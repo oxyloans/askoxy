@@ -1,0 +1,212 @@
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+.Landingpage-header, .Landingpage-footer {
+  background-color: #282c34;
+  color: white;
+}
+
+.Landingpage-main {
+  height: 95vh;
+}
+
+.Landingpage-center-div {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Landingpage-second-sub-div {
+  position: relative;
+  text-align: center;
+  z-index: 1;
+  width: 80%; /* Adjust width as needed */
+  height: 100%; /* Ensure div takes full height */
+  background-size: cover; /* Ensures background covers the entire div */
+  background-position: center; /* Centers the background image */
+  background-repeat: no-repeat; /* Prevents background repetition */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+}
+@media (max-width: 480px) {
+  .Landingpage-second-sub-div{
+    width: 100%; 
+  }
+}
+
+
+.Landingpage-background-image {
+  width: 100%;
+  height: auto;
+  opacity: 0.1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+
+.Landingpage-scroll-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 90%;
+  overflow: hidden;
+  align-items: center;
+}
+
+.Landingpage-scroll-line {
+  display: flex;
+  white-space: wrap;
+  animation: scroll 30s linear infinite;
+  width: 100%;
+}
+@media (max-width: 480px) {
+  .Landingpage-scroll-line {
+    animation: scroll 100s linear infinite;
+    width: 10000%;
+  }
+}
+
+/* Media query for screens smaller than 768px */
+@media (max-width: 768px) {
+  .Landingpage-scroll-line {
+    animation: scroll 100s linear infinite;
+    width: 10000%;
+  }
+}
+.Landingpage-image-container {
+  display: inline-block;
+  width: 120px;
+  height: 135px;
+  position: relative;
+  margin: 50px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.Landingpage-image-container:hover {
+  transform: scale(1.1); /* Zoom effect on hover */
+}
+
+.zoom-effect {
+  transition: transform 0.3s ease; /* Smooth transition for zoom effect */
+}
+
+.Landingpage-image-container img {
+  width: auto;
+  height: 240px; /* Default height */
+}
+
+/* Media query for screens smaller than 480px */
+@media (max-width: 480px) {
+  .Landingpage-image-container img {
+    height: 150px; /* Adjust height for very small screens */
+  }
+}
+
+/* Media query for screens smaller than 768px */
+@media (max-width: 768px) {
+  .Landingpage-image-container img {
+    height: 160px; /* Adjust height for smaller screens */
+  }
+}
+
+
+/* Default styles */
+.Landingpage-dummy-text {
+  font-size: 1rem;
+  position: absolute;
+  top: 130%;
+  left: 97%;
+  font-weight: bold;
+  transform: translate(-50%, -50%);
+  color: #747474;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  padding: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+}
+
+/* Media query for screens smaller than 768px */
+@media only screen and (max-width: 768px) {
+  .Landingpage-dummy-text {
+    font-size: 0.9rem;  /* Adjust font size for smaller screens */
+    top: 120%;  /* Adjust position if necessary */
+    left: 90%;  /* Adjust position to fit smaller screens */
+    padding: 4px;  /* Adjust padding for smaller screens */
+  }
+}
+
+/* Media query for screens smaller than 480px */
+@media only screen and (max-width: 480px) {
+  .Landingpage-dummy-text {
+    font-size: 0.8rem;  /* Further adjust font size for very small screens */
+    top: 110%;  /* Further adjust position */
+    left: 85%;  /* Adjust position to fit very small screens */
+    padding: 3px;  /* Further adjust padding */
+  }
+}
+
+.Landingpage-scroll-line.reverse {
+  animation-direction: reverse;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-20%);
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .Landingpage-image-container img {
+    height: 270px;
+  }
+}
+
+@media (max-width: 480px) {
+  .Landingpage-image-container img {
+    height: 200px;
+  }
+}
+
+
+.logo-image {
+  width: 450px; 
+  height: auto;
+  margin-right: 10px; 
+}
+@media (max-width: 480px) {
+  .logo-image {
+    width: 200px; 
+  }
+}
+@media (max-width: 768px) {
+  .logo-image {
+    width: 200px; 
+  }
+}
+.Landingpage-title{
+  font-size: 2rem;
+}
+@media (max-width: 480px) {
+  .Landingpage-title{
+    font-size: 0.8rem;
+  }
+}

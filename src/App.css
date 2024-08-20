@@ -1,0 +1,46 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.nav {
+  /* padding: 1rem; */
+  padding-inline: 50PX;
+  display: flex;
+  align-items: center;
+  background-color: #0c647a;
+  
+}
+
+.logo img {
+  height: 70px;
+}
+
+.nav ul {
+  list-style-type: none;
+  display: flex;
+  gap: 1rem;
+  margin-left: auto; /* Pushes the list to the right */
+}
+
+.nav ul li {
+  display: inline;
+}
+
+.nav a {
+  color: rgb(255, 255, 255);
+  text-decoration: none;
+}
+
+.content {
+  flex-grow: 1;
+
+}
+
+.footer {
+  background-color: #0c647a;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
