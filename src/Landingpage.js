@@ -20,7 +20,7 @@ import HM15 from './images/V11.png';
 
 function Landingpage() {
   const logo = 'ASKOXY.ai';
-  const title = 'Any question to your abroad plan';
+  const title = 'Any question to your abroad plan.....';
 
   const images = [
     { src: HM1, alt: 'Image 1', text: 'IT & AI Services' },
