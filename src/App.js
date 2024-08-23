@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { FaBars, FaTimes } from 'react-icons/fa'; // Import icons
 import Landingpage from './Landingpage.js';
 import logo from './images/logo.png'; 
 
 import './App.css';
 
 function App() {
+  const [isMenuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = () => setMenuOpen(!isMenuOpen);
+
   return (
     <Router>
       <div className="app d-flex flex-column min-vh-100">
@@ -13,15 +18,18 @@ function App() {
           <Link to="/" className="logo">
             <img src={logo} alt="Logo" />
           </Link>
-          <ul>
+          <button className="menu-toggle" onClick={toggleMenu}>
+            {isMenuOpen ? <FaTimes /> : <FaBars />}
+          </button>
+          <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
             <li>
-              <Link to="/">Landingpage</Link>
+              <Link to="/" onClick={toggleMenu}>Landingpage</Link>
             </li>
             <li>
-              <Link to="/about">About</Link>
+              <Link to="/about" onClick={toggleMenu}>About</Link>
             </li>
             <li>
-              <Link to="/contact">Contact</Link>
+              <Link to="/contact" onClick={toggleMenu}>Contact</Link>
             </li>
           </ul>
         </nav>
@@ -35,7 +43,7 @@ function App() {
         </div>
 
         <footer className="footer bg-dark text-white text-center py-3">
-          © 2024 Your Company. All Rights Reserved.
+          © 2024 Askoxy.AI. All Rights Reserved.
         </footer>
       </div>
     </Router>

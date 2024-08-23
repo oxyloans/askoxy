@@ -27,7 +27,7 @@ body, html, #root {
   position: relative;
   text-align: center;
   z-index: 1;
-  width: 80%; /* Adjust width as needed */
+  width: 60%; /* Adjust width as needed */
   height: 100%; /* Ensure div takes full height */
   background-size: cover; /* Ensures background covers the entire div */
   background-position: center; /* Centers the background image */
@@ -209,4 +209,290 @@ body, html, #root {
   .Landingpage-title{
     font-size: 0.8rem;
   }
+}
+
+
+
+/* section css */
+
+
+
+.three-boxes-section {
+  position: relative;
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-image: url('./images/BG1.jpg'); /* Replace with your image path */
+  background-size: cover; /* Ensures the image covers the entire section */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  /* width: 100%;  */
+  height: auto; 
+}
+@media (max-width: 768px) {
+  /* .three-boxes-section {
+   top: 350px;
+  } */
+
+
+  .three-boxes-section {
+    position: relative;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    /* width: 100%; */
+    /* height: auto !important; */
+}
+}
+.main-heading-container {
+  text-align: center;
+  margin-bottom: 50px;
+
+}
+
+.main-heading {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #0c647a;
+}
+
+.main-subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.box-container {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.box {
+  background-color: rgb(255, 255, 255);
+  color: black;
+  text-align: center;
+  padding: 20px;
+  border-radius: 8px;
+  flex-grow: 1; /* Allows boxes to grow equally */
+  flex-basis: 0; /* Ensures equal width */
+  margin: 0 50px; /* Adds space between boxes */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 0.1px solid #6fadbd; 
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+
+.box:hover {
+  transform: translateY(-10px); /* Moves the box up slightly */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2); /* Increases shadow size */
+  background-color: #0c647a;
+color: #ffffff;
+}
+.box:hover .box-heading {
+  color: #ffffff; /* Changes heading color on hover */
+}
+.box:hover .box-subtitle {
+  color: #ffc400; /* Changes heading color on hover */
+}
+
+.box-image {
+  width: 80px;
+  height: auto;
+  margin-bottom: 0px;
+}
+
+.box-heading {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  margin: 10px;
+  color: #0c647a;
+}
+
+.box-subtitle {
+  font-size: 1.2rem;
+  margin: 0;
+  
+}
+
+/* Flexbox for side-by-side alignment */
+@media (min-width: 768px) {
+  .box-container {
+    flex-direction: row;
+  }
+}
+
+/* Stacked alignment on mobile screens */
+@media (max-width: 767px) {
+  .box-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .box {
+    margin-bottom: 20px; /* Add space between stacked boxes */
+    width: 90%; /* Adjust width for mobile screens */
+  }
+}
+
+
+
+/* section2 */
+
+
+.info-section {
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-image: url('./images/BG2.jpg'); /* Replace with your image path */
+  background-size: cover; /* Ensures the image covers the entire section */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  height: 50vh;
+
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #0c647a;
+}
+
+.section-description {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+
+/* section3 */
+
+.introduction-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #0c647a; /* Replaces background image with solid color */
+  color: #ffffff; /* Text color to contrast with background */
+  height: 30vh;
+  margin-top: 100px;
+  margin-bottom: 100px;
+}
+
+.intro-content {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.intro-heading {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #ffffff; /* Ensures the heading is visible against the background */
+}
+
+.intro-text {
+  font-size: 1.2rem;
+  color: #f0f0f0; /* Slightly lighter color for better readability */
+  margin: 0;
+}
+
+.search-container {
+  margin-top: 20px; /* Space above the search input */
+}
+
+.search-input {
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 400px; /* Limits the width of the input field */
+}
+
+
+
+/* section 4 */
+
+.testimonials-section {
+  padding: 50px 0;
+  background-color: #f4f4f4;
+  text-align: center;
+}
+
+.testimonials-heading {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #0c647a;
+}
+
+.testimonials-section {
+  padding: 50px 0;
+  background-color: #f4f4f4;
+  text-align: center;
+  overflow: hidden; /* Ensure the overflow is hidden */
+}
+
+.testimonials-heading {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #0c647a;
+}
+
+.testimonials-container {
+  display: flex;
+  width: max-content; /* Allows the container to resize based on content */
+  animation: scroll-testimonials 20s linear infinite;
+}
+
+.testimonial {
+  flex: 0 0 auto; /* Ensures testimonials don't shrink or grow */
+  padding: 20px;
+  margin: 20px;
+  box-sizing: border-box;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #ffffff;
+}
+
+.testimonial-text {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.testimonial-author {
+  font-size: 1rem;
+  color: #0c647a;
+}
+
+@keyframes scroll-testimonials {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% + 100vw)); /* Moves the testimonials left to cover the full screen */
+  }
+}
+
+.testimonials-container:hover {
+  animation-play-state: paused; /* Pauses the animation on hover */
+}
+
+.testimonial:hover {
+  transform: translateY(-10px);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
 }
