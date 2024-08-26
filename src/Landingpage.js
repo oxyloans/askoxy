@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Landingpage.css';
 import bg from './images/bg.png';
 import LOGO2 from './images/logo3.png';
@@ -22,6 +22,9 @@ import I1 from './images/ICON1.png';
 import I2 from './images/ICON2.png';
 import I3 from './images/ICON3.png';
 
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle, faLightbulb, faHandsHelping } from '@fortawesome/free-solid-svg-icons';
 
 
 function Landingpage() {
@@ -84,7 +87,33 @@ function Landingpage() {
     return shuffled;
   }
 
+// animate up
+ const [currentIndex, setCurrentIndex] = useState(0);
+  const texts = [
+    {
+      type: "Simple Ask", 
+      heading: "Simple Ask",
+      paragraph: "Make it easy for you to get what you need"
+    },
+    {
+      type: "Problem & Solutions",
+      heading: "Problem & Solutions",
+      paragraph: "Solve your problem with a solution that works."
+    },
+    {
+      type: "End-to-End Support",
+      heading: "End-to-End Support",
+      paragraph: " Support you every step of the way, from start to finish."
+    }
+  ];
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % texts.length);
+    }, 4000); // Change text every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [texts.length]);
 
   return (
     <div className="Landingpage d-flex flex-column min-vh-100">
@@ -97,13 +126,42 @@ function Landingpage() {
 
             }}
           >
-            <img src={LOGO2} alt={logo} className="logo-image" />
-            <h1 className="Landingpage-title mb-3">{title}</h1>
+
+            <div>
+              <img src={LOGO2} alt={logo} className="logo-image" />
+              <h1 className="Landingpage-title mb-3">{title}</h1>
+            </div>
             {/* <input
               type="text"
               className="Landingpage-search form-control w-75 mx-auto"
               placeholder="Looking for Universities..."
               style={{ width: '30%', padding: '12px' }} /> */}
+            <div className="text-slider">
+              <div className="text-container">
+                {texts.map((text, index) => (
+                  <div
+                    key={index}
+                    className={`text-item ${index === currentIndex ? 'active' : ''} ${index === (currentIndex - 1 + texts.length) % texts.length ? 'previous' : ''}`}
+                  >
+                    <FontAwesomeIcon
+                      icon={index === 0 ? faQuestionCircle : index === 1 ? faLightbulb : faHandsHelping}
+                      className="text-icon"
+                    />
+                    {text.type}
+                  </div>
+                ))}
+              </div>
+              <div className="buttons-container">
+                {texts.map((text, index) => (
+                  <button className="slider-button" key={index}>
+                    <h3>{text.heading}</h3>
+                    <p>{text.paragraph}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+
           </div>
 
           <div className="Landingpage-scroll-container">
@@ -138,7 +196,7 @@ function Landingpage() {
         </div>
       </main>
 
-      
+
       <div class="three-boxes-section" >
         <div class="main-heading-container">
           <h2 class="main-heading">We’re not just about advice</h2>
@@ -176,7 +234,7 @@ function Landingpage() {
       </div>
 
 
-       <div class="info-section">
+      <div class="info-section">
         <div class="section-header">
           <h2 class="section-title">Ready to Start? Choose Your Path</h2>
           <p class="section-description">We're here to help you achieve your goals with tailored solutions and end-to-end support.</p>

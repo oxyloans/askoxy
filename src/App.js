@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Import icons
 import Landingpage from './Landingpage.js';
+import Erice from './Erice.js'
 import logo from './images/logo.png'; 
 
 import './App.css';
@@ -37,6 +38,7 @@ function App() {
         <div className="content flex-grow-1">
           <Routes>
             <Route path="/" element={<Landingpage />} />
+            {/* <Route path="/" element={<Erice/>} /> */}
             {/* <Route path="/about" element={<AboutCard />} />
             <Route path="/contact" element={<ContactCard />} /> */}
           </Routes>

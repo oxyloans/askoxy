@@ -496,3 +496,141 @@ color: #ffffff;
   transform: translateY(-10px);
   box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
 }
+
+
+/* text animate up */
+.text-slider {
+  position: relative;
+  width: 100%;
+  height: auto; /* Adjust based on your content */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.text-container {
+  position: relative;
+  height: 50px; /* Adjust based on your text height */
+  width: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.text-item {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.5s ease-in-out;
+  font-size: 15px;
+  text-align: center;
+  white-space: nowrap; 
+  overflow: hidden;   
+  text-overflow: ellipsis; 
+  border: 2px solid #f6b300; 
+  padding: 8px; 
+  box-sizing: border-box; 
+  border-radius: 15px; 
+  background-color: #0c647a; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  margin-block: 10px;
+}
+
+.text-item.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.text-item.previous {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+.buttons-container {
+  margin-top: 20px; /* Adds space between text and buttons */
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.slider-button {
+  padding: 10px;
+  background-color: #ffffff;
+
+
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: left;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  margin: 5px;
+  border: 1px solid #0c647a; 
+}
+
+
+.slider-button h3 {
+  color: #0c647a;
+  margin: 0;
+  font-size: 16px; /* Adjust font size as needed */
+  border-bottom: 1px solid #ffffff; /* Border below the heading */
+  padding-bottom: 5px; /* Padding below the heading */
+}
+
+.slider-button p {
+  margin: 5px 0 0 0;
+  font-size: 12px; /* Adjust font size as needed */
+  display: block;
+  text-align: center;
+
+}
+
+.slider-button:hover {
+  background-color: #0c647a;
+  color: #f0f0f0;
+}
+
+.slider-button:hover h3{
+  color: #f6b300;
+}
+
+.text-slider:hover .text-item.active {
+  opacity: 0.3;
+  transform: translateY(-10px);
+}
+
+.text-slider:hover .buttons-container {
+  opacity: 1;
+}
+.text-icon {
+  margin-right: 8px;
+  color: #f6b300; /* Adjust icon color as needed */
+  font-size: 18px; /* Adjust icon size as needed */
+  vertical-align: middle;
+}
+
+/* Media Query for Mobile Screens */
+@media (max-width: 768px) {
+  .buttons-container {
+      flex-direction: column;
+      gap: 5px;
+      align-items: center;
+      width: 80%;
+  }
+
+  .slider-button {
+      width: 100%;
+      text-align: center;
+  }
+}
