@@ -27,7 +27,7 @@ body, html, #root {
   position: relative;
   text-align: center;
   z-index: 1;
-  width: 60%; /* Adjust width as needed */
+  width: 70%; /* Adjust width as needed */
   height: 100%; /* Ensure div takes full height */
   background-size: cover; /* Ensures background covers the entire div */
   background-position: center; /* Centers the background image */
@@ -510,6 +510,19 @@ color: #ffffff;
   align-items: center;
 }
 
+@media (max-width: 768px) {
+  .text-slider {
+    width: 130%;
+    font-size: 1.1rem; 
+  }
+}
+@media (max-width: 480px) {
+  .text-slider {
+    width: 130%;
+    font-size: 1rem; 
+
+  }
+}
 .text-container {
   position: relative;
   height: 50px; /* Adjust based on your text height */
@@ -630,7 +643,7 @@ color: #ffffff;
   }
 
   .slider-button {
-      width: 100%;
+      width: 90%;
       text-align: center;
   }
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Import icons
 import Landingpage from './Landingpage.js';
-import Erice from './Erice.js'
+import AIChat from './Erice.js'
 import logo from './images/logo.png'; 
 
 import './App.css';
@@ -23,6 +23,9 @@ function App() {
             {isMenuOpen ? <FaTimes /> : <FaBars />}
           </button>
           <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
+            <li style={{backgroundColor: "#f6b300", padding: 5, borderRadius:5,}}>
+              <Link to="/AIChat" onClick={toggleMenu} style={{color:'black',fontWeight:'bold',}}>AI CHAT</Link>
+            </li>
             <li>
               <Link to="/" onClick={toggleMenu}>Landingpage</Link>
             </li>
@@ -38,13 +41,11 @@ function App() {
         <div className="content flex-grow-1">
           <Routes>
             <Route path="/" element={<Landingpage />} />
-            {/* <Route path="/" element={<Erice/>} /> */}
-            {/* <Route path="/about" element={<AboutCard />} />
-            <Route path="/contact" element={<ContactCard />} /> */}
+            <Route path="/AIChat" element={<AIChat/>} />
+ 
           </Routes>
         </div>
-
-        <footer className="footer bg-dark text-white text-center py-3">
+                <footer className="footer bg-dark text-white text-center py-3">
           © 2024 Askoxy.AI. All Rights Reserved.
         </footer>
       </div>

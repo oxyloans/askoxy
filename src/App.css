@@ -1,14 +1,21 @@
+/* Base Styles */
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
+
+/* Navigation Bar Styles */
 .nav {
   padding-inline: 50px;
   display: flex;
   align-items: center;
   background-color: #0c647a;
-  position: relative;
+  position: fixed; /* Fixes the navbar at the top */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; /* Ensures it's above other content */
   justify-content: space-between;
 }
 
@@ -41,6 +48,26 @@
   display: flex;
 }
 
+/* Logo Styles */
+.logo img {
+  height: 70px;
+}
+
+/* Content Styles */
+.content {
+  flex-grow: 1;
+  margin-top: 70px; /* Adds space below the fixed navbar */
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #0c647a;
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
   .nav-links {
     display: none;
@@ -52,6 +79,7 @@
     background-color: #0c647a;
     padding: 1rem;
     gap: 0.5rem;
+    z-index: 999; /* Ensures the menu is above other content */
   }
 
   .menu-toggle {
@@ -66,23 +94,4 @@
     display: block;
     text-align: center;
   }
-}
-
-
-.logo img {
-  height: 70px;
-}
-
-
-
-.content {
-  flex-grow: 1;
-
-}
-
-.footer {
-  background-color: #0c647a;
-  color: white;
-  padding: 1.5rem;
-  text-align: center;
 }

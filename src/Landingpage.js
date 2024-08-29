@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Landingpage.css';
 import bg from './images/bg.png';
 import LOGO2 from './images/logo3.png';
+
 import HM1 from './images/6.png';
 import HM2 from './images/8.png';
 import HM3 from './images/7.png';
@@ -17,6 +19,7 @@ import HM12 from './images/V8.png';
 import HM13 from './images/V7.png';
 import HM14 from './images/V9.png';
 import HM15 from './images/V11.png';
+import HM16 from './images/9.png';
 
 import I1 from './images/ICON1.png';
 import I2 from './images/ICON2.png';
@@ -30,6 +33,14 @@ import { faQuestionCircle, faLightbulb, faHandsHelping } from '@fortawesome/free
 function Landingpage() {
   const logo = 'ASKOXY.ai';
   const title = 'Ask | Solve | Succeed';
+
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/erice');
+  };
+
+  
 
   const images = [
     { src: HM1, alt: 'Image 1', text: 'IT & AI Services' },
@@ -47,11 +58,11 @@ function Landingpage() {
     { src: HM12, alt: 'Image 12', text: 'Food & Beverage' },
     { src: HM13, alt: 'Image 13', text: 'Travel' },
     { src: HM14, alt: 'Image 14', text: 'Education' },
-    { src: HM15, alt: 'Image 15', text: 'Health & Wellness' }
+    { src: HM15, alt: 'Image 15', text: 'Health & Wellness' },
+    { src: HM16, alt: 'Image 16', text: 'Erice' }
   ];
 
-  const extendedImages = [...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images,];
-
+  const extendedImages = new Array(14).fill(images).flat(); 
   function shuffleNoAdjacent(array) {
     // Initial shuffle
     let shuffled = array.sort(() => Math.random() - 0.5);
@@ -63,7 +74,7 @@ function Landingpage() {
         shuffled[i].src === shuffled[i + 2].src ||
         shuffled[i].src === shuffled[i + 3].src
       ) {
-        let j = i + 3;
+        let j = i + 2;
         // Find a suitable image that isn't the same as the current image
         while (
           j < shuffled.length &&
@@ -131,11 +142,7 @@ function Landingpage() {
               <img src={LOGO2} alt={logo} className="logo-image" />
               <h1 className="Landingpage-title mb-3">{title}</h1>
             </div>
-            {/* <input
-              type="text"
-              className="Landingpage-search form-control w-75 mx-auto"
-              placeholder="Looking for Universities..."
-              style={{ width: '30%', padding: '12px' }} /> */}
+        
             <div className="text-slider">
               <div className="text-container">
                 {texts.map((text, index) => (
