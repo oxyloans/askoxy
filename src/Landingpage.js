@@ -40,7 +40,7 @@ function Landingpage() {
     navigate('/erice');
   };
 
-  
+
 
   const images = [
     { src: HM1, alt: 'Image 1', text: 'IT & AI Services' },
@@ -48,7 +48,6 @@ function Landingpage() {
     { src: HM3, alt: 'Image 3', text: 'Builder Loans' },
     { src: HM4, alt: 'Image 4', text: 'Rental Services' },
     { src: HM5, alt: 'Image 5', text: 'Global Education' },
-
     { src: HM6, alt: 'Image 6', text: 'Groceries' },
     { src: HM7, alt: 'Image 7', text: 'Games' },
     { src: HM8, alt: 'Image 8', text: 'Tickets' },
@@ -62,47 +61,32 @@ function Landingpage() {
     { src: HM16, alt: 'Image 16', text: 'Erice' }
   ];
 
-  const extendedImages = new Array(14).fill(images).flat(); 
-  function shuffleNoAdjacent(array) {
-    // Initial shuffle
-    let shuffled = array.sort(() => Math.random() - 0.5);
+  const extendedImages = new Array(14).fill(images).flat();
 
-    for (let i = 0; i < shuffled.length - 3; i++) {
-      // Check for duplicates in the next three positions
-      if (
-        shuffled[i].src === shuffled[i + 1].src ||
-        shuffled[i].src === shuffled[i + 2].src ||
-        shuffled[i].src === shuffled[i + 3].src
-      ) {
-        let j = i + 2;
-        // Find a suitable image that isn't the same as the current image
-        while (
-          j < shuffled.length &&
-          (shuffled[i].src === shuffled[j].src)
-        ) {
-          j++;
-        }
-        if (j < shuffled.length) {
-          // Swap the images
-          [shuffled[i + 3], shuffled[j]] = [shuffled[j], shuffled[i + 3]];
+  // Shuffle images once and store in a variable
+  const shuffledImages = shuffleNoAdjacent([...extendedImages]);
+
+  function shuffleNoAdjacent(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+      [array[i], array[randomIndex]] = [array[randomIndex], array[i]];
+    }
+
+    for (let i = 1; i < array.length; i++) {
+      if (array[i].src === array[i - 1].src) {
+        if (i + 1 < array.length) {
+          [array[i], array[i + 1]] = [array[i + 1], array[i]];
         }
       }
     }
 
-    // Final shuffle to randomize the rest without breaking the no-adjacency rule
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const randomIndex = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
-    }
-
-    return shuffled;
+    return array;
   }
-
-// animate up
- const [currentIndex, setCurrentIndex] = useState(0);
+  // animate up
+  const [currentIndex, setCurrentIndex] = useState(0);
   const texts = [
     {
-      type: "Simple Ask", 
+      type: "Simple Ask",
       heading: "Simple Ask",
       paragraph: "Make it easy for you to get what you need"
     },
@@ -142,7 +126,7 @@ function Landingpage() {
               <img src={LOGO2} alt={logo} className="logo-image" />
               <h1 className="Landingpage-title mb-3">{title}</h1>
             </div>
-        
+
             <div className="text-slider">
               <div className="text-container">
                 {texts.map((text, index) => (
@@ -173,7 +157,7 @@ function Landingpage() {
 
           <div className="Landingpage-scroll-container">
             <div className="Landingpage-scroll-line">
-              {shuffleNoAdjacent(extendedImages).map((item, index) => (
+              {shuffleNoAdjacent([...extendedImages]).map((item, index) => (
                 <div key={index} className="Landingpage-image-container">
                   <img src={item.src} alt={item.alt} className="img-fluid" />
                   <div className="Landingpage-dummy-text">{item.text}</div>
@@ -181,9 +165,8 @@ function Landingpage() {
               ))}
             </div>
 
-            {/* This line will scroll from right to left */}
             <div className="Landingpage-scroll-line reverse">
-              {shuffleNoAdjacent(extendedImages).map((item, index) => (
+              {shuffleNoAdjacent([...extendedImages]).map((item, index) => (
                 <div key={index} className="Landingpage-image-container">
                   <img src={item.src} alt={item.alt} className="img-fluid" />
                   <div className="Landingpage-dummy-text">{item.text}</div>
@@ -192,7 +175,7 @@ function Landingpage() {
             </div>
 
             <div className="Landingpage-scroll-line">
-              {shuffleNoAdjacent(extendedImages).map((item, index) => (
+              {shuffleNoAdjacent([...extendedImages]).map((item, index) => (
                 <div key={index} className="Landingpage-image-container">
                   <img src={item.src} alt={item.alt} className="img-fluid" />
                   <div className="Landingpage-dummy-text">{item.text}</div>

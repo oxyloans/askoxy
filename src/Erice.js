@@ -16,7 +16,7 @@ function Erice() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        'http://182.18.139.138:9001/api/student-service/user/ask',
+        'https://meta.oxyloans.com/api/student-service/user/ask',
         [
           {
             role: 'user',
