@@ -41,7 +41,7 @@ function Erice() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        'http://182.18.139.138:9001/api/student-service/user/seekthesolution',
+        'https://meta.oxyloans.com/api/student-service/user/seekthesolution',
         [
           {
             role: 'user',
@@ -66,7 +66,7 @@ function Erice() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        'http://182.18.139.138:9001/api/student-service/user/Endtoend',
+        'https://meta.oxyloans.com/api/student-service/user/Endtoend',
         [
           {
             role: 'user',
