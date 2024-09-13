@@ -1,0 +1,43 @@
+/* Chat container with grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 6 columns */
+  grid-template-rows: repeat(6, auto); /* Auto rows based on content */
+  gap: 10px; /* Gap between grid items */
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Chat bubbles styling */
+.chat-bubble.question {
+  border: 1px solid #6f6d71; /* Light blue for questions */
+  color: black;
+  grid-column: span 6; /* Full width of the grid */
+  align-self: start;
+}
+
+.chat-bubble.answer {
+  border:1px solid #a7a6a8;
+  grid-column: span 6; /* Full width of the grid */
+   color: black;
+  align-self: flex-start;
+  text-align: start;
+}
+
+/* Adjustments for better appearance */
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffa800;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+
+
+  .chat-bubble {
+    @apply break-words; /* Ensures text wrapping */
+  }
+

@@ -1,97 +1,38 @@
-/* Base Styles */
-.app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* Navigation Bar Styles */
-.nav {
-  padding-inline: 50px;
-  display: flex;
-  align-items: center;
-  background-color: #0c647a;
-  position: fixed; /* Fixes the navbar at the top */
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000; /* Ensures it's above other content */
-  justify-content: space-between;
-}
-
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.nav-links {
-  list-style-type: none;
-  display: flex;
-  gap: 1rem;
-  margin-left: auto; /* Pushes the list to the right */
-}
-
-.nav-links li {
-  display: inline;
-}
-
-.nav-links a {
-  color: rgb(255, 255, 255);
-  text-decoration: none;
-}
-
-.nav-links.active {
-  display: flex;
-}
-
-/* Logo Styles */
-.logo img {
-  height: 70px;
-}
-
-/* Content Styles */
-.content {
-  flex-grow: 1;
-  margin-top: 70px; /* Adds space below the fixed navbar */
-}
-
-/* Footer Styles */
-.footer {
-  background-color: #0c647a;
-  color: white;
-  padding: 1.5rem;
+.App {
   text-align: center;
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .nav-links {
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: #0c647a;
-    padding: 1rem;
-    gap: 0.5rem;
-    z-index: 999; /* Ensures the menu is above other content */
-  }
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
 
-  .menu-toggle {
-    display: block;
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
   }
+}
 
-  .nav-links.active {
-    display: flex;
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
   }
-
-  .nav-links li {
-    display: block;
-    text-align: center;
+  to {
+    transform: rotate(360deg);
   }
 }
