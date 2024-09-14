@@ -10,7 +10,7 @@ import Footer from './Footer';
 const Landingpage: React.FC = () => {
   return (
       <>
-            <HeroSection/>
+    <HeroSection/>
    <InfoSection/>
    <ProductsSection/>
    <Testimonials/>
