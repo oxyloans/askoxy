@@ -7,7 +7,7 @@ import './erice.css'
 import { useLocation } from 'react-router-dom';
 
 
-interface ChatMessage {           
+interface ChatMessage {
   type: 'question' | 'answer';
   content: string;
 }
