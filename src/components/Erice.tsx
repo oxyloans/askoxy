@@ -20,6 +20,8 @@ const Erice = () => {
   const [input, setInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState<number>(0);
+
 
   // Toggle edit state
   const handleEditClick = () => {
@@ -31,6 +33,10 @@ const Erice = () => {
     // Implement functionality to start a new chat
     console.log("New Chat clicked");
   };
+
+
+
+
 
   // Handle image enlargement
   const handleImageClick = (image: string) => {
@@ -49,31 +55,34 @@ const Erice = () => {
     if (query) {
       handleSend(query);
     }
-  }, [query]);
+  }, []);
 
-  const handleSend = async (queryInput: string) => {
-    if (queryInput.trim() === '') return;
+const handleSend = async (queryInput: string) => {
+  if (queryInput.trim() === '') return;
 
-    // Add the user's question to the chat
-    setMessages([...messages, { type: 'question', content: queryInput }]);
-    setInput('');
-    setIsLoading(true);
+  // Add the user's question to the chat
+  setMessages([...messages, { type: 'question', content: queryInput }]);
+  setInput('');
+  setIsLoading(true);
+  setQuestionCount((prevCount) => prevCount + 1); // Increment question count
 
-    try {
-      // Make API request to the specified endpoint
-      const response = await axios.post(
-        `http://182.18.139.138:9001/api/student-service/user/erice?InfoType=${encodeURIComponent(queryInput)}`
-      );
+  try {
+    // Make API request to the specified endpoint
+    const response = await axios.post(
+      `http://182.18.139.138:9001/api/student-service/user/erice?InfoType=${input}`
+    );
 
-      // Process the API response and update the chat
-      setMessages([...messages, { type: 'question', content: queryInput }, { type: 'answer', content: response.data }]);
-    } catch (error) {
-      console.error('Error fetching response:', error);
-      setMessages([...messages, { type: 'question', content: queryInput }, { type: 'answer', content: 'Sorry, there was an error. Please try again later.' }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Process the API response and update the chat
+    console.log(response)
+    setMessages([...messages, { type: 'question', content: queryInput }, { type: 'question', content: response.data }]);
+  } catch (error) {
+    console.error('Error fetching response:', error);
+    setMessages([...messages, { type: 'question', content: queryInput }, { type: 'answer', content: 'Sorry, there was an error. Please try again later.' }]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
@@ -91,9 +100,9 @@ const Erice = () => {
         </div>
       </header>
 
-      <main className="flex flex-grow p-7" style={{ height: '73vh' }}>
+      <main className="flex flex-grow p-5" style={{ height: '73vh' }}>
         {/* Combined Left and Center Panel */}
-        <div className="flex flex-grow bg-white shadow-md rounded-2xl overflow-hidden">
+        <div className="flex flex-grow overflow-hidden bg-white shadow-md rounded-2xl">
           {/* Left Panel */}
           <aside className="relative hidden w-1/6 p-4 text-black md:block">
             {/* History Header with Edit and New Chat Icons */}
@@ -120,12 +129,11 @@ const Erice = () => {
           {/* Center Panel */}
           <section className="flex flex-col justify-between w-5/6 p-6 rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-3xl bg-gray-50 md:rounded-none">
             {/* Chat messages */}
-            <div className="grid grid-cols-6 gap-4 p-2 overflow-y-auto">
+            <div className="p-2 overflow-y-auto chat-container">
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`chat-bubble ${msg.type === 'question' ? 'question' : 'answer'} p-3 rounded-lg break-words`}
-                  style={{ gridColumn: msg.type === 'question' ? 'span 3' : 'span 6' }}
+                  className={`chat-bubble chat-bubble11 ${msg.type === 'question' ? 'question' : 'answer'} p-3 rounded-lg text-black`}
                 >
                   <ReactMarkdown>
                     {typeof msg.content === 'string' ? msg.content : String(msg.content)}
@@ -155,9 +163,9 @@ const Erice = () => {
         </div>
 
         {/* Combined Right Panel and Advertisement Section */}
-        <div className="flex flex-col w-1/4 ml-4 space-y-4">
+        {questionCount >= 8 ? <>  <div className="flex flex-col w-1/4 ml-4 space-y-2">
           {/* Right Panel */}
-          <div className="flex flex-col w-full p-4 bg-white rounded-2xl shadow-md flex-grow">
+          <div className="flex flex-col flex-grow w-full p-4 bg-white shadow-md rounded-2xl">
             {/* Download App Section */}
             <div className="flex items-center justify-between w-full mb-4">
               <span className="text-2xl font-bold text-yellow-500">erice.in</span>
@@ -166,65 +174,51 @@ const Erice = () => {
 
             {/* Rice List */}
             <div className="flex flex-col w-full h-full p-4 space-y-2 overflow-y-auto bg-gray-100 rounded-lg shadow-md">
-              {[
-                { name: "MAATEJA 26 KGS", available: true, image: B1 },
+              {[{ name: "MAATEJA 26 KGS", available: true, image: B1 },
                 { name: "GAJRAJ 26 KGS", available: false, image: B2 },
-                { name: "KURNOOL 26 KGS", available: true, image: B3 },
+                // { name: "KURNOOL 26 KGS", available: true, image: B3 },
               ].map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-2 border-b border-gray-300">
                   <div className="relative flex items-center justify-center">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
+                    <img src={item.image} alt={item.name} className="object-cover w-12 h-12 rounded-full" />
                     <button
-                      className="absolute flex items-center justify-center text-blue-800 text-sm font-bold bg-white bg-opacity-60 rounded-full p-1 shadow-md border border-gray-300"
+                      className="absolute flex items-center justify-center p-1 text-sm font-bold text-blue-800 bg-white border border-gray-300 rounded-full shadow-md bg-opacity-60"
                       style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
                       onClick={() => handleImageClick(item.image)}
                     >
-                      +
+                      View
                     </button>
-                    {item.available && (
-                      <button
-                        className="absolute flex items-center justify-center text-white text-sm font-bold bg-green-600 rounded-full p-1 shadow-md border border-gray-300 w-auto"
-                        style={{ top: '50%', left: '280px', transform: 'translateY(-50%)' }}
-                      >
-                        Order
-                      </button>
-                    )}
                   </div>
-                  <div className="flex-grow ml-3">
-                    <p className="font-medium text-black">{item.name}</p>
-                    <p className={`text-sm ${item.available ? 'text-green-500' : 'text-red-500'}`}>
-                      {item.available ? 'Available' : 'Not Available'}
-                    </p>
-                  </div>
+                  <span className={`text-lg font-semibold ${item.available ? 'text-green-500' : 'text-red-500'}`}>{item.name}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Advertisement Section */}
-          <div className="flex flex-col w-full p-4 bg-white rounded-2xl shadow-md">
-            <span className="font-bold text-xl">Ad Space</span>
-            <img src={Image1} alt="Advertisement" className="w-full mt-2 rounded-lg shadow-md" />
-          </div>
-        </div>
+   <section className="relative flex flex-col p-4 bg-white shadow-md rounded-2xl">
+  {/* Enlarge Image Modal */}
+  {enlargedImage && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70" onClick={handleCloseImage}>
+      <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-full" />
+    </div>
+  )}
+  <h2 className="text-xl font-bold text-[#351664] mb-4">Rice Advertisement</h2>
+  {/* Scrollable Container */}
+  <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+    <img src={Image1} alt="Advertisement 1" className="w-full h-auto mt-2 rounded-lg" onClick={() => handleImageClick(Image1)} />
+    {/* <img src={Image2} alt="Advertisement 2" className="w-full h-auto mt-2 rounded-lg" onClick={() => handleImageClick(Image2)} /> */}
+  </div>
+</section>
+        </div></> : <></>}
+      
       </main>
-
-      {/* Enlarged Image Modal */}
-      {enlargedImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="relative">
-            <img src={enlargedImage} alt="Enlarged" className="max-w-screen-md max-h-screen" />
-            <button
-              className="absolute top-2 right-2 text-white text-xl font-bold bg-black"
-              onClick={handleCloseImage}
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
+
+
+
 
 export default Erice;
