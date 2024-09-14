@@ -6,6 +6,7 @@ import Loans from '../assets/img/3.png';
 import Study from '../assets/img/4.png';
 import Insurance from '../assets/img/5.png';
 import Investments from '../assets/img/6.png';
+import { Link } from 'react-router-dom';
 
 const ProductsSection: React.FC = () => {
   const products = [
@@ -31,21 +32,21 @@ const ProductsSection: React.FC = () => {
   };
 
   return (
-    <div className="bg-white py-8 px-4 sm:px-10 md:px-20 mb-5">
+    <div className="px-4 py-8 mb-5 bg-white sm:px-10 md:px-20">
       {/* Container for search about products */}
-      <div className="bg-gray-200 rounded-xl border-2 border-purple-600 shadow-lg">
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
+      <div className="bg-gray-200 border-2 border-purple-600 shadow-lg rounded-xl">
+        <div className="flex flex-col items-center justify-between gap-6 lg:flex-row">
           {/* Left side (Search about our famous products) */}
-          <div className="w-full lg:w-1/3 bg-gradient-to-b bg-gradient-from-t from-purple-500 to-purple-900 text-white p-6 rounded-xl shadow-lg">
-            <h3 className="text-white text-2xl sm:text-3xl font-semibold mb-2">Search About Our Famous</h3>
-            <h1 className="text-yellow-500 text-3xl sm:text-4xl font-bold">PRODUCTS</h1>
-            <p className="text-base sm:text-lg mt-4">
+          <div className="w-full p-6 text-white shadow-lg lg:w-1/3 bg-gradient-to-b bg-gradient-from-t from-purple-500 to-purple-900 rounded-xl">
+            <h3 className="mb-2 text-2xl font-semibold text-white sm:text-3xl">Search About Our Famous</h3>
+            <h1 className="text-3xl font-bold text-yellow-500 sm:text-4xl">PRODUCTS</h1>
+            <p className="mt-4 text-base sm:text-lg">
               We're here to help you achieve your goals with tailored solutions and end-to-end support.
             </p>
           </div>
 
           {/* Right side (Product Cards with carousel navigation) */}
-          <div className="w-full lg:w-2/3 flex items-center justify-between">
+          <div className="flex items-center justify-between w-full lg:w-2/3">
             {/* Left arrow */}
             <IoMdArrowDropleft
               className={`cursor-pointer ${startIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -56,13 +57,15 @@ const ProductsSection: React.FC = () => {
             {/* Product Cards */}
             <div className="flex justify-between w-full space-x-4 overflow-hidden">
               {visibleProducts.map((product) => (
-                <div key={product.id} className="bg-white rounded-lg shadow-lg flex-grow text-center">
+                <div key={product.id} className="flex-grow text-center bg-white rounded-lg shadow-lg">
+                  <Link to={product.img} >
                   <img
                     src={product.img}
                     alt={product.name}
-                    className="w-full h-32 object-cover rounded-t-lg mb-0"
-                  />
-                  <button className="bg-purple-900 text-white font-semibold mt-0 w-full py-2 rounded-b-lg border-none cursor-pointer block">
+                    className="object-cover w-full h-32 mb-0 rounded-t-lg"
+                    />
+                    </Link>
+                  <button className="block w-full py-2 mt-0 font-semibold text-white bg-purple-900 border-none rounded-b-lg cursor-pointer">
                     {product.name}
                   </button>
                 </div>
