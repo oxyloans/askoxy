@@ -142,3 +142,17 @@ button.close {
   font-size: 24px;
   cursor: pointer;
 }
+
+
+
+.buttonsing{
+      height: 2.4rem;
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.buttonsing:hover{
+  color: black;
+}

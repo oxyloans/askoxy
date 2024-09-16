@@ -17,7 +17,7 @@ const Header: React.FC = () => {
     >
       {/* Button "AskOxy.AI" */}
       <button
-        className="text-white px-6 py-2 rounded-full"
+        className="px-6 py-2 text-white rounded-full"
         style={{
           borderRadius: '50px',
           backgroundColor: '#351664',
@@ -32,24 +32,7 @@ const Header: React.FC = () => {
         <button>SignUp</button>
       </div>
 
-      <style >{`
-        @media (max-width: 768px) {
-          div {
-            width: 100%;
-            height: auto;
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 10px;
-          }
-          button {
-            margin: 5px 0;
-            font-size: 14px;
-          }
-          .mr-4 {
-            margin-right: 0;
-          }
-        }
-      `}</style>
+     
     </div>
   );
 };

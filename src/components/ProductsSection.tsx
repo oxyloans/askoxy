@@ -7,6 +7,8 @@ import Study from '../assets/img/4.png';
 import Insurance from '../assets/img/5.png';
 import Investments from '../assets/img/6.png';
 import { Link } from 'react-router-dom';
+// src/components/ProductsSection.tsx
+
 
 const ProductsSection: React.FC = () => {
   const products = [
@@ -32,6 +34,10 @@ const ProductsSection: React.FC = () => {
   };
 
   return (
+    // <section
+    //   className="relative flex flex-col text-white bg-purple-700 bg-left bg-cover items-left"
+    //   style={{ backgroundImage: `url(${Image})`, minHeight: '20vh' }}
+    // >
     <div className="px-4 py-8 mb-5 bg-white sm:px-10 md:px-20">
       {/* Container for search about products */}
       <div className="bg-gray-200 border-2 border-purple-600 shadow-lg rounded-xl">
@@ -57,15 +63,13 @@ const ProductsSection: React.FC = () => {
             {/* Product Cards */}
             <div className="flex justify-between w-full space-x-4 overflow-hidden">
               {visibleProducts.map((product) => (
-                <div key={product.id} className="flex-grow text-center bg-white rounded-lg shadow-lg">
-                  <Link to={product.img} >
+                <div key={product.id} className="flex-grow p-4 text-center bg-white border rounded-lg shadow-lg">
                   <img
                     src={product.img}
                     alt={product.name}
-                    className="object-cover w-full h-32 mb-0 rounded-t-lg"
-                    />
-                    </Link>
-                  <button className="block w-full py-2 mt-0 font-semibold text-white bg-purple-900 border-none rounded-b-lg cursor-pointer">
+                    className="object-cover w-full h-32 mb-0 mb-4 rounded"
+                  />
+                  <button className="block w-full py-2 text-white bg-purple-900 border-none cursor-pointer fon0t-semibold mt-">
                     {product.name}
                   </button>
                 </div>
@@ -82,6 +86,7 @@ const ProductsSection: React.FC = () => {
         </div>
       </div>
     </div>
+    // </section>
   );
 };
 

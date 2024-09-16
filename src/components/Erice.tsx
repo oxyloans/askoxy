@@ -63,7 +63,7 @@ const Erice = () => {
     try {
       // Make API request to the specified endpoint
       const response = await axios.post(
-        `http://65.0.147.157:9001/api/student-service/user/erice?InfoType=${queryInput}`
+        `https://meta.oxyloans.com/api/student-service/user/erice?InfoType=${queryInput}`
       );
 
       // Process the API response and update the chat
@@ -90,8 +90,8 @@ const Erice = () => {
         </div>
         {/* SignIn/SignUp Buttons */}
         <div className="flex space-x-4">
-          <button className="text-white font-medium hover:text-[#ffa800]">Sign In</button>
-          <button className="text-white font-medium hover:text-[#ffa800]">Sign Up</button>
+          <button className="text-white font-medium hover:text-[#ffa800] buttonsing">Sign In</button>
+          <button className="text-white font-medium hover:text-[#ffa800] buttonsing">Sign Up</button>
         </div>
       </header>
 
@@ -122,7 +122,7 @@ const Erice = () => {
               {/* Centered History Text */}
               <span className="flex-1 text-center">History</span>
               {/* New Chat Icon */}
-              <button onClick={handleNewChatClick} className="p-1">
+              {/* <button onClick={handleNewChatClick} className="p-1">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -133,7 +133,7 @@ const Erice = () => {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-              </button>
+              </button> */}
             </div>
             {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
           </aside>
@@ -183,7 +183,7 @@ const Erice = () => {
         </div>
 
         {/* Right Panel */}
-        {questionCount >= 0 && (
+        {questionCount >= 3 && (
   <div className="flex-col hidden w-1/4 ml-4 space-y-2 bg-white shadow-md lg:flex rounded-2xl">
     <div className="flex flex-col flex-grow w-full p-4">
       {/* Download App Section */}
@@ -212,7 +212,7 @@ const Erice = () => {
           <span className="text-sm font-medium text-gray-700">{item.name}</span>
           <div
 
-                   style={{width:'5.5rem'}}
+                   style={{width:'5.1rem'}}
             className={`m-1 px-2 py-1 text-xs font-bold text-white rounded-full w-6rem ${
               item.available ? 'bg-green-500' : 'bg-red-500'
             }`}   
