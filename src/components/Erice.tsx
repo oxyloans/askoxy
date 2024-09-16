@@ -63,7 +63,7 @@ const Erice = () => {
     try {
       // Make API request to the specified endpoint
       const response = await axios.post(
-        `http://182.18.139.138:9001/api/student-service/user/erice?InfoType=${queryInput}`
+        `http://65.0.147.157:9001/api/student-service/user/erice?InfoType=${queryInput}`
       );
 
       // Process the API response and update the chat
@@ -184,12 +184,12 @@ const Erice = () => {
 
         {/* Right Panel */}
         {questionCount >= 0 && (
-  <div className="hidden lg:flex flex-col w-1/4 ml-4 space-y-2 bg-white shadow-md rounded-2xl">
+  <div className="flex-col hidden w-1/4 ml-4 space-y-2 bg-white shadow-md lg:flex rounded-2xl">
     <div className="flex flex-col flex-grow w-full p-4">
       {/* Download App Section */}
       <div className="flex items-center justify-between w-full mb-4">
         <span className="text-2xl font-bold text-yellow-500">erice.in</span>
-        <a href="#" className="text-blue-500 font-small text-sm">
+        <a href="#" className="text-sm text-blue-500 font-small">
           Download Our App &gt;&gt;
         </a>
       </div>
@@ -198,7 +198,7 @@ const Erice = () => {
       <div className="flex flex-col w-full h-full p-4 space-y-2 overflow-y-auto bg-gray-100 rounded-lg">
   {[{ name: 'MAATEJA 26 KGS', available: true, image: B1 }, { name: 'GAJRAJ 26 KGS', available: false, image: B2 },{ name: 'MAATEJA 26 KGS', available: true, image: B1 }].map(
     (item, index) => (
-      <div key={index} className="flex items-center p-2 border-b border-gray-300 space-x-4">
+      <div key={index} className="flex items-center p-2 space-x-4 border-b border-gray-300">
         {/* Image and Badge */}
         <div className="relative flex-shrink-0">
           {/* Image */}
