@@ -289,8 +289,8 @@ return (
     </section>
   </div>
 
-  {/* Right Panel */}
-  {questionCount >= 0 && (
+  {/* Right Panel */}        
+  {questionCount >= 2 && (
         <div className="flex-col hidden w-full ml-2 bg-white shadow-md md:flex md:w-1/4 rounded-2xl">
           <div className="flex flex-col flex-grow w-full p-4">
             {/* Download App Section */}
