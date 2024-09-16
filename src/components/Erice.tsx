@@ -141,7 +141,14 @@ const Erice = () => {
           {/* Center Panel */}
           <section className="flex flex-col justify-between w-5/6 p-6 rounded-tr-3xl rounded-br-3xl bg-gray-50 md:rounded-none">
   {/* Chat messages */}
-  <div className="p-2 overflow-y-auto chat-container" style={{ maxHeight: '70vh', maxWidth:'64vw', scrollBehavior: 'smooth' }}>
+          <div 
+  className={`p-2 overflow-y-auto chat-container ${questionCount >= 1 ? "cardsize" : "minsize"}`}
+  style={{ 
+    maxHeight: '70vh', 
+    maxWidth: questionCount >= 1 ? 'auto' : '64vw', 
+    scrollBehavior: 'smooth' 
+  }}
+>
   {messages.map((msg, index) => (
     <div
       key={index}
@@ -162,22 +169,28 @@ const Erice = () => {
 
 
   {/* Input bar with send button */}
-  <div className="flex items-center p-2 border-t border-gray-300">
-    <input
-      type="text"
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
-      placeholder="Ask about rice information..."
-      className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
-    />
-    <button
-      onClick={() => handleSend(input)}
-      className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-      disabled={isLoading}
-    >
-      {isLoading ? 'Sending...' : 'Send'}
-    </button>
-  </div>
+<div className="flex items-center p-2 border-t border-gray-300">
+  <input
+    type="text"
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    placeholder="Ask about rice information..."
+    className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
+    onKeyDown={(e) => {
+      if (e.key === 'Enter') {
+        handleSend(input);  // Trigger API call on Enter
+      }
+    }}
+  />
+  <button
+    onClick={() => handleSend(input)}
+    className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+    disabled={isLoading}
+  >
+    {isLoading ? 'Sending...' : 'Send'}
+  </button>
+</div>
+
 </section>
 
         </div>
