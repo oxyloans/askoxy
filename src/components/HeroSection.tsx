@@ -124,7 +124,7 @@ const HeroSection: React.FC = () => {
                   </Link>
                 </div>
               ))}
-            </div>
+            </div>      
           </div>
 
           <div className="scroll-div group3">
