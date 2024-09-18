@@ -1,147 +1,142 @@
-import React, { useMemo } from 'react';
-import { imageUrls } from '../assets/images';
+import React, { useState } from 'react';
 import backgroundImage from '../assets/img/BG.jpg';
-import { FaSearch } from "react-icons/fa";
-import Askoxy from "../assets/img/logo3.png";
+import { FaSearch } from 'react-icons/fa';
 import Header from './Header';
 import { Link, useNavigate } from 'react-router-dom';
+import HM1 from '../assets/img/1.png';
+import HM2 from '../assets/img/2.png';
+import HM3 from '../assets/img/3.png';
+import HM4 from '../assets/img/4.png';
+import HM5 from '../assets/img/5.png';
+import HM6 from '../assets/img/6.png';
+import HM7 from '../assets/img/7.png';
+import HM8 from '../assets/img/8.png';
 
-const shuffleArray = (array: string[]): string[] => {
-  const shuffledArray = [...array];
-  for (let i = shuffledArray.length - 1; i > 0; i--) {
+// Type definition for image data
+interface ImageData {
+  src: string;
+  alt: string;
+  text: string;
+  link: string;
+}
+
+// Images and their metadata with page links
+const images: ImageData[] = [
+  { src: HM1, alt: 'Image 1', text: 'Order Rice Online', link: '/Erice' },
+  { src: HM2, alt: 'Image 2', text: 'Groceries', link: '' },
+  { src: HM3, alt: 'Image 3', text: 'Tickets', link: '' },
+  { src: HM4, alt: 'Image 4', text: 'Transportation', link: '' },
+  { src: HM5, alt: 'Image 5', text: 'Global Education', link: '' },
+  { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '' },
+  { src: HM7, alt: 'Image 7', text: 'Games', link: '' },
+  { src: HM8, alt: 'Image 8', text: 'Tickets', link: '' },
+];
+
+// Helper function to shuffle images
+const shuffleImages = (images: ImageData[]): ImageData[] => {
+  let shuffledImages = [...images];
+  for (let i = shuffledImages.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
   }
-  return shuffledArray;
+  return shuffledImages;
 };
 
+// Helper function to repeat and shuffle images
+const repeatAndShuffleImages = (images: ImageData[], count: number): ImageData[] => {
+  const repeatedImages: ImageData[] = [];
+  for (let i = 0; i < count; i++) {
+    repeatedImages.push(...shuffleImages(images));
+  }
+  return repeatedImages;
+};
 
 const HeroSection: React.FC = () => {
-  // Shuffle images on render
-  const shuffledImageUrls = useMemo(() => shuffleArray(imageUrls), []);
-
-  // Function to handle click events on items
-  const handleClick = (url: string) => {
-    alert(`Clicked on: ${url}`);
-  };
-
-
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-    const getBaseName = (url: string): string => {
-    const fullFileName = url.split('/').pop() || '';
-    const baseName = fullFileName.split('.')[0];
-    return baseName;
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
+  const imageGroup1 = repeatAndShuffleImages(images, 20);
+  const imageGroup2 = repeatAndShuffleImages(images, 20);
+  const imageGroup3 = repeatAndShuffleImages(images, 20);
 
-  const handleLinkClick = (url: string, event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-  event.preventDefault(); // Prevent default link navigation
-  const baseName = getBaseName(url);
-  console.log('Base name:', baseName);
-  
-  // Navigate to a new route based on the base name
-  navigate(`/${baseName}`);
-};
   return (
     <section
-      className="relative flex flex-col items-center text-white bg-purple-700 bg-center bg-cover"
+      className="relative flex items-center text-white bg-purple-700 bg-center bg-cover max-h-0 overflow-hidden"
       style={{ backgroundImage: `url(${backgroundImage})`, minHeight: '100vh' }}
     >
-      <div className="relative w-full h-full">
+      {/* Header Section */}
+      <header className="absolute top-0 left-0 right-0 z-20 w-full">
+        <Header />
+      </header>
 
-        {/* Main Content */}
-        <div className="relative flex flex-col w-full h-full md:flex-row">
-          {/* Text Section */}
-          <div className="z-10 flex flex-col items-start justify-center flex-1 px-6 mt-16 md:px-16 md:mt-0">
-            {/* Header */}
-            <div className="hidden lg:block">
-              <Header />
-              
-              </div>
-            <h1 className="mb-4 text-3xl font-bold text-left md:text-6xl animate__animated animate__fadeIn animate__delay-1s">
-              <span>ASK</span> <br />
-              <span className="text-yellow-400">Solve</span><br />
+      <div className="relative w-full h-full flex flex-col md:flex-row">
+        {/* Text Section - 60% of screen width */}
+        <div className="flex flex-col items-center justify-center flex-[3] px-6 md:px-16 md:mt-0">
+          <div className="flex flex-col justify-center flex-[3] items-center">
+            <h1 style={{ fontSize: 130, fontWeight: 800, lineHeight: '100%' }}>
+              <span>Ask</span> <br />
+              <span className="text-yellow-400">Solve</span>
+              <br />
               Succeed<span className="text-yellow-400">...</span>
             </h1>
 
             {/* Search Input */}
-           <div className="relative w-full max-w-lg p-2 mt-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', borderRadius: '50px' }}>
-  <div className="relative flex items-center w-full">
-    {/* Move the search icon to the right */}
-    <input
-      type="text"
-      placeholder="Ask question about global education..."
-      className="w-full p-4 pr-12 text-black placeholder-black border border-gray-300 rounded-full"
-      style={{
-        borderRadius: '50px',
-        backgroundColor: '#ffffff',
-        border: 'none',
-        height: '45px',
-      }}
-    />
-    <FaSearch
-      className="absolute text-gray-500 right-5"
-      style={{ fontSize: '1.25rem' }}
-    />
-  </div>
-</div>
+            <div className="relative w-full p-3 mt-10 bg-white/50 rounded-3xl search-placeholder">
+              <div className="relative flex items-center w-full">
+                <input
+                  type="text"
+                  placeholder="Ask question about global education..."
+                  className="w-full p-4 pr-12 text-black placeholder-black border-none rounded-full"
+                  style={{ height: '60px', fontSize: '1rem' }} // Increased height and adjusted font-size
+                />
+                <FaSearch className="absolute text-gray-500 right-5" style={{ fontSize: '1.5rem' }} />
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* Image Section - 40% of screen width */}
+        <div className="div2 flex-[3]">
+          <div className="scroll-div group1">
+            <div className="image-group">
+              {imageGroup1.map((image, index) => (
+                <div className="image-item" key={index}>
+                  <Link to={image.link}>
+                    <img src={image.src} alt={image.alt} />
+                    <div className="image-text">{image.text}</div>
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Image Section */}
-          <div className="flex items-start justify-center flex-1 px-6 mt-6 md:px-16 md:mt-0">
-            <div className="relative w-full h-64 overflow-hidden md:h-screen">
-              <div className="absolute inset-0 flex gap-x-4">
-                {/* Column 1 */}
-                <div className="w-1/3 h-full overflow-hidden">
-                  <div className="flex flex-col animate-scroll-tb">
-                    {shuffledImageUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className="mb-4 transition-transform transform cursor-pointer hover:scale-105"
-                      >       <Link to={url} onClick={(event) => handleLinkClick(url, event)}>
-                          <img src={url} alt={`Example ${index + 1}`} className="object-cover w-full h-32 md:h-48" />
-                          
-                          </Link>
-                      </div>
-                    ))}
-                  </div>
+          <div className="scroll-div group2">
+            <div className="image-group">
+              {imageGroup2.map((image, index) => (
+                <div className="image-item" key={index}>
+                  <Link to={image.link}>
+                    <img src={image.src} alt={image.alt} />
+                    <div className="image-text">{image.text}</div>
+                  </Link>
                 </div>
+              ))}
+            </div>
+          </div>
 
-                {/* Column 2 */}
-                <div className="w-1/3 h-full overflow-hidden">
-                  <div className="flex flex-col animate-scroll-bt">
-                    {shuffledImageUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className="mb-4 transition-transform transform cursor-pointer hover:scale-105"
-                      >
-                            <Link to={url} onClick={(event) => handleLinkClick(url, event)}>
-                          <img src={url} alt={`Example ${index + 1}`} className="object-cover w-full h-32 md:h-48" />
-                          </Link>
-                      </div>
-                    ))}
-                  </div>
+          <div className="scroll-div group3">
+            <div className="image-group">
+              {imageGroup3.map((image, index) => (
+                <div className="image-item" key={index}>
+                  <Link to={image.link}>
+                    <img src={image.src} alt={image.alt} />
+                    <div className="image-text">{image.text}</div>
+                  </Link>
                 </div>
-
-                {/* Column 3 */}
-                <div className="w-1/3 h-full overflow-hidden">
-                  <div className="flex flex-col animate-scroll-tb">
-                    {shuffledImageUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className="mb-4 transition-transform transform cursor-pointer hover:scale-105"
-        
-                      >
-                          <Link to={url} onClick={(event) => handleLinkClick(url, event)}>
-                          <img src={url} alt={`Example ${index + 1}`} className="object-cover w-full h-32 md:h-48" />
-                          </Link>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -149,27 +144,103 @@ const HeroSection: React.FC = () => {
 
       {/* Custom Animations */}
       <style>{`
-        @keyframes scroll-tb {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-100%); }
-        }
-        @keyframes scroll-bt {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(0); }
+        .div2 {
+          display: flex;
+          justify-content: space-between;
+          height: 100%;
+          overflow: hidden;
+          position: relative;
+          width: calc(100% - 20px);
         }
 
-        .animate-scroll-tb {
+        .scroll-div {
+          width: 30%;
           height: 100%;
-          animation: scroll-tb 45s linear infinite;
+          overflow: hidden;
+          position: relative;
         }
 
-        .animate-scroll-bt {
-          height: 100%;
-          animation: scroll-bt 75s linear infinite;
+        .image-group {
+          display: flex;
+          flex-direction: column;
+          height: 200%;
+          transform: translateY(100%);
+        }
+
+        .image-item {
+          position: relative;
+          height: 40%;
+          overflow: hidden;
+        }
+
+        .scroll-div img {
+          width: 100%;
+          height: auto;
+          object-fit: cover;
+          transition: transform 0.5s ease, box-shadow 0.5s ease; /* Smooth transition for hover effects */
+        }
+
+        .image-text {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+          background-color: rgba(0, 0, 0, 0.5);
+          padding: 5px;
+          border-radius: 3px;
+          text-align: center;
+        }
+
+        /* Hover effect: Zoom and add shadow */
+        .image-item:hover img {
+          transform: scale(1.1); /* Zoom effect */
+          box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5); /* Shadow effect */
+        }
+
+        .group1 .image-group,
+        .group3 .image-group {
+          animation: scrollUpFromBottom 350s linear infinite;
+        }
+
+        .group2 .image-group {
+          animation: scrollDown 800s linear infinite;
+        }
+
+        @keyframes scrollUpFromBottom {
+          0% {
+            transform: translateY(-40%);
+          }
+          100% {
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes scrollDown {
+          0% {
+            transform: translateY(0);
+          }
+          100% {
+            transform: translateY(-100%);
+          }
+        }
+
+        /* Search Input Placeholder Animation */
+        @keyframes moveUp {
+          0% {
+            transform: translateY(0);
+          }
+          100% {
+            transform: translateY(-100%);
+          }
+        }
+
+        .search-placeholder input::placeholder {
+          animation: moveUp 6s linear infinite;
         }
       `}</style>
     </section>
   );
-}
+};
 
 export default HeroSection;

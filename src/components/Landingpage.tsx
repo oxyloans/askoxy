@@ -7,10 +7,12 @@ import ProductsSection from './ProductsSection';
 import Testimonials from './Testimonials';
 import Footer from './Footer';
 
+
 const Landingpage: React.FC = () => {
   return (
       <>
     <HeroSection/>
+
    <InfoSection/>
    <ProductsSection/>
    <Testimonials/>

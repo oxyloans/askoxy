@@ -67,7 +67,7 @@ const ProductsSection: React.FC = () => {
                   <img
                     src={product.img}
                     alt={product.name}
-                    className="object-cover w-full h-32 mb-0 mb-4 rounded"
+                    className="object-cover w-full h-32 mb-4 rounded"
                   />
                   <button className="block w-full py-2 text-white bg-purple-900 border-none cursor-pointer fon0t-semibold mt-">
                     {product.name}
