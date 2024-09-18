@@ -11,6 +11,9 @@ import HM5 from '../assets/img/5.png';
 import HM6 from '../assets/img/6.png';
 import HM7 from '../assets/img/7.png';
 import HM8 from '../assets/img/8.png';
+import HM9 from '../assets/img/9.png';
+import HM10 from '../assets/img/10.png';
+import HM11 from '../assets/img/11.png';
 
 // Type definition for image data
 interface ImageData {
@@ -29,7 +32,10 @@ const images: ImageData[] = [
   { src: HM5, alt: 'Image 5', text: 'Global Education', link: '' },
   { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '' },
   { src: HM7, alt: 'Image 7', text: 'Games', link: '' },
-  { src: HM8, alt: 'Image 8', text: 'Tickets', link: '' },
+  { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '' },
+  { src: HM9, alt: 'Image 9', text: 'Pets', link: '' },
+  { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '' },
+  { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '' },
 ];
 
 // Helper function to shuffle images
@@ -182,7 +188,7 @@ const HeroSection: React.FC = () => {
 
         .image-text {
           position: absolute;
-          top: 50%;
+          top: 70%;
           left: 50%;
           transform: translate(-50%, -50%);
           color: white;
