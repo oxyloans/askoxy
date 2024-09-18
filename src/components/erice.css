@@ -177,3 +177,16 @@ button.close {
   box-shadow: 1px 1px 2px 2px rgb(226, 225, 225);
   padding: 2px;
 }
+
+@media (max-width: 768px) {
+  .your-class {
+    /* Custom styles for mobile */
+  }
+}
+
+@media (min-width: 1024px) {
+  .your-class {
+    /* Custom styles for larger screens */
+  }
+}
+
