@@ -1,6 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 
 const Header: React.FC = () => {
+  const navigate = useNavigate(); // Initialize navigate function
+
+  // Function to handle the click event
+  const handleSignInClick = () => {
+    navigate('/login'); // Redirect to the login page
+  };
+
   return (
     <div
       className="absolute top-0 left-0 h-full mt-10"
@@ -12,27 +20,25 @@ const Header: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px', // Adding padding for better spacing
+        padding: '0 20px',
       }}
     >
       {/* Button "AskOxy.AI" */}
       <button
-        className="px-6 py-2 text-white rounded-full"
+        className="px-6 py-2 text-black rounded-full font-bold"
         style={{
           borderRadius: '50px',
-          backgroundColor: '#351664',
+          backgroundColor: '#f9cc15',
           border: 'none',
         }}
       >
         ASKOXY.AI
       </button>
 
-      <div className="flex items-center">
-        <button className="mr-4">SignIn</button>
-        <button>SignUp</button>
+      <div className="flex items-center " style={{width:'auto',height:'auto',backgroundColor:'white',padding:7,paddingInline:20, borderRadius:50,color:'black',textAlign:'center',fontWeight:'bold'}}>
+        {/* SignIn button with redirection functionality */}
+        <button className="" onClick={handleSignInClick}>SignIn</button>
       </div>
-
-     
     </div>
   );
 };
