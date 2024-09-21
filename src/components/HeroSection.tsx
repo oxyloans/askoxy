@@ -123,7 +123,7 @@ const HeroSection: React.FC = () => {
    <div className="search-placeholder">
       <div className="input-container">
         <input
-          type="text"
+          type="text"   
           placeholder="Ask question..."
           className="search-input"
           value={query}
