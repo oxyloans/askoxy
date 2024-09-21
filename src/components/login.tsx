@@ -62,7 +62,7 @@ const Login = () => {
         }
 
         try {
-            const response = await fetch('http://182.18.139.138:9000/api/auth-service/auth/registerwithMobile', {
+            const response = await fetch('https://meta.oxyloans.com/api/auth-service/auth/registerwithMobile', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch('http://182.18.139.138:9000/api/auth-service/auth/registerwithMobile', {
+            const response = await fetch('https://meta.oxyloans.com/api/auth-service/auth/registerwithMobile', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
