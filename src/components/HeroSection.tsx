@@ -124,7 +124,7 @@ const HeroSection: React.FC = () => {
       <div className="input-container">
         <input
           type="text"
-          placeholder="Ask question about global education..."
+          placeholder="Ask question..."
           className="search-input"
           value={query}
           onChange={handleInputChange}
