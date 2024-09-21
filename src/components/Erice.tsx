@@ -118,7 +118,7 @@ const Erice = () => {
     setIsLoading(true);
     setQuestionCount(prevCount => prevCount + 1); // Increment question count
 
-    try {
+    try {    
       // Make API request to the specified endpoint
       const response = await axios.post(
         `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
