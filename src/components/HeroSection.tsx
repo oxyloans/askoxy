@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import backgroundImage from '../assets/img/BG.jpg';
 import { FaSearch } from 'react-icons/fa';
 import Header from './Header';
+import ReactMarkdown from 'react-markdown';
 
 
 import { Link, useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ import HM8 from '../assets/img/8.png';
 import HM9 from '../assets/img/9.png';
 import HM10 from '../assets/img/10.png';
 import HM11 from '../assets/img/11.png';
+import axios from 'axios';
 
 // Type definition for image data
 interface ImageData {
@@ -59,6 +61,9 @@ const repeatAndShuffleImages = (images: ImageData[], count: number): ImageData[]
   return repeatedImages;
 };
 
+
+
+
 const HeroSection: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -67,6 +72,31 @@ const HeroSection: React.FC = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+
+    const [query, setQuery] = useState('');
+  const [response, setResponse] = useState('');
+
+ const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
+  const handleSearch = async () => {
+    if (query.trim() === '') {
+      alert('Please enter a valid question');
+      return;
+    }
+
+    try {
+      const result = await axios.post(
+        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${query}`
+      );
+      setResponse(result.data); // Assuming the response data you want is directly in `data`
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      alert('Something went wrong. Please try again later.');
+    }
+};
+  
   const imageGroup1 = repeatAndShuffleImages(images, 20);
   const imageGroup2 = repeatAndShuffleImages(images, 20);
   const imageGroup3 = repeatAndShuffleImages(images, 20);
@@ -90,15 +120,27 @@ const HeroSection: React.FC = () => {
     </h1>
 
     {/* Search Input */}
-    <div className="search-placeholder">
+   <div className="search-placeholder">
       <div className="input-container">
         <input
           type="text"
           placeholder="Ask question about global education..."
           className="search-input"
+          value={query}
+          onChange={handleInputChange}
         />
-        <span className="search-icon">&#128269;</span> {/* Placeholder for Search Icon */}
+        <button onClick={handleSearch} className="search-button icons">
+          <span className="search-icon">&#128269;</span> {/* Placeholder for Search Icon */}
+        </button>
       </div>
+
+      {/* Display the API response */}
+      {response && (
+        <div className="response-container">
+          <h3></h3>
+          <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown> </p>{/* Pretty print JSON response */}
+        </div>
+      )}
     </div>
   </div>
 </div>
@@ -162,6 +204,8 @@ const HeroSection: React.FC = () => {
     min-height: 100vh;
     background-image: url(${backgroundImage}); /* Path to the image */
   }
+    .icons{
+    margin-top:-2rem}
 
   /* Mobile Devices - Background covers entire area */
   @media (max-width: 767px) {
@@ -236,6 +280,19 @@ const HeroSection: React.FC = () => {
   }
 }
 
+
+// .response-container{
+//     height: 8rem !important;
+//     overflow-y: scroll;
+//     background-color: gray !important;
+//     overflow: scroll;
+//     overflow-x: hidden;
+// }
+.response-container > p{
+ height: 8rem !important;
+    overflow: scroll;
+    overflow-x: hidden;
+}  
 /* For mobile phones (between 600px and 768px) */
 @media (max-width: 768px) and (min-width: 600px) {
   .div1 {
@@ -339,6 +396,7 @@ const HeroSection: React.FC = () => {
 @media (max-width: 1440px) and (min-width: 1024px) {
   .heading {
     font-size: 100px; /* Reduce font size for laptops */
+   margin-top: 4rem !important;
   }
 
   .search-input {

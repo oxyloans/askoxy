@@ -121,7 +121,7 @@ const Erice = () => {
     try {
       // Make API request to the specified endpoint
       const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/erice?InfoType=${encodeURIComponent(queryInput)}`
+        `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
       );
 
       // Process the API response and update the chat
@@ -458,7 +458,7 @@ const Erice = () => {
                   <div className="relative pb-4 overflow-hidden">
                     <div className="flex mt-4 space-x-1 animate-slider">
                       {imageData.map((image, index) => (
-                        <div key={index} className="flex-shrink-0 w-40 mx-2 bg-white rounded-md  shadow-lg h-18 md:w-80 md:h-36">
+                        <div key={index} className="flex-shrink-0 w-40 mx-2 bg-white rounded-md shadow-lg h-18 md:w-80 md:h-36">
                           <a href={image.link} target="_blank" rel="noopener noreferrer">
                             <img
                               src={image.oxyLoans}
