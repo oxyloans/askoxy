@@ -4,7 +4,7 @@ import Image2 from '../assets/img/AD2.jpg';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import './erice.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import B1 from '../assets/img/B1.jpg';
 import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
@@ -28,6 +28,7 @@ const Normal = () => {
   const [showStaticBubbles, setShowStaticBubbles] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isReading, setIsReading] = useState(false);
+  const histary = useNavigate()
 
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
@@ -45,6 +46,7 @@ const Normal = () => {
     localStorage.setItem('chatHistory', JSON.stringify(history));
   }, [history]);
 
+  
   // Toggle edit state
   const handleEditClick = () => {
     setIsEditing(isEditing);
@@ -100,6 +102,16 @@ let result = queryString.replace('?', '');
     setEnlargedImage(image);
   };
 
+  useEffect(() => {
+   const islogin= localStorage.getItem("userId")
+    if (questionCount > 3) {
+      if (islogin) {
+        
+      } else {
+        histary("/login")
+      }
+    }
+  },[questionCount])
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
       e.preventDefault(); // Prevent default Enter key behavior

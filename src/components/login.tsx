@@ -15,6 +15,10 @@ const Login = () => {
     const [showSuccessPopup, setShowSuccessPopup] = useState(false); // State for popup
     const [userId, setUserId] = useState('');
 
+
+
+    const histary =useNavigate()
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         if (name === 'emailOrPhone') {
