@@ -128,19 +128,21 @@ const HeroSection: React.FC = () => {
           className="search-input"
           value={query}
           onChange={handleInputChange}
-        />
-        <button onClick={handleSearch} className="search-button icons">
-          <span className="search-icon">&#128269;</span> {/* Placeholder for Search Icon */}
-        </button>
+                />
+                <Link to={`/normal?${query}`}>
+        <button  className="search-button ">
+          <span className="search-icon icons">&#128269;</span> {/* Placeholder for Search Icon */}
+                  </button>
+                  </Link>
       </div>
 
       {/* Display the API response */}
-      {response && (
+      {/* {response && (
         <div className="response-container">
           <h3></h3>
-          <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown> </p>{/* Pretty print JSON response */}
+          <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown> </p>
         </div>
-      )}
+      )} */}
     </div>
   </div>
 </div>
@@ -205,7 +207,7 @@ const HeroSection: React.FC = () => {
     background-image: url(${backgroundImage}); /* Path to the image */
   }
     .icons{
-    margin-top:-2rem}
+    margin-top:-1.5rem}
 
   /* Mobile Devices - Background covers entire area */
   @media (max-width: 767px) {
