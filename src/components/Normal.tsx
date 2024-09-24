@@ -105,11 +105,11 @@ let result = queryString.replace('?', '');
 
   useEffect(() => {
    const islogin= localStorage.getItem("userId")
-    if (questionCount > 1) {
+    if (questionCount > 3) {
       if (islogin) {
         
       } else {
-        // histary("/login")
+        histary("/login")
       }
     }
   },[questionCount])
@@ -181,7 +181,7 @@ let result = queryString.replace('?', '');
       // Make API request to the specified endpoint
       const response = await axios.post(
 
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?infoType=${encodeURIComponent(queryInput)}`
+        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
       );
 
       // Process the API response and update the chat
@@ -471,70 +471,7 @@ let result = queryString.replace('?', '');
           </section>
 
           {/* Right Panel */}
-          {questionCount >= 3 && (
-            <div className="w-full bg-white rounded-lg shadow-md md:w-1/4">
-              <div className="flex flex-col flex-grow w-full p-5">
-                <div className="flex items-center justify-between w-full mb-4">
-                  <span className="text-2xl font-bold text-yellow-500">erice.in</span>
-                  <a
-                    href="https://play.google.com/store/apps/details?id=erice.customer&hl=en"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-blue-500"
-                  >
-                    Download Our App &gt;
-                  </a>
-                </div>
-
-                {/* Rice List */}
-                <div className="flex flex-col w-full h-full p-4 space-y-2 overflow-y-auto rounded-lg shadow bg-gray-50">
-                  {[
-                    { name: 'MAATEJA 26 KGS', available: true, image: B1 },
-                    { name: 'GAJRAJ 26 KGS', available: false, image: B2 },
-                    { name: 'MAATEJA 26 KGS', available: true, image: B1 },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center p-2 space-x-4 text-white bg-gray-200 rounded-xl">
-                      <div className="relative flex-shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="object-cover w-16 h-16 rounded-full cursor-pointer md:w-17 md:h-17"
-                          onClick={() => handleImageClick(item.image)}
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-xs font-bold ${item.available ? 'text-green-700' : 'text-red-700'}`}>
-                          {item.available ? 'Available' : 'Out of stock'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Bottom Slider Images */}
-                <div className="w-full shadow mt-9 bg-gray-50">
-                  <div className="relative pb-4 overflow-hidden">
-                    <div className="flex mt-4 space-x-1 animate-slider">
-                      {imageData.map((image, index) => (
-                        <div key={index} className="flex-shrink-0 w-40 mx-2 bg-white rounded-md shadow-lg h-18 md:w-80 md:h-36">
-                          <a href={image.link} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={image.oxyLoans}
-                              alt={`Slider image ${index + 1}`}
-                              className="object-cover w-full h-full rounded-md"
-                            />
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+  
         </div>
       </main>
     </div>
