@@ -2,13 +2,13 @@ import React from 'react';
 
 const Testimonials: React.FC = () => {
   return (
-    <section className="p-6 md:p-10 bg-gray-100 text-gray-800 mb-8">
+    <section className="pt-8 bg-gray-100 text-gray-800 mb-8 pb-8">
       <h2 className="text-center text-xl md:text-2xl font-bold mb-6">Testimonials</h2>
       <div className="relative overflow-hidden">
         {/* Scrolling wrapper */}
         <div className="flex animate-scroll whitespace-nowrap">
           {/* Testimonial 1 */}
-          <div className="w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
+          <div className="testimonial-item w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
             <p className="text-sm italic text-center">
               "A seamless experience from start to finish."
               <br />
@@ -17,7 +17,7 @@ const Testimonials: React.FC = () => {
           </div>
 
           {/* Testimonial 2 */}
-          <div className="w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
+          <div className="testimonial-item w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
             <p className="text-sm italic text-center">
               "Outstanding support and great results!"
               <br />
@@ -26,7 +26,7 @@ const Testimonials: React.FC = () => {
           </div>
 
           {/* Testimonial 3 */}
-          <div className="w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
+          <div className="testimonial-item w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
             <p className="text-sm italic text-center">
               "The service was amazing! Highly recommend."
               <br />
@@ -34,8 +34,8 @@ const Testimonials: React.FC = () => {
             </p>
           </div>
 
-          {/* Duplicating testimonials for continuous scrolling */}
-          <div className="w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
+          {/* Duplicate Testimonials */}
+          <div className="testimonial-item w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
             <p className="text-sm italic text-center">
               "A seamless experience from start to finish."
               <br />
@@ -43,7 +43,7 @@ const Testimonials: React.FC = () => {
             </p>
           </div>
 
-          <div className="w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
+          <div className="testimonial-item w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
             <p className="text-sm italic text-center">
               "Outstanding support and great results!"
               <br />
@@ -51,7 +51,7 @@ const Testimonials: React.FC = () => {
             </p>
           </div>
 
-          <div className="w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
+          <div className="testimonial-item w-3/4 sm:w-1/2 md:w-1/4 h-48 sm:h-56 md:h-64 p-4 bg-white shadow-lg mx-4 rounded-lg flex flex-col justify-center items-center">
             <p className="text-sm italic text-center">
               "The service was amazing! Highly recommend."
               <br />
@@ -68,23 +68,29 @@ const Testimonials: React.FC = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(-100%);
           }
         }
 
         .animate-scroll {
           animation: scroll 30s linear infinite;
+          display: flex;
+          width: 100%; /* To accommodate both the original and duplicate testimonials */
+        }
+
+        .testimonial-item {
+          flex-shrink: 0; /* Prevent shrinking to ensure smooth scroll */
         }
 
         @media (max-width: 640px) {
           .animate-scroll {
-            animation: scroll 45s linear infinite;
+            animation-duration: 25s;
           }
         }
 
         @media (max-width: 768px) {
           .animate-scroll {
-            animation: scroll 35s linear infinite;
+            animation-duration: 25s;
           }
         }
         `}

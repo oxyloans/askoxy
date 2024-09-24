@@ -1,14 +1,11 @@
 // src/components/ProductsSection.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoMdArrowDropleft, IoMdArrowDropright } from 'react-icons/io';
 import Rice from '../assets/img/2.png';
 import Loans from '../assets/img/3.png';
 import Study from '../assets/img/4.png';
 import Insurance from '../assets/img/5.png';
 import Investments from '../assets/img/6.png';
-import { Link } from 'react-router-dom';
-// src/components/ProductsSection.tsx
-
 
 const ProductsSection: React.FC = () => {
   const products = [
@@ -20,73 +17,193 @@ const ProductsSection: React.FC = () => {
   ];
 
   const [startIndex, setStartIndex] = useState(0);
+  const [productsToShow, setProductsToShow] = useState(3);
 
-  const visibleProducts = products.slice(startIndex, startIndex + 3);
+  // Dynamically update the number of products to show based on window width
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setProductsToShow(1); // Show 1 product on mobile screens
+      } else {
+        setProductsToShow(3); // Show 3 products on larger screens
+      }
+    };
+
+    handleResize(); // Call once to set initial state
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const visibleProducts = products.slice(startIndex, startIndex + productsToShow);
 
   const handleLeftClick = () => {
-    setStartIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
+    setStartIndex((prevIndex) =>
+      prevIndex > 0 ? prevIndex - 1 : products.length - productsToShow
+    );
   };
 
   const handleRightClick = () => {
     setStartIndex((prevIndex) =>
-      prevIndex < products.length - 3 ? prevIndex + 1 : products.length - 3
+      prevIndex < products.length - productsToShow ? prevIndex + 1 : 0
     );
   };
 
   return (
-    // <section
-    //   className="relative flex flex-col text-white bg-purple-700 bg-left bg-cover items-left"
-    //   style={{ backgroundImage: `url(${Image})`, minHeight: '20vh' }}
-    // >
-    <div className="px-4 py-8 mb-5 bg-white sm:px-10 md:px-20">
-      {/* Container for search about products */}
-      <div className="bg-gray-200 border-2 border-purple-600 shadow-lg rounded-xl">
-        <div className="flex flex-col items-center justify-between gap-6 lg:flex-row">
-          {/* Left side (Search about our famous products) */}
-          <div className="w-full p-6 text-white shadow-lg lg:w-1/3 bg-gradient-to-b bg-gradient-from-t from-purple-500 to-purple-900 rounded-xl">
-            <h3 className="mb-2 text-2xl font-semibold text-white sm:text-3xl">Search About Our Famous</h3>
-            <h1 className="text-3xl font-bold text-yellow-500 sm:text-4xl">PRODUCTS</h1>
-            <p className="mt-4 text-base sm:text-lg">
-              We're here to help you achieve your goals with tailored solutions and end-to-end support.
-            </p>
+    <div className="products-section">
+      <div className="products-container">
+        <div className="left-section">
+          <h2 >Search About Our Famous</h2>
+          <h1>PRODUCTS</h1>
+          <p>
+            We're here to help you achieve your goals with tailored solutions and end-to-end support.
+          </p>
+        </div>
+
+        {/* Right side (Product Cards with arrows) */}
+        <div className="right-section">
+          <IoMdArrowDropleft
+            className={`arrow ${startIndex === 0 ? 'disabled' : ''}`}
+            size={40}
+            onClick={handleLeftClick}
+          />
+
+          {/* Product Cards */}
+          <div className="product-cards">
+            {visibleProducts.map((product) => (
+              <div key={product.id} className="product-card">
+                <img
+                  src={product.img}
+                  alt={product.name}
+                  className="product-image"
+                />
+                <button className="product-button">
+                  {product.name}
+                </button>
+              </div>
+            ))}
           </div>
 
-          {/* Right side (Product Cards with carousel navigation) */}
-          <div className="flex items-center justify-between w-full lg:w-2/3">
-            {/* Left arrow */}
-            <IoMdArrowDropleft
-              className={`cursor-pointer ${startIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              size={40}
-              onClick={handleLeftClick}
-            />
-
-            {/* Product Cards */}
-            <div className="flex justify-between w-full space-x-4 overflow-hidden">
-              {visibleProducts.map((product) => (
-                <div key={product.id} className="flex-grow p-4 text-center bg-white border rounded-lg shadow-lg">
-                  <img
-                    src={product.img}
-                    alt={product.name}
-                    className="object-cover w-full h-32 mb-4 rounded"
-                  />
-                  <button className="block w-full py-2 text-white bg-purple-900 border-none cursor-pointer fon0t-semibold mt-">
-                    {product.name}
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Right arrow */}
-            <IoMdArrowDropright
-              className={`cursor-pointer ${startIndex === products.length - 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              size={40}
-              onClick={handleRightClick}
-            />
-          </div>
+          <IoMdArrowDropright
+            className={`arrow ${startIndex === products.length - productsToShow ? 'disabled' : ''}`}
+            size={40}
+            onClick={handleRightClick}
+          />
         </div>
       </div>
+
+      {/* CSS Styles with Media Queries */}
+      <style>{`
+        .products-section {
+          padding: 2rem;
+          background-color: white;
+        }
+
+        .products-container {
+          display: flex;
+          justify-content: space-between;
+          background-color: #f3f4f6;
+          border: 2px solid #6b21a8;
+          border-radius: 1rem;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          padding: 2rem;
+        }
+
+        .left-section {
+          flex: 1;
+          padding: 1.5rem;
+          background: linear-gradient(to bottom, #6b21a8, #4c1d95);
+          color: white;
+          border-radius: 1rem;
+        }
+
+        .left-section h1 {
+          color: #fbbf24;
+        }
+
+        .right-section {
+          flex: 2;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .arrow {
+          cursor: pointer;
+        }
+
+        .disabled {
+          opacity: 0.5;
+          pointer-events: none;
+        }
+
+        .product-cards {
+          display: flex;
+          justify-content: space-between;
+          gap: 1rem;
+          width: 100%;
+        }
+
+        .product-card {
+          flex-grow: 1;
+          text-align: center;
+          background-color: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          padding: 1rem;
+        }
+
+        .product-image {
+          object-fit: cover;
+          width: 100%;
+          height: 200px; /* Fixed height */
+          margin-bottom: 1rem;
+          border-radius: 0.5rem;
+        }
+
+        .product-button {
+          display: block;
+          width: 100%;
+          padding: 0.5rem;
+          background-color: #4c1d95;
+          color: white;
+          border: none;
+          cursor: pointer;
+          font-weight: 600;
+          border-radius: 0.5rem;
+        }
+
+        .product-button:hover {
+          background-color: #6b21a8;
+        }
+
+        /* Media Queries for mobile view */
+        @media (max-width: 768px) {
+         .products-container {
+         flex-direction: column;
+         padding:1rem
+        }
+
+          .right-section {
+            flex-direction: row;
+            padding-top:30px
+          }
+
+          .product-cards {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+          }
+
+          .product-card {
+            width: 100%; /* Show one product card at a time */
+          }
+        }
+      `}</style>
     </div>
-    // </section>
   );
 };
 

@@ -11,21 +11,18 @@ const Header: React.FC = () => {
 
   return (
     <div
-      className="absolute top-0 left-0 h-full mt-10"
+      className="header-container absolute top-0 left-0 mt-10 flex items-center justify-between"
       style={{
         width: 'calc(100% - 50%)',
         height: '50px',
         backgroundColor: 'rgba(255, 255, 255, 0.5)',
         zIndex: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
         padding: '0 20px',
       }}
     >
       {/* Button "AskOxy.AI" */}
       <button
-        className="px-6 py-2 text-black rounded-full font-bold"
+        className="ask-button px-6 py-2 text-black font-bold"
         style={{
           borderRadius: '50px',
           backgroundColor: '#f9cc15',
@@ -35,10 +32,70 @@ const Header: React.FC = () => {
         ASKOXY.AI
       </button>
 
-      <div className="flex items-center " style={{width:'auto',height:'auto',backgroundColor:'white',padding:7,paddingInline:20, borderRadius:50,color:'black',textAlign:'center',fontWeight:'bold'}}>
+      <div
+        className="sign-in-container flex items-center"
+        style={{
+          width: 'auto',
+          height: 'auto',
+          backgroundColor: 'white',
+          padding: '7px 20px',
+          borderRadius: '50px',
+          color: 'black',
+          textAlign: 'center',
+          fontWeight: 'bold',
+        }}
+      >
         {/* SignIn button with redirection functionality */}
-        <button className="" onClick={handleSignInClick}>SignIn</button>
+        <button className="" onClick={handleSignInClick}>
+          SignIn
+        </button>
       </div>
+
+      {/* Media Queries for Mobile */}
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .header-container {
+              flex-direction: row;
+              height: auto;
+              padding: 10px;
+              justify-content: space-between;
+              align-items: center;
+              width: calc(100%) !important;
+            }
+
+            .ask-button {
+              width: 50%;
+              margin-bottom: 0px;
+              text-align: center;
+              padding: 10px ;
+            }
+
+            .sign-in-container {
+              width: 100%;
+              text-align: center;
+              padding: 10px 0;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .header-container {
+              padding: 5px;
+              display : flex
+            }
+
+            .ask-button {
+              font-size: 14px;
+              padding: 8px 0;
+            }
+
+            .sign-in-container {
+              font-size: 14px;
+              padding: 8px 0;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
