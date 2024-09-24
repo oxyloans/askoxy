@@ -80,7 +80,7 @@ let result = queryString.replace('?', '');
       // Make API request to the specified endpoint
       const response = await axios.post(
         
-        `http://65.0.147.157:9001/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
+        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
       );
 
       // Process the API response and update the chat
