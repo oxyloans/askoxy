@@ -8,6 +8,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import B1 from '../assets/img/B1.jpg';
 import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
+import { error } from 'console';
+import ChatHistory from './ChatHistory';
 
 interface ChatMessage {
   type: 'question' | 'answer';
@@ -24,6 +26,7 @@ const Normal = () => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const [showSendButton, setShowSendButton] = useState(false);
+  const [chathistory  , setchathistory]=useState([])
   const [riceTopicsshow , setriceTopicsshow] = useState(false)
   const [showStaticBubbles, setShowStaticBubbles] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,14 +55,15 @@ const Normal = () => {
     setIsEditing(isEditing);
   };
 
+    let queryString = window.location.search;
   useEffect(() => {
 
     
 
-    let queryString = window.location.search;
+  
     
 // Remove the first "?" from the string
-let result = queryString.replace('?', '');
+  const result = queryString.replace('?', '').replace(/%20/g, ' ');
     console.log(result); // Output: "data"
 
     const handleSend = async (queryInput: string) => {
@@ -97,12 +101,28 @@ let result = queryString.replace('?', '');
     };
     handleSend(result);
     
-  },[])
+  },[queryString])
   // Handle image enlargement
   const handleImageClick = (image: string) => {
     setEnlargedImage(image);
   };
 
+
+  
+  // useEffect(() => {
+  //   const response = axios.get("http://65.0.147.157:9001/api/student-service/user/queries");
+  //   response.then((data) => {
+  //     console.log(data)
+  //     if (data.status === 200) {
+  //       console.log(data.data)
+  //       setchathistory(data.data)
+  //     }
+      
+  //   }).catch((error) => {
+  //     console.log(error)
+  //   })
+  
+  // },[])
   useEffect(() => {
    const islogin= localStorage.getItem("userId")
     if (questionCount > 3) {
@@ -322,27 +342,7 @@ let result = queryString.replace('?', '');
             {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
 
             {/* History List */}
-            <div className="mt-4 overflow-y-auto max-h-80">
-              {history.length === 0 ? (
-                <p className="text-sm text-gray-500">No history available.</p>
-              ) : (
-                history.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded cursor-pointer" onClick={() => handleHistoryItemClick(item)}>
-                    <span className="text-sm text-gray-800">{item}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteHistoryItem(index);
-                      }}
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      title="Delete"
-                    >
-                      &#10005;
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+        <ChatHistory />
           </aside>
 
           {/* Center Panel */}
