@@ -79,7 +79,8 @@ let result = queryString.replace('?', '');
     try {    
       // Make API request to the specified endpoint
       const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
+        
+        `http://65.0.147.157:9001/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
       );
 
       // Process the API response and update the chat
@@ -104,11 +105,11 @@ let result = queryString.replace('?', '');
 
   useEffect(() => {
    const islogin= localStorage.getItem("userId")
-    if (questionCount > 3) {
+    if (questionCount > 1) {
       if (islogin) {
         
       } else {
-        histary("/login")
+        // histary("/login")
       }
     }
   },[questionCount])
@@ -179,7 +180,8 @@ let result = queryString.replace('?', '');
     try {    
       // Make API request to the specified endpoint
       const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
+
+        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?infoType=${encodeURIComponent(queryInput)}`
       );
 
       // Process the API response and update the chat
