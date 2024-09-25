@@ -8,6 +8,9 @@ import { useLocation } from 'react-router-dom';
 import B1 from '../assets/img/B1.jpg';
 import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
+import ChatHistory from './ChatHistory';
+import ChatHistory1 from './ChatHistory1';
+import Example from './Example';
 
 interface ChatMessage {
   type: 'question' | 'answer';
@@ -212,9 +215,9 @@ const Erice = () => {
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
-        <div className="flex items-center m-2 space-x-2 text-2xl font-bold">
-          <span className="text-white">ASK</span>
-          <span className="text-[#ffa800]">OXY.AI</span>
+        <div className="flex items-center m-2  text-2xl font-bold">
+          <span className="text-white">ASKOXY</span>
+          <span className="text-[#ffa800]">.AI</span>
         </div>
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
@@ -262,27 +265,7 @@ const Erice = () => {
             {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
 
             {/* History List */}
-            <div className="mt-4 overflow-y-auto max-h-80">
-              {history.length === 0 ? (
-                <p className="text-sm text-gray-500">No history available.</p>
-              ) : (
-                history.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded cursor-pointer" onClick={() => handleHistoryItemClick(item)}>
-                    <span className="text-sm text-gray-800">{item}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteHistoryItem(index);
-                      }}
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      title="Delete"
-                    >
-                      &#10005;
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+         <ChatHistory1 />
           </aside>
 
           {/* Center Panel */}
@@ -317,8 +300,9 @@ const Erice = () => {
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
-                    <div className="w-12 h-12 border-t-2 border-blue-500 rounded-full animate-spin"></div>
-                    <p className="ml-4 text-black">Loading...</p>
+                    {/* <div className="w-12 h-12 border-t-2 border-blue-500 rounded-full animate-spin"></div>
+                    <p className="ml-4 text-black">Loading...</p> */}
+                    <Example  variant="loading01"/>
                   </div>
                 ) : (
                   <>
@@ -410,7 +394,7 @@ const Erice = () => {
           </section>
 
           {/* Right Panel */}
-          {questionCount >= 3 && (
+          {/* {questionCount >= 3 && (
             <div className="w-full bg-white rounded-lg shadow-md md:w-1/4">
               <div className="flex flex-col flex-grow w-full p-5">
                 <div className="flex items-center justify-between w-full mb-4">
@@ -425,7 +409,7 @@ const Erice = () => {
                   </a>
                 </div>
 
-                {/* Rice List */}
+           
                 <div className="flex flex-col w-full h-full p-4 space-y-2 overflow-y-auto rounded-lg shadow bg-gray-50">
                   {[
                     { name: 'MAATEJA 26 KGS', available: true, image: B1 },
@@ -453,7 +437,7 @@ const Erice = () => {
                   ))}
                 </div>
 
-                {/* Bottom Slider Images */}
+
                 <div className="w-full shadow mt-9 bg-gray-50">
                   <div className="relative pb-4 overflow-hidden">
                     <div className="flex mt-4 space-x-1 animate-slider">
@@ -473,7 +457,7 @@ const Erice = () => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </main>
     </div>

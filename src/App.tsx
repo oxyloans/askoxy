@@ -4,6 +4,8 @@ import Erice from './components/Erice';
 import Landingpage from './components/Landingpage';
 import Login from './components/login';
 import Normal from './components/Normal';
+import Example from './components/Example';
+
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
           <Route path="/erice" element={<Erice />} />
           <Route path="/login" element={<Login />} />
            <Route path="/normal" element={<Normal />} />
+           <Route path="/Example" element={<Example variant="loading01" />} />
+           
         </Routes>
       </div>
     </Router>

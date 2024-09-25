@@ -10,6 +10,8 @@ import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
 import { error } from 'console';
 import ChatHistory from './ChatHistory';
+import Example from './Example';
+
 
 interface ChatMessage {
   type: 'question' | 'answer';
@@ -23,7 +25,7 @@ const Normal = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState<number>(0);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+
 
   const [showSendButton, setShowSendButton] = useState(false);
   const [chathistory  , setchathistory]=useState([])
@@ -32,11 +34,14 @@ const Normal = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isReading, setIsReading] = useState(false);
   const histary = useNavigate()
+  const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
+  const bottomRef = useRef<HTMLDivElement | null>(null);  
 
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
 
   // Load history from localStorage on component mount
+  
   useEffect(() => {
     const storedHistory = localStorage.getItem('chatHistory');
     if (storedHistory) {
@@ -44,7 +49,19 @@ const Normal = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (isAtBottom && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' }); // Scroll to bottom if at the bottom
+    }
+  }, [messages, isAtBottom]); 
   // Save history to localStorage whenever it changes
+
+  const handleScroll = () => {
+    if (bottomRef.current) {
+      const { scrollTop, clientHeight, scrollHeight } = bottomRef.current.parentElement!;
+      setIsAtBottom(scrollTop + clientHeight >= scrollHeight); // Check if the user is at the bottom
+    }
+  };
   useEffect(() => {
     localStorage.setItem('chatHistory', JSON.stringify(history));
   }, [history]);
@@ -125,7 +142,7 @@ const Normal = () => {
   // },[])
   useEffect(() => {
    const islogin= localStorage.getItem("userId")
-    if (questionCount > 3) {
+    if (questionCount > 10) {
       if (islogin) {
         
       } else {
@@ -276,6 +293,7 @@ const Normal = () => {
     setHistory(prevHistory => prevHistory.filter((_, i) => i !== index));
   };
 
+
   const imageData = [
     {
       oxyLoans: Image1,
@@ -292,9 +310,9 @@ const Normal = () => {
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
-        <div className="flex items-center m-2 space-x-2 text-2xl font-bold">
-          <span className="text-white">ASK</span>
-          <span className="text-[#ffa800]">OXY.AI</span>
+        <div className="flex items-center m-2  text-2xl font-bold">
+          <span className="text-white">ASKOXY</span>
+          <span className="text-[#ffa800]">.AI</span>
         </div>
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
@@ -347,128 +365,132 @@ const Normal = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            {/* Static Rice Related Text */}
-            {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Map over rice topics to create chat bubbles */}
-                  {riceTopicsshow && <>      {riceTopics.map(topic => (
-                    <div
-                      key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
-                      style={{
-                        wordWrap: 'break-word',
-                        zIndex:'10'
-                      }}
-                      onClick={() => { handleBubbleClick(topic.title); setInput(topic.title)}}
-                    >
-                      <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
-                    </div>
-                  ))}</>}
-            
-                </div>
-              </div>
-            )}
-
-            {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: 'calc(100vh - 12rem)' }}
-            >
-              <div>
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-24">
-                    <div className="w-12 h-12 border-t-2 border-blue-500 rounded-full animate-spin"></div>
-                    <p className="ml-4 text-black">Loading...</p>
+      {/* Static Rice Related Text */}
+      {showStaticBubbles && (
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="grid grid-cols-2 gap-4">
+            {riceTopicsshow && (
+              <>
+                {riceTopics.map((topic) => (
+                  <div
+                    key={topic.id}
+                    className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                    style={{
+                      wordWrap: 'break-word',
+                      zIndex: '10'
+                    }}
+                    onClick={() => { handleBubbleClick(topic.title); setInput(topic.title); }}
+                  >
+                    <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
                   </div>
-                ) : (
-                  <>
-                    {/* Chat bubbles from messages */}
-                    {messages.map((msg, index) => (
-                      <div
-                        key={index}
-                        className={`chat-bubble p-2 rounded-lg text-black mb-2 ${
-                          msg.type === 'question' ? 'self-start bg-blue-200' : 'self-end bg-green-200'
-                        }`}
-                        style={{
-                          maxWidth: msg.type === 'question' ? '50%' : '80%',
-                          wordWrap: 'break-word',
-                          float: msg.type === 'question' ? 'left' : 'right',
-                          clear: 'both',
-                        }}
-                        onClick={() => handleBubbleClick(msg.content)}
-              //                   onClick={() => {
-              //   setInput('Do you use rice for daily meals or special dishes like biryani?');
-              //   setitem(false);
-              // }}
-                      >
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        <div className="flex mt-2 space-x-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopy(msg.content);
-                            }}
-                            className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
-                            title="Copy"
-                          >
-                            <FaRegCopy className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              isReading ? handleStopReadAloud() : handleReadAloud(msg.content); // Ternary to toggle functionality
-                            }}
-                            className={`${
-                              isReading ? 'text-red-600 hover:text-red-800 bg-red-200' : 'text-blue-600 hover:text-blue-800 bg-blue-200'
-                            } bg-white rounded-full p-1 ml-2`}
-                            title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
-                          >
-                            {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShare(msg.content);
-                            }}
-                            className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
-                            title="Share"
-                          >
-                            <FaShareAlt className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-              <div ref={bottomRef} />
-            </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
-            {/* Input Bar */}
-            <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={handleInputChangeWithVisibility}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about rice information..."
-                className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
-              />
-              {showSendButton && (
-                <button
-                  onClick={() => handleSend(input)}
-                  className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Sending...' : 'Send'}
-                </button>
-              )}
+      {/* Chat messages */}
+      <div
+        className="relative flex-grow p-2 overflow-y-auto chat-container"
+        style={{ maxHeight: 'calc(100vh - 12rem)' }}
+      >
+        <div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-24">
+              {/* <div className="w-12 h-12 border-t-2 border-blue-500 rounded-full animate-spin"></div> */}
+              {/* <p className="ml-4 text-black">Loading...</p> */}
+              <> <Example  variant="loading01" /></>
+             
             </div>
-          </section>
+          ) : (
+            <>
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`chat-bubble p-2 rounded-lg text-black mb-2 ${
+                    msg.type === 'question' ? 'self-start bg-blue-200' : 'self-end bg-green-200'
+                  }`}
+                  style={{
+                    maxWidth: msg.type === 'question' ? '50%' : '80%',
+                    wordWrap: 'break-word',
+                    float: msg.type === 'question' ? 'left' : 'right',
+                    clear: 'both',
+                  }}
+                  onClick={() => handleBubbleClick(msg.content)}
+                >
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <div className="flex mt-2 space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(msg.content);
+                      }}
+                      className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
+                      title="Copy"
+                    >
+                      <FaRegCopy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        isReading ? handleStopReadAloud() : handleReadAloud(msg.content);
+                      }}
+                      className={`${
+                        isReading
+                          ? 'text-red-600 hover:text-red-800 bg-red-200'
+                          : 'text-blue-600 hover:text-blue-800 bg-blue-200'
+                      } bg-white rounded-full p-1 ml-2`}
+                      title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
+                    >
+                      {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare(msg.content);
+                      }}
+                      className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
+                      title="Share"
+                    >
+                      <FaShareAlt className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+
+            </>
+          )}
+        </div>
+        <div ref={bottomRef} /> {/* This ref will be used to scroll to the bottom */}
+      </div>
+
+      {/* Input Bar */}
+      <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={handleInputChangeWithVisibility}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about rice information..."
+          className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
+        />
+        {showSendButton && (
+          <button
+            onClick={() => handleSend(input)}
+            className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Sending...' : 'Send'}
+          </button>
+        )}
+      </div>
+    </section>
+
 
           {/* Right Panel */}
   
