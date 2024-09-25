@@ -75,6 +75,9 @@ button:disabled {
   .chat-container {
     height: 250px;
   }
+  .sidebar11{
+    height: 30vh;
+  }
 }
 
 /* Tablet screen adjustments */

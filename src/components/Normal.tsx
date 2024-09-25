@@ -336,7 +336,7 @@ const Normal = () => {
         {/* Combined Left, Center, and Right Panel */}
         <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">
           {/* Left Panel */}
-          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6">
+          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 sidebar11">
             <div className="flex items-center justify-between mt-4 mb-4 font-bold">
               <button onClick={handleEditClick} className="p-1">
                 <svg
