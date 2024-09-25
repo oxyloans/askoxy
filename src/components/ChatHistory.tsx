@@ -6,8 +6,8 @@ import { Link } from "react-router-dom";
 type ChatHistoryItem = {
   id: string;
   userQuations: string;
-  ericeQueries: string | null;
-};    
+  ericeQueries: string | null;     
+};
 
 function ChatHistory() {
   // Set the type for chat history state
@@ -32,13 +32,19 @@ function ChatHistory() {
     fetchChatHistory(); // Invoke the API call
   }, []); // Empty dependency array to run once on component mount
 
+  // Sort by id and limit to last 5 items (modify the condition as needed)
+  const recentChatHistory = chathistory
+    .filter(item => item.userQuations !== null) // Filter out items with null ericeQueries
+    .slice(-30); // Get the last 5 items
+
   return (
     <div className="mt-4 overflow-y-auto max-h-80">
-      {chathistory.length === 0 ? (
+      {recentChatHistory.length === 0 ? (
         <p className="text-sm text-gray-500">No history available.</p>
       ) : (
-        chathistory.map((item, index) => (
-          <div
+        recentChatHistory.map((item, index) => (
+          <>
+          {item.userQuations !== null && <> <div
             key={index}
             className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded cursor-pointer"
           >
@@ -49,7 +55,8 @@ function ChatHistory() {
             >
               {item.userQuations}
             </Link>
-          </div>
+          </div></>}</>
+         
         ))
       )}
     </div>

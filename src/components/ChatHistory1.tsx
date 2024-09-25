@@ -32,29 +32,29 @@ function ChatHistory1() {
     fetchChatHistory(); // Invoke the API call
   }, []); // Empty dependency array to run once on component mount
 
+  // Sort by id and limit to last 5 items (modify the condition as needed)
+  const recentChatHistory = chathistory
+    .filter(item => item.ericeQueries !== null) // Filter out items with null ericeQueries
+    .slice(-20); // Get the last 5 items
+
   return (
     <div className="mt-4 overflow-y-auto max-h-80">
-      {chathistory.length === 0 ? (
+      {recentChatHistory.length === 0 ? (
         <p className="text-sm text-gray-500">No history available.</p>
       ) : (
-        chathistory.map((item, index) => (
-            <>
-            {item.ericeQueries !== null && <> 
+        recentChatHistory.map((item, index) => (
           <div
             key={index}
             className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded cursor-pointer"
           >
             {/* Link with encoded userQuations */}
-               <Link
+            <Link
               className="text-sm text-gray-800"
               to={`?${encodeURIComponent(item.userQuations)}`} // Encode the userQuations
             >
               {item.ericeQueries}
             </Link>
-       
           </div>
-          </>}
-          </>
         ))
       )}
     </div>

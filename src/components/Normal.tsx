@@ -142,7 +142,7 @@ const Normal = () => {
   // },[])
   useEffect(() => {
    const islogin= localStorage.getItem("userId")
-    if (questionCount > 10) {
+    if (questionCount > 4) {
       if (islogin) {
         
       } else {

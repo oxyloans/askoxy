@@ -30,16 +30,16 @@ interface ImageData {
 // Images and their metadata with page links
 const images: ImageData[] = [
   { src: HM1, alt: 'Image 1', text: 'Order Rice Online', link: '/Erice' },
-  { src: HM2, alt: 'Image 2', text: 'Groceries', link: '' },
-  { src: HM3, alt: 'Image 3', text: 'Tickets', link: '' },
-  { src: HM4, alt: 'Image 4', text: 'Transportation', link: '' },
-  { src: HM5, alt: 'Image 5', text: 'Global Education', link: '' },
-  { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '' },
-  { src: HM7, alt: 'Image 7', text: 'Games', link: '' },
-  { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '' },
-  { src: HM9, alt: 'Image 9', text: 'Pets', link: '' },
-  { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '' },
-  { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '' },
+  { src: HM2, alt: 'Image 2', text: 'Groceries', link: '/normal' },
+  { src: HM3, alt: 'Image 3', text: 'Tickets', link: '/normal' },
+  { src: HM4, alt: 'Image 4', text: 'Transportation', link: '/normal' },
+  { src: HM5, alt: 'Image 5', text: 'Global Education', link: '/normal' },
+  { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '/normal' },
+  { src: HM7, alt: 'Image 7', text: 'Games', link: '/normal' },
+  { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '/normal' },
+  { src: HM9, alt: 'Image 9', text: 'Pets', link: '/normal' },
+  { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '/normal' },
+  { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '/normal' },
 ];
 
 // Helper function to shuffle images

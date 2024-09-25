@@ -12,6 +12,7 @@ const Example: React.FC<{ variant: string }> = ({ variant }) => {
       <span>I</span>
       <span>N</span>
       <span>G</span>
+  
       <span>.</span>
       <span>.</span>
       <span>.</span>
