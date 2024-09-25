@@ -29,7 +29,7 @@ const Normal = () => {
 
   const [showSendButton, setShowSendButton] = useState(false);
   const [chathistory  , setchathistory]=useState([])
-  const [riceTopicsshow , setriceTopicsshow] = useState(false)
+  const [riceTopicsshow , setriceTopicsshow] = useState(true)
   const [showStaticBubbles, setShowStaticBubbles] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isReading, setIsReading] = useState(false);
@@ -236,13 +236,13 @@ const Normal = () => {
 
   // Dummy data for rice-related topics
   const riceTopics = [
-    { id: 1, title: 'Rice Cooking Tip', content: 'Get tips and tricks for cooking perfect rice every time.' },
-    { id: 2, title: 'Rice Varieties', content: 'Learn about different types of rice such as Basmati, Jasmine, and Arborio.' },
-    { id: 3, title: 'Nutritional Information', content: 'Find out about the nutritional benefits of rice, including calories, vitamins, and minerals.' },
-    { id: 4, title: 'Availability and Sourcing', content: 'Explore where to buy quality rice and how to choose the best option based on your needs.' },
+    { id: 1, title: 'Healthy Eating Habits', content: 'Discover tips on how to develop sustainable and healthy eating patterns.' },
+    { id: 1, title: 'Latest Movie Releases', content: 'Stay updated with the latest blockbusters and independent films hitting the theaters.' },
+    { id: 3, title: 'Product Reviews and Comparisons', content: 'Find out how to compare products and read reviews before making an online purchase.' },
+    { id: 4, title: 'Shipping and Delivery Options', content: 'Understand different shipping methods and how to track your online orders.' },
   ];
 
-  // Handle input change to manage send button visibility and bubble visibility
+  // Handle input change to manage send button visibility and bubble visibilitys
   const handleInputChangeWithVisibility = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value); // Update input value
@@ -381,19 +381,20 @@ const Normal = () => {
           <div className="grid grid-cols-2 gap-4">
             {riceTopicsshow && (
               <>
-                {riceTopics.map((topic) => (
-                  <div
-                    key={topic.id}
-                    className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
-                    style={{
-                      wordWrap: 'break-word',
-                      zIndex: '10'
-                    }}
-                    onClick={() => { handleBubbleClick(topic.title); setInput(topic.title); }}
-                  >
-                    <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
-                  </div>
-                ))}
+              
+              {riceTopics.map(topic => (
+                    <div
+                      key={topic.id}
+                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      style={{
+                        wordWrap: 'break-word',
+                        zIndex:'10'
+                      }}
+                      onClick={() => { handleBubbleClick(topic.title); setInput(topic.title)}}
+                    >
+                      <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
+                    </div>
+                  ))}
               </>
             )}
           </div>
