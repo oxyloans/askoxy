@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 type ChatHistoryItem = {
   id: string;
   userQuations: string;
-  ericeQueries: string | null;
+  ericeQueries: string | null;     
 };
 
 function ChatHistory1() {
@@ -18,7 +18,7 @@ function ChatHistory1() {
     const fetchChatHistory = async () => {
       try {
         const response = await axios.get(
-          "http://65.0.147.157:9001/api/student-service/user/queries"
+          "https://meta.oxyloans.com/api/student-service/user/queries"
         );
         if (response.status === 200) {
           console.log(response.data);

@@ -7,7 +7,7 @@ type ChatHistoryItem = {
   id: string;
   userQuations: string;
   ericeQueries: string | null;
-};
+};    
 
 function ChatHistory() {
   // Set the type for chat history state
@@ -18,7 +18,7 @@ function ChatHistory() {
     const fetchChatHistory = async () => {
       try {
         const response = await axios.get(
-          "http://65.0.147.157:9001/api/student-service/user/queries"
+          "https://meta.oxyloans.com/api/student-service/user/queries"
         );
         if (response.status === 200) {
           console.log(response.data);
