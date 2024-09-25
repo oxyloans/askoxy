@@ -84,7 +84,7 @@ const Normal = () => {
     console.log(result); // Output: "data"
 
     const handleSend = async (queryInput: string) => {
-     
+  
     if (queryInput.trim() === '') return;
 
     // Add the user's question to the chat
@@ -99,6 +99,7 @@ const Normal = () => {
 
     try {    
       // Make API request to the specified endpoint
+      setriceTopicsshow(false)
       const response = await axios.post(
         
         `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
@@ -202,6 +203,7 @@ const Normal = () => {
   }, [query]);
 
   const handleSend = async (queryInput: string) => {
+    setriceTopicsshow(false)
     if (queryInput.trim() === '') return;
 
     // Add the user's question to the chat
