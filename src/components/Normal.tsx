@@ -305,19 +305,29 @@ const Normal = () => {
     },
   ];
 
+  const navigate = useNavigate(); // Initialize navigate function
+
+  // Function to handle the click event
+  const handleRedirect = () => {
+    navigate('/'); // Redirect to the login page
+  };
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
-        <div className="flex items-center m-2  text-2xl font-bold">
-          <span className="text-white">ASKOXY</span>
-          <span className="text-[#ffa800]">.AI</span>
-        </div>
+        <button
+      className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+      onClick={handleRedirect}
+    >
+      <span className="text-white">ASKOXY</span>
+      <span className="text-[#ffa800]">.AI</span>
+    </button>
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
-          <button className="text-white font-medium hover:text-[#ffa800]">Sign In</button>
-          <button className="text-white font-medium hover:text-[#ffa800]">Sign Up</button>
+
+
+      
         </div>
       </header>
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">

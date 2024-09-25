@@ -30,16 +30,16 @@ interface ImageData {
 // Images and their metadata with page links
 const images: ImageData[] = [
   { src: HM1, alt: 'Image 1', text: 'Order Rice Online', link: '/Erice' },
-  { src: HM2, alt: 'Image 2', text: 'Groceries', link: '' },
-  { src: HM3, alt: 'Image 3', text: 'Tickets', link: '' },
-  { src: HM4, alt: 'Image 4', text: 'Transportation', link: '' },
-  { src: HM5, alt: 'Image 5', text: 'Global Education', link: '' },
-  { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '' },
-  { src: HM7, alt: 'Image 7', text: 'Games', link: '' },
-  { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '' },
-  { src: HM9, alt: 'Image 9', text: 'Pets', link: '' },
-  { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '' },
-  { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '' },
+  { src: HM2, alt: 'Image 2', text: 'Groceries', link: '/Normal' },
+  { src: HM3, alt: 'Image 3', text: 'Tickets', link: '/Normal' },
+  { src: HM4, alt: 'Image 4', text: 'Transportation', link: '/Normal' },
+  { src: HM5, alt: 'Image 5', text: 'Global Education', link: '/Normal' },
+  { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '/Normal' },
+  { src: HM7, alt: 'Image 7', text: 'Games', link: '/Normal' },
+  { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '/Normal' },
+  { src: HM9, alt: 'Image 9', text: 'Pets', link: '/Normal' },
+  { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '/Normal' },
+  { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '/Normal' },
 ];
 
 // Helper function to shuffle images
@@ -299,7 +299,8 @@ const HeroSection: React.FC = () => {
 @media (max-width: 768px) and (min-width: 600px) {
   .div1 {
     flex-direction: column;
-    padding: 150px;
+    padding-top: 150px;
+    padding-bottom: 60px;
   }
 }
 
@@ -307,7 +308,8 @@ const HeroSection: React.FC = () => {
 @media (max-width: 600px) and (min-width: 480px) {
   .div1 {
     flex-direction: column;
-    padding: 150px;
+    padding-top: 150px;
+    padding-bottom: 60px;
   }
 }
 
@@ -315,7 +317,8 @@ const HeroSection: React.FC = () => {
 @media (max-width: 480px) {
   .div1 {
     flex-direction: column;
-    padding: 150px;
+    padding-top: 150px;
+    padding-bottom: 60px;
   }
 }
 
@@ -340,7 +343,7 @@ const HeroSection: React.FC = () => {
 /* Search Input Styling */
 .search-placeholder {
   width: 100%;
-  padding: 1rem;
+  padding: 0.4rem;
   margin-top: 2.5rem;
   background-color: rgba(255, 255, 255, 0.5); /* White with 50% opacity */
   border-radius: 1.5rem;

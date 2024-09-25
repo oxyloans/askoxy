@@ -4,13 +4,14 @@ import Image2 from '../assets/img/AD2.jpg';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import './erice.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation,useNavigate } from 'react-router-dom';
 import B1 from '../assets/img/B1.jpg';
 import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
 import ChatHistory from './ChatHistory';
 import ChatHistory1 from './ChatHistory1';
 import Example from './Example';
+
 
 interface ChatMessage {
   type: 'question' | 'answer';
@@ -210,20 +211,29 @@ const Erice = () => {
     },
   ];
 
+  const navigate = useNavigate(); // Initialize navigate function
+
+  // Function to handle the click event
+  const handleRedirect = () => {
+    navigate('/'); // Redirect to the login page
+  };
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
-        <div className="flex items-center m-2  text-2xl font-bold">
-          <span className="text-white">ASKOXY</span>
-          <span className="text-[#ffa800]">.AI</span>
-        </div>
+        <button
+      className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+      onClick={handleRedirect}
+    >
+      <span className="text-white">ASKOXY</span>
+      <span className="text-[#ffa800]">.AI</span>
+    </button>
         {/* SignIn/SignUp Buttons */}
-        <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
+        {/* <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
           <button className="text-white font-medium hover:text-[#ffa800]">Sign In</button>
           <button className="text-white font-medium hover:text-[#ffa800]">Sign Up</button>
-        </div>
+        </div> */}
       </header>
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
