@@ -217,6 +217,18 @@ const Erice = () => {
   const handleRedirect = () => {
     navigate('/'); // Redirect to the login page
   };
+
+
+  useEffect(() => {
+    const islogin= localStorage.getItem("userId")
+     if (questionCount > 3) {
+       if (islogin) {
+         
+       } else {
+        navigate("/login")
+       }
+     }
+   },[questionCount])
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
       {/* Header */}
@@ -234,6 +246,27 @@ const Erice = () => {
           <button className="text-white font-medium hover:text-[#ffa800]">Sign In</button>
           <button className="text-white font-medium hover:text-[#ffa800]">Sign Up</button>
         </div> */}
+          <div   
+        className="sign-in-container"
+        style={{
+          width: 'auto',
+          height: 'auto',
+          backgroundColor: 'gray',
+          padding: '7px 20px',
+          borderRadius: '50px',
+          color: 'white',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          position:'absolute',
+          right:'2rem'
+        }}
+      >
+        {/* SignIn button with redirection functionality */}
+
+        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
+          SignOut
+        </button>
+      </div>
       </header>
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}

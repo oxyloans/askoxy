@@ -119,7 +119,7 @@ const HeroSection: React.FC = () => {
       Succeed<span className="text-yellow">...</span>
     </h1>
 
-    {/* Search Input */}
+    {/* Search Input */}  
    <div className="search-placeholder">
       <div className="input-container">
         <input

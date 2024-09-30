@@ -8,6 +8,7 @@ const Header: React.FC = () => {
   const handleSignInClick = () => {
     navigate('/login'); // Redirect to the login page
   };
+  
 
   return (
     <div
@@ -31,7 +32,7 @@ const Header: React.FC = () => {
       >
         ASKOXY.AI
       </button>
-
+<div  className='row'  style={{display:'flex',flexDirection:'row' ,gap:'10px'}}>
       <div
         className="sign-in-container flex items-center"
         style={{
@@ -49,8 +50,28 @@ const Header: React.FC = () => {
         <button className="" onClick={handleSignInClick}>
           SignIn
         </button>
+    
       </div>
+      <div   
+        className="sign-in-container"
+        style={{
+          width: 'auto',
+          height: 'auto',
+          backgroundColor: 'gray',
+          padding: '7px 20px',
+          borderRadius: '50px',
+          color: 'white',
+          textAlign: 'center',
+          fontWeight: 'bold',
+        }}
+      >
+        {/* SignIn button with redirection functionality */}
 
+        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
+          SignOut
+        </button>
+      </div>
+      </div>
       {/* Media Queries for Mobile */}
       <style>
         {`

@@ -143,7 +143,7 @@ const Normal = () => {
   // },[])
   useEffect(() => {
    const islogin= localStorage.getItem("userId")
-    if (questionCount > 10) {
+    if (questionCount > 3) {
       if (islogin) {
         
       } else {
@@ -325,6 +325,28 @@ const Normal = () => {
       <span className="text-white">ASKOXY</span>
       <span className="text-[#ffa800]">.AI</span>
     </button>
+<div></div>
+    <div   
+        className="sign-in-container"
+        style={{
+          width: 'auto',
+          height: 'auto',
+          backgroundColor: 'gray',
+          padding: '7px 20px',
+          borderRadius: '50px',
+          color: 'white',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          position:'absolute',
+          right:'2rem'
+        }}
+      >
+        {/* SignIn button with redirection functionality */}
+
+        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
+          SignOut
+        </button>
+      </div>
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
 
