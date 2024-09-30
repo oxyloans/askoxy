@@ -17,6 +17,21 @@ import HM8 from '../assets/img/8.png';
 import HM9 from '../assets/img/9.png';
 import HM10 from '../assets/img/10.png';
 import HM11 from '../assets/img/11.png';
+import HM12 from '../assets/img/X1.png';
+import HM13 from '../assets/img/X2.png';
+import HM14 from '../assets/img/X3.png';
+import HM15 from '../assets/img/X4.png';
+import HM16 from '../assets/img/X5.png';
+import HM17 from '../assets/img/X6.png';
+import HM18 from '../assets/img/X7.png';
+import HM19 from '../assets/img/X8.png';
+import HM20 from '../assets/img/X9.png';
+import HM21 from '../assets/img/X10.png';
+import HM22 from '../assets/img/X11.png';
+import HM23 from '../assets/img/X12.png';
+import HM24 from '../assets/img/X13.png';
+import HM25 from '../assets/img/X14.png';
+import HM26 from '../assets/img/X15.png';
 import axios from 'axios';
 
 // Type definition for image data
@@ -40,6 +55,21 @@ const images: ImageData[] = [
   { src: HM9, alt: 'Image 9', text: 'Pets', link: '/Normal' },
   { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '/Normal' },
   { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '/Normal' },
+  { src: HM12, alt: 'Image 12', text: 'Travel and Tour Services', link: '/Normal' },
+  { src: HM13, alt: 'Image 13', text: 'Financial Advisory', link: '/Normal' },
+  { src: HM14, alt: 'Image 14', text: 'Loan Servies', link: '/Normal' },
+  { src: HM15, alt: 'Image 15', text: 'Health and Wellness Services', link: '/Normal' },
+  { src: HM16, alt: 'Image 16', text: 'Home and Wellness Services', link: '/Normal' },
+  { src: HM17, alt: 'Image 17', text: 'Advertising Services', link: '/Normal' },
+  { src: HM18, alt: 'Image 18', text: 'Marketing Services', link: '/Normal' },
+  { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
+  { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
+  { src: HM21, alt: 'Image 21', text: 'Consulting Services', link: '/Normal' },
+  { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
+  { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: '/Normal' },
+  { src: HM24, alt: 'Image 24', text: 'CA Services', link: '/Normal' },
+  { src: HM25, alt: 'Image 25', text: 'Whole Sale Services', link: '/Normal' },
+  { src: HM26, alt: 'Image 26', text: 'Education (Domestic and Global)', link: '/Normal' },
 ];
 
 // Helper function to shuffle images
@@ -562,11 +592,11 @@ const HeroSection: React.FC = () => {
 /* Scroll animations for image groups */
 .group1 .image-group,
 .group3 .image-group {
-  animation: scrollUpFromBottom 350s linear infinite;
+  animation: scrollUpFromBottom 950s linear infinite;
 }
 
 .group2 .image-group {
-  animation: scrollDown 800s linear infinite;
+  animation: scrollDown 2000s linear infinite;
 }
 
 /* Keyframes for scrolling animations */
