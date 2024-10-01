@@ -75,7 +75,6 @@ const Normal = () => {
     let queryString = window.location.search;
   useEffect(() => {
 
-    
 
   
     
