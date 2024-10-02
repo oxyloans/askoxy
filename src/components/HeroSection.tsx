@@ -150,30 +150,42 @@ const HeroSection: React.FC = () => {
     </h1>
 
     {/* Search Input */}  
-   <div className="search-placeholder">
-      <div className="input-container">
-        <input
-          type="text"   
-          placeholder="Ask question..."
-          className="search-input"
-          value={query}
-          onChange={handleInputChange}
-                />
-                <Link to={`/normal?${query}`}>
-        <button  className="search-button ">
-          <span className="search-icon icons">&#128269;</span> {/* Placeholder for Search Icon */}
-                  </button>
-                  </Link>
-      </div>
+    <div className="search-placeholder">
+    <div className="input-container">
+  <input
+    type="text"
+    placeholder="Ask question..."
+    className="search-input"
+    value={query}
+    onChange={handleInputChange}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter') {
+        // Trigger redirection when Enter is pressed
+        window.location.href = `/normal?${query}`;
+      }
+    }}
+  />
+  <button
+    className="search-button"
+    onClick={() => {
+      // Trigger redirection when the button is clicked
+      window.location.href = `/normal?${query}`;
+    }}
+  >
+    <span className="search-icon icons">&#128269;</span> {/* Placeholder for Search Icon */}
+  </button>
+</div>
 
-      {/* Display the API response */}
-      {/* {response && (
-        <div className="response-container">
-          <h3></h3>
-          <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown> </p>
-        </div>
-      )} */}
+
+  {/* Optional: Display the API response */}
+  {/* {response && (
+    <div className="response-container">
+      <h3></h3>
+      <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown></p>
     </div>
+  )} */}
+</div>
+
   </div>
 </div>
 

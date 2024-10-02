@@ -11,6 +11,7 @@ import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
 import { error } from 'console';
 import ChatHistory from './ChatHistory';
 import Example from './Example';
+import AuthorInfo from './AuthorInfo';
 
 
 interface ChatMessage {
@@ -50,10 +51,11 @@ const Normal = () => {
   }, []);
 
   useEffect(() => {
-    if (isAtBottom && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' }); // Scroll to bottom if at the bottom
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isAtBottom]); 
+  }, [messages]);
+  
   // Save history to localStorage whenever it changes
 
   const handleScroll = () => {
@@ -71,6 +73,19 @@ const Normal = () => {
   const handleEditClick = () => {
     setIsEditing(isEditing);
   };
+
+
+
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+
+
+
+
 
     let queryString = window.location.search;
   useEffect(() => {
@@ -150,12 +165,7 @@ const Normal = () => {
       }
     }
   },[questionCount])
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isLoading) {
-      e.preventDefault(); // Prevent default Enter key behavior
-      handleSend(input);
-    }
-  };
+
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -201,28 +211,40 @@ const Normal = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  useEffect(() => {
+    const storedHistory = localStorage.getItem('chatHistory');
+    if (storedHistory) {
+      setHistory(JSON.parse(storedHistory));
+    }
+  }, []);
+
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('chatHistory', JSON.stringify(history));
+  }, [history]);
+
+  // Scroll to the bottom when messages change
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
   const handleSend = async (queryInput: string) => {
-    setriceTopicsshow(false)
     if (queryInput.trim() === '') return;
 
-    // Add the user's question to the chat
     setMessages(prev => [...prev, { type: 'question', content: queryInput }]);
-
-    // Save the query to history
     setHistory(prevHistory => [queryInput, ...prevHistory]);
-
     setInput('');
     setIsLoading(true);
     setQuestionCount(prevCount => prevCount + 1); // Increment question count
 
-    try {    
-      // Make API request to the specified endpoint
+    try {
       const response = await axios.post(
-
         `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
       );
 
-      // Process the API response and update the chat
+      // Add the API response to chat
       setMessages(prev => [...prev, { type: 'answer', content: response.data }]);
     } catch (error) {
       console.error('Error fetching response:', error);
@@ -235,27 +257,34 @@ const Normal = () => {
     }
   };
 
-  // Dummy data for rice-related topics
-  const riceTopics = [
-    { id: 1, title: 'Healthy Eating Habits', content: 'Discover tips on how to develop sustainable and healthy eating patterns.' },
-    { id: 1, title: 'Latest Movie Releases', content: 'Stay updated with the latest blockbusters and independent films hitting the theaters.' },
-    { id: 3, title: 'Product Reviews and Comparisons', content: 'Find out how to compare products and read reviews before making an online purchase.' },
-    { id: 4, title: 'Shipping and Delivery Options', content: 'Understand different shipping methods and how to track your online orders.' },
-  ];
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isLoading) {
+      e.preventDefault(); // Prevent default Enter key behavior
+      handleSend(input);
+    }
+  };
 
-  // Handle input change to manage send button visibility and bubble visibilitys
   const handleInputChangeWithVisibility = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value); // Update input value
-
-    // Show the send button if there is text in the input field
     setShowSendButton(value.trim() !== '');
-
-    // Hide static chat bubbles when user starts typing
     if (showStaticBubbles && value.trim() !== '') {
       setShowStaticBubbles(false);
     }
   };
+
+
+
+
+  // Dummy data for rice-related topics
+  const riceTopics = [
+    { id: 1, title: 'Ask questions', content: 'Discover tips on how to develop sustainable and healthy eating patterns.' },
+    { id: 1, title: 'Ask membership', content: 'Stay updated with the latest blockbusters and independent films hitting the theaters.' },
+    { id: 3, title: 'Ask for funds', content: 'Find out how to compare products and read reviews before making an online purchase.' },
+    { id: 4, title: 'Ask for end-to-end solution', content: 'Understand different shipping methods and how to track your online orders.' },
+  ];
+
+
 
   // Handle click on static chat bubble
   const handleBubbleClick = (content: string) => {
@@ -295,6 +324,9 @@ const Normal = () => {
   };
 
 
+  const questions = messages.filter((msg) => msg.type === 'question');
+  const answers = messages.filter((msg) => msg.type === 'answer');
+
   const imageData = [
     {
       oxyLoans: Image1,
@@ -324,7 +356,8 @@ const Normal = () => {
       <span className="text-white">ASKOXY</span>
       <span className="text-[#ffa800]">.AI</span>
     </button>
-<div></div>    
+<div></div> 
+
     <div   
         className="sign-in-container"
         style={{
@@ -337,7 +370,7 @@ const Normal = () => {
           textAlign: 'center',
           fontWeight: 'bold',
           position:'absolute',
-          right:'2rem'
+          right:'5rem'
         }}
       >
         {/* SignIn button with redirection functionality */}
@@ -346,10 +379,16 @@ const Normal = () => {
           SignOut
         </button>
       </div>
+
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
 
-
+        <AuthorInfo
+        name="A"
+        location="New York"
+        email="john.doe@example.com"
+        avatarUrl="https://via.placeholder.com/150" // Optional, can be null or undefined
+      />   
       
         </div>
       </header>
@@ -400,65 +439,111 @@ const Normal = () => {
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
       {/* Static Rice Related Text */}
       {showStaticBubbles && (
-        <div className="absolute inset-0 flex items-center justify-center p-4">
-          <div className="grid grid-cols-2 gap-4">
-            {riceTopicsshow && (
-              <>
-              
-              {riceTopics.map(topic => (
-                    <div
-                      key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
-                      style={{
-                        wordWrap: 'break-word',
-                        zIndex:'10'
-                      }}
-                      onClick={() => { handleBubbleClick(topic.title); setInput(topic.title)}}
-                    >
-                      <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
-                    </div>
-                  ))}
-              </>
-            )}
-          </div>
-        </div>
+  <div className="absolute inset-0 flex items-center justify-center p-4">
+    <div className="grid grid-cols-2 gap-4 max-h-60 overflow-y-auto"> {/* Add max-height and overflow */}
+      {riceTopicsshow && (
+        <>
+          {riceTopics.map(topic => (
+            <div
+              key={topic.id}
+              className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+              style={{
+                wordWrap: 'break-word',
+                zIndex: '10'
+              }}
+              onClick={() => { handleBubbleClick(topic.title); setInput(topic.title) }}
+            >
+              <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
+            </div>
+          ))}
+        </>
       )}
+    </div>
+  </div>
+)}
+
 
       {/* Chat messages */}
       <div
-        className="relative flex-grow p-2 overflow-y-auto chat-container"
-        style={{ maxHeight: 'calc(100vh - 12rem)' }}
-      >
-        <div>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-24">
-              {/* <div className="w-12 h-12 border-t-2 border-blue-500 rounded-full animate-spin"></div> */}
-              {/* <p className="ml-4 text-black">Loading...</p> */}
-              <> <Example  variant="loading01" /></>
-             
-            </div>
-          ) : (
-            <>
-              {messages.map((msg, index) => (
+      className="relative flex-grow p-2 overflow-y-auto chat-container"
+      style={{ maxHeight: 'calc(100vh - 12rem)' }}
+    >
+      <div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-24">
+          <Example variant="loading01" />
+        </div>
+      ) : (
+        <>
+          {/* Render Questions followed by their corresponding Answers */}
+          {questions.slice(0).reverse().map((question, index) => (
+            <React.Fragment key={index}>
+              <div
+                className={`chat-bubble p-2 rounded-lg text-black mb-2 self-start bg-blue-200`}
+                style={{
+                  maxWidth: '50%',
+                  wordWrap: 'break-word',
+                  float: 'left',
+                  clear: 'both',
+                }}
+                onClick={() => handleBubbleClick(question.content)}
+              >
+                <ReactMarkdown>{question.content}</ReactMarkdown>
+                <div className="flex mt-2 space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(question.content);
+                    }}
+                    className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
+                    title="Copy"
+                  >
+                    <FaRegCopy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      isReading ? handleStopReadAloud() : handleReadAloud(question.content);
+                    }}
+                    className={`${
+                      isReading
+                        ? 'text-red-600 hover:text-red-800 bg-red-200'
+                        : 'text-blue-600 hover:text-blue-800 bg-blue-200'
+                    } bg-white rounded-full p-1 ml-2`}
+                    title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
+                  >
+                    {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShare(question.content);
+                    }}
+                    className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
+                    title="Share"
+                  >
+                    <FaShareAlt className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              {/* Render the corresponding answer below the question */}
+              {answers[index] && (
                 <div
-                  key={index}
-                  className={`chat-bubble p-2 rounded-lg text-black mb-2 ${
-                    msg.type === 'question' ? 'self-start bg-blue-200' : 'self-end bg-green-200'
-                  }`}
+                  className={`chat-bubble p-2 rounded-lg text-black mb-2 self-end bg-green-200`}
                   style={{
-                    maxWidth: msg.type === 'question' ? '50%' : '80%',
+                    maxWidth: '80%',
                     wordWrap: 'break-word',
-                    float: msg.type === 'question' ? 'left' : 'right',
+                    float: 'right',
                     clear: 'both',
                   }}
-                  onClick={() => handleBubbleClick(msg.content)}
+                  onClick={() => handleBubbleClick(answers[index].content)}
                 >
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown>{answers[index].content}</ReactMarkdown>
                   <div className="flex mt-2 space-x-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCopy(msg.content);
+                        handleCopy(answers[index].content);
                       }}
                       className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
                       title="Copy"
@@ -468,7 +553,7 @@ const Normal = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        isReading ? handleStopReadAloud() : handleReadAloud(msg.content);
+                        isReading ? handleStopReadAloud() : handleReadAloud(answers[index].content);
                       }}
                       className={`${
                         isReading
@@ -482,7 +567,7 @@ const Normal = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleShare(msg.content);
+                        handleShare(answers[index].content);
                       }}
                       className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
                       title="Share"
@@ -491,15 +576,14 @@ const Normal = () => {
                     </button>
                   </div>
                 </div>
-              ))}
-
-
-            </>
-          )}
-        </div>
-        <div ref={bottomRef} /> {/* This ref will be used to scroll to the bottom */}
+              )}
+            </React.Fragment>
+          ))}
+        </>
+      )}
       </div>
-
+      <div ref={bottomRef} /> {/* This ref will be used to scroll to the bottom */}
+    </div>
       {/* Input Bar */}
       <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
         <input
@@ -508,7 +592,7 @@ const Normal = () => {
           value={input}
           onChange={handleInputChangeWithVisibility}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about rice information..."
+          placeholder="Ask questions..."
           className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
         />
         {showSendButton && (

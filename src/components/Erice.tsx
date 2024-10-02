@@ -4,19 +4,37 @@ import Image2 from '../assets/img/AD2.jpg';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import './erice.css';
-import { useLocation,useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import B1 from '../assets/img/B1.jpg';
 import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
 import ChatHistory from './ChatHistory';
 import ChatHistory1 from './ChatHistory1';
 import Example from './Example';
+import AuthorInfo from './AuthorInfo';
 
 
 interface ChatMessage {
   type: 'question' | 'answer';
   content: string;
 }
+
+interface Message {
+  type: 'question' | 'answer';
+  content: string;
+}
+
+interface ChatProps {
+  messages: Message[];
+  isLoading: boolean;
+  isReading: boolean;
+  handleBubbleClick: (content: string) => void;
+  handleCopy: (content: string) => void;
+  handleReadAloud: (content: string) => void;
+  handleStopReadAloud: () => void;
+  handleShare: (content: string) => void;
+}
+
 
 const Erice = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -99,6 +117,8 @@ const Erice = () => {
     }
   };
 
+
+  const userId = localStorage.getItem("userId")
   const location = useLocation();
   const query = new URLSearchParams(location.search).get('search') || '';
 
@@ -122,10 +142,11 @@ const Erice = () => {
     setIsLoading(true);
     setQuestionCount(prevCount => prevCount + 1); // Increment question count
 
-    try {    
+    try {
       // Make API request to the specified endpoint
       const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
+        // `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
+        `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
       );
 
       // Process the API response and update the chat
@@ -165,7 +186,7 @@ const Erice = () => {
 
   // Handle click on static chat bubble
   const handleBubbleClick = (content: string) => {
- 
+
     console.log('Bubble clicked:', content); // Debugging log
     setInput(content); // Set input value when a bubble is clicked
     setShowStaticBubbles(false); // Hide static bubbles after click
@@ -217,56 +238,68 @@ const Erice = () => {
   const handleRedirect = () => {
     navigate('/'); // Redirect to the login page
   };
+  const questions = messages.filter((msg) => msg.type === 'question');
+  const answers = messages.filter((msg) => msg.type === 'answer');
+
 
 
   useEffect(() => {
-    const islogin= localStorage.getItem("userId")
-     if (questionCount > 3) {
-       if (islogin) {
-         
-       } else {
+    const islogin = localStorage.getItem("userId")
+    if (questionCount > 3) {
+      if (islogin) {
+
+      } else {
         navigate("/login")
-       }
-     }
-   },[questionCount])
+      }
+    }
+  }, [questionCount])
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
         <button
-      className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-      onClick={handleRedirect}
-    >
-      <span className="text-white">ASKOXY</span>
-      <span className="text-[#ffa800]">.AI</span>
-    </button>
+          className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+          onClick={handleRedirect}
+        >
+          <span className="text-white">ASKOXY</span>
+          <span className="text-[#ffa800]">.AI</span>
+        </button>
         {/* SignIn/SignUp Buttons */}
         {/* <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
           <button className="text-white font-medium hover:text-[#ffa800]">Sign In</button>
           <button className="text-white font-medium hover:text-[#ffa800]">Sign Up</button>
         </div> */}
-          <div   
-        className="sign-in-container"
-        style={{
-          width: 'auto',
-          height: 'auto',
-          backgroundColor: 'gray',
-          padding: '7px 20px',
-          borderRadius: '50px',
-          color: 'white',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          position:'absolute',
-          right:'2rem'
-        }}
-      >
-        {/* SignIn button with redirection functionality */}
+        <div
+          className="sign-in-container"
+          style={{
+            width: 'auto',
+            height: 'auto',
+            backgroundColor: 'gray',
+            padding: '7px 20px',
+            borderRadius: '50px',
+            color: 'white',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            position: 'absolute',
+            right: '5rem'
+          }}
+        >
+          {/* SignIn button with redirection functionality */}
 
-        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
-          SignOut
-        </button>
-      </div>
+          <button className="" onClick={() => { localStorage.removeItem("userId"); navigate('/login') }}>
+            SignOut
+          </button>
+        </div>
+        <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
+
+          <AuthorInfo
+            name="A"
+            location="New York"
+            email="john.doe@example.com"
+            avatarUrl="https://via.placeholder.com/150" // Optional, can be null or undefined
+          />
+        </div>
       </header>
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
@@ -308,7 +341,7 @@ const Erice = () => {
             {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
 
             {/* History List */}
-         <ChatHistory1 />
+            <ChatHistory1 />
           </aside>
 
           {/* Center Panel */}
@@ -324,9 +357,9 @@ const Erice = () => {
                       className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: 'break-word',
-                        zIndex:'10'
+                        zIndex: '10'
                       }}
-                      onClick={() => { handleBubbleClick(topic.title); setInput(topic.title)}}
+                      onClick={() => { handleBubbleClick(topic.title); setInput(topic.title) }}
                     >
                       <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
                     </div>
@@ -343,97 +376,138 @@ const Erice = () => {
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
-                    {/* <div className="w-12 h-12 border-t-2 border-blue-500 rounded-full animate-spin"></div>
-                    <p className="ml-4 text-black">Loading...</p> */}
-                    <Example  variant="loading01"/>
+                    <Example variant="loading01" />
                   </div>
                 ) : (
                   <>
-                    {/* Chat bubbles from messages */}
-                    {messages.map((msg, index) => (
-                      <div
-                        key={index}
-                        className={`chat-bubble p-2 rounded-lg text-black mb-2 ${
-                          msg.type === 'question' ? 'self-start bg-blue-200' : 'self-end bg-green-200'
-                        }`}
-                        style={{
-                          maxWidth: msg.type === 'question' ? '50%' : '80%',
-                          wordWrap: 'break-word',
-                          float: msg.type === 'question' ? 'left' : 'right',
-                          clear: 'both',
-                        }}
-                        onClick={() => handleBubbleClick(msg.content)}
-              //                   onClick={() => {
-              //   setInput('Do you use rice for daily meals or special dishes like biryani?');
-              //   setitem(false);
-              // }}
-                      >
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        <div className="flex mt-2 space-x-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopy(msg.content);
-                            }}
-                            className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
-                            title="Copy"
-                          >
-                            <FaRegCopy className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              isReading ? handleStopReadAloud() : handleReadAloud(msg.content); // Ternary to toggle functionality
-                            }}
-                            className={`${
-                              isReading ? 'text-red-600 hover:text-red-800 bg-red-200' : 'text-blue-600 hover:text-blue-800 bg-blue-200'
-                            } bg-white rounded-full p-1 ml-2`}
-                            title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
-                          >
-                            {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShare(msg.content);
-                            }}
-                            className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
-                            title="Share"
-                          >
-                            <FaShareAlt className="w-4 h-4" />
-                          </button>
+                    {/* Render Questions followed by their corresponding Answers */}
+                    {questions.slice(0).reverse().map((question, index) => (
+                      <React.Fragment key={index}>
+                        <div
+                          className={`chat-bubble p-2 rounded-lg text-black mb-2 self-start bg-blue-200`}
+                          style={{
+                            maxWidth: '50%',
+                            wordWrap: 'break-word',
+                            float: 'left',
+                            clear: 'both',
+                          }}
+                          onClick={() => handleBubbleClick(question.content)}
+                        >
+                          <ReactMarkdown>{question.content}</ReactMarkdown>
+                          <div className="flex mt-2 space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopy(question.content);
+                              }}
+                              className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
+                              title="Copy"
+                            >
+                              <FaRegCopy className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                isReading ? handleStopReadAloud() : handleReadAloud(question.content);
+                              }}
+                              className={`${isReading
+                                  ? 'text-red-600 hover:text-red-800 bg-red-200'
+                                  : 'text-blue-600 hover:text-blue-800 bg-blue-200'
+                                } bg-white rounded-full p-1 ml-2`}
+                              title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
+                            >
+                              {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShare(question.content);
+                              }}
+                              className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
+                              title="Share"
+                            >
+                              <FaShareAlt className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                        {/* Render the corresponding answer below the question */}
+                        {answers[index] && (
+                          <div
+                            className={`chat-bubble p-2 rounded-lg text-black mb-2 self-end bg-green-200`}
+                            style={{
+                              maxWidth: '80%',
+                              wordWrap: 'break-word',
+                              float: 'right',
+                              clear: 'both',
+                            }}
+                            onClick={() => handleBubbleClick(answers[index].content)}
+                          >
+                            <ReactMarkdown>{answers[index].content}</ReactMarkdown>
+                            <div className="flex mt-2 space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(answers[index].content);
+                                }}
+                                className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
+                                title="Copy"
+                              >
+                                <FaRegCopy className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  isReading ? handleStopReadAloud() : handleReadAloud(answers[index].content);
+                                }}
+                                className={`${isReading
+                                    ? 'text-red-600 hover:text-red-800 bg-red-200'
+                                    : 'text-blue-600 hover:text-blue-800 bg-blue-200'
+                                  } bg-white rounded-full p-1 ml-2`}
+                                title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
+                              >
+                                {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShare(answers[index].content);
+                                }}
+                                className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
+                                title="Share"
+                              >
+                                <FaShareAlt className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </React.Fragment>
                     ))}
                   </>
+                )} <div ref={bottomRef} />
+              </div>
+</div>
+              {/* Input Bar */}
+              <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={handleInputChangeWithVisibility}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about rice information..."
+                  className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
+                />
+                {showSendButton && (
+                  <button
+                    onClick={() => handleSend(input)}
+                    className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Sending...' : 'Send'}
+                  </button>
                 )}
               </div>
-              <div ref={bottomRef} />
-            </div>
-
-            {/* Input Bar */}
-            <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={handleInputChangeWithVisibility}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about rice information..."
-                className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
-              />
-              {showSendButton && (
-                <button
-                  onClick={() => handleSend(input)}
-                  className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Sending...' : 'Send'}
-                </button>
-              )}
-            </div>
           </section>
 
           {/* Right Panel */}
