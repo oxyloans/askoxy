@@ -21,9 +21,9 @@ const Landingpage: React.FC = () => {
       </section>
 
       {/* Products Section */}
-      <section>
+      {/* <section>
         <ProductsSection />
-      </section>
+      </section> */}
 
       {/* Testimonials Section */}
       {/* <section>
@@ -36,9 +36,9 @@ const Landingpage: React.FC = () => {
       </footer>
 
       {/* Example of how to integrate the search icon (you can place it wherever appropriate) */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', backgroundColor: '#fff', padding: '10px', borderRadius: '50%', boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
+      {/* <div style={{ position: 'fixed', bottom: '20px', right: '20px', backgroundColor: '#fff', padding: '10px', borderRadius: '50%', boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
         <FaSearch size={24} />
-      </div>
+      </div> */}
     </>
   );
 };

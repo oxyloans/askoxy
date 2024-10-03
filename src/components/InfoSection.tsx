@@ -6,14 +6,14 @@ const InfoSection: React.FC = () => {
   return (
     <div className="py-8">
       {/* Advice Section */}
-      <div className="px-6 py-5 bg-white md:px-10">
+      <div className="px-6 py-5 bg-white md:p-10">
         <div className="flex flex-col items-center justify-around gap-6 md:flex-row">
           {/* First Div: Simple Ask */}
           <div className="flex flex-col items-center justify-center w-full mb-6 md:w-1/4 md:mb-0">
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
-              <h3 className="mb-6 text-xl font-semibold text-purple-700 md:mb-10">Simple Ask</h3>
+              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Simple Ask</h3>
               <p className="text-gray-600">
-                Get instant answers or connect with a mentor who can guide you further.
+              Get instant answers or connect with a mentor who can guide you further.
               </p>
             </div>
           </div>
@@ -21,21 +21,20 @@ const InfoSection: React.FC = () => {
           {/* Second Div: Heading, Problem & Solutions */}
           <div className="flex flex-col items-center justify-center w-full mb-6 md:w-1/3 md:mb-0">
             {/* Heading */}
-            <h2 className="mb-4 text-2xl font-bold text-center text-yellow-600 md:text-3xl md:mb-6">
+            <h2 className="mb-2 text-2xl font-bold text-center text-yellow-600 md:text-3xl md:mb-6">
               We're not just about advice
             </h2>
-            <p className="text-sm text-center text-gray-600 md:text-lg">
-              We're here to help you achieve your<br /> goals with tailored solutions and end-to-end support.
+            <p className="text-sm text-center text-gray-600 md:text-lg mb-8">
+            AskOxy.AI is more than just unlimited ChatGPT prompts. We're committed to helping you achieve your goals by enabling unlimited queries, assigning mentors, arranging funding, discussing tailored solutions, and providing end-to-end support.
             </p>
             {/* Added 'Click here to know more' */}
-            <a href="/" className="mb-6 text-blue-600 hover:underline md:mb-8">Click here to know more &gt;&gt;</a>
+          
 
             {/* Problem & Solutions */}
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
-              <h3 className="mb-6 text-xl font-semibold text-purple-700 md:mb-10">Problem & Solutions</h3>
+              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Effective Solve</h3>
               <p className="text-gray-600">
-                Get instant answers or connect with a mentor who can guide you further. We make it
-                easy to find the help you need.
+              We equip you with mentors, funding, and comprehensive platform solutions to overcome obstacles and progress seamlessly.
               </p>
             </div>
           </div>
@@ -43,9 +42,9 @@ const InfoSection: React.FC = () => {
           {/* Third Div: End-to-End Support */}
           <div className="flex flex-col items-center justify-center w-full mb-6 md:w-1/4 md:mb-0">
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
-              <h3 className="mb-6 text-xl font-semibold text-purple-700 md:mb-10">End-to-End Support</h3>
+              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Guaranteed Success</h3>
               <p className="text-gray-600">
-                Get instant answers or connect with a mentor who can guide you further.
+              Our end-to-end support ensures comprehensive backing for projects or companies with a clear vision and mission, complemented by Simple Ask and Effective Solve.
               </p>
             </div>
           </div>

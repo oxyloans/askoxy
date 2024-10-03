@@ -426,7 +426,7 @@ const HeroSection: React.FC = () => {
 /* For larger desktops (1440px and above) */
 @media (min-width: 1440px) {
   .heading {
-    font-size: 130px;
+    font-size: 125px;
   }
 
   .search-input {
@@ -536,12 +536,14 @@ const HeroSection: React.FC = () => {
   position: relative;
   width: calc(100% - 20px);
   flex: 3;
+  padding-inline: 60px;
 }
 
 /* Ensures div2 moves below div1 on mobile */
 @media (max-width: 767px) {
   .div2 {
     margin-top: 20px; /* Add space between div1 and div2 */
+    padding-inline: 10px;
   }
 }
 
