@@ -12,6 +12,7 @@ import { error } from 'console';
 import ChatHistory from './ChatHistory';
 import Example from './Example';
 import AuthorInfo from './AuthorInfo';
+import ModalComponent from './ModalComponent';
 
 
 interface ChatMessage {
@@ -357,7 +358,6 @@ const Normal = () => {
       <span className="text-[#ffa800]">.AI</span>
     </button>
 <div></div> 
-
     <div   
         className="sign-in-container"
         style={{
@@ -392,6 +392,7 @@ const Normal = () => {
       
         </div>
       </header>
+      <ModalComponent />
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
         <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">

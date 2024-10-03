@@ -88,7 +88,7 @@ const Login = () => {
                 setShowSuccessPopup(true);
                 setTimeout(() => {
                     setShowSuccessPopup(false);
-                    navigate('/'); // Navigate after 3 seconds
+                    navigate('/Normal'); // Navigate after 3 seconds
                 }, 2000);
             } else {
                 setOtpSession(data.mobileOtpSession);
