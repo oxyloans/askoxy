@@ -392,7 +392,7 @@ const Normal = () => {
       
         </div>
       </header>
-      <ModalComponent />
+      {/* <ModalComponent /> */}
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
         <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">
