@@ -28,6 +28,7 @@ const Header: React.FC = () => {
           borderRadius: '50px',
           backgroundColor: '#f9cc15',
           border: 'none',
+          margin:"10px"
         }}
       >
         ASKOXY.AI
@@ -57,7 +58,7 @@ const Header: React.FC = () => {
         style={{
           width: 'auto',
           height: 'auto',
-          backgroundColor: 'gray',
+          backgroundColor: '#726096',
           padding: '7px 20px',
           borderRadius: '50px',
           color: 'white',

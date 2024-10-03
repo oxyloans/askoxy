@@ -1,8 +1,32 @@
 // src/components/CombinedSections.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { FaSearch } from "react-icons/fa";  // Import the search icon
+import axios from 'axios';
 
 const InfoSection: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [response, setResponse] = useState('');
+
+ const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
+  const handleSearch = async () => {
+    if (query.trim() === '') {
+      alert('Please enter a valid question');
+      return;
+    }
+
+    try {
+      const result = await axios.post(
+        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${query}`
+      );
+      setResponse(result.data); // Assuming the response data you want is directly in `data`
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      alert('Something went wrong. Please try again later.');
+    }
+};
   return (
     <div className="py-8">
       {/* Advice Section */}
@@ -62,22 +86,83 @@ const InfoSection: React.FC = () => {
 
   <div className="flex items-center justify-center">
     {/* Icon and input grouped together */}
-    <div className="relative flex w-full sm:w-4/5 md:w-3/5 lg:w-2/5">
-      <input
-        type="text"
-        placeholder="Search..."
-        className="p-3 w-full rounded-[20px] focus:outline-none focus:ring-3 focus:ring-yellow-500 pr-10" // Add padding on the right for the icon
-      />
-      {/* Move the icon to the right */}
-      <FaSearch
-        className="absolute text-gray-400 transform -translate-y-1/2 right-5 top-1/2"
-        size={20}
-      />
+    <div className="search-placeholder1">
+              <div className="input-container">
+                <input
+                  type="text"
+                  placeholder="Ask any question..."
+                  className="search-input"
+                  value={query}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      // Trigger redirection when Enter is pressed
+                      window.location.href = `/normal?${query}`;
+                    }
+                  }}
+                />
+                <button
+                  className="search-button"
+                  onClick={() => {
+                    // Trigger redirection when the button is clicked
+                    window.location.href = `/normal?${query}`;
+                  }}
+                >
+                  <span className="search-icon icons">&#128269;</span> {/* Placeholder for Search Icon */}
+                </button>
+              </div>
+
+
+              {/* Optional: Display the API response */}
+              {/* {response && (
+    <div className="response-container">
+      <h3></h3>
+      <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown></p>
     </div>
+  )} */}
+            </div>
   </div>
 </div>
+<style>
+  {`.search-placeholder1 {
+      width: 50%;
+      padding: 0.4rem;
+      margin-top: 2.5rem;
+      background-color: rgba(255, 255, 255, 0.5);
+      border-radius: 1.5rem;
+      position: relative;
+  }
+
+  /* Media query for smaller screens (e.g., mobile devices) */
+  @media (max-width: 768px) {
+      .search-placeholder1 {
+          width: 80%; /* Adjust width for smaller screens */
+          padding: 0.5rem; /* Slightly larger padding for better touch interaction */
+          margin-top: 1.5rem; /* Reduce top margin */
+          border-radius: 1rem; /* Adjust border-radius */
+      }
+  }
+
+  /* Media query for very small screens (e.g., mobile phones in portrait) */
+  @media (max-width: 480px) {
+      .search-placeholder1 {
+          width: 90%; /* Full width for very small screens */
+          padding: 0.6rem; /* More padding for better usability */
+          margin-top: 1rem; /* Further reduce top margin */
+          border-radius: 0.75rem; /* More rounded corners */
+      }
+  }
+      @media (max-width: 480px) {
+    .search-icon {
+        font-size: 1rem;
+        top: 30px;
+    }
+}
+  `}
+</style>
 
     </div>
+
   );
 };
 
