@@ -143,6 +143,7 @@ const HeroSection: React.FC = () => {
 
       <div className="div1">
   <div className="inner-flex">
+   <h2 className='Unlmt'>Unlimited ChatGPT Prompts</h2>
     <h1 className="heading">
       <span>Ask</span> <br />
       <span className="text-yellow">Solve</span><br />
@@ -648,7 +649,18 @@ const HeroSection: React.FC = () => {
     opacity: 0;
   }
 }
+.Unlmt{
+align-self: flex-start;
+    border-width: 2px;
+    // background-color: #f9cc15;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom:10px;
+    color:#f9cc15;
+    font-weight: bold;
+    border-color:#f9cc15
 
+    }
       `}</style>
     </section>
   );
