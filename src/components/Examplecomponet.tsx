@@ -19,7 +19,7 @@ interface ChatMessage {
   content: string;
 }
 
-const Normal = () => {
+const Examplecomponet = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>('');
@@ -618,4 +618,4 @@ const Normal = () => {
   );
 };
 
-export default Normal;
+export default Examplecomponet;

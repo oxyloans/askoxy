@@ -381,7 +381,7 @@ const Erice = () => {
                 ) : (
                   <>
                     {/* Render Questions followed by their corresponding Answers */}
-                    {questions.slice(0).reverse().map((question, index) => (
+                    {questions.map((question, index) => (
                       <React.Fragment key={index}>
                         <div
                           className={`chat-bubble p-2 rounded-lg text-black mb-2 self-start bg-blue-200`}
