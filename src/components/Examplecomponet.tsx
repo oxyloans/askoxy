@@ -1,227 +1,36 @@
 import React, { useEffect, useState, useRef } from 'react';
-import Image1 from '../assets/img/AD1 (1).jpg';
-import Image2 from '../assets/img/AD2.jpg';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
-import './erice.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import B1 from '../assets/img/B1.jpg';
-import B2 from '../assets/img/B2.jpg';
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
-import { error } from 'console';
-import ChatHistory from './ChatHistory';
-import Example from './Example';
-import AuthorInfo from './AuthorInfo';
-
+import './erice.css';
 
 interface ChatMessage {
   type: 'question' | 'answer';
   content: string;
 }
 
-const Examplecomponet = () => {
-  const [isEditing, setIsEditing] = useState(false);
+const ExampleComponent = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
-  const [questionCount, setQuestionCount] = useState<number>(0);
-
-
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showSendButton, setShowSendButton] = useState(false);
-  const [chathistory  , setchathistory]=useState([])
-  const [riceTopicsshow , setriceTopicsshow] = useState(true)
-  const [showStaticBubbles, setShowStaticBubbles] = useState(true);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [isReading, setIsReading] = useState(false);
-  const histary = useNavigate()
-  const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
-  const bottomRef = useRef<HTMLDivElement | null>(null);  
-
-  // New State for History
   const [history, setHistory] = useState<string[]>([]);
+  const [questionCount, setQuestionCount] = useState(0);
 
-  // Load history from localStorage on component mount
-  
-  useEffect(() => {
-    const storedHistory = localStorage.getItem('chatHistory');
-    if (storedHistory) {
-      setHistory(JSON.parse(storedHistory));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-  
-  // Save history to localStorage whenever it changes
-
-  const handleScroll = () => {
-    if (bottomRef.current) {
-      const { scrollTop, clientHeight, scrollHeight } = bottomRef.current.parentElement!;
-      setIsAtBottom(scrollTop + clientHeight >= scrollHeight); // Check if the user is at the bottom
-    }
-  };
-  useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(history));
-  }, [history]);
-
-  
-  // Toggle edit state
-  const handleEditClick = () => {
-    setIsEditing(isEditing);
-  };
-
-
-
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-
-
-
-
-
-    let queryString = window.location.search;
-  useEffect(() => {
-
-
-  
-    
-// Remove the first "?" from the string
-  const result = queryString.replace('?', '').replace(/%20/g, ' ');
-    console.log(result); // Output: "data"
-
-    const handleSend = async (queryInput: string) => {
-  
-    if (queryInput.trim() === '') return;
-
-    // Add the user's question to the chat
-    setMessages(prev => [...prev, { type: 'question', content: queryInput }]);
-
-    // Save the query to history
-    setHistory(prevHistory => [queryInput, ...prevHistory]);
-
-    setInput('');
-    setIsLoading(true);
-    setQuestionCount(prevCount => prevCount + 1); // Increment question count
-
-    try {    
-      // Make API request to the specified endpoint
-      setriceTopicsshow(false)
-      const response = await axios.post(
-        
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
-      );
-
-      // Process the API response and update the chat
-      setMessages(prev => [...prev, { type: 'answer', content: response.data }]);
-    } catch (error) {
-      console.error('Error fetching response:', error);
-      setMessages(prev => [
-        ...prev,
-        { type: 'answer', content: 'Sorry, there was an error. Please try again later.' },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-    };
-    handleSend(result);
-    
-  },[queryString])
-  // Handle image enlargement
-  const handleImageClick = (image: string) => {
-    setEnlargedImage(image);
-  };
-
-
-  
-  // useEffect(() => {
-  //   const response = axios.get("http://65.0.147.157:9001/api/student-service/user/queries");
-  //   response.then((data) => {
-  //     console.log(data)
-  //     if (data.status === 200) {
-  //       console.log(data.data)
-  //       setchathistory(data.data)
-  //     }
-      
-  //   }).catch((error) => {
-  //     console.log(error)
-  //   })
-  
-  // },[])
-  useEffect(() => {
-   const islogin= localStorage.getItem("userId")
-    if (questionCount > 3) {
-      if (islogin) {
-        
-      } else {
-        histary("/login")
-      }
-    }
-  },[questionCount])
-
-
-  const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content);
-    alert('Message copied to clipboard!');
-  };
-
-  const handleReadAloud = (content: string) => {
-    window.speechSynthesis.cancel(); // Stop any ongoing speech before starting
-    const utterance = new SpeechSynthesisUtterance(content);
-    window.speechSynthesis.speak(utterance);
-    setIsReading(true); // Set reading state to true
-
-    // When speech ends, set isReading to false
-    utterance.onend = () => {
-      setIsReading(false);
-    };
-  };
-
-  const handleStopReadAloud = () => {
-    window.speechSynthesis.cancel(); // Stop any ongoing speech
-    setIsReading(false); // Set reading state to false
-  };
-
-  const handleShare = (content: string) => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Chat Message',
-        text: content,
-        url: window.location.href,
-      }).catch(error => console.error('Error sharing:', error));
-    } else {
-      alert('Share functionality is not supported on this device.');
-    }
-  };
-
+  const inputRef = useRef<HTMLInputElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const location = useLocation();
-  const query = new URLSearchParams(location.search).get('search') || '';
 
-  useEffect(() => {
-    if (query) {
-      handleSend(query);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
+  // Load chat history on component mount
   useEffect(() => {
     const storedHistory = localStorage.getItem('chatHistory');
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory));
     }
   }, []);
-
-  // Save history to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(history));
-  }, [history]);
 
   // Scroll to the bottom when messages change
   useEffect(() => {
@@ -230,392 +39,143 @@ const Examplecomponet = () => {
     }
   }, [messages]);
 
-  const handleSend = async (queryInput: string) => {
-    if (queryInput.trim() === '') return;
+  // Save chat history
+  useEffect(() => {
+    localStorage.setItem('chatHistory', JSON.stringify(history));
+  }, [history]);
 
-    setMessages(prev => [...prev, { type: 'question', content: queryInput }]);
-    setHistory(prevHistory => [queryInput, ...prevHistory]);
+  // Handle sending a message
+  const handleSend = async (queryInput: string) => {
+    if (!queryInput.trim()) return;
+    setMessages((prev) => [...prev, { type: 'question', content: queryInput }]);
+    setHistory((prev) => [queryInput, ...prev]);
     setInput('');
     setIsLoading(true);
-    setQuestionCount(prevCount => prevCount + 1); // Increment question count
+    setQuestionCount((prev) => prev + 1);
 
     try {
-      const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
-      );
-
-      // Add the API response to chat
-      setMessages(prev => [...prev, { type: 'answer', content: response.data }]);
+      const response = await axios.post(`https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`);
+      setMessages((prev) => [...prev, { type: 'answer', content: response.data }]);
     } catch (error) {
-      console.error('Error fetching response:', error);
-      setMessages(prev => [
-        ...prev,
-        { type: 'answer', content: 'Sorry, there was an error. Please try again later.' },
-      ]);
+      setMessages((prev) => [...prev, { type: 'answer', content: 'Sorry, there was an error. Please try again later.' }]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle input change and visibility of the send button
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    setShowSendButton(e.target.value.trim() !== '');
+  };
+
+  // Handle 'Enter' keypress to send message
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
-      e.preventDefault(); // Prevent default Enter key behavior
       handleSend(input);
     }
   };
 
-  const handleInputChangeWithVisibility = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInput(value); // Update input value
-    setShowSendButton(value.trim() !== '');
-    if (showStaticBubbles && value.trim() !== '') {
-      setShowStaticBubbles(false);
+  // Read aloud the answer
+  const handleReadAloud = (content: string) => {
+    const utterance = new SpeechSynthesisUtterance(content);
+    window.speechSynthesis.speak(utterance);
+    setIsReading(true);
+    utterance.onend = () => setIsReading(false);
+  };
+
+  // Copy message to clipboard
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    alert('Message copied to clipboard!');
+  };
+
+  // Share the message
+  const handleShare = (content: string) => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Chat Message',
+        text: content,
+        url: window.location.href,
+      }).catch((error) => console.error('Error sharing:', error));
+    } else {
+      alert('Share functionality is not supported on this device.');
     }
   };
 
-
-
-
-  // Dummy data for rice-related topics
-  const riceTopics = [
-    { id: 1, title: 'Ask questions', content: 'Discover tips on how to develop sustainable and healthy eating patterns.' },
-    { id: 1, title: 'Ask membership', content: 'Stay updated with the latest blockbusters and independent films hitting the theaters.' },
-    { id: 3, title: 'Ask for funds', content: 'Find out how to compare products and read reviews before making an online purchase.' },
-    { id: 4, title: 'Ask for end-to-end solution', content: 'Understand different shipping methods and how to track your online orders.' },
-  ];
-
-
-
-  // Handle click on static chat bubble
-  const handleBubbleClick = (content: string) => {
- 
-    console.log('Bubble clicked:', content); // Debugging log
-    setInput(content); // Set input value when a bubble is clicked
-    setShowStaticBubbles(false); // Hide static bubbles after click
-    setShowSendButton(true); // Show send button
-    if (inputRef.current) {
-      inputRef.current.focus(); // Focus the input field
+  // Handle user redirection after 3 questions if not logged in
+  useEffect(() => {
+    const isLogin = localStorage.getItem('userId');
+    if (questionCount > 3 && !isLogin) {
+      navigate('/login');
     }
-  };
+  }, [questionCount, navigate]);
 
-  // Handle new chat click
-  const handleNewChatClick = () => {
-    setMessages([]); // Clear the messages
-    setShowStaticBubbles(true); // Show the static chat bubbles
-    if (inputRef.current) {
-      inputRef.current.value = ''; // Clear the input field
-      setShowSendButton(false); // Hide the send button
-    }
-  };
-
-  // Handle history item click
-  const handleHistoryItemClick = (historyItem: string) => {
-    setInput(historyItem); // Set input to the history item
-    setShowSendButton(true); // Show send button
-    setShowStaticBubbles(false); // Hide static bubbles
-    if (inputRef.current) {
-      inputRef.current.focus(); // Focus the input field
-    }
-  };
-
-  // Handle deleting a history item
-  const handleDeleteHistoryItem = (index: number) => {
-    setHistory(prevHistory => prevHistory.filter((_, i) => i !== index));
-  };
-
-
-  const questions = messages.filter((msg) => msg.type === 'question');
-  const answers = messages.filter((msg) => msg.type === 'answer');
-
-  const imageData = [
-    {
-      oxyLoans: Image1,
-      link: 'https://oxyloans.com/login',
-    },
-    {
-      oxyLoans: Image2,
-      link: 'https://erice.in/',
-    },
-  ];
-
-  const navigate = useNavigate(); // Initialize navigate function
-
-  // Function to handle the click event
-  const handleRedirect = () => {
-    navigate('/'); // Redirect to the login page
-  };
   return (
-    <div className="min-h-screen bg-[#351664] text-white flex flex-col">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
-        {/* Logo with Icon */}
-        <button
-      className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-      onClick={handleRedirect}
-    >
-      <span className="text-white">ASKOXY</span>
-      <span className="text-[#ffa800]">.AI</span>
-    </button>
-<div></div> 
-
-    <div   
-        className="sign-in-container"
-        style={{
-          width: 'auto',
-          height: 'auto',
-          backgroundColor: 'gray',
-          padding: '7px 20px',
-          borderRadius: '50px',
-          color: 'white',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          position:'absolute',
-          right:'5rem'
-        }}
-      >
-        {/* SignIn button with redirection functionality */}
-
-        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
-          SignOut
-        </button>
-      </div>
-
-        {/* SignIn/SignUp Buttons */}
-        <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
-
-        <AuthorInfo
-        name="A"
-        location="New York"
-        email="john.doe@example.com"
-        avatarUrl="https://via.placeholder.com/150" // Optional, can be null or undefined
-      />   
-      
-        </div>
-      </header>
-      <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
-        {/* Combined Left, Center, and Right Panel */}
-        <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">
-          {/* Left Panel */}
-          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 sidebar11">
-            <div className="flex items-center justify-between mt-4 mb-4 font-bold">
-              <button onClick={handleEditClick} className="p-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5 text-[#351664]"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
-                  />
-                </svg>
-              </button>
-              <span className="flex-1 text-center">History</span>
-              <button onClick={handleNewChatClick} className="p-1 rounded-md" title="New Chat" >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5 text-[#351664]"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-
-              </button>
-            </div>
-            {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
-
-            {/* History List */}
-        <ChatHistory />
-          </aside>
-
-          {/* Center Panel */}
-          <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-      {/* Static Rice Related Text */}
-      {showStaticBubbles && (
-  <div className="absolute inset-0 flex items-center justify-center p-4">
-    <div className="grid grid-cols-2 gap-4 max-h-60 overflow-y-auto"> {/* Add max-height and overflow */}
-      {riceTopicsshow && (
-        <>
-          {riceTopics.map(topic => (
-            <div
-              key={topic.id}
-              className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
-              style={{
-                wordWrap: 'break-word',
-                zIndex: '10'
-              }}
-              onClick={() => { handleBubbleClick(topic.title); setInput(topic.title) }}
-            >
-              <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
-            </div>
-          ))}
-        </>
-      )}
-    </div>
-  </div>
-)}
-
-
-      {/* Chat messages */}
-      <div
-      className="relative flex-grow p-2 overflow-y-auto chat-container"
-      style={{ maxHeight: 'calc(100vh - 12rem)' }}
-    >
-      <div>
-      {isLoading ? (
-        <div className="flex items-center justify-center h-24">
-          <Example variant="loading01" />
-        </div>
-      ) : (
-        <>
-          {/* Render Questions followed by their corresponding Answers */}
-          {questions.map((question, index) => (
-            <React.Fragment key={index}>
-              <div
-                className={`chat-bubble p-2 rounded-lg text-black mb-2 self-start bg-blue-200`}
-                style={{
-                  maxWidth: '50%',
-                  wordWrap: 'break-word',
-                  float: 'left',
-                  clear: 'both',
-                }}
-                onClick={() => handleBubbleClick(question.content)}
-              >
-                <ReactMarkdown>{question.content}</ReactMarkdown>
-                <div className="flex mt-2 space-x-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCopy(question.content);
-                    }}
-                    className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
-                    title="Copy"
-                  >
-                    <FaRegCopy className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      isReading ? handleStopReadAloud() : handleReadAloud(question.content);
-                    }}
-                    className={`${
-                      isReading
-                        ? 'text-red-600 hover:text-red-800 bg-red-200'
-                        : 'text-blue-600 hover:text-blue-800 bg-blue-200'
-                    } bg-white rounded-full p-1 ml-2`}
-                    title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
-                  >
-                    {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShare(question.content);
-                    }}
-                    className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
-                    title="Share"
-                  >
-                    <FaShareAlt className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              {/* Render the corresponding answer below the question */}
-              {answers[index] && (
-                <div
-                  className={`chat-bubble p-2 rounded-lg text-black mb-2 self-end bg-green-200`}
-                  style={{
-                    maxWidth: '80%',
-                    wordWrap: 'break-word',
-                    float: 'right',
-                    clear: 'both',
-                  }}
-                  onClick={() => handleBubbleClick(answers[index].content)}
-                >
-                  <ReactMarkdown>{answers[index].content}</ReactMarkdown>
-                  <div className="flex mt-2 space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopy(answers[index].content);
-                      }}
-                      className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
-                      title="Copy"
-                    >
-                      <FaRegCopy className="w-4 h-4" />
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      <div className="flex-1 flex overflow-hidden">
+        <div className="hidden lg:block lg:w-64 bg-gray-200 p-4"> {/* Sidebar content */} </div>
+        <div className="flex-1 p-4 overflow-auto">
+          <h1 className="text-3xl font-bold mb-4">Chat with us!</h1>
+          <div className="grid grid-cols-8 gap-4">
+            {messages.map((message, index) => (
+              <div key={index} className={`col-span-8 mb-4 p-2 rounded-md ${message.type === 'question' ? 'bg-blue-200 col-span-5' : 'bg-green-200 col-span-6'}`}>
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                {message.type === 'answer' && (
+                  <div className="mt-2">
+                    <button className="mr-2" onClick={() => handleCopy(message.content)}>
+                      <FaRegCopy />
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        isReading ? handleStopReadAloud() : handleReadAloud(answers[index].content);
-                      }}
-                      className={`${
-                        isReading
-                          ? 'text-red-600 hover:text-red-800 bg-red-200'
-                          : 'text-blue-600 hover:text-blue-800 bg-blue-200'
-                      } bg-white rounded-full p-1 ml-2`}
-                      title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
-                    >
-                      {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShare(answers[index].content);
-                      }}
-                      className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
-                      title="Share"
-                    >
-                      <FaShareAlt className="w-4 h-4" />
+                    {isReading ? (
+                      <button className="mr-2" onClick={() => window.speechSynthesis.cancel()}>
+                        <FaVolumeOff />
+                      </button>
+                    ) : (
+                      <button className="mr-2" onClick={() => handleReadAloud(message.content)}>
+                        <FaVolumeUp />
+                      </button>
+                    )}
+                    <button onClick={() => handleShare(message.content)}>
+                      <FaShareAlt />
                     </button>
                   </div>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </>
-      )}
-      </div>
-      <div ref={bottomRef} /> {/* This ref will be used to scroll to the bottom */}
-    </div>
-      {/* Input Bar */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={handleInputChangeWithVisibility}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask questions..."
-          className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
-        />
-        {showSendButton && (
-          <button
-            onClick={() => handleSend(input)}
-            className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Sending...' : 'Send'}
-          </button>
-        )}
-      </div>
-    </section>
+                )}
+              </div>
+            ))}
 
-
-          {/* Right Panel */}
-  
+{messages.map((message, index) => (
+  <div
+    key={index}
+    className={`col-span-8 mb-4 p-2 rounded-md ${
+      message.type === 'question' ? 'bg-blue-200 col-span-4' : 'bg-green-200 col-span-4'
+    }`}
+  >
+    <p>{message.content}</p>
+  </div>
+))}
+          </div>
+          {/* Input Field */}
+          <div className="mt-4 flex">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              className="flex-1 p-2 border rounded-md"
+              placeholder="Type your message here..."
+            />
+            {showSendButton && (
+              <button onClick={() => handleSend(input)} disabled={isLoading} className="ml-2 p-2 bg-blue-500 text-white rounded-md">
+                {isLoading ? 'Sending...' : 'Send'}
+              </button>
+            )}
+          </div>
+          <div ref={bottomRef} />
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
-export default Examplecomponet;
+export default ExampleComponent;

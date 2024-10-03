@@ -26,9 +26,9 @@ const Landingpage: React.FC = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section>
+      {/* <section>
         <Testimonials />
-      </section>
+      </section> */}
 
       {/* Footer Section */}
       <footer>

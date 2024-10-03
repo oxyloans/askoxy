@@ -374,116 +374,63 @@ const Erice = () => {
               style={{ maxHeight: 'calc(100vh - 12rem)' }}
             >
               <div>
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-24">
-                    <Example variant="loading01" />
-                  </div>
-                ) : (
-                  <>
-                    {/* Render Questions followed by their corresponding Answers */}
-                    {questions.map((question, index) => (
-                      <React.Fragment key={index}>
-                        <div
-                          className={`chat-bubble p-2 rounded-lg text-black mb-2 self-start bg-blue-200`}
-                          style={{
-                            maxWidth: '50%',
-                            wordWrap: 'break-word',
-                            float: 'left',
-                            clear: 'both',
-                          }}
-                          onClick={() => handleBubbleClick(question.content)}
-                        >
-                          <ReactMarkdown>{question.content}</ReactMarkdown>
-                          <div className="flex mt-2 space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCopy(question.content);
-                              }}
-                              className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
-                              title="Copy"
-                            >
-                              <FaRegCopy className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                isReading ? handleStopReadAloud() : handleReadAloud(question.content);
-                              }}
-                              className={`${isReading
-                                  ? 'text-red-600 hover:text-red-800 bg-red-200'
-                                  : 'text-blue-600 hover:text-blue-800 bg-blue-200'
-                                } bg-white rounded-full p-1 ml-2`}
-                              title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
-                            >
-                              {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleShare(question.content);
-                              }}
-                              className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
-                              title="Share"
-                            >
-                              <FaShareAlt className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                        {/* Render the corresponding answer below the question */}
-                        {answers[index] && (
-                          <div
-                            className={`chat-bubble p-2 rounded-lg text-black mb-2 self-end bg-green-200`}
-                            style={{
-                              maxWidth: '80%',
-                              wordWrap: 'break-word',
-                              float: 'right',
-                              clear: 'both',
-                            }}
-                            onClick={() => handleBubbleClick(answers[index].content)}
-                          >
-                            <ReactMarkdown>{answers[index].content}</ReactMarkdown>
-                            <div className="flex mt-2 space-x-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCopy(answers[index].content);
-                                }}
-                                className="p-1 text-gray-700 bg-white rounded-full hover:text-gray-900 hover:bg-gray-200"
-                                title="Copy"
-                              >
-                                <FaRegCopy className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  isReading ? handleStopReadAloud() : handleReadAloud(answers[index].content);
-                                }}
-                                className={`${isReading
-                                    ? 'text-red-600 hover:text-red-800 bg-red-200'
-                                    : 'text-blue-600 hover:text-blue-800 bg-blue-200'
-                                  } bg-white rounded-full p-1 ml-2`}
-                                title={isReading ? 'Stop Read Aloud' : 'Read Aloud'}
-                              >
-                                {isReading ? <FaVolumeOff className="w-4 h-4" /> : <FaVolumeUp className="w-4 h-4" />}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleShare(answers[index].content);
-                                }}
-                                className="p-1 text-green-600 bg-white rounded-full hover:text-green-800 hover:bg-green-200"
-                                title="Share"
-                              >
-                                <FaShareAlt className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </>
-                )} <div ref={bottomRef} />
+              {isLoading ? (
+  <div className="flex items-center justify-center h-24">
+    <Example variant="loading01" />
+  </div>
+) : (
+  <>
+    {/* Render Questions followed by their corresponding Answers */}
+    {messages.map((message, index) => (
+  <div 
+    key={index} 
+    className={`col-span-8 mb-6 p-3 rounded-md ${message.type === 'question' ? 'bg-blue-200 col-span-3 text-black' : 'bg-green-200 col-span-5 text-black'}`}
+  >
+    <ReactMarkdown>{message.content}</ReactMarkdown>
+    <div className="mt-2 flex space-x-1">
+      {/* Copy Button */}
+      <button 
+        className="mr bg-white p-2" 
+        onClick={() => handleCopy(message.content)}
+        title="Copy"
+      >
+        <FaRegCopy />
+      </button>
+
+      {/* Speaker (Read Aloud) Button */}
+      {isReading ? (
+        <button 
+          className="mr bg-white p-2" 
+          onClick={() => window.speechSynthesis.cancel()}
+          title="Stop Read Aloud"
+        >
+          <FaVolumeOff />
+        </button>
+        
+      ) : (
+        <button 
+          className="mr bg-white p-2" 
+          onClick={() => handleReadAloud(message.content)}
+          title="Read Aloud"
+        >
+          <FaVolumeUp />
+        </button>
+      )}
+
+      {/* Share Button */}
+      <button  
+       className="mr bg-white p-2" 
+        onClick={() => handleShare(message.content)} 
+        title="Share"
+      >
+        <FaShareAlt />
+      </button>
+    </div>
+  </div>
+))}
+
+  </>
+)} <div ref={bottomRef} />
               </div>
 </div>
               {/* Input Bar */}
