@@ -161,8 +161,7 @@ const Normal = () => {
       // Make API request to the specified endpoint
       setriceTopicsshow(false)
       const response = await axios.post(
-        
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
+  `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
       );
 
       // Process the API response and update the chat

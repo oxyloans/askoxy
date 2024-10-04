@@ -16,14 +16,14 @@ function ChatHistory() {
   useEffect(() => {
     const fetchChatHistory = async () => {
       const userId = localStorage.getItem("userId");
-      const apiurl = userId
+      const apiurl = userId  !== null
       ? `https://meta.oxyloans.com/api/student-service/user/queries?userId=${userId}`
-      : ``;
+      : `https://meta.oxyloans.com/api/student-service/user/queries`;
       try {
         const response = await axios.get(apiurl);
         if (response.status === 200) {
           console.log(response.data);
-          setChatHistory(response.data);
+          setChatHistory(response.data); 
         }
       } catch (error) {
         console.error("Error fetching chat history:", error);
