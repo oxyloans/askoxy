@@ -142,7 +142,7 @@ const HeroSection: React.FC = () => {
   
 
       <div className="div1">
-  <div className="inner-flex">
+  <div className="inner-flex"  style={{marginTop:'4rem'}}>
    <h2 className='Unlmt'>Unlimited ChatGPT Prompts</h2>
     <h1 className="heading">
       <span>Ask</span> <br />

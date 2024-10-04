@@ -242,7 +242,7 @@ const Normal = () => {
 
     try {
       const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
+        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`
       );
 
       // Add the API response to chat
