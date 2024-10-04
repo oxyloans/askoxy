@@ -18,7 +18,7 @@ function ChatHistory() {
       const userId = localStorage.getItem("userId");
       const apiurl = userId
       ? `https://meta.oxyloans.com/api/student-service/user/queries?userId=${userId}`
-      : `https://meta.oxyloans.com/api/student-service/user/queries`;
+      : ``;
       try {
         const response = await axios.get(apiurl);
         if (response.status === 200) {

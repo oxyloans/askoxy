@@ -76,7 +76,7 @@ const Normal = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    const userId = "8cf7ff5b-c357-48da-a240-35a1a8345e1c";
+    const userId = localStorage.getItem("userId");
     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
 
     axios.get(apiUrl)
@@ -488,7 +488,7 @@ const Normal = () => {
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
       {/* Static Rice Related Text */}
       <h1 className='fw-500' style={{ zIndex: '10', color: 'black', fontWeight: '600' }}>
-  Welcome {profileData ? `${profileData.firstName} ${profileData.lastName}` : 'Guest'}
+      Welcome {profileData ? `    ${profileData.firstName} ${profileData.lastName}` : 'Guest'}
 </h1>
 
 

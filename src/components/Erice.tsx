@@ -185,10 +185,15 @@ const Erice = () => {
     setQuestionCount(prevCount => prevCount + 1); // Increment question count
 
     try {
+      const userId = localStorage.getItem("userId");
+      const apiurl = userId
+      ? `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
+      : `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}`;
       // Make API request to the specified endpoint
       const response = await axios.post(
-        // `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
-        `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
+        // // `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
+        // `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}`
+        apiurl
       );
 
       // Process the API response and update the chat
@@ -389,6 +394,9 @@ const Erice = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
+          <h1 className='fw-500' style={{ zIndex: '10', color: 'black', fontWeight: '600' }}>
+          Welcome {profileData ? `    ${profileData.firstName} ${profileData.lastName}` : 'Guest'}
+</h1>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
               <div className="absolute inset-0 flex items-center justify-center p-4">

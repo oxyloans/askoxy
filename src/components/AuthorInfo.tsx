@@ -66,9 +66,9 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, avatarUr
               <h4 className="text-lg font-bold text-gray-800">
                 UserId: {localStorage.getItem("userId")?.slice(-5)}
               </h4>
-              <p className="text-md text-gray-600"> {name}</p>
-              <p className="text-md text-gray-600">Location: {location}</p>
-              <p className="text-md text-gray-600">{email}</p>
+             {name && <><p className="text-md text-gray-600"> {name}</p></>} 
+                {name && <><p className="text-md text-gray-600">Location: {location}</p></>}
+                {name && <><p className="text-md text-gray-600">{email}</p></>}
              <Link to="/Examplecomponet"><button
   className="bg-blue-500 text-white py-1 px-2 rounded-full text-xs"
   style={{ width: '4rem' }}
