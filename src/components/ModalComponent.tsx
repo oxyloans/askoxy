@@ -88,9 +88,7 @@ const ModalComponent: React.FC = () => {
     setError(''); // Reset error state
     try {
       const response = await axios.post('http://65.0.147.157:9000/api/auth-service/auth/verifyWhatsappOtp', {
-        "chatId": mobileNumber,
-        "id": localStorage.getItem("userId"),
-        "message": "string",
+        "id": "005c9bb8-8a7b-46b4-ad75-eb17539a87d7",
         "whatsappOtp": otp,
       });
 
@@ -108,9 +106,12 @@ const ModalComponent: React.FC = () => {
     setError(''); // Reset error state
     try {
       const response = await axios.post('http://65.0.147.157:9000/api/auth-service/auth/verifyEmailOtp', {
-        email: email,
+        // email: email,
+        // emailOtp: otp,
+        // emailOtpSession: localStorage.getItem("emailOtpSession"),
         emailOtp: otp,
         emailOtpSession: localStorage.getItem("emailOtpSession"),
+        userId: "005c9bb8-8a7b-46b4-ad75-eb17539a87d7",
       });
 
       if (response.status === 200) {

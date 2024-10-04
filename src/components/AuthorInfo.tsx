@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 interface AuthorInfoProps {
   name: string;
@@ -52,7 +53,7 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, avatarUr
             {/* Author's Avatar */}
             {avatarUrl ? (
               <img
-                src={avatarUrl}
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6V1NHpqrmEQH_NYts3Lp1X6g4MWRRLH_1gg&s"
                 alt="Author Avatar"
                 className="w-12 h-12 rounded-full"
               />
@@ -65,8 +66,16 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, avatarUr
               <h4 className="text-lg font-bold text-gray-800">
                 UserId: {localStorage.getItem("userId")?.slice(-5)}
               </h4>
-              {/* <p className="text-sm text-gray-600">Location: {location}</p>
-              <p className="text-sm text-gray-600">{email}</p> */}
+              <p className="text-md text-gray-600"> {name}</p>
+              <p className="text-md text-gray-600">Location: {location}</p>
+              <p className="text-md text-gray-600">{email}</p>
+             <Link to="/Examplecomponet"><button
+  className="bg-blue-500 text-white py-1 px-2 rounded-full text-xs"
+  style={{ width: '4rem' }}
+>
+  Edit
+</button></Link> 
+
             </div>
           </div>
         </div>

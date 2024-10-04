@@ -14,12 +14,13 @@ function ChatHistory() {
   const [chathistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
 
   useEffect(() => {
-    // Fetch data from the API using axios
     const fetchChatHistory = async () => {
+      const userId = localStorage.getItem("userId");
+      const apiurl = userId
+      ? `https://meta.oxyloans.com/api/student-service/user/queries?userId=${userId}`
+      : `https://meta.oxyloans.com/api/student-service/user/queries`;
       try {
-        const response = await axios.get(
-          "https://meta.oxyloans.com/api/student-service/user/queries"
-        );
+        const response = await axios.get(apiurl);
         if (response.status === 200) {
           console.log(response.data);
           setChatHistory(response.data);
@@ -30,7 +31,7 @@ function ChatHistory() {
     };
 
     fetchChatHistory(); // Invoke the API call
-  }, []); // Empty dependency array to run once on component mount
+  }, []);// Empty dependency array to run once on component mount
 
   return (
     <div className="mt-4 overflow-y-auto max-h-80">

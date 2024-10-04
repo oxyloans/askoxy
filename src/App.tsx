@@ -6,6 +6,8 @@ import Login from './components/login';
 import Normal from './components/Normal';
 import Example from './components/Example';
 import Examplecomponet from './components/Examplecomponet';
+import UserProfileModel from './components/models/ProfileCallPage';
+import ProfileCallPage from './components/models/ProfileCallPage';
 
 
 function App() {
@@ -18,7 +20,8 @@ function App() {
           <Route path="/login" element={<Login />} />
            <Route path="/normal" element={<Normal />} />
            <Route path="/Example" element={<Example variant="loading01" />} />
-           <Route path='/Examplecomponet'    element={<Examplecomponet />}  />
+           <Route path='/Examplecomponet'    element={<Examplecomponet />}  />  <Route path='/UserProfileModel'    element={<ProfileCallPage />}  />
+           
            
         </Routes>
       </div>

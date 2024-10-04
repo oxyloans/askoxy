@@ -35,6 +35,31 @@ interface ChatProps {
   handleShare: (content: string) => void;
 }
 
+interface ProfileData {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobileNumber: string;
+  gender: string;
+  dob: string | null;
+  address: string | null;
+  city: string | null;
+  pinCode: string | null;
+  consent: string | null;
+  message: string | null;
+  organization: string | null;
+  designation: string | null;
+  educationDetailsModelList: null;
+  state: string | null;
+  country: string | null;
+  nationality: string | null;
+  emailVerified: boolean;
+  panVerified: boolean | null;
+  whatsappVerified: boolean | null;
+  name:string|null
+}
+
 
 const Erice = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +78,23 @@ const Erice = () => {
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
 
+
+
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    const userId =   localStorage.getItem("userId")
+    const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
+
+    axios.get(apiUrl)
+      .then(response => {
+        console.log(response.data);
+        setProfileData(response.data); // Set the profile data to state
+      })
+      .catch(error => {
+        console.error('There was an error making the request:', error);
+      });
+  }, []);
   // Load history from localStorage on component mount
   useEffect(() => {
     const storedHistory = localStorage.getItem('chatHistory');
@@ -293,12 +335,13 @@ const Erice = () => {
         </div>
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
 
-          <AuthorInfo
-            name="A"
-            location="New York"
-            email="john.doe@example.com"
-            avatarUrl="https://via.placeholder.com/150" // Optional, can be null or undefined
-          />
+        
+        <AuthorInfo
+  name={`${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()} // Combines first and last name, falls back to empty string if either is undefined
+  location={profileData?.city || 'Unknown'} // Falls back to 'Unknown' if city is null or undefined
+  email={profileData?.email || 'No email available'} // Falls back to a default if email is not provided
+  avatarUrl="https://via.placeholder.com/150"// Optional, falls back to placeholder image
+/>
         </div>
       </header>
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">

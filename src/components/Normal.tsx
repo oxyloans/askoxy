@@ -13,12 +13,39 @@ import ChatHistory from './ChatHistory';
 import Example from './Example';
 import AuthorInfo from './AuthorInfo';
 import ModalComponent from './ModalComponent';
+import ProfileCallPage from './models/ProfileCallPage';
 
 
 interface ChatMessage {
   type: 'question' | 'answer';
   content: string;
 }
+
+interface ProfileData {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobileNumber: string;
+  gender: string;
+  dob: string | null;
+  address: string | null;
+  city: string | null;
+  pinCode: string | null;
+  consent: string | null;
+  message: string | null;
+  organization: string | null;
+  designation: string | null;
+  educationDetailsModelList: null;
+  state: string | null;
+  country: string | null;
+  nationality: string | null;
+  emailVerified: boolean;
+  panVerified: boolean | null;
+  whatsappVerified: boolean | null;
+  name:string|null
+}
+
 
 const Normal = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -38,12 +65,30 @@ const Normal = () => {
   const histary = useNavigate()
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
   const bottomRef = useRef<HTMLDivElement | null>(null);  
+  const [profiledata , setprofiledata]=useState({})
 
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
 
   // Load history from localStorage on component mount
   
+
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    const userId = "8cf7ff5b-c357-48da-a240-35a1a8345e1c";
+    const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
+
+    axios.get(apiUrl)
+      .then(response => {
+        console.log(response.data);
+        setProfileData(response.data); // Set the profile data to state
+      })
+      .catch(error => {
+        console.error('There was an error making the request:', error);
+      });
+  }, []);
+
   useEffect(() => {
     const storedHistory = localStorage.getItem('chatHistory');
     if (storedHistory) {
@@ -325,6 +370,7 @@ const Normal = () => {
   };
 
 
+
   const questions = messages.filter((msg) => msg.type === 'question');
   const answers = messages.filter((msg) => msg.type === 'answer');
 
@@ -384,14 +430,16 @@ const Normal = () => {
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
 
         <AuthorInfo
-        name="A"
-        location="New York"
-        email="john.doe@example.com"
-        avatarUrl="https://via.placeholder.com/150" // Optional, can be null or undefined
-      />   
+  name={`${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()} // Combines first and last name, falls back to empty string if either is undefined
+  location={profileData?.city || 'Unknown'} // Falls back to 'Unknown' if city is null or undefined
+  email={profileData?.email || 'No email available'} // Falls back to a default if email is not provided
+  avatarUrl="https://via.placeholder.com/150"// Optional, falls back to placeholder image
+/>
+
       
         </div>
       </header>
+
       {/* <ModalComponent /> */}
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
@@ -439,9 +487,18 @@ const Normal = () => {
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
       {/* Static Rice Related Text */}
+      <h1 className='fw-500' style={{ zIndex: '10', color: 'black', fontWeight: '600' }}>
+  Welcome {profileData ? `${profileData.firstName} ${profileData.lastName}` : 'Guest'}
+</h1>
+
+
       {showStaticBubbles && (
+        <>
+        
   <div className="absolute inset-0 flex items-center justify-center p-4">
+    
     <div className="grid grid-cols-2 gap-4 max-h-60 overflow-y-auto"> {/* Add max-height and overflow */}
+    
       {riceTopicsshow && (
         <>
           {riceTopics.map(topic => (
@@ -461,6 +518,7 @@ const Normal = () => {
       )}
     </div>
   </div>
+  </>
 )}
 
 
