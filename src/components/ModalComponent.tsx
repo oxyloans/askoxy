@@ -50,7 +50,7 @@ const ModalComponent: React.FC = () => {
         emailOtp: 'string', // Replace with the actual OTP if needed
         emailOtpSession: 'string',
         timeInMilliSeconds: new Date().getTime().toString(),
-        userId: "005c9bb8-8a7b-46b4-ad75-eb17539a87d7",
+        userId: localStorage.getItem("userId"),
         whatsAppNumber: mobileNumber,
       });
 
@@ -88,7 +88,7 @@ const ModalComponent: React.FC = () => {
     setError(''); // Reset error state
     try {
       const response = await axios.post('http://65.0.147.157:9000/api/auth-service/auth/verifyWhatsappOtp', {
-        "id": "005c9bb8-8a7b-46b4-ad75-eb17539a87d7",
+        "id": localStorage.getItem("userId"),
         "whatsappOtp": otp,
       });
 
@@ -111,7 +111,7 @@ const ModalComponent: React.FC = () => {
         // emailOtpSession: localStorage.getItem("emailOtpSession"),
         emailOtp: otp,
         emailOtpSession: localStorage.getItem("emailOtpSession"),
-        userId: "005c9bb8-8a7b-46b4-ad75-eb17539a87d7",
+        userId: localStorage.getItem("userId"),
       });
 
       if (response.status === 200) {
