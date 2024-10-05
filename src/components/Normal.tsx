@@ -75,6 +75,7 @@ const Normal = () => {
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
+  
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
@@ -89,6 +90,8 @@ const Normal = () => {
       });
   }, []);
 
+
+  const userId = localStorage.getItem("userId")
   useEffect(() => {
     const storedHistory = localStorage.getItem('chatHistory');
     if (storedHistory) {
@@ -157,12 +160,15 @@ const Normal = () => {
     setIsLoading(true);
     setQuestionCount(prevCount => prevCount + 1); // Increment question count
 
+
+    const apiurl = userId !== null
+    ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
+    : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`;
+  
     try {    
       // Make API request to the specified endpoint
       setriceTopicsshow(false)
-      const response = await axios.post(
-  `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${encodeURIComponent(queryInput)}`
-      );
+      const response = await axios.post(apiurl);
 
       // Process the API response and update the chat
       setMessages(prev => [...prev, { type: 'answer', content: response.data }]);
@@ -275,6 +281,7 @@ const Normal = () => {
     }
   }, [messages]);
 
+  
   const handleSend = async (queryInput: string) => {
     if (queryInput.trim() === '') return;
 
@@ -284,9 +291,15 @@ const Normal = () => {
     setIsLoading(true);
     setQuestionCount(prevCount => prevCount + 1); // Increment question count
 
+    
+    const apiurl = userId !== null
+    ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
+    : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`;
+  
     try {
       const response = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`
+        // `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`
+        apiurl
       );
 
       // Add the API response to chat

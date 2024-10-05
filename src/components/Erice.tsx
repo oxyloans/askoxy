@@ -186,9 +186,11 @@ const Erice = () => {
 
     try {
       const userId = localStorage.getItem("userId");
-      const apiurl = userId
+      const apiurl = userId !== null
       ? `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
       : `https://meta.oxyloans.com/api/student-service/user/erice?prompt=${encodeURIComponent(queryInput)}`;
+
+
       // Make API request to the specified endpoint
       const response = await axios.post(
         // // `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
