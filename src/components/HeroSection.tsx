@@ -63,7 +63,7 @@ const images: ImageData[] = [
   { src: HM17, alt: 'Image 17', text: 'Advertising Services', link: '/Normal' },
   { src: HM18, alt: 'Image 18', text: 'Marketing Services', link: '/Normal' },
   { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
-  { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
+  { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' }, 
   { src: HM21, alt: 'Image 21', text: 'Consulting Services', link: '/Normal' },
   { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
   { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: '/Normal' },

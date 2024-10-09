@@ -113,6 +113,7 @@ const Login = () => {
                     mobileNumber: credentials.emailOrPhone,
                     mobileOtpSession: otpSession,
                     mobileOtpValue: credentials.otp,
+                    primaryType: "ASKOXY",
                 }),
             });
 
