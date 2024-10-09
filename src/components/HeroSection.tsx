@@ -69,7 +69,7 @@ const images: ImageData[] = [
   { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: '/Normal' },
   { src: HM24, alt: 'Image 24', text: 'CA Services', link: '/Normal' },
   { src: HM25, alt: 'Image 25', text: 'Whole Sale Services', link: '/Normal' },
-  { src: HM26, alt: 'Image 26', text: 'Education (Domestic and Global)', link: '/Normal' },
+  { src: HM26, alt: 'Image 26', text: 'Education (Domestic and Global)', link: 'https://chatgpt.com/g/g-HfWFTK9qV-study-abroad-buddy' },
 ];
 
 // Helper function to shuffle images
