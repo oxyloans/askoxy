@@ -48,7 +48,7 @@ const images: ImageData[] = [
   { src: HM2, alt: 'Image 2', text: 'Groceries', link: '/Normal' },
   { src: HM3, alt: 'Image 3', text: 'Tickets', link: '/Normal' },
   { src: HM4, alt: 'Image 4', text: 'Transportation', link: '/Normal' },
-  { src: HM5, alt: 'Image 5', text: 'Global Education', link: '/Normal' },
+  { src: HM5, alt: 'Image 5', text: 'Global Education', link: 'https://chatgpt.com/g/g-HfWFTK9qV-study-abroad-buddy' },
   { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '/Normal' },
   { src: HM7, alt: 'Image 7', text: 'Games', link: '/Normal' },
   { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '/Normal' },
