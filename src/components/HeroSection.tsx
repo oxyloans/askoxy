@@ -63,7 +63,7 @@ const images: ImageData[] = [
   { src: HM17, alt: 'Image 17', text: 'Advertising Services', link: '/Normal' },
   { src: HM18, alt: 'Image 18', text: 'Marketing Services', link: '/Normal' },
   { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
-  { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' }, 
+  { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
   { src: HM21, alt: 'Image 21', text: 'Consulting Services', link: '/Normal' },
   { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
   { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: '/Normal' },
@@ -106,6 +106,9 @@ const HeroSection: React.FC = () => {
     const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
 
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState("You are being transferred to the powerful ChatGPT. Please login to continue your experience.");
+
  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
   };
@@ -127,6 +130,40 @@ const HeroSection: React.FC = () => {
     }
 };
   
+
+const handleImageClick = (image: any) => {
+  // Check if the image link starts with "https"
+  if (image.link.startsWith("https")) {
+    const userId = localStorage.getItem("userId");
+
+    // Check if userId exists in localStorage
+    if (!userId) {
+      // Show modal if userId is not found
+      setModalContent(
+        `You are being transferred to the powerful ChatGPT. Please log in to continue your experience.`
+      );
+      setShowModal(true);
+    } else {
+      // Navigate or show another action for logged-in users if needed
+      // alert(`User ID is: ${userId}`);
+      navigate(image.link);
+    }
+  } else {
+    // Navigate to the link if it's not an "https" link
+    navigate(image.link);
+  }
+};
+
+
+const closeModal = () => {
+  setShowModal(false);
+};
+
+const handleLoginClick = () => {
+  closeModal();
+  navigate("/login"); // Navigate to the login page
+};
+
   const imageGroup1 = repeatAndShuffleImages(images, 20);
   const imageGroup2 = repeatAndShuffleImages(images, 20);
   const imageGroup3 = repeatAndShuffleImages(images, 20);
@@ -197,40 +234,102 @@ const HeroSection: React.FC = () => {
         <div className="div2 ">
           <div className="scroll-div group1">
             <div className="image-group">
-              {imageGroup1.map((image, index) => (
-                <div className="image-item" key={index}>
-                  <Link to={image.link}>
-                    <img src={image.src} alt={image.alt} />
-                    <div className="image-text">{image.text}</div>
-                  </Link>
-                </div>
-              ))}
+            {imageGroup1.map((image, index) => (
+            <div className="image-item" key={index}>
+              <div onClick={() => handleImageClick(image)}>
+                <img src={image.src} alt={image.alt} />
+                <div className="image-text">{image.text}</div>
+              </div>
             </div>
+          ))}
+            </div>
+            {showModal && (
+  <div
+    className="modal-overlay"
+    style={{
+      zIndex: 1000,
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
+  >
+    <div
+      className="modal-content"
+      style={{
+        backgroundColor: 'white',
+        padding: '10px 15px', // Smaller padding
+        borderRadius: '8px',
+        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+        zIndex: 1001,
+        width: '300px', // Smaller width
+        textAlign: 'center',
+      }}
+    >
+      <p   style={{color:'black'}}>{modalContent}</p>
+      <br></br>
+      <button
+        onClick={handleLoginClick}
+        style={{
+          backgroundColor: '#007BFF',
+          color: 'white',
+          border: 'none',
+          padding: '8px 16px', // Smaller padding for buttons
+          borderRadius: '4px',
+          cursor: 'pointer',
+          marginRight: '10px',
+        }}
+      >
+        Log In
+      </button>
+      <button
+        onClick={closeModal}
+        style={{
+          backgroundColor: '#DC3545',
+          color: 'white',
+          border: 'none',
+          padding: '8px 16px', // Smaller padding for buttons
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+
           </div>
 
           <div className="scroll-div group2">
             <div className="image-group">
-              {imageGroup2.map((image, index) => (
-                <div className="image-item" key={index}>
-                  <Link to={image.link}>
-                    <img src={image.src} alt={image.alt} />
-                    <div className="image-text">{image.text}</div>
-                  </Link>
-                </div>
-              ))}
+            {imageGroup2.map((image, index) => (
+            <div className="image-item" key={index}>
+              <div onClick={() => handleImageClick(image)}>
+                <img src={image.src} alt={image.alt} />
+                <div className="image-text">{image.text}</div>
+              </div>
+            </div>
+          ))}
             </div>      
           </div>
 
           <div className="scroll-div group3">
             <div className="image-group">
-              {imageGroup3.map((image, index) => (
-                <div className="image-item" key={index}>
-                  <Link to={image.link}>
-                    <img src={image.src} alt={image.alt} />
-                    <div className="image-text">{image.text}</div>
-                  </Link>
-                </div>
-              ))}
+            {imageGroup3.map((image, index) => (
+            <div className="image-item" key={index}>
+              <div onClick={() => handleImageClick(image)}>
+                <img src={image.src} alt={image.alt} />
+                <div className="image-text">{image.text}</div>
+              </div>
+            </div>
+          ))}
             </div>
           </div>
         </div>
