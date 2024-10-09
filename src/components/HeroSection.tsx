@@ -146,7 +146,7 @@ const handleImageClick = (image: any) => {
     } else {
       // Navigate or show another action for logged-in users if needed
       // alert(`User ID is: ${userId}`);
-      navigate(image.link);
+      window.open(image.link, "_self");
     }
   } else {
     // Navigate to the link if it's not an "https" link
