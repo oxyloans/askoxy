@@ -79,7 +79,7 @@ const images: ImageData[] = [
   // { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
   // { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
   { src: HM21, alt: 'Image 21', text: 'Consulting Services', link: 'https://chatgpt.com/g/g-dKS0DGZaO-businessadviseai-gpt' },
-  { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
+  // { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
   { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: 'https://chatgpt.com/g/g-UqWRcL56H-freelancerai-gpt' },
   { src: HM24, alt: 'Image 24', text: 'CA Services', link: 'https://chatgpt.com/g/g-hmAPGBqYY-caassistai-gpt' },
   { src: HM25, alt: 'Image 25', text: 'Whole Sale Services', link: 'https://chatgpt.com/g/g-Il6kqNW6F-wholesaleaingpt' },
