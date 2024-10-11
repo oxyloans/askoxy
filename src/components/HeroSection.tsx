@@ -32,6 +32,20 @@ import HM23 from '../assets/img/X12.png';
 import HM24 from '../assets/img/X13.png';
 import HM25 from '../assets/img/X14.png';
 import HM26 from '../assets/img/X15.png';
+import HM27 from '../assets/img/X27.png';
+import HM28 from '../assets/img/X28.png';
+import HM29 from '../assets/img/X29.png';
+import HM30 from '../assets/img/X30.png';
+import HM31 from '../assets/img/X31.png';
+import HM32 from '../assets/img/X32.png';
+import HM33 from '../assets/img/X33.png';
+import HM34 from '../assets/img/X34.png';
+import HM35 from '../assets/img/X35.png';
+import HM36 from '../assets/img/X36.png';
+import HM37 from '../assets/img/X37.png';
+import HM38 from '../assets/img/X38.png';
+import HM39 from '../assets/img/X39.png';
+import HM40 from '../assets/img/X40.png';
 import axios from 'axios';
 
 // Type definition for image data
@@ -59,11 +73,11 @@ const images: ImageData[] = [
   { src: HM13, alt: 'Image 13', text: 'Financial Advisory', link: 'https://chatgpt.com/g/g-1tjwJY59f-finadviseai-gpt' },
   { src: HM14, alt: 'Image 14', text: 'Loan Servies', link: 'https://chatgpt.com/g/g-8FZ5veZAp-loainsgpt' },
   { src: HM15, alt: 'Image 15', text: 'Health and Wellness Services', link: '/Normal' },
-  { src: HM16, alt: 'Image 16', text: 'Home and Wellness Services', link: '/Normal' },
+  // { src: HM16, alt: 'Image 16', text: 'Home and Wellness Services', link: '/Normal' },
   { src: HM17, alt: 'Image 17', text: 'Advertising Services', link: 'https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt' },
   { src: HM18, alt: 'Image 18', text: 'Marketing Services', link: 'https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt' },
-  { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
-  { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
+  // { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
+  // { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
   { src: HM21, alt: 'Image 21', text: 'Consulting Services', link: 'https://chatgpt.com/g/g-dKS0DGZaO-businessadviseai-gpt' },
   { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
   { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: 'https://chatgpt.com/g/g-UqWRcL56H-freelancerai-gpt' },
@@ -71,24 +85,25 @@ const images: ImageData[] = [
   { src: HM25, alt: 'Image 25', text: 'Whole Sale Services', link: 'https://chatgpt.com/g/g-Il6kqNW6F-wholesaleaingpt' },
   { src: HM26, alt: 'Image 26', text: 'Education (Domestic and Global)', link: 'https://chatgpt.com/g/g-YowIvLCKJ-eduai-gpt' },
  
-  { src: HM26, alt: 'Image 26', text: 'InsurAI GPT', link: 'https://chatgpt.com/g/g-JlPzVtjFK-insurai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Beauty GPT', link: 'https://chatgpt.com/g/g-atKXBmoVR-glamai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Professional Services GPT', link: 'https://chatgpt.com/g/g-zcSFmhyDq-proserveai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Creative Services GPT', link: 'https://chatgpt.com/g/g-ycPInHA9E-artassistai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Advertising services GPT', link: 'https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Marketing Services GPT', link: 'https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Management Services GPT', link: 'https://chatgpt.com/g/g-gkFpZWjhf-eventmanageai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Management Services GPT', link: 'https://chatgpt.com/g/g-gkFpZWjhf-eventmanageai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Home Service GPT', link: 'https://chatgpt.com/g/g-gYP7A9DGj-servaihome-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Automotive Services GPT', link: 'https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Real Estate Services GPT', link: 'https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Technical Services GPT', link: 'https://chatgpt.com/g/g-Buk4VV0Ng-techservai-gpt' },
 
-  { src: HM26, alt: 'Image 26', text: 'Streetwear GPT', link: 'https://chatgpt.com/g/g-rdKd46utz-streetweartrendai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Shopping GPT', link: 'https://chatgpt.com/g/g-kCDP2g5yE-shopsmartai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Travel Planner AI', link: 'https://chatgpt.com/g/g-96zscm6Ar-globetrottergpt' },
-  { src: HM26, alt: 'Image 26', text: 'Technical Services GPT', link: 'https://chatgpt.com/g/g-Buk4VV0Ng-techservai-gpt' },
-  { src: HM26, alt: 'Image 26', text: 'Influencers GPT', link: 'https://chatgpt.com/g/g-ttxew4llb-influencehub-gpt' },
+  { src: HM27, alt: 'Image 27', text: 'Beauty GPT', link: 'https://chatgpt.com/g/g-atKXBmoVR-glamai-gpt' },
+  { src: HM28, alt: 'Image 28', text: 'Professional Services GPT', link: 'https://chatgpt.com/g/g-zcSFmhyDq-proserveai-gpt' },
+  { src: HM20, alt: 'Image 26', text: 'Creative Services GPT', link: 'https://chatgpt.com/g/g-ycPInHA9E-artassistai-gpt' },
+  { src: HM29, alt: 'Image 29', text: 'Advertising services GPT', link: 'https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt' },
+  { src: HM30, alt: 'Image 30', text: 'Marketing Services GPT', link: 'https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt' },
+  { src: HM31, alt: 'Image 31', text: 'Management Services GPT', link: 'https://chatgpt.com/g/g-gkFpZWjhf-eventmanageai-gpt' },
+  
+  { src: HM32, alt: 'Image 32', text: 'Home Service GPT', link: 'https://chatgpt.com/g/g-gYP7A9DGj-servaihome-gpt' },
+  { src: HM33, alt: 'Image 33', text: 'Automotive Services GPT', link: 'https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt' },
+  { src: HM34, alt: 'Image 34', text: 'Real Estate Services GPT', link: 'https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt' },
+  { src: HM35, alt: 'Image 35', text: 'Technical Services GPT', link: 'https://chatgpt.com/g/g-Buk4VV0Ng-techservai-gpt' },
+
+  { src: HM36, alt: 'Image 36', text: 'Streetwear GPT', link: 'https://chatgpt.com/g/g-rdKd46utz-streetweartrendai-gpt' },
+ 
+  { src: HM37, alt: 'Image 37', text: 'Travel Planner AI', link: 'https://chatgpt.com/g/g-96zscm6Ar-globetrottergpt' },
+  { src: HM38, alt: 'Image 38', text: 'InsurAI GPT', link: 'https://chatgpt.com/g/g-JlPzVtjFK-insurai-gpt' },
+  { src: HM39, alt: 'Image 39', text: 'Influencers GPT', link: 'https://chatgpt.com/g/g-ttxew4llb-influencehub-gpt' },
+  { src: HM40, alt: 'Image 40', text: 'Shopping GPT', link: 'https://chatgpt.com/g/g-kCDP2g5yE-shopsmartai-gpt' },
 
 
 ];
