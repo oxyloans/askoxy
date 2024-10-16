@@ -199,17 +199,21 @@ const Login = () => {
                 {otpError && <span className="error-message">{otpError}</span>}
               </div>
             )}
+
+         <div style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <h1 style={{textAlign:'center'}}>or login with</h1>
+            <div>
             <Link to="/Whatapplogin" style={{display:'flex',alignItems:'center',justifyContent:'center',margin:'10px'}}>
               <svg
                 style={{
-                  border: "1px solid gray",
+                  // border: "1px solid gray",
                   padding: "5px",
                                 color: "green",
                textAlign:'center'
                 }}
                 xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                            height="14"
+                width="35"
+                            height="35"
                             
                 fill="currentColor"
                 className="bi bi-whatsapp"
@@ -221,7 +225,11 @@ const Login = () => {
             {message && !showSuccessPopup && (
               <span className="success-message">{message}</span>
             )}
-            <button type="submit">Submit</button>
+       
+            </div>
+                          
+          </div>
+          <button type="submit">Submit</button>
             {otpSession && (
               <button
                 type="button"
