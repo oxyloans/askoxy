@@ -201,7 +201,7 @@ const Login = () => {
             )}
 
          <div style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <h1 style={{textAlign:'center'}}>or login with</h1>
+            <h1 style={{textAlign:'center'}}>login with</h1>
             <div>
             <Link to="/Whatapplogin" style={{display:'flex',alignItems:'center',justifyContent:'center',margin:'10px'}}>
               <svg
