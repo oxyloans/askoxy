@@ -13,7 +13,7 @@ const Whatapplogin: React.FC = () => {
   const [otpError, setOtpError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [otpSession, setOtpSession] = useState<string | null>(null);
-  const [showotp, setOtpShow] = useState<boolean | null>(false);
+  const [showOtp, setOtpShow] = useState<boolean | null>(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // Handle input field changes
@@ -24,11 +24,33 @@ const Whatapplogin: React.FC = () => {
     });
   };
 
+  // Validate WhatsApp number (must be numeric and 10 digits long)
+  const validateWhatsAppNumber = (number: string) => {
+    const isValid = /^\d{10}$/.test(number); // Adjust this regex based on required length
+    if (!isValid) {
+      setError("Please enter a valid 10-digit WhatsApp number.");
+    }
+    return isValid;
+  };
+
+  // Validate OTP (must be numeric and 4-6 digits long)
+  const validateOtp = (otp: string) => {
+    const isValid = /^\d{4,6}$/.test(otp); // Adjust based on OTP length
+    if (!isValid) {
+      setOtpError("Please enter a valid OTP (4-6 digits).");
+    }
+    return isValid;
+  };
+
   // Handle submission of the phone number to receive OTP
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setMessage("");
+
+    if (!validateWhatsAppNumber(credentials.whatsappNumber)) {
+      return; // If the number is invalid, stop the submission
+    }
 
     try {
       const response = await axios.post(
@@ -39,18 +61,18 @@ const Whatapplogin: React.FC = () => {
         }
       );
       if (response.data) {
-        // Store the necessary session details
         console.log(response.data.mobileOtpSession);
         localStorage.setItem(
           "mobileOtpSession",
           response.data.mobileOtpSession
         );
         localStorage.setItem("salt", response.data.salt);
-        setOtpShow(true);
-
-        // Save OTP session and show success message for OTP
-
-        // setOtpSession(response.data.whatsappOtpSession);
+        if (response.data.userId !== null) {
+          localStorage.setItem("userId", response.data.userId);
+          navigate("/");
+        } else {
+          setOtpShow(true);
+        }
         setMessage("OTP sent successfully to your WhatsApp number.");
       } else {
         setError("Failed to send OTP. Please try again.");
@@ -66,33 +88,26 @@ const Whatapplogin: React.FC = () => {
     setOtpError("");
     setMessage("");
 
+    if (!validateOtp(credentials.otp)) {
+      return; // If the OTP is invalid, stop the submission
+    }
+
     try {
       const response = await axios.post(
         "https://meta.oxyloans.com/api/auth-service/auth/registerwithMobile",
         {
           registrationType: "whatsapp",
-          whatsappOtpSession: localStorage.getItem("mobileOtpSession"), // Use the stored whatsappOtpSession
+          whatsappOtpSession: localStorage.getItem("mobileOtpSession"),
           whatsappOtpValue: credentials.otp,
-          salt: localStorage.getItem("salt"), // Ensure salt is passed
+          salt: localStorage.getItem("salt"),
           whatsappNumber: credentials.whatsappNumber,
           primaryType: "ASKOXY",
         }
-        //         {
-        //   "registrationType": "whatsapp",
-        //   "whatsappNumber": "9182580511",
-        //   "salt": "608cf1b1-b47a-4184-b87f-ea60b6d08b075a23f443-8",
-        //   "whatsappOtpSession":"7FA49C96CE9EC198EFB1372DD458894B94A1E6978AB228C80936EC139A0220C1125DF3E995D766E21E04A6E826C60B04A7E819939639E9547D4EA7A5306E1688",
-        //   "primaryType": "ASKOXY",
-        //   "whatsappOtpValue": "5021"
-
-        // }
       );
       if (response.data) {
-        setShowSuccessPopup(true); // Show success popup
+        setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
         setMessage("Login successful!");
-
-        // Redirect to dashboard or another page after success
         setTimeout(() => navigate("/"), 2000);
       } else {
         setOtpError("Invalid OTP. Please try again.");
@@ -124,7 +139,7 @@ const Whatapplogin: React.FC = () => {
 
       <div className="form-container">
         <h2 className="login-header">ASKOXY.AI</h2>
-        <form onSubmit={showotp ? handleOtpSubmit : handleSubmit}>
+        <form onSubmit={showOtp ? handleOtpSubmit : handleSubmit}>
           <div className="form-group">
             <label htmlFor="whatsappNumber" className="phoneNumber">
               WhatsApp Number
@@ -138,14 +153,14 @@ const Whatapplogin: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Enter your WhatsApp number"
                 required
-                disabled={otpSession !== null} // Disable if OTP session is active
+                disabled={otpSession !== null}
               />
             </div>
             {error && <span className="error-message">{error}</span>}
           </div>
 
           {/* OTP Field: Show only if OTP session is active */}
-          {showotp && (
+          {showOtp && (
             <div className="form-group">
               <label htmlFor="otp">OTP</label>
               <div className="input-wrapper">
@@ -170,17 +185,6 @@ const Whatapplogin: React.FC = () => {
 
           {/* Button text dynamically changes */}
           <button type="submit">{otpSession ? "Submit OTP" : "Submit"}</button>
-
-          {/* Option to change phone number after OTP is sent */}
-          {otpSession && (
-            <button
-              type="button"
-              onClick={handleChangeNumber}
-              className="change-number-button"
-            >
-              Change Number
-            </button>
-          )}
         </form>
       </div>
     </div>
