@@ -283,6 +283,9 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
     [shuffledImages[i], shuffledImages[j]] = [
       shuffledImages[j],
       shuffledImages[i],
+      shuffledImages[j],
+      shuffledImages[i],
+      shuffledImages[j],
     ];
   }
   return shuffledImages;
