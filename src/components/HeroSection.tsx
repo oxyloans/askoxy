@@ -1,52 +1,52 @@
-import React, { useState } from 'react';
-import backgroundImage from '../assets/img/BG.jpg';
-import { FaSearch } from 'react-icons/fa';
-import Header from './Header';
-import ReactMarkdown from 'react-markdown';
+import React, { useState } from "react";
+import backgroundImage from "../assets/img/BG.jpg";
+import { FaSearch } from "react-icons/fa";
+import "./herosection.css";
+import Header from "./Header";
+import ReactMarkdown from "react-markdown";
 
-
-import { Link, useNavigate } from 'react-router-dom';
-import HM1 from '../assets/img/1.png';
-import HM2 from '../assets/img/2.png';
-import HM3 from '../assets/img/3.png';
-import HM4 from '../assets/img/4.png';
-import HM5 from '../assets/img/5.png';
-import HM6 from '../assets/img/6.png';
-import HM7 from '../assets/img/7.png';
-import HM8 from '../assets/img/8.png';
-import HM9 from '../assets/img/9.png';
-import HM10 from '../assets/img/10.png';
-import HM11 from '../assets/img/11.png';
-import HM12 from '../assets/img/X1.png';
-import HM13 from '../assets/img/X2.png';
-import HM14 from '../assets/img/X3.png';
-import HM15 from '../assets/img/X4.png';
-import HM16 from '../assets/img/X5.png';
-import HM17 from '../assets/img/X6.png';
-import HM18 from '../assets/img/X7.png';
-import HM19 from '../assets/img/X8.png';
-import HM20 from '../assets/img/X9.png';
-import HM21 from '../assets/img/X10.png';
-import HM22 from '../assets/img/X11.png';
-import HM23 from '../assets/img/X12.png';
-import HM24 from '../assets/img/X13.png';
-import HM25 from '../assets/img/X14.png';
-import HM26 from '../assets/img/X15.png';
-import HM27 from '../assets/img/X27.png';
-import HM28 from '../assets/img/X28.png';
-import HM29 from '../assets/img/X29.png';
-import HM30 from '../assets/img/X30.png';
-import HM31 from '../assets/img/X31.png';
-import HM32 from '../assets/img/X32.png';
-import HM33 from '../assets/img/X33.png';
-import HM34 from '../assets/img/X34.png';
-import HM35 from '../assets/img/X35.png';
-import HM36 from '../assets/img/X36.png';
-import HM37 from '../assets/img/X37.png';
-import HM38 from '../assets/img/X38.png';
-import HM39 from '../assets/img/X39.png';
-import HM40 from '../assets/img/X40.png';
-import axios from 'axios';
+import { Link, useNavigate } from "react-router-dom";
+import HM1 from "../assets/img/1.png";
+import HM2 from "../assets/img/2.png";
+import HM3 from "../assets/img/3.png";
+import HM4 from "../assets/img/4.png";
+import HM5 from "../assets/img/5.png";
+import HM6 from "../assets/img/6.png";
+import HM7 from "../assets/img/7.png";
+import HM8 from "../assets/img/8.png";
+import HM9 from "../assets/img/9.png";
+import HM10 from "../assets/img/10.png";
+import HM11 from "../assets/img/11.png";
+import HM12 from "../assets/img/X1.png";
+import HM13 from "../assets/img/X2.png";
+import HM14 from "../assets/img/X3.png";
+import HM15 from "../assets/img/X4.png";
+import HM16 from "../assets/img/X5.png";
+import HM17 from "../assets/img/X6.png";
+import HM18 from "../assets/img/X7.png";
+import HM19 from "../assets/img/X8.png";
+import HM20 from "../assets/img/X9.png";
+import HM21 from "../assets/img/X10.png";
+import HM22 from "../assets/img/X11.png";
+import HM23 from "../assets/img/X12.png";
+import HM24 from "../assets/img/X13.png";
+import HM25 from "../assets/img/X14.png";
+import HM26 from "../assets/img/X15.png";
+import HM27 from "../assets/img/X27.png";
+import HM28 from "../assets/img/X28.png";
+import HM29 from "../assets/img/X29.png";
+import HM30 from "../assets/img/X30.png";
+import HM31 from "../assets/img/X31.png";
+import HM32 from "../assets/img/X32.png";
+import HM33 from "../assets/img/X33.png";
+import HM34 from "../assets/img/X34.png";
+import HM35 from "../assets/img/X35.png";
+import HM36 from "../assets/img/X36.png";
+import HM37 from "../assets/img/X37.png";
+import HM38 from "../assets/img/X38.png";
+import HM39 from "../assets/img/X39.png";
+import HM40 from "../assets/img/X40.png";
+import axios from "axios";
 
 // Type definition for image data
 interface ImageData {
@@ -58,54 +58,221 @@ interface ImageData {
 
 // Images and their metadata with page links
 const images: ImageData[] = [
-  { src: HM1, alt: 'Image 1', text: 'Order Rice Online', link: '/Erice' },
-  { src: HM2, alt: 'Image 2', text: 'Groceries', link: 'https://chatgpt.com/g/g-oca8vFV4R-grocery-gpt' },
-  { src: HM3, alt: 'Image 3', text: 'Tickets', link: 'https://chatgpt.com/g/g-zWr0ULYQ3-legaladviseai-gpt' },
-  { src: HM4, alt: 'Image 4', text: 'Transportation', link: 'https://chatgpt.com/g/g-0HtZUgSav-transportai-gpt' },
-  { src: HM5, alt: 'Image 5', text: 'Global Education', link: 'https://chatgpt.com/g/g-HfWFTK9qV-study-abroad-buddy' },
-  { src: HM6, alt: 'Image 6', text: 'Food & Beverage', link: '/Normal' },
-  { src: HM7, alt: 'Image 7', text: 'Games', link: 'https://chatgpt.com/g/g-WhoEAgQHk-gamemasterai-gpt' },
-  { src: HM8, alt: 'Image 8', text: 'Legal Services', link: '/Normal' },
-  { src: HM9, alt: 'Image 9', text: 'Pets', link: 'https://chatgpt.com/g/g-SkIhRjqxp-petcareai-gp' },
-  { src: HM10, alt: 'Image 10', text: 'Event Management Services', link: '/Normal' },
-  { src: HM11, alt: 'Image 11', text: 'Influencer Marketing Services', link: '/Normal' },
-  { src: HM12, alt: 'Image 12', text: 'Travel and Tour Services', link: 'https://chatgpt.com/g/g-puZOdL9qn-travelaingpt' },
-  { src: HM13, alt: 'Image 13', text: 'Financial Advisory', link: 'https://chatgpt.com/g/g-1tjwJY59f-finadviseai-gpt' },
-  { src: HM14, alt: 'Image 14', text: 'Loan Servies', link: 'https://chatgpt.com/g/g-8FZ5veZAp-loainsgpt' },
-  { src: HM15, alt: 'Image 15', text: 'Health and Wellness Services', link: '/Normal' },
+  { src: HM1, alt: "Image 1", text: "Order Rice Online", link: "/Erice" },
+  {
+    src: HM2,
+    alt: "Image 2",
+    text: "Groceries",
+    link: "https://chatgpt.com/g/g-oca8vFV4R-grocery-gpt",
+  },
+  {
+    src: HM3,
+    alt: "Image 3",
+    text: "Tickets",
+    link: "https://chatgpt.com/g/g-zWr0ULYQ3-legaladviseai-gpt",
+  },
+  {
+    src: HM4,
+    alt: "Image 4",
+    text: "Transportation",
+    link: "https://chatgpt.com/g/g-0HtZUgSav-transportai-gpt",
+  },
+  {
+    src: HM5,
+    alt: "Image 5",
+    text: "Global Education",
+    link: "https://chatgpt.com/g/g-HfWFTK9qV-study-abroad-buddy",
+  },
+  { src: HM6, alt: "Image 6", text: "Food & Beverage", link: "/Normal" },
+  {
+    src: HM7,
+    alt: "Image 7",
+    text: "Games",
+    link: "https://chatgpt.com/g/g-WhoEAgQHk-gamemasterai-gpt",
+  },
+  { src: HM8, alt: "Image 8", text: "Legal Services", link: "/Normal" },
+  {
+    src: HM9,
+    alt: "Image 9",
+    text: "Pets",
+    link: "https://chatgpt.com/g/g-SkIhRjqxp-petcareai-gp",
+  },
+  {
+    src: HM10,
+    alt: "Image 10",
+    text: "Event Management Services",
+    link: "/Normal",
+  },
+  {
+    src: HM11,
+    alt: "Image 11",
+    text: "Influencer Marketing Services",
+    link: "/Normal",
+  },
+  {
+    src: HM12,
+    alt: "Image 12",
+    text: "Travel and Tour Services",
+    link: "https://chatgpt.com/g/g-puZOdL9qn-travelaingpt",
+  },
+  {
+    src: HM13,
+    alt: "Image 13",
+    text: "Financial Advisory",
+    link: "https://chatgpt.com/g/g-1tjwJY59f-finadviseai-gpt",
+  },
+  {
+    src: HM14,
+    alt: "Image 14",
+    text: "Loan Servies",
+    link: "https://chatgpt.com/g/g-8FZ5veZAp-loainsgpt",
+  },
+  {
+    src: HM15,
+    alt: "Image 15",
+    text: "Health and Wellness Services",
+    link: "/Normal",
+  },
   // { src: HM16, alt: 'Image 16', text: 'Home and Wellness Services', link: '/Normal' },
-  { src: HM17, alt: 'Image 17', text: 'Advertising Services', link: 'https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt' },
-  { src: HM18, alt: 'Image 18', text: 'Marketing Services', link: 'https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt' },
+  {
+    src: HM17,
+    alt: "Image 17",
+    text: "Advertising Services",
+    link: "https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt",
+  },
+  {
+    src: HM18,
+    alt: "Image 18",
+    text: "Marketing Services",
+    link: "https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt",
+  },
   // { src: HM19, alt: 'Image 19', text: 'Technical Services', link: '/Normal' },
   // { src: HM20, alt: 'Image 20', text: 'Creative Services', link: '/Normal' },
-  { src: HM21, alt: 'Image 21', text: 'Consulting Services', link: 'https://chatgpt.com/g/g-dKS0DGZaO-businessadviseai-gpt' },
+  {
+    src: HM21,
+    alt: "Image 21",
+    text: "Consulting Services",
+    link: "https://chatgpt.com/g/g-dKS0DGZaO-businessadviseai-gpt",
+  },
   // { src: HM22, alt: 'Image 22', text: 'Legal Services', link: '/Normal' },
-  { src: HM23, alt: 'Image 23', text: 'Freelance Services', link: 'https://chatgpt.com/g/g-UqWRcL56H-freelancerai-gpt' },
-  { src: HM24, alt: 'Image 24', text: 'CA Services', link: 'https://chatgpt.com/g/g-hmAPGBqYY-caassistai-gpt' },
-  { src: HM25, alt: 'Image 25', text: 'Whole Sale Services', link: 'https://chatgpt.com/g/g-Il6kqNW6F-wholesaleaingpt' },
-  { src: HM26, alt: 'Image 26', text: 'Education (Domestic and Global)', link: 'https://chatgpt.com/g/g-YowIvLCKJ-eduai-gpt' },
- 
+  {
+    src: HM23,
+    alt: "Image 23",
+    text: "Freelance Services",
+    link: "https://chatgpt.com/g/g-UqWRcL56H-freelancerai-gpt",
+  },
+  {
+    src: HM24,
+    alt: "Image 24",
+    text: "CA Services",
+    link: "https://chatgpt.com/g/g-hmAPGBqYY-caassistai-gpt",
+  },
+  {
+    src: HM25,
+    alt: "Image 25",
+    text: "Whole Sale Services",
+    link: "https://chatgpt.com/g/g-Il6kqNW6F-wholesaleaingpt",
+  },
+  {
+    src: HM26,
+    alt: "Image 26",
+    text: "Education (Domestic and Global)",
+    link: "https://chatgpt.com/g/g-YowIvLCKJ-eduai-gpt",
+  },
 
-  { src: HM27, alt: 'Image 27', text: 'Beauty GPT', link: 'https://chatgpt.com/g/g-atKXBmoVR-glamai-gpt' },
-  { src: HM28, alt: 'Image 28', text: 'Professional Services GPT', link: 'https://chatgpt.com/g/g-zcSFmhyDq-proserveai-gpt' },
-  { src: HM20, alt: 'Image 26', text: 'Creative Services GPT', link: 'https://chatgpt.com/g/g-ycPInHA9E-artassistai-gpt' },
-  { src: HM29, alt: 'Image 29', text: 'Advertising services GPT', link: 'https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt' },
-  { src: HM30, alt: 'Image 30', text: 'Marketing Services GPT', link: 'https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt' },
-  { src: HM31, alt: 'Image 31', text: 'Management Services GPT', link: 'https://chatgpt.com/g/g-gkFpZWjhf-eventmanageai-gpt' },
-  
-  { src: HM32, alt: 'Image 32', text: 'Home Service GPT', link: 'https://chatgpt.com/g/g-gYP7A9DGj-servaihome-gpt' },
-  { src: HM33, alt: 'Image 33', text: 'Automotive Services GPT', link: 'https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt' },
-  { src: HM34, alt: 'Image 34', text: 'Real Estate Services GPT', link: 'https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt' },
-  { src: HM35, alt: 'Image 35', text: 'Technical Services GPT', link: 'https://chatgpt.com/g/g-Buk4VV0Ng-techservai-gpt' },
+  {
+    src: HM27,
+    alt: "Image 27",
+    text: "Beauty GPT",
+    link: "https://chatgpt.com/g/g-atKXBmoVR-glamai-gpt",
+  },
+  {
+    src: HM28,
+    alt: "Image 28",
+    text: "Professional Services GPT",
+    link: "https://chatgpt.com/g/g-zcSFmhyDq-proserveai-gpt",
+  },
+  {
+    src: HM20,
+    alt: "Image 26",
+    text: "Creative Services GPT",
+    link: "https://chatgpt.com/g/g-ycPInHA9E-artassistai-gpt",
+  },
+  {
+    src: HM29,
+    alt: "Image 29",
+    text: "Advertising services GPT",
+    link: "https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt",
+  },
+  {
+    src: HM30,
+    alt: "Image 30",
+    text: "Marketing Services GPT",
+    link: "https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt",
+  },
+  {
+    src: HM31,
+    alt: "Image 31",
+    text: "Management Services GPT",
+    link: "https://chatgpt.com/g/g-gkFpZWjhf-eventmanageai-gpt",
+  },
 
-  { src: HM36, alt: 'Image 36', text: 'Streetwear GPT', link: 'https://chatgpt.com/g/g-rdKd46utz-streetweartrendai-gpt' },
- 
-  { src: HM37, alt: 'Image 37', text: 'Travel Planner AI', link: 'https://chatgpt.com/g/g-96zscm6Ar-globetrottergpt' },
-  { src: HM38, alt: 'Image 38', text: 'InsurAI GPT', link: 'https://chatgpt.com/g/g-JlPzVtjFK-insurai-gpt' },
-  { src: HM39, alt: 'Image 39', text: 'Influencers GPT', link: 'https://chatgpt.com/g/g-ttxew4llb-influencehub-gpt' },
-  { src: HM40, alt: 'Image 40', text: 'Shopping GPT', link: 'https://chatgpt.com/g/g-kCDP2g5yE-shopsmartai-gpt' },
+  {
+    src: HM32,
+    alt: "Image 32",
+    text: "Home Service GPT",
+    link: "https://chatgpt.com/g/g-gYP7A9DGj-servaihome-gpt",
+  },
+  {
+    src: HM33,
+    alt: "Image 33",
+    text: "Automotive Services GPT",
+    link: "https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt",
+  },
+  {
+    src: HM34,
+    alt: "Image 34",
+    text: "Real Estate Services GPT",
+    link: "https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt",
+  },
+  {
+    src: HM35,
+    alt: "Image 35",
+    text: "Technical Services GPT",
+    link: "https://chatgpt.com/g/g-Buk4VV0Ng-techservai-gpt",
+  },
 
+  {
+    src: HM36,
+    alt: "Image 36",
+    text: "Streetwear GPT",
+    link: "https://chatgpt.com/g/g-rdKd46utz-streetweartrendai-gpt",
+  },
 
+  {
+    src: HM37,
+    alt: "Image 37",
+    text: "Travel Planner AI",
+    link: "https://chatgpt.com/g/g-96zscm6Ar-globetrottergpt",
+  },
+  {
+    src: HM38,
+    alt: "Image 38",
+    text: "InsurAI GPT",
+    link: "https://chatgpt.com/g/g-JlPzVtjFK-insurai-gpt",
+  },
+  {
+    src: HM39,
+    alt: "Image 39",
+    text: "Influencers GPT",
+    link: "https://chatgpt.com/g/g-ttxew4llb-influencehub-gpt",
+  },
+  {
+    src: HM40,
+    alt: "Image 40",
+    text: "Shopping GPT",
+    link: "https://chatgpt.com/g/g-kCDP2g5yE-shopsmartai-gpt",
+  },
 ];
 
 // Helper function to shuffle images
@@ -113,22 +280,25 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
   let shuffledImages = [...images];
   for (let i = shuffledImages.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
+    [shuffledImages[i], shuffledImages[j]] = [
+      shuffledImages[j],
+      shuffledImages[i],
+    ];
   }
   return shuffledImages;
 };
 
 // Helper function to repeat and shuffle images
-const repeatAndShuffleImages = (images: ImageData[], count: number): ImageData[] => {
+const repeatAndShuffleImages = (
+  images: ImageData[],
+  count: number
+): ImageData[] => {
   const repeatedImages: ImageData[] = [];
   for (let i = 0; i < count; i++) {
     repeatedImages.push(...shuffleImages(images));
   }
   return repeatedImages;
 };
-
-
-
 
 const HeroSection: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -138,20 +308,21 @@ const HeroSection: React.FC = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-
-    const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [query, setQuery] = useState("");
+  const [response, setResponse] = useState("");
 
   const [showModal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState("You are being transferred to the powerful ChatGPT. Please login to continue your experience.");
+  const [modalContent, setModalContent] = useState(
+    "You are being transferred to the powerful ChatGPT. Please login to continue your experience."
+  );
 
- const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
   };
 
   const handleSearch = async () => {
-    if (query.trim() === '') {
-      alert('Please enter a valid question');
+    if (query.trim() === "") {
+      alert("Please enter a valid question");
       return;
     }
 
@@ -161,44 +332,42 @@ const HeroSection: React.FC = () => {
       );
       setResponse(result.data); // Assuming the response data you want is directly in `data`
     } catch (error) {
-      console.error('Error fetching data:', error);
-      alert('Something went wrong. Please try again later.');
+      console.error("Error fetching data:", error);
+      alert("Something went wrong. Please try again later.");
     }
-};
-  
+  };
 
-const handleImageClick = (image: any) => {
-  // Check if the image link starts with "https"
-  if (image.link.startsWith("https")) {
-    const userId = localStorage.getItem("userId");
+  const handleImageClick = (image: any) => {
+    // Check if the image link starts with "https"
+    if (image.link.startsWith("https")) {
+      const userId = localStorage.getItem("userId");
 
-    // Check if userId exists in localStorage
-    if (!userId) {
-      // Show modal if userId is not found
-      setModalContent(
-        `You are being transferred to the powerful ChatGPT. Please log in to continue your experience.`
-      );
-      setShowModal(true);
+      // Check if userId exists in localStorage
+      if (!userId) {
+        // Show modal if userId is not found
+        setModalContent(
+          `You are being transferred to the powerful ChatGPT. Please log in to continue your experience.`
+        );
+        setShowModal(true);
+      } else {
+        // Navigate or show another action for logged-in users if needed
+        // alert(`User ID is: ${userId}`);
+        window.open(image.link, "_self");
+      }
     } else {
-      // Navigate or show another action for logged-in users if needed
-      // alert(`User ID is: ${userId}`);
-      window.open(image.link, "_self");
+      // Navigate to the link if it's not an "https" link
+      navigate(image.link);
     }
-  } else {
-    // Navigate to the link if it's not an "https" link
-    navigate(image.link);
-  }
-};
+  };
 
+  const closeModal = () => {
+    setShowModal(false);
+  };
 
-const closeModal = () => {
-  setShowModal(false);
-};
-
-const handleLoginClick = () => {
-  closeModal();
-  navigate("/login"); // Navigate to the login page
-};
+  const handleLoginClick = () => {
+    closeModal();
+    navigate("/login"); // Navigate to the login page
+  };
 
   const imageGroup1 = repeatAndShuffleImages(images, 20);
   const imageGroup2 = repeatAndShuffleImages(images, 20);
@@ -212,18 +381,20 @@ const handleLoginClick = () => {
       </header>
 
       <div className="main">
-  
+        <div className="div1">
+          <div
+            className="inner-flex UnlimitedChatGPT"
+            style={{ marginTop: "5rem" }}
+          >
+            <h2 className="Unlmt">Unlimited ChatGPT Prompts</h2>
+            <h1 className="heading">
+              <span>Ask</span> <br />
+              <span className="text-yellow">Solve</span>
+              <br />
+              Succeed<span className="text-yellow">...</span>
+            </h1>
 
-      <div className="div1">
-  <div className="inner-flex"  style={{marginTop:'4rem'}}>
-   <h2 className='Unlmt'>Unlimited ChatGPT Prompts</h2>
-    <h1 className="heading">
-      <span>Ask</span> <br />
-      <span className="text-yellow">Solve</span><br />
-      Succeed<span className="text-yellow">...</span>
-    </h1>
-
-    {/* Search Input */}  
+            {/* Search Input */}
             <div className="search-placeholder">
               <div className="input-container">
                 <input
@@ -233,7 +404,7 @@ const handleLoginClick = () => {
                   value={query}
                   onChange={handleInputChange}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       // Trigger redirection when Enter is pressed
                       window.location.href = `/normal?${query}`;
                     }
@@ -246,10 +417,10 @@ const handleLoginClick = () => {
                     window.location.href = `/normal?${query}`;
                   }}
                 >
-                  <span className="search-icon icons">&#128269;</span> {/* Placeholder for Search Icon */}
+                  <span className="search-icon icons">&#128269;</span>{" "}
+                  {/* Placeholder for Search Icon */}
                 </button>
               </div>
-
 
               {/* Optional: Display the API response */}
               {/* {response && (
@@ -259,113 +430,107 @@ const handleLoginClick = () => {
     </div>
   )} */}
             </div>
-
-  </div>
-</div>
-
-
-
+          </div>
+        </div>
 
         {/* Image Section - 40% of screen width */}
         <div className="div2 ">
           <div className="scroll-div group1">
             <div className="image-group">
-            {imageGroup1.map((image, index) => (
-            <div className="image-item" key={index}>
-              <div onClick={() => handleImageClick(image)}>
-                <img src={image.src} alt={image.alt} />
-                <div className="image-text">{image.text}</div>
-              </div>
-            </div>
-          ))}
+              {imageGroup1.map((image, index) => (
+                <div className="image-item" key={index}>
+                  <div onClick={() => handleImageClick(image)}>
+                    <img src={image.src} alt={image.alt} />
+                    <div className="image-text">{image.text}</div>
+                  </div>
+                </div>
+              ))}
             </div>
             {showModal && (
-  <div
-    className="modal-overlay"
-    style={{
-      zIndex: 1000,
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}
-  >
-    <div
-      className="modal-content"
-      style={{
-        backgroundColor: 'white',
-        padding: '10px 15px', // Smaller padding
-        borderRadius: '8px',
-        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
-        zIndex: 1001,
-        width: '300px', // Smaller width
-        textAlign: 'center',
-      }}
-    >
-      <p   style={{color:'black'}}>{modalContent}</p>
-      <br></br>
-      <button
-        onClick={handleLoginClick}
-        style={{
-          backgroundColor: '#007BFF',
-          color: 'white',
-          border: 'none',
-          padding: '8px 16px', // Smaller padding for buttons
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginRight: '10px',
-        }}
-      >
-        Log In
-      </button>
-      <button
-        onClick={closeModal}
-        style={{
-          backgroundColor: '#DC3545',
-          color: 'white',
-          border: 'none',
-          padding: '8px 16px', // Smaller padding for buttons
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
-
-
+              <div
+                className="modal-overlay"
+                style={{
+                  zIndex: 1000,
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  className="modal-content"
+                  style={{
+                    backgroundColor: "white",
+                    padding: "10px 15px", // Smaller padding
+                    borderRadius: "8px",
+                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                    zIndex: 1001,
+                    width: "300px", // Smaller width
+                    textAlign: "center",
+                  }}
+                >
+                  <p style={{ color: "black" }}>{modalContent}</p>
+                  <br></br>
+                  <button
+                    onClick={handleLoginClick}
+                    style={{
+                      backgroundColor: "#007BFF",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px", // Smaller padding for buttons
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      marginRight: "10px",
+                    }}
+                  >
+                    Log In
+                  </button>
+                  <button
+                    onClick={closeModal}
+                    style={{
+                      backgroundColor: "#DC3545",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px", // Smaller padding for buttons
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="scroll-div group2">
             <div className="image-group">
-            {imageGroup2.map((image, index) => (
-            <div className="image-item" key={index}>
-              <div onClick={() => handleImageClick(image)}>
-                <img src={image.src} alt={image.alt} />
-                <div className="image-text">{image.text}</div>
-              </div>
+              {imageGroup2.map((image, index) => (
+                <div className="image-item" key={index}>
+                  <div onClick={() => handleImageClick(image)}>
+                    <img src={image.src} alt={image.alt} />
+                    <div className="image-text">{image.text}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-            </div>      
           </div>
 
           <div className="scroll-div group3">
             <div className="image-group">
-            {imageGroup3.map((image, index) => (
-            <div className="image-item" key={index}>
-              <div onClick={() => handleImageClick(image)}>
-                <img src={image.src} alt={image.alt} />
-                <div className="image-text">{image.text}</div>
-              </div>
-            </div>
-          ))}
+              {imageGroup3.map((image, index) => (
+                <div className="image-item" key={index}>
+                  <div onClick={() => handleImageClick(image)}>
+                    <img src={image.src} alt={image.alt} />
+                    <div className="image-text">{image.text}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

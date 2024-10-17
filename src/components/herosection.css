@@ -30,10 +30,16 @@
   opacity: 1;
 }
 
-
 @media screen and (max-width: 700px) {
-    .mediamscreen {
-        margin-top: 3rem;
-        height: 60vh !important;
-    }
+  .mediamscreen {
+    margin-top: 3rem;
+    height: 60vh !important;
+  }
 }
+
+/* @media (min-width: 900px) and (max-width: 1300px) {
+  .UnlimitedChatGPT {
+    margin-top: 6rem !important;
+
+  }
+} */
