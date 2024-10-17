@@ -14,6 +14,8 @@ const Whatapplogin: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const [otpSession, setOtpSession] = useState<string | null>(null);
   const [showOtp, setOtpShow] = useState<boolean | null>(false);
+  const [isbuttonenable, setisbuttonenable] = useState<boolean | null>(false);
+
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // Handle input field changes
@@ -60,6 +62,7 @@ const Whatapplogin: React.FC = () => {
           whatsappNumber: credentials.whatsappNumber,
         }
       );
+      setisbuttonenable(true);
       if (response.data) {
         console.log(response.data.mobileOtpSession);
         localStorage.setItem(
@@ -111,9 +114,11 @@ const Whatapplogin: React.FC = () => {
         setTimeout(() => navigate("/"), 2000);
       } else {
         setOtpError("Invalid OTP. Please try again.");
+        setOtpSession(response.data.mobileOtpSession);
       }
-    } catch (err) {
+    } catch (err: any) {
       setOtpError("An error occurred while verifying OTP.");
+      setOtpSession(err);
     }
   };
 
@@ -123,6 +128,8 @@ const Whatapplogin: React.FC = () => {
     setCredentials({ whatsappNumber: "", otp: "" });
     setError("");
     setOtpError("");
+    setOtpShow(false);
+    setMessage("");
   };
 
   return (
@@ -185,6 +192,15 @@ const Whatapplogin: React.FC = () => {
 
           {/* Button text dynamically changes */}
           <button type="submit">{otpSession ? "Submit OTP" : "Submit"}</button>
+          {isbuttonenable && (
+            <button
+              type="button"
+              onClick={handleChangeNumber}
+              className="change-number-button"
+            >
+              Change Number
+            </button>
+          )}
         </form>
       </div>
     </div>
