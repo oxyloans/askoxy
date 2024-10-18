@@ -748,17 +748,18 @@ const HeroSection: React.FC = () => {
 /* For laptops (between 1024px and 1440px) */
 @media (max-width: 1440px) and (min-width: 1024px) {
   .heading {
-    font-size: 100px; /* Reduce font size for laptops */
-   margin-top: 4rem !important;
+    font-size: 80px; /* Reduce font size for laptops */
+
   }
 
   .search-input {
-    height: 60px;
+    height: 40px;
     font-size: 1rem;
   }
 
   .search-icon {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+    top:25px;
   }
 }
 
