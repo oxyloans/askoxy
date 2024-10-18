@@ -569,6 +569,7 @@ const HeroSection: React.FC = () => {
     .section {
       background-size: contain; /* Contains background without cutting off image */
       background-position: center; /* Centers the image */
+        min-height: 100vh;
     }
   }
 
@@ -577,6 +578,7 @@ const HeroSection: React.FC = () => {
     .section {
       background-size: cover; /* Full background coverage on larger screens */
       background-position: center; /* Centers the image */
+        min-height: 100vh;
     }
   }
 
@@ -964,7 +966,7 @@ align-self: flex-start;
     // background-color: #f9cc15;
     padding: 10px;
     border-radius: 10px;
-    margin-bottom:10px;
+ 
     color:#f9cc15;
     font-weight: bold;
     border-color:#f9cc15
