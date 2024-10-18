@@ -911,6 +911,10 @@ const HeroSection: React.FC = () => {
   opacity: 1; /* Show text on hover */
   font-size:15px;
 }
+
+@media (max-width: 1440px) and (min-width: 1024px) {
+  font-size:10px;
+}
 @media (max-width: 768px) {
   .image-item:hover .image-text {
     font-size: 10px; /* Decrease font size on smaller screens */
