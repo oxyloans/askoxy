@@ -2,12 +2,43 @@
 import React, { useState } from 'react';
 import { FaSearch } from "react-icons/fa";  // Import the search icon
 import axios from 'axios';
+import img1 from '../assets/img/image1.png'; // Import your images
+import img2 from '../assets/img/image2.png';
+import img3 from '../assets/img/image3.png';
+import img4 from '../assets/img/image4.png';
+import img5 from '../assets/img/image5.png';
+import img6 from '../assets/img/image6.png';
+
+
+const images = [
+  { src: img1, alt: 'Image 1', },
+  { src: img2, alt: 'Image 2', },
+  { src: img5, alt: 'Image 5', },
+  { src: img6, alt: 'Image 6', },
+  { src: img3, alt: 'Image 3',  },
+  { src: img4, alt: 'Image 4', },
+ 
+
+];
 
 const InfoSection: React.FC = () => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
 
- const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNext = () => {
+    if (currentIndex < images.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
   };
 
@@ -26,7 +57,8 @@ const InfoSection: React.FC = () => {
       console.error('Error fetching data:', error);
       alert('Something went wrong. Please try again later.');
     }
-};
+  };
+
   return (
     <div className="py-8">
       {/* Advice Section */}
@@ -37,28 +69,23 @@ const InfoSection: React.FC = () => {
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
               <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Simple Ask</h3>
               <p className="text-gray-600">
-              Get instant answers or connect with a mentor who can guide you further.
+                Get instant answers or connect with a mentor who can guide you further.
               </p>
             </div>
           </div>
 
           {/* Second Div: Heading, Problem & Solutions */}
           <div className="flex flex-col items-center justify-center w-full mb-6 md:w-1/3 md:mb-0">
-            {/* Heading */}
             <h2 className="mb-2 text-2xl font-bold text-center text-yellow-600 md:text-3xl md:mb-6">
               We're not just about advice
             </h2>
             <p className="text-sm text-center text-gray-600 md:text-lg mb-8">
-            AskOxy.AI is more than just unlimited ChatGPT prompts. We're committed to helping you achieve your goals by enabling unlimited queries, assigning mentors, arranging funding, discussing tailored solutions, and providing end-to-end support.
+              AskOxy.AI is more than just unlimited ChatGPT prompts. We're committed to helping you achieve your goals by enabling unlimited queries, assigning mentors, arranging funding, discussing tailored solutions, and providing end-to-end support.
             </p>
-            {/* Added 'Click here to know more' */}
-          
-
-            {/* Problem & Solutions */}
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
               <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Effective Solve</h3>
               <p className="text-gray-600">
-              We equip you with mentors, funding, and comprehensive platform solutions to overcome obstacles and progress seamlessly.
+                We equip you with mentors, funding, and comprehensive platform solutions to overcome obstacles and progress seamlessly.
               </p>
             </div>
           </div>
@@ -68,102 +95,224 @@ const InfoSection: React.FC = () => {
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
               <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Guaranteed Success</h3>
               <p className="text-gray-600">
-              Our end-to-end support ensures comprehensive backing for projects or companies with a clear vision and mission, complemented by Simple Ask and Effective Solve.
+                Our end-to-end support ensures comprehensive backing for projects or companies with a clear vision and mission, complemented by Simple Ask and Effective Solve.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Search Section */}
-    <div className="py-8 text-center bg-purple-700 bg-gradient-to-b from-purple-500 to-purple-900">
-  <h2 className="mb-4 text-2xl font-bold text-yellow-500 md:text-3xl">
-    Search anything you want
-  </h2>
-  <p className="mb-6 text-sm text-gray-300 md:text-lg">
-    We're here to help you achieve your goals with tailored solutions and end-to-end support.
-  </p>
+      {/* Group Section */}
+      <div className="px-6 py-5 bg-[#f1f1f1] md:p-10">
+        <h2 className="mb-4 text-2xl font-bold text-purple-700 md:text-3xl" style={{textAlign:'center'}}>
+         OxyGroup Companies
+        </h2>
+        <div className="carousel-container">
 
-  <div className="flex items-center justify-center">
-    {/* Icon and input grouped together */}
-    <div className="search-placeholder1">
-              <div className="input-container">
-                <input
-                  type="text"
-                  placeholder="Ask any question..."
-                  className="search-input"
-                  value={query}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      // Trigger redirection when Enter is pressed
-                      window.location.href = `/normal?${query}`;
-                    }
-                  }}
-                />
-                <button
-                  className="search-button"
-                  onClick={() => {
-                    // Trigger redirection when the button is clicked
-                    window.location.href = `/normal?${query}`;
-                  }}
-                >
-                  <span className="search-icon icons">&#128269;</span> {/* Placeholder for Search Icon */}
-                </button>
-              </div>
-
-
-              {/* Optional: Display the API response */}
-              {/* {response && (
-    <div className="response-container">
-      <h3></h3>
-      <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown></p>
-    </div>
-  )} */}
+          <button className="carousel-button prev-button" onClick={handlePrev}>←</button>
+          <div className="carousel-wrapper">
+            <div className="carousel-images-wrapper" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+              {images.map((image, idx) => (
+                <div key={idx} className="carousel-image-item">
+                  <img src={image.src} alt={image.alt} className="carousel-image" />
+                </div>
+              ))}
             </div>
-  </div>
-</div>
-<style>
-  {`.search-placeholder1 {
-      width: 50%;
-      padding: 0.4rem;
-      margin-top: 2.5rem;
-      background-color: rgba(255, 255, 255, 0.5);
-      border-radius: 1.5rem;
-      position: relative;
-  }
+          </div>
+          <button className="carousel-button next-button" onClick={handleNext}>→</button>
+        </div>
+      </div>
 
-  /* Media query for smaller screens (e.g., mobile devices) */
-  @media (max-width: 768px) {
-      .search-placeholder1 {
-          width: 80%; /* Adjust width for smaller screens */
-          padding: 0.5rem; /* Slightly larger padding for better touch interaction */
-          margin-top: 1.5rem; /* Reduce top margin */
-          border-radius: 1rem; /* Adjust border-radius */
-      }
-  }
+      {/* Search Section */}
+      <div className="py-8 text-center bg-purple-700 bg-gradient-to-b from-purple-500 to-purple-900">
+        <h2 className="mb-4 text-2xl font-bold text-yellow-500 md:text-3xl">
+          Search anything you want
+        </h2>
+        <p className="mb-6 text-sm text-gray-300 md:text-lg">
+          We're here to help you achieve your goals with tailored solutions and end-to-end support.
+        </p>
 
-  /* Media query for very small screens (e.g., mobile phones in portrait) */
-  @media (max-width: 480px) {
-      .search-placeholder1 {
-          width: 90%; /* Full width for very small screens */
-          padding: 0.6rem; /* More padding for better usability */
-          margin-top: 1rem; /* Further reduce top margin */
-          border-radius: 0.75rem; /* More rounded corners */
-      }
-  }
-      @media (max-width: 480px) {
-    .search-icon {
-        font-size: 1rem;
-        top: 30px;
-    }
+        <div className="flex items-center justify-center">
+          <div className="search-placeholder1">
+            <div className="input-container">
+              <input
+                type="text"
+                placeholder="Ask any question..."
+                className="search-input"
+                value={query}
+                onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
+              <button
+                className="search-button"
+                onClick={handleSearch}
+              >
+                <FaSearch className="search-icon" />
+              </button>
+            </div>
+          </div>
+        </div>
+        {response && <div className="response-section">{response}</div>}
+      </div>
+
+      <style>
+        {`
+        .search-placeholder1 {
+            width: 50%;
+            padding: 0.4rem;
+            margin-top: 2.5rem;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 1.5rem;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .search-placeholder1 {
+                width: 80%;
+                padding: 0.5rem;
+                margin-top: 1.5rem;
+                border-radius: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .search-placeholder1 {
+                width: 90%;
+                padding: 0.6rem;
+                margin-top: 1rem;
+                border-radius: 0.75rem;
+            }
+
+            .search-icon {
+                font-size: 1rem;
+                top: 30px;
+            }
+        }/* General Container */
+.carousel-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 50px;
 }
-  `}
-</style>
 
+/* Wrapper for Carousel */
+.carousel-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+/* Carousel Buttons */
+.carousel-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 50px;
+            position: relative;
+          }
+
+          .carousel-wrapper {
+            display: flex;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+          }
+
+          .carousel-images-wrapper {
+            display: flex;
+            transition: transform 0.3s ease;
+            width: 100%;
+          }
+
+          .carousel-image-item {
+            margin: 0 10px;
+            text-align: center;
+            flex: 0 0 100%;
+          }
+
+          .carousel-image {
+            width: 100%;
+            height: auto;
+            max-width: 200px;
+          }
+
+          .carousel-button {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 24px;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+            z-index: 10;
+            transition: background-color 0.3s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+
+          .carousel-button:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+          }
+
+          .prev-button {
+            margin-right: 10px; /* Space between button and image */
+          }
+
+          .next-button {
+            margin-left: 10px; /* Space between button and image */
+          }
+
+          @media (max-width: 768px) {
+            .carousel-container {
+              padding: 20px;
+            }
+
+            .carousel-images-wrapper {
+              width: 100%;
+            }
+
+            .carousel-image-item {
+              flex: 0 0 100%;
+            }
+
+            .carousel-button {
+              font-size: 18px;
+              padding: 8px;
+            }
+          }
+
+          @media (min-width: 769px) {
+            .carousel-images-wrapper {
+              width: 80%;
+            }
+
+            .carousel-image-item {
+              flex: 0 0 22%;
+            }
+
+            .carousel-button {
+              font-size: 24px;
+              padding: 12px;
+            }
+          }
+
+      `}
+      </style>
     </div>
-
   );
 };
 
 export default InfoSection;
+
+
+
+
