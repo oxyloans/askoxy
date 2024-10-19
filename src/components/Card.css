@@ -15,14 +15,14 @@
     margin-bottom: 20px; /* Space below the header */
 }
 
-.header h2 {
-    font-size: 2rem; /* Larger font size for the main header */
+.header h1 {
+    font-size: 2.5rem; /* Larger font size for the main header */
     color: #333; /* Dark color for header */
     margin-bottom: 10px; /* Space below the main header */
 }
 
-.header h6 {
-    font-size: 1rem; /* Smaller font size for the subheader */
+.header h3 {
+    font-size: 1.25rem; /* Adjusted font size for the subheader */
     color: #666; /* Lighter color for subheader */
 }
 
