@@ -10,6 +10,8 @@ import UserProfileModel from "./components/models/ProfileCallPage";
 import ProfileCallPage from "./components/models/ProfileCallPage";
 import Whatapplogin from "./components/Whatapplogin";
 import Meeting from "./components/Meeting";
+import Happy from "./components/DiwaliPage";
+import DiwaliPage from "./components/DiwaliPage";
 
 function App() {
   return (
@@ -21,6 +23,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
+          <Route path="/diwalipage" element={<DiwaliPage />} />
           <Route path="/Example" element={<Example variant="loading01" />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/Examplecomponet" element={<Examplecomponet />} />{" "}
