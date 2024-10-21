@@ -282,6 +282,7 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
     [shuffledImages[i], shuffledImages[j]] = [
       shuffledImages[j],
       shuffledImages[i],
+<<<<<<< Updated upstream
       shuffledImages[j],
       shuffledImages[i],
       shuffledImages[j],
@@ -321,6 +322,8 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
       shuffledImages[j],
       shuffledImages[i],
       shuffledImages[j],
+=======
+>>>>>>> Stashed changes
     ];
   }
   return shuffledImages;
@@ -938,12 +941,12 @@ const HeroSection: React.FC = () => {
 /* Hover effects for image items */
 .image-item:hover img {
   transform: scale(1.1); /* Zoom effect */
-  box-shadow: 0px 4px 15px rgba(255, 255, 0, 1);
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5); /* Shadow effect */
 }
-
 
 .image-item:hover .image-text {
   opacity: 1; /* Show text on hover */
+<<<<<<< Updated upstream
   font-size:15px;
 }
 
@@ -954,15 +957,18 @@ const HeroSection: React.FC = () => {
   .image-item:hover .image-text {
     font-size: 10px; /* Decrease font size on smaller screens */
   }
+=======
+>>>>>>> Stashed changes
 }
+
 /* Scroll animations for image groups */
 .group1 .image-group,
 .group3 .image-group {
-  animation: scrollUpFromBottom 2550s linear infinite;
+  animation: scrollUpFromBottom 950s linear infinite;
 }
 
 .group2 .image-group {
-  animation: scrollDown 3000s linear infinite;
+  animation: scrollDown 2000s linear infinite;
 }
 
 /* Keyframes for scrolling animations */
