@@ -282,7 +282,6 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
     [shuffledImages[i], shuffledImages[j]] = [
       shuffledImages[j],
       shuffledImages[i],
-<<<<<<< Updated upstream
       shuffledImages[j],
       shuffledImages[i],
       shuffledImages[j],
@@ -322,8 +321,7 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
       shuffledImages[j],
       shuffledImages[i],
       shuffledImages[j],
-=======
->>>>>>> Stashed changes
+
     ];
   }
   return shuffledImages;
