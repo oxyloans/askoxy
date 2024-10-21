@@ -32,8 +32,7 @@ const DiwaliPage: React.FC = () => {
             Happy Diwali from Oxy Group!
           </h1>
           <h3 className="diwali-subtitle">
-            Celebrate this Diwali with Oxy Group! Get a free set of 6 diyas and
-            sweets delivered to your doorstep. Just send us a message on
+            Celebrate this Diwali with Oxy Group! Get a free set of 6 diyas  delivered to your doorstep. Just send us a message on
             WhatsApp!
           </h3>
         </div>
@@ -52,19 +51,16 @@ const DiwaliPage: React.FC = () => {
         </div>
 
         <div className="details">
-          <h2 className="offer-title">Free Diwali Diyas and Sweets Offer</h2>
+          <h2 className="offer-title">Free Diwali Diyas Offer!</h2>
           <p className="offer-description">
-            We are giving away a set of 6 diyas and delicious sweets at no cost
-            with free delivery!
+            We are giving a set of 6 diyas at no cost with free delivery!
           </p>
-          <p>
-            Click the button below to send us a WhatsApp message with your
-            location and the message:
-          </p>
+          <p>Click the button below to send us a message on WhatsApp.</p>
           <p className="whatsapp-message">
-            "All the best to study abroad aspirants applying for Jan Intake"
+            "All the best to study abroad aspirants applying for the January
+            intake!"
           </p>
-          <p>We will deliver the diyas and sweets to your address for free.</p>
+          {/* <p>We will deliver the diyas and sweets to your address for free.</p> */}
           <div className="buttons">
             <button onClick={handleWhatsAppClick} className="button demo">
               Send WhatsApp Message
