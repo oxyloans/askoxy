@@ -36,10 +36,9 @@
     height: 60vh !important;
   }
 }
-
-/* @media (min-width: 900px) and (max-width: 1300px) {
+  
+@media (min-width: 900px) and (max-width: 1300px) {
   .UnlimitedChatGPT {
     margin-top: 6rem !important;
-
   }
-} */
+}
