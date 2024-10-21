@@ -90,7 +90,7 @@ const images: ImageData[] = [
     text: "Games",
     link: "https://chatgpt.com/g/g-WhoEAgQHk-gamemasterai-gpt",
   },
-  { src: HM8, alt: "Image 8", text: "Legal Services", link: "/Normal" },
+  { src: HM8, alt: "Image 8", text: "Legal Services", link: "https://chatgpt.com/g/g-zWr0ULYQ3-legaladviseai-gpt" },
   {
     src: HM9,
     alt: "Image 9",
