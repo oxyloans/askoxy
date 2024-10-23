@@ -40,7 +40,7 @@ const Happy_Diwali: React.FC = () => {
             WhatsApp!
           </h3>
 
-          <h2 className="offer-title">Free Diwali Diyas Offer!</h2>
+          <h2 className="offer-title">Green Diwali with Clay Diyas</h2>
           <p className="offer-description">
             We are giving a set of 6 diyas at no cost with free delivery!
           </p>
