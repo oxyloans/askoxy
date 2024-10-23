@@ -10,8 +10,9 @@ const Happy_Diwali: React.FC = () => {
   const whatsappNumber = "9160463697";
 
   const handleWhatsAppClick = () => {
-    const message =
-      "Hai I confirm your participation in Green Diwali with Clay Diyas \n\n All the best to study abroad aspirants applying for january intake \n Happy Diwali";
+    const message = `Hi, thanks for the initiative! Please deliver Diyas to my residence. Sharing Google coordinates.
+
+    \n   Best wishes to students heading to the US & UK for higher studies`;
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
       message
     )}`;
