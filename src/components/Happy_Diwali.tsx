@@ -1,5 +1,5 @@
 import React from "react";
-import diyasImage from "../assets/img/diwalli.jpeg"; 
+import diyasImage from "../assets/img/Diwali2.jpg"; 
 import sweetsImage from "../assets/img/sweets.jpeg"; 
 import "./DiwaliPage.css";
 import Header1 from "./Header1";
@@ -11,7 +11,7 @@ const Happy_Diwali: React.FC = () => {
 
   const handleWhatsAppClick = () => {
     const message =
-      "All the best to study abroad aspirants applying for Jan Intake";
+      "please confirm your participation in Green Diwali with Clay Diyas \n\n All the best to study abroad aspirants applying for january intake \n Happy Diwali";
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
       message
     )}`;
@@ -42,7 +42,7 @@ const Happy_Diwali: React.FC = () => {
 
           <h2 className="offer-title">Green Diwali with Clay Diyas</h2>
           <p className="offer-description">
-            We are giving a set of 6 diyas at no cost with free delivery!
+            We are giving away a set of 6 clay diyas at no cost with free delivery!
           </p>
           <p>Click the button below to send us a message on WhatsApp.</p>
           <p className="whatsapp-message">
