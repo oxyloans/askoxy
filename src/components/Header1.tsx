@@ -14,7 +14,7 @@ const Header1: React.FC = () => {
     <div
       className="header-container absolute top-0 left-0 mt-10 flex items-center justify-between"
       style={{
-        width: 'calc(100% - 50%)',
+        width: 'calc(100%)',
         height: '50px',
         backgroundColor: 'rgba(91, 5, 213, 0.85)',
         zIndex: 0,
@@ -28,7 +28,9 @@ const Header1: React.FC = () => {
           borderRadius: '50px',
           backgroundColor: '#f9cc15',
           border: 'none',
-          margin:"10px"
+          margin:"10px",
+          width:'auto',
+          padding:"8px"
         }}
       >
         ASKOXY.AI
