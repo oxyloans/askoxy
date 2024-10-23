@@ -1,13 +1,13 @@
 import React from "react";
-import diyasImage from "../assets/img/Diwali2.jpg"; 
-import sweetsImage from "../assets/img/sweets.jpeg"; 
+import diyasImage from "../assets/img/Diwali2.jpg";
+import sweetsImage from "../assets/img/sweets.jpeg";
 import "./DiwaliPage.css";
 import Header1 from "./Header1";
 import Footer from "./Footer";
-import Firecracker from "./Firecracker"; 
+import Firecracker from "./Firecracker";
 
 const Happy_Diwali: React.FC = () => {
-  const whatsappNumber = "9160463697"; 
+  const whatsappNumber = "9160463697";
 
   const handleWhatsAppClick = () => {
     const message =
@@ -22,48 +22,53 @@ const Happy_Diwali: React.FC = () => {
     <>
       <Header1 />
       <div className="event-container">
-  <div className="event-content">
-    <div className="diwali-images">
-      <div className="image-container">
-        <img src={diyasImage} alt="Diwali Diyas" className="diwali-diya" />
-      </div>
-    </div>
-    <div className="event-details">
-          <h1
-            className=" diwali-title"
-            style={{ color: "rgba(121, 32, 199, 1)", }}
-          >
-            Happy Diwali from Oxy Group!
-          </h1>
-          <h3 className="diwali-subtitle">
-            Celebrate this Diwali with Oxy Group! Get a free set of 6 diyas  delivered to your doorstep. Just send us a message on
-            WhatsApp!
-          </h3>
-
-          <h2 className="offer-title">Green Diwali with Clay Diyas</h2>
-          <p className="offer-description">
-            We are giving away a set of 6 clay diyas at no cost with free delivery!
-          </p>
-          <p>Click the button below to send us a message on WhatsApp.</p>
-          <p className="whatsapp-message">
-            "All the best to study abroad aspirants applying for the January
-            intake!"
-          </p>
-
-          <div className="buttons">
-            <button onClick={handleWhatsAppClick} className="button demo">
-              Send WhatsApp Message
-            </button>
+        <div className="event-content">
+          <div className="diwali-images">
+            <div className="image-container">
+              <img
+                src={diyasImage}
+                alt="Diwali Diyas"
+                className="diwali-diya"
+              />
+            </div>
           </div>
-    </div>
-  </div>
-</div>
+          <div className="event-details">
+            <h1
+              className=" diwali-title"
+              style={{ color: "rgba(121, 32, 199, 1)" }}
+            >
+              Happy Diwali from Oxy Group!
+            </h1>
+            <h3 className="diwali-subtitle">
+              Celebrate this Diwali with Oxy Group! Get a free set of 6 diyas
+              delivered to your doorstep. Just send us a message on WhatsApp!
+            </h3>
+            <div className="buttons">
+              <button onClick={handleWhatsAppClick} className="button demo">
+                Send WhatsApp Message
+              </button>
+            </div>
+            <h2 className="offer-title">Green Diwali with Clay Diyas</h2>
+            <p className="offer-description">
+              We are giving away a set of 6 clay diyas at no cost with free
+              delivery!
+            </p>
+            <p>Click the button below to send us a message on WhatsApp.</p>
+            <p className="whatsapp-message">
+              "All the best to study abroad aspirants applying for the January
+              intake!"
+            </p>
 
+            <div className="buttons">
+              <button onClick={handleWhatsAppClick} className="button demo">
+                Send WhatsApp Message
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    
       <Firecracker />
-
-
 
       <Footer />
     </>
@@ -71,8 +76,11 @@ const Happy_Diwali: React.FC = () => {
 };
 
 export default Happy_Diwali;
-      {/* <div className="container1"> */}
-        {/* <div className="header">
+{
+  /* <div className="container1"> */
+}
+{
+  /* <div className="header">
           <br></br>
           <br></br>
           <h1
@@ -110,4 +118,5 @@ export default Happy_Diwali;
               Send WhatsApp Message
             </button>
           </div>
-        </div> */}
+        </div> */
+}
