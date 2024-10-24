@@ -1,17 +1,18 @@
 import React from "react";
-import diyasImage from "../assets/img/Diwali2.jpg"; 
-import sweetsImage from "../assets/img/sweets.jpeg"; 
+import diyasImage from "../assets/img/Diwali2.jpg";
+import sweetsImage from "../assets/img/sweets.jpeg";
 import "./DiwaliPage.css";
 import Header1 from "./Header1";
 import Footer from "./Footer";
-import Firecracker from "./Firecracker"; 
+import Firecracker from "./Firecracker";
 
 const Happy_Diwali: React.FC = () => {
-  const whatsappNumber = "9160463697"; 
+  const whatsappNumber = "9160463697";
 
   const handleWhatsAppClick = () => {
-    const message =
-      "please confirm your participation in Green Diwali with Clay Diyas \n\n All the best to study abroad aspirants applying for january intake \n Happy Diwali";
+    const message = `Hi, thanks for the initiative! Please deliver Diyas to my residence. Sharing Google coordinates.
+
+    \n   Best wishes to students heading to the US & UK for higher studies`;
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
       message
     )}`;
@@ -50,20 +51,16 @@ const Happy_Diwali: React.FC = () => {
             intake!"
           </p>
 
-          <div className="buttons">
-            <button onClick={handleWhatsAppClick} className="button demo">
-              Send WhatsApp Message
-            </button>
+            <div className="buttons">
+              <button onClick={handleWhatsAppClick} className="button demo">
+                Send WhatsApp Message
+              </button>
+            </div>
           </div>
-    </div>
-  </div>
-</div>
+        </div>
+      </div>
 
-
-    
       <Firecracker />
-
-
 
       <Footer />
     </>
@@ -71,8 +68,11 @@ const Happy_Diwali: React.FC = () => {
 };
 
 export default Happy_Diwali;
-      {/* <div className="container1"> */}
-        {/* <div className="header">
+{
+  /* <div className="container1"> */
+}
+{
+  /* <div className="header">
           <br></br>
           <br></br>
           <h1
@@ -110,4 +110,5 @@ export default Happy_Diwali;
               Send WhatsApp Message
             </button>
           </div>
-        </div> */}
+        </div> */
+}
