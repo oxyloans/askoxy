@@ -1,29 +1,26 @@
 // src/components/CombinedSections.tsx
-import React, { useState } from 'react';
-import { FaSearch } from "react-icons/fa";  // Import the search icon
-import axios from 'axios';
-import img1 from '../assets/img/image1.png'; // Import your images
-import img2 from '../assets/img/image2.png';
-import img3 from '../assets/img/image3.png';
-import img4 from '../assets/img/image4.png';
-import img5 from '../assets/img/image5.png';
-import img6 from '../assets/img/image6.png';
-
+import React, { useState } from "react";
+import { FaSearch } from "react-icons/fa"; // Import the search icon
+import axios from "axios";
+import img1 from "../assets/img/image1.png"; // Import your images
+import img2 from "../assets/img/image2.png";
+import img3 from "../assets/img/image3.png";
+import img4 from "../assets/img/image4.png";
+import img5 from "../assets/img/image4.png";
+import img6 from "../assets/img/image6.png";
 
 const images = [
-  { src: img1, alt: 'Image 1', },
-  { src: img2, alt: 'Image 2', },
-  { src: img5, alt: 'Image 5', },
-  { src: img6, alt: 'Image 6', },
-  { src: img3, alt: 'Image 3',  },
-  { src: img4, alt: 'Image 4', },
- 
-
+  { src: img1, alt: "Image 1" },
+  { src: img2, alt: "Image 2" },
+  { src: img5, alt: "Image 5" },
+  { src: img6, alt: "Image 6" },
+  { src: img3, alt: "Image 3" },
+  { src: img4, alt: "Image 4" },
 ];
 
 const InfoSection: React.FC = () => {
-  const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [query, setQuery] = useState("");
+  const [response, setResponse] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNext = () => {
@@ -43,8 +40,8 @@ const InfoSection: React.FC = () => {
   };
 
   const handleSearch = async () => {
-    if (query.trim() === '') {
-      alert('Please enter a valid question');
+    if (query.trim() === "") {
+      alert("Please enter a valid question");
       return;
     }
 
@@ -54,8 +51,8 @@ const InfoSection: React.FC = () => {
       );
       setResponse(result.data); // Assuming the response data you want is directly in `data`
     } catch (error) {
-      console.error('Error fetching data:', error);
-      alert('Something went wrong. Please try again later.');
+      console.error("Error fetching data:", error);
+      alert("Something went wrong. Please try again later.");
     }
   };
 
@@ -67,9 +64,12 @@ const InfoSection: React.FC = () => {
           {/* First Div: Simple Ask */}
           <div className="flex flex-col items-center justify-center w-full mb-6 md:w-1/4 md:mb-0">
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
-              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Simple Ask</h3>
+              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">
+                Simple Ask
+              </h3>
               <p className="text-gray-600">
-                Get instant answers or connect with a mentor who can guide you further.
+                Get instant answers or connect with a mentor who can guide you
+                further.
               </p>
             </div>
           </div>
@@ -79,13 +79,19 @@ const InfoSection: React.FC = () => {
             <h2 className="mb-2 text-2xl font-bold text-center text-yellow-600 md:text-3xl md:mb-6">
               We're not just about advice
             </h2>
-            <p className="text-sm text-center text-gray-600 md:text-lg mb-8">
-              AskOxy.AI is more than just unlimited ChatGPT prompts. We're committed to helping you achieve your goals by enabling unlimited queries, assigning mentors, arranging funding, discussing tailored solutions, and providing end-to-end support.
+            <p className="mb-8 text-sm text-center text-gray-600 md:text-lg">
+              AskOxy.AI is more than just unlimited ChatGPT prompts. We're
+              committed to helping you achieve your goals by enabling unlimited
+              queries, assigning mentors, arranging funding, discussing tailored
+              solutions, and providing end-to-end support.
             </p>
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
-              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Effective Solve</h3>
+              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">
+                Effective Solve
+              </h3>
               <p className="text-gray-600">
-                We equip you with mentors, funding, and comprehensive platform solutions to overcome obstacles and progress seamlessly.
+                We equip you with mentors, funding, and comprehensive platform
+                solutions to overcome obstacles and progress seamlessly.
               </p>
             </div>
           </div>
@@ -93,9 +99,13 @@ const InfoSection: React.FC = () => {
           {/* Third Div: End-to-End Support */}
           <div className="flex flex-col items-center justify-center w-full mb-6 md:w-1/4 md:mb-0">
             <div className="bg-white shadow-xl p-8 md:p-10 rounded-[20px] text-center border border-gray-300">
-              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">Guaranteed Success</h3>
+              <h3 className="mb-2 text-xl font-semibold text-purple-700 md:mb-5">
+                Guaranteed Success
+              </h3>
               <p className="text-gray-600">
-                Our end-to-end support ensures comprehensive backing for projects or companies with a clear vision and mission, complemented by Simple Ask and Effective Solve.
+                Our end-to-end support ensures comprehensive backing for
+                projects or companies with a clear vision and mission,
+                complemented by Simple Ask and Effective Solve.
               </p>
             </div>
           </div>
@@ -104,22 +114,36 @@ const InfoSection: React.FC = () => {
 
       {/* Group Section */}
       <div className="px-6 py-5 bg-[#f1f1f1] md:p-10">
-        <h2 className="mb-4 text-2xl font-bold text-purple-700 md:text-3xl" style={{textAlign:'center'}}>
-         OxyGroup Companies
+        <h2
+          className="mb-4 text-2xl font-bold text-purple-700 md:text-3xl"
+          style={{ textAlign: "center" }}
+        >
+          OxyGroup Companies
         </h2>
         <div className="carousel-container">
-
-          <button className="carousel-button prev-button" onClick={handlePrev}>←</button>
+          <button className="carousel-button prev-button" onClick={handlePrev}>
+            ←
+          </button>
           <div className="carousel-wrapper">
-            <div className="carousel-images-wrapper" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+            <div
+              className="carousel-images-wrapper"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
               {images.map((image, idx) => (
                 <div key={idx} className="carousel-image-item">
-                  <img src={image.src} alt={image.alt} className="carousel-image" />
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="carousel"
+                  />
                 </div>
               ))}
             </div>
           </div>
-          <button className="carousel-button next-button" onClick={handleNext}>→</button>
+
+          <button className="carousel-button next-button" onClick={handleNext}>
+            →
+          </button>
         </div>
       </div>
 
@@ -129,7 +153,8 @@ const InfoSection: React.FC = () => {
           Search anything you want
         </h2>
         <p className="mb-6 text-sm text-gray-300 md:text-lg">
-          We're here to help you achieve your goals with tailored solutions and end-to-end support.
+          We're here to help you achieve your goals with tailored solutions and
+          end-to-end support.
         </p>
 
         <div className="flex items-center justify-center">
@@ -142,15 +167,12 @@ const InfoSection: React.FC = () => {
                 value={query}
                 onChange={handleInputChange}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleSearch();
                   }
                 }}
               />
-              <button
-                className="search-button"
-                onClick={handleSearch}
-              >
+              <button className="search-button" onClick={handleSearch}>
                 <FaSearch className="search-icon" />
               </button>
             </div>
@@ -312,7 +334,3 @@ const InfoSection: React.FC = () => {
 };
 
 export default InfoSection;
-
-
-
-

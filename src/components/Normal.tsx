@@ -1,23 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
-import Image1 from '../assets/img/AD1 (1).jpg';
-import Image2 from '../assets/img/AD2.jpg';
-import ReactMarkdown from 'react-markdown';
-import axios from 'axios';
-import './erice.css';
-import { useLocation, useNavigate } from 'react-router-dom';
-import B1 from '../assets/img/B1.jpg';
-import B2 from '../assets/img/B2.jpg';
-import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from 'react-icons/fa';
-import { error } from 'console';
-import ChatHistory from './ChatHistory';
-import Example from './Example';
-import AuthorInfo from './AuthorInfo';
-import ModalComponent from './ModalComponent';
-import ProfileCallPage from './models/ProfileCallPage';
-
+import React, { useEffect, useState, useRef } from "react";
+import Image1 from "../assets/img/AD1 (1).jpg";
+import Image2 from "../assets/img/AD2.jpg";
+import ReactMarkdown from "react-markdown";
+import axios from "axios";
+import "./erice.css";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import B1 from "../assets/img/B1.jpg";
+import B2 from "../assets/img/B2.jpg";
+import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
+import { error } from "console";
+import ChatHistory from "./ChatHistory";
+import Example from "./Example";
+import AuthorInfo from "./AuthorInfo";
+import ModalComponent from "./ModalComponent";
+import ProfileCallPage from "./models/ProfileCallPage";
 
 interface ChatMessage {
-  type: 'question' | 'answer';
+  type: "question" | "answer";
   content: string;
 }
 
@@ -43,57 +42,100 @@ interface ProfileData {
   emailVerified: boolean;
   panVerified: boolean | null;
   whatsappVerified: boolean | null;
-  name:string|null
+  name: string | null;
 }
 
-
+type ChatHistoryItem = {
+  id: string;
+  userQuations: string;
+  ericeQueries: string | null;
+};
 const Normal = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState<string>('');
+  const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState<number>(0);
 
-
   const [showSendButton, setShowSendButton] = useState(false);
-  const [chathistory  , setchathistory]=useState([])
-  const [riceTopicsshow , setriceTopicsshow] = useState(true)
+  const [riceTopicsshow, setriceTopicsshow] = useState(true);
   const [showStaticBubbles, setShowStaticBubbles] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isReading, setIsReading] = useState(false);
-  const histary = useNavigate()
+  const histary = useNavigate();
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
-  const bottomRef = useRef<HTMLDivElement | null>(null);  
-  const [profiledata , setprofiledata]=useState({})
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [profiledata, setprofiledata] = useState({});
 
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
 
   // Load history from localStorage on component mount
-  
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
-  
+  const [chathistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      const userId = localStorage.getItem("userId");
+      const apiurl =
+        userId !== null
+          ? `https://meta.oxyloans.com/api/student-service/user/queries?userId=${userId}`
+          : `https://meta.oxyloans.com/api/student-service/user/querie`;
+      try {
+        const response = await axios.get(apiurl);
+        if (response.status === 200) {
+          console.log(response.data);
+          setChatHistory(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
+    };
+
+    fetchChatHistory(); // Invoke the API call
+  }, []); // Empty dependency array to run once on component mount
+
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
 
-    axios.get(apiUrl)
-      .then(response => {
+    axios
+      .get(apiUrl)
+      .then((response) => {
         console.log(response.data);
         setProfileData(response.data); // Set the profile data to state
       })
-      .catch(error => {
-        console.error('There was an error making the request:', error);
+      .catch((error) => {
+        console.error("There was an error making the request:", error);
       });
   }, []);
-
-
-  const userId = localStorage.getItem("userId")
   useEffect(() => {
-    const storedHistory = localStorage.getItem('chatHistory');
+    const fetchChatHistory = async () => {
+      const userId = localStorage.getItem("userId");
+      const apiurl =
+        userId !== null
+          ? `https://meta.oxyloans.com/api/student-service/user/queries?userId=${userId}`
+          : `https://meta.oxyloans.com/api/student-service/user/querie`;
+      try {
+        const response = await axios.get(apiurl);
+        if (response.status === 200) {
+          console.log(response.data);
+          setChatHistory(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
+    };
+
+    fetchChatHistory(); // Invoke the API call
+  }, [input]); // Empty dependency array to run once on component mount
+
+  const userId = localStorage.getItem("userId");
+  useEffect(() => {
+    const storedHistory = localStorage.getItem("chatHistory");
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory));
     }
@@ -101,97 +143,95 @@ const Normal = () => {
 
   useEffect(() => {
     if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
-  
+
   // Save history to localStorage whenever it changes
 
   const handleScroll = () => {
     if (bottomRef.current) {
-      const { scrollTop, clientHeight, scrollHeight } = bottomRef.current.parentElement!;
+      const { scrollTop, clientHeight, scrollHeight } =
+        bottomRef.current.parentElement!;
       setIsAtBottom(scrollTop + clientHeight >= scrollHeight); // Check if the user is at the bottom
     }
   };
   useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(history));
+    localStorage.setItem("chatHistory", JSON.stringify(history));
   }, [history]);
 
-  
   // Toggle edit state
   const handleEditClick = () => {
     setIsEditing(isEditing);
   };
 
-
-
   useEffect(() => {
     if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-
-
-
-
-
-    let queryString = window.location.search;
+  let queryString = window.location.search;
   useEffect(() => {
-
-
-  
-    
-// Remove the first "?" from the string
-  const result = queryString.replace('?', '').replace(/%20/g, ' ');
+    // Remove the first "?" from the string
+    const result = queryString.replace("?", "").replace(/%20/g, " ");
     console.log(result); // Output: "data"
 
     const handleSend = async (queryInput: string) => {
-  
-    if (queryInput.trim() === '') return;
+      if (queryInput.trim() === "") return;
 
-    // Add the user's question to the chat
-    setMessages(prev => [...prev, { type: 'question', content: queryInput }]);
-
-    // Save the query to history
-    setHistory(prevHistory => [queryInput, ...prevHistory]);
-
-    setInput('');
-    setIsLoading(true);
-    setQuestionCount(prevCount => prevCount + 1); // Increment question count
-
-
-    const apiurl = userId !== null
-    ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
-    : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`;
-  
-    try {    
-      // Make API request to the specified endpoint
-      setriceTopicsshow(false)
-      const response = await axios.post(apiurl);
-
-      // Process the API response and update the chat
-      setMessages(prev => [...prev, { type: 'answer', content: response.data }]);
-    } catch (error) {
-      console.error('Error fetching response:', error);
-      setMessages(prev => [
+      // Add the user's question to the chat
+      setMessages((prev) => [
         ...prev,
-        { type: 'answer', content: 'Sorry, there was an error. Please try again later.' },
+        { type: "question", content: queryInput },
       ]);
-    } finally {
-      setIsLoading(false);
-    }
+
+      // Save the query to history
+      setHistory((prevHistory) => [queryInput, ...prevHistory]);
+
+      setInput("");
+      setIsLoading(true);
+      setQuestionCount((prevCount) => prevCount + 1); // Increment question count
+
+      const apiurl =
+        userId !== null
+          ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
+              queryInput
+            )}&userId=${userId}`
+          : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
+              queryInput
+            )}`;
+
+      try {
+        // Make API request to the specified endpoint
+        setriceTopicsshow(false);
+        const response = await axios.post(apiurl);
+
+        // Process the API response and update the chat
+        setMessages((prev) => [
+          ...prev,
+          { type: "answer", content: response.data },
+        ]);
+      } catch (error) {
+        console.error("Error fetching response:", error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "answer",
+            content: "Sorry, there was an error. Please try again later.",
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     handleSend(result);
-    
-  },[queryString])
+  }, [queryString]);
   // Handle image enlargement
   const handleImageClick = (image: string) => {
     setEnlargedImage(image);
   };
 
-
-  
   // useEffect(() => {
   //   const response = axios.get("http://65.0.147.157:9001/api/student-service/user/queries");
   //   response.then((data) => {
@@ -200,27 +240,25 @@ const Normal = () => {
   //       console.log(data.data)
   //       setchathistory(data.data)
   //     }
-      
+
   //   }).catch((error) => {
   //     console.log(error)
   //   })
-  
+
   // },[])
   useEffect(() => {
-   const islogin= localStorage.getItem("userId")
+    const islogin = localStorage.getItem("userId");
     if (questionCount > 3) {
       if (islogin) {
-        
       } else {
-        histary("/login")
+        histary("/login");
       }
     }
-  },[questionCount])
-
+  }, [questionCount]);
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
-    alert('Message copied to clipboard!');
+    alert("Message copied to clipboard!");
   };
 
   const handleReadAloud = (content: string) => {
@@ -242,18 +280,20 @@ const Normal = () => {
 
   const handleShare = (content: string) => {
     if (navigator.share) {
-      navigator.share({
-        title: 'Chat Message',
-        text: content,
-        url: window.location.href,
-      }).catch(error => console.error('Error sharing:', error));
+      navigator
+        .share({
+          title: "Chat Message",
+          text: content,
+          url: window.location.href,
+        })
+        .catch((error) => console.error("Error sharing:", error));
     } else {
-      alert('Share functionality is not supported on this device.');
+      alert("Share functionality is not supported on this device.");
     }
   };
 
   const location = useLocation();
-  const query = new URLSearchParams(location.search).get('search') || '';
+  const query = new URLSearchParams(location.search).get("search") || "";
 
   useEffect(() => {
     if (query) {
@@ -263,7 +303,7 @@ const Normal = () => {
   }, [query]);
 
   useEffect(() => {
-    const storedHistory = localStorage.getItem('chatHistory');
+    const storedHistory = localStorage.getItem("chatHistory");
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory));
     }
@@ -271,31 +311,34 @@ const Normal = () => {
 
   // Save history to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(history));
+    localStorage.setItem("chatHistory", JSON.stringify(history));
   }, [history]);
 
   // Scroll to the bottom when messages change
   useEffect(() => {
     if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  
   const handleSend = async (queryInput: string) => {
-    if (queryInput.trim() === '') return;
+    if (queryInput.trim() === "") return;
 
-    setMessages(prev => [...prev, { type: 'question', content: queryInput }]);
-    setHistory(prevHistory => [queryInput, ...prevHistory]);
-    setInput('');
+    setMessages((prev) => [...prev, { type: "question", content: queryInput }]);
+    setHistory((prevHistory) => [queryInput, ...prevHistory]);
+    setInput("");
     setIsLoading(true);
-    setQuestionCount(prevCount => prevCount + 1); // Increment question count
+    setQuestionCount((prevCount) => prevCount + 1); // Increment question count
 
-    
-    const apiurl = userId !== null
-    ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}&userId=${userId}`
-    : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`;
-  
+    const apiurl =
+      userId !== null
+        ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
+            queryInput
+          )}&userId=${userId}`
+        : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
+            queryInput
+          )}`;
+
     try {
       const response = await axios.post(
         // `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`
@@ -303,12 +346,18 @@ const Normal = () => {
       );
 
       // Add the API response to chat
-      setMessages(prev => [...prev, { type: 'answer', content: response.data }]);
-    } catch (error) {
-      console.error('Error fetching response:', error);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
-        { type: 'answer', content: 'Sorry, there was an error. Please try again later.' },
+        { type: "answer", content: response.data },
+      ]);
+    } catch (error) {
+      console.error("Error fetching response:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "answer",
+          content: "Sorry, there was an error. Please try again later.",
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -316,38 +365,54 @@ const Normal = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isLoading) {
+    if (e.key === "Enter" && !isLoading) {
       e.preventDefault(); // Prevent default Enter key behavior
       handleSend(input);
     }
   };
 
-  const handleInputChangeWithVisibility = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChangeWithVisibility = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const value = e.target.value;
     setInput(value); // Update input value
-    setShowSendButton(value.trim() !== '');
-    if (showStaticBubbles && value.trim() !== '') {
+    setShowSendButton(value.trim() !== "");
+    if (showStaticBubbles && value.trim() !== "") {
       setShowStaticBubbles(false);
     }
   };
 
-
-
-
   // Dummy data for rice-related topics
   const riceTopics = [
-    { id: 1, title: 'Ask questions', content: 'Discover tips on how to develop sustainable and healthy eating patterns.' },
-    { id: 1, title: 'Ask membership', content: 'Stay updated with the latest blockbusters and independent films hitting the theaters.' },
-    { id: 3, title: 'Ask for funds', content: 'Find out how to compare products and read reviews before making an online purchase.' },
-    { id: 4, title: 'Ask for end-to-end solution', content: 'Understand different shipping methods and how to track your online orders.' },
+    {
+      id: 1,
+      title: "Ask questions",
+      content:
+        "Discover tips on how to develop sustainable and healthy eating patterns.",
+    },
+    {
+      id: 1,
+      title: "Ask membership",
+      content:
+        "Stay updated with the latest blockbusters and independent films hitting the theaters.",
+    },
+    {
+      id: 3,
+      title: "Ask for funds",
+      content:
+        "Find out how to compare products and read reviews before making an online purchase.",
+    },
+    {
+      id: 4,
+      title: "Ask for end-to-end solution",
+      content:
+        "Understand different shipping methods and how to track your online orders.",
+    },
   ];
-
-
 
   // Handle click on static chat bubble
   const handleBubbleClick = (content: string) => {
- 
-    console.log('Bubble clicked:', content); // Debugging log
+    console.log("Bubble clicked:", content); // Debugging log
     setInput(content); // Set input value when a bubble is clicked
     setShowStaticBubbles(false); // Hide static bubbles after click
     setShowSendButton(true); // Show send button
@@ -361,7 +426,7 @@ const Normal = () => {
     setMessages([]); // Clear the messages
     setShowStaticBubbles(true); // Show the static chat bubbles
     if (inputRef.current) {
-      inputRef.current.value = ''; // Clear the input field
+      inputRef.current.value = ""; // Clear the input field
       setShowSendButton(false); // Hide the send button
     }
   };
@@ -378,22 +443,20 @@ const Normal = () => {
 
   // Handle deleting a history item
   const handleDeleteHistoryItem = (index: number) => {
-    setHistory(prevHistory => prevHistory.filter((_, i) => i !== index));
+    setHistory((prevHistory) => prevHistory.filter((_, i) => i !== index));
   };
 
-
-
-  const questions = messages.filter((msg) => msg.type === 'question');
-  const answers = messages.filter((msg) => msg.type === 'answer');
+  const questions = messages.filter((msg) => msg.type === "question");
+  const answers = messages.filter((msg) => msg.type === "answer");
 
   const imageData = [
     {
       oxyLoans: Image1,
-      link: 'https://oxyloans.com/login',
+      link: "https://oxyloans.com/login",
     },
     {
       oxyLoans: Image2,
-      link: 'https://erice.in/',
+      link: "https://erice.in/",
     },
   ];
 
@@ -401,7 +464,7 @@ const Normal = () => {
 
   // Function to handle the click event
   const handleRedirect = () => {
-    navigate('/'); // Redirect to the login page
+    navigate("/"); // Redirect to the login page
   };
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
@@ -409,46 +472,51 @@ const Normal = () => {
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
         <button
-      className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-      onClick={handleRedirect}
-    >
-      <span className="text-white">ASKOXY</span>
-      <span className="text-[#ffa800]">.AI</span>
-    </button>
-<div></div> 
-    <div   
-        className="sign-in-container"
-        style={{
-          width: 'auto',
-          height: 'auto',
-          backgroundColor: 'gray',
-          padding: '7px 20px',
-          borderRadius: '50px',
-          color: 'white',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          position:'absolute',
-          right:'5rem'
-        }}
-      >
-        {/* SignIn button with redirection functionality */}
-
-        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
-          SignOut
+          className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+          onClick={handleRedirect}
+        >
+          <span className="text-white">ASKOXY</span>
+          <span className="text-[#ffa800]">.AI</span>
         </button>
-      </div>
+        <div></div>
+        <div
+          className="sign-in-container"
+          style={{
+            width: "auto",
+            height: "auto",
+            backgroundColor: "gray",
+            padding: "7px 20px",
+            borderRadius: "50px",
+            color: "white",
+            textAlign: "center",
+            fontWeight: "bold",
+            position: "absolute",
+            right: "5rem",
+          }}
+        >
+          {/* SignIn button with redirection functionality */}
+
+          <button
+            className=""
+            onClick={() => {
+              localStorage.removeItem("userId");
+              navigate("/login");
+            }}
+          >
+            SignOut
+          </button>
+        </div>
 
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
-
-        <AuthorInfo
-  name={`${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()} // Combines first and last name, falls back to empty string if either is undefined
-  location={profileData?.city || 'Unknown'} // Falls back to 'Unknown' if city is null or undefined
-  email={profileData?.email || 'No email available'} // Falls back to a default if email is not provided
-  avatarUrl="https://via.placeholder.com/150"// Optional, falls back to placeholder image
-/>
-
-      
+          <AuthorInfo
+            name={`${profileData?.firstName || ""} ${
+              profileData?.lastName || ""
+            }`.trim()} // Combines first and last name, falls back to empty string if either is undefined
+            location={profileData?.city || "Unknown"} // Falls back to 'Unknown' if city is null or undefined
+            email={profileData?.email || "No email available"} // Falls back to a default if email is not provided
+            avatarUrl="https://via.placeholder.com/150" // Optional, falls back to placeholder image
+          />
         </div>
       </header>
 
@@ -476,7 +544,11 @@ const Normal = () => {
                 </svg>
               </button>
               <span className="flex-1 text-center">History</span>
-              <button onClick={handleNewChatClick} className="p-1 rounded-md" title="New Chat" >
+              <button
+                onClick={handleNewChatClick}
+                className="p-1 rounded-md"
+                title="New Chat"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -485,150 +557,183 @@ const Normal = () => {
                   stroke="currentColor"
                   className="w-5 h-5 text-[#351664]"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
                 </svg>
-
               </button>
             </div>
-            {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
+            {isEditing && (
+              <p className="text-sm text-[#351664]">Editing mode enabled...</p>
+            )}
 
             {/* History List */}
-        <ChatHistory />
+            <div className="mt-4 overflow-y-auto max-h-80">
+              {chathistory.length === 0 ? (
+                <p className="text-sm text-gray-500">No history available.</p>
+              ) : (
+                chathistory.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded cursor-pointer"
+                  >
+                    {/* Link with encoded userQuations */}
+                    <Link
+                      className="text-sm text-gray-800"
+                      to={`?${encodeURIComponent(item.userQuations)}`} // Encode the userQuations
+                    >
+                      {item.userQuations}
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
+            {/* <ChatHistory /> */}
           </aside>
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-      {/* Static Rice Related Text */}
-      <h1 className='fw-500' style={{ zIndex: '10', color: 'black', fontWeight: '600' }}>
-      Welcome {profileData ? `    ${profileData.firstName} ${profileData.lastName}` : 'Guest'}
-</h1>
-
-
-      {showStaticBubbles && (
-        <>
-        
-  <div className="absolute inset-0 flex items-center justify-center p-4">
-    
-    <div className="grid grid-cols-2 gap-4 max-h-60 overflow-y-auto"> {/* Add max-height and overflow */}
-    
-      {riceTopicsshow && (
-        <>
-          {riceTopics.map(topic => (
-            <div
-              key={topic.id}
-              className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
-              style={{
-                wordWrap: 'break-word',
-                zIndex: '10'
-              }}
-              onClick={() => { handleBubbleClick(topic.title); setInput(topic.title) }}
+            {/* Static Rice Related Text */}
+            <h1
+              className="fw-500"
+              style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
-              <ReactMarkdown className="text-center">{topic.title}</ReactMarkdown>
+              Welcome{" "}
+              {profileData
+                ? `    ${profileData.firstName} ${profileData.lastName}`
+                : "Guest"}
+            </h1>
+
+            {showStaticBubbles && (
+              <>
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <div className="grid grid-cols-2 gap-4 overflow-y-auto max-h-60">
+                    {" "}
+                    {/* Add max-height and overflow */}
+                    {riceTopicsshow && (
+                      <>
+                        {riceTopics.map((topic) => (
+                          <div
+                            key={topic.id}
+                            className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                            style={{
+                              wordWrap: "break-word",
+                              zIndex: "10",
+                            }}
+                            onClick={() => {
+                              handleBubbleClick(topic.title);
+                              setInput(topic.title);
+                            }}
+                          >
+                            <ReactMarkdown className="text-center">
+                              {topic.title}
+                            </ReactMarkdown>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Chat messages */}
+            <div
+              className="relative flex-grow p-2 overflow-y-auto chat-container"
+              style={{ maxHeight: "calc(100vh - 12rem)" }}
+            >
+              <div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-24">
+                    <Example variant="loading01" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Render Questions followed by their corresponding Answers */}
+                    {messages.map((message, index) => (
+                      <div
+                        key={index}
+                        className={`col-span-8 mb-6 p-3 rounded-md ${
+                          message.type === "question"
+                            ? "bg-blue-200 col-span-3 text-black"
+                            : "bg-green-200 col-span-5 text-black"
+                        }`}
+                      >
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                        <div className="flex mt-2 space-x-1">
+                          {/* Copy Button */}
+                          <button
+                            className="p-2 bg-white mr"
+                            onClick={() => handleCopy(message.content)}
+                            title="Copy"
+                          >
+                            <FaRegCopy />
+                          </button>
+
+                          {/* Speaker (Read Aloud) Button */}
+                          {isReading ? (
+                            <button
+                              className="p-2 bg-white mr"
+                              onClick={() => window.speechSynthesis.cancel()}
+                              title="Stop Read Aloud"
+                            >
+                              <FaVolumeOff />
+                            </button>
+                          ) : (
+                            <button
+                              className="p-2 bg-white mr"
+                              onClick={() => handleReadAloud(message.content)}
+                              title="Read Aloud"
+                            >
+                              <FaVolumeUp />
+                            </button>
+                          )}
+
+                          {/* Share Button */}
+                          <button
+                            className="p-2 bg-white mr"
+                            onClick={() => handleShare(message.content)}
+                            title="Share"
+                          >
+                            <FaShareAlt />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+              <div ref={bottomRef} />{" "}
+              {/* This ref will be used to scroll to the bottom */}
             </div>
-          ))}
-        </>
-      )}
-    </div>
-  </div>
-  </>
-)}
-
-
-      {/* Chat messages */}
-      <div
-      className="relative flex-grow p-2 overflow-y-auto chat-container"
-      style={{ maxHeight: 'calc(100vh - 12rem)' }}
-    >
-      <div>
-      {isLoading ? (
-  <div className="flex items-center justify-center h-24">
-    <Example variant="loading01" />
-  </div>
-) : (
-  <>
-    {/* Render Questions followed by their corresponding Answers */}
-    {messages.map((message, index) => (
-  <div 
-    key={index} 
-    className={`col-span-8 mb-6 p-3 rounded-md ${message.type === 'question' ? 'bg-blue-200 col-span-3 text-black' : 'bg-green-200 col-span-5 text-black'}`}
-  >
-    <ReactMarkdown>{message.content}</ReactMarkdown>
-    <div className="mt-2 flex space-x-1">
-      {/* Copy Button */}
-      <button 
-        className="mr bg-white p-2" 
-        onClick={() => handleCopy(message.content)}
-        title="Copy"
-      >
-        <FaRegCopy />
-      </button>
-
-      {/* Speaker (Read Aloud) Button */}
-      {isReading ? (
-        <button 
-          className="mr bg-white p-2" 
-          onClick={() => window.speechSynthesis.cancel()}
-          title="Stop Read Aloud"
-        >
-          <FaVolumeOff />
-        </button>
-        
-      ) : (
-        <button 
-          className="mr bg-white p-2" 
-          onClick={() => handleReadAloud(message.content)}
-          title="Read Aloud"
-        >
-          <FaVolumeUp />
-        </button>
-      )}
-
-      {/* Share Button */}
-      <button  
-       className="mr bg-white p-2" 
-        onClick={() => handleShare(message.content)} 
-        title="Share"
-      >
-        <FaShareAlt />
-      </button>
-    </div>
-  </div>
-))}
-
-  </>
-)}
-
-      </div>
-      <div ref={bottomRef} /> {/* This ref will be used to scroll to the bottom */}
-    </div>
-      {/* Input Bar */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={handleInputChangeWithVisibility}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask questions..."
-          className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
-        />
-        {showSendButton && (
-          <button
-            onClick={() => handleSend(input)}
-            className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Sending...' : 'Send'}
-          </button>
-        )}
-      </div>
-    </section>
-
+            {/* Input Bar */}
+            <div className="absolute inset-x-0 bottom-0 flex items-center p-2 bg-white border-t border-gray-300 md:relative">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={handleInputChangeWithVisibility}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask questions..."
+                className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
+              />
+              {showSendButton && (
+                <button
+                  onClick={() => handleSend(input)}
+                  className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
+                    isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send"}
+                </button>
+              )}
+            </div>
+          </section>
 
           {/* Right Panel */}
-  
         </div>
       </main>
     </div>

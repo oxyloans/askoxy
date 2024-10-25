@@ -35,6 +35,8 @@ function ChatHistory1() {
     fetchChatHistory(); // Invoke the API call
   }, []); // Empty dependency array to run once on component mount
 
+
+  
   return (
     <div className="mt-4 overflow-y-auto max-h-80">
       {chathistory.length === 0 ? (
