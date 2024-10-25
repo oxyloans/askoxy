@@ -151,13 +151,41 @@ const Happy_Diwali: React.FC = () => {
               <h1 className="diwali-title1" style={{ color: "#c26c27" }}>
                Fractional Investments in Lands & Buildings
               </h1>
-              <h3 className="diwali-subtitle1" style={{padding:"0px",margin:'0px'}}>
+              <h3 className="diwali-subtitle1" style={{padding:"0px",margin:'0px',paddingBottom:"20px"}}>
               OXYBRICKS is the first Blockchain platform that enables fractional investment in lands & buildings: a Blockchain tech platform that allows principal guarantee, monthly earnings, and property appreciation.
               </h3>
               
               <div className="buttons">
               <a href="https://oxybricks.world/" target="_blank" rel="noopener noreferrer">
-  <button className="button demo">
+  <button className="button demo" style={{backgroundColor:"#c26c27"}}>
+  Know More
+  </button>
+</a>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px" }}>
+          <div className="event-content1" style={{borderColor:'#583e99'}}>
+            <div className="diwali-images1">
+              <div className="image-container1">
+                <img src={img4} alt="Diwali Diyas" className="diwali-diya" />
+              </div>
+            </div>
+            <div className="event-details">
+            
+              <h1 className="diwali-title1" style={{ color: "#583e99" }}>
+              All your ideas at one place
+              </h1>
+              <h3 className="diwali-subtitle1" style={{padding:"0px",margin:'0px',paddingBottom:"20px"}}>
+              BMV.Money is an Bridgital Marketplace connecting stakeholders in global immigration services, property management, machinery purchases, startup mentoring, and job orientation programs.
+              </h3>
+              
+              <div className="buttons" >
+              <a href="https://bmv.money/" target="_blank" rel="noopener noreferrer">
+  <button className="button demo" style={{backgroundColor:'#583e99'}}>
   Know More
   </button>
 </a>
