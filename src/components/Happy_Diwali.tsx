@@ -5,6 +5,8 @@ import "./DiwaliPage.css";
 import Header1 from "./Header1";
 import Footer from "./Footer";
 import Firecracker from "./Firecracker";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
 const Happy_Diwali: React.FC = () => {
   const whatsappNumber = "9160463697";
@@ -51,11 +53,11 @@ const Happy_Diwali: React.FC = () => {
             intake!"
           </p>
 
-            <div className="buttons">
-              <button onClick={handleWhatsAppClick} className="button demo">
-                Send WhatsApp Message
-              </button>
-            </div>
+          <div className="buttons">
+  <button onClick={handleWhatsAppClick} className="button demo">
+    <FontAwesomeIcon icon={faWhatsapp} className="whatsapp-icon" /> Send WhatsApp Message
+  </button>
+</div>
           </div>
         </div>
       </div>

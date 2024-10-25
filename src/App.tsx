@@ -18,12 +18,12 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Landingpage />} />
+          {/* <Route path="/" element={<Landingpage />} /> */}
           <Route path="/erice" element={<Erice />} />
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
-          <Route path="/Happy_Diwali" element={<Happy_Diwali/>} /> 
+          <Route path="/" element={<Happy_Diwali/>} /> 
           <Route path="/Example" element={<Example variant="loading01" />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/Examplecomponet" element={<Examplecomponet />} />{" "}
