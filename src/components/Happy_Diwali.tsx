@@ -110,7 +110,7 @@ const Happy_Diwali: React.FC = () => {
         <h1 style={{textAlign:'center',margin:"50px",fontSize:"50px"}}><b style={{color:'green'}}><span style={{color:'#0a6fba'}}>Oxy</span>Group</b> Companies</h1>
        
        
-        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px",paddingInline:"130px" }}>
+        <div className="event-container1" >
           <div className="event-content1">
             <div className="diwali-images1">
               <div className="image-container1">
@@ -142,7 +142,7 @@ const Happy_Diwali: React.FC = () => {
           </div>
         </div>
 
-        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px",paddingInline:"130px" }}>
+        <div className="event-container1" >
           <div className="event-content1" style={{borderColor:'#c26c27'}}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -170,7 +170,7 @@ const Happy_Diwali: React.FC = () => {
           </div>
         </div>
 
-        <div className="event-container" style={{ paddingTop: "0px", paddingBottom: "130px",paddingInline:"130px" }}>
+        <div className="event-container1">
           <div className="event-content1" style={{ borderColor: '#05a446' }}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -205,7 +205,7 @@ Kolam Rice, Surya Teja’s Brand, Gajraj Evergreen, Shubodayam, 5 Star, JSR
           </div>
         </div>
 
-        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px",paddingInline:"130px" }}>
+        <div className="event-container1" >
           <div className="event-content1" style={{borderColor:'#583e99'}}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -232,7 +232,7 @@ Kolam Rice, Surya Teja’s Brand, Gajraj Evergreen, Shubodayam, 5 Star, JSR
             </div>
           </div>
         </div>
-        <div className="event-container" style={{ paddingTop: "0px", paddingBottom: "130px",paddingInline:"130px" }}>
+        <div className="event-container1" >
           <div className="event-content1" style={{ borderColor: '#189c9e' }}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -263,7 +263,7 @@ Kolam Rice, Surya Teja’s Brand, Gajraj Evergreen, Shubodayam, 5 Star, JSR
       </div>
    
 
-      <Firecracker />
+      {/* <Firecracker /> */}
       <Footer />
     </>
   );
