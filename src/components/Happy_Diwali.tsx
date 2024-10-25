@@ -194,6 +194,33 @@ const Happy_Diwali: React.FC = () => {
             </div>
           </div>
         </div>
+        <div className="event-container" style={{ paddingTop: "0px", paddingBottom: "130px" }}>
+          <div className="event-content1" style={{ borderColor: '#189c9e' }}>
+            <div className="diwali-images1">
+              <div className="image-container1">
+                <img src={img5} alt="Diwali Diyas" className="diwali-diya" />
+              </div>
+            </div>
+            <div className="event-details">
+
+              <h1 className="diwali-title1" style={{ color: "#189c9e" }}>
+Find your dream home
+              </h1>
+              <h3 className="diwali-subtitle1" style={{ padding: "0px", margin: '0px', paddingBottom: "20px" }}>
+              XPERT HOMES is a leading property management company offering transparent, high-quality services. We help property owners maximize ROI and find verified tenants through our comprehensive 360° management solutions.
+              </h3>
+
+              <div className="buttons" >
+                <a href="https://xperthomes.in/" target="_blank" rel="noopener noreferrer">
+                  <button className="button demo" style={{ backgroundColor: '#189c9e' }}>
+                    Know More
+                  </button>
+                </a>
+
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
    
 
