@@ -108,7 +108,9 @@ const Happy_Diwali: React.FC = () => {
       </div> */}
       <div>
         <h1 style={{textAlign:'center',margin:"50px",fontSize:"50px"}}><b style={{color:'green'}}><span style={{color:'#0a6fba'}}>Oxy</span>Group</b> Companies</h1>
-        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px" }}>
+       
+       
+        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px",paddingInline:"130px" }}>
           <div className="event-content1">
             <div className="diwali-images1">
               <div className="image-container1">
@@ -139,7 +141,8 @@ const Happy_Diwali: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px" }}>
+
+        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px",paddingInline:"130px" }}>
           <div className="event-content1" style={{borderColor:'#c26c27'}}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -167,7 +170,42 @@ const Happy_Diwali: React.FC = () => {
           </div>
         </div>
 
-        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px" }}>
+        <div className="event-container" style={{ paddingTop: "0px", paddingBottom: "130px",paddingInline:"130px" }}>
+          <div className="event-content1" style={{ borderColor: '#05a446' }}>
+            <div className="diwali-images1">
+              <div className="image-container1">
+                <img src={img6} alt="Diwali Diyas" className="diwali-diya" />
+              </div>
+            </div>
+            <div className="event-details">
+
+              <h1 className="diwali-title1" style={{ color: "#05a446" }}>
+                Order . Rice . Online
+              </h1>
+              <h3 className="diwali-subtitle1" style={{ padding: "0px", margin: '0px', paddingBottom: "20px",fontWeight:'bold' }}>
+               Free Delivery | All Over Hyderabad
+              </h3>
+              <h3 className="diwali-subtitle1" style={{ padding: "0px", margin: '0px', paddingBottom: "20px", }}>
+              All type of rice brands available. Sri Lalitha, Kurnool, RRI, Cow brand, Sree Maateja,
+Kolam Rice, Surya Teja’s Brand, Gajraj Evergreen, Shubodayam, 5 Star, JSR
+              </h3>
+              <h3 className="diwali-subtitle1" style={{ padding: "0px", margin: '0px', paddingBottom: "20px",fontWeight:'bold' }}>
+              Return & Exchange Guarantee | Available Now : Steamed & Raw Rice
+              </h3>
+
+              <div className="buttons" >
+                <a href="https://erice.in/" target="_blank" rel="noopener noreferrer">
+                  <button className="button demo" style={{ backgroundColor: '#05a446' }}>
+                 order rice 
+                  </button>
+                </a>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px",paddingInline:"130px" }}>
           <div className="event-content1" style={{borderColor:'#583e99'}}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -194,7 +232,7 @@ const Happy_Diwali: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="event-container" style={{ paddingTop: "0px", paddingBottom: "130px" }}>
+        <div className="event-container" style={{ paddingTop: "0px", paddingBottom: "130px",paddingInline:"130px" }}>
           <div className="event-content1" style={{ borderColor: '#189c9e' }}>
             <div className="diwali-images1">
               <div className="image-container1">
@@ -204,10 +242,10 @@ const Happy_Diwali: React.FC = () => {
             <div className="event-details">
 
               <h1 className="diwali-title1" style={{ color: "#189c9e" }}>
-Find your dream home
+                Find your dream home
               </h1>
               <h3 className="diwali-subtitle1" style={{ padding: "0px", margin: '0px', paddingBottom: "20px" }}>
-              XPERT HOMES is a leading property management company offering transparent, high-quality services. We help property owners maximize ROI and find verified tenants through our comprehensive 360° management solutions.
+                XPERT HOMES is a leading property management company offering transparent, high-quality services. We help property owners maximize ROI and find verified tenants through our comprehensive 360° management solutions.
               </h3>
 
               <div className="buttons" >
@@ -221,6 +259,7 @@ Find your dream home
             </div>
           </div>
         </div>
+      
       </div>
    
 
