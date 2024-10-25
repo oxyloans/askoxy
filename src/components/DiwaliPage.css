@@ -10,6 +10,19 @@
     font-size: 2.5em;
     margin-bottom: 10px;
   }
+
+  .diwali-title1 {
+    color: rgba(121, 32, 199, 1);
+    font-weight: 700;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .diwali-title1 {
+      font-size: 2em;
+      text-align: center;
+    }}
   
   .diwali-subtitle {
     color: #555;
@@ -17,13 +30,37 @@
     font-size: 1.2em;
     margin-bottom: 30px;
   }
+
+
+    
+  .diwali-subtitle1 {
+    color: #555;
+    font-weight: 400;
+    font-size: 1.2em;
+    margin-bottom: 30px;
+  }
+  @media (max-width: 768px) {
+    .diwali-subtitle1 {
+      text-align: center;
+    }}
+    .subtitle2{
+      font-weight: bold;
+
+       color: 'green';
+        margin: "0px"
+    }
+
+    @media (max-width: 768px) {
+      .subtitle2 {
+        text-align: center;
+      }}
   
-  .diwali-images {
+  /* .diwali-images {
     display: flex;
     justify-content: center;
     gap: 30px;
     margin-bottom: 30px;
-  }
+  } */
   
   .image-container {
     width: 150px;
@@ -53,7 +90,11 @@
     font-weight: bold;
     margin-bottom: 15px;
   }
-  
+  @media (max-width: 768px) {
+    .buttons{
+   align-items: center;
+    }}
+    
   .buttons .demo {
     background-color:"#075e54";
     color: white;
@@ -130,71 +171,182 @@
       opacity: 0;
     }
   }
-  
-  .event-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 210px; /* Padding for web view */
-  }
-  
-  .event-content {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-  }
-  
-  .diwali-images {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .image-container {
-    width: 100%;
-    height: 100%;
-  }
-  .image-container img {
-    width: 850px;
-    height: auto;
-    border-radius: 8px;
-    object-fit: cover;
+  /* General Styles *//* General Styles *//* General Styles */
+.event-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 210px;
 }
+
+.event-content1 {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  border: 2px solid #00ad57; /* Change the color and width as needed */
+  border-radius: 20px;
+  
+  /* Drop shadow */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Adjust values for desired effect */
+}
+
+.event-content {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  
+}
+
+.diwali-images {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.diwali-images1 {
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-container {
+  width: 100%;
+  height: 100%;
+}
+
+.image-container1 {
+  width: 100%;
+  height: 100%;
+}
+
+.image-container img {
+  width: 850px;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.image-container1 img {
+  width: 550px;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.diwali-diya {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.event-details {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Carousel Styles */
+.carousel-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  max-width: 80%; /* Adjusted for centering */
+  margin: 0 auto;
+}
+
+.carousel-button {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 15px;
+  font-size: 24px;
+  z-index: 10;
+}
+
+.prev-button {
+  position: absolute;
+  left: -60px; /* Adjusted to the left side */
+}
+
+.next-button {
+  position: absolute;
+  right: -60px; /* Adjusted to the right side */
+}
+
+.carousel-images {
+  display: flex;
+  overflow: hidden;
+  width: 100%; /* Full-width for the carousel */
+  justify-content: center;
+}
+
+.carousel-image {
+  min-width: 300px;
+  height: 200px;
+  transition: opacity 0.5s ease-in-out;
+  display: none;
+}
+
+.carousel-image.active {
+  display: block;
+  opacity: 1;
+}
+
+.carousel-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .carousel-image {
+    min-width: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .carousel-image {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .event-container {
+    padding: 20px;
+    padding-top: 170px;
+  }
+
+
+
+
+  .event-content {
+    flex-direction: column;
+  }
+
+  .event-content1 {
+    flex-direction: column;
+  }
+
   .diwali-diya {
     width: 100%;
     height: auto;
-    object-fit: cover;
   }
-  
+
   .event-details {
-    flex: 1;
-    padding: 20px;
+    padding: 10px;
   }
-  
-  .join-button {
-    width: 100%;
-    margin-top: 10px;
+
+  .carousel-image {
+    min-width: 100%;
   }
-  
-  /* Media Query for Mobile View */
-  @media (max-width: 768px) {
-    .event-container {
-      padding: 20px; /* Reduced padding for mobile view */
-      padding-top: 170px;
-    }
-  
-    .event-content {
-      flex-direction: column;
-    }
-  
-    .diwali-diya {
-      width: 100%;
-      height: auto;
-    }
-  
-    .event-details {
-      padding: 10px;
-    }
+}
+
+@media (max-width: 576px) {
+  .carousel-image {
+    min-width: 100%;
   }
-  
+}
