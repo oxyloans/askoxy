@@ -54,7 +54,7 @@ const Happy_Diwali: React.FC = () => {
   return (
     <>
       <Header1 />
-      <div className="event-container">
+      <div className="event-container" style={{paddingBottom:'100px'}}>
         <div className="event-content">
           <div className="diwali-images">
             <div className="image-container">
@@ -108,7 +108,7 @@ const Happy_Diwali: React.FC = () => {
       </div> */}
       <div>
         <h1 style={{textAlign:'center',margin:"50px",fontSize:"50px"}}><b style={{color:'green'}}><span style={{color:'#0a6fba'}}>Oxy</span>Group</b> Companies</h1>
-        <div className="event-container" style={{ paddingTop: "0px" }}>
+        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px" }}>
           <div className="event-content1">
             <div className="diwali-images1">
               <div className="image-container1">
@@ -116,13 +116,15 @@ const Happy_Diwali: React.FC = () => {
               </div>
             </div>
             <div className="event-details">
-              <h2 className="subtitle2" >
+              {/* <h2 className="subtitle2" >
                 Oxyloans is a P2P NBFC
-              </h2>
+              </h2> */}
               <h1 className="diwali-title1" style={{ color: "#0a6fba" }}>
                 Lend & Earn 1.5% - 2.5% Monthly RoI
               </h1>
-
+              <h3 className="diwali-subtitle1" style={{padding:"0px",margin:'0px'}}>
+              OxyLoans.com is an RBI-approved P2P NBFC, a revolutionary fintech platform. We onboard tax-paying Individuals, and HNIs as Lenders. We enable lenders/ investors to exchange funds directly with borrowers. Our proprietary algorithms include credit scoring, underwriting, and loan agreement preparation.
+              </h3>
               <h3 className="diwali-subtitle1" style={{ fontWeight: 'bold' }}>
                 ₹1000000000+<b>DISBURSAL</b> <br></br>   30000+ <b>LENDERS</b><br></br>  270000+ <b>BORROWERS</b>
               </h3>
@@ -130,6 +132,33 @@ const Happy_Diwali: React.FC = () => {
               <a href="https://oxyloans.com/" target="_blank" rel="noopener noreferrer">
   <button className="button demo">
     Start Lending
+  </button>
+</a>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="event-container" style={{ paddingTop: "0px",paddingBottom:"130px" }}>
+          <div className="event-content1" style={{borderColor:'#c26c27'}}>
+            <div className="diwali-images1">
+              <div className="image-container1">
+                <img src={img2} alt="Diwali Diyas" className="diwali-diya" />
+              </div>
+            </div>
+            <div className="event-details">
+            
+              <h1 className="diwali-title1" style={{ color: "#c26c27" }}>
+               Fractional Investments in Lands & Buildings
+              </h1>
+              <h3 className="diwali-subtitle1" style={{padding:"0px",margin:'0px'}}>
+              OXYBRICKS is the first Blockchain platform that enables fractional investment in lands & buildings: a Blockchain tech platform that allows principal guarantee, monthly earnings, and property appreciation.
+              </h3>
+              
+              <div className="buttons">
+              <a href="https://oxybricks.world/" target="_blank" rel="noopener noreferrer">
+  <button className="button demo">
+  Know More
   </button>
 </a>
 
