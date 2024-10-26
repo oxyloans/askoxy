@@ -18,7 +18,7 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Landingpage />} />
+          {/* <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
@@ -27,7 +27,7 @@ function App() {
           <Route path="/Example" element={<Example variant="loading01" />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/Examplecomponet" element={<Examplecomponet />} />{" "}
-          <Route path="/UserProfileModel" element={<ProfileCallPage />} />
+          <Route path="/UserProfileModel" element={<ProfileCallPage />} /> */}
         </Routes>
       </div>
     </Router>
