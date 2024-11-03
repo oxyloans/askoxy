@@ -16,8 +16,8 @@ import ExampleComponent from "./components/Examplecomponet";
 
 const App: React.FC = () => {
   return (
-    <Router basename="/freerudraksha">
-
+    <Router>
+      <div className="App">
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
@@ -33,7 +33,7 @@ const App: React.FC = () => {
           <Route path="/example-component" element={<ExampleComponent />} />
           <Route path="/user-profile-model" element={<UserProfileModel />} />
         </Routes>
-
+      </div>
     </Router>
   );
 };
