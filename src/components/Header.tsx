@@ -34,6 +34,25 @@ const Header: React.FC = () => {
         ASKOXY.AI
       </button>
 <div  className='row'  style={{display:'flex',flexDirection:'row' ,gap:'10px'}}>
+<div   
+        className="sign-in-container"
+        style={{
+          width: 'auto',
+          height: 'auto',
+          backgroundColor: 'rgb(124, 70, 233)',
+          padding: '7px 20px',
+          borderRadius: '50px',
+          color: 'white',
+          textAlign: 'center',
+          fontWeight: 'bold',
+        }}
+      >
+        {/* SignIn button with redirection functionality */}
+
+        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/freerudraksha')}}>
+        Free Rudraksha
+        </button>
+      </div>
       <div
         className="sign-in-container flex items-center"
         style={{
