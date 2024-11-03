@@ -12,12 +12,11 @@ import Greenproject from "./components/Greenproject";
 import EL_Dorado from "./components/EL_Dorado";
 import Freerudraksha from "./components/Freerudraksh";
 import Login from "./components/login";
-import Examplecomponet from "./components/Examplecomponet";
-
+import ExampleComponent from "./components/Examplecomponet";
 
 const App: React.FC = () => {
   return (
-    <Router>
+    <Router basename="/freerudraksha">
       <div className="App">
         <Routes>
           <Route path="/" element={<Landingpage />} />
@@ -31,12 +30,12 @@ const App: React.FC = () => {
           <Route path="/greenproject" element={<Greenproject />} />
           <Route path="/el-dorado" element={<EL_Dorado />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
-          <Route path="/example-component" element={<Examplecomponet />} />
+          <Route path="/example-component" element={<ExampleComponent />} />
           <Route path="/user-profile-model" element={<UserProfileModel />} />
         </Routes>
       </div>
     </Router>
   );
-}
+};
 
 export default App;
