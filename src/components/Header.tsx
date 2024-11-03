@@ -68,7 +68,7 @@ const Header: React.FC = () => {
       >
         {/* SignIn button with redirection functionality */}
 
-        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/freerudraksha')}}>
+        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
           SignOut
         </button>
       </div>
