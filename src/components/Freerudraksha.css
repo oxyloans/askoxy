@@ -1,0 +1,92 @@
+/* Main container styling */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f5f5f5; /* Light background color for contrast */
+  padding: 20px;
+  min-height: 100vh; /* Make sure it covers full viewport height */
+}
+
+/* Container styling */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adds shadow for better visibility */
+}
+
+/* Header styling */
+.header {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Worlds section styling */
+.worlds {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+/* Each world section styling */
+.spiritual-world,
+.ai-world {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0 10px;
+}
+
+/* Headings in each section */
+.spiritual-world h2,
+.ai-world h2 {
+  font-size: 2rem;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+/* Image styling */
+.world-image {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  margin-top: 10px;
+}
+
+.world-image:hover {
+  transform: scale(1.05);
+}
+
+/* Details section styling */
+.details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #555;
+  /* max-width: 800px; */
+  margin-bottom: 20px;
+}
+
+.details p {
+  margin: 10px 0;
+}
+
+/* Footer styling */
+.footer {
+  text-align: center;
+  font-size: 1rem;
+  color: #777;
+  margin-top: 20px;
+}

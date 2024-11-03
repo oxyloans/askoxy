@@ -14,6 +14,7 @@ import Meeting from "./components/Meeting";
 import Happy_Diwali from "./components/Happy_Diwali";
 import Greenproject from "./components/Greenproject";
 import EL_Dorado from "./components/EL_Dorado";
+import Freerudraksha from "./components/Freerudraksh";
 
 function App() {
   return (
@@ -25,10 +26,11 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
-          <Route path="/Happy_Diwali" element={<Happy_Diwali/>} /> 
-          <Route path="/Example" element={<Example variant="loading01" />} />         
-           <Route path="/Greenproject" element={<Greenproject/>} /> 
-           <Route path="/EL_Dorado" element={<EL_Dorado/>} /> 
+          <Route path="/freerudraksha" element={<Freerudraksha />} />
+          <Route path="/Happy_Diwali" element={<Happy_Diwali />} />
+          <Route path="/Example" element={<Example variant="loading01" />} />
+          <Route path="/Greenproject" element={<Greenproject />} />
+          <Route path="/EL_Dorado" element={<EL_Dorado />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/Examplecomponet" element={<Examplecomponet />} />{" "}
           <Route path="/UserProfileModel" element={<ProfileCallPage />} />
