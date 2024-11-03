@@ -25,6 +25,7 @@ const App: React.FC = () => {
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
           <Route path="/freerudraksha" element={<Freerudraksha />} />
+          <Route path="/freerudraksha/" element={<Freerudraksha />} />
           <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />
           <Route path="/greenproject" element={<Greenproject />} />
