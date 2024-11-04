@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
 import Erice from "./components/Erice";
 import Landingpage from "./components/Landingpage";
 import Normal from "./components/Normal";
@@ -24,8 +29,14 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
-          <Route path="/freerudraksha" element={<Freerudraksha />} />
+
+          {/* Redirect to add a trailing slash if missing */}
+          <Route
+            path="/freerudraksha"
+            element={<Navigate to="/freerudraksha/" />}
+          />
           <Route path="/freerudraksha/" element={<Freerudraksha />} />
+
           <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />
           <Route path="/greenproject" element={<Greenproject />} />
@@ -33,7 +44,6 @@ const App: React.FC = () => {
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/example-component" element={<ExampleComponent />} />
           <Route path="/user-profile-model" element={<UserProfileModel />} />
-
         </Routes>
       </div>
     </Router>
