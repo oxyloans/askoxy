@@ -33,7 +33,7 @@ function App() {
           <Route path="/EL_Dorado" element={<EL_Dorado />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/Examplecomponet" element={<Examplecomponet />} />{" "}
-          <Route path="/UserProfileModel" element={<ProfileCallPage />} />
+          <Route path="/UserProfileModel" element={<ProfileCallPage />} />     
         </Routes>
       </div>
     </Router>
