@@ -7,6 +7,7 @@ import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
 import B2 from "../assets/img/B2.jpg";
+import FR from '../assets/img/WhatsApp.jpeg'
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
 import ChatHistory from "./ChatHistory";
@@ -14,6 +15,10 @@ import Example from "./Example";
 import AuthorInfo from "./AuthorInfo";
 import ModalComponent from "./ModalComponent";
 import ProfileCallPage from "./models/ProfileCallPage";
+import Freerudraksha from "./Freerudraksh";
+import Vanabhojanam from "./Vanabhojanam";
+
+
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -77,6 +82,22 @@ const Normal = () => {
 
   const [chathistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
 
+  const [showFreerudraksha, setShowFreerudraksha] = useState(false);
+
+  const [showVanabhojanam, setShowVanabhojanam] = useState(false);
+  // const [showLeftPanel, setShowLeftPanel] = useState(true);
+
+const handleFreerudrakshaClick = () => {
+  setShowFreerudraksha(true);
+  // setShowLeftPanel(false); 
+  setShowVanabhojanam(false); 
+};
+
+const handleVanabhojanamClick = () => {
+  setShowVanabhojanam(true);
+  setShowFreerudraksha(false); // Hide Freerudraksha when Vanabhojanam is clicked
+  // setShowLeftPanel(false); 
+};
   useEffect(() => {
     const fetchChatHistory = async () => {
       const userId = localStorage.getItem("userId");
@@ -420,11 +441,18 @@ const Normal = () => {
       inputRef.current.focus(); // Focus the input field
     }
   };
-
+  // const handleBackToChatClick = () => {
+  //   setShowFreerudraksha(false);    // Hide the Freerudraksha component
+  //   setShowLeftPanel(true);   
+  //   setShowVanabhojanam(false)     // Show the left panel again
+  // };
   // Handle new chat click
   const handleNewChatClick = () => {
     setMessages([]); // Clear the messages
     setShowStaticBubbles(true); // Show the static chat bubbles
+    setShowFreerudraksha(false); // Reset to main chat interface
+    setShowVanabhojanam(false)
+    // setShowLeftPanel(true);        // Show the left panel again
     if (inputRef.current) {
       inputRef.current.value = ""; // Clear the input field
       setShowSendButton(false); // Hide the send button
@@ -497,14 +525,19 @@ const Normal = () => {
           {/* SignIn button with redirection functionality */}
 
           <button
-            className=""
-            onClick={() => {
-              localStorage.removeItem("userId");
-              navigate("/login");
-            }}
-          >
-            SignOut
-          </button>
+  className=""
+  onClick={() => {
+    if (localStorage.getItem("userId")) {
+      localStorage.removeItem("userId");
+      navigate("/whatapplogin");
+    } else {
+      navigate("/login");
+    }
+  }}
+>
+  SignOut
+</button>
+
         </div>
 
         {/* SignIn/SignUp Buttons */}
@@ -522,89 +555,152 @@ const Normal = () => {
 
       {/* <ModalComponent /> */}
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
-        {/* Combined Left, Center, and Right Panel */}
-        <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">
-          {/* Left Panel */}
-          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 sidebar11">
-            <div className="flex items-center justify-between mt-4 mb-4 font-bold">
-              <button onClick={handleEditClick} className="p-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5 text-[#351664]"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
-                  />
-                </svg>
-              </button>
-              <span className="flex-1 text-center">History</span>
-              <button
-                onClick={handleNewChatClick}
-                className="p-1 rounded-md"
-                title="New Chat"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5 text-[#351664]"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4.5v15m7.5-7.5h-15"
-                  />
-                </svg>
-              </button>
-            </div>
-            {isEditing && (
-              <p className="text-sm text-[#351664]">Editing mode enabled...</p>
-            )}
+      {/* Combined Left, Center, and Right Panel */}
+      <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">
+        {/* Left Panel */}
+        {/* {showLeftPanel && ( */}
+          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col">
+        <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+            <button
+              onClick={handleFreerudrakshaClick}
+              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+            >
+              <img
+                src={FR} // Replace with the actual image path
+                alt="Free Rudraksha"
+                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+              />
+              Free Rudraksha
+            </button>
+        </div>
 
-            {/* History List */}
-            <div className="mt-4 overflow-y-auto max-h-80">
-              {chathistory.length === 0 ? (
-                <p className="text-sm text-gray-500">No history available.</p>
-              ) : (
-                chathistory.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded cursor-pointer"
-                  >
-                    {/* Link with encoded userQuations */}
-                    <Link
-                      className="text-sm text-gray-800"
-                      to={`?${encodeURIComponent(item.userQuations)}`} // Encode the userQuations
-                    >
-                      {item.userQuations}
-                    </Link>
-                  </div>
-                ))
-              )}
-            </div>
-            {/* <ChatHistory /> */}
-          </aside>
+        {/* <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+            <button
+             onClick={handleVanabhojanamClick}
+              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+            >
+              <img
+                src={FR} // Replace with the actual image path
+                alt="Free Rudraksha"
+                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+              />
+             Vanabhojanam
+            </button>
+        </div> */}
+          <div className="flex items-center justify-between font-bold mb-4">
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="pt-16 rounded-md"
+            >
+             <div className="hover:bg-gray-200 p-2 rounded-full"> {/* Add background color here */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+        className="w-5 h-5 text-[#351664]"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
+        />
+      </svg>
+    </div>
+            </button>
+            <span className="flex-1 text-center text-[#351664] pt-16">History</span>
+            <button
+              onClick={handleNewChatClick}
+              className="pt-16 rounded-md"
+              title="New Chat"
+            >
+              <div className="hover:bg-gray-200 p-2 rounded-full"> {/* Add background color here */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+        className="w-5 h-5 text-[#351664]"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    </div>
+            </button>
+          </div>
+
+          {isEditing && (
+            <p className="text-sm text-[#351664] mb-4 text-center">Editing mode enabled...</p>
+          )}
+
+          
+          
+
+          <div className="mt-4 overflow-y-auto max-h-80 border-t border-gray-300 pt-4">
+            {chathistory.length === 0 ? (
+              <p className="text-sm text-gray-500 italic text-center">No history available.</p>
+            ) : (
+              chathistory.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 mb-4 bg-gray-200 rounded cursor-pointer"
+                >
+                  <Link className="text-sm text-gray-800" to={`?${encodeURIComponent(item.userQuations)}`}>
+                    {item.userQuations}
+                  </Link>
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+
+
+{/* }) */}
+
+  
 
           {/* Center Panel */}
-          <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
+     <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
+        {showFreerudraksha ? (
+            <Freerudraksha />
+          ) 
+          
+         /* { {showFreerudraksha ? (
+        <div>
+          <button
+            onClick={handleBackToChatClick}
+            className="p-2 mb-4 text-white bg-blue-500 rounded-md"
+          >
+         ASKOXY.AI CHAT
+          </button>
+          <Freerudraksha /> 
+        </div>
+      ): showVanabhojanam ? (
+        <div>
+          <button
+            onClick={handleBackToChatClick}
+            className="p-2 mb-4 text-white bg-blue-500 rounded-md"
+          >
+         ASKOXY.AI CHAT
+          </button>
+          <Vanabhojanam />  
+        </div>
+      ) }*/
+      :showVanabhojanam?  (
+        <Vanabhojanam />
+      ) :(
+            <>
             {/* Static Rice Related Text */}
-            <h1
+            <h2
               className="fw-500"
-              style={{ zIndex: "10", color: "black", fontWeight: "600" }}
+              style={{ zIndex: "10", color: "black", fontWeight: "700" }}
             >
               Welcome{" "}
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
 
             {showStaticBubbles && (
               <>
@@ -731,8 +827,11 @@ const Normal = () => {
                 </button>
               )}
             </div>
-          </section>
+            </>
+          )}
 
+          </section>
+         
           {/* Right Panel */}
         </div>
       </main>

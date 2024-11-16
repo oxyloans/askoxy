@@ -171,94 +171,140 @@
       opacity: 0;
     }
   }
-  /* General Styles *//* General Styles *//* General Styles */
-.event-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 210px;
+
+/* General Styles */
+* {
+  box-sizing: border-box;
 }
 
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* Flexbox Layout for Event Container */
 .event-container1 {
-  padding-top: 0px;
-  padding-bottom: 130px ;
-  padding-inline: 130px;
+  padding: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
- 
+  flex-direction: column;
+  gap: 20px;
 }
 
 .event-content1 {
   display: flex;
   flex-direction: row;
   width: 100%;
-  border: 2px solid #00ad57; /* Change the color and width as needed */
+  border: 2px solid #00ad57;
   border-radius: 20px;
-  
-  /* Drop shadow */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Adjust values for desired effect */
-}
-
-.event-content {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  
-}
-
-.diwali-images {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.diwali-images1 {
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.image-container {
-  width: 100%;
-  height: 100%;
-}
-
-.image-container1 {
-  width: 100%;
-  height: 100%;
-}
-
-.image-container img {
-  width: 850px;
-  height: auto;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.image-container1 img {
-  width: 550px;
-  height: auto;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-@media (max-width: 1440px) and (min-width: 1024px) {
-  .image-container1 img {
-    width: 350px;
-  }}
-
-.diwali-diya {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-.event-details {
-  flex: 1;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
   padding: 20px;
+  gap: 20px;
+}
+
+.event-content1 .diwali-images1,
+.event-content1 .event-details {
+  flex: 1;
+}
+
+/* Image Styling */
+.image-container1 img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* Text Styling */
+.diwali-title1 {
+  font-size: 24px;
+  color: #0a6fba;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.diwali-subtitle1 {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+/* Button Styling */
+.button {
+  padding: 10px 20px;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.button.demo {
+  background-color: #00ad57;
+}
+
+.button:hover {
+  background-color: #087e43;
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .event-content1 {
+    flex-direction: column;
+  }
+
+  .image-container1 img {
+    width: 80%;
+  }
+}
+
+@media (max-width: 768px) {
+  .event-container1 {
+    padding: 10px;
+  }
+
+  .event-content1 {
+    padding: 15px;
+  }
+
+  .diwali-title1 {
+    font-size: 20px;
+  }
+
+  .diwali-subtitle1 {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 576px) {
+  .event-container1 {
+    padding: 5px;
+  }
+
+  .diwali-title1 {
+    font-size: 18px;
+  }
+
+  .diwali-subtitle1 {
+    font-size: 12px;
+  }
+}
+
+/* Section Titles */
+h1 {
+  text-align: center;
+  font-size: 50px;
+  margin: 20px 0;
+}
+
+h1 b {
+  color: green;
+}
+
+h1 span {
+  color: #0a6fba;
 }
 
 /* Carousel Styles */
@@ -267,7 +313,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  max-width: 80%; /* Adjusted for centering */
+  max-width: 80%;
   margin: 0 auto;
 }
 
@@ -283,18 +329,18 @@
 
 .prev-button {
   position: absolute;
-  left: -60px; /* Adjusted to the left side */
+  left: -60px;
 }
 
 .next-button {
   position: absolute;
-  right: -60px; /* Adjusted to the right side */
+  right: -60px;
 }
 
 .carousel-images {
   display: flex;
   overflow: hidden;
-  width: 100%; /* Full-width for the carousel */
+  width: 100%;
   justify-content: center;
 }
 
@@ -315,64 +361,84 @@
   height: 100%;
   object-fit: cover;
 }
-
-/* Responsive Styles */
-@media (max-width: 1200px) {
-  .carousel-image {
-    min-width: 250px;
-  }
+/* General styles for container */
+.container {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  background-color: #f1f1f1;
 }
 
-@media (max-width: 992px) {
-  .carousel-image {
-    min-width: 200px;
-  }
+/* Heading style */
+.container h1 {
+  text-align: center;
+  margin: 10px;
+  font-size: 50px;
 }
 
-@media (max-width: 768px) {
-  .event-container {
-    padding: 20px;
-    padding-top: 170px;
-  }
-
-
-
-
-  .event-content {
-    flex-direction: column;
-  }
-
-  .event-content1 {
-    flex-direction: column;
-  }
-
-  .diwali-diya {
-    width: 100%;
-    height: auto;
-  }
-
-  .event-details {
-    padding: 10px;
-  }
-
-  .carousel-image {
-    min-width: 100%;
-  }
+.container h1 b {
+  color: green;
 }
 
-@media (max-width: 576px) {
-  .carousel-image {
-    min-width: 100%;
+.container h1 b span {
+  color: #0a6fba;
+}
+
+.container h1 span {
+  color: #ffa500;
+}
+
+/* Image slider container */
+.slider-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Flexbox to display images */
+.slider-images {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+}
+
+.slider-images img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Button styles */
+.slider-button {
+  position: absolute;
+  z-index: 10;
+  padding: 0.5rem;
+  font-size: 2rem;
+  transform: translateY(-50%);
+  background-color: #2563eb; /* Blue color */
+  color: white;
+  border-radius: 50%;
+  top: 50%;
+  transition: background-color 0.3s;
+}
+
+.slider-button:hover {
+  background-color: #1d4ed8; /* Darker blue */
+}
+
+.slider-button-left {
+  left: 2rem;
+}
+
+.slider-button-right {
+  right: 2rem;
+}
+
+/* Media Queries for responsiveness */
+@media (min-width: 768px) {
+  .container h1 {
+    font-size: 60px;
   }
 }
-@media (max-width: 768px) {
-  .event-container1 {
-padding-inline: 30px;
-  
-  }}
-
-
-
-
-
-  

@@ -1,0 +1,195 @@
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('/src/assets/img/BG1.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 20px;
+  }
+  
+  /* === Popup Message === */
+  .popup-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4caf50;
+    color: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    text-align: center;
+  }
+  
+  /* === Form Container === */
+  .form-container {
+    background-color: white; 
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* === Header / Intro Text === */
+  .login-header {
+    font-size: 28px;
+    font-weight: bold;
+    color: #3d5afe;
+    margin-bottom: 20px;
+  }
+  
+  /* === Form Groups / Inputs === */
+  .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  
+  .form-group label {
+    font-weight: 500;
+    color: #333;
+    display: block;
+    margin-bottom: 8px;
+  }
+  
+  .otp-inputs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  /* === Phone Input Container === */
+.phoneinputfield {
+    position: relative;
+    width: 100%;
+    max-width: 350px; /* Adjust to fit your design */
+  }
+  
+  /* === PhoneInput Component === */
+  .PhoneInputInput {
+    width: 100%;
+    padding: 10px 20px 10px 10px; /* Add padding to ensure the country select doesn't overlap the input */
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  
+  /* === Country Select Dropdown Style === */
+  .PhoneInputCountrySelect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    border-radius: 4px;
+    border: none;
+    height: 100%;
+    padding: 10px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* === Optional: Add custom styles for focus/hover states === */
+  .PhoneInputInput:focus {
+    border-color: #3d5afe;
+    outline: none;
+  }
+  
+  .PhoneInputCountrySelect:focus {
+    border-color: #3d5afe;
+    outline: none;
+  }
+  
+  
+  .otp-circle {
+    width: 40px;
+    height: 40px;
+    margin: 0 5px;
+    text-align: center;
+    font-size: 18px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .otp-circle:focus {
+    border-color: #3d5afe;
+    outline: none;
+  }
+  
+  /* === Submit Button === */
+  .button {
+    width: 100%;
+    padding: 12px;
+    background-color: #f9cc15;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .button:hover {
+    background-color: #e6b812;
+  }
+  
+  /* === Change Number Button === */
+  .change-number-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+  }
+  
+  .change-number-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* === Error Message === */
+  .error-message {
+    color: #e74c3c;
+    font-size: 14px;
+  }
+  
+  /* === OR Divider === */
+  .or-divider {
+    text-align: center;
+    padding-top: 8px;
+    color: #666;
+    font-size: 18px;
+  }
+  
+  /* === Alternate Login Link === */
+  .alternate-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  
+  .alternate-login h1 {
+    text-align: center;
+    font-size: 18px;
+    color: #3d5afe;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  
+  .alternate-login h1:hover {
+    color: #2c47d1;
+  }
+  

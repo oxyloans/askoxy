@@ -40,24 +40,7 @@ const Header2: React.FC = () => {
         className="row"
         style={{ display: "flex", flexDirection: "row", gap: "10px" }}
       >
-        <div
-          className="flex items-center sign-in-container"
-          style={{
-            width: "auto",
-            height: "auto",
-            backgroundColor: "white",
-            padding: "7px 20px",
-            borderRadius: "50px",
-            color: "black",
-            textAlign: "center",
-            fontWeight: "bold",
-          }}
-        >
-          {/* SignIn button with redirection functionality */}
-          <button className="" onClick={handleSignInClick}>
-            SignIn
-          </button>
-        </div>
+        
         <div
           className="sign-in-container"
           style={{

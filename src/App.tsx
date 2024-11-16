@@ -18,6 +18,7 @@ import EL_Dorado from "./components/EL_Dorado";
 import Freerudraksha from "./components/Freerudraksh";
 import Login from "./components/login";
 import ExampleComponent from "./components/Examplecomponet";
+import Vanabhojanam from "./components/Vanabhojanam";
 
 const App: React.FC = () => {
   return (
@@ -29,6 +30,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
+          <Route path="/vanabhojanam" element={<Vanabhojanam/>}/>
 
           {/* Redirect to add a trailing slash if missing */}
           <Route

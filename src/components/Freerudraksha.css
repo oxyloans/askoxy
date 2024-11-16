@@ -5,17 +5,17 @@
   align-items: center;
   background-color: #f5f5f5; /* Light background color for contrast */
   padding: 20px;
-  min-height: 100vh; /* Make sure it covers full viewport height */
+  min-height: 100vh; /* Full viewport height */
 }
 
 /* Container styling */
 .container {
   width: 100%;
   max-width: 1200px;
-  background-color: white;
+  background-color: #fff;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adds shadow for better visibility */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow */
 }
 
 /* Header styling */
@@ -44,8 +44,13 @@
 }
 
 /* Headings in each section */
-.spiritual-world h2,
-.ai-world h2 {
+.spiritual-world 
+.ai-world {
+  font-size: 2rem;
+  color: #444;
+  margin-bottom: 10px;
+}
+#h2{
   font-size: 2rem;
   color: #444;
   margin-bottom: 10px;
@@ -57,25 +62,23 @@
   max-width: 500px;
   height: auto;
   border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Image shadow */
   transition: transform 0.3s ease;
   margin-top: 10px;
 }
 
 .world-image:hover {
-  transform: scale(1.05);
+  transform: scale(1.05); /* Hover effect */
 }
 
 /* Details section styling */
 .details {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #555;
-  /* max-width: 800px; */
   margin-bottom: 20px;
 }
 
@@ -90,3 +93,4 @@
   color: #777;
   margin-top: 20px;
 }
+

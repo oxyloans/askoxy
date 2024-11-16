@@ -6,7 +6,7 @@ const Header: React.FC = () => {
 
   // Function to handle the click event
   const handleSignInClick = () => {
-    navigate('/login'); // Redirect to the login page
+    navigate('/whatapplogin'); // Redirect to the login page
   };
   
 
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
         ASKOXY.AI
       </button>
 <div  className='row'  style={{display:'flex',flexDirection:'row' ,gap:'10px'}}>
-<div   
+{/* <div   
         className="sign-in-container"
         style={{
           width: 'auto',
@@ -47,12 +47,12 @@ const Header: React.FC = () => {
           fontWeight: 'bold',
         }}
       >
-        {/* SignIn button with redirection functionality */}
+       
 
         <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/freerudraksha')}}>
         Free Rudraksha
         </button>
-      </div>
+      </div> */}
       <div
         className="sign-in-container flex items-center"
         style={{
