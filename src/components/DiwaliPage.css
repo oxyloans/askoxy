@@ -1,4 +1,4 @@
-/* Existing CSS for layout and animations */
+Existing CSS for layout and animations
 .container1 {
     text-align: center;
     padding: 20px;
@@ -55,12 +55,12 @@
         text-align: center;
       }}
   
-  /* .diwali-images {
+  .diwali-images {
     display: flex;
     justify-content: center;
     gap: 30px;
     margin-bottom: 30px;
-  } */
+  }
   
   .image-container {
     width: 150px;
@@ -110,7 +110,7 @@
     background-color: rgb(23, 85, 51);
   }
   
-  /* CSS for the Tracer Rocket Animation */
+ 
   .rocket-container {
     position: fixed;
     bottom: 0;
@@ -118,7 +118,7 @@
     transform: translateX(-50%);
     width: 20px;
     height: 100%;
-    pointer-events: none; /* Prevent the rocket from interfering with clicks */
+    pointer-events: none; 
   }
   
   .rocket {
@@ -140,7 +140,7 @@
     animation: trailFade 3s ease-in-out infinite;
   }
   
-  /* Rocket flying animation */
+
   @keyframes rocketFly {
     0% {
       bottom: 0;
@@ -156,7 +156,7 @@
     }
   }
   
-  /* Rocket trail fade */
+
   @keyframes trailFade {
     0% {
       bottom: 0;
@@ -172,7 +172,7 @@
     }
   }
 
-/* General Styles */
+
 * {
   box-sizing: border-box;
 }
@@ -182,7 +182,7 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* Flexbox Layout for Event Container */
+
 .event-container1 {
   padding: 20px;
   display: flex;
@@ -208,7 +208,7 @@ body {
   flex: 1;
 }
 
-/* Image Styling */
+
 .image-container1 img {
   width: 100%;
   height: auto;
@@ -216,7 +216,7 @@ body {
   object-fit: cover;
 }
 
-/* Text Styling */
+
 .diwali-title1 {
   font-size: 24px;
   color: #0a6fba;
@@ -230,7 +230,6 @@ body {
   margin-bottom: 10px;
 }
 
-/* Button Styling */
 .button {
   padding: 10px 20px;
   color: white;
@@ -249,7 +248,7 @@ body {
   background-color: #087e43;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1200px) {
   .event-content1 {
     flex-direction: column;
@@ -292,22 +291,21 @@ body {
   }
 }
 
-/* Section Titles */
-h1 {
+
+.diwali-title1 {
   text-align: center;
   font-size: 50px;
   margin: 20px 0;
 }
 
-h1 b {
+.diwali-title1 b {
   color: green;
 }
 
-h1 span {
+.diwali-title1 span {
   color: #0a6fba;
 }
 
-/* Carousel Styles */
 .carousel-container {
   display: flex;
   align-items: center;
@@ -361,7 +359,7 @@ h1 span {
   height: 100%;
   object-fit: cover;
 }
-/* General styles for container */
+
 .container {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
@@ -370,7 +368,7 @@ h1 span {
   background-color: #f1f1f1;
 }
 
-/* Heading style */
+
 .container h1 {
   text-align: center;
   margin: 10px;
@@ -389,7 +387,7 @@ h1 span {
   color: #ffa500;
 }
 
-/* Image slider container */
+
 .slider-container {
   position: relative;
   width: 100%;
@@ -398,7 +396,7 @@ h1 span {
   overflow: hidden;
 }
 
-/* Flexbox to display images */
+
 .slider-images {
   display: flex;
   transition: transform 0.3s ease-in-out;
@@ -410,14 +408,14 @@ h1 span {
   display: block;
 }
 
-/* Button styles */
+
 .slider-button {
   position: absolute;
   z-index: 10;
   padding: 0.5rem;
   font-size: 2rem;
   transform: translateY(-50%);
-  background-color: #2563eb; /* Blue color */
+  background-color: #2563eb; 
   color: white;
   border-radius: 50%;
   top: 50%;
@@ -425,7 +423,7 @@ h1 span {
 }
 
 .slider-button:hover {
-  background-color: #1d4ed8; /* Darker blue */
+  background-color: #1d4ed8; 
 }
 
 .slider-button-left {
@@ -436,7 +434,6 @@ h1 span {
   right: 2rem;
 }
 
-/* Media Queries for responsiveness */
 @media (min-width: 768px) {
   .container h1 {
     font-size: 60px;

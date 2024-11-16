@@ -349,27 +349,24 @@ const Freerudraksha: React.FC = () => {
     const isLastImage = currentIndex === images.length - 1;
     const newIndex = isLastImage ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
-  };
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [modalType, setModalType] = useState<string>(""); // 'confirmation', 'addressEntry', 'success'
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  }; const [phoneNumber, setPhoneNumber] = useState<string>("");
+  
   const [address, setAddress] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<string>("");
   const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
-  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
   const storedPhoneNumber = localStorage.getItem("whatsappNumber");
-  const userId = localStorage.getItem("userId") || "";
-  const [isLoading, setIsLoading] = useState<boolean>(false); // Track loading state
+  const userId = localStorage.getItem("userId"); // Fetch user ID from storage if needed.
 
-
-  // Handlers
   const handleWhatsappClick = () => {
     if (storedPhoneNumber) {
       setPhoneNumber(storedPhoneNumber);
       setModalType("confirmation");
       setIsModalOpen(true);
     } else {
-      message.success("Phone number is not available in local storage.");
+      message.error("Phone number is not available in local storage.");
     }
   };
 
@@ -381,13 +378,13 @@ const Freerudraksha: React.FC = () => {
     if (!address.trim()) {
       message.error("Please enter an address.");
       return;
-      
     }
 
     const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
     const payload = { address, userId };
 
     try {
+      setIsLoading(true); // Show loading spinner
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -403,11 +400,13 @@ const Freerudraksha: React.FC = () => {
       } else {
         const errorData = await response.json();
         console.error("Error saving address:", errorData);
-        message.success("Failed to save the address. Please try again.");
+        message.error("Failed to save the address. Please try again.");
       }
     } catch (error) {
       console.error("Error saving address:", error);
       message.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false); // Hide loading spinner
     }
   };
 
@@ -416,6 +415,7 @@ const Freerudraksha: React.FC = () => {
     const payload = { userId, deliveryType };
 
     try {
+      setIsLoading(true); // Show loading spinner
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -434,13 +434,13 @@ const Freerudraksha: React.FC = () => {
     } catch (error) {
       console.error("Error submitting request:", error);
       message.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false); // Hide loading spinner
+      setAddress("");
+      setIsPopupVisible(false);
+      setIsModalOpen(false);
     }
-
-    setIsPopupVisible(false);
-    setAddress("");
-    setIsModalOpen(false);
   };
-
   return (
     <div>
       <header className="header text-center">
@@ -490,10 +490,12 @@ const Freerudraksha: React.FC = () => {
         <button
           className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
           onClick={handleWhatsappClick}
+          aria-label="Request Free Rudraksha"
         >
           I Want Free Rudraksha
         </button>
       </div>
+
 
       {/* Modals */}
       {isModalOpen && (
@@ -522,53 +524,51 @@ const Freerudraksha: React.FC = () => {
               </>
             )}
 
-{modalType === "addressEntry" && (
-  <>
-    <p className="text-lg text-center text-black mb-4">Enter your address:</p>
-    <input
-      type="text"
-      value={address}
-      onChange={(e) => setAddress(e.target.value)}
-      placeholder="Enter address"
-      className="w-full p-2 mb-4 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-    {isConfirmVisible ? (
-      <>
-        <p className="text-lg text-center text-black mb-4">
-          Is this your correct address?
-        </p>
-        <p className="text-center text-gray-600 mb-4">{address}</p>
-        <div className="flex justify-between gap-4">
-          <button
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-            onClick={saveAddress}
-          >
-            Yes
-          </button>
-          <button
-            className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-            onClick={() => setIsConfirmVisible(false)}
-          >
-            No
-          </button>
-        </div>
-      </>
-    ) : (
-      <button
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-        onClick={() => setIsConfirmVisible(true)}
-      >
-        Confirm Address
-      </button>
-    )}
-  </>
-)}
-
+            {modalType === "addressEntry" && (
+              <>
+                <p className="text-lg text-center text-black mb-4">Enter your address:</p>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Enter address"
+                  className="w-full p-2 mb-4 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {isConfirmVisible ? (
+                  <>
+                    <p className="text-lg text-center text-black mb-4">Is this your correct address?</p>
+                    <p className="text-center text-gray-600 mb-4">{address}</p>
+                    <div className="flex justify-between gap-4">
+                      <button
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
+                        onClick={saveAddress}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
+                        onClick={() => setIsConfirmVisible(false)}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
+                    onClick={() => setIsConfirmVisible(true)}
+                  >
+                    Confirm Address
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
 
-{isPopupVisible && !isLoading && (
+      {/* Popup Modals */}
+      {isPopupVisible && !isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
             <p className="text-lg text-center text-black mb-4">
@@ -577,13 +577,13 @@ const Freerudraksha: React.FC = () => {
             <div className="flex justify-between gap-4">
               <button
                 className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
-                onClick={() => setModalType("confirmHomeDelivery")}
+                onClick={() => submitRequest("HomeDelivery")}
               >
                 Home Delivery
               </button>
               <button
                 className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
-                onClick={() => setModalType("confirmPickUpInOffice")}
+                onClick={() => submitRequest("PickInOffice")}
               >
                 Pick Up In Office
               </button>
@@ -592,65 +592,11 @@ const Freerudraksha: React.FC = () => {
         </div>
       )}
 
-      {/* Confirmation Modal for Home Delivery */}
-      {modalType === "confirmHomeDelivery" && !isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-            <p className="text-lg text-center text-black mb-4">
-              Confirm your choice: <strong>Home Delivery</strong>
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-                onClick={() => {
-                  submitRequest("HomeDelivery");
-                  setModalType(""); // Close modal
-                }}
-              >
-                Yes
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-                onClick={() => setModalType("")} // Close modal
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal for Pick Up In Office */}
-      {modalType === "confirmPickUpInOffice" && !isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-            <p className="text-lg text-center text-black mb-4">
-              Confirm your choice: <strong>Pick Up In Office</strong>
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-                onClick={() => {
-                  submitRequest("PickInOffice");
-                  setModalType(""); // Close modal
-                }}
-              >
-                Yes
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-                onClick={() => setModalType("")} // Close modal
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-       {isLoading && (
+      {/* Loading Spinner */}
+      {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md flex justify-center items-center">
-            <div className="loader"></div> {/* You can use any loading spinner or icon */}
+            <div className="loader"></div>
             <p className="text-lg text-black ml-4">Processing your request...</p>
           </div>
         </div>
