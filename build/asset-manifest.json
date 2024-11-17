@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/static/css/main.408b3b42.css",
-    "main.js": "/static/js/main.b034198f.js",
-    "static/js/453.a933a333.chunk.js": "/static/js/453.a933a333.chunk.js",
+    "main.css": "/static/css/main.761bad04.css",
+    "main.js": "/static/js/main.cf0214b8.js",
+    "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/Diwali2.jpg": "/static/media/Diwali2.6f6ebe2f2b7a4f8996bf.jpg",
     "static/media/BG1.jpg": "/static/media/BG1.73ad94a0c4546e5fffc8.jpg",
     "static/media/BG.jpg": "/static/media/BG.b949b1a77589a17ce6eb.jpg",
@@ -55,12 +55,12 @@
     "static/media/image4.png": "/static/media/image4.8734801ecd660024a317.png",
     "static/media/image2.png": "/static/media/image2.a465e4cf5f56f1a2acd6.png",
     "index.html": "/index.html",
-    "main.408b3b42.css.map": "/static/css/main.408b3b42.css.map",
-    "main.b034198f.js.map": "/static/js/main.b034198f.js.map",
-    "453.a933a333.chunk.js.map": "/static/js/453.a933a333.chunk.js.map"
+    "main.761bad04.css.map": "/static/css/main.761bad04.css.map",
+    "main.cf0214b8.js.map": "/static/js/main.cf0214b8.js.map",
+    "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.408b3b42.css",
-    "static/js/main.b034198f.js"
+    "static/css/main.761bad04.css",
+    "static/js/main.cf0214b8.js"
   ]
 }

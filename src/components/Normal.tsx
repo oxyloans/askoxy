@@ -7,7 +7,7 @@ import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
 import B2 from "../assets/img/B2.jpg";
-import Telegu from '../assets/img/telugushiva.jpeg.jpeg'
+
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
 import ChatHistory from "./ChatHistory";
@@ -494,64 +494,64 @@ const handleVanabhojanamClick = () => {
   const handleRedirect = () => {
     navigate("/"); // Redirect to the login page
   };
+
+
+  
   return (
     <div className="min-h-screen bg-[#351664] text-white flex flex-col">
       {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
-        {/* Logo with Icon */}
-        <button
-          className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-          onClick={handleRedirect}
-        >
-          <span className="text-white">ASKOXY</span>
-          <span className="text-[#ffa800]">.AI</span>
-        </button>
-        <div></div>
-        <div
-          className="sign-in-container"
-          style={{
-            width: "auto",
-            height: "auto",
-            backgroundColor: "gray",
-            padding: "7px 20px",
-            borderRadius: "50px",
-            color: "white",
-            textAlign: "center",
-            fontWeight: "bold",
-            position: "absolute",
-            right: "5rem",
-          }}
-        >
-          {/* SignIn button with redirection functionality */}
+      <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white relative">
+  {/* Logo with Icon */}
+  <button
+    className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+    onClick={handleRedirect}
+  >
+    <span className="text-white">ASKOXY</span>
+    <span className="text-[#ffa800]">.AI</span>
+  </button>
 
-          <button
-  className=""
-  onClick={() => {
-    if (localStorage.getItem("userId")) {
-      localStorage.removeItem("userId");
-      navigate("/whatapplogin");
-    } else {
-      navigate("/login");
-    }
-  }}
->
-  SignOut
-</button>
+  {/* Placeholder for center space */}
+  <div className="flex-1"></div>
 
-        </div>
+  {/* SignIn container */}
+  <div
+    className="sign-in-container absolute right-14 top-1/2 transform -translate-y-1/2 flex justify-center"
+    style={{
+      padding: "7px 20px",
+      borderRadius: "50px",
+      color: "white",
+      textAlign: "center",
+      fontWeight: "bold",
+    }}
+  >
+    <button
+      onClick={() => {
+        if (localStorage.getItem("userId")) {
+          localStorage.removeItem("userId");
+          navigate("/whatapplogin");
+        } else {
+          navigate("/login");
+        }
+      }}
+      className="text-white bg-[#ffa800] px-4 py-2 rounded-full"
+    >
+      SignOut
+    </button>
+  </div>
 
-        {/* SignIn/SignUp Buttons */}
-        <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
-          <AuthorInfo
-            name={`${profileData?.firstName || ""} ${
-              profileData?.lastName || ""
-            }`.trim()} // Combines first and last name, falls back to empty string if either is undefined
-            location={profileData?.city || "Unknown"} // Falls back to 'Unknown' if city is null or undefined
-            email={profileData?.email || "No email available"} // Falls back to a default if email is not provided
-            avatarUrl="https://via.placeholder.com/150" // Optional, falls back to placeholder image
-          />
-        </div>
-      </header>
+  {/* Profile Info Section (AuthorInfo) */}
+  <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
+    <AuthorInfo
+      name={`${profileData?.firstName || ""} ${profileData?.lastName || ""}`.trim()}
+      location={profileData?.city || "Unknown"}
+      email={profileData?.email || "No email available"}
+      avatarUrl="https://via.placeholder.com/150"
+    />
+  </div>
+</header>
+
+
+
 
       {/* <ModalComponent /> */}
       <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
@@ -563,15 +563,10 @@ const handleVanabhojanamClick = () => {
         <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
             <button
               onClick={handleFreerudrakshaClick}
-              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+              className="px-11 py-4 text-black rounded-md cursor-pointer flex items-center"
             >
-              <img
-                src={Telegu} // Replace with the actual image path
-                alt="Free Rudraksha"
-                className="w-10 h-10 mr-2 rounded-full" // Adjust image size and margin
-              />
-
-             <span style={{fontWeight:'bold'}}> Free Rudraksha</span>
+             
+             <span style={{fontWeight:'bold', color:'3c1973',fontSize:'22'}}> Free Rudraksha</span>
             </button>
         </div>
 

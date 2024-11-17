@@ -296,12 +296,14 @@
 
 
 
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "./Freerudraksha.css";
 import "./DiwaliPage.css";
 
-import TeluguShiva from '../assets/img/telugushiva.jpeg.jpeg'
-import EnglishShiva from '../assets/img/englishshiva.jpeg.jpeg'
+import TeluguShiva from '../assets/img/telugu.png'
+import EnglishShiva from '../assets/img/english.png'
+import Image1 from '../assets/img/WhatsApp.jpeg'
+import Image2 from '../assets/img/WhatsApp2.jpeg'
 import Footer from "./Footer";
 import { message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -360,7 +362,9 @@ const Freerudraksha: React.FC = () => {
   const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
   const storedPhoneNumber = localStorage.getItem("whatsappNumber");
   const userId = localStorage.getItem("userId"); // Fetch user ID from storage if needed.
-
+  const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
+  const [firstRequestDate, setFirstRequestDate] = useState("");
+  const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] = useState(false);
   const handleWhatsappClick = () => {
     if (storedPhoneNumber) {
       setPhoneNumber(storedPhoneNumber);
@@ -370,7 +374,11 @@ const Freerudraksha: React.FC = () => {
       message.error("Phone number is not available in local storage.");
     }
   };
-
+  const officeDetails = {
+    address: "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
+    googleMapLink: "https://www.google.com/maps/dir/17.44092,78.4472191/oxyloans+address/@17.4573856,78.374833,13z/data=!3m1!4b1!4m9!4m8!1m1!4e1!1m5!1m1!1s0x3bcb918d3a95555",
+    contact: "099668 88825",
+  };
   const handleConfirm = () => setModalType("addressEntry");
 
   const handleCancel = () => setIsModalOpen(false);
@@ -380,6 +388,7 @@ const Freerudraksha: React.FC = () => {
       message.error("Please enter an address.");
       return;
     }
+    
 
     const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
     const payload = { address, userId };
@@ -411,7 +420,34 @@ const Freerudraksha: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const storedSubmissionDate = localStorage.getItem("firstRequestDate");
+    const submissionStatus = localStorage.getItem("hasSubmitted");
+  
+    // Check if the submission status exists and is true
+    if (submissionStatus === "true") {
+      setHasSubmitted(true);
+      
+      // Ensure storedSubmissionDate is not null before using it
+      if (storedSubmissionDate) {
+        setFirstRequestDate(storedSubmissionDate);
+      } else {
+        // Handle the case where the submission date is missing (e.g., return an empty string or a default message)
+        setFirstRequestDate(""); 
+      }
+    }
+  }, []);
+  
+
   const submitRequest = async (deliveryType: string) => {
+    if (hasSubmitted) {
+      message.info(`We have received your first request on ${firstRequestDate}. Every user can participate only once!`);
+      setTimeout(() => {
+       
+        window.location.href = "/normal"; 
+      }, 2000); 
+      return;
+    }
     const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
     const payload = { userId, deliveryType };
 
@@ -426,7 +462,14 @@ const Freerudraksha: React.FC = () => {
       });
 
       if (response.ok) {
+        const date = new Date().toLocaleDateString(); // Get current date
+        setFirstRequestDate(date);
+        setHasSubmitted(true); 
+          // Save to localStorage to persist the submission state
+          localStorage.setItem("hasSubmitted", "true");
+          localStorage.setItem("firstRequestDate", date);
         message.success("Request submitted successfully!");
+        setIsPopupVisible(false);
       } else {
         const errorData = await response.json();
         console.error("Error submitting request:", errorData);
@@ -442,48 +485,48 @@ const Freerudraksha: React.FC = () => {
       setIsModalOpen(false);
     }
   };
+  const handleDeliverySelection = (deliveryType: string) => {
+    if (deliveryType === "PickInOffice") {
+      setIsOfficeConfirmationVisible(true); // Show office details confirmation
+    } else {
+      submitRequest(deliveryType);
+    }
+  };
   return (
     <div>
       <header className="header text-center">
         <h1 style={{ color: "rgba(91, 5, 200, 0.85)" }}><strong>
-        Om Namah Shivaya</strong></h1>
+        The Two Worlds</strong></h1>
       </header>
 
       {/* Main Content */}
       <div className="worlds flex justify-center mt-8">
         <section className="spiritual-world text-center mx-4">
-          <h2 id="h2" style={{fontWeight:'bold'}}>ఒక లక్ష రుద్రాభిషేకం</h2>
-          <img src={TeluguShiva} alt="ఒక లక్ష రుద్రాభిషేకం" className="world-image" />
+          <h2 id="h2" style={{fontWeight:'bold'}}>Spiritual World</h2>
+          <img src={Image1} alt="Spiritual World" className="world-image" />
         </section>
         <section className="ai-world text-center mx-4">
-          <h2 id="h2" style={{fontWeight:'bold'}}>One Lakh Rudrabhishekam</h2>
-          <img src={EnglishShiva} alt="One Lakh Rudrabhishekam" className="world-image" />
+          <h2 id="h2" style={{fontWeight:'bold'}}>AI & Generative AI World</h2>
+          <img src={Image2} alt="AI & Generative AI World" className="world-image" />
         </section>
       </div>
 
       {/* Details Section */}
       <div className="details">
   <p>
-    <strong>Join us on the 19th for the grand 1 Lack Rudra Abhishekam</strong>, 
-    a divine ceremony followed by the distribution of blessed Rudrakshas. This event 
-    will bring spiritual awakening to every home.
+
+  <strong>Join us on the 19th for the grand One Lahk Rudrabhishekam! Experience divine blessings and receive a free blessed Rudraksha. Alongside this sacred event, we’re empowering families with free AI training, unlocking opportunities for sustainable incomes. Don’t miss this journey of spiritual and intellectual growth! </strong>
+
   </p>
   
-  <p>
-    Alongside, we’re offering <strong>free training in Artificial Intelligence and Generative AI</strong> 
-    to empower every household with the skills for sustainable income and prosperity.
-  </p>
+  
+  
 </div>
 
 <div className="details">
   <p>
-    <strong>19న, లక్ష రుద్రాభిషేకం మహోత్సవం</strong> మరియు 
-    రుద్రాక్షాల ఉచిత పంపిణీతో ఆధ్యాత్మిక శక్తిని ప్రతి ఇంటికి అందిస్తాము.
-  </p>
-  <p>
-    అదనంగా, <strong>ఎఐ మరియు జనరేటివ్ ఎఐలో ఉచిత శిక్షణ</strong> 
-     అందించి ప్రతి ఇంటినీ శాశ్వత ఆదాయ అవకాశాల ద్వారా శక్తివంతం చేస్తున్నాము.
-  </p>
+  <strong>19వ తేదీన, మహా  క రుద్ర అభిషేకం కోసం మాతో చేరండి! దివ్య ఆశీర్వాదాలను అనుభవించండి మరియు ఉచితంగా ఆశీర్వదించబడిన రుద్రాక్షను పొందండి. ఈ పవిత్ర కార్యక్రమంతో పాటు, మేము ఉచిత AI శిక్షణతో కుటుంబాలను శక్తివంతం చేస్తున్నాము, ఇది స్థిరమైన ఆదాయ అవకాశాలను తెరిచిపెడుతుంది. ఆధ్యాత్మిక మరియు బౌద్ధిక ఎదుగుదలకు ఈ ప్రయాణాన్ని తప్పక చేరుకోండి!</strong>
+ </p>
 </div>
 
 
@@ -585,7 +628,7 @@ const Freerudraksha: React.FC = () => {
               </button>
               <button
                 className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
-                onClick={() => submitRequest("PickInOffice")}
+                onClick={() => handleDeliverySelection("PickInOffice")}
               >
               Collect from Office
               </button>
@@ -593,6 +636,41 @@ const Freerudraksha: React.FC = () => {
           </div>
         </div>
       )}
+
+{isOfficeConfirmationVisible && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
+          <p className="text-lg text-center text-black mb-4">
+            Please confirm the OxyLoans office details before proceeding:
+          </p>
+          <div className="text-center mb-4">
+            <p className="text-black">{officeDetails.address}</p>
+            <a href={officeDetails.googleMapLink} target="_blank" className="text-blue-600">
+              View on Google Maps
+            </a>
+            <p className="text-black">Contact: {officeDetails.contact}</p>
+          </div>
+          <div className="flex justify-between gap-4">
+            <button
+              className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
+              onClick={() => {
+                setIsOfficeConfirmationVisible(false); // Close confirmation
+                submitRequest("PickInOffice");
+              }}
+            >
+              Confirm and Proceed
+            </button>
+            <button
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all w-full"
+              onClick={() => setIsOfficeConfirmationVisible(false)} // Close confirmation
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
 
       {/* Loading Spinner */}
       {isLoading && (
@@ -605,12 +683,12 @@ const Freerudraksha: React.FC = () => {
       )}
 
 <div>
-        <h1 style={{ textAlign: "center", margin: "50px", fontSize: "50px" }}>
-          <b style={{ color: "green" }}>
-            <span style={{ color: "#0a6fba" }}>Oxy</span>Group
-          </b>{" "}
-          <span className="text-[#FFA500]">Companies</span>
-        </h1>
+<h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
+  <span className="text-green-600">
+    <span className="text-[#0a6fba]">Oxy</span>Group
+  </span>{" "}
+  <span className="text-[#FFA500]">Companies</span>
+</h1>
 
         <div className="event-container1">
           <div className="event-content1">
@@ -815,12 +893,17 @@ const Freerudraksha: React.FC = () => {
 
         {/* Group Section */}
         <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
-        <h1 style={{ textAlign: "center", margin: "10px", fontSize: "50px" }}>
-          <b style={{ color: "green" }}>
-            <span style={{ color: "#0a6fba" }}>Oxy</span>Group
-          </b>{" "}
-          <span className="text-[#FFA500]">Companies</span>
-        </h1>
+  <h1
+    className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
+    style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
+  >
+    <b className="text-green-600">
+      <span className="text-[#0a6fba]">Oxy</span>Group
+    </b>{" "}
+    <span className="text-[#FFA500]">Companies</span>
+  </h1>
+
+
 
 
   <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">
