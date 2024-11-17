@@ -7,7 +7,7 @@ import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
 import B2 from "../assets/img/B2.jpg";
-import FR from '../assets/img/WhatsApp.jpeg'
+import Telegu from '../assets/img/telugushiva.jpeg.jpeg'
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
 import ChatHistory from "./ChatHistory";
@@ -566,11 +566,12 @@ const handleVanabhojanamClick = () => {
               className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
             >
               <img
-                src={FR} // Replace with the actual image path
+                src={Telegu} // Replace with the actual image path
                 alt="Free Rudraksha"
-                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                className="w-10 h-10 mr-2 rounded-full" // Adjust image size and margin
               />
-              Free Rudraksha
+
+             <span style={{fontWeight:'bold'}}> Free Rudraksha</span>
             </button>
         </div>
 

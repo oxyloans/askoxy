@@ -11,52 +11,15 @@
     padding: 20px;
   }
   
-  /* === Popup Message === */
-  .popup-message {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #4caf50;
-    color: white;
-    padding: 16px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    text-align: center;
-  }
   
-  /* === Form Container === */
-  .form-container {
-    background-color: white; 
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    max-width: 400px;
-    width: 100%;
-    text-align: center;
-  }
   
-  /* === Header / Intro Text === */
-  .login-header {
-    font-size: 28px;
-    font-weight: bold;
-    color: #3d5afe;
-    margin-bottom: 20px;
-  }
   
-  /* === Form Groups / Inputs === */
-  .form-group {
-    margin-bottom: 20px;
-    text-align: left;
-  }
+ 
+ 
   
-  .form-group label {
-    font-weight: 500;
-    color: #333;
-    display: block;
-    margin-bottom: 8px;
-  }
+ 
+  
+
   
   .otp-inputs {
     display: flex;

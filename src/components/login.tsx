@@ -216,6 +216,7 @@ const Login = () => {
               </button>
             )}
           </form>
+          {message && !showSuccessPopup && <span className="success-message">{message}</span>}
     
           {/* Alternative Login Options */}
           <p style={{ textAlign: 'center',paddingTop:4}}>OR</p>
@@ -234,7 +235,7 @@ const Login = () => {
             >
             <FaSquareWhatsapp />
             </Link>
-            {message && !showSuccessPopup && <span className="success-message">{message}</span>}
+           
           </div>
         </div>
       </div>

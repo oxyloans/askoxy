@@ -217,7 +217,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import './LoginScreen.css';
+import './Whatsapp.css';
 import {Link} from 'react-router-dom'
 const Whatapplogin: React.FC = () => {
   const navigate = useNavigate();

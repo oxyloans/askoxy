@@ -299,8 +299,9 @@
 import React, { useState } from "react";
 import "./Freerudraksha.css";
 import "./DiwaliPage.css";
-import WhatsApp from "../assets/img/WhatsApp.jpeg";
-import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
+
+import TeluguShiva from '../assets/img/telugushiva.jpeg.jpeg'
+import EnglishShiva from '../assets/img/englishshiva.jpeg.jpeg'
 import Footer from "./Footer";
 import { message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -444,25 +445,26 @@ const Freerudraksha: React.FC = () => {
   return (
     <div>
       <header className="header text-center">
-        <h1 style={{ color: "rgba(91, 5, 200, 0.85)" }}><strong>The Two Worlds</strong></h1>
+        <h1 style={{ color: "rgba(91, 5, 200, 0.85)" }}><strong>
+        Om Namah Shivaya</strong></h1>
       </header>
 
       {/* Main Content */}
       <div className="worlds flex justify-center mt-8">
         <section className="spiritual-world text-center mx-4">
-          <h2 id="h2">Spiritual World</h2>
-          <img src={WhatsApp} alt="Spiritual World" className="world-image" />
+          <h2 id="h2" style={{fontWeight:'bold'}}>ఒక లక్ష రుద్రాభిషేకం</h2>
+          <img src={TeluguShiva} alt="ఒక లక్ష రుద్రాభిషేకం" className="world-image" />
         </section>
         <section className="ai-world text-center mx-4">
-          <h2 id="h2">AI & Generative AI World</h2>
-          <img src={WhatsApp2} alt="AI World" className="world-image" />
+          <h2 id="h2" style={{fontWeight:'bold'}}>One Lakh Rudrabhishekam</h2>
+          <img src={EnglishShiva} alt="One Lakh Rudrabhishekam" className="world-image" />
         </section>
       </div>
 
       {/* Details Section */}
       <div className="details">
   <p>
-    <strong>Join us on the 19th for the grand 1 Crore Rudra Abhishekam</strong>, 
+    <strong>Join us on the 19th for the grand 1 Lack Rudra Abhishekam</strong>, 
     a divine ceremony followed by the distribution of blessed Rudrakshas. This event 
     will bring spiritual awakening to every home.
   </p>
@@ -475,7 +477,7 @@ const Freerudraksha: React.FC = () => {
 
 <div className="details">
   <p>
-    <strong>19న, కోటి రుద్రాభిషేకం మహోత్సవం</strong> మరియు 
+    <strong>19న, లక్ష రుద్రాభిషేకం మహోత్సవం</strong> మరియు 
     రుద్రాక్షాల ఉచిత పంపిణీతో ఆధ్యాత్మిక శక్తిని ప్రతి ఇంటికి అందిస్తాము.
   </p>
   <p>
@@ -585,7 +587,7 @@ const Freerudraksha: React.FC = () => {
                 className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
                 onClick={() => submitRequest("PickInOffice")}
               >
-                Pick Up In Office
+              Collect from Office
               </button>
             </div>
           </div>
