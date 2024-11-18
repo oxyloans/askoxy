@@ -302,8 +302,8 @@ import "./DiwaliPage.css";
 
 import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
-import Image1 from '../assets/img/WhatsApp.jpeg'
-import Image2 from '../assets/img/WhatsApp2.jpeg'
+import Image1 from '../assets/img/R1.png'
+import Image2 from '../assets/img/R2.png'
 import Footer from "./Footer";
 import { message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -515,7 +515,7 @@ const Freerudraksha: React.FC = () => {
       <div className="details">
   <p>
 
-  <strong>Join us on the 19th for the grand One Lahk Rudrabhishekam! Experience divine blessings and receive a free blessed Rudraksha. Alongside this sacred event, we’re empowering families with free AI training, unlocking opportunities for sustainable incomes. Don’t miss this journey of spiritual and intellectual growth! </strong>
+  <strong>Join us on the 19th for the grand One Lakh Rudrabhishekam! Experience divine blessings and receive a free blessed Rudraksha. Alongside this sacred event, we’re empowering families with free AI training, creating opportunities for sustainable incomes. Don’t miss this journey of spiritual and intellectual growth! </strong>
 
   </p>
   
@@ -525,7 +525,8 @@ const Freerudraksha: React.FC = () => {
 
 <div className="details">
   <p>
-  <strong>19వ తేదీన, మహా  క రుద్ర అభిషేకం కోసం మాతో చేరండి! దివ్య ఆశీర్వాదాలను అనుభవించండి మరియు ఉచితంగా ఆశీర్వదించబడిన రుద్రాక్షను పొందండి. ఈ పవిత్ర కార్యక్రమంతో పాటు, మేము ఉచిత AI శిక్షణతో కుటుంబాలను శక్తివంతం చేస్తున్నాము, ఇది స్థిరమైన ఆదాయ అవకాశాలను తెరిచిపెడుతుంది. ఆధ్యాత్మిక మరియు బౌద్ధిక ఎదుగుదలకు ఈ ప్రయాణాన్ని తప్పక చేరుకోండి!</strong>
+  <strong>19వ తేదీన మహత్తరమైన లక్ష రుద్రాభిషేకంలో పాల్గొనండి!దైవిక ఆశీర్వాదాలను పొందండి మరియు ఉచితంగా పూజించిన రుద్రాక్షను అందుకోండి. ఈ పవిత్ర కార్యక్రమంతో పాటు, కుటుంబాలకు ఉచిత AI శిక్షణ అందించి, స్థిరమైన ఆదాయ అవకాశాలను కల్పించే దిశగా కృషి చేస్తున్నాం. ఆధ్యాత్మిక మరియు మేధో వికాస పయనంలో పాల్గొనే అవకాశాన్ని చేజారనీయకండి!
+  </strong>
  </p>
 </div>
 
