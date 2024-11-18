@@ -323,7 +323,7 @@ const Whatapplogin: React.FC = () => {
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
       
-        setMessage("Please Login Now !");
+        setMessage("Registration SuccessFull");
         setTimeout(() => window.location.reload(), 1000);
       } else {
         setOtpError("Invalid OTP. Please try again.");

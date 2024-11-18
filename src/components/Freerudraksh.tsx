@@ -86,7 +86,7 @@ const Freerudraksha: React.FC = () => {
 
   const officeDetails = {
     address: "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
-    googleMapLink: "https://www.google.com/maps/dir/17.44092,78.4472191/oxyloans+address/@17.4573856,78.374833,13z/data=!3m1!4b1!4m9!4m8!1m1!4e1!1m5!1m1!1s0x3bcb918d3a95555",
+    googleMapLink: "https://maps.app.goo.gl/MC1EmbY4DSdFcpke9",
     contact: "099668 88825",
   };
 
@@ -120,6 +120,12 @@ const Freerudraksha: React.FC = () => {
       message.error("Please enter an address.");
       return;
     }
+    if (hasSubmitted) {
+      // If the user has already submitted once, show the message with first request date
+      message.info(`We have received your first request on ${firstRequestDate}". Every user can participate only once!`);
+      return; // Prevent submitting again
+    }
+   
 
     const endpoint =
       "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";

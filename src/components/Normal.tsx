@@ -415,7 +415,7 @@ const handleVanabhojanamClick = () => {
     },
     {
       id: 1,
-      title: "Ask membership",
+      title: "Ask mentorship",
       content:
         "Stay updated with the latest blockbusters and independent films hitting the theaters.",
     },
