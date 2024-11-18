@@ -1,297 +1,3 @@
-// import React,{useState} from "react";
-// import "./Freerudraksha.css";
-// import WhatsApp from "../assets/img/WhatsApp.jpeg";
-// import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
-// import Header1 from "./Header1";
-// import Footer from "./Footer";
-// import Header2 from "./Header2";
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-// import  './DiwaliPage.css'
-// import Modal from "./Modal";
-// import img1 from "../assets/img/image1.png";
-// import img2 from "../assets/img/image2.png";
-// import img3 from "../assets/img/image3.png";
-// import img4 from "../assets/img/image4.png";
-// import img5 from "../assets/img/image5.png";
-// import img6 from "../assets/img/image6.png";
-
-// const images = [
-//   { src: img1, alt: "Image 1" },
-//   { src: img2, alt: "Image 2" },
-//   { src: img5, alt: "Image 5" },
-//   { src: img6, alt: "Image 6" },
-//   { src: img3, alt: "Image 3" },
-//   { src: img4, alt: "Image 4" },
-// ];
-
-// const Freerudraksha: React.FC = () => {
-
-  // const [currentIndex, setCurrentIndex] = useState(0);
-
-  // const handleNext = () => {
-  //   if (currentIndex < images.length - 1) {
-  //     setCurrentIndex(currentIndex + 1);
-  //   }
-  // };
-
-  // const handlePrev = () => {
-  //   if (currentIndex > 0) {
-  //     setCurrentIndex(currentIndex - 1);
-  //   }
-  // };
-
-  // const goToPrevious = () => {
-  //   const isFirstImage = currentIndex === 0;
-  //   const newIndex = isFirstImage ? images.length - 1 : currentIndex - 1;
-  //   setCurrentIndex(newIndex);
-  // };
-
-  // const goToNext = () => {
-  //   const isLastImage = currentIndex === images.length - 1;
-  //   const newIndex = isLastImage ? 0 : currentIndex + 1;
-  //   setCurrentIndex(newIndex);
-  // };
-
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [modalType, setModalType] = useState(''); // 'confirmation', 'addressEntry', 'success'
-//   const [phoneNumber, setPhoneNumber] = useState('');
-//   const [address, setAddress] = useState('');
-//   const [isPopupVisible, setIsPopupVisible] = useState(false);
-//   const storedPhoneNumber = localStorage.getItem('whatsappNumber');
-//   const userId = localStorage.getItem('userId') || '';
-
-//   const handleWhatsappClick = () => {
-//     if (storedPhoneNumber) {
-//       setPhoneNumber(storedPhoneNumber);
-//       setModalType('confirmation');
-//       setIsModalOpen(true);
-//     } else {
-//       alert('Phone number is not available in local storage.');
-//     }
-//   };
-
-//   const handleConfirm = () => {
-//     setModalType('addressEntry');
-//   };
-
-//   const handleCancel = () => {
-//     setIsModalOpen(false);
-//   };
-
-//   const saveAddress = async () => {
-//     if (!address.trim()) {
-//       alert('Please enter an address.');
-//       return;
-//     }
-
-//     const endpoint = 'https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution';
-//     const payload = { address, userId };
-
-//     try {
-//       const response = await fetch(endpoint, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(payload),
-//       });
-
-//       if (response.ok) {
-//         alert('Address saved successfully!');
-//         setModalType('success');
-//         setIsPopupVisible(true);
-//       } else {
-//         const errorData = await response.json();
-//         console.error('Error saving address:', errorData);
-//         alert('Failed to save the address. Please try again.');
-//       }
-//     } catch (error) {
-//       console.error('Error saving address:', error);
-//       alert('An error occurred. Please try again.');
-//     }
-//   };
-
-//   const submitRequest = async (deliveryType: string) => {
-//     const endpoint = 'https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution';
-//     const payload = { userId, deliveryType };
-
-//     try {
-//       const response = await fetch(endpoint, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(payload),
-//       });
-
-//       if (response.ok) {
-//         alert('Request submitted successfully!');
-//       } else {
-//         const errorData = await response.json();
-//         console.error('Error submitting request:', errorData);
-//         alert('Failed to submit the request. Please try again.');
-//       }
-//     } catch (error) {
-//       console.error('Error submitting request:', error);
-//       alert('An error occurred. Please try again.');
-//     }
-
-//     // Reset state
-//     setIsPopupVisible(false);
-//     setAddress('');
-//     setIsModalOpen(false);
-//   };
-
-//   return (
-//     <div>
-     
-      
-//       <div className="main-container">
-//       <header className="header text-center">
-//         <h1 style={{ color: "rgba(91, 5, 213, 0.85)" }}>The Two Worlds</h1>
-//       </header>
-
-//       {/* Main Content */}
-//       <div className="worlds flex justify-center mt-8">
-//         <section className="spiritual-world text-center mx-4">
-//           <h2>Spiritual World</h2>
-//           <img src={WhatsApp} alt="Spiritual World" className="world-image" />
-//         </section>
-//         <section className="ai-world text-center mx-4">
-//           <h2>AI & Generative AI World</h2>
-//           <img src={WhatsApp2} alt="AI World" className="world-image" />
-//         </section>
-//       </div>
-
-//       {/* Details Section */}
-//       <div className="details">
-//             <p>
-//               <strong>1 crore Rudra Abhishekam:</strong> After the Abhishekam,
-//               Rudraksha will be distributed for free.
-//             </p>
-//             <p>
-//             Every home will receive free training in AI and Generative AI,
-//               enabling a continuous income stream.
-//             </p>
-//           </div>
-          // <div className="details">
-          //   <p>
-          //     <strong>
-          //       రెండు లోకాలు ఆధ్యాత్మిక లోకం ఎఐ & జనరేటివ్ ఎఐ లోకం కోటి
-          //       రుద్రాభిషేకం.
-          //     </strong>{" "}
-          //     అభిషేకం తర్వాత రుద్రాక్షలను ఉచితంగా పంచబడతాయి.
-          //   </p>
-          //   <p>
-          //     ప్రతి ఇంటికి ఎఐ మరియు జనరేటివ్ ఎఐలో ఉచిత శిక్షణ అందించబడుతుంది,
-          //     దీని ద్వారా నిరంతర ఆదాయం సాధించగలరు.
-          //   </p>
-          // </div>
-
-//       {/* Button Section */}
-//            <div className="buttons flex justify-center mt-8">
-       
-//   {/* Address Input */}
-  
-
-//   {/* Save Address Button */}
-//   <div className="flex flex-col items-center justify-center">
-//   {/* Free Rudraksha Button */}
-//   <button
-//     className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-//     onClick={handleWhatsappClick} // Trigger saving address on button click
-//   >
-//     Free Rudraksha
-//   </button>
-
-//   {/* Confirmation Modal */}
-//   {isModalOpen && modalType === 'confirmation' && (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-//       <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-//         <p className="text-lg text-center mb-4">
-//           Please confirm your WhatsApp mobile number: <span className="font-bold">{phoneNumber}</span>
-//         </p>
-//         <div className="flex gap-4 justify-center">
-//           <button
-//             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-//             onClick={handleConfirm}
-//           >
-//             Yes
-//           </button>
-//           <button
-//             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-//             onClick={handleCancel}
-//           >
-//             No
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   )}
-
-//   {/* Address Entry Modal */}
-//   {isModalOpen && modalType === 'addressEntry' && (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-//       <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-//         <p className="text-lg text-center mb-4">Enter your address:</p>
-//         <input
-//           type="text"
-//           value={address}
-//           onChange={(e) => setAddress(e.target.value)}
-//           placeholder="Enter address"
-//           className="w-full p-2 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-//         />
-//         <button
-//           className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-//           onClick={saveAddress}
-//         >
-//           Save Address
-//         </button>
-//       </div>
-//     </div>
-//   )}
-
-//   {/* Delivery Options Modal */}
-//   {isPopupVisible && (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-//       <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-//         <p className="text-lg text-center mb-4">
-//           Address saved successfully! Choose a delivery method:
-//         </p>
-//         <div className="flex flex-col gap-4">
-//           <button
-//             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-//             onClick={() => submitRequest('Home Delivery')}
-//           >
-//             Home Delivery
-//           </button>
-//           <button
-//             className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-all"
-//             onClick={() => submitRequest('Pick Up In Office')}
-//           >
-//             Pick Up In Office
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   )}
-// </div>
-
-
-
-
-
-      
-    
-//       <Footer />
-//     </div>
-
-//   );
-// };
-
-// export default Freerudraksha;
-
 
 
 
@@ -302,10 +8,10 @@ import "./DiwaliPage.css";
 
 import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
-import Image1 from '../assets/img/R1.png'
+import Image1 from '../assets/img/WEBSITE PNG.png'
 import Image2 from '../assets/img/R2.png'
 import Footer from "./Footer";
-import { message } from "antd";
+import { Modal, Button, Input,message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
@@ -353,7 +59,7 @@ const Freerudraksha: React.FC = () => {
     const newIndex = isLastImage ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
   }; const [phoneNumber, setPhoneNumber] = useState<string>("");
-  
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [address, setAddress] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalType, setModalType] = useState<string>("");
@@ -365,6 +71,8 @@ const Freerudraksha: React.FC = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
   const [firstRequestDate, setFirstRequestDate] = useState("");
   const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] = useState(false);
+  const [savedAddress, setSavedAddress] = useState<string>('');
+  const [delivery, setDelivery] = useState<string>('');
   const handleWhatsappClick = () => {
     if (storedPhoneNumber) {
       setPhoneNumber(storedPhoneNumber);
@@ -374,39 +82,60 @@ const Freerudraksha: React.FC = () => {
       message.error("Phone number is not available in local storage.");
     }
   };
+
+
   const officeDetails = {
     address: "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
     googleMapLink: "https://www.google.com/maps/dir/17.44092,78.4472191/oxyloans+address/@17.4573856,78.374833,13z/data=!3m1!4b1!4m9!4m8!1m1!4e1!1m5!1m1!1s0x3bcb918d3a95555",
     contact: "099668 88825",
   };
-  const handleConfirm = () => setModalType("addressEntry");
 
-  const handleCancel = () => setIsModalOpen(false);
+
+  const fetchUserAddress = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `https://meta.oxyloans.com/api/auth-service/auth/userAddress?userId=${userId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+        console.log(address)
+        setSavedAddress(address); 
+        setDelivery(delivery)// Assuming the API response has the address under 'address' key
+        setModalType("success"); // Move to address confirmation modal
+      } else {
+        message.error("Failed to fetch saved address. Please try again.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch address:", error);
+      message.error("An error occurred while fetching the address.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const saveAddress = async () => {
     if (!address.trim()) {
       message.error("Please enter an address.");
       return;
     }
-    
 
-    const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
+    const endpoint =
+      "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
     const payload = { address, userId };
 
     try {
-      setIsLoading(true); // Show loading spinner
+      setIsLoading(true);
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         message.success("Address saved successfully!");
-        setModalType("success");
-        setIsPopupVisible(true);
+        fetchUserAddress(); // Fetch the saved address after successful save
       } else {
         const errorData = await response.json();
         console.error("Error saving address:", errorData);
@@ -416,38 +145,41 @@ const Freerudraksha: React.FC = () => {
       console.error("Error saving address:", error);
       message.error("An error occurred. Please try again.");
     } finally {
-      setIsLoading(false); // Hide loading spinner
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const storedSubmissionDate = localStorage.getItem("firstRequestDate");
-    const submissionStatus = localStorage.getItem("hasSubmitted");
-  
-    // Check if the submission status exists and is true
-    if (submissionStatus === "true") {
+  // Handle WhatsApp confirmation
+  const handleConfirmPhone = () => {
+    setModalType("addressEntry"); // Move to address entry modal
+  };
+   // Handle address confirmation
+   const handleConfirmAddress = () => {
+    setIsModalOpen(false); // Close the modal
+    message.success("Address confirmed successfully!");
+  };
+
+  // Fetch the saved address and submission status when the component mounts
+   // Fetch the saved address and submission status when the component mounts
+   useEffect(() => {
+    const savedHasSubmitted = localStorage.getItem(`${userId}_hasSubmitted`);
+    const savedDate = localStorage.getItem(`${userId}_firstRequestDate`);
+
+    if (savedHasSubmitted && savedDate) {
+      // User has already participated
       setHasSubmitted(true);
-      
-      // Ensure storedSubmissionDate is not null before using it
-      if (storedSubmissionDate) {
-        setFirstRequestDate(storedSubmissionDate);
-      } else {
-        // Handle the case where the submission date is missing (e.g., return an empty string or a default message)
-        setFirstRequestDate(""); 
-      }
+      setFirstRequestDate(savedDate);
     }
-  }, []);
+  }, [userId]);
   
 
   const submitRequest = async (deliveryType: string) => {
     if (hasSubmitted) {
-      message.info(`We have received your first request on ${firstRequestDate}. Every user can participate only once!`);
-      setTimeout(() => {
-       
-        window.location.href = "/normal"; 
-      }, 2000); 
-      return;
+      // If the user has already submitted once, show the message with first request date
+      message.info(`We have received your first request on ${firstRequestDate}`);
+      return; // Prevent submitting again
     }
+   
     const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
     const payload = { userId, deliveryType };
 
@@ -464,10 +196,11 @@ const Freerudraksha: React.FC = () => {
       if (response.ok) {
         const date = new Date().toLocaleDateString(); // Get current date
         setFirstRequestDate(date);
-        setHasSubmitted(true); 
-          // Save to localStorage to persist the submission state
-          localStorage.setItem("hasSubmitted", "true");
-          localStorage.setItem("firstRequestDate", date);
+        setHasSubmitted(true);
+
+        // Save to localStorage with the userId as part of the key to make it specific to the user
+        localStorage.setItem(`${userId}_hasSubmitted`, "true");
+        localStorage.setItem(`${userId}_firstRequestDate`, date);
         message.success("Request submitted successfully!");
         setIsPopupVisible(false);
       } else {
@@ -501,21 +234,22 @@ const Freerudraksha: React.FC = () => {
 
       {/* Main Content */}
       <div className="worlds flex justify-center mt-8">
-        <section className="spiritual-world text-center mx-4">
-          <h2 id="h2" style={{fontWeight:'bold'}}>Spiritual World</h2>
-          <img src={Image1} alt="Spiritual World" className="world-image" />
-        </section>
-        <section className="ai-world text-center mx-4">
-          <h2 id="h2" style={{fontWeight:'bold'}}>AI & Generative AI World</h2>
-          <img src={Image2} alt="AI & Generative AI World" className="world-image" />
-        </section>
-      </div>
+  <section className="spiritual-world text-center mx-4">
+    <h2 id="h2" style={{ fontWeight: 'bold' }}>Spiritual World</h2>
+    <img src={Image1} alt="Spiritual World" className="world-image" />
+  </section>
+  <section className="ai-world text-center mx-4">
+    <h2 id="h2" style={{ fontWeight: 'bold' }}>AI & Generative AI World</h2>
+    <img src={Image2} alt="AI & Generative AI World" className="world-image" />
+  </section>
+</div>
+
 
       {/* Details Section */}
       <div className="details">
   <p>
 
-  <strong>Join us on the 19th for the grand One Lakh Rudrabhishekam! Experience divine blessings and receive a free blessed Rudraksha. Alongside this sacred event, we’re empowering families with free AI training, creating opportunities for sustainable incomes. Don’t miss this journey of spiritual and intellectual growth! </strong>
+  <strong>Join us on 19th November 2024, from 6 PM onwards, for the grand event of One Lakh Rudrabhishekam! Experience divine blessings and receive a free blessed Rudraksha. Alongside this sacred event, we are empowering families with free AI training to create opportunities for sustainable incomes. Don’t miss this transformative journey of spiritual and intellectual growth!</strong>
 
   </p>
   
@@ -525,8 +259,7 @@ const Freerudraksha: React.FC = () => {
 
 <div className="details">
   <p>
-  <strong>19వ తేదీన మహత్తరమైన లక్ష రుద్రాభిషేకంలో పాల్గొనండి!దైవిక ఆశీర్వాదాలను పొందండి మరియు ఉచితంగా పూజించిన రుద్రాక్షను అందుకోండి. ఈ పవిత్ర కార్యక్రమంతో పాటు, కుటుంబాలకు ఉచిత AI శిక్షణ అందించి, స్థిరమైన ఆదాయ అవకాశాలను కల్పించే దిశగా కృషి చేస్తున్నాం. ఆధ్యాత్మిక మరియు మేధో వికాస పయనంలో పాల్గొనే అవకాశాన్ని చేజారనీయకండి!
-  </strong>
+  <strong>19 నవంబర్ 2024 సాయంత్రం 6 గంటల నుంచి భారీ లక్ష రుద్రాభిషేకానికి మాకు జతకండి! ఆధ్యాత్మిక ఆశీర్వాదాలను అనుభవించి, పవిత్రమైన రుద్రాక్షను ఉచితంగా పొందండి. ఈ పవిత్ర కార్యక్రమంతో పాటు, కుటుంబాలను ఆర్థికంగా స్థిరంగా నిలిపేందుకు ఉచిత AI శిక్షణ ద్వారా సాధికారత కల్పించుకుంటున్నాము. ఆధ్యాత్మిక మరియు మేధో వికాసానికి ఇది ఒక మార్గం, మిస్ అవ్వకండి!</strong>
  </p>
 </div>
 
@@ -544,144 +277,169 @@ const Freerudraksha: React.FC = () => {
 
 
       {/* Modals */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-            {modalType === "confirmation" && (
-              <>
-                <p className="text-lg text-center text-black mb-4">
-                  Please confirm your WhatsApp mobile number:{" "}
-                  <span className="font-bold">{phoneNumber}</span>
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-                    onClick={handleConfirm}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-                    onClick={handleCancel}
-                  >
-                    No
-                  </button>
-                </div>
-              </>
-            )}
+      <Modal
+  title=""
+  visible={isModalOpen}
+  onCancel={() => setIsModalOpen(false)} // Close the modal
+  footer={null} // Custom footer
+  className="modal-responsive"
+>
+  {/* Step 1: Confirm WhatsApp Number */}
+{modalType === "confirmation" && (
+    <>
+      <p className="text-lg text-center text-black mb-4">
+        Please confirm your WhatsApp number:
+        <span className="font-bold block mt-2">{phoneNumber}</span>
+      </p>
+      <div className="flex gap-4 justify-center">
+        <Button
+          type="primary"
+          onClick={handleConfirmPhone}
+          className="w-full sm:w-auto"
+        >
+          Yes
+        </Button>
+        <Button
+          danger
+          onClick={() => setIsModalOpen(false)}
+          className="w-full sm:w-auto"
+        >
+          No
+        </Button>
+      </div>
+    </>
+  )}
 
-            {modalType === "addressEntry" && (
-              <>
-                <p className="text-lg text-center text-black mb-4">Enter your address:</p>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter address"
-                  className="w-full p-2 mb-4 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {isConfirmVisible ? (
-                  <>
-                    <p className="text-lg text-center text-black mb-4">Is this your correct address?</p>
-                    <p className="text-center text-gray-600 mb-4">{address}</p>
-                    <div className="flex justify-between gap-4">
-                      <button
-                        className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-                        onClick={saveAddress}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-                        onClick={() => setIsConfirmVisible(false)}
-                      >
-                        No
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <button
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
-                    onClick={() => setIsConfirmVisible(true)}
-                  >
-                    Confirm Address
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
+  {modalType === "addressEntry" && (
+    <>
+      <p className="text-lg text-center text-black mb-4">
+        Please enter your address below:
+      </p>
+      <Input
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Enter your address"
+        className="w-full mb-4"
+      />
+      <Button
+        type="primary"
+        block
+        className="mt-4"
+        onClick={saveAddress}
+        loading={isLoading} // Spinner while saving
+      >
+        Save Address
+      </Button>
+    </>
+  )}
 
-      {/* Popup Modals */}
-      {isPopupVisible && !isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-            <p className="text-lg text-center text-black mb-4">
-              Please choose your preferred delivery method:
-            </p>
-            <div className="flex justify-between gap-4">
-              <button
-                className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
-                onClick={() => submitRequest("HomeDelivery")}
-              >
-                Home Delivery
-              </button>
-              <button
-                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
-                onClick={() => handleDeliverySelection("PickInOffice")}
-              >
-              Collect from Office
-              </button>
-            </div>
+  {/* Step 3: Confirm Saved Address */}
+  {modalType === "success" && (
+    <>
+      {isLoading ? (
+        <p className="text-center">Loading address...</p>
+      ) : (
+        <>
+          <p className="text-lg text-center text-black mb-4">
+            Your saved address is:
+            <span className="font-bold block mt-2">{savedAddress}</span>
+          </p>
+          {/* <p className="text-lg text-center text-black mb-4">
+            Your choose delivery option:
+            <span className="font-bold block mt-2">{delivery}</span>
+          </p> */}
+          <div className="flex gap-4 justify-center">
+            <Button
+              type="primary"
+              onClick={() => {
+                handleConfirmAddress(); // Confirm address
+                setIsPopupVisible(true); // Open the delivery method modal immediately
+              }}
+              className="w-full sm:w-auto"
+            >
+              Confirm
+            </Button>
+            <Button
+              danger
+              onClick={() => setModalType("addressEntry")}
+              className="w-full sm:w-auto"
+            >
+              Edit Address
+            </Button>
           </div>
-        </div>
+        </>
       )}
+    </>
+  )}
+</Modal>
+
+{/* Popup Modals */}
+{isPopupVisible && !isLoading && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
+      <p className="text-lg text-center text-black mb-4">
+        Please choose your preferred delivery method:
+      </p>
+      <div className="flex justify-between gap-4">
+        <button
+          className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
+          onClick={() => submitRequest("HomeDelivery")}
+        >
+          Home Delivery
+        </button>
+        <button
+          className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
+          onClick={() => handleDeliverySelection("PickInOffice")}
+        >
+          Collect from Office
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 {isOfficeConfirmationVisible && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-          <p className="text-lg text-center text-black mb-4">
-            Please confirm the OxyLoans office details before proceeding:
-          </p>
-          <div className="text-center mb-4">
-            <p className="text-black">{officeDetails.address}</p>
-            <a href={officeDetails.googleMapLink} target="_blank" className="text-blue-600">
-              View on Google Maps
-            </a>
-            <p className="text-black">Contact: {officeDetails.contact}</p>
-          </div>
-          <div className="flex justify-between gap-4">
-            <button
-              className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
-              onClick={() => {
-                setIsOfficeConfirmationVisible(false); // Close confirmation
-                submitRequest("PickInOffice");
-              }}
-            >
-              Confirm and Proceed
-            </button>
-            <button
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all w-full"
-              onClick={() => setIsOfficeConfirmationVisible(false)} // Close confirmation
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
+      <p className="text-lg text-center text-black mb-4 font-semibold">
+        Confirm OxyLoans Office Details
+      </p>
+      <p className="text-center text-gray-600 mb-4">
+        Please review the office details below before proceeding with your request.
+      </p>
+      <div className="text-center mb-4">
+        <p className="text-black font-medium">{officeDetails.address}</p>
+        <a 
+          href={officeDetails.googleMapLink} 
+          target="_blank" 
+          className="text-blue-600 hover:underline"
+          rel="noopener noreferrer"
+        >
+          View Location on Google Maps
+        </a>
+        <p className="text-black mt-2">Contact: <span className="font-medium">{officeDetails.contact}</span></p>
       </div>
-    )}
+      <div className="flex justify-between gap-4">
+        <button
+          className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
+          onClick={() => {
+            setIsOfficeConfirmationVisible(false); // Close confirmation
+            submitRequest("PickInOffice");
+          }}
+        >
+          Confirm and Proceed
+        </button>
+        <button
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all w-full"
+          onClick={() => setIsOfficeConfirmationVisible(false)} // Close confirmation
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-
-      {/* Loading Spinner */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md flex justify-center items-center">
-            <div className="loader"></div>
-            <p className="text-lg text-black ml-4">Processing your request...</p>
-          </div>
-        </div>
-      )}
 
 <div>
 <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">

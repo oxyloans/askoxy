@@ -60,11 +60,11 @@
   margin-bottom: 10px;
 }
 
-/* Image styling */
 .world-image {
   width: 100%;
-  max-width: 500px;
-  height: auto;
+  max-width: 400px; /* Fixed maximum width */
+  height: auto; /* Fixed height for uniformity */
+  object-fit: cover; /* Ensures the image fits within the dimensions */
   border-radius: 10px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Image shadow */
   transition: transform 0.3s ease;

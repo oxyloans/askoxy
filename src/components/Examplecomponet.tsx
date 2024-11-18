@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image1 from '../assets/img/AD1 (1).jpg';
 import Image2 from '../assets/img/AD2.jpg';
 import ReactMarkdown from 'react-markdown';
+import { FaUserCircle } from "react-icons/fa";
 import axios from 'axios';
 import './erice.css';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -392,7 +393,7 @@ const Examplecomponet = () => {
   name={`${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()} // Combines first and last name, falls back to empty string if either is undefined
   location={profileData?.city || 'Unknown'} // Falls back to 'Unknown' if city is null or undefined
   email={profileData?.email || 'No email available'} // Falls back to a default if email is not provided
-  avatarUrl="https://via.placeholder.com/150"// Optional, falls back to placeholder image
+  icon={<FaUserCircle />}// Optional, falls back to placeholder image
 />
 
       

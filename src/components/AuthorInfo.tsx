@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-
+import { FaUserCircle } from "react-icons/fa";
 interface AuthorInfoProps {
   name: string;
   location: string;
   email: string;
-  avatarUrl?: string; // Optional prop for avatar image URL
+  icon?: React.ReactNode;  // Optional prop for avatar image URL
 }
 
-const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, avatarUrl }) => {
+const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, icon }) => {
   const [showInfo, setShowInfo] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null); // Ref for the popover
 
@@ -51,12 +51,9 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, avatarUr
         >
           <div className="flex items-center space-x-4">
             {/* Author's Avatar */}
-            {avatarUrl ? (
-              <img
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6V1NHpqrmEQH_NYts3Lp1X6g4MWRRLH_1gg&s"
-                alt="Author Avatar"
-                className="w-12 h-12 rounded-full"
-              />
+            {icon ? (
+             <FaUserCircle />
+
             ) : (
               <div className="w-12 h-12 rounded-full bg-gray-300"></div>
             )}

@@ -7,6 +7,7 @@ import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
 import B2 from "../assets/img/B2.jpg";
+import FR from '../assets/img/R1.png'
 
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
@@ -18,7 +19,7 @@ import ProfileCallPage from "./models/ProfileCallPage";
 import Freerudraksha from "./Freerudraksh";
 import Vanabhojanam from "./Vanabhojanam";
 
-
+import { FaUserCircle } from "react-icons/fa";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -48,6 +49,7 @@ interface ProfileData {
   panVerified: boolean | null;
   whatsappVerified: boolean | null;
   name: string | null;
+ 
 }
 
 type ChatHistoryItem = {
@@ -541,13 +543,14 @@ const handleVanabhojanamClick = () => {
 
   {/* Profile Info Section (AuthorInfo) */}
   <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
-    <AuthorInfo
-      name={`${profileData?.firstName || ""} ${profileData?.lastName || ""}`.trim()}
-      location={profileData?.city || "Unknown"}
-      email={profileData?.email || "No email available"}
-      avatarUrl="https://via.placeholder.com/150"
-    />
-  </div>
+  <AuthorInfo
+    name={`${profileData?.firstName || ""} ${profileData?.lastName || ""}`.trim()}
+    location={profileData?.city || "Unknown"}
+    email={profileData?.email || "No email available"}
+    icon={<FaUserCircle />}
+  />
+</div>
+
 </header>
 
 
@@ -565,6 +568,11 @@ const handleVanabhojanamClick = () => {
               onClick={handleFreerudrakshaClick}
               className="px-11 py-4 text-black rounded-md cursor-pointer flex items-center"
             >
+               <img
+                src={FR} // Replace with the actual image path
+                alt="Free Rudraksha"
+                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+              />
              
              <span style={{fontWeight:'bold', color:'3c1973',fontSize:'22'}}> Free Rudraksha</span>
             </button>

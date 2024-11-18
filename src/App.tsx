@@ -39,7 +39,7 @@ const App: React.FC = () => {
           />
           <Route path="/freerudraksha/" element={<Freerudraksha />} />
 
-          <Route path="/happy-diwali" element={<Happy_Diwali />} />
+          {/* <Route path="/happy-diwali" element={<Happy_Diwali />} /> */}
           <Route path="/example" element={<Example variant="loading01" />} />
           <Route path="/greenproject" element={<Greenproject />} />
           <Route path="/el-dorado" element={<EL_Dorado />} />

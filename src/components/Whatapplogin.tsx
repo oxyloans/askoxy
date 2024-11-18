@@ -251,7 +251,7 @@ const Whatapplogin: React.FC = () => {
     setMessage("");
 
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
-      setError("Please enter a valid WhatsApp number with country code.");
+      setError("Please Enter a valid WhatsApp Number with Country code.");
       return;
     }  
     localStorage.setItem("whatsappNumber", phoneNumber);
@@ -303,7 +303,7 @@ const Whatapplogin: React.FC = () => {
     setMessage("");
 
     if(credentials.otp.join("").length!=4){
-      setOtpError("Please Enter The OTP Value")
+      setOtpError("Please Enter the OTP")
       return 
     }
 
@@ -330,7 +330,7 @@ const Whatapplogin: React.FC = () => {
         setOtpSession(response.data.mobileOtpSession);
       }
     } catch (err: any) {
-      setOtpError("An error occurred while verifying OTP.");
+      setOtpError("Invalid OTP");
       setOtpSession(err);
     }
   };
@@ -420,13 +420,13 @@ const Whatapplogin: React.FC = () => {
             </button>
           )}
         </form>
-        <p className="or-divider">OR</p>
+        {/* <p className="or-divider">OR</p>
   
         <div className="alternate-login">
           <Link to="/login" style={{ textDecoration: 'none' }}>
             <h1 style={{color:'#3d5afe', fontSize:'18px'}}>Login with Mobile Number</h1>
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );

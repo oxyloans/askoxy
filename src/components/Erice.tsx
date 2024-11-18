@@ -3,6 +3,7 @@ import Image1 from "../assets/img/AD1 (1).jpg";
 import Image2 from "../assets/img/AD2.jpg";
 import ReactMarkdown from "react-markdown";
 import axios from "axios";
+import { FaUserCircle } from "react-icons/fa";
 import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
@@ -438,7 +439,7 @@ const Erice = () => {
             }`.trim()} // Combines first and last name, falls back to empty string if either is undefined
             location={profileData?.city || "Unknown"} // Falls back to 'Unknown' if city is null or undefined
             email={profileData?.email || "No email available"} // Falls back to a default if email is not provided
-            avatarUrl="https://via.placeholder.com/150" // Optional, falls back to placeholder image
+            icon={<FaUserCircle />}// Optional, falls back to placeholder image
           />
         </div>
       </header>
