@@ -5,6 +5,7 @@
 import React, { useState,useEffect } from "react";
 import "./Freerudraksha.css";
 import "./DiwaliPage.css";
+import axios from 'axios';
 
 import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
@@ -58,7 +59,8 @@ const Freerudraksha: React.FC = () => {
     const isLastImage = currentIndex === images.length - 1;
     const newIndex = isLastImage ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
-  }; const [phoneNumber, setPhoneNumber] = useState<string>("");
+  }; 
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [address, setAddress] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -67,12 +69,16 @@ const Freerudraksha: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
   const storedPhoneNumber = localStorage.getItem("whatsappNumber");
-  const userId = localStorage.getItem("userId"); // Fetch user ID from storage if needed.
+  // Fetch user ID from storage if needed.
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
   const [firstRequestDate, setFirstRequestDate] = useState("");
   const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] = useState(false);
   const [savedAddress, setSavedAddress] = useState<string>('');
   const [delivery, setDelivery] = useState<string>('');
+
+
+  const userId = localStorage.getItem("userId");
+  console.log(userId)
   const handleWhatsappClick = () => {
     if (storedPhoneNumber) {
       setPhoneNumber(storedPhoneNumber);
@@ -95,7 +101,7 @@ const Freerudraksha: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `https://meta.oxyloans.com/api/auth-service/auth/userAddress?userId=${userId}`
+        `https://meta.oxyloans.com/api/auth-service/auth/getuserAddress?userId=${userId}`
       );
       if (response.ok) {
         const data = await response.json();

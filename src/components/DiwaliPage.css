@@ -1,10 +1,10 @@
 /* General Styles */
 * {
   box-sizing: border-box;
+  margin: 0;
 }
 
 body {
-  margin: 0;
   font-family: Arial, sans-serif;
 }
 
@@ -271,10 +271,7 @@ body {
 
 /* Container and Slider */
 .container {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  padding-top: 1.25rem;
-  padding-bottom: 1.25rem;
+  padding: 1.25rem;
   background-color: #f1f1f1;
 }
 
@@ -404,26 +401,7 @@ body {
     padding: 8px 16px;
   }
 
-  .image-container {
-    width: 120px;
-  }
-
-  .carousel-button {
-    font-size: 20px;
+  .container1 {
     padding: 10px;
-  }
-
-  .rocket-container {
-    width: 15px;
-  }
-
-  .rocket {
-    width: 15px;
-    height: 30px;
-  }
-
-  .rocket-trail {
-    width: 1px;
-    height: 100px;
   }
 }

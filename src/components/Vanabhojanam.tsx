@@ -1,14 +1,16 @@
-import React,{useState} from "react";
+import React,{useState,useEffect} from "react";
 import "./Freerudraksha.css";
 import WhatsApp from "../assets/img/WhatsApp.jpeg";
 import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
 import Header1 from "./Header1";
+import VanabhojanamImage from '../assets/img/vanabhojanam 1 png.png'
 import Footer from "./Footer";
 import Header2 from "./Header2";
 import  './DiwaliPage.css'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
+import axios from "axios";
 
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -16,7 +18,7 @@ import img3 from "../assets/img/image3.png";
 import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
-
+import { Modal, Button, Input,message } from "antd";
 const images = [
   { src: img1, alt: "Image 1" },
   { src: img2, alt: "Image 2" },
@@ -29,12 +31,44 @@ const images = [
 const Vanabhojanam: React.FC = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [familyCount, setFamilyCount] = useState(0); 
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [message, setMessage] = useState("");
+  const [hasParticipated, setHasParticipated] = useState(false); 
+  const [storedPhoneNumber, setStoredPhoneNumber] = useState("");
 
+
+  useEffect(() => {
+    const phoneNumber = localStorage.getItem("whatsappNumber"); // Get the phone number from localStorage
+    if (phoneNumber) {
+      setStoredPhoneNumber(phoneNumber); // Set the state with the phone number if available
+    }
+  }, []);
+
+
+  // Update localStorage and state when the phone number changes
+  const handlePhoneNumberChange = (newPhoneNumber: string) => {
+    localStorage.setItem("whatsappNumber", newPhoneNumber); // Store in localStorage
+    setStoredPhoneNumber(newPhoneNumber); // Update the state to trigger a re-render
+  };
+  const userId = localStorage.getItem("userId");
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
+
+   // Effect to check participation status when the component mounts
+   useEffect(() => {
+    if (userId) {
+      const participated = localStorage.getItem(`hasParticipated_${userId}`) === "true";
+      setHasParticipated(participated); // Set participation status based on userId
+    }
+  }, [userId]);
 
   const handlePrev = () => {
     if (currentIndex > 0) {
@@ -55,75 +89,187 @@ const Vanabhojanam: React.FC = () => {
   };
 
 
-      const whatsappNumber = "9160463697";
+  const handleWhatsappClick = () => {
+    if (storedPhoneNumber) {
+      setPhoneNumber(storedPhoneNumber);
+      setModalType("confirmation");
+      setIsModalOpen(true);
+    } 
+  };
+  const handleParticipationClick = () => {
+    if (hasParticipated) {
+      setMessage("You have already participated only once.");
+      setShowModal(false); // Close the modal
+      return;
+    }
+    setShowModal(true); // Open the modal if not participated
+    setShowModal(true); // Open the modal if not participated
+  };
+  
+  const handleSubmit = async () => {
+    if (hasParticipated) {
+      setMessage("You have already participated only once.");
+      setShowModal(false); // Close the modal
+      return;
+    }
+  
+    setLoading(true);
+    setMessage("");
+    try {
+      const response = await axios.post(
+        "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution",
+        {
+          userId: userId,
+          familyCount,
+        }
+      );
+      setMessage("Participation successful! 🎉");
+      setHasParticipated(true);
+      if (userId) {
+        localStorage.setItem(`hasParticipated_${userId}`, "true"); // Store participation status in localStorage with userId
+      }
+      
+      setHasParticipated(true); // Mark as participated
+    } catch (error) {
+      setMessage("Failed to submit. Please try again.");
+    } finally {
+      setLoading(false);
+      setShowModal(false);
+    }
+  };
+  
 
-      const handleWhatsAppClick = () => {
-        const message = `Hi, thanks for the initiative! Please deliver Diyas to my residence. Sharing Google coordinates.
-
-    \n   Best wishes to students heading to the US & UK for higher studies`;
-        const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-          message
-        )}`;
-        window.open(url, "_blank");
-      };
 
   return (
     <div>
-     
-      <div className="main-container">
-        <div className="container">
-          {/* Header */}
-          <header className="header">
-            <h1 style={{ color: "rgba(91, 5, 213, 0.85)" }}>Vanabhojanam</h1>
-          </header>
-          {/* Main Content */}
-          <div className="worlds">
-            <section className="spiritual-world">
-              <h2>Urban SpringSanto</h2>
-              <img
-                src={''}
-                alt="Urban spring santo"
-                className="world-image"
-              />
-            </section>
-            <section className="ai-world">
-              <h2>AI & Generative AI World</h2>
-              <img src={""} alt="Urban spring" className="world-image" />
-            </section>
-          </div>
-          {/* Details Section */}
-          <div className="details">
-            <p>
-              <strong>1 Crore Rudra Abhishekam</strong> After the Abhishekam,
-              Rudraksha will be distributed for free.
-            </p>
-            <p>
-              Every home will receive free training in AI and Generative AI,
-              enabling a continuous income stream.
-            </p>
-          </div>
-          <div className="details">
-            <p>
-              <strong>
-                రెండు లోకాలు ఆధ్యాత్మిక లోకం ఎఐ & జనరేటివ్ ఎఐ లోకం కోటి
-                రుద్రాభిషేకం.
-              </strong>{" "}
-              అభిషేకం తర్వాత రుద్రాక్షలను ఉచితంగా పంచబడతాయి.
-            </p>
-            <p>
-              ప్రతి ఇంటికి ఎఐ మరియు జనరేటివ్ ఎఐలో ఉచిత శిక్షణ అందించబడుతుంది,
-              దీని ద్వారా నిరంతర ఆదాయం సాధించగలరు.
-            </p>
-          </div>
-          <div className="buttons"  style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <button onClick={handleWhatsAppClick} className="button demo">
-              <FontAwesomeIcon icon={faWhatsapp} className="whatsapp-icon" />{" "}
-              Send WhatsApp Message
-            </button>
-          </div>
+      
+   <div className="main-container">
+ <div className="container mx-auto p-2 max-w-screen-xl">
+  {/* Header */}
+  <header className="text-center py-4">
+  <h5 className="text-3xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold text-green-700 text-center">
+  Vanabhojanam
+</h5>
 
-        </div>
-        <div>
+</header>
+
+  {/* Main Content */}
+  <div className="worlds my-8">
+    <section className="spiritual-world flex justify-center">
+      <img
+        src={VanabhojanamImage}
+        alt="Urban spring santo"
+        className="world-image rounded-xl shadow-xl w-full sm:w-3/4 lg:w-2/3"
+      />
+    </section>
+  </div>
+
+  {/* Details Section */}
+  <div className="details space-y-6 mt-8">
+    <p className="text-center text-base sm:text-lg lg:text-xl text-gray-700">
+      Join us for <strong>VanaBhojanam</strong> at <strong>Urban Springs, Nawabpet</strong>, on <strong>Saturday, Nov 30th, 2024</strong>! Enjoy a day filled with fun activities, including a <strong>bus ride from Miyapur Metro</strong>, <strong>snacks</strong>, <strong>games</strong>, a <strong>cricket league</strong>, a <strong>delicious vegetarian lunch</strong>, and <strong>entertainment</strong> with visits to <strong>Urban Santo</strong> and <strong>Urban Groove</strong>. Don’t miss this exciting event by <strong>ASKOXY.AI</strong> and <strong>OXY Group Companies</strong>!
+    </p>
+  </div>
+
+  {/* Details Section in Telugu */}
+  <div className="details space-y-2 mt-4">
+    <p className="text-center text-base sm:text-lg lg:text-xl text-gray-700">
+      వనభోజనానికి నవాబ్‌పేట్‌లోని అర్బన్ స్ప్రింగ్స్‌లో 2024 నవంబర్ 30వ తేదీ, శనివారం మాకు చేరండి!<br /><br />
+      మియాపూర్ మెట్రో నుండి బస్ రైడ్, తినుబండారాలు, ఆటలు, క్రికెట్ లీగ్, రుచికరమైన శాకాహార భోజనం మరియు ఎంటర్‌టైన్‌మెంట్‌తో కూడిన అర్బన్ సాంటో మరియు అర్బన్ గ్రూవ్ సందర్శనలతో ఆనందభరితమైన రోజును ఆస్వాదించండి.<br /><br />
+      ఈ ఆహ్లాదకరమైన కార్యక్రమాన్ని <strong>ASKOXY.AI</strong> మరియు <strong>OXY గ్రూప్ కంపెనీలు</strong> మీ కోసం అందిస్తున్నాయి!
+    </p>
+  </div>
+  <div className="flex justify-center mt-8">
+        <button
+          className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
+          onClick={handleParticipationClick}
+          aria-label="Request Free Rudraksha"
+        >
+        Participation
+        </button>
+</div>
+{showModal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+    <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-md mx-4 sm:mx-auto">
+      <p className="text-lg text-center text-black mb-4">
+        Please confirm your WhatsApp number:
+        <span className="font-bold block mt-2">{storedPhoneNumber}</span>
+      </p>
+      <h2 className="text-lg font-bold mb-4 text-black text-center">
+        We’re excited to have your loved ones join us! <br />
+        How many family members or friends will accompany you?
+      </h2>
+      <label className="block mb-4 text-sm font-medium text-black">
+        Please share the total count:
+        <input
+  type="number"
+  value={familyCount}
+  onChange={(e) => {
+    const value = Number(e.target.value);
+
+    if (value < 1) {
+      setFamilyCount(1); // Set minimum value to 1
+      setMessage("Please enter a family count between 1 and 100.");
+    } else if (value > 100) {
+      setFamilyCount(100); // Set maximum value to 100
+      setMessage("Please enter a family count between 1 and 100.");
+    } else {
+      setFamilyCount(value); // Set valid value within the range
+      setMessage(""); // Clear error if input is valid
+    }
+  }}
+  onKeyPress={(e) => {
+    if (!/[0-9]/.test(e.key)) {
+      e.preventDefault(); // Allow only numeric characters
+    }
+  }}
+  className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+  style={{
+    appearance: "none",
+    MozAppearance: "textfield",
+    WebkitAppearance: "none",
+  }}
+/>
+
+      </label>
+      {/* Error or Success Message */}
+      {message && <p className="text-sm text-red-600 mb-4">{message}</p>}
+      <div className="flex justify-between">
+        {/* Cancel Button */}
+        <button
+          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-all"
+          onClick={() => setShowModal(false)}
+        >
+          Cancel
+        </button>
+
+        {/* Submit Button */}
+        <button
+          className={`px-4 py-2 text-white rounded-md ${
+            loading
+              ? "bg-gray-500 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          } transition-all`}
+          onClick={handleSubmit}
+          disabled={loading || familyCount <= 0}
+        >
+          {loading ? "Submitting..." : "Submit"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+      {/* Feedback Message */}
+      {message && (
+        <p className="mt-4 text-center text-lg font-medium text-green-700">
+          {message}
+        </p>
+      )}
+</div>
+
+ <div>
         <h1 style={{ textAlign: "center", margin: "50px", fontSize: "50px" }}>
           <b style={{ color: "green" }}>
             <span style={{ color: "#0a6fba" }}>Oxy</span>Group

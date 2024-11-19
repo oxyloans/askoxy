@@ -18,7 +18,7 @@ import ModalComponent from "./ModalComponent";
 import ProfileCallPage from "./models/ProfileCallPage";
 import Freerudraksha from "./Freerudraksh";
 import Vanabhojanam from "./Vanabhojanam";
-
+import VanabhojanammImage from  '../assets/img/vanabhojanam.png';
 import { FaUserCircle } from "react-icons/fa";
 
 interface ChatMessage {
@@ -566,7 +566,7 @@ const handleVanabhojanamClick = () => {
         <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
             <button
               onClick={handleFreerudrakshaClick}
-              className="px-11 py-4 text-black rounded-md cursor-pointer flex items-center"
+              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
             >
                <img
                 src={FR} // Replace with the actual image path
@@ -578,19 +578,19 @@ const handleVanabhojanamClick = () => {
             </button>
         </div>
 
-        {/* <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+        <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
             <button
              onClick={handleVanabhojanamClick}
               className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
             >
               <img
-                src={FR} // Replace with the actual image path
-                alt="Free Rudraksha"
+                src={VanabhojanammImage} // Replace with the actual image path
+                alt="Vanabhojanam"
                 className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
               />
-             Vanabhojanam
+          <span style={{fontWeight:'bold', color:'3c1973',fontSize:'22'}}> Vanabhojanam</span>
             </button>
-        </div> */}
+        </div> 
           <div className="flex items-center justify-between font-bold mb-4">
             <button
               onClick={() => setIsEditing(!isEditing)}
