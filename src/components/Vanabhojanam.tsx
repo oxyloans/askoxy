@@ -3,7 +3,7 @@ import "./Freerudraksha.css";
 import WhatsApp from "../assets/img/WhatsApp.jpeg";
 import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
 import Header1 from "./Header1";
-import VanabhojanamImage from '../assets/img/vanabhojanam 1 png.png'
+import VanabhojanamImage from '../assets/img/WhatsApp Image 2024-11-20 at 12.03.34.png'
 import Footer from "./Footer";
 import Header2 from "./Header2";
 import  './DiwaliPage.css'
@@ -27,7 +27,11 @@ const images = [
   { src: img3, alt: "Image 3" },
   { src: img4, alt: "Image 4" },
 ];
-
+interface ConfirmationDetails {
+  phoneNumber: string;
+  familyCount: number;
+  transportation:string;
+}
 const Vanabhojanam: React.FC = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -35,11 +39,19 @@ const Vanabhojanam: React.FC = () => {
   const [modalType, setModalType] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [familyCount, setFamilyCount] = useState(0); 
+  const [transportation, setTransportation] = useState("");
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState("");
   const [hasParticipated, setHasParticipated] = useState(false); 
   const [storedPhoneNumber, setStoredPhoneNumber] = useState("");
+
+  const [confirmationDetails, setConfirmationDetails] = useState<ConfirmationDetails>({
+    phoneNumber: "",
+    familyCount: 0,
+    transportation:""
+  });
+const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
 
   useEffect(() => {
@@ -63,12 +75,12 @@ const Vanabhojanam: React.FC = () => {
   };
 
    // Effect to check participation status when the component mounts
-   useEffect(() => {
-    if (userId) {
-      const participated = localStorage.getItem(`hasParticipated_${userId}`) === "true";
-      setHasParticipated(participated); // Set participation status based on userId
-    }
-  }, [userId]);
+  //  useEffect(() => {
+  //   if (userId) {
+  //     const participated = localStorage.getItem(`hasParticipated_${userId}`) === "true";
+  //     setHasParticipated(participated); 
+  //   }
+  // }, [userId]);
 
   const handlePrev = () => {
     if (currentIndex > 0) {
@@ -76,17 +88,7 @@ const Vanabhojanam: React.FC = () => {
     }
   };
 
-  const goToPrevious = () => {
-    const isFirstImage = currentIndex === 0;
-    const newIndex = isFirstImage ? images.length - 1 : currentIndex - 1;
-    setCurrentIndex(newIndex);
-  };
 
-  const goToNext = () => {
-    const isLastImage = currentIndex === images.length - 1;
-    const newIndex = isLastImage ? 0 : currentIndex + 1;
-    setCurrentIndex(newIndex);
-  };
 
 
   const handleWhatsappClick = () => {
@@ -97,46 +99,57 @@ const Vanabhojanam: React.FC = () => {
     } 
   };
   const handleParticipationClick = () => {
-    if (hasParticipated) {
-      setMessage("You have already participated only once.");
-      setShowModal(false); // Close the modal
-      return;
-    }
-    setShowModal(true); // Open the modal if not participated
+   
+    setShowModal(true); 
     setShowModal(true); // Open the modal if not participated
   };
   
-  const handleSubmit = async () => {
-    if (hasParticipated) {
-      setMessage("You have already participated only once.");
-      setShowModal(false); // Close the modal
-      return;
-    }
-  
+  const handleSubmit = () => {
     setLoading(true);
     setMessage("");
+  
+    // Set the details for confirmation modal before displaying it
+    setConfirmationDetails({
+      phoneNumber: storedPhoneNumber,
+      familyCount: familyCount,
+      transportation:transportation
+    });
+  
+    // Show the confirmation modal with entered details
+    setShowConfirmationModal(true);
+    setShowModal(false); // Close the input modal after submission
+  };
+  const handleConfirm = async () => {
+    setLoading(true);
+    setMessage("");
+  
     try {
-      const response = await axios.post(
+      // Make POST request for participation after confirming
+      await axios.post(
         "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution",
         {
           userId: userId,
+          trvellType:transportation,
           familyCount,
+          
+
         }
       );
-      setMessage("Participation successful! 🎉");
-      setHasParticipated(true);
-      if (userId) {
-        localStorage.setItem(`hasParticipated_${userId}`, "true"); // Store participation status in localStorage with userId
-      }
-      
-      setHasParticipated(true); // Mark as participated
+  
+      // If successful, show success message or take further action
+      setMessage("Submitted successfully!");
+      setShowConfirmationModal(false); // Close the confirmation modal after submission
+  
     } catch (error) {
+      console.error("Error during submission:", error);
       setMessage("Failed to submit. Please try again.");
     } finally {
       setLoading(false);
-      setShowModal(false);
     }
   };
+  
+  
+  
   
 
 
@@ -167,14 +180,14 @@ const Vanabhojanam: React.FC = () => {
   {/* Details Section */}
   <div className="details space-y-6 mt-8">
     <p className="text-center text-base sm:text-lg lg:text-xl text-gray-700">
-      Join us for <strong>VanaBhojanam</strong> at <strong>Urban Springs, Nawabpet</strong>, on <strong>Saturday, Nov 30th, 2024</strong>! Enjoy a day filled with fun activities, including a <strong>bus ride from Miyapur Metro</strong>, <strong>snacks</strong>, <strong>games</strong>, a <strong>cricket league</strong>, a <strong>delicious vegetarian lunch</strong>, and <strong>entertainment</strong> with visits to <strong>Urban Santo</strong> and <strong>Urban Groove</strong>. Don’t miss this exciting event by <strong>ASKOXY.AI</strong> and <strong>OXY Group Companies</strong>!
+    Join us for a picnic <strong>Vana Bhojanam</strong> at <strong>Urban Springs, Nawabpet</strong> on <strong>Saturday, November 30th, 2024</strong>! Enjoy a day filled with fun activities, including a <strong>bus ride from Miyapur Metro</strong>, <strong>snacks</strong>, <strong>games</strong>, a <strong>cricket league</strong>, a <strong>delicious vegetarian lunch</strong>, and <strong>entertainment</strong> with visits to <strong>Urban Santo</strong> and <strong>Urban Groove</strong>. Don’t miss this exciting event by <strong>ASKOXY.AI</strong> and <strong>OXY Group Companies</strong>!
     </p>
   </div>
 
   {/* Details Section in Telugu */}
   <div className="details space-y-2 mt-4">
     <p className="text-center text-base sm:text-lg lg:text-xl text-gray-700">
-      వనభోజనానికి నవాబ్‌పేట్‌లోని అర్బన్ స్ప్రింగ్స్‌లో 2024 నవంబర్ 30వ తేదీ, శనివారం మాకు చేరండి!<br /><br />
+    అర్బన్ స్ప్రింగ్స్, నవాబుపేటలో నవంబర్ 30వ తేదీ 2024, శనివారం నాడు వనభోజనానికి మాతో చేరండి!<br /><br />
       మియాపూర్ మెట్రో నుండి బస్ రైడ్, తినుబండారాలు, ఆటలు, క్రికెట్ లీగ్, రుచికరమైన శాకాహార భోజనం మరియు ఎంటర్‌టైన్‌మెంట్‌తో కూడిన అర్బన్ సాంటో మరియు అర్బన్ గ్రూవ్ సందర్శనలతో ఆనందభరితమైన రోజును ఆస్వాదించండి.<br /><br />
       ఈ ఆహ్లాదకరమైన కార్యక్రమాన్ని <strong>ASKOXY.AI</strong> మరియు <strong>OXY గ్రూప్ కంపెనీలు</strong> మీ కోసం అందిస్తున్నాయి!
     </p>
@@ -185,14 +198,14 @@ const Vanabhojanam: React.FC = () => {
           onClick={handleParticipationClick}
           aria-label="Request Free Rudraksha"
         >
-        Participation
+       Confirm Participation
         </button>
 </div>
 {showModal && (
   <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
     <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-md mx-4 sm:mx-auto">
       <p className="text-lg text-center text-black mb-4">
-        Please confirm your WhatsApp number:
+        Your WhatsApp number:
         <span className="font-bold block mt-2">{storedPhoneNumber}</span>
       </p>
       <h2 className="text-lg font-bold mb-4 text-black text-center">
@@ -200,60 +213,115 @@ const Vanabhojanam: React.FC = () => {
         How many family members or friends will accompany you?
       </h2>
       <label className="block mb-4 text-sm font-medium text-black">
-        Please share the total count:
+        Total family members or friends:
         <input
-  type="number"
-  value={familyCount}
-  onChange={(e) => {
-    const value = Number(e.target.value);
-
-    if (value < 1) {
-      setFamilyCount(1); // Set minimum value to 1
-      setMessage("Please enter a family count between 1 and 100.");
-    } else if (value > 100) {
-      setFamilyCount(100); // Set maximum value to 100
-      setMessage("Please enter a family count between 1 and 100.");
-    } else {
-      setFamilyCount(value); // Set valid value within the range
-      setMessage(""); // Clear error if input is valid
-    }
-  }}
-  onKeyPress={(e) => {
-    if (!/[0-9]/.test(e.key)) {
-      e.preventDefault(); // Allow only numeric characters
-    }
-  }}
-  className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
-  style={{
-    appearance: "none",
-    MozAppearance: "textfield",
-    WebkitAppearance: "none",
-  }}
-/>
-
+          type="number"
+          value={familyCount}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            if (value < 1) {
+              setMessage("Please enter a value between 1 and 100.");
+              setFamilyCount(1);
+            } else if (value > 100) {
+              setMessage("Please enter a value between 1 and 100.");
+              setFamilyCount(100);
+            } else {
+              setMessage("");
+              setFamilyCount(value);
+            }
+          }}
+          onKeyPress={(e) => {
+            if (!/[0-9]/.test(e.key)) {
+              e.preventDefault();
+            }
+          }}
+          className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+        />
       </label>
-      {/* Error or Success Message */}
+
+      {/* Transportation Dropdown */}
+      <label className="block mb-4 text-sm font-medium text-black">
+        <strong>Would you prefer to use your own transportation or join us on our bus from Miyapur Metro for the VanaBhojanam event?</strong><br></br> Please let us know your choice!
+        <select
+          value={transportation}
+          onChange={(e) => setTransportation(e.target.value)}
+          className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+        >
+          <option value="">Select Transportation</option>
+          <option value="BUSTRANSPORT">Bus</option>
+          <option value="OWNTRANSPORT">Own Transportation</option>
+        </select>
+      </label>
+
       {message && <p className="text-sm text-red-600 mb-4">{message}</p>}
+
       <div className="flex justify-between">
-        {/* Cancel Button */}
         <button
           className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-all"
           onClick={() => setShowModal(false)}
         >
           Cancel
         </button>
+        {/* Edit/Submit Button */}
+        {!showConfirmationModal && (
+          <button
+            className={`px-4 py-2 text-white rounded-md ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"} transition-all`}
+            onClick={handleSubmit} // Submit action
+            disabled={loading || familyCount <= 0 || !transportation}
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </button>
+        )}
 
-        {/* Submit Button */}
+        {/* Button to Edit after confirmation */}
+        {showConfirmationModal && confirmationDetails && (
+          <button
+            className="px-4 py-2 text-white rounded-md bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              setShowConfirmationModal(false); // Close confirmation modal
+              setShowModal(true); // Reopen input modal for editing
+              setLoading(false)
+            }}
+          >
+            Edit
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+{showConfirmationModal && confirmationDetails && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+    <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-md mx-4 sm:mx-auto">
+      <h2 className="text-lg font-bold mb-4 text-black text-center">
+        Confirmation Details
+      </h2>
+      <p className="text-sm text-black mb-2">
+        <strong>WhatsApp Number:</strong> {confirmationDetails.phoneNumber}
+      </p>
+      <p className="text-sm text-black mb-2">
+        <strong>Family Count:</strong> {confirmationDetails.familyCount}
+      </p>
+      <p className="text-sm text-black mb-2">
+        <strong>Transportation:</strong> {confirmationDetails.transportation === "BUSTRANSPORT" ? "Bus Transport" : "Own Transport"}
+      </p>
+      <div className="flex justify-between">
         <button
-          className={`px-4 py-2 text-white rounded-md ${
-            loading
-              ? "bg-gray-500 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700"
-          } transition-all`}
-          onClick={handleSubmit}
-          disabled={loading || familyCount <= 0}
+          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-all"
+          onClick={() => {
+            setShowConfirmationModal(false); // Close confirmation modal
+            setShowModal(true);
+            setLoading(false); // Reopen input modal for editing
+          }}
         >
-          {loading ? "Submitting..." : "Submit"}
+          Edit
+        </button>
+        <button
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
+          onClick={handleConfirm} // Final submission on confirm
+        >
+          Confirm
         </button>
       </div>
     </div>

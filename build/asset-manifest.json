@@ -1,12 +1,12 @@
 {
   "files": {
     "main.css": "/static/css/main.5a184ec6.css",
-    "main.js": "/static/js/main.04d7ad1a.js",
+    "main.js": "/static/js/main.dd0750e9.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
+    "static/media/WhatsApp Image 2024-11-20 at 12.03.34.png": "/static/media/WhatsApp Image 2024-11-20 at 12.03.34.adb3f776977a487c4919.png",
     "static/media/R1.png": "/static/media/R1.c5abc3bb1aa03be79519.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
     "static/media/WEBSITE PNG.png": "/static/media/WEBSITE PNG.a212495a7669855e2e99.png",
-    "static/media/vanabhojanam 1 png.png": "/static/media/vanabhojanam 1 png.5e0958a3b2831d8de21b.png",
     "static/media/BG1.jpg": "/static/media/BG1.73ad94a0c4546e5fffc8.jpg",
     "static/media/BG.jpg": "/static/media/BG.b949b1a77589a17ce6eb.jpg",
     "static/media/6.png": "/static/media/6.c305f3465aad505f3e2f.png",
@@ -58,11 +58,11 @@
     "static/media/image2.png": "/static/media/image2.a465e4cf5f56f1a2acd6.png",
     "index.html": "/index.html",
     "main.5a184ec6.css.map": "/static/css/main.5a184ec6.css.map",
-    "main.04d7ad1a.js.map": "/static/js/main.04d7ad1a.js.map",
+    "main.dd0750e9.js.map": "/static/js/main.dd0750e9.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.5a184ec6.css",
-    "static/js/main.04d7ad1a.js"
+    "static/js/main.dd0750e9.js"
   ]
 }
