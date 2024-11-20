@@ -19,6 +19,9 @@ import Freerudraksha from "./components/Freerudraksh";
 import Login from "./components/login";
 import ExampleComponent from "./components/Examplecomponet";
 import Vanabhojanam from "./components/Vanabhojanam";
+import PresentationViewer from "./components/PresentationViewer";
+
+
 
 const App: React.FC = () => {
   return (
@@ -46,6 +49,8 @@ const App: React.FC = () => {
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/example-component" element={<ExampleComponent />} />
           <Route path="/user-profile-model" element={<UserProfileModel />} />
+          <Route path="/30NoV24Vanabhojanam"  element={<PresentationViewer/>}/>
+          
         </Routes>
       </div>
     </Router>

@@ -273,7 +273,7 @@ const Whatapplogin: React.FC = () => {
           setShowSuccessPopup(true)
           localStorage.setItem("userId", response.data.userId);
 
-          setMessage("Login Sucessfull !");
+          setMessage("Login Successful!");
          setTimeout(()=> navigate("/normal"),2000)
         } else {
           setOtpShow(true);

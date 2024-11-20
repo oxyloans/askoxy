@@ -31,6 +31,7 @@ interface ConfirmationDetails {
   phoneNumber: string;
   familyCount: number;
   transportation:string;
+  name:string;
 }
 const Vanabhojanam: React.FC = () => {
 
@@ -45,11 +46,14 @@ const Vanabhojanam: React.FC = () => {
   const [message, setMessage] = useState("");
   const [hasParticipated, setHasParticipated] = useState(false); 
   const [storedPhoneNumber, setStoredPhoneNumber] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [name, setName] = useState("");
 
   const [confirmationDetails, setConfirmationDetails] = useState<ConfirmationDetails>({
     phoneNumber: "",
     familyCount: 0,
-    transportation:""
+    transportation:"",
+    name:""
   });
 const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
@@ -81,6 +85,11 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   //     setHasParticipated(participated); 
   //   }
   // }, [userId]);
+  const [isClicked, setIsClicked] = useState(false);
+
+  
+    // Add your confirmation logic here
+  // Hide the button after it's clicked
 
   const handlePrev = () => {
     if (currentIndex > 0) {
@@ -100,7 +109,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   };
   const handleParticipationClick = () => {
    
-    setShowModal(true); 
+
     setShowModal(true); // Open the modal if not participated
   };
   
@@ -110,6 +119,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   
     // Set the details for confirmation modal before displaying it
     setConfirmationDetails({
+      name: name,
       phoneNumber: storedPhoneNumber,
       familyCount: familyCount,
       transportation:transportation
@@ -119,26 +129,40 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     setShowConfirmationModal(true);
     setShowModal(false); // Close the input modal after submission
   };
+
   const handleConfirm = async () => {
     setLoading(true);
-    setMessage("");
+    setMessage(""); // Clear any previous message
   
     try {
-      // Make POST request for participation after confirming
-      await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution",
-        {
-          userId: userId,
-          trvellType:transportation,
-          familyCount,
-          
-
-        }
-      );
+      // Make both requests concurrently using Promise.all
+      await Promise.all([
+        axios.post(
+          "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution",
+          {
+            userId: userId,
+            trvellType: transportation,
+            familyCount,
+          }
+        ),
+        axios.patch(
+          "https://meta.oxyloans.com/api/student-service/user/profile/update",
+          {
+            userId: userId, // Example of data to send
+            firstName: name, // Assuming you have a name field
+            // Add other fields as necessary
+          }
+        ),
+      ]);
   
-      // If successful, show success message or take further action
+      // If both requests succeed, show success message
       setMessage("Submitted successfully!");
-      setShowConfirmationModal(false); // Close the confirmation modal after submission
+  
+      // Close the confirmation modal and input modal
+      setTimeout(() => {
+        setShowConfirmationModal(false); // Close the confirmation modal
+        setShowModal(false); // Close the input modal (optional)
+      }, 500); // Slight delay to show success message before closing the modal
   
     } catch (error) {
       console.error("Error during submission:", error);
@@ -147,11 +171,26 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
       setLoading(false);
     }
   };
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let input = e.target.value;
+  
+    // Remove any characters that are not letters or spaces
+    input = input.replace(/[^A-Za-z\s]/g, '');
+  
+    // Update the name state with the filtered input
+    setName(input);
+  
+    // Validate the input
+    if (!input) {
+      setErrorMessage("Name is required.");
+    } else if (input.length < 2) {
+      setErrorMessage("Name must be at least 2 characters long.");
+    } else {
+      setErrorMessage(""); // Clear the error if the input is valid
+    }
+  };
   
   
-  
-  
-
 
   return (
     <div>
@@ -208,12 +247,27 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
         Your WhatsApp number:
         <span className="font-bold block mt-2">{storedPhoneNumber}</span>
       </p>
+
+        {/* Add Name Input */}
+        <label className="block mb-4 text-sm font-medium text-black">
+        Enter Your Name:
+        <input
+          type="text"
+          value={name}
+          onChange={handleNameChange}
+          placeholder="Enter your Name"
+          className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+        />
+      </label>
+      {errorMessage && (
+        <p className="text-red-600 text-sm mt-2">{errorMessage}</p>
+      )}
       <h2 className="text-lg font-bold mb-4 text-black text-center">
         We’re excited to have your loved ones join us! <br />
         How many family members or friends will accompany you?
       </h2>
       <label className="block mb-4 text-sm font-medium text-black">
-        Total family members or friends:
+      Total family members or friends:
         <input
           type="number"
           value={familyCount}
@@ -267,7 +321,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
           <button
             className={`px-4 py-2 text-white rounded-md ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"} transition-all`}
             onClick={handleSubmit} // Submit action
-            disabled={loading || familyCount <= 0 || !transportation}
+            disabled={loading || familyCount <= 0 || !transportation || !name}
           >
             {loading ? "Submitting..." : "Submit"}
           </button>
@@ -298,10 +352,13 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
         Confirmation Details
       </h2>
       <p className="text-sm text-black mb-2">
+        <strong>Name:</strong> {confirmationDetails.name}
+      </p>
+      <p className="text-sm text-black mb-2">
         <strong>WhatsApp Number:</strong> {confirmationDetails.phoneNumber}
       </p>
       <p className="text-sm text-black mb-2">
-        <strong>Family Count:</strong> {confirmationDetails.familyCount}
+        <strong> Total family members or friends:</strong> {confirmationDetails.familyCount}
       </p>
       <p className="text-sm text-black mb-2">
         <strong>Transportation:</strong> {confirmationDetails.transportation === "BUSTRANSPORT" ? "Bus Transport" : "Own Transport"}
@@ -319,7 +376,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
         </button>
         <button
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-          onClick={handleConfirm} // Final submission on confirm
+          onClick={handleConfirm} 
         >
           Confirm
         </button>
@@ -601,7 +658,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   </div>
 </div>
 
-      </div>
+</div>
       </div>
       <Footer />
     </div>
