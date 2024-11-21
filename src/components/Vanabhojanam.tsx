@@ -157,12 +157,13 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   
       // If both requests succeed, show success message
       setMessage("Submitted successfully!");
+      
   
-      // Close the confirmation modal and input modal
+      // Optional: Automatically close modals after a success message
       setTimeout(() => {
         setShowConfirmationModal(false); // Close the confirmation modal
-        setShowModal(false); // Close the input modal (optional)
-      }, 500); // Slight delay to show success message before closing the modal
+        setShowModal(false); // Close the input modal if necessary
+      }, 50); // Close after 2 seconds
   
     } catch (error) {
       console.error("Error during submission:", error);
@@ -267,31 +268,39 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
         How many family members or friends will accompany you?
       </h2>
       <label className="block mb-4 text-sm font-medium text-black">
-      Total family members or friends:
-        <input
-          type="number"
-          value={familyCount}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (value < 1) {
-              setMessage("Please enter a value between 1 and 100.");
-              setFamilyCount(1);
-            } else if (value > 100) {
-              setMessage("Please enter a value between 1 and 100.");
-              setFamilyCount(100);
-            } else {
-              setMessage("");
-              setFamilyCount(value);
-            }
-          }}
-          onKeyPress={(e) => {
-            if (!/[0-9]/.test(e.key)) {
-              e.preventDefault();
-            }
-          }}
-          className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
-        />
-      </label>
+  Total family members or friends:
+  <input
+    type="text" // Keep type as "text" to handle non-numeric input filtering
+    value={familyCount}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      // Allow only numbers and ensure value is between 1 and 100
+      if (/^\d*$/.test(value)) { // /^\d*$/ means only allow digits (no other characters)
+        const numValue = Number(value);
+        if (numValue < 1) {
+          setMessage("Please enter a value between 1 and 100.");
+          setFamilyCount(0);
+        } else if (numValue > 100) {
+          setMessage("Please enter a value between 1 and 100.");
+          setFamilyCount(100);
+        } else {
+          setMessage("");
+          setFamilyCount(numValue);
+        }
+      }
+    }}
+    onKeyDown={(e) => {
+      // Allow only numeric input or backspace key (key code 8)
+      if (!/\d/.test(e.key) && e.key !== 'Backspace') {
+        e.preventDefault(); // Prevent non-numeric input (e.g. letters, symbols)
+      }
+    }}
+    className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+  />
+</label>
+
+
 
       {/* Transportation Dropdown */}
       <label className="block mb-4 text-sm font-medium text-black">
