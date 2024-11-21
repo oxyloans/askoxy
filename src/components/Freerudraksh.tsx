@@ -6,10 +6,11 @@ import React, { useState,useEffect } from "react";
 import "./Freerudraksha.css";
 import "./DiwaliPage.css";
 import axios from 'axios';
+import { FaMapMarkerAlt } from "react-icons/fa";
 
 import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
-import Image1 from '../assets/img/WEBSITE PNG.png'
+import Image1 from '../assets/img/WEBSITE.png'
 import Image2 from '../assets/img/R2.png'
 import Footer from "./Footer";
 import { Modal, Button, Input,message } from "antd";
@@ -92,6 +93,8 @@ const Freerudraksha: React.FC = () => {
 
   const officeDetails = {
     address: "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
+
+    VisitTimings:"Monday to Friday, 10:00 AM to 6:00 PM",  
     googleMapLink: "https://maps.app.goo.gl/MC1EmbY4DSdFcpke9",
     contact: "099668 88825",
   };
@@ -259,20 +262,20 @@ const Freerudraksha: React.FC = () => {
 
       {/* Details Section */}
       <div className="details">
-  <p>
+  
+  <strong>The One Lakh Rudraksharchana on 19th November was a grand success! 🌟 Click on “I Want Free Rudraksha” now to receive the sacred Rudrakshas used in the Archana. They will be delivered to your doorstep at no cost. Inspired by this success, we aspire to host 99 more Rudraksharchana events to fulfill our vision of One Crore Rudraksharchanas! Join us on this divine journey. 🙏</strong>
 
-  <strong>Join us on 19th November 2024, from 6 PM onwards, for the grand event of One Lakh Rudrabhishekam! Experience divine blessings and receive a free blessed Rudraksha. Alongside this sacred event, we are empowering families with free AI training to create opportunities for sustainable incomes. Don’t miss this transformative journey of spiritual and intellectual growth!</strong>
 
-  </p>
+
+
+
   
   
   
 </div>
 
 <div className="details">
-  <p>
-  <strong>19 నవంబర్ 2024 సాయంత్రం 6 గంటల నుంచి భారీ లక్ష రుద్రాభిషేకానికి మాకు జతకండి! ఆధ్యాత్మిక ఆశీర్వాదాలను అనుభవించి, పవిత్రమైన రుద్రాక్షను ఉచితంగా పొందండి. ఈ పవిత్ర కార్యక్రమంతో పాటు, కుటుంబాలను ఆర్థికంగా స్థిరంగా నిలిపేందుకు ఉచిత AI శిక్షణ ద్వారా సాధికారత కల్పించుకుంటున్నాము. ఆధ్యాత్మిక మరియు మేధో వికాసానికి ఇది ఒక మార్గం, మిస్ అవ్వకండి!</strong>
- </p>
+<strong>నవంబర్ 19న నిర్వహించిన లక్ష రుద్రాక్షార్చన ఘన విజయాన్ని సాధించింది!🌟  </strong> ఆర్చనలో ఉపయోగించిన పవిత్ర రుద్రాక్షలను పొందడానికి ఇప్పుడు "I want Free Rudraksha" పై క్లిక్ చేయండి. అవి మీ ఇంటి వద్దకు ఉచితంగా పంపబడతాయి. ఈ విజయంతో ప్రేరణ పొందిన మేము, మా లక్ష్యం అయిన కోటి రుద్రాక్షార్చనల సాధన కోసం మరో 99 రుద్రాక్షార్చన కార్యక్రమాలను నిర్వహించేందుకు సంకల్పించాము! ఈ దివ్య ప్రయాణంలో భాగస్వామ్యం అవ్వండి. 🙏
 </div>
 
 
@@ -414,22 +417,22 @@ const Freerudraksha: React.FC = () => {
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
     <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
       <p className="text-lg text-center text-black mb-4 font-semibold">
-        Confirm OxyLoans Office Details
+      Please find our address below:  
       </p>
-      <p className="text-center text-gray-600 mb-4">
-        Please review the office details below before proceeding with your request.
-      </p>
+    
       <div className="text-center mb-4">
-        <p className="text-black font-medium">{officeDetails.address}</p>
-        <a 
-          href={officeDetails.googleMapLink} 
-          target="_blank" 
-          className="text-blue-600 hover:underline"
-          rel="noopener noreferrer"
-        >
-          View Location on Google Maps
-        </a>
-        <p className="text-black mt-2">Contact: <span className="font-medium">{officeDetails.contact}</span></p>
+     <p className="text-black font-medium">   <strong>Address: </strong>{officeDetails.address}</p><br></br>
+        <p  className="text-black font-medium"><strong>Visit Timings: </strong>{officeDetails.VisitTimings}</p>
+       <a 
+  href={officeDetails.googleMapLink} 
+  target="_blank" 
+  className="text-blue-600 hover:underline"
+  rel="noopener noreferrer"
+>
+   View Location on Google Maps
+</a>
+
+        <p className="text-black mt-2"><strong>Contact: </strong><span className="font-medium">{officeDetails.contact}</span></p>
       </div>
       <div className="flex justify-between gap-4">
         <button

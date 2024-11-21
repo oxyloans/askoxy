@@ -20,6 +20,7 @@ import Login from "./components/login";
 import ExampleComponent from "./components/Examplecomponet";
 import Vanabhojanam from "./components/Vanabhojanam";
 import PresentationViewer from "./components/PresentationViewer";
+import FlowSteps from "./components/FlowSteps";
 
 
 
@@ -30,6 +31,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
+          <Route path='/rudraksha-vanabhojanam' element={<FlowSteps/>}/>
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />

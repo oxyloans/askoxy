@@ -3,7 +3,7 @@ import "./Freerudraksha.css";
 import WhatsApp from "../assets/img/WhatsApp.jpeg";
 import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
 import Header1 from "./Header1";
-import VanabhojanamImage from '../assets/img/WhatsApp Image 2024-11-20 at 12.03.34.png'
+import VanabhojanamImage from '../assets/img/urbansprings.png'
 import Footer from "./Footer";
 import Header2 from "./Header2";
 import  './DiwaliPage.css'
@@ -201,7 +201,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   {/* Header */}
   <header className="text-center py-4">
   <h5 className="text-3xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold text-green-700 text-center">
-  Vanabhojanam
+  VANABHOJANAM
 </h5>
 
 </header>
@@ -219,18 +219,23 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   {/* Details Section */}
   <div className="details space-y-6 mt-8">
-    <p className="text-center text-base sm:text-lg lg:text-xl text-gray-700">
-    Join us for a picnic <strong>Vana Bhojanam</strong> at <strong>Urban Springs, Nawabpet</strong> on <strong>Saturday, November 30th, 2024</strong>! Enjoy a day filled with fun activities, including a <strong>bus ride from Miyapur Metro</strong>, <strong>snacks</strong>, <strong>games</strong>, a <strong>cricket league</strong>, a <strong>delicious vegetarian lunch</strong>, and <strong>entertainment</strong> with visits to <strong>Urban Santo</strong> and <strong>Urban Groove</strong>. Don’t miss this exciting event by <strong>ASKOXY.AI</strong> and <strong>OXY Group Companies</strong>!
-    </p>
+  <p>
+  <strong>Join us for a Vana Bhojanam at Urban Springs, Nawabpet, on Saturday, November 30th, 2024!</strong> 
+  <strong>Enjoy a fun-filled day</strong> with a bus ride from Miyapur Metro, <strong>snacks, games, a cricket league, a delicious vegetarian lunch,</strong> and <strong>entertainment,</strong> including visits to <strong>Urban Santo and Urban Groove.</strong> 
+  <strong>This exciting event is brought to you by ASKOXY.AI and OXY Group Companies!</strong>
+</p>
+
   </div>
 
   {/* Details Section in Telugu */}
   <div className="details space-y-2 mt-4">
-    <p className="text-center text-base sm:text-lg lg:text-xl text-gray-700">
-    అర్బన్ స్ప్రింగ్స్, నవాబుపేటలో నవంబర్ 30వ తేదీ 2024, శనివారం నాడు వనభోజనానికి మాతో చేరండి!<br /><br />
-      మియాపూర్ మెట్రో నుండి బస్ రైడ్, తినుబండారాలు, ఆటలు, క్రికెట్ లీగ్, రుచికరమైన శాకాహార భోజనం మరియు ఎంటర్‌టైన్‌మెంట్‌తో కూడిన అర్బన్ సాంటో మరియు అర్బన్ గ్రూవ్ సందర్శనలతో ఆనందభరితమైన రోజును ఆస్వాదించండి.<br /><br />
-      ఈ ఆహ్లాదకరమైన కార్యక్రమాన్ని <strong>ASKOXY.AI</strong> మరియు <strong>OXY గ్రూప్ కంపెనీలు</strong> మీ కోసం అందిస్తున్నాయి!
-    </p>
+  <p>
+  <strong>అర్బన్ స్ప్రింగ్స్, నవాబుపేటలో నవంబర్ 30, 2024, శనివారం నాడు వనభోజనానికి మాతో చేరండి!</strong> 
+  <strong>మియాపూర్ మెట్రో నుండి బస్ రైడ్, తినుబండారాలు, ఆటలు, క్రికెట్ లీగ్, రుచికరమైన శాకాహార భోజనం మరియు </strong>
+  <strong>వినోదంతో కూడిన అర్బన్ సాంటో మరియు  అర్బన్ గ్రూవ్ సందర్శనలతో ఆనందభరితమైన రోజును ఆస్వాదించండి.</strong> 
+  <strong>ఈ ఆహ్లాదకరమైన కార్యక్రమాన్ని ASKOXY.AI మరియు OXY గ్రూప్ కంపెనీలు మీ కోసం అందిస్తున్నాయి!</strong>
+</p>
+
   </div>
   <div className="flex justify-center mt-8">
         <button

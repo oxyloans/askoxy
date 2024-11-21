@@ -62,7 +62,7 @@
 
 .world-image {
   width: 100%;
-  max-width: 400px; /* Fixed maximum width */
+  max-width: 600px; /* Fixed maximum width */
   height: auto; /* Fixed height for uniformity */
   object-fit: cover; /* Ensures the image fits within the dimensions */
   border-radius: 10px;
