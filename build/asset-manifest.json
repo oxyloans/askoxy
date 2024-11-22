@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.css": "/static/css/main.d0980feb.css",
-    "main.js": "/static/js/main.4128155c.js",
+    "main.css": "/static/css/main.3150eb26.css",
+    "main.js": "/static/js/main.2312ae61.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE.png": "/static/media/WEBSITE.c2a5ab8a64eaacc8b55b.png",
-    "static/media/urbansprings.png": "/static/media/urbansprings.aae60a13a6e286e33c54.png",
+    "static/media/website 2.png": "/static/media/website 2.d8e6472b7c5f250e6c86.png",
     "static/media/R1.png": "/static/media/R1.c5abc3bb1aa03be79519.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
     "static/media/BG1.jpg": "/static/media/BG1.73ad94a0c4546e5fffc8.jpg",
@@ -57,12 +57,12 @@
     "static/media/image4.png": "/static/media/image4.8734801ecd660024a317.png",
     "static/media/image2.png": "/static/media/image2.a465e4cf5f56f1a2acd6.png",
     "index.html": "/index.html",
-    "main.d0980feb.css.map": "/static/css/main.d0980feb.css.map",
-    "main.4128155c.js.map": "/static/js/main.4128155c.js.map",
+    "main.3150eb26.css.map": "/static/css/main.3150eb26.css.map",
+    "main.2312ae61.js.map": "/static/js/main.2312ae61.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d0980feb.css",
-    "static/js/main.4128155c.js"
+    "static/css/main.3150eb26.css",
+    "static/js/main.2312ae61.js"
   ]
 }

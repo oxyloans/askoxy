@@ -20,7 +20,10 @@ import Login from "./components/login";
 import ExampleComponent from "./components/Examplecomponet";
 import Vanabhojanam from "./components/Vanabhojanam";
 import PresentationViewer from "./components/PresentationViewer";
-import FlowSteps from "./components/FlowSteps";
+import VanabhojanamSteps from "./components/VanabhojanamaSteps";
+import RudrakshaSteps from "./components/RudrakshaSteps";
+import Flow from "./components/Flow";
+
 
 
 
@@ -31,18 +34,20 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
-          <Route path='/rudraksha-vanabhojanam' element={<FlowSteps/>}/>
+          <Route path='/vanabhojanam' element={<VanabhojanamSteps/>}/>
+          <Route path='/rudraksha-vanabhojanam'  element={<Flow/>}/>
+           <Route path='/rudraksha'element={<RudrakshaSteps/>}/>
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
-          <Route path="/vanabhojanam" element={<Vanabhojanam/>}/>
+          {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
 
           {/* Redirect to add a trailing slash if missing */}
           <Route
             path="/freerudraksha"
             element={<Navigate to="/freerudraksha/" />}
           />
-          <Route path="/freerudraksha/" element={<Freerudraksha />} />
+          {/* <Route path="/freerudraksha/" element={<Freerudraksha />} /> */}
 
           {/* <Route path="/happy-diwali" element={<Happy_Diwali />} /> */}
           <Route path="/example" element={<Example variant="loading01" />} />
