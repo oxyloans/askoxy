@@ -3,7 +3,7 @@ import "./Freerudraksha.css";
 import WhatsApp from "../assets/img/WhatsApp.jpeg";
 import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
 import Header1 from "./Header1";
-import VanabhojanamImage from '../assets/img/website 2.png'
+import VanabhojanamImage from '../assets/img/WhatsApp Image 2024-11-25 at 10.38.19.png'
 import Footer from "./Footer";
 import Header2 from "./Header2";
 import  './DiwaliPage.css'

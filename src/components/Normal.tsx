@@ -8,7 +8,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
 import B2 from "../assets/img/B2.jpg";
 import FR from '../assets/img/R1.png'
-
+import Pushpa2GPT from "./Pushpa2GPT";
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
 import ChatHistory from "./ChatHistory";
@@ -19,6 +19,7 @@ import ProfileCallPage from "./models/ProfileCallPage";
 import Freerudraksha from "./Freerudraksh";
 import Vanabhojanam from "./Vanabhojanam";
 import VanabhojanammImage from  '../assets/img/vanabhojanam.png';
+import Pushpa from '../assets/img/3ef05659-d79c-42e9-b3dc-ebc61b63f430.png'
 import { FaUserCircle } from "react-icons/fa";
 
 interface ChatMessage {
@@ -88,17 +89,25 @@ const Normal = () => {
 
   const [showVanabhojanam, setShowVanabhojanam] = useState(false);
   // const [showLeftPanel, setShowLeftPanel] = useState(true);
-
+  const [showPushpa2Gpt, setShowPushpa2Gpt] = useState(false);
 const handleFreerudrakshaClick = () => {
   setShowFreerudraksha(true);
   // setShowLeftPanel(false); 
   setShowVanabhojanam(false); 
+  setShowPushpa2Gpt(false);
+};
+const handlepushpa2Gptclick = () => {
+  setShowFreerudraksha(false);
+  // setShowLeftPanel(false); 
+  setShowVanabhojanam(false); 
+  setShowPushpa2Gpt(true);
 };
 
 const handleVanabhojanamClick = () => {
   setShowVanabhojanam(true);
   setShowFreerudraksha(false); // Hide Freerudraksha when Vanabhojanam is clicked
   // setShowLeftPanel(false); 
+  setShowPushpa2Gpt(false)
 };
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -454,6 +463,7 @@ const handleVanabhojanamClick = () => {
     setShowStaticBubbles(true); // Show the static chat bubbles
     setShowFreerudraksha(false); // Reset to main chat interface
     setShowVanabhojanam(false)
+    setShowPushpa2Gpt(false)
     // setShowLeftPanel(true);        // Show the left panel again
     if (inputRef.current) {
       inputRef.current.value = ""; // Clear the input field
@@ -574,7 +584,7 @@ const handleVanabhojanamClick = () => {
                 className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
               />
              
-             <span style={{fontWeight:'bold', color:'3c1973',fontSize:'22'}}> Free Rudraksha</span>
+             <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Free Rudraksha</span>
             </button>
         </div>
 
@@ -588,9 +598,22 @@ const handleVanabhojanamClick = () => {
                 alt="Vanabhojanam"
                 className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
               />
-          <span style={{fontWeight:'bold', color:'3c1973',fontSize:'22'}}> Vanabhojanam</span>
+          <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Vanabhojanam</span>
             </button>
         </div> 
+        <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+            <button
+             onClick={handlepushpa2Gptclick}
+              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+            >
+              <img
+                src={Pushpa} // Replace with the actual image path
+                alt="Pushpa"
+                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+              />
+          <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Pushpa 2 GPT</span>
+            </button>
+        </div>
           <div className="flex items-center justify-between font-bold mb-4">
             <button
               onClick={() => setIsEditing(!isEditing)}
@@ -693,7 +716,7 @@ const handleVanabhojanamClick = () => {
       ) }*/
       :showVanabhojanam?  (
         <Vanabhojanam />
-      ) :(
+      ) :showPushpa2Gpt ? (<Pushpa2GPT/> ):(
             <>
             {/* Static Rice Related Text */}
             <h2
