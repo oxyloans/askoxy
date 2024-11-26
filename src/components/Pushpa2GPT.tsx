@@ -44,26 +44,24 @@ const Pushpa2GPT: React.FC = () => {
   };
   const userid = localStorage.getItem('userId');
   useEffect(() => {
-    const savedHasSubmitted = localStorage.getItem(`${userid}_hasSubmitted`);
-    const savedDate = localStorage.getItem(`${userid}_firstRequestDate`);
-
-    if (savedHasSubmitted && savedDate) {
-      // User has already participated
-      setHasSubmitted(true);
-   
+    if (userid) {
+      const savedHasSubmitted = localStorage.getItem(`${userid}_hasSubmitted`);
+      if (savedHasSubmitted === "true") {
+        setHasSubmitted(true);
+      }
     }
   }, [userid]);
   
 
   const handledscriptId = async () => {
-    if (!scriptId) {
-      message.error(" Please enter a valid scriptId to proceed.");
+    if (!scriptId.trim()) {
+      message.error("Please enter a valid script ID to proceed.");
       return;
     }
+
     if (hasSubmitted) {
-      // If the user has already submitted once, show the message with first request date
-      message.info(`You have already participated in the context`);
-      return; // Prevent submitting again
+      message.info("You have already participated in the contest.");
+      return;
     }
   
     const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
@@ -79,9 +77,8 @@ const Pushpa2GPT: React.FC = () => {
   
       if (response.ok) {
         setHasSubmitted(true);
-
-        // Save to localStorage with the userId as part of the key to make it specific to the user
         localStorage.setItem(`${userid}_hasSubmitted`, "true");
+
         setIsLoading(false);
         setShowConfirmationModal(false); // Close any open modal before showing the success one
   
