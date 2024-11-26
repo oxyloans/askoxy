@@ -542,7 +542,7 @@ const handleVanabhojanamClick = () => {
           localStorage.removeItem("userId");
           navigate("/whatapplogin");
         } else {
-          navigate("/login");
+          navigate("/whatapplogin");
         }
       }}
       className="text-white bg-[#ffa800] px-4 py-2 rounded-full"

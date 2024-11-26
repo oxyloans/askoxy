@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import Footer from "./Footer";
 import './Freerudraksha.css';
 import { message,Modal } from 'antd';
@@ -11,6 +11,7 @@ import img3 from "../assets/img/image3.png";
 import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
+
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -27,7 +28,8 @@ const Pushpa2GPT: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const userid = localStorage.getItem('userId');
+ 
+  const [hasSubmitted, setHasSubmitted] = useState(false); 
 
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
@@ -40,11 +42,28 @@ const Pushpa2GPT: React.FC = () => {
       setCurrentIndex(currentIndex - 1);
     }
   };
+  const userid = localStorage.getItem('userId');
+  useEffect(() => {
+    const savedHasSubmitted = localStorage.getItem(`${userid}_hasSubmitted`);
+    const savedDate = localStorage.getItem(`${userid}_firstRequestDate`);
+
+    if (savedHasSubmitted && savedDate) {
+      // User has already participated
+      setHasSubmitted(true);
+   
+    }
+  }, [userid]);
+  
 
   const handledscriptId = async () => {
     if (!scriptId) {
-      message.error("Please enter a scriptId.");
+      message.error(" Please enter a valid scriptId to proceed.");
       return;
+    }
+    if (hasSubmitted) {
+      // If the user has already submitted once, show the message with first request date
+      message.info(`You have already participated in the context`);
+      return; // Prevent submitting again
     }
   
     const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
@@ -59,12 +78,16 @@ const Pushpa2GPT: React.FC = () => {
       });
   
       if (response.ok) {
+        setHasSubmitted(true);
+
+        // Save to localStorage with the userId as part of the key to make it specific to the user
+        localStorage.setItem(`${userid}_hasSubmitted`, "true");
         setIsLoading(false);
         setShowConfirmationModal(false); // Close any open modal before showing the success one
   
         Modal.success({
           title: 'Success!',
-          content: "Your entry has been successfully submitted. Winners will be announced soon. Good luck!",
+          content: "Your submission was successful. Stay tuned for the announcement of the winners. Best of luck!",
           
           onOk: () => {
             // Automatic closure after "OK" is clicked
@@ -91,7 +114,7 @@ const Pushpa2GPT: React.FC = () => {
   return (
     <div>
       <div className="border-green-900">
-        <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-white shadow-md border-2 border-[#51ff00] rounded-lg max-w-7xl w-full" style={{
+        <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-white shadow-md border-2 border-gray-200 rounded-lg max-w-7xl w-full" style={{
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
         }}>
           {/* Left: Image */}
@@ -106,11 +129,9 @@ const Pushpa2GPT: React.FC = () => {
                 Pushpa 2 GPT: Let AI Write the Story, Win 2 Tickets!
               </h1>
               <p className="text-gray-600 text-base mt-4">
-                Predict Pushpa’s final story in 5 steps: uncover his motives, choose
-                his path, define allies and enemies, add suspense, and establish his
-                legacy for a chance to win 2 movie tickets!
+              Predict Pushpa’s final story in 5 steps or prompts, starting with a given choice. Uncover his motives: power, redemption, or protection. Choose his path—don, reformer, or mystery. Define allies and enemies, add suspense with betrayal or sacrifice, & decide his legacy: hero or legend. Start Now!!
               </p>
-              <p className="text-gray-500 text-sm mt-4">
+              <p className="text-gray-500 text-md mt-4">
           <strong>Details:</strong>
        <br />
        <p>
@@ -118,10 +139,10 @@ const Pushpa2GPT: React.FC = () => {
     href="https://chatgpt.com/g/g-67329e4fa1808190a9f3673eec58adf8-pushpa-2-gpt-let-ai-write-story-win-2-tickets"
     target="_blank"
     rel="noopener noreferrer"
-    className="text-blue-800 font-bold text-sm py-2 px-4  transition-colors inline-block"
+    className="text-blue-800  font-bold text-sm py-2 px-6  transition-colors inline-block"
     aria-label="Start the process"
   >
-    Start Now!
+   <strong style={{ fontSize: '20px' }}> Start Now!</strong>
   </a> 
   to begin the process.
 </p>
