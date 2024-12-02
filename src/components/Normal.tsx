@@ -87,28 +87,28 @@ const Normal = () => {
 
   const [showFreerudraksha, setShowFreerudraksha] = useState(false);
 
-  const [showVanabhojanam, setShowVanabhojanam] = useState(false);
+  // const [showVanabhojanam, setShowVanabhojanam] = useState(false);
   // const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showPushpa2Gpt, setShowPushpa2Gpt] = useState(false);
 const handleFreerudrakshaClick = () => {
   setShowFreerudraksha(true);
   // setShowLeftPanel(false); 
-  setShowVanabhojanam(false); 
+  // setShowVanabhojanam(false); 
   setShowPushpa2Gpt(false);
 };
 const handlepushpa2Gptclick = () => {
   setShowFreerudraksha(false);
   // setShowLeftPanel(false); 
-  setShowVanabhojanam(false); 
+  // setShowVanabhojanam(false); 
   setShowPushpa2Gpt(true);
 };
 
-const handleVanabhojanamClick = () => {
-  setShowVanabhojanam(true);
-  setShowFreerudraksha(false); // Hide Freerudraksha when Vanabhojanam is clicked
-  // setShowLeftPanel(false); 
-  setShowPushpa2Gpt(false)
-};
+// const handleVanabhojanamClick = () => {
+//   setShowVanabhojanam(true);
+//   setShowFreerudraksha(false); // Hide Freerudraksha when Vanabhojanam is clicked
+//   // setShowLeftPanel(false); 
+//   setShowPushpa2Gpt(false)
+// };
   useEffect(() => {
     const fetchChatHistory = async () => {
       const userId = localStorage.getItem("userId");
@@ -462,7 +462,7 @@ const handleVanabhojanamClick = () => {
     setMessages([]); // Clear the messages
     setShowStaticBubbles(true); // Show the static chat bubbles
     setShowFreerudraksha(false); // Reset to main chat interface
-    setShowVanabhojanam(false)
+    // setShowVanabhojanam(false)
     setShowPushpa2Gpt(false)
     // setShowLeftPanel(true);        // Show the left panel again
     if (inputRef.current) {
@@ -554,12 +554,13 @@ const handleVanabhojanamClick = () => {
   {/* Profile Info Section (AuthorInfo) */}
   <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
   <AuthorInfo
-    name={`${profileData?.firstName || ""} ${profileData?.lastName || ""}`.trim()}
-    location={profileData?.city || "Unknown"}
-    email={profileData?.email || "No email available"}
+    name={`${profileData?.firstName || ""} ${profileData?.lastName || ""}`.trim()} 
+    location={profileData?.city || ""} 
+    email={profileData?.email || ""} 
     icon={<FaUserCircle />}
   />
 </div>
+
 
 </header>
 
@@ -588,7 +589,7 @@ const handleVanabhojanamClick = () => {
             </button>
         </div>
 
-        <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+        {/* <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
             <button
              onClick={handleVanabhojanamClick}
               className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
@@ -600,7 +601,7 @@ const handleVanabhojanamClick = () => {
               />
           <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Vanabhojanam</span>
             </button>
-        </div> 
+        </div>  */}
         <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
             <button
              onClick={handlepushpa2Gptclick}
@@ -714,9 +715,10 @@ const handleVanabhojanamClick = () => {
           <Vanabhojanam />  
         </div>
       ) }*/
-      :showVanabhojanam?  (
-        <Vanabhojanam />
-      ) :showPushpa2Gpt ? (<Pushpa2GPT/> ):(
+      // :showVanabhojanam?  (
+      //   <Vanabhojanam />
+      // ) 
+      :showPushpa2Gpt ? (<Pushpa2GPT/> ):(
             <>
             {/* Static Rice Related Text */}
             <h2
