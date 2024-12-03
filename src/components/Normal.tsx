@@ -89,19 +89,19 @@ const Normal = () => {
 
   // const [showVanabhojanam, setShowVanabhojanam] = useState(false);
   // const [showLeftPanel, setShowLeftPanel] = useState(true);
-  const [showPushpa2Gpt, setShowPushpa2Gpt] = useState(false);
+  // const [showPushpa2Gpt, setShowPushpa2Gpt] = useState(false);
 const handleFreerudrakshaClick = () => {
   setShowFreerudraksha(true);
   // setShowLeftPanel(false); 
   // setShowVanabhojanam(false); 
-  setShowPushpa2Gpt(false);
+  // setShowPushpa2Gpt(false);
 };
-const handlepushpa2Gptclick = () => {
-  setShowFreerudraksha(false);
-  // setShowLeftPanel(false); 
-  // setShowVanabhojanam(false); 
-  setShowPushpa2Gpt(true);
-};
+// const handlepushpa2Gptclick = () => {
+//   setShowFreerudraksha(false);
+//   // setShowLeftPanel(false); 
+//   // setShowVanabhojanam(false); 
+//   setShowPushpa2Gpt(true);
+// };
 
 // const handleVanabhojanamClick = () => {
 //   setShowVanabhojanam(true);
@@ -463,7 +463,7 @@ const handlepushpa2Gptclick = () => {
     setShowStaticBubbles(true); // Show the static chat bubbles
     setShowFreerudraksha(false); // Reset to main chat interface
     // setShowVanabhojanam(false)
-    setShowPushpa2Gpt(false)
+    // setShowPushpa2Gpt(false)
     // setShowLeftPanel(true);        // Show the left panel again
     if (inputRef.current) {
       inputRef.current.value = ""; // Clear the input field
@@ -602,7 +602,7 @@ const handlepushpa2Gptclick = () => {
           <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Vanabhojanam</span>
             </button>
         </div>  */}
-        <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+        {/* <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
             <button
              onClick={handlepushpa2Gptclick}
               className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
@@ -614,7 +614,7 @@ const handlepushpa2Gptclick = () => {
               />
           <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Pushpa 2 GPT</span>
             </button>
-        </div>
+        </div> */}
           <div className="flex items-center justify-between font-bold mb-4">
             <button
               onClick={() => setIsEditing(!isEditing)}
@@ -718,7 +718,8 @@ const handlepushpa2Gptclick = () => {
       // :showVanabhojanam?  (
       //   <Vanabhojanam />
       // ) 
-      :showPushpa2Gpt ? (<Pushpa2GPT/> ):(
+      // :showPushpa2Gpt ? (<Pushpa2GPT/> )
+      :(
             <>
             {/* Static Rice Related Text */}
             <h2
