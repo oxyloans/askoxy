@@ -27,6 +27,7 @@ import Flow from "./components/Flow";
 
 
 
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -37,6 +38,7 @@ const App: React.FC = () => {
           <Route path='/vanabhojanam' element={<VanabhojanamSteps/>}/>
           <Route path='/rudraksha-vanabhojanam'  element={<Flow/>}/>
            <Route path='/rudraksha'element={<RudrakshaSteps/>}/>
+  
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
@@ -44,9 +46,12 @@ const App: React.FC = () => {
 
           {/* Redirect to add a trailing slash if missing */}
           <Route
-            path="/freerudraksha"
-            element={<Navigate to="/freerudraksha/" />}
+            path="/freerudraksha" element={<Navigate to="/freerudraksha/" />}
           />
+             <Route
+            path="/StudyAbroad" element={<Navigate to="/StudyAbroad/" />}
+          />
+       
           {/* <Route path="/freerudraksha/" element={<Freerudraksha />} /> */}
 
           {/* <Route path="/happy-diwali" element={<Happy_Diwali />} /> */}
