@@ -11,7 +11,7 @@ import FR from "../assets/img/R1.png";
 import FR1 from "../assets/img/R22.jpg";
 import FR2 from "../assets/img/freesample.jpg";
 import FR3 from "../assets/img/freeaiandgenai.png";
-import FR4 from "../assets/img/machines.webp";
+import FR4 from "../assets/img/machines.png";
 
 import Pushpa2GPT from "./Pushpa2GPT";
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";

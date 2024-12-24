@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./StudyAbroad.css";
 import "./DiwaliPage.css";
+import "./Freerudraksha.css";
 import axios from 'axios';
 import { FaMapMarkerAlt, FaUniversity, FaGlobe, FaPlane, FaBook } from "react-icons/fa"; // Import icons
 
@@ -8,6 +9,11 @@ import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
 import Image1 from '../assets/img/WEBSITE.png'
 import Image3 from '../assets/img/R33.jpg'
+import S1 from '../assets/img/st1.jpg'
+import S2 from "../assets/img/st2.jpg";
+import S3 from "../assets/img/s3.jpg";
+import S4 from "../assets/img/s4.jpg";
+import S5 from "../assets/img/s5.jpg";
 import Image2 from '../assets/img/R2.png'
 import Footer from "./Footer";
 import { Modal, Button, Input, message } from "antd";
@@ -157,9 +163,48 @@ const handleSubmit = async () => {
        </header>
 
        {/* Main Content */}
-       <div className="worlds flex justify-center mt-8">
-         <section className="spiritual-world text-center mx-4">
-           <img src={Image3} alt="Spiritual World" className="world-image" />
+       <div className="grid grid-cols-3 gap-4">
+         <section>
+           <img
+             src={Image3}
+             alt="Spiritual World"
+             className="w-full h-59 object-cover rounded"
+           />
+         </section>
+         <section>
+           <img
+             src={S1}
+             alt="Spiritual World"
+             className="w-full h-59 object-cover rounded"
+           />
+         </section>
+         <section>
+           <img
+             src={S3}
+             alt="Spiritual World"
+             className="w-full h-59 object-cover rounded"
+           />
+         </section>
+         <section>
+           <img
+             src={S2}
+             alt="Spiritual World"
+             className="w-full h-59 object-cover rounded"
+           />
+         </section>
+         <section>
+           <img
+             src={S4}
+             alt="Spiritual World"
+             className="w-full h-59 object-cover rounded"
+           />
+         </section>
+         <section>
+           <img
+             src={S5}
+             alt="Spiritual World"
+             className="w-full h-59 object-cover rounded"
+           />
          </section>
        </div>
 
