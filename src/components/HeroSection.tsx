@@ -408,7 +408,7 @@ const HeroSection: React.FC = () => {
 
   const handleLoginClick = () => {
     closeModal();
-    navigate("/login"); // Navigate to the login page
+    navigate("/whatapplogin"); // Navigate to the login page
   };
 
   const imageGroup1 = repeatAndShuffleImages(images, 20);

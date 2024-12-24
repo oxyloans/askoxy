@@ -131,11 +131,7 @@ const InfoSection: React.FC = () => {
             >
               {images.map((image, idx) => (
                 <div key={idx} className="carousel-image-item">
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="carousel"
-                  />
+                  <img src={image.src} alt={image.alt} className="carousel" />
                 </div>
               ))}
             </div>
@@ -159,21 +155,28 @@ const InfoSection: React.FC = () => {
 
         <div className="flex items-center justify-center">
           <div className="search-placeholder1">
-            <div className="input-container">
+            <div className="relative w-100 ">
               <input
                 type="text"
                 placeholder="Ask any question..."
-                className="search-input"
+                className="search-input w-full px-4 py-2 pr-12 rounded-md border border-gray-300 shadow-sm focus:outline-none"
                 value={query}
                 onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    handleSearch();
+                    // Trigger redirection when Enter is pressed
+                    window.location.href = `/normal?${query}`;
                   }
                 }}
               />
-              <button className="search-button" onClick={handleSearch}>
-                <FaSearch className="search-icon" />
+              <button
+                className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full hover:bg-blue-600"
+                onClick={() => {
+                  // Trigger redirection when the button is clicked
+                  window.location.href = `/normal?${query}`;
+                }}
+              >
+                <FaSearch />
               </button>
             </div>
           </div>

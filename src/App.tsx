@@ -22,12 +22,11 @@ import Vanabhojanam from "./components/Vanabhojanam";
 import PresentationViewer from "./components/PresentationViewer";
 import VanabhojanamSteps from "./components/VanabhojanamaSteps";
 import RudrakshaSteps from "./components/RudrakshaSteps";
+import FreeSample from "./components/FreeSample";
+import FreeAiandGenAi from "./components/FreeAi&GenAi";
+import StudyAbroad from "./components/StudyAbroad";
 import Flow from "./components/Flow";
-
-
-
-
-
+import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
 const App: React.FC = () => {
   return (
     <Router>
@@ -35,23 +34,29 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
-          <Route path='/vanabhojanam' element={<VanabhojanamSteps/>}/>
-          <Route path='/rudraksha-vanabhojanam'  element={<Flow/>}/>
-           <Route path='/rudraksha'element={<RudrakshaSteps/>}/>
-  
+          <Route path="/vanabhojanam" element={<VanabhojanamSteps />} />
+          <Route path="/rudraksha-vanabhojanam" element={<Flow />} />
+          <Route path="/rudraksha" element={<RudrakshaSteps />} />
+          <Route path="/freerudraksha" element={<Freerudraksha />} />
+          <Route path="/freesample" element={<FreeSample />} />
+          <Route path="/freeaiandgenai" element={<FreeAiandGenAi />} />
+          <Route path="/studyabroad" element={<StudyAbroad />} />
           <Route path="/login" element={<Login />} />
           <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
+          <Route path="/machines&manufacturing" element={<MachinesManufacturingServices />} />
           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
 
           {/* Redirect to add a trailing slash if missing */}
           <Route
-            path="/freerudraksha" element={<Navigate to="/freerudraksha/" />}
+            path="/freerudraksha"
+            element={<Navigate to="/freerudraksha/" />}
           />
-             <Route
-            path="/StudyAbroad" element={<Navigate to="/StudyAbroad/" />}
+          <Route
+            path="/StudyAbroad"
+            element={<Navigate to="/StudyAbroad/" />}
           />
-       
+
           {/* <Route path="/freerudraksha/" element={<Freerudraksha />} /> */}
 
           {/* <Route path="/happy-diwali" element={<Happy_Diwali />} /> */}
@@ -61,8 +66,7 @@ const App: React.FC = () => {
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/example-component" element={<ExampleComponent />} />
           <Route path="/user-profile-model" element={<UserProfileModel />} />
-          <Route path="/30NoV24Vanabhojanam"  element={<PresentationViewer/>}/>
-          
+          <Route path="/30NoV24Vanabhojanam" element={<PresentationViewer />} />
         </Routes>
       </div>
     </Router>
