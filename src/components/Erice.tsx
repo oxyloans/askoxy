@@ -395,7 +395,7 @@ const Erice = () => {
         {/* Logo with Icon */}
         <button
           className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-          onClick={handleRedirect}
+          // onClick={handleRedirect}
         >
           <span className="text-white">ASKOXY</span>
           <span className="text-[#ffa800]">.AI</span>
@@ -426,20 +426,23 @@ const Erice = () => {
             className=""
             onClick={() => {
               localStorage.removeItem("userId");
-              navigate("/login");
+              navigate("/whatapplogin");
             }}
           >
             SignOut
           </button>
+
+
+          
         </div>
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
           <AuthorInfo
             name={`${profileData?.firstName || ""} ${
               profileData?.lastName || ""
-            }`.trim()} // Combines first and last name, falls back to empty string if either is undefined
-            location={profileData?.city || "Unknown"} // Falls back to 'Unknown' if city is null or undefined
-            email={profileData?.email || "No email available"} // Falls back to a default if email is not provided
-            icon={<FaUserCircle />}// Optional, falls back to placeholder image
+            }`.trim()}
+            location={profileData?.city || ""}
+            email={profileData?.email || ""}
+            icon={<FaUserCircle />}
           />
         </div>
       </header>

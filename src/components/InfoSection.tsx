@@ -141,6 +141,35 @@ const InfoSection: React.FC = () => {
             →
           </button>
         </div>
+
+        {/* <div className="carousel-container">
+          <button
+            className="carousel-button prev-button"
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+          >
+            ←
+          </button>
+          <div className="carousel-wrapper">
+            <div
+              className="carousel-images-wrapper"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+              {images.map((image, idx) => (
+                <div key={idx} className="carousel-image-item">
+                  <img src={image.src} alt={image.alt} className="carousel" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <button
+            className="carousel-button next-button"
+            onClick={handleNext}
+            disabled={currentIndex === images.length - 1}
+          >
+            →
+          </button>
+        </div> */}
       </div>
 
       {/* Search Section */}
@@ -165,7 +194,7 @@ const InfoSection: React.FC = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     // Trigger redirection when Enter is pressed
-                    window.location.href = `/normal?${query}`;
+                    window.location.href = `/dashboard?${query}`;
                   }
                 }}
               />
@@ -173,7 +202,7 @@ const InfoSection: React.FC = () => {
                 className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full hover:bg-blue-600"
                 onClick={() => {
                   // Trigger redirection when the button is clicked
-                  window.location.href = `/normal?${query}`;
+                  window.location.href = `/dashboard?${query}`;
                 }}
               >
                 <FaSearch />
@@ -217,6 +246,90 @@ const InfoSection: React.FC = () => {
                 top: 30px;
             }
         }/* General Container */
+
+// /* Carousel Container */
+// .carousel-container {
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   position: relative;
+//   overflow: hidden;
+//   width: 100%;
+//   max-width: 600px; /* Or any width you want for the carousel */
+//   padding: 0 20px; /* Adds space on the sides */
+// }
+
+// /* Carousel Wrapper */
+// .carousel-wrapper {
+//   width: 100%;
+//   overflow: hidden;
+// }
+
+// /* Images Wrapper */
+// .carousel-images-wrapper {
+//   display: flex;
+//   transition: transform 0.5s ease; /* Smooth transition */
+// }
+
+// /* Individual Carousel Item */
+// .carousel-image-item {
+//   min-width: calc(100% - 20px); /* Adjust for spacing between images */
+//   display: flex;
+//   justify-content: center;
+//   margin-right: 20px; /* Add space between images */
+// }
+
+// /* Image Styling */
+// .carousel {
+//   width: 100%;
+//   height: auto;
+//   object-fit: cover;
+// }
+
+// /* Carousel Buttons */
+// .carousel-button {
+//   background-color: rgba(0, 0, 0, 0.5);
+//   color: white;
+//   font-size: 2rem;
+//   padding: 0.5rem;
+//   position: absolute;
+//   top: 50%;
+//   transform: translateY(-50%);
+//   border: none;
+//   cursor: pointer;
+//   z-index: 10;
+//   border-radius: 50%;
+// }
+
+// .prev-button {
+//   left: 10px;
+// }
+
+// .next-button {
+//   right: 10px;
+// }
+
+// /* Disable buttons when at the ends */
+// .carousel-button:disabled {
+//   background-color: rgba(0, 0, 0, 0.2);
+//   cursor: not-allowed;
+// }
+
+// /* Optional: Add responsiveness for smaller screens */
+// @media (max-width: 768px) {
+//   .carousel-container {
+//     max-width: 100%;
+//   }
+
+//   .carousel-button {
+//     font-size: 1.5rem;
+//   }
+// }
+
+
+
+
+
 .carousel-container {
   display: flex;
   justify-content: center;

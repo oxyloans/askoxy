@@ -54,63 +54,76 @@ interface ImageData {
   alt: string;
   text: string;
   link: string;
+  
 }
 
 // Images and their metadata with page links
 const images: ImageData[] = [
-  { src: HM1, alt: "Image 1", text: "Order Rice Online", link: "/Erice" },
+  {
+    src: HM1,
+    alt: "Order Rice Online",
+    text: "Order Rice Online",
+    link: "/erice",
+  },
   {
     src: HM2,
-    alt: "Image 2",
+    alt: "Groceries",
     text: "Groceries",
     link: "https://chatgpt.com/g/g-oca8vFV4R-grocery-gpt",
   },
   {
     src: HM3,
-    alt: "Image 3",
+    alt: "Tickets",
     text: "Tickets",
     link: "https://chatgpt.com/g/g-zWr0ULYQ3-legaladviseai-gpt",
   },
   {
     src: HM4,
-    alt: "Image 4",
+    alt: "Transportation",
     text: "Transportation",
     link: "https://chatgpt.com/g/g-0HtZUgSav-transportai-gpt",
   },
   {
     src: HM5,
-    alt: "Image 5",
+    alt: "Global Education",
     text: "Global Education",
     link: "https://chatgpt.com/g/g-HfWFTK9qV-study-abroad-buddy",
   },
-  { src: HM6, alt: "Image 6", text: "Food & Beverage", link: "/Normal" },
+  {
+    src: HM6,
+    alt: "Image 6",
+    text: "Food & Beverage",
+    link: "/dashboard",
+  },
   {
     src: HM7,
-    alt: "Image 7",
+    alt: "Games",
     text: "Games",
     link: "https://chatgpt.com/g/g-WhoEAgQHk-gamemasterai-gpt",
   },
-  { src: HM8, 
-    alt: "Image 8",
+  {
+    src: HM8,
+    alt: "Legal Services",
     text: "Legal Services",
-    link: "https://chatgpt.com/g/g-zWr0ULYQ3-legaladviseai-gpt" },
+    link: "https://chatgpt.com/g/g-zWr0ULYQ3-legaladviseai-gpt",
+  },
   {
     src: HM9,
-    alt: "Image 9",
+    alt: "Pets",
     text: "Pets",
     link: "https://chatgpt.com/g/g-SkIhRjqxp-petcareai-gp",
   },
   {
     src: HM10,
-    alt: "Image 10",
+    alt: "Event Management Services",
     text: "Event Management Services",
-    link: "/Normal",
+    link: "/dashboard",
   },
   {
     src: HM11,
     alt: "Image 11",
     text: "Influencer Marketing Services",
-    link: "/Normal",
+    link: "/dashboard",
   },
   {
     src: HM12,
@@ -120,158 +133,158 @@ const images: ImageData[] = [
   },
   {
     src: HM13,
-    alt: "Image 13",
+    alt: "Financial Advisory",
     text: "Financial Advisory",
     link: "https://chatgpt.com/g/g-1tjwJY59f-finadviseai-gpt",
   },
   {
     src: HM14,
-    alt: "Image 14",
+    alt: "Loan Servies",
     text: "Loan Servies",
     link: "https://chatgpt.com/g/g-8FZ5veZAp-loainsgpt",
   },
   {
     src: HM15,
-    alt: "Image 15",
+    alt: "Health and Wellness Services",
     text: "Health and Wellness Services",
-    link: "/Normal",
+    link: "/dashboard",
   },
 
   {
     src: HM17,
-    alt: "Image 17",
+    alt: "Advertising Services",
     text: "Advertising Services",
     link: "https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt",
   },
   {
     src: HM18,
-    alt: "Image 18",
+    alt: "Marketing Services",
     text: "Marketing Services",
     link: "https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt",
   },
 
   {
     src: HM21,
-    alt: "Image 21",
+    alt: "Consulting Services",
     text: "Consulting Services",
     link: "https://chatgpt.com/g/g-dKS0DGZaO-businessadviseai-gpt",
   },
 
   {
     src: HM23,
-    alt: "Image 23",
+    alt: "Freelance Services",
     text: "Freelance Services",
     link: "https://chatgpt.com/g/g-UqWRcL56H-freelancerai-gpt",
   },
   {
     src: HM24,
-    alt: "Image 24",
+    alt: "CA Services",
     text: "CA Services",
     link: "https://chatgpt.com/g/g-hmAPGBqYY-caassistai-gpt",
   },
   {
     src: HM25,
-    alt: "Image 25",
+    alt: "Whole Sale Services",
     text: "Whole Sale Services",
     link: "https://chatgpt.com/g/g-Il6kqNW6F-wholesaleaingpt",
   },
   {
     src: HM26,
-    alt: "Image 26",
+    alt: "Education (Domestic and Global)",
     text: "Education (Domestic and Global)",
     link: "https://chatgpt.com/g/g-YowIvLCKJ-eduai-gpt",
   },
 
   {
     src: HM27,
-    alt: "Image 27",
+    alt: "Beauty GPT",
     text: "Beauty GPT",
     link: "https://chatgpt.com/g/g-atKXBmoVR-glamai-gpt",
   },
   {
     src: HM28,
-    alt: "Image 28",
+    alt: "Professional Services GPT",
     text: "Professional Services GPT",
     link: "https://chatgpt.com/g/g-zcSFmhyDq-proserveai-gpt",
   },
   {
     src: HM20,
-    alt: "Image 26",
+    alt: "Creative Services GPT",
     text: "Creative Services GPT",
     link: "https://chatgpt.com/g/g-ycPInHA9E-artassistai-gpt",
   },
   {
     src: HM29,
-    alt: "Image 29",
+    alt: "Advertising services GPT",
     text: "Advertising services GPT",
     link: "https://chatgpt.com/g/g-1NeeKkOv7-advertising-services-gpt",
   },
   {
     src: HM30,
-    alt: "Image 30",
+    alt: "Marketing Services GPT",
     text: "Marketing Services GPT",
     link: "https://chatgpt.com/g/g-3HZ8yLPdZ-campaignai-gpt",
   },
   {
     src: HM31,
-    alt: "Image 31",
+    alt: "Management Services GPT",
     text: "Management Services GPT",
     link: "https://chatgpt.com/g/g-gkFpZWjhf-eventmanageai-gpt",
   },
 
   {
     src: HM32,
-    alt: "Image 32",
+    alt: "Home Service GPT",
     text: "Home Service GPT",
     link: "https://chatgpt.com/g/g-gYP7A9DGj-servaihome-gpt",
   },
   {
     src: HM33,
-    alt: "Image 33",
+    alt: "Automotive Services GPT",
     text: "Automotive Services GPT",
     link: "https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt",
   },
   {
     src: HM34,
-    alt: "Image 34",
+    alt: "Real Estate Services GPT",
     text: "Real Estate Services GPT",
     link: "https://chatgpt.com/g/g-PczKU2om8-realestateai-gpt",
   },
   {
     src: HM35,
-    alt: "Image 35",
+    alt: "Technical Services GPT",
     text: "Technical Services GPT",
     link: "https://chatgpt.com/g/g-Buk4VV0Ng-techservai-gpt",
   },
 
   {
     src: HM36,
-    alt: "Image 36",
+    alt: "Streetwear GPT",
     text: "Streetwear GPT",
     link: "https://chatgpt.com/g/g-rdKd46utz-streetweartrendai-gpt",
   },
 
   {
     src: HM37,
-    alt: "Image 37",
+    alt: "Travel Planner AI",
     text: "Travel Planner AI",
     link: "https://chatgpt.com/g/g-96zscm6Ar-globetrottergpt",
   },
   {
     src: HM38,
-    alt: "Image 38",
+    alt: "InsurAI GPT",
     text: "InsurAI GPT",
     link: "https://chatgpt.com/g/g-JlPzVtjFK-insurai-gpt",
   },
   {
     src: HM39,
-    alt: "Image 39",
+    alt: "Influencers GPT",
     text: "Influencers GPT",
     link: "https://chatgpt.com/g/g-ttxew4llb-influencehub-gpt",
   },
   {
     src: HM40,
-    alt: "Image 40",
+    alt: "Shopping GPT",
     text: "Shopping GPT",
     link: "https://chatgpt.com/g/g-kCDP2g5yE-shopsmartai-gpt",
   },
@@ -285,46 +298,6 @@ const shuffleImages = (images: ImageData[]): ImageData[] => {
     [shuffledImages[i], shuffledImages[j]] = [
       shuffledImages[j],
       shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-      shuffledImages[i],
-      shuffledImages[j],
-
     ];
   }
   return shuffledImages;
@@ -394,7 +367,7 @@ const HeroSection: React.FC = () => {
       } else {
         // Navigate or show another action for logged-in users if needed
         // alert(`User ID is: ${userId}`);
-        window.open(image.link, "_self");
+        window.open(image.link, "_blank");
       }
     } else {
       // Navigate to the link if it's not an "https" link
@@ -448,15 +421,14 @@ const HeroSection: React.FC = () => {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       // Trigger redirection when Enter is pressed
-                      window.location.href = `/normal?${query}`;
+                      window.location.href = `/dashboard?${query}`;
                     }
                   }}
                 />
                 <button
                   className="search-button"
                   onClick={() => {
-                    // Trigger redirection when the button is clicked
-                    window.location.href = `/normal?${query}`;
+                    window.location.href = `/dashboard?${query}`;
                   }}
                 >
                   <span className="search-icon icons">&#128269;</span>{" "}
@@ -482,7 +454,9 @@ const HeroSection: React.FC = () => {
               {imageGroup1.map((image, index) => (
                 <div className="image-item" key={index}>
                   <div onClick={() => handleImageClick(image)}>
-                    <img src={image.src} alt={image.alt} />
+                    
+                      <img src={image.src} alt={image.alt} />
+                 
                     <div className="image-text">{image.text}</div>
                   </div>
                 </div>
@@ -555,7 +529,9 @@ const HeroSection: React.FC = () => {
               {imageGroup2.map((image, index) => (
                 <div className="image-item" key={index}>
                   <div onClick={() => handleImageClick(image)}>
-                    <img src={image.src} alt={image.alt} />
+                  
+                      <img src={image.src} alt={image.alt} />
+                    
                     <div className="image-text">{image.text}</div>
                   </div>
                 </div>
@@ -568,7 +544,9 @@ const HeroSection: React.FC = () => {
               {imageGroup3.map((image, index) => (
                 <div className="image-item" key={index}>
                   <div onClick={() => handleImageClick(image)}>
-                    <img src={image.src} alt={image.alt} />
+                    
+                      <img src={image.src} alt={image.alt} />
+                   
                     <div className="image-text">{image.text}</div>
                   </div>
                 </div>

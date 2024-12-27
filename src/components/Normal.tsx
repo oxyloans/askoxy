@@ -112,11 +112,8 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
-
-    // setShowLeftPanel(false);
-    // setShowVanabhojanam(false);
-    // setShowPushpa2Gpt(false);
   };
+
   const handleStudyAbroadClick = () => {
     setShowStudyAbroad(true);
     setShowFreerudraksha(false);
@@ -212,6 +209,7 @@ const Normal = () => {
         console.error("There was an error making the request:", error);
       });
   }, []);
+
   useEffect(() => {
     const fetchChatHistory = async () => {
       const userId = localStorage.getItem("userId");
@@ -533,6 +531,8 @@ const Normal = () => {
     setShowStudyAbroad(false); // Reset to main chat interface
     setShowFreeSample(false);
     setShowFreeaiandgenai(false);
+    setShowMachinesManufacturing(false);
+    setShowMyRotaryService(false);
     // setShowVanabhojanam(false)
     // setShowPushpa2Gpt(false)
     // setShowLeftPanel(true);        // Show the left panel again
@@ -541,8 +541,6 @@ const Normal = () => {
       setShowSendButton(false); // Hide the send button
     }
   };
-
-  // Handle history item click
   const handleHistoryItemClick = (historyItem: string) => {
     setInput(historyItem); // Set input to the history item
     setShowSendButton(true); // Show send button
@@ -552,9 +550,21 @@ const Normal = () => {
     }
   };
 
-  // Handle deleting a history item
-  const handleDeleteHistoryItem = (index: number) => {
-    setHistory((prevHistory) => prevHistory.filter((_, i) => i !== index));
+  // Load history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = JSON.parse(
+      localStorage.getItem("chathistory") || "[]"
+    );
+    setChatHistory(savedHistory);
+  }, []);
+
+  // Delete history permanently
+  const handleDeleteHistory = (index: number) => {
+    const updatedHistory = chathistory.filter((_, i) => i !== index);
+    setChatHistory(updatedHistory);
+
+    // Update localStorage
+    localStorage.setItem("chathistory", JSON.stringify(updatedHistory));
   };
 
   const questions = messages.filter((msg) => msg.type === "question");
@@ -578,16 +588,21 @@ const Normal = () => {
     navigate("/"); // Redirect to the login page
   };
 
-  // Function to truncate text to a certain word limit
-  const truncateText = (text: any, maxWords: any) => {
-    const words = text.split(" ");
-    return words.length > maxWords
-      ? words.slice(0, maxWords).join(" ") + "..."
-      : text;
-  };
+  // Utility function to truncate the text to the first 20 words
+  const truncateText = (text: string, wordLimit: number = 20) => {
+    // Ensure the text is not null or undefined
+    if (!text) {
+      return ""; // Return an empty string if no text is provided
+    }
 
+    const words = text.split(" ");
+    if (words.length <= wordLimit) {
+      return text;
+    }
+    return words.slice(0, wordLimit).join(" ") + "..."; // Add ellipsis if the text is truncated
+  };
   return (
-    <div className="min-h-screen bg-[#351664] text-white flex flex-col">
+    <div className="max-h-screen  fixed bg-[#351664] text-white overflow-y-auto  w-full flex flex-col">
       {/* Header */}
       <header className="flex flex-col md:flex-row items-center justify-between p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
@@ -600,7 +615,7 @@ const Normal = () => {
         </button>
 
         {/* Right Section: Profile and SignOut */}
-        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+        <div className="flex flex-col md:flex-row items-center  space-y-2 md:space-y-0 md:space-x-4">
           {/* Profile Info Section (AuthorInfo) */}
 
           {/* SignOut Button */}
@@ -632,12 +647,70 @@ const Normal = () => {
       </header>
 
       {/* <ModalComponent /> */}
-      <main className="flex flex-col flex-grow w-full p-3 md:flex-row">
+      <main className="flex  flex-col flex-grow w-full overflow-y-auto p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
-        <div className="flex flex-col flex-grow bg-white rounded-lg shadow-md lg:flex-row">
+        <div className="flex flex-col  flex-grow bg-white rounded-lg shadow-md lg:flex-row">
           {/* Left Panel */}
           {/* {showLeftPanel && ( */}
-          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col">
+          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between font-bold ">
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className=" rounded-md"
+                title="Edit"
+              >
+                <div className="hover:bg-gray-200 p-2 rounded-full">
+                  {" "}
+                  {/* Add background color here */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5 text-[#351664]"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
+                    />
+                  </svg>
+                </div>
+              </button>
+              <span className="flex-1 text-center text-[#351664] ">
+                History
+              </span>
+              <button
+                onClick={handleNewChatClick}
+                className=" rounded-md"
+                title="New Chat"
+              >
+                <div className="hover:bg-gray-200 p-2 rounded-full">
+                  {" "}
+                  {/* Add background color here */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5 text-[#351664]"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
+            {isEditing && (
+              <p className="text-sm text-[#351664] mb-4 text-center">
+                Editing mode enabled...
+              </p>
+            )}
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleFreerudrakshaClick}
@@ -749,8 +822,7 @@ const Normal = () => {
                     fontSize: "22",
                   }}
                 >
-                  {" "}
-                  Machines and Manufacturing Services
+                  Machines & Manufacturing Services
                 </span>
               </button>
             </div>
@@ -778,91 +850,7 @@ const Normal = () => {
                 </span>
               </button>
             </div>
-
-            {/* <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-            <button
-             onClick={handleVanabhojanamClick}
-              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
-            >
-              <img
-                src={VanabhojanammImage} // Replace with the actual image path
-                alt="Vanabhojanam"
-                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
-              />
-          <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Vanabhojanam</span>
-            </button>
-        </div>  */}
-            {/* <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-            <button
-             onClick={handlepushpa2Gptclick}
-              className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
-            >
-              <img
-                src={Pushpa} // Replace with the actual image path
-                alt="Pushpa"
-                className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
-              />
-          <span style={{fontWeight:'bold', color:'#3c1973',fontSize:'22'}}> Pushpa 2 GPT</span>
-            </button>
-        </div> */}
-            <div className="flex items-center justify-between font-bold mb-4">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="pt-16 rounded-md"
-              >
-                <div className="hover:bg-gray-200 p-2 rounded-full">
-                  {" "}
-                  {/* Add background color here */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-[#351664]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
-                    />
-                  </svg>
-                </div>
-              </button>
-              <span className="flex-1 text-center text-[#351664] pt-16">
-                History
-              </span>
-              <button
-                onClick={handleNewChatClick}
-                className="pt-16 rounded-md"
-                title="New Chat"
-              >
-                <div className="hover:bg-gray-200 p-2 rounded-full">
-                  {" "}
-                  {/* Add background color here */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-[#351664]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
-                </div>
-              </button>
-            </div>
-            {isEditing && (
-              <p className="text-sm text-[#351664] mb-4 text-center">
-                Editing mode enabled...
-              </p>
-            )}
-            <div className="mt-4 overflow-y-auto max-h-80 border-t border-gray-300 pt-4">
+            <div className="mt-4 h-80 border-t border-gray-300 pt-2">
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
                   No history available.
@@ -872,13 +860,37 @@ const Normal = () => {
                   <div
                     key={index}
                     className="flex items-center justify-between p-2 mb-4 bg-gray-200 rounded cursor-pointer"
+                    onClick={() => handleHistoryItemClick(item.userQuations)} // Update input with selected history item
                   >
                     <Link
                       className="text-sm text-gray-800"
                       to={`?${encodeURIComponent(item.userQuations)}`}
                     >
-                      {item.userQuations}
+                      {/* Display a truncated version if necessary */}
+                      {truncateText(item.userQuations, 40)}
                     </Link>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent click event from triggering input update
+                        handleDeleteHistory(index); // Delete the history item
+                      }}
+                      className="text-red-500 hover:text-red-700 ml-2"
+                      title="Delete"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 ))
               )}
@@ -888,7 +900,7 @@ const Normal = () => {
           {/* }) */}
 
           {/* Center Panel */}
-          <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
+          <section className="relative  overflow-y-auto  flex flex-col flex-grow w-full    p-6 md:w-1/2 bg-gray-50">
             {showFreerudraksha ? (
               <Freerudraksha />
             ) : showStudyAbroad ? (
@@ -949,8 +961,8 @@ const Normal = () => {
 
                 {/* Chat messages */}
                 <div
-                  className="relative flex-grow p-2 overflow-y-auto chat-container"
-                  style={{ maxHeight: "calc(100vh - 12rem)" }}
+                  className="relative flex-grow p-4  chat-container"
+                  // style={{ maxHeight: "calc(100vh - 12rem)" }}
                 >
                   <div>
                     {isLoading ? (

@@ -339,7 +339,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
           <span className="text-green-600">
-            <span className="text-[#0a6fba]">Oxy</span> Group
+            <span className="text-[#0a6fba]">Oxy</span>  sGroup
           </span>{" "}
           <span className="text-[#FFA500]">Companies</span>
         </h1>

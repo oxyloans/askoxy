@@ -209,16 +209,13 @@
 
 // export default Whatapplogin;
 
-
-
-
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import './Whatsapp.css';
-import {Link} from 'react-router-dom'
+import "./Whatsapp.css";
+import { Link } from "react-router-dom";
 const Whatapplogin: React.FC = () => {
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
@@ -240,7 +237,7 @@ const Whatapplogin: React.FC = () => {
     setCredentials({ otp: newOtp });
 
     if (value && index < otpRefs.current.length - 1) {
-      otpRefs.current[index + 1]?.focus(); 
+      otpRefs.current[index + 1]?.focus();
     }
   };
 
@@ -253,7 +250,7 @@ const Whatapplogin: React.FC = () => {
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
       setError("Please Enter a valid WhatsApp Number with Country code.");
       return;
-    }  
+    }
     localStorage.setItem("whatsappNumber", phoneNumber);
 
     try {
@@ -266,28 +263,27 @@ const Whatapplogin: React.FC = () => {
       );
       setIsButtonEnabled(true);
       if (response.data) {
-        localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession);
+        localStorage.setItem(
+          "mobileOtpSession",
+          response.data.mobileOtpSession
+        );
         localStorage.setItem("salt", response.data.salt);
-    
+
         if (response.data.userId !== null) {
-          setShowSuccessPopup(true)
+          setShowSuccessPopup(true);
           localStorage.setItem("userId", response.data.userId);
 
           setMessage("Login Successful!");
-         setTimeout(()=> navigate("/normal"),2000)
+          setTimeout(() => navigate("/dashboard"), 2000);
         } else {
           setOtpShow(true);
           setShowSuccessPopup(true);
-          setMessage("OTP sent successfully to your WhatsApp number.")
-          setTimeout(()=>
-          {
-          setShowSuccessPopup(false)
-          setMessage("")
-          }
-          ,2000)
+          setMessage("OTP sent successfully to your WhatsApp number.");
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            setMessage("");
+          }, 2000);
         }
-        
-        
       } else {
         setError("Failed to send OTP. Please try again.");
       }
@@ -302,9 +298,9 @@ const Whatapplogin: React.FC = () => {
     setOtpError("");
     setMessage("");
 
-    if(credentials.otp.join("").length!=4){
-      setOtpError("Please Enter the OTP")
-      return 
+    if (credentials.otp.join("").length != 4) {
+      setOtpError("Please Enter the OTP");
+      return;
     }
 
     try {
@@ -322,8 +318,9 @@ const Whatapplogin: React.FC = () => {
       if (response.data) {
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
-      
+
         setMessage("Registration SuccessFull");
+        setTimeout(() => navigate("/whatsapplogin"), 500);
         setTimeout(() => window.location.reload(), 1000);
       } else {
         setOtpError("Invalid OTP. Please try again.");
@@ -357,13 +354,13 @@ const Whatapplogin: React.FC = () => {
           <p>{message}</p>
         </div>
       )}
-  
+
       <div className="form-container">
         <h2 className="login-header">ASKOXY.AI</h2>
         <form onSubmit={showOtp ? handleOtpSubmit : handleSubmit}>
           <div className="form-group">
             <label>
-              WhatsApp Number <span style={{ color: 'red' }}>*</span>
+              WhatsApp Number <span style={{ color: "red" }}>*</span>
             </label>
             <div className="phoneinputfield">
               <PhoneInput
@@ -380,7 +377,7 @@ const Whatapplogin: React.FC = () => {
             </div>
             {error && <span className="error-message">{error}</span>}
           </div>
-  
+
           {showOtp && (
             <div className="form-group">
               <label htmlFor="otp">Enter OTP</label>
@@ -391,7 +388,7 @@ const Whatapplogin: React.FC = () => {
                     type="text"
                     maxLength={1}
                     value={digit}
-                    ref={(el) => (otpRefs.current[index] = el!)} 
+                    ref={(el) => (otpRefs.current[index] = el!)}
                     onChange={(e) => handleOtpChange(e.target.value, index)}
                     onFocus={(e) => e.target.select()}
                     className="otp-circle"
@@ -401,15 +398,15 @@ const Whatapplogin: React.FC = () => {
               {otpError && <span className="error-message">{otpError}</span>}
             </div>
           )}
-  
+
           {message && !showSuccessPopup && (
             <span className="success-message">{message}</span>
           )}
-  
+
           <button type="submit" className="button">
             {otpSession ? "Submit OTP" : "Submit"}
           </button>
-  
+
           {isButtonEnabled && (
             <button
               type="button"
@@ -430,7 +427,6 @@ const Whatapplogin: React.FC = () => {
       </div>
     </div>
   );
-  
 };
 
 export default Whatapplogin;
