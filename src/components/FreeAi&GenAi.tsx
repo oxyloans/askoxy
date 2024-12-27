@@ -9,12 +9,14 @@ import {
   FaPlane,
   FaBook,
 } from "react-icons/fa"; // Import icons
-
+import { FaSquareWhatsapp } from "react-icons/fa6";
 import TeluguShiva from "../assets/img/telugu.png";
 import EnglishShiva from "../assets/img/english.png";
 import Image1 from "../assets/img/WEBSITE.png";
 import Image3 from "../assets/img/R33.jpg";
 import Image2 from "../assets/img/R2.png";
+import Image5 from "../assets/img/images.png";
+import Image4 from "../assets/img/chat-icon-2048x2048-i7er18st.png";
 import Footer from "./Footer";
 import { Modal, Button, Input, message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -78,6 +80,8 @@ const FreeAiandGenAi: React.FC = () => {
     useState(false);
   const [savedAddress, setSavedAddress] = useState<string>("");
   const [delivery, setDelivery] = useState<string>("");
+    const [query, setQuery] = useState("");
+  const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
   const userId = localStorage.getItem("userId");
   console.log(userId);
@@ -143,7 +147,31 @@ const FreeAiandGenAi: React.FC = () => {
       message.error("Failed to submit your interest. Please try again.");
     }
   };
-
+  
+   const handleSend = () => {
+     if (query.trim()) {
+       // Handle sending the query
+       console.log("User Query:", query);
+       setIsModalOpen(false);
+       setQuery("");
+       alert("Your query has been sent successfully!");
+     } else {
+       alert("Please write a query before submitting.");
+     }
+   };
+   const handleMessage = (action: string) => {
+     if (action === "Write to Us") {
+       console.log("Navigating to 'Write to Us' feature...");
+       window.location.href = "/contact-form";
+     } else if (action === "Chat with Us") {
+       const phoneNumber = "7093485208"; // Replace with your WhatsApp number
+       const message = "Hello, I am interested in your services."; // Replace with your message
+       const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+         message
+       )}`;
+       window.open(url, "_blank");
+     }
+   };
   return (
     <div>
       <div className="bg-gray-100">
@@ -228,6 +256,71 @@ const FreeAiandGenAi: React.FC = () => {
           </button>
           <br></br>
         </div>
+        <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
+          {/* Write to Us Button */}
+          <button
+            onClick={() => setIsModalOpen1(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
+          >
+            <img
+              src={Image5} // Replace with your icon path or fallback
+              alt="Write to Us"
+              className="w-6 h-6 mr-2"
+            />
+            <span className="font-medium text-sm md:text-base">
+              Write to Us
+            </span>
+          </button>
+
+          {/* Modal */}
+          {isModalOpen1 && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+                {/* Modal content */}
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                  Write to Us
+                </h2>
+                <textarea
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full border text-black border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Write your query here..."
+                />
+                <div className="mt-4 flex justify-end space-x-4">
+                  <button
+                    onClick={() => setIsModalOpen1(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSend}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Chat with Us Button */}
+          <button
+            onClick={() => handleMessage("Chat with Us")}
+            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
+          >
+            {/* <img
+                      src={Image4 || "/default-icon.png"} // Replace with your fallback icon path if needed
+                      alt="Chat with Us"
+                      className="w-6 h-6 mr-2"
+                    /> */}
+            <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />{" "}
+            {/* Adjust size and spacing */}
+            <span className="font-medium text-sm md:text-base">
+              Chat with Us
+            </span>
+          </button>
+        </div>
         <h1 className="text-gray-100">{"hello "}</h1>s
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -274,7 +367,7 @@ const FreeAiandGenAi: React.FC = () => {
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
           <span className="text-green-600">
-            <span className="text-[#0a6fba]">Oxy</span>  Group
+            <span className="text-[#0a6fba]">Oxy</span> Group
           </span>{" "}
           <span className="text-[#FFA500]">Companies</span>
         </h1>

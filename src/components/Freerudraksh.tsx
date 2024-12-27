@@ -10,8 +10,10 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 
 import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
-import Image1 from '../assets/img/WEBSITE.png'
+import Image1 from '../assets/img/WEBSITE (1).png'
 import Image2 from '../assets/img/R2.png'
+import Image3 from '../assets/img/images.png'
+import Image4 from '../assets/img/chat-icon-2048x2048-i7er18st.png'
 import Footer from "./Footer";
 import { Modal, Button, Input,message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,6 +25,7 @@ import img3 from "../assets/img/image3.png";
 import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
+import { FaSquareWhatsapp } from "react-icons/fa6";
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -50,25 +53,15 @@ const Freerudraksha: React.FC = () => {
     }
   };
 
-  const goToPrevious = () => {
-    const isFirstImage = currentIndex === 0;
-    const newIndex = isFirstImage ? images.length - 1 : currentIndex - 1;
-    setCurrentIndex(newIndex);
-  };
-
-  const goToNext = () => {
-    const isLastImage = currentIndex === images.length - 1;
-    const newIndex = isLastImage ? 0 : currentIndex + 1;
-    setCurrentIndex(newIndex);
-  }; 
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [address, setAddress] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  
   const [modalType, setModalType] = useState<string>("");
   const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
+
   const storedPhoneNumber = localStorage.getItem("whatsappNumber");
   // Fetch user ID from storage if needed.
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
@@ -77,7 +70,8 @@ const Freerudraksha: React.FC = () => {
   const [savedAddress, setSavedAddress] = useState<string>('');
   const [delivery, setDelivery] = useState<string>('');
 
-
+  const [query, setQuery] = useState("");
+const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const userId = localStorage.getItem("userId");
   console.log(userId)
   const handleWhatsappClick = () => {
@@ -90,6 +84,34 @@ const Freerudraksha: React.FC = () => {
     }
   };
 
+
+
+   const handleSend = () => {
+     if (query.trim()) {
+       // Handle sending the query
+       console.log("User Query:", query);
+       setIsModalOpen(false);
+       setQuery("");
+       alert("Your query has been sent successfully!");
+     } else {
+       alert("Please write a query before submitting.");
+     }
+   };
+  const whatsappNumber = "9160463697";
+
+   const handleMessage = (action: string) => {
+     if (action === "Write to Us") {
+       console.log("Navigating to 'Write to Us' feature...");
+      //  window.location.href = "/contact-form";
+     } else if (action === "Chat with Us") {
+       console.log("Opening WhatsApp chat...");
+      const message = `Hi`;
+      const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        message
+      )}`;
+      window.open(url, "_blank");
+     }
+   };
 
   const officeDetails = {
     address: "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
@@ -243,41 +265,53 @@ const Freerudraksha: React.FC = () => {
   return (
     <div>
       <header className="header text-center">
-        <h1 style={{ color: "rgba(91, 5, 200, 0.85)" }}><strong>
-        The Two Worlds</strong></h1>
+        <h1 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
+          <strong>The Two Worlds</strong>
+        </h1>
       </header>
 
       {/* Main Content */}
       <div className="worlds flex justify-center mt-8">
-  <section className="spiritual-world text-center mx-4">
-    <h2 id="h2" style={{ fontWeight: 'bold' }}>Spiritual World</h2>
-    <img src={Image1} alt="Spiritual World" className="world-image" />
-  </section>
-  <section className="ai-world text-center mx-4">
-    <h2 id="h2" style={{ fontWeight: 'bold' }}>AI & Generative AI World</h2>
-    <img src={Image2} alt="AI & Generative AI World" className="world-image" />
-  </section>
-</div>
-
+        <section className="spiritual-world text-center mx-4">
+          <h2 id="h2" style={{ fontWeight: "bold" }}>
+            Spiritual World
+          </h2>
+          <img src={Image1} alt="Spiritual World" className="world-image" />
+        </section>
+        <section className="ai-world text-center mx-4">
+          <h2 id="h2" style={{ fontWeight: "bold" }}>
+            AI & Generative AI World
+          </h2>
+          <img
+            src={Image2}
+            alt="AI & Generative AI World"
+            className="world-image"
+          />
+        </section>
+      </div>
 
       {/* Details Section */}
       <div className="details">
-  
-  <strong>The One Lakh Rudraksharchana on 19th November was a grand success! 🌟 Click on “I Want Free Rudraksha” now to receive the sacred Rudrakshas used in the Archana. They will be delivered to your doorstep at no cost. Inspired by this success, we aspire to host 99 more Rudraksharchana events to fulfill our vision of One Crore Rudraksharchanas! Join us on this divine journey. 🙏</strong>
+        <strong>
+          The One Lakh Rudraksharchana on 19th November was a grand success! 🌟
+          Click on “I Want Free Rudraksha” now to receive the sacred Rudrakshas
+          used in the Archana. They will be delivered to your doorstep at no
+          cost. Inspired by this success, we aspire to host 99 more
+          Rudraksharchana events to fulfill our vision of One Crore
+          Rudraksharchanas! Join us on this divine journey. 🙏
+        </strong>
+      </div>
 
-
-
-
-
-  
-  
-  
-</div>
-
-<div className="details">
-<strong>నవంబర్ 19న నిర్వహించిన లక్ష రుద్రాక్షార్చన ఘన విజయాన్ని సాధించింది!🌟  </strong> ఆర్చనలో ఉపయోగించిన పవిత్ర రుద్రాక్షలను పొందడానికి ఇప్పుడు "I want Free Rudraksha" పై క్లిక్ చేయండి. అవి మీ ఇంటి వద్దకు ఉచితంగా పంపబడతాయి. ఈ విజయంతో ప్రేరణ పొందిన మేము, మా లక్ష్యం అయిన కోటి రుద్రాక్షార్చనల సాధన కోసం మరో 99 రుద్రాక్షార్చన కార్యక్రమాలను నిర్వహించేందుకు సంకల్పించాము! ఈ దివ్య ప్రయాణంలో భాగస్వామ్యం అవ్వండి. 🙏
-</div>
-
+      <div className="details">
+        <strong>
+          నవంబర్ 19న నిర్వహించిన లక్ష రుద్రాక్షార్చన ఘన విజయాన్ని సాధించింది!🌟{" "}
+        </strong>{" "}
+        ఆర్చనలో ఉపయోగించిన పవిత్ర రుద్రాక్షలను పొందడానికి ఇప్పుడు "I want Free
+        Rudraksha" పై క్లిక్ చేయండి. అవి మీ ఇంటి వద్దకు ఉచితంగా పంపబడతాయి. ఈ
+        విజయంతో ప్రేరణ పొందిన మేము, మా లక్ష్యం అయిన కోటి రుద్రాక్షార్చనల సాధన
+        కోసం మరో 99 రుద్రాక్షార్చన కార్యక్రమాలను నిర్వహించేందుకు సంకల్పించాము! ఈ
+        దివ్య ప్రయాణంలో భాగస్వామ్యం అవ్వండి. 🙏
+      </div>
 
       {/* Button Section */}
       <div className="flex justify-center mt-8">
@@ -289,180 +323,252 @@ const Freerudraksha: React.FC = () => {
           I Want Free Rudraksha
         </button>
       </div>
+      <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
+        {/* Write to Us Button */}
+        <button
+          onClick={() => setIsModalOpen1(true)}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
+        >
+          <img
+            src={Image3} // Replace with your icon path or fallback
+            alt="Write to Us"
+            className="w-6 h-6 mr-2"
+          />
+          <span className="font-medium text-sm md:text-base">Write to Us</span>
+        </button>
 
+        {/* Modal */}
+        {isModalOpen1 && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+              
+
+              {/* Modal content */}
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Write to Us
+              </h2>
+              <textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full border text-black border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Write your query here..."
+              />
+              <div className="mt-4 flex justify-end space-x-4">
+                <button
+                  onClick={() => setIsModalOpen1(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSend}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Chat with Us Button */}
+        <button
+          onClick={() => handleMessage("Chat with Us")}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
+        >
+          {/* <img
+            src={Image4 || "/default-icon.png"} // Replace with your fallback icon path if needed
+            alt="Chat with Us"
+            className="w-6 h-6 mr-2"
+          /> */}
+          <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />{" "}
+          {/* Adjust size and spacing */}
+          <span className="font-medium text-sm md:text-base">Chat with Us</span>
+        </button>
+      </div>
 
       {/* Modals */}
       <Modal
-  title=""
-  visible={isModalOpen}
-  onCancel={() => setIsModalOpen(false)} // Close the modal
-  footer={null} // Custom footer
-  className="modal-responsive"
->
-  {/* Step 1: Confirm WhatsApp Number */}
-{modalType === "confirmation" && (
-    <>
-      <p className="text-lg text-center text-black mb-4">
-        Please confirm your WhatsApp number:
-        <span className="font-bold block mt-2">{phoneNumber}</span>
-      </p>
-      <div className="flex gap-4 justify-center">
-        <Button
-          type="primary"
-          onClick={handleConfirmPhone}
-          className="w-full sm:w-auto"
-        >
-          Yes
-        </Button>
-        <Button
-          danger
-          onClick={() => setIsModalOpen(false)}
-          className="w-full sm:w-auto"
-        >
-          No
-        </Button>
-      </div>
-    </>
-  )}
-
-  {modalType === "addressEntry" && (
-    <>
-      <p className="text-lg text-center text-black mb-4">
-        Please enter your address below:
-      </p>
-      <Input
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Enter your address"
-        className="w-full mb-4"
-      />
-      <Button
-        type="primary"
-        block
-        className="mt-4"
-        onClick={saveAddress}
-        loading={isLoading} // Spinner while saving
+        title=""
+        visible={isModalOpen}
+        onCancel={() => setIsModalOpen(false)} // Close the modal
+        footer={null} // Custom footer
+        className="modal-responsive"
       >
-        Save Address
-      </Button>
-    </>
-  )}
+        {/* Step 1: Confirm WhatsApp Number */}
+        {modalType === "confirmation" && (
+          <>
+            <p className="text-lg text-center text-black mb-4">
+              Please confirm your WhatsApp number:
+              <span className="font-bold block mt-2">{phoneNumber}</span>
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button
+                type="primary"
+                onClick={handleConfirmPhone}
+                className="w-full sm:w-auto"
+              >
+                Yes
+              </Button>
+              <Button
+                danger
+                onClick={() => setIsModalOpen(false)}
+                className="w-full sm:w-auto"
+              >
+                No
+              </Button>
+            </div>
+          </>
+        )}
 
-  {/* Step 3: Confirm Saved Address */}
-  {modalType === "success" && (
-    <>
-      {isLoading ? (
-        <p className="text-center">Loading address...</p>
-      ) : (
-        <>
-          <p className="text-lg text-center text-black mb-4">
-            Your saved address is:
-            <span className="font-bold block mt-2">{savedAddress}</span>
-          </p>
-          {/* <p className="text-lg text-center text-black mb-4">
+        {modalType === "addressEntry" && (
+          <>
+            <p className="text-lg text-center text-black mb-4">
+              Please enter your address below:
+            </p>
+            <Input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter your address"
+              className="w-full mb-4"
+            />
+            <Button
+              type="primary"
+              block
+              className="mt-4"
+              onClick={saveAddress}
+              loading={isLoading} // Spinner while saving
+            >
+              Save Address
+            </Button>
+          </>
+        )}
+
+        {/* Step 3: Confirm Saved Address */}
+        {modalType === "success" && (
+          <>
+            {isLoading ? (
+              <p className="text-center">Loading address...</p>
+            ) : (
+              <>
+                <p className="text-lg text-center text-black mb-4">
+                  Your saved address is:
+                  <span className="font-bold block mt-2">{savedAddress}</span>
+                </p>
+                {/* <p className="text-lg text-center text-black mb-4">
             Your choose delivery option:
             <span className="font-bold block mt-2">{delivery}</span>
           </p> */}
-          <div className="flex gap-4 justify-center">
-            <Button
-              type="primary"
-              onClick={() => {
-                handleConfirmAddress(); // Confirm address
-                setIsPopupVisible(true); // Open the delivery method modal immediately
-              }}
-              className="w-full sm:w-auto"
-            >
-              Confirm
-            </Button>
-            <Button
-              danger
-              onClick={() => setModalType("addressEntry")}
-              className="w-full sm:w-auto"
-            >
-              Edit Address
-            </Button>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      handleConfirmAddress(); // Confirm address
+                      setIsPopupVisible(true); // Open the delivery method modal immediately
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    danger
+                    onClick={() => setModalType("addressEntry")}
+                    className="w-full sm:w-auto"
+                  >
+                    Edit Address
+                  </Button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </Modal>
+
+      {/* Popup Modals */}
+      {isPopupVisible && !isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
+            <p className="text-lg text-center text-black mb-4">
+              Please choose your preferred delivery method:
+            </p>
+            <div className="flex justify-between gap-4">
+              <button
+                className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
+                onClick={() => submitRequest("HomeDelivery")}
+              >
+                Home Delivery
+              </button>
+              <button
+                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
+                onClick={() => handleDeliverySelection("PickInOffice")}
+              >
+                Collect from Office
+              </button>
+            </div>
           </div>
-        </>
+        </div>
       )}
-    </>
-  )}
-</Modal>
 
-{/* Popup Modals */}
-{isPopupVisible && !isLoading && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-      <p className="text-lg text-center text-black mb-4">
-        Please choose your preferred delivery method:
-      </p>
-      <div className="flex justify-between gap-4">
-        <button
-          className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
-          onClick={() => submitRequest("HomeDelivery")}
-        >
-          Home Delivery
-        </button>
-        <button
-          className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-all w-full"
-          onClick={() => handleDeliverySelection("PickInOffice")}
-        >
-          Collect from Office
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      {isOfficeConfirmationVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
+            <p className="text-lg text-center text-black mb-4 font-semibold">
+              Please find our address below:
+            </p>
 
-{isOfficeConfirmationVisible && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div className="bg-white p-6 rounded-lg shadow-md w-11/12 max-w-md">
-      <p className="text-lg text-center text-black mb-4 font-semibold">
-      Please find our address below:  
-      </p>
-    
-      <div className="text-center mb-4">
-     <p className="text-black font-medium">   <strong>Address: </strong>{officeDetails.address}</p><br></br>
-        <p  className="text-black font-medium"><strong>Visit Timings: </strong>{officeDetails.VisitTimings}</p>
-       <a 
-  href={officeDetails.googleMapLink} 
-  target="_blank" 
-  className="text-blue-600 hover:underline"
-  rel="noopener noreferrer"
->
-   View Location on Google Maps
-</a>
+            <div className="text-center mb-4">
+              <p className="text-black font-medium">
+                {" "}
+                <strong>Address: </strong>
+                {officeDetails.address}
+              </p>
+              <br></br>
+              <p className="text-black font-medium">
+                <strong>Visit Timings: </strong>
+                {officeDetails.VisitTimings}
+              </p>
+              <a
+                href={officeDetails.googleMapLink}
+                target="_blank"
+                className="text-blue-600 hover:underline"
+                rel="noopener noreferrer"
+              >
+                View Location on Google Maps
+              </a>
 
-        <p className="text-black mt-2"><strong>Contact: </strong><span className="font-medium">{officeDetails.contact}</span></p>
-      </div>
-      <div className="flex justify-between gap-4">
-        <button
-          className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
-          onClick={() => {
-            setIsOfficeConfirmationVisible(false); // Close confirmation
-            submitRequest("PickInOffice");
-          }}
-        >
-          Confirm and Proceed
-        </button>
-        <button
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all w-full"
-          onClick={() => setIsOfficeConfirmationVisible(false)} // Close confirmation
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <p className="text-black mt-2">
+                <strong>Contact: </strong>
+                <span className="font-medium">{officeDetails.contact}</span>
+              </p>
+            </div>
+            <div className="flex justify-between gap-4">
+              <button
+                className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-all w-full"
+                onClick={() => {
+                  setIsOfficeConfirmationVisible(false); // Close confirmation
+                  submitRequest("PickInOffice");
+                }}
+              >
+                Confirm and Proceed
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all w-full"
+                onClick={() => setIsOfficeConfirmationVisible(false)} // Close confirmation
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-
-<div>
-<h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-  <span className="text-green-600">
-    <span className="text-[#0a6fba]">Oxy</span>  Group
-  </span>{" "}
-  <span className="text-[#FFA500]">Companies</span>
-</h1>
+      <div>
+        <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
+          <span className="text-green-600">
+            <span className="text-[#0a6fba]">Oxy</span> Group
+          </span>{" "}
+          <span className="text-[#FFA500]">Companies</span>
+        </h1>
 
         <div className="event-container1">
           <div className="event-content1">
@@ -544,50 +650,56 @@ const Freerudraksha: React.FC = () => {
           </div>
         </div>
 
-  <div className="event-container1 ">
-  <div
-    className="event-content1 border-2 rounded-lg p-4 md:p-6 lg:p-8"
-    style={{ borderColor: "#05a446" }}
-  >
-    <div className="diwali-images1">
-      <div className="image-container1 flex justify-center">
-        <img
-          src={img6}
-          alt="Diwali Diyas"
-          className="diwali-diya w-full max-w-xs sm:max-w-sm md:max-w-md"
-        />
-      </div>
-    </div>
-    <div className="event-details text-center mt-4">
-      <h1 className="diwali-title1 text-2xl md:text-3xl font-bold" style={{ color: "#05a446" }}>
-        Order . Rice . Online
-      </h1>
-      <h3 className="diwali-subtitle1 font-bold my-4">
-        Free Delivery | All Over Hyderabad
-      </h3>
-      <h3 className="diwali-subtitle1 my-4">
-        All types of rice brands available: Sri Lalitha, Kurnool, RRI, Cow
-        brand, Sree Maateja, Kolam Rice, Surya Teja’s Brand, Gajraj Evergreen,
-        Shubodayam, 5 Star, JSR
-      </h3>
-      <h3 className="diwali-subtitle1 font-bold my-4">
-        Return & Exchange Guarantee | Available Now: Steamed & Raw Rice
-      </h3>
-
-      <div className="buttons mt-6">
-        <a href="https://erice.in/" target="_blank" rel="noopener noreferrer">
-          <button
-            className="button demo text-white px-6 py-3 rounded-lg"
-            style={{ backgroundColor: "#05a446" }}
+        <div className="event-container1 ">
+          <div
+            className="event-content1 border-2 rounded-lg p-4 md:p-6 lg:p-8"
+            style={{ borderColor: "#05a446" }}
           >
-            Order Rice
-          </button>
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
+            <div className="diwali-images1">
+              <div className="image-container1 flex justify-center">
+                <img
+                  src={img6}
+                  alt="Diwali Diyas"
+                  className="diwali-diya w-full max-w-xs sm:max-w-sm md:max-w-md"
+                />
+              </div>
+            </div>
+            <div className="event-details text-center mt-4">
+              <h1
+                className="diwali-title1 text-2xl md:text-3xl font-bold"
+                style={{ color: "#05a446" }}
+              >
+                Order . Rice . Online
+              </h1>
+              <h3 className="diwali-subtitle1 font-bold my-4">
+                Free Delivery | All Over Hyderabad
+              </h3>
+              <h3 className="diwali-subtitle1 my-4">
+                All types of rice brands available: Sri Lalitha, Kurnool, RRI,
+                Cow brand, Sree Maateja, Kolam Rice, Surya Teja’s Brand, Gajraj
+                Evergreen, Shubodayam, 5 Star, JSR
+              </h3>
+              <h3 className="diwali-subtitle1 font-bold my-4">
+                Return & Exchange Guarantee | Available Now: Steamed & Raw Rice
+              </h3>
 
+              <div className="buttons mt-6">
+                <a
+                  href="https://erice.in/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <button
+                    className="button demo text-white px-6 py-3 rounded-lg"
+                    style={{ backgroundColor: "#05a446" }}
+                  >
+                    Order Rice
+                  </button>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="event-container1">
           <div className="event-content1" style={{ borderColor: "#583e99" }}>
@@ -667,51 +779,47 @@ const Freerudraksha: React.FC = () => {
 
         {/* Group Section */}
         <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
-  <h1
-    className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
-    style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
-  >
-    <b className="text-green-600">
-      <span className="text-[#0a6fba]">Oxy</span>Group
-    </b>{" "}
-    <span className="text-[#FFA500]">Companies</span>
-  </h1>
+          <h1
+            className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
+            style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
+          >
+            <b className="text-green-600">
+              <span className="text-[#0a6fba]">Oxy</span>Group
+            </b>{" "}
+            <span className="text-[#FFA500]">Companies</span>
+          </h1>
 
-
-
-
-  <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">
-    <button
-      className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
-      onClick={handlePrev}
-    >
-      ←
-    </button>
-    <div
-      className="flex transition-transform duration-300 ease-in-out"
-      style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-    >
-      {images.map((image, idx) => (
-        <div key={idx} className="flex-shrink-0 w-full">
-          <img
-            src={image.src}
-            alt={image.alt}
-            className="w-full h-auto"
-          />
+          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">
+            <button
+              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
+              onClick={handlePrev}
+            >
+              ←
+            </button>
+            <div
+              className="flex transition-transform duration-300 ease-in-out"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+              {images.map((image, idx) => (
+                <div key={idx} className="flex-shrink-0 w-full">
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-auto"
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
+              onClick={handleNext}
+            >
+              →
+            </button>
+          </div>
         </div>
-      ))}
-    </div>
-    <button
-      className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
-      onClick={handleNext}
-    >
-      →
-    </button>
-  </div>
-</div>
-
-        </div>
-<Footer />
+      </div>
+      <Footer />
     </div>
   );
 };

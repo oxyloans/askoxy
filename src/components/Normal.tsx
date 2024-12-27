@@ -12,7 +12,8 @@ import FR1 from "../assets/img/R22.jpg";
 import FR2 from "../assets/img/freesample.jpg";
 import FR3 from "../assets/img/freeaiandgenai.png";
 import FR4 from "../assets/img/machines.png";
-
+import FR5 from "../assets/img/legail.jpg";
+import LegalService from "./LegalService";
 import Pushpa2GPT from "./Pushpa2GPT";
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
@@ -101,17 +102,20 @@ const Normal = () => {
   const [showMachinesManufacturing, setShowMachinesManufacturing] =
     useState(false);
   const [showMyRotaryService, setShowMyRotaryService] = useState(false);
+  const [showLegalService, setShowLegalService] =  useState(false)
 
   // const [showVanabhojanam, setShowVanabhojanam] = useState(false);
   // const [showLeftPanel, setShowLeftPanel] = useState(true);
   // const [showPushpa2Gpt, setShowPushpa2Gpt] = useState(false);
   const handleFreerudrakshaClick = () => {
     setShowFreerudraksha(true);
+
     setShowStudyAbroad(false);
     setShowFreeSample(false);
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
+    setShowLegalService(false)
   };
 
   const handleStudyAbroadClick = () => {
@@ -121,6 +125,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
+    setShowLegalService(false)
   };
 
   const handleFreeSampleClick = () => {
@@ -130,6 +135,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
+     setShowLegalService(false);
   };
 
   const handleFreeAiandGenAiClick = () => {
@@ -139,6 +145,7 @@ const Normal = () => {
     setShowFreeaiandgenai(true);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
+     setShowLegalService(false);
   };
 
   const handleMachinesandManufacturingClick = () => {
@@ -148,6 +155,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(true);
     setShowMyRotaryService(false);
+     setShowLegalService(false);
     // histary("/machines&manufacturing");
   };
 
@@ -158,9 +166,14 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(true);
+     setShowLegalService(false);
     // histary("/machines&manufacturing");
   };
 
+
+  const handledLegalServiceClick = () => {
+     setShowLegalService(true);
+  }
   // const handlepushpa2Gptclick = () => {
   //   setShowFreerudraksha(false);
   //   // setShowLeftPanel(false);
@@ -533,6 +546,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
+    setShowLegalService(false);
     // setShowVanabhojanam(false)
     // setShowPushpa2Gpt(false)
     // setShowLeftPanel(true);        // Show the left panel again
@@ -714,68 +728,46 @@ const Normal = () => {
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleFreerudrakshaClick}
-                className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
               >
                 <img
                   src={FR} // Replace with the actual image path
                   alt="Free Rudraksha"
-                  className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                  className="w-7 h-7 mr-2 rounded-full" // Adjust image size and margin
                 />
-
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: "#3c1973",
-                    fontSize: "22",
-                  }}
-                >
-                  {" "}
+                <span className="text-[#3c1973] text-sm leading-tight">
                   Free Rudraksha
                 </span>
               </button>
             </div>
+
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleFreeAiandGenAiClick}
-                className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
               >
                 <img
                   src={FR3} // Replace with the actual image path
                   alt="FreeAI & GenAI"
-                  className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                  className="w-7 h-7 mr-2 rounded-full"
                 />
-
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: "#3c1973",
-                    fontSize: "22",
-                  }}
-                >
-                  {" "}
-                  Free AI & GenAI
+                <span className="text-[#3c1973] text-sm leading-tight">
+                  Free AI & GenAI Training
                 </span>
               </button>
             </div>
+
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleFreeSampleClick}
-                className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
               >
                 <img
                   src={FR2} // Replace with the actual image path
                   alt="Free Rice Samples"
-                  className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                  className="w-7 h-7 mr-2 rounded-full"
                 />
-
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: "#3c1973",
-                    fontSize: "22",
-                  }}
-                >
-                  {" "}
+                <span className="text-[#3c1973] text-sm leading-tight">
                   Free Rice Samples & Steel Container
                 </span>
               </button>
@@ -784,44 +776,45 @@ const Normal = () => {
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleStudyAbroadClick}
-                className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
               >
                 <img
                   src={FR1} // Replace with the actual image path
                   alt="Study Abroad"
-                  className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                  className="w-7 h-7 mr-2 rounded-full"
                 />
-
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: "#3c1973",
-                    fontSize: "22",
-                  }}
-                >
-                  {" "}
+                <span className="text-[#3c1973] text-sm leading-tight">
                   Study Abroad
+                </span>
+              </button>
+            </div>
+
+            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+              <button
+                onClick={handledLegalServiceClick}
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+              >
+                <img
+                  src={FR5} // Replace with the actual image path
+                  alt="Legail Service"
+                  className="w-7 h-7 mr-2 rounded-full"
+                />
+                <span className="text-[#3c1973] text-sm leading-tight">
+                  Legail Service
                 </span>
               </button>
             </div>
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleMachinesandManufacturingClick}
-                className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
               >
                 <img
                   src={FR4} // Replace with the actual image path
                   alt="Machines and Manufacturing Services"
-                  className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                  className="w-7 h-7 rounded-full"
                 />
-
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: "#3c1973",
-                    fontSize: "22",
-                  }}
-                >
+                <span className=" text-[#3c1973] text-sm leading-tight">
                   Machines & Manufacturing Services
                 </span>
               </button>
@@ -830,26 +823,19 @@ const Normal = () => {
             <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
               <button
                 onClick={handleMyRotaryClick}
-                className="px-4 py-2 text-black rounded-md cursor-pointer flex items-center"
+                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
               >
                 <img
                   src={FR3} // Replace with the actual image path
-                  alt="Machines and Manufacturing Services"
-                  className="w-8 h-8 mr-2 rounded-full" // Adjust image size and margin
+                  alt="My Rotary"
+                  className="w-7 h-7 mr-2 rounded-full"
                 />
-
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    color: "#3c1973",
-                    fontSize: "22",
-                  }}
-                >
-                  {" "}
+                <span className=" text-[#3c1973] text-sm leading-tight">
                   My Rotary
                 </span>
               </button>
             </div>
+
             <div className="mt-4 h-80 border-t border-gray-300 pt-2">
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
@@ -913,7 +899,7 @@ const Normal = () => {
               <MachinesManufacturingServices />
             ) : showMyRotaryService ? (
               <MyRotaryServices />
-            ) : (
+            ) :showLegalService ? (<LegalService/>): (
               <>
                 {/* Static Rice Related Text */}
                 <h2

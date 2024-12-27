@@ -27,6 +27,7 @@ import FreeAiandGenAi from "./components/FreeAi&GenAi";
 import StudyAbroad from "./components/StudyAbroad";
 import Flow from "./components/Flow";
 import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
+import LegalService from "./components/LegalService";
 
 const App: React.FC = () => {
   return (
@@ -46,6 +47,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
+          <Route path="/legal" element={<LegalService />} />
           <Route
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
@@ -64,7 +66,7 @@ const App: React.FC = () => {
 
           {/* <Route path="/freerudraksha/" element={<Freerudraksha />} /> */}
 
-          {/* <Route path="/happy-diwali" element={<Happy_Diwali />} /> */}
+          <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />
           <Route path="/greenproject" element={<Greenproject />} />
           <Route path="/el-dorado" element={<EL_Dorado />} />
