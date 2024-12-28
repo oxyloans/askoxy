@@ -9,6 +9,8 @@ import img3 from "../assets/img/image3.png";
 import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
+import axios from "axios";
+import { Modal, Button, Input, message } from "antd";
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -21,7 +23,9 @@ const images = [
 const LegalService: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
  const [currentIndex, setCurrentIndex] = useState(0);
-
+  const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
+  const userId = localStorage.getItem("userId");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -38,32 +42,140 @@ const LegalService: React.FC = () => {
     setIsLoading(false);
   };
 
+  const [formData, setFormData] = useState({
+    askOxyOfers: "LEGALSERVICES",
+    id: userId,
+    mobileNumber: "",
+    projectType: "ASKOXY",
+  });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Real-time mobile number validation
+    if (name === "mobileNumber") {
+      if (!/^\d{0,10}$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          mobileNumber: "Please enter a valid mobile number with only digits.",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
+      }
+    }
+  };
+  const handleSubmit = async () => {
+    const { mobileNumber } = formData;
+    const newErrors: { mobileNumber?: string } = {};
+
+    // Validation
+    if (!mobileNumber) {
+      newErrors.mobileNumber = "Mobile number is required.";
+    } else if (!/^\d{10}$/.test(mobileNumber)) {
+      newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Set errors if validation fails
+      return; // Do not proceed with the form submission
+    }
+
+    try {
+      // API request to submit the form data
+      const response = await axios.post(
+        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        formData
+      );
+      console.log("API Response:", response.data);
+      message.success("Your interest has been submitted successfully!");
+      setIsModalOpen(false); // Close modal on success
+    } catch (error) {
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+    }
+  };
+  
   return (
     <>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ padding: "30px" }}>
-          <h1 style={{ fontSize: "50px", color: "rgba(91, 5, 200, 0.85)" }}>
-            Legail Service
+      <div className="text-center">
+        <div className="p-8">
+          <h1 className="text-4xl font-semibold text-purple-700">
+            Legal Service
           </h1>
-          {/* <h1 style={{ fontSize: "30px", color: "orange" }}>
-            DTDC Approved Villa Plots Venture
-          </h1> */}
+          {/* <h1 className="text-2xl text-orange-500">
+      DTDC Approved Villa Plots Venture
+    </h1> */}
         </div>
 
         {isLoading && (
-          <div>
+          <div className="flex justify-center">
             <Example variant="loading01" />
           </div>
         )}
-        <iframe
-          src={`https://drive.google.com/file/d/11AI-em7upR9UVcec1mFuxmIPh1Cfx0Ai/preview`}
-          frameBorder="0"
-          height="1000px"
-          width="100%"
-          title="PDF Viewer"
-          onLoad={handleLoad} // Set loading state to false when the iframe loads
-        />
+
+        <div className="flex justify-center items-center my-8">
+          <iframe
+            src="https://drive.google.com/file/d/11AI-em7upR9UVcec1mFuxmIPh1Cfx0Ai/preview"
+            frameBorder="0"
+            height="1000px"
+            width="80%"
+            title="PDF Viewer"
+            onLoad={handleLoad} // Set loading state to false when the iframe loads
+          />
+        </div>
+
+        <div className="flex justify-center mt-8">
+          <button
+            className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
+            onClick={() => setIsModalOpen(true)}
+            aria-label="Visit our site"
+          >
+            I'm interested
+          </button>
+        </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Enter Your Details</h2>
+            <div className="space-y-4">
+              <label className="text-black">
+                Enter your mobile number
+                <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="mobileNumber"
+                placeholder="Mobile Number"
+                value={formData.mobileNumber}
+                onChange={handleInputChange}
+                maxLength={10} // Limit the input to 10 digits
+                className={`w-full px-4 text-black py-2 border rounded ${
+                  errors.mobileNumber ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.mobileNumber && (
+                <p className="text-red-500 text-sm">{errors.mobileNumber}</p>
+              )}
+            </div>
+            <div className="flex justify-end mt-6 space-x-2">
+              <button
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                onClick={handleSubmit}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
@@ -287,7 +399,7 @@ const LegalService: React.FC = () => {
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
           >
             <b className="text-green-600">
-              <span className="text-[#0a6fba]">Oxy</span>Group
+              <span className="text-[#0a6fba]">Oxy</span> Group
             </b>{" "}
             <span className="text-[#FFA500]">Companies</span>
           </h1>

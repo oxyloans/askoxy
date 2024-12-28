@@ -28,6 +28,7 @@ import StudyAbroad from "./components/StudyAbroad";
 import Flow from "./components/Flow";
 import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
 import LegalService from "./components/LegalService";
+import MyRotaryServices from "./components/MyRotary";
 
 const App: React.FC = () => {
   return (
@@ -36,18 +37,19 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
-       
+
           {/* <Route path="/vanabhojanam" element={<VanabhojanamSteps />} />
           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
           {/* <Route path="/rudraksha" element={<RudrakshaSteps />} /> */}
           <Route path="/freerudraksha" Component={Freerudraksha} />
-          <Route path="/freesample" element={<FreeSample />} />
+          <Route path="/freesample&steelcontainer" element={<FreeSample />} />
           <Route path="/freeaiandgenai" element={<FreeAiandGenAi />} />
           <Route path="/studyabroad" element={<StudyAbroad />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
-          <Route path="/legal" element={<LegalService />} />
+          <Route path="/legalservice" element={<LegalService />} />
+          <Route path="/myrotary" element={<MyRotaryServices />} />  
           <Route
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}

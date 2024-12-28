@@ -102,7 +102,7 @@ const Normal = () => {
   const [showMachinesManufacturing, setShowMachinesManufacturing] =
     useState(false);
   const [showMyRotaryService, setShowMyRotaryService] = useState(false);
-  const [showLegalService, setShowLegalService] =  useState(false)
+  const [showLegalService, setShowLegalService] = useState(false);
 
   // const [showVanabhojanam, setShowVanabhojanam] = useState(false);
   // const [showLeftPanel, setShowLeftPanel] = useState(true);
@@ -115,7 +115,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
-    setShowLegalService(false)
+    setShowLegalService(false);
   };
 
   const handleStudyAbroadClick = () => {
@@ -125,7 +125,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
-    setShowLegalService(false)
+    setShowLegalService(false);
   };
 
   const handleFreeSampleClick = () => {
@@ -135,7 +135,7 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
-     setShowLegalService(false);
+    setShowLegalService(false);
   };
 
   const handleFreeAiandGenAiClick = () => {
@@ -145,7 +145,7 @@ const Normal = () => {
     setShowFreeaiandgenai(true);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
-     setShowLegalService(false);
+    setShowLegalService(false);
   };
 
   const handleMachinesandManufacturingClick = () => {
@@ -155,38 +155,33 @@ const Normal = () => {
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(true);
     setShowMyRotaryService(false);
-     setShowLegalService(false);
+    setShowLegalService(false);
     // histary("/machines&manufacturing");
   };
 
   const handleMyRotaryClick = () => {
+    setShowMyRotaryService(true);
+    setShowStudyAbroad(false);
+    setShowFreerudraksha(false);
+
+    setShowFreeSample(false);
+    setShowFreeaiandgenai(false);
+    setShowMachinesManufacturing(false);
+
+    setShowLegalService(false);
+    // histary("/machines&manufacturing");
+  };
+
+  const handledLegalServiceClick = () => {
+    setShowLegalService(true);
     setShowStudyAbroad(false);
     setShowFreerudraksha(false);
     setShowFreeSample(false);
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
-    setShowMyRotaryService(true);
-     setShowLegalService(false);
-    // histary("/machines&manufacturing");
+      setShowMyRotaryService(false);
   };
 
-
-  const handledLegalServiceClick = () => {
-     setShowLegalService(true);
-  }
-  // const handlepushpa2Gptclick = () => {
-  //   setShowFreerudraksha(false);
-  //   // setShowLeftPanel(false);
-  //   // setShowVanabhojanam(false);
-  //   setShowPushpa2Gpt(true);
-  // };
-
-  // const handleVanabhojanamClick = () => {
-  //   setShowVanabhojanam(true);
-  //   setShowFreerudraksha(false); // Hide Freerudraksha when Vanabhojanam is clicked
-  //   // setShowLeftPanel(false);
-  //   setShowPushpa2Gpt(false)
-  // };
   useEffect(() => {
     const fetchChatHistory = async () => {
       const userId = localStorage.getItem("userId");
@@ -630,8 +625,6 @@ const Normal = () => {
 
         {/* Right Section: Profile and SignOut */}
         <div className="flex flex-col md:flex-row items-center  space-y-2 md:space-y-0 md:space-x-4">
-          {/* Profile Info Section (AuthorInfo) */}
-
           {/* SignOut Button */}
           <button
             onClick={() => {
@@ -646,6 +639,7 @@ const Normal = () => {
           >
             SignOut
           </button>
+          {/* Profile Info Section (AuthorInfo) */}
 
           <div className="flex items-center space-x-2">
             <AuthorInfo
@@ -669,7 +663,7 @@ const Normal = () => {
           <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col overflow-y-auto">
             <div className="flex items-center justify-between font-bold ">
               <button
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => handleEditClick()}
                 className=" rounded-md"
                 title="Edit"
               >
@@ -725,115 +719,117 @@ const Normal = () => {
                 Editing mode enabled...
               </p>
             )}
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handleFreerudrakshaClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR} // Replace with the actual image path
-                  alt="Free Rudraksha"
-                  className="w-7 h-7 mr-2 rounded-full" // Adjust image size and margin
-                />
-                <span className="text-[#3c1973] text-sm leading-tight">
-                  Free Rudraksha
-                </span>
-              </button>
-            </div>
+            <div className="mt-4 border-t border-gray-300 pt-2">
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleFreerudrakshaClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR} // Replace with the actual image path
+                    alt="Free Rudraksha"
+                    className="w-7 h-7 mr-2 rounded-full" // Adjust image size and margin
+                  />
+                  <span className="text-[#3c1973] text-sm leading-tight">
+                    Free Rudraksha
+                  </span>
+                </button>
+              </div>
 
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handleFreeAiandGenAiClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR3} // Replace with the actual image path
-                  alt="FreeAI & GenAI"
-                  className="w-7 h-7 mr-2 rounded-full"
-                />
-                <span className="text-[#3c1973] text-sm leading-tight">
-                  Free AI & GenAI Training
-                </span>
-              </button>
-            </div>
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleFreeAiandGenAiClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR3} // Replace with the actual image path
+                    alt="FreeAI & GenAI"
+                    className="w-7 h-7 mr-2 rounded-full"
+                  />
+                  <span className="text-[#3c1973] text-sm leading-tight">
+                    Free AI & GenAI Training
+                  </span>
+                </button>
+              </div>
 
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handleFreeSampleClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR2} // Replace with the actual image path
-                  alt="Free Rice Samples"
-                  className="w-7 h-7 mr-2 rounded-full"
-                />
-                <span className="text-[#3c1973] text-sm leading-tight">
-                  Free Rice Samples & Steel Container
-                </span>
-              </button>
-            </div>
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleFreeSampleClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR2} // Replace with the actual image path
+                    alt="Free Rice Samples"
+                    className="w-7 h-7 mr-2 rounded-full"
+                  />
+                  <span className="text-[#3c1973] text-sm leading-tight">
+                    Free Rice Samples & Steel Container
+                  </span>
+                </button>
+              </div>
 
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handleStudyAbroadClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR1} // Replace with the actual image path
-                  alt="Study Abroad"
-                  className="w-7 h-7 mr-2 rounded-full"
-                />
-                <span className="text-[#3c1973] text-sm leading-tight">
-                  Study Abroad
-                </span>
-              </button>
-            </div>
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleStudyAbroadClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR1} // Replace with the actual image path
+                    alt="Study Abroad"
+                    className="w-7 h-7 mr-2 rounded-full"
+                  />
+                  <span className="text-[#3c1973] text-sm leading-tight">
+                    Study Abroad
+                  </span>
+                </button>
+              </div>
 
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handledLegalServiceClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR5} // Replace with the actual image path
-                  alt="Legail Service"
-                  className="w-7 h-7 mr-2 rounded-full"
-                />
-                <span className="text-[#3c1973] text-sm leading-tight">
-                  Legail Service
-                </span>
-              </button>
-            </div>
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handleMachinesandManufacturingClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR4} // Replace with the actual image path
-                  alt="Machines and Manufacturing Services"
-                  className="w-7 h-7 rounded-full"
-                />
-                <span className=" text-[#3c1973] text-sm leading-tight">
-                  Machines & Manufacturing Services
-                </span>
-              </button>
-            </div>
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handledLegalServiceClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR5} // Replace with the actual image path
+                    alt="Legail Service"
+                    className="w-7 h-7 mr-2 rounded-full"
+                  />
+                  <span className="text-[#3c1973] text-sm leading-tight">
+                    Legal Service
+                  </span>
+                </button>
+              </div>
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleMachinesandManufacturingClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR4} // Replace with the actual image path
+                    alt="Machines and Manufacturing Services"
+                    className="w-7 h-7 rounded-full"
+                  />
+                  <span className=" text-[#3c1973] text-sm leading-tight">
+                    Machines & Manufacturing Services
+                  </span>
+                </button>
+              </div>
 
-            <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-              <button
-                onClick={handleMyRotaryClick}
-                className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-              >
-                <img
-                  src={FR3} // Replace with the actual image path
-                  alt="My Rotary"
-                  className="w-7 h-7 mr-2 rounded-full"
-                />
-                <span className=" text-[#3c1973] text-sm leading-tight">
-                  My Rotary
-                </span>
-              </button>
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleMyRotaryClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR3} // Replace with the actual image path
+                    alt="My Rotary"
+                    className="w-7 h-7 mr-2 rounded-full"
+                  />
+                  <span className=" text-[#3c1973] text-sm leading-tight">
+                    My Rotary
+                  </span>
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 h-80 border-t border-gray-300 pt-2">
@@ -899,7 +895,9 @@ const Normal = () => {
               <MachinesManufacturingServices />
             ) : showMyRotaryService ? (
               <MyRotaryServices />
-            ) :showLegalService ? (<LegalService/>): (
+            ) : showLegalService ? (
+              <LegalService />
+            ) : (
               <>
                 {/* Static Rice Related Text */}
                 <h2
@@ -971,7 +969,7 @@ const Normal = () => {
                             <div className="flex mt-2 space-x-1">
                               {/* Copy Button */}
                               <button
-                                className="p-2 bg-white mr"
+                                className="p-2 bg-white rounded-full mr"
                                 onClick={() => handleCopy(message.content)}
                                 title="Copy"
                               >
@@ -981,7 +979,7 @@ const Normal = () => {
                               {/* Speaker (Read Aloud) Button */}
                               {isReading ? (
                                 <button
-                                  className="p-2 bg-white mr"
+                                  className="p-2 bg-white mr rounded-full"
                                   onClick={() =>
                                     window.speechSynthesis.cancel()
                                   }
@@ -991,7 +989,7 @@ const Normal = () => {
                                 </button>
                               ) : (
                                 <button
-                                  className="p-2 bg-white mr"
+                                  className="p-2 bg-white mr rounded-full"
                                   onClick={() =>
                                     handleReadAloud(message.content)
                                   }
@@ -1003,7 +1001,7 @@ const Normal = () => {
 
                               {/* Share Button */}
                               <button
-                                className="p-2 bg-white mr"
+                                className="p-2 bg-white rounded-full mr"
                                 onClick={() => handleShare(message.content)}
                                 title="Share"
                               >

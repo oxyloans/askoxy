@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import axios from "axios";
+import { BiLogoPlayStore } from "react-icons/bi";
 import {
   FaMapMarkerAlt,
   FaUniversity,
@@ -27,7 +28,9 @@ import img2 from "../assets/img/image2.png";
 import img3 from "../assets/img/image3.png";
 import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
-import img6 from "../assets/img/image6.png";
+import img6 from "../assets/img/soon.png";
+import ricesample1kgGif from "../assets/img/ricesample1kg.gif";
+import ricebag26kgsGif from "../assets/img/ricebag26kgsGif.gif";
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -176,7 +179,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
  
   return (
     <div>
-      <div className="bg-gray-100">
+      <div>
         <header className="header text-center">
           <h3 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
             <strong>
@@ -195,9 +198,9 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
 
         {/* Details Section */}
 
-        <div className="details p-6 space-y-6">
+        <div className="details p-3 space-y-6">
           {/* Offer Heading */}
-          <div className="text-center">
+          <div className="text-center mt-4">
             <strong style={{ color: "purple", fontSize: "24px" }}>
               Our Offer: Free Rice Sample and Steel Container
             </strong>
@@ -262,7 +265,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
             </ul>
           </div> */}
 
-          <div className="details">
+          <div className="details mt-4">
             <strong>
               ASKOXY.AI offers an exclusive deal: get 1 KG of free rice samples
               with a free steel container. This sleek container ensures
@@ -314,14 +317,48 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
         {/* Button Section */}
         <div className="flex justify-center">
           <button
-            className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
+            className="w-52 h-12 mb-4 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
             onClick={() => setIsModalOpen(true)}
             aria-label="Visit our site"
           >
             I'm interested
           </button>
-          <br></br>{" "}
         </div>
+
+        {/* New GIFs Section */}
+        <div className="flex justify-center mt-4 space-x-5">
+          <div className="w-500 h-500 text-center bg-white shadow-lg p-4 rounded">
+            <img src={ricesample1kgGif} alt="Rice Sample 1kg" />
+            <h5 className="text-blue-600 font-bold mt-5">Rice Sample 1kg</h5>
+          </div>
+          <div className="text-center bg-white shadow-lg p-4 rounded">
+            <img src={ricebag26kgsGif} alt="Rice Bag 26kgs" />
+            <h5 className="text-blue-600 font-bold mt-5">Rice Bag 26kgs</h5>
+          </div>
+        </div>
+
+        {/* Playstore Button */}
+        <div className="flex justify-center mt-4">
+          <a
+            href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-52 h-12 mt-4 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-800 transition-all flex items-center justify-center"
+          >
+            <BiLogoPlayStore className="w-6 h-6 mr-2" />
+            Download App
+          </a>
+        </div>
+
+        {/* New Image Section */}
+        <div className="flex justify-center mt-4">
+          <img
+            src={img6} // Replace with the actual image path
+            alt="New Image"
+            style={{ width: "1000px", height: "300px", objectFit: "contain" }}
+          />
+        </div>
+
         <h1 className="text-gray-100">{"hello "}</h1>
         <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
           {/* Write to Us Button */}
@@ -433,7 +470,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
           <span className="text-green-600">
-            <span className="text-[#0a6fba]">Oxy</span> sGroup
+            <span className="text-[#0a6fba]">Oxy</span> Group
           </span>{" "}
           <span className="text-[#FFA500]">Companies</span>
         </h1>
@@ -649,7 +686,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
           >
             <b className="text-green-600">
-              <span className="text-[#0a6fba]">Oxy</span>Group
+              <span className="text-[#0a6fba]">Oxy</span> Group
             </b>{" "}
             <span className="text-[#FFA500]">Companies</span>
           </h1>
@@ -663,7 +700,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
             </button>
             <div
               className="flex transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              style={{transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {images.map((image, idx) => (
                 <div key={idx} className="flex-shrink-0 w-full">

@@ -621,7 +621,7 @@ const handleSubmit = async () => {
            style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
          >
            <b className="text-green-600">
-             <span className="text-[#0a6fba]">Oxy</span>Group
+             <span className="text-[#0a6fba]">Oxy</span> Group
            </b>{" "}
            <span className="text-[#FFA500]">Companies</span>
          </h1>

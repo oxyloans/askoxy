@@ -246,7 +246,7 @@ const FreeAiandGenAi: React.FC = () => {
           </p>
         </div>
       </div> */}
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-8 space-x-10">
           <button
             className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
             onClick={() => setIsModalOpen(true)}
@@ -254,7 +254,18 @@ const FreeAiandGenAi: React.FC = () => {
           >
             I'm interested
           </button>
-          <br></br>
+          <a
+            href="https://sites.google.com/view/globalecommercemarketplace/home" // Replace with your Google site link
+            target="_blank"
+            rel="Oxyloans Training Guide"
+          >
+            <button
+              className="w-52 h-12 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all"
+              aria-label="Our Training Guide"
+            >
+              Our Training Guide
+            </button>
+          </a>
         </div>
         <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
           {/* Write to Us Button */}
@@ -583,7 +594,7 @@ const FreeAiandGenAi: React.FC = () => {
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
           >
             <b className="text-green-600">
-              <span className="text-[#0a6fba]">Oxy</span>Group
+              <span className="text-[#0a6fba]">Oxy</span> Group
             </b>{" "}
             <span className="text-[#FFA500]">Companies</span>
           </h1>
