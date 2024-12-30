@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.3d96b58b.css",
-    "main.js": "/static/js/main.d1343960.js",
+    "main.css": "/static/css/main.35c148e1.css",
+    "main.js": "/static/js/main.525fc19f.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/ricebag26kgsGif.gif": "/static/media/ricebag26kgsGif.a6a8b88bf9bf1f9fe9ac.gif",
@@ -14,12 +14,12 @@
     "static/media/machines.png": "/static/media/machines.8a2c5d9604b7fe5261f4.png",
     "static/media/Diwali2.jpg": "/static/media/Diwali2.6f6ebe2f2b7a4f8996bf.jpg",
     "static/media/s4.jpg": "/static/media/s4.ab99b600b0dbc0c7eb79.jpg",
-    "static/media/st1.jpg": "/static/media/st1.899a43593c070ca5c240.jpg",
     "static/media/s5.jpg": "/static/media/s5.795d42e052eeb7e6f258.jpg",
     "static/media/freeaiandgenai.png": "/static/media/freeaiandgenai.1d1acc8f9d05b67f3707.png",
     "static/media/st2.jpg": "/static/media/st2.fb315ac75d40fdb65695.jpg",
     "static/media/s3.jpg": "/static/media/s3.1bca733225fbd6ac3bb9.jpg",
     "static/media/BG1.jpg": "/static/media/BG1.73ad94a0c4546e5fffc8.jpg",
+    "static/media/WhatsApp Image 2024-12-30 at 17.29.46.jpeg": "/static/media/WhatsApp Image 2024-12-30 at 17.29.46.9bf6805c7fd808455fe9.jpeg",
     "static/media/BG.jpg": "/static/media/BG.b949b1a77589a17ce6eb.jpg",
     "static/media/6.png": "/static/media/6.c305f3465aad505f3e2f.png",
     "static/media/7.png": "/static/media/7.3d41b0f8891fd3c86d68.png",
@@ -72,12 +72,12 @@
     "static/media/image2.png": "/static/media/image2.a465e4cf5f56f1a2acd6.png",
     "static/media/R22.jpg": "/static/media/R22.b6514acc45c7f069ac7a.jpg",
     "index.html": "/index.html",
-    "main.3d96b58b.css.map": "/static/css/main.3d96b58b.css.map",
-    "main.d1343960.js.map": "/static/js/main.d1343960.js.map",
+    "main.35c148e1.css.map": "/static/css/main.35c148e1.css.map",
+    "main.525fc19f.js.map": "/static/js/main.525fc19f.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.3d96b58b.css",
-    "static/js/main.d1343960.js"
+    "static/css/main.35c148e1.css",
+    "static/js/main.525fc19f.js"
   ]
 }

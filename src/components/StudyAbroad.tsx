@@ -9,7 +9,7 @@ import TeluguShiva from '../assets/img/telugu.png'
 import EnglishShiva from '../assets/img/english.png'
 import Image1 from '../assets/img/WEBSITE.png'
 import Image3 from '../assets/img/R33.jpg'
-import S1 from '../assets/img/st1.jpg'
+import S1 from '../assets/img/WhatsApp Image 2024-12-30 at 17.29.46.jpeg'
 import S2 from "../assets/img/st2.jpg";
 import S3 from "../assets/img/s3.jpg";
 import S4 from "../assets/img/s4.jpg";
@@ -183,74 +183,75 @@ const handleSubmit = async () => {
 
  return (
    <div>
-     <div className="bg-gray-100">
+     <div>
        <header className="header text-center">
          <h3 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
            <strong>
-             World's 1 AI & Blockchain based platform for university admissions{" "}
+             World's 1<sup>st</sup> AI & Blockchain based platform for
+             university admissions
            </strong>
          </h3>
        </header>
 
        {/* Main Content */}
-       <div className="grid grid-cols-3 gap-4">
+       <div className="grid bg-gray-100 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
          <section>
            <img
              src={Image3}
              alt="Spiritual World"
-             className="w-full h-59 object-cover rounded"
+             className="w-full h-63 object-cover rounded"
            />
          </section>
          <section>
            <img
              src={S1}
              alt="Spiritual World"
-             className="w-full h-59 object-cover rounded"
+             className="w-full h-63 object-cover rounded"
            />
          </section>
          <section>
            <img
              src={S3}
              alt="Spiritual World"
-             className="w-full h-59 object-cover rounded"
-           />
-         </section>
-         <section>
-           <img
-             src={S2}
-             alt="Spiritual World"
-             className="w-full h-59 object-cover rounded"
+             className="w-full h-63 object-cover rounded"
            />
          </section>
          <section>
            <img
              src={S4}
              alt="Spiritual World"
-             className="w-full h-59 object-cover rounded"
+             className="w-full h-63 object-cover rounded"
            />
          </section>
          <section>
            <img
              src={S5}
              alt="Spiritual World"
-             className="w-full h-59 object-cover rounded"
+             className="w-full h-63 object-cover rounded"
+           />
+         </section>
+         <section>
+           <img
+             src={S2}
+             alt="Spiritual World"
+             className="w-full h-63 object-cover rounded"
            />
          </section>
        </div>
 
        {/* Details Section */}
-
-       <div className="details">
+       <div className="details px-4 py-8">
          <strong style={{ color: "purple" }}>Our Mission & Vision</strong>
-         <br></br>
+         <br />
          <strong>
            To enable 1 million students to fulfill their abroad dream by 2030.
-           Our vision is to connect all stakeholders seamlessly with high trust.{" "}
+           Our vision is to connect all stakeholders seamlessly with high trust.
          </strong>
        </div>
 
-       <div className="grid  grid-cols-1 md:grid-cols-4 gap-4 mt-8 justify-center">
-         <div className="p-2  bg-white border rounded-lg shadow-md flex flex-col items-center">
+       {/* Stats Section */}
+       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mt-8 justify-center px-4">
+         <div className="p-4 bg-white border rounded-lg shadow-md flex flex-col items-center">
            <FaUniversity className="w-12 h-12 mb-2 text-purple-600" />
            <h3 className="text-center font-bold mb-1 text-black">
              3000+ Students
@@ -259,7 +260,7 @@ const handleSubmit = async () => {
              Availed this platform and currently studying in universities abroad
            </p>
          </div>
-         <div className="p-2 border bg-white rounded-lg shadow-md flex flex-col items-center">
+         <div className="p-4 border bg-white rounded-lg shadow-md flex flex-col items-center">
            <FaGlobe className="w-12 h-12 mb-2 text-purple-600" />
            <h3 className="text-center font-bold mb-1 text-black">
              150+ Recruiters
@@ -269,20 +270,20 @@ const handleSubmit = async () => {
              85% accuracy in mapping
            </p>
          </div>
-         <div className="p-2 border bg-white rounded-lg shadow-md flex flex-col items-center">
+         <div className="p-4 border bg-white rounded-lg shadow-md flex flex-col items-center">
            <FaPlane className="w-12 h-12 mb-2 text-purple-600" />
            <h3 className="text-center font-bold mb-1 text-black">
              100+ Universities
            </h3>
            <p className="text-center text-black text-sm">
-             Spread across the UK, Europe, US, Canada, Australia, Newzealand
+             Spread across the UK, Europe, US, Canada, Australia, New Zealand
            </p>
          </div>
-         <div className="p-2 border bg-white rounded-lg shadow-md flex flex-col items-center">
+         <div className="p-4 border bg-white rounded-lg shadow-md flex flex-col items-center">
            <FaBook className="w-12 h-12 mb-2 text-purple-600" />
            <h3 className="text-center font-bold mb-1 text-black">Free</h3>
            <p className="text-center text-black text-sm">
-             Life time Access to students
+             Lifetime Access to students
            </p>
          </div>
        </div>
@@ -297,70 +298,30 @@ const handleSubmit = async () => {
            I'm interested!
          </button>
        </div>
-       <h1 className="text-gray-100">{"hello "}</h1>
+
+       {/* Floating Chat & Write to Us */}
        <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
          {/* Write to Us Button */}
          <button
            onClick={() => setIsModalOpen1(true)}
            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
          >
-           <img
-             src={Image5} // Replace with your icon path or fallback
-             alt="Write to Us"
-             className="w-6 h-6 mr-2"
-           />
+           <img src={Image5} alt="Write to Us" className="w-6 h-6 mr-2" />
            <span className="font-medium text-sm md:text-base">Write to Us</span>
          </button>
-
-         {/* Modal */}
-         {isModalOpen1 && (
-           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-             <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
-               {/* Modal content */}
-               <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                 Write to Us
-               </h2>
-               <textarea
-                 value={query}
-                 onChange={(e) => setQuery(e.target.value)}
-                 className="w-full border text-black border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                 placeholder="Write your query here..."
-               />
-               <div className="mt-4 flex justify-end space-x-4">
-                 <button
-                   onClick={() => setIsModalOpen1(false)}
-                   className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all"
-                 >
-                   Cancel
-                 </button>
-                 <button
-                   onClick={handleSend}
-                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-                 >
-                   Send
-                 </button>
-               </div>
-             </div>
-           </div>
-         )}
 
          {/* Chat with Us Button */}
          <button
            onClick={() => handleMessage("Chat with Us")}
            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
          >
-           {/* <img
-                     src={Image4 || "/default-icon.png"} // Replace with your fallback icon path if needed
-                     alt="Chat with Us"
-                     className="w-6 h-6 mr-2"
-                   /> */}
-           <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />{" "}
-           {/* Adjust size and spacing */}
+           <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />
            <span className="font-medium text-sm md:text-base">
              Chat with Us
            </span>
          </button>
        </div>
+
        {isModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
            <div className="bg-white p-6 rounded shadow-lg w-96">
@@ -405,9 +366,9 @@ const handleSubmit = async () => {
      <div>
        <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
          <span className="text-green-600">
-           <span className="text-[#0a6fba]">Oxy</span> Group
+           <span className="text-[#0a6fba]">OXY</span> GROUP
          </span>{" "}
-         <span className="text-[#FFA500]">Companies</span>
+         <span className="text-[#FFA500]">COMPANIES</span>
        </h1>
 
        <div className="event-container1">
@@ -480,57 +441,6 @@ const handleSubmit = async () => {
                    style={{ backgroundColor: "#c26c27" }}
                  >
                    Know More
-                 </button>
-               </a>
-             </div>
-           </div>
-         </div>
-       </div>
-
-       <div className="event-container1 ">
-         <div
-           className="event-content1 border-2 rounded-lg p-4 md:p-6 lg:p-8"
-           style={{ borderColor: "#05a446" }}
-         >
-           <div className="diwali-images1">
-             <div className="image-container1 flex justify-center">
-               <img
-                 src={img6}
-                 alt="Diwali Diyas"
-                 className="diwali-diya w-full max-w-xs sm:max-w-sm md:max-w-md"
-               />
-             </div>
-           </div>
-           <div className="event-details text-center mt-4">
-             <h1
-               className="diwali-title1 text-2xl md:text-3xl font-bold"
-               style={{ color: "#05a446" }}
-             >
-               Order . Rice . Online
-             </h1>
-             <h3 className="diwali-subtitle1 font-bold my-4">
-               Free Delivery | All Over Hyderabad
-             </h3>
-             <h3 className="diwali-subtitle1 my-4">
-               All types of rice brands available: Sri Lalitha, Kurnool, RRI,
-               Cow brand, Sree Maateja, Kolam Rice, Surya Teja’s Brand, Gajraj
-               Evergreen, Shubodayam, 5 Star, JSR
-             </h3>
-             <h3 className="diwali-subtitle1 font-bold my-4">
-               Return & Exchange Guarantee | Available Now: Steamed & Raw Rice
-             </h3>
-
-             <div className="buttons mt-6">
-               <a
-                 href="https://erice.in/"
-                 target="_blank"
-                 rel="noopener noreferrer"
-               >
-                 <button
-                   className="button demo text-white px-6 py-3 rounded-lg"
-                   style={{ backgroundColor: "#05a446" }}
-                 >
-                   Order Rice
                  </button>
                </a>
              </div>
@@ -621,9 +531,9 @@ const handleSubmit = async () => {
            style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
          >
            <b className="text-green-600">
-             <span className="text-[#0a6fba]">Oxy</span> Group
+             <span className="text-[#0a6fba]">OXY</span> GROUP
            </b>{" "}
-           <span className="text-[#FFA500]">Companies</span>
+           <span className="text-[#FFA500]">COMPANIES</span>
          </h1>
 
          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">

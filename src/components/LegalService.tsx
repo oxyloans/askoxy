@@ -180,9 +180,9 @@ const LegalService: React.FC = () => {
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
           <span className="text-green-600">
-            <span className="text-[#0a6fba]">Oxy</span> Group
+            <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">Companies</span>
+          <span className="text-[#FFA500]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -399,9 +399,9 @@ const LegalService: React.FC = () => {
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
           >
             <b className="text-green-600">
-              <span className="text-[#0a6fba]">Oxy</span> Group
+              <span className="text-[#0a6fba]">OXY</span> GROUP
             </b>{" "}
-            <span className="text-[#FFA500]">Companies</span>
+            <span className="text-[#FFA500]">COMPANIES</span>
           </h1>
 
           <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">

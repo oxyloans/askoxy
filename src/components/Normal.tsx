@@ -94,93 +94,9 @@ const Normal = () => {
 
   const [chathistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
 
-  const [showFreerudraksha, setShowFreerudraksha] = useState(false);
+ 
 
-  const [showStudyAbroad, setShowStudyAbroad] = useState(false);
-  const [showFreeSample, setShowFreeSample] = useState(false);
-  const [showFreeaiandgenai, setShowFreeaiandgenai] = useState(false);
-  const [showMachinesManufacturing, setShowMachinesManufacturing] =
-    useState(false);
-  const [showMyRotaryService, setShowMyRotaryService] = useState(false);
-  const [showLegalService, setShowLegalService] = useState(false);
 
-  // const [showVanabhojanam, setShowVanabhojanam] = useState(false);
-  // const [showLeftPanel, setShowLeftPanel] = useState(true);
-  // const [showPushpa2Gpt, setShowPushpa2Gpt] = useState(false);
-  const handleFreerudrakshaClick = () => {
-    setShowFreerudraksha(true);
-
-    setShowStudyAbroad(false);
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-  };
-
-  const handleStudyAbroadClick = () => {
-    setShowStudyAbroad(true);
-    setShowFreerudraksha(false);
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-  };
-
-  const handleFreeSampleClick = () => {
-    setShowStudyAbroad(false);
-    setShowFreerudraksha(false);
-    setShowFreeSample(true);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-  };
-
-  const handleFreeAiandGenAiClick = () => {
-    setShowStudyAbroad(false);
-    setShowFreerudraksha(false);
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(true);
-    setShowMachinesManufacturing(false);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-  };
-
-  const handleMachinesandManufacturingClick = () => {
-    setShowStudyAbroad(false);
-    setShowFreerudraksha(false);
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(true);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-    // histary("/machines&manufacturing");
-  };
-
-  const handleMyRotaryClick = () => {
-    setShowMyRotaryService(true);
-    setShowStudyAbroad(false);
-    setShowFreerudraksha(false);
-
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-
-    setShowLegalService(false);
-    // histary("/machines&manufacturing");
-  };
-
-  const handledLegalServiceClick = () => {
-    setShowLegalService(true);
-    setShowStudyAbroad(false);
-    setShowFreerudraksha(false);
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-      setShowMyRotaryService(false);
-  };
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -532,24 +448,14 @@ const Normal = () => {
   //   setShowVanabhojanam(false)     // Show the left panel again
   // };
   // Handle new chat click
-  const handleNewChatClick = () => {
-    setMessages([]); // Clear the messages
-    setShowStaticBubbles(true); // Show the static chat bubbles
-    setShowFreerudraksha(false); // Reset to main chat
-    setShowStudyAbroad(false); // Reset to main chat interface
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-    // setShowVanabhojanam(false)
-    // setShowPushpa2Gpt(false)
-    // setShowLeftPanel(true);        // Show the left panel again
-    if (inputRef.current) {
-      inputRef.current.value = ""; // Clear the input field
-      setShowSendButton(false); // Hide the send button
-    }
-  };
+ const handleNewChatClick = () => {
+   setMessages([]); // Clear messages
+   if (inputRef.current) {
+     inputRef.current.value = ""; // Clear the input field
+     setShowSendButton(false); // Hide the send button
+   }
+   navigate("/normal", { state: { showStaticBubbles: true } });
+ };
   const handleHistoryItemClick = (historyItem: string) => {
     setInput(historyItem); // Set input to the history item
     setShowSendButton(true); // Show send button
@@ -719,118 +625,6 @@ const Normal = () => {
                 Editing mode enabled...
               </p>
             )}
-            <div className="mt-4 border-t border-gray-300 pt-2">
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleFreerudrakshaClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR} // Replace with the actual image path
-                    alt="Free Rudraksha"
-                    className="w-7 h-7 mr-2 rounded-full" // Adjust image size and margin
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Free Rudraksha
-                  </span>
-                </button>
-              </div>
-
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleFreeAiandGenAiClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR3} // Replace with the actual image path
-                    alt="FreeAI & GenAI"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Free AI & GenAI Training
-                  </span>
-                </button>
-              </div>
-
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleFreeSampleClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR2} // Replace with the actual image path
-                    alt="Free Rice Samples"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Free Rice Samples & Steel Container
-                  </span>
-                </button>
-              </div>
-
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleStudyAbroadClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR1} // Replace with the actual image path
-                    alt="Study Abroad"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Study Abroad
-                  </span>
-                </button>
-              </div>
-
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handledLegalServiceClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR5} // Replace with the actual image path
-                    alt="Legail Service"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Legal Service
-                  </span>
-                </button>
-              </div>
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleMachinesandManufacturingClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR4} // Replace with the actual image path
-                    alt="Machines and Manufacturing Services"
-                    className="w-7 h-7 rounded-full"
-                  />
-                  <span className=" text-[#3c1973] text-sm leading-tight">
-                    Machines & Manufacturing Services
-                  </span>
-                </button>
-              </div>
-
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleMyRotaryClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR3} // Replace with the actual image path
-                    alt="My Rotary"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className=" text-[#3c1973] text-sm leading-tight">
-                    My Rotary
-                  </span>
-                </button>
-              </div>
-            </div>
 
             <div className="mt-4 h-80 border-t border-gray-300 pt-2">
               {chathistory.length === 0 ? (
@@ -883,21 +677,7 @@ const Normal = () => {
 
           {/* Center Panel */}
           <section className="relative  overflow-y-auto  flex flex-col flex-grow w-full    p-6 md:w-1/2 bg-gray-50">
-            {showFreerudraksha ? (
-              <Freerudraksha />
-            ) : showStudyAbroad ? (
-              <StudyAbroad />
-            ) : showFreeSample ? (
-              <FreeSample />
-            ) : showFreeaiandgenai ? (
-              <FreeAiandGenAi />
-            ) : showMachinesManufacturing ? (
-              <MachinesManufacturingServices />
-            ) : showMyRotaryService ? (
-              <MyRotaryServices />
-            ) : showLegalService ? (
-              <LegalService />
-            ) : (
+          
               <>
                 {/* Static Rice Related Text */}
                 <h2
@@ -1040,7 +820,6 @@ const Normal = () => {
                   )}
                 </div>
               </>
-            )}
           </section>
 
           {/* Right Panel */}

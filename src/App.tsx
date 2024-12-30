@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import Erice from "./components/Erice";
 import Landingpage from "./components/Landingpage";
+import Dasboard from "./components/Dashboard";
 import Normal from "./components/Normal";
 import Example from "./components/Example";
 import UserProfileModel from "./components/models/ProfileCallPage";
@@ -29,7 +30,7 @@ import Flow from "./components/Flow";
 import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
 import LegalService from "./components/LegalService";
 import MyRotaryServices from "./components/MyRotary";
-
+import Admin from "./Pages/Admin";
 const App: React.FC = () => {
   return (
     <Router>
@@ -37,6 +38,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
+          <Route path="/admin" element={<Admin />} /> 
 
           {/* <Route path="/vanabhojanam" element={<VanabhojanamSteps />} />
           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
@@ -46,10 +48,11 @@ const App: React.FC = () => {
           <Route path="/freeaiandgenai" element={<FreeAiandGenAi />} />
           <Route path="/studyabroad" element={<StudyAbroad />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Normal />} />
+          <Route path="/dashboard" element={<Dasboard />} />
+          <Route path="/normal" element={<Normal />} />
           <Route path="/meeting" element={<Meeting />} />
           <Route path="/legalservice" element={<LegalService />} />
-          <Route path="/myrotary" element={<MyRotaryServices />} />  
+          <Route path="/myrotary" element={<MyRotaryServices />} />
           <Route
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}

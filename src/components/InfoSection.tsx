@@ -194,7 +194,7 @@ const InfoSection: React.FC = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     // Trigger redirection when Enter is pressed
-                    window.location.href = `/dashboard?${query}`;
+                    window.location.href = `/normal?${query}`;
                   }
                 }}
               />
@@ -202,7 +202,7 @@ const InfoSection: React.FC = () => {
                 className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full hover:bg-blue-600"
                 onClick={() => {
                   // Trigger redirection when the button is clicked
-                  window.location.href = `/dashboard?${query}`;
+                  window.location.href = `/normal?${query}`;
                 }}
               >
                 <FaSearch />

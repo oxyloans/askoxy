@@ -565,9 +565,9 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
           <span className="text-green-600">
-            <span className="text-[#0a6fba]">Oxy</span> Group
+            <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">Companies</span>
+          <span className="text-[#FFA500]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -650,56 +650,7 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
           </div>
         </div>
 
-        <div className="event-container1 ">
-          <div
-            className="event-content1 border-2 rounded-lg p-4 md:p-6 lg:p-8"
-            style={{ borderColor: "#05a446" }}
-          >
-            <div className="diwali-images1">
-              <div className="image-container1 flex justify-center">
-                <img
-                  src={img6}
-                  alt="Diwali Diyas"
-                  className="diwali-diya w-full max-w-xs sm:max-w-sm md:max-w-md"
-                />
-              </div>
-            </div>
-            <div className="event-details text-center mt-4">
-              <h1
-                className="diwali-title1 text-2xl md:text-3xl font-bold"
-                style={{ color: "#05a446" }}
-              >
-                Order . Rice . Online
-              </h1>
-              <h3 className="diwali-subtitle1 font-bold my-4">
-                Free Delivery | All Over Hyderabad
-              </h3>
-              <h3 className="diwali-subtitle1 my-4">
-                All types of rice brands available: Sri Lalitha, Kurnool, RRI,
-                Cow brand, Sree Maateja, Kolam Rice, Surya Teja’s Brand, Gajraj
-                Evergreen, Shubodayam, 5 Star, JSR
-              </h3>
-              <h3 className="diwali-subtitle1 font-bold my-4">
-                Return & Exchange Guarantee | Available Now: Steamed & Raw Rice
-              </h3>
-
-              <div className="buttons mt-6">
-                <a
-                  href="https://erice.in/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button
-                    className="button demo text-white px-6 py-3 rounded-lg"
-                    style={{ backgroundColor: "#05a446" }}
-                  >
-                    Order Rice
-                  </button>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
+      
 
         <div className="event-container1">
           <div className="event-content1" style={{ borderColor: "#583e99" }}>
@@ -784,9 +735,9 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
           >
             <b className="text-green-600">
-              <span className="text-[#0a6fba]">Oxy</span> Group
+              <span className="text-[#0a6fba]">OXY</span> GROUP
             </b>{" "}
-            <span className="text-[#FFA500]">Companies</span>
+            <span className="text-[#FFA500]">COMPANIES</span>
           </h1>
 
           <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">

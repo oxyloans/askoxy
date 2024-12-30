@@ -421,14 +421,14 @@ const HeroSection: React.FC = () => {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       // Trigger redirection when Enter is pressed
-                      window.location.href = `/dashboard?${query}`;
+                      window.location.href = `/normal?${query}`;
                     }
                   }}
                 />
                 <button
                   className="search-button"
                   onClick={() => {
-                    window.location.href = `/dashboard?${query}`;
+                    window.location.href = `/normal?${query}`;
                   }}
                 >
                   <span className="search-icon icons">&#128269;</span>{" "}

@@ -325,14 +325,24 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
           </button>
         </div>
 
-        {/* New GIFs Section */}
-        <div className="flex justify-center mt-4 space-x-5">
-          <div className="w-500 h-500 text-center bg-white shadow-lg p-4 rounded">
-            <img src={ricesample1kgGif} alt="Rice Sample 1kg" />
+        <div className="flex flex-col md:flex-row justify-center mt-4 space-y-6 md:space-y-0 md:space-x-5">
+          {/* Rice Sample 1kg */}
+          <div className="w-full md:w-[450px] h-[350px] text-center bg-white shadow-lg p-4 rounded">
+            <img
+              src={ricesample1kgGif}
+              alt="Rice Sample 1kg"
+              className="w-full h-full object-cover rounded-lg"
+            />
             <h5 className="text-blue-600 font-bold mt-5">Rice Sample 1kg</h5>
           </div>
-          <div className="text-center bg-white shadow-lg p-4 rounded">
-            <img src={ricebag26kgsGif} alt="Rice Bag 26kgs" />
+
+          {/* Rice Bag 26kgs */}
+          <div className="w-full md:w-[450px] h-[350px] text-center bg-white shadow-lg p-4 rounded">
+            <img
+              src={ricebag26kgsGif}
+              alt="Rice Bag 26kgs"
+              className="w-full h-full object-cover rounded-lg"
+            />
             <h5 className="text-blue-600 font-bold mt-5">Rice Bag 26kgs</h5>
           </div>
         </div>
@@ -467,12 +477,13 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
           </div>
         )}
       </div>
+
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
           <span className="text-green-600">
-            <span className="text-[#0a6fba]">Oxy</span> Group
+            <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">Companies</span>
+          <span className="text-[#FFA500]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -545,57 +556,6 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
                     style={{ backgroundColor: "#c26c27" }}
                   >
                     Know More
-                  </button>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="event-container1 ">
-          <div
-            className="event-content1 border-2 rounded-lg p-4 md:p-6 lg:p-8"
-            style={{ borderColor: "#05a446" }}
-          >
-            <div className="diwali-images1">
-              <div className="image-container1 flex justify-center">
-                <img
-                  src={img6}
-                  alt="Diwali Diyas"
-                  className="diwali-diya w-full max-w-xs sm:max-w-sm md:max-w-md"
-                />
-              </div>
-            </div>
-            <div className="event-details text-center mt-4">
-              <h1
-                className="diwali-title1 text-2xl md:text-3xl font-bold"
-                style={{ color: "#05a446" }}
-              >
-                Order . Rice . Online
-              </h1>
-              <h3 className="diwali-subtitle1 font-bold my-4">
-                Free Delivery | All Over Hyderabad
-              </h3>
-              <h3 className="diwali-subtitle1 my-4">
-                All types of rice brands available: Sri Lalitha, Kurnool, RRI,
-                Cow brand, Sree Maateja, Kolam Rice, Surya Teja’s Brand, Gajraj
-                Evergreen, Shubodayam, 5 Star, JSR
-              </h3>
-              <h3 className="diwali-subtitle1 font-bold my-4">
-                Return & Exchange Guarantee | Available Now: Steamed & Raw Rice
-              </h3>
-
-              <div className="buttons mt-6">
-                <a
-                  href="https://erice.in/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button
-                    className="button demo text-white px-6 py-3 rounded-lg"
-                    style={{ backgroundColor: "#05a446" }}
-                  >
-                    Order Rice
                   </button>
                 </a>
               </div>
@@ -686,34 +646,34 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
           >
             <b className="text-green-600">
-              <span className="text-[#0a6fba]">Oxy</span> Group
+              <span className="text-[#0a6fba]">OXY</span> GROUP
             </b>{" "}
-            <span className="text-[#FFA500]">Companies</span>
+            <span className="text-[#FFA500]">COMPANIES</span>
           </h1>
 
-          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">
+          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden min-w-[300px] min-h-[200px]">
             <button
-              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
+              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700"
               onClick={handlePrev}
             >
               ←
             </button>
             <div
               className="flex transition-transform duration-300 ease-in-out"
-              style={{transform: `translateX(-${currentIndex * 100}%)` }}
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {images.map((image, idx) => (
-                <div key={idx} className="flex-shrink-0 w-full">
+                <div key={idx} className="flex-shrink-0 w-full min-w-[300px]">
                   <img
                     src={image.src}
                     alt={image.alt}
-                    className="w-full h-auto"
+                    className="w-full h-auto max-h-[400px] object-cover"
                   />
                 </div>
               ))}
             </div>
             <button
-              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
+              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700"
               onClick={handleNext}
             >
               →
