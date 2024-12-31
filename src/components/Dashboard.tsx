@@ -597,19 +597,22 @@ const Dasboard = () => {
     navigate("/"); // Redirect to the login page
   };
 
-  // Utility function to truncate the text to the first 20 words
-  const truncateText = (text: string, wordLimit: number = 20) => {
-    // Ensure the text is not null or undefined
-    if (!text) {
-      return ""; // Return an empty string if no text is provided
-    }
+ 
 
-    const words = text.split(" ");
-    if (words.length <= wordLimit) {
-      return text;
-    }
-    return words.slice(0, wordLimit).join(" ") + "..."; // Add ellipsis if the text is truncated
-  };
+const truncateText = (
+  text: string | null | undefined,
+  length: number
+): string => {
+  if (!text) {
+    return ""; // Return an empty string if the text is null or undefined
+  }
+  if (text.length <= length) {
+    return text; // Return the text as it is if it's shorter than the specified length
+  }
+  return text.slice(0, length) + "..."; // Truncate text and add ellipsis
+};
+
+
   return (
     <div className="max-h-screen  fixed bg-[#351664] text-white overflow-y-auto  w-full flex flex-col">
       {/* Header */}
@@ -799,21 +802,6 @@ const Dasboard = () => {
                   </span>
                 </button>
               </div>
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleMachinesandManufacturingClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR4} // Replace with the actual image path
-                    alt="Machines and Manufacturing Services"
-                    className="w-7 h-7 rounded-full"
-                  />
-                  <span className=" text-[#3c1973] text-sm leading-tight">
-                    Machines & Manufacturing Services
-                  </span>
-                </button>
-              </div>
 
               <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
                 <button
@@ -827,6 +815,22 @@ const Dasboard = () => {
                   />
                   <span className=" text-[#3c1973] text-sm leading-tight">
                     My Rotary
+                  </span>
+                </button>
+              </div>
+
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handleMachinesandManufacturingClick}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR4} // Replace with the actual image path
+                    alt="Machines and Manufacturing Services"
+                    className="w-7 h-7 rounded-full"
+                  />
+                  <span className=" text-[#3c1973] text-sm leading-tight">
+                    Machines & Manufacturing Services
                   </span>
                 </button>
               </div>
@@ -848,31 +852,10 @@ const Dasboard = () => {
                       className="text-sm text-gray-800"
                       to={`?${encodeURIComponent(item.userQuations)}`}
                     >
-                      {/* Display a truncated version if necessary */}
-                      {truncateText(item.userQuations, 40)}
+                      {/* Truncate text with a minimum of 20 characters */}
+                      {truncateText(item.userQuations, 25)}
                     </Link>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent click event from triggering input update
-                        handleDeleteHistory(index); // Delete the history item
-                      }}
-                      className="text-red-500 hover:text-red-700 ml-2"
-                      title="Delete"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                   
                   </div>
                 ))
               )}

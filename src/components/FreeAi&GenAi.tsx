@@ -21,7 +21,7 @@ import Footer from "./Footer";
 import { Modal, Button, Input, message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import FG from "../assets/img/GEN AI (1).png";
+import FG from "../assets/img/genai.png";
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
 import img3 from "../assets/img/image3.png";
@@ -80,7 +80,7 @@ const FreeAiandGenAi: React.FC = () => {
     useState(false);
   const [savedAddress, setSavedAddress] = useState<string>("");
   const [delivery, setDelivery] = useState<string>("");
-    const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("");
   const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
   const userId = localStorage.getItem("userId");
@@ -147,113 +147,92 @@ const FreeAiandGenAi: React.FC = () => {
       message.error("Failed to submit your interest. Please try again.");
     }
   };
-  
-   const handleSend = () => {
-     if (query.trim()) {
-       // Handle sending the query
-       console.log("User Query:", query);
-       setIsModalOpen(false);
-       setQuery("");
-       alert("Your query has been sent successfully!");
-     } else {
-       alert("Please write a query before submitting.");
-     }
-   };
-   const handleMessage = (action: string) => {
-     if (action === "Write to Us") {
-       console.log("Navigating to 'Write to Us' feature...");
-       window.location.href = "/contact-form";
-     } else if (action === "Chat with Us") {
-       const phoneNumber = "7093485208"; // Replace with your WhatsApp number
-       const message = "Hello, I am interested in your services."; // Replace with your message
-       const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-         message
-       )}`;
-       window.open(url, "_blank");
-     }
-   };
+
+  const handleSend = () => {
+    if (query.trim()) {
+      // Handle sending the query
+      console.log("User Query:", query);
+      setIsModalOpen(false);
+      setQuery("");
+      alert("Your query has been sent successfully!");
+    } else {
+      alert("Please write a query before submitting.");
+    }
+  };
+ 
   return (
     <div>
-      <div className="bg-gray-100">
-        <header className="header text-center">
-          <h3 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
-            <strong>
-              Free AI and Gen AI Training: Unlock the Power of Artificial
-              Intelligence
-            </strong>
-          </h3>
+      <div>
+        <header className="relative p-4 bg-gray-50">
+          <div className="flex justify-between items-center">
+            {/* Empty space on the left */}
+            <div className="hidden md:block w-1/3"></div>
+
+            {/* Title in the center */}
+            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-base md:text-lg lg:text-xl">
+              FREE AI & GEN AI TRAINING
+            </h3>
+
+            {/* Buttons on the right */}
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              {/* Button: I'm Interested */}
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+                onClick={() => setIsModalOpen(true)}
+                aria-label="Visit our site"
+              >
+                I'm Interested
+              </button>
+
+              {/* Button: Write To Us */}
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+                aria-label="Write To Us"
+              >
+                Write To Us
+              </button>
+            </div>
+          </div>
         </header>
+
         {/* Main Content */}
-        <div className="worlds flex justify-center mt-8">
-          <section className="spiritual-world text-center mx-4">
-            <img src={FG} alt="FREE AI & GEN AI" className="world-image" />
-          </section>
-        </div>
-        <div className=" p-3 space-y-6">
-          {/* Offer Heading */}
-          <div className="text-center">
-            <strong style={{ color: "#6A1B9A", fontSize: "24px" }}>
-              Our Offer: FREE AI & GEN AI TRAINING
-            </strong>
+
+        <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4">
+          {/* Left Section: Image */}
+          <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
+            <img src={FG} alt="My Rotarian" />
+          </div>
+
+          {/* Right Section: Text */}
+          <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
+            {/* Offer Heading */}
+            <div className="text-center md:text-left p-3 space-y-6">
+              <strong className="text-[#6A1B9A] text-[24px]">
+                Our Offer: Free AI & Gen AI Training
+              </strong>
+            </div>
+
+            {/* Details */}
+            <div className="space-y-4 text-gray-800">
+              <p>
+                <strong>Unlock your career potential</strong> with ASKOXY.AI’s
+                free AI & Generative AI training, combined with Java and
+                Microservices expertise.{" "}
+                <strong>Open to all graduates, pass or fail</strong>, this
+                program empowers freshers to land their first job and
+                experienced professionals to achieve high-salary roles. 🎓
+              </p>
+              <p>
+                Gain hands-on experience with free project training, guided by
+                visionary leader <strong>Radhakrishna Thatavarti</strong>,
+                Founder & CEO of ASKOXY.AI. 🚀{" "}
+                <strong>Transform your future today!</strong> 🌐
+              </p>
+            </div>
           </div>
         </div>
-        <div className="details">
-          <strong>
-            🌟 Unlock your career potential with ASKOXY.AI’s free AI &
-            Generative AI training, combined with Java and Microservices
-            expertise. 🎓 Open to all graduates, pass or fail, this program
-            empowers freshers to land their first job and experienced
-            professionals to achieve high-salary roles. 💼 Gain hands-on
-            experience with free project training, guided by visionary leader
-            Radhakrishna Thatavarti, Founder & CEO of ASKOXY.AI. 🚀 Transform
-            your future today! 🌐
-          </strong>
-        </div>
-        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8 justify-center">
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaUniversity className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">
-            3000+ Students
-          </h3>
-          <p className="text-center text-black text-sm">
-            Availed this platform and currently studying in universities abroad
-          </p>
-        </div>
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaGlobe className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">
-            150+ Recruiters
-          </h3>
-          <p className="text-center text-black text-sm">
-            Support in mapping students to the university and have registered
-            85% accuracy in mapping
-          </p>
-        </div>
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaPlane className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">
-            100+ Universities
-          </h3>
-          <p className="text-center text-black text-sm">
-            Spread across the UK, Europe, US, Canada, Australia, Newzealand
-          </p>
-        </div>
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaBook className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">Free</h3>
-          <p className="text-center text-black text-sm">
-            Life time Access to students
-          </p>
-        </div>
-      </div> */}
+
         <div className="flex justify-center mt-8 space-x-10">
-          <button
-            className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-            onClick={() => setIsModalOpen(true)}
-            aria-label="Visit our site"
-          >
-            I'm interested
-          </button>
           <a
             href="https://sites.google.com/view/globalecommercemarketplace/home" // Replace with your Google site link
             target="_blank"
@@ -267,71 +246,7 @@ const FreeAiandGenAi: React.FC = () => {
             </button>
           </a>
         </div>
-        <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
-          {/* Write to Us Button */}
-          <button
-            onClick={() => setIsModalOpen1(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-          >
-            <img
-              src={Image5} // Replace with your icon path or fallback
-              alt="Write to Us"
-              className="w-6 h-6 mr-2"
-            />
-            <span className="font-medium text-sm md:text-base">
-              Write to Us
-            </span>
-          </button>
 
-          {/* Modal */}
-          {isModalOpen1 && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
-                {/* Modal content */}
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                  Write to Us
-                </h2>
-                <textarea
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full border text-black border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Write your query here..."
-                />
-                <div className="mt-4 flex justify-end space-x-4">
-                  <button
-                    onClick={() => setIsModalOpen1(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSend}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Chat with Us Button */}
-          <button
-            onClick={() => handleMessage("Chat with Us")}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-          >
-            {/* <img
-                      src={Image4 || "/default-icon.png"} // Replace with your fallback icon path if needed
-                      alt="Chat with Us"
-                      className="w-6 h-6 mr-2"
-                    /> */}
-            <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />{" "}
-            {/* Adjust size and spacing */}
-            <span className="font-medium text-sm md:text-base">
-              Chat with Us
-            </span>
-          </button>
-        </div>
         <h1 className="text-gray-100">{"hello "}</h1>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

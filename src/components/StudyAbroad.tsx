@@ -184,13 +184,37 @@ const handleSubmit = async () => {
  return (
    <div>
      <div>
-       <header className="header text-center">
-         <h3 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
-           <strong>
-             World's 1<sup>st</sup> AI & Blockchain based platform for
-             university admissions
-           </strong>
-         </h3>
+       <header className="relative p-4 bg-gray-50">
+         {/* Container for layout */}
+         <div className="flex justify-between items-center">
+           {/* Empty space on the left */}
+           <div className="hidden md:block w-1/3"></div>
+
+           {/* Centered Title */}
+           <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm md:text-base lg:text-lg leading-relaxed flex-grow">
+             <strong>
+               World's 1<sup>st</sup> AI & Blockchain based platform for
+               university admissions
+             </strong>
+           </h3>
+
+           {/* Buttons on the right */}
+           <div className="flex flex-col md:flex-row gap-1 items-center">
+             <button
+               className="px-2 py-1 text-sm md:text-base  bg-green-600 text-white rounded-md hover:bg-green-700 shadow-md transition-all"
+               onClick={() => setIsModalOpen(true)}
+               aria-label="Visit our site"
+             >
+               I'm Interested
+             </button>
+             <button
+               className="px-2 py-1 text-sm md:text-base  bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-md transition-all"
+               aria-label="Write To Us"
+             >
+               Write To Us
+             </button>
+           </div>
+         </div>
        </header>
 
        {/* Main Content */}
@@ -286,40 +310,6 @@ const handleSubmit = async () => {
              Lifetime Access to students
            </p>
          </div>
-       </div>
-
-       {/* Button Section */}
-       <div className="flex justify-center mt-8">
-         <button
-           className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-           onClick={() => setIsModalOpen(true)}
-           aria-label="Visit our site"
-         >
-           I'm interested!
-         </button>
-       </div>
-
-       {/* Floating Chat & Write to Us */}
-       <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
-         {/* Write to Us Button */}
-         <button
-           onClick={() => setIsModalOpen1(true)}
-           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-         >
-           <img src={Image5} alt="Write to Us" className="w-6 h-6 mr-2" />
-           <span className="font-medium text-sm md:text-base">Write to Us</span>
-         </button>
-
-         {/* Chat with Us Button */}
-         <button
-           onClick={() => handleMessage("Chat with Us")}
-           className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-         >
-           <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />
-           <span className="font-medium text-sm md:text-base">
-             Chat with Us
-           </span>
-         </button>
        </div>
 
        {isModalOpen && (

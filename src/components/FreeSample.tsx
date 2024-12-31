@@ -1,27 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import axios from "axios";
 import { BiLogoPlayStore } from "react-icons/bi";
-import {
-  FaMapMarkerAlt,
-  FaUniversity,
-  FaGlobe,
-  FaPlane,
-  FaBook,
-} from "react-icons/fa"; // Import icons
-import { FaSquareWhatsapp } from "react-icons/fa6";
-import TeluguShiva from "../assets/img/telugu.png";
-import EnglishShiva from "../assets/img/english.png";
-import Image1 from "../assets/img/WEBSITE.png";
-import FR from "../assets/img/ricesample (1).png";
-import Image3 from "../assets/img/images.png";
-import Image4 from "../assets/img/chat-icon-2048x2048-i7er18st.png";
-import Image2 from "../assets/img/R2.png";
+
+import FR from "../assets/img/ricesample (2).png";
+
 import Footer from "./Footer";
 import { Modal, Button, Input, message } from "antd";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+
 
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -29,8 +16,8 @@ import img3 from "../assets/img/image3.png";
 import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/soon.png";
-import ricesample1kgGif from "../assets/img/ricesample1kg.gif";
-import ricebag26kgsGif from "../assets/img/ricebag26kgsGif.gif";
+import ricesample1kgGif from "../assets/img/ricesample1kg (1).gif";
+import ricebag26kgsGif from "../assets/img/ricebag26kgsGif (1).gif";
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -56,46 +43,12 @@ const FreeSample: React.FC = () => {
     }
   };
 
-  const goToPrevious = () => {
-    const isFirstImage = currentIndex === 0;
-    const newIndex = isFirstImage ? images.length - 1 : currentIndex - 1;
-    setCurrentIndex(newIndex);
-  };
 
-  const goToNext = () => {
-    const isLastImage = currentIndex === images.length - 1;
-    const newIndex = isLastImage ? 0 : currentIndex + 1;
-    setCurrentIndex(newIndex);
-  };
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [address, setAddress] = useState<string>("");
-    const [query, setQuery] = useState("");
-  const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [modalType, setModalType] = useState<string>("");
-  const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isConfirmVisible, setIsConfirmVisible] = useState<boolean>(false);
-  const storedPhoneNumber = localStorage.getItem("whatsappNumber");
-  // Fetch user ID from storage if needed.
-  const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
-  const [firstRequestDate, setFirstRequestDate] = useState("");
-  const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] =
-    useState(false);
-  const [savedAddress, setSavedAddress] = useState<string>("");
-  const [delivery, setDelivery] = useState<string>("");
+ 
 const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
   const userId = localStorage.getItem("userId");
-  console.log(userId);
-  const handleWhatsappClick = () => {
-    const phoneNumber = "YOUR_WHATSAPP_NUMBER"; // Replace with your WhatsApp number
-    const message = "Hello, I am interested in your services."; // Replace with your message
-    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
-    window.open(url, "_blank");
-  };
+
 
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
@@ -104,17 +57,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
     projectType: "ASKOXY",
   });
   
-   const handleSend = () => {
-     if (query.trim()) {
-       // Handle sending the query
-       console.log("User Query:", query);
-       setIsModalOpen(false);
-       setQuery("");
-       alert("Your query has been sent successfully!");
-     } else {
-       alert("Please write a query before submitting.");
-     }
-   };
+
  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
    const { name, value } = e.target;
    setFormData({ ...formData, [name]: value });
@@ -162,172 +105,47 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
      message.error("Failed to submit your interest. Please try again.");
    }
   };
-  
-   const handleMessage = (action: string) => {
-     if (action === "Write to Us") {
-       console.log("Navigating to 'Write to Us' feature...");
-       window.location.href = "/contact-form";
-     } else if (action === "Chat with Us") {
-       console.log("Opening WhatsApp chat...");
-       window.open(
-         "https://wa.me/<7093485208>?text=Hi, I need assistance!",
-         "_blank"
-       );
-     }
-   };
+
 
  
   return (
     <div>
       <div>
-        <header className="header text-center">
-          <h3 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
-            <strong>
-              Order Rice Online – Free Rice Samples & Steel Container from
-              OxyRice{" "}
-            </strong>
-          </h3>
+        <header className="relative p-4 bg-gray-50">
+          <div className="flex justify-between items-center">
+            {/* Empty space on the left */}
+            <div className="hidden md:block w-1/3"></div>
+
+            {/* Title in the center */}
+            <h3 className="text-[rgba(91,5,200,0.85)] font-bold text-base md:text-lg lg:text-xl text-center leading-relaxed">
+              <strong>Free Rice Samples & Steel Container</strong>
+            </h3>
+
+            {/* Buttons on the right */}
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              {/* Button: I'm Interested */}
+              <button
+                className="px-4 py-2 text-sm md:text-base lg:text-lg bg-green-600 text-white rounded-md hover:bg-green-700 shadow-lg transition-all"
+                onClick={() => setIsModalOpen(true)}
+                aria-label="Visit our site"
+              >
+                I'm Interested
+              </button>
+
+              {/* Button: Write To Us */}
+              <button
+                className="px-4 py-2 text-sm md:text-base lg:text-lg bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-lg transition-all"
+                aria-label="Write To Us"
+              >
+                Write To Us
+              </button>
+            </div>
+          </div>
         </header>
-
-        {/* Main Content */}
-        <div className="worlds flex justify-center mt-8">
-          <section className="spiritual-world text-center mx-4">
-            <img src={FR} alt="Spiritual World" className="world-image" />
-          </section>
-        </div>
-
-        {/* Details Section */}
-
-        <div className="details p-3 space-y-6">
-          {/* Offer Heading */}
-          <div className="text-center mt-4">
-            <strong style={{ color: "purple", fontSize: "24px" }}>
-              Our Offer: Free Rice Sample and Steel Container
-            </strong>
-          </div>
-
-          {/* Offer Details Section */}
-          {/* <div className="text-left">
-            <strong className="text-purple-600 text-xl">Offer Details</strong>
-            <p>
-              Purchase any rice bag and receive a free steel container
-              proportional to your purchase:
-            </p>
-            <ul className="list-disc ml-6">
-              <li>
-                <strong>1 kg rice bag</strong>: Free <strong>1+ kg</strong>{" "}
-                steel container
-              </li>
-              <li>
-                <strong>5 kg rice bag</strong>: Free <strong>5+ kg</strong>{" "}
-                steel container
-              </li>
-              <li>
-                <strong>10 kg rice bag</strong>: Free <strong>10+ kg</strong>{" "}
-                steel container
-              </li>
-              <li>
-                <strong>26 kg rice bag</strong>: Free <strong>26+ kg</strong>{" "}
-                steel container
-              </li>
-            </ul>
-            <br></br>
-            <strong className="text-purple-600 text-xl">
-              Container Policy
-            </strong>
-            <ul className="list-disc ml-6">
-              <li>
-                The container delivery will take time as it is ordered based on
-                demand.
-              </li>
-              <li>
-                The container remains the property of OXY Group and is provided
-                as a free asset for your usage, as long as you continue
-                purchasing rice from us.
-              </li>
-            </ul>
-
-            <strong className="text-purple-600 text-xl">
-              Usage and Recovery Terms
-            </strong>
-            <ul className="list-disc ml-6">
-              <li>
-                If no purchase is made within <strong>45 days</strong>, you will
-                receive an alert.
-              </li>
-              <li>
-                If no purchase is made within <strong>60 days</strong>,{" "}
-                <strong>
-                  OXY Group reserves the right to recover the container
-                </strong>
-                .
-              </li>
-            </ul>
-          </div> */}
-
-          <div className="details mt-4">
-            <strong>
-              ASKOXY.AI offers an exclusive deal: get 1 KG of free rice samples
-              with a free steel container. This sleek container ensures
-              freshness and sustainability, reflecting ASKOXY.AI's commitment to
-              quality. Download the app now from the App Store or Google Play by
-              scanning the QR code and enjoy premium rice ordering online!
-            </strong>
-          </div>
-        </div>
-
-        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8 justify-center">
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaUniversity className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">
-            3000+ Students
-          </h3>
-          <p className="text-center text-black text-sm">
-            Availed this platform and currently studying in universities abroad
-          </p>
-        </div>
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaGlobe className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">
-            150+ Recruiters
-          </h3>
-          <p className="text-center text-black text-sm">
-            Support in mapping students to the university and have registered
-            85% accuracy in mapping
-          </p>
-        </div>
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaPlane className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">
-            100+ Universities
-          </h3>
-          <p className="text-center text-black text-sm">
-            Spread across the UK, Europe, US, Canada, Australia, Newzealand
-          </p>
-        </div>
-        <div className="p-2 border rounded-lg shadow-md flex flex-col items-center">
-          <FaBook className="w-12 h-12 mb-2 text-purple-600" />
-          <h3 className="text-center font-bold mb-1 text-black">Free</h3>
-          <p className="text-center text-black text-sm">
-            Life time Access to students
-          </p>
-        </div>
-      </div> */}
-
-        {/* Button Section */}
-        <div className="flex justify-center">
-          <button
-            className="w-52 h-12 mb-4 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-            onClick={() => setIsModalOpen(true)}
-            aria-label="Visit our site"
-          >
-            I'm interested
-          </button>
-        </div>
 
         <div className="flex flex-col md:flex-row justify-center mt-4 space-y-6 md:space-y-0 md:space-x-5">
           {/* Rice Sample 1kg */}
-          <div className="w-full md:w-[450px] h-[350px] text-center bg-white shadow-lg p-4 rounded">
+          <div className="w-full md:w-[450px] h-[450px] text-center bg-white shadow-lg p-4 rounded">
             <img
               src={ricesample1kgGif}
               alt="Rice Sample 1kg"
@@ -337,7 +155,7 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
           </div>
 
           {/* Rice Bag 26kgs */}
-          <div className="w-full md:w-[450px] h-[350px] text-center bg-white shadow-lg p-4 rounded">
+          <div className="w-full md:w-[450px] h-[450px] text-center bg-white shadow-lg p-4 rounded">
             <img
               src={ricebag26kgsGif}
               alt="Rice Bag 26kgs"
@@ -347,102 +165,69 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
           </div>
         </div>
 
-        {/* Playstore Button */}
-        <div className="flex justify-center mt-4">
-          <a
-            href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-52 h-12 mt-4 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-800 transition-all flex items-center justify-center"
-          >
-            <BiLogoPlayStore className="w-6 h-6 mr-2" />
-            Download App
-          </a>
+        {/* Details Section */}
+        <div className="flex flex-col md:flex-row items-center justify-center mt-10 px-4">
+          {/* Left Section: Image */}
+          <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
+            <img src={FR} alt="Free Sample" />
+          </div>
+
+          {/* Right Section: Text */}
+          <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
+            {/* Offer Heading */}
+            <div className="text-center md:text-left p-3 space-y-6">
+              <strong className="text-[#6A1B9A] text-[24px]">
+                Free Rice Samples & Steel Container
+              </strong>
+            </div>
+
+            {/* Details */}
+            <div className="space-y-4 text-gray-800">
+              <p>
+                <strong>ASKOXY.AI</strong> offers an exclusive deal: get{" "}
+                <strong>1 KG of free rice samples</strong> with a{" "}
+                <strong>free steel container</strong>. This sleek container
+                ensures freshness and sustainability, reflecting{" "}
+                <strong>ASKOXY.AI's commitment to quality</strong>.{" "}
+                <strong>Download the app now</strong> from the{" "}
+                <strong>App Store or Google Play</strong> by scanning the QR
+                code, and enjoy premium rice ordering online!
+              </p>
+            </div>
+
+            {/* Playstore Button */}
+            <div className="flex justify-center mt-6">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-52 h-12 mt-4 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-800 transition-all flex items-center justify-center"
+              >
+                <BiLogoPlayStore className="w-6 h-6 mr-2" />
+                Download App
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* New Image Section */}
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center mt-8">
           <img
             src={img6} // Replace with the actual image path
             alt="New Image"
-            style={{ width: "1000px", height: "300px", objectFit: "contain" }}
+            className="w-full max-w-5xl h-auto object-contain"
           />
         </div>
 
-        <h1 className="text-gray-100">{"hello "}</h1>
-        <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
-          {/* Write to Us Button */}
-          <button
-            onClick={() => setIsModalOpen1(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-          >
-            <img
-              src={Image3} // Replace with your icon path or fallback
-              alt="Write to Us"
-              className="w-6 h-6 mr-2"
-            />
-            <span className="font-medium text-sm md:text-base">
-              Write to Us
-            </span>
-          </button>
-
-          {/* Modal */}
-          {isModalOpen1 && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
-                {/* Modal content */}
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                  Write to Us
-                </h2>
-                <textarea
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full border text-black border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Write your query here..."
-                />
-                <div className="mt-4 flex justify-end space-x-4">
-                  <button
-                    onClick={() => setIsModalOpen1(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSend}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Chat with Us Button */}
-          <button
-            onClick={() => handleMessage("Chat with Us")}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-          >
-            {/* <img
-                     src={Image4 || "/default-icon.png"} // Replace with your fallback icon path if needed
-                     alt="Chat with Us"
-                     className="w-6 h-6 mr-2"
-                   /> */}
-            <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />{" "}
-            {/* Adjust size and spacing */}
-            <span className="font-medium text-sm md:text-base">
-              Chat with Us
-            </span>
-          </button>
-        </div>
+        {/* Modal Section */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
+            <div className="bg-white p-6 rounded shadow-lg w-11/12 md:w-96">
               <h2 className="text-xl font-semibold mb-4">Enter Your Details</h2>
               <div className="space-y-4">
                 <label className="text-black">
                   Enter your mobile number
-                  <span style={{ color: "red" }}>*</span>
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -494,6 +279,9 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
               </div>
             </div>
             <div className="event-details">
+              {/* <h2 className="subtitle2" >
+                Oxyloans is a P2P NBFC
+              </h2> */}
               <h1 className="diwali-title1" style={{ color: "#0a6fba" }}>
                 Lend & Earn 1.5% - 2.5% Monthly RoI
               </h1>
@@ -651,9 +439,9 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
             <span className="text-[#FFA500]">COMPANIES</span>
           </h1>
 
-          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden min-w-[300px] min-h-[200px]">
+          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">
             <button
-              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700"
+              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
               onClick={handlePrev}
             >
               ←
@@ -663,17 +451,17 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {images.map((image, idx) => (
-                <div key={idx} className="flex-shrink-0 w-full min-w-[300px]">
+                <div key={idx} className="flex-shrink-0 w-full">
                   <img
                     src={image.src}
                     alt={image.alt}
-                    className="w-full h-auto max-h-[400px] object-cover"
+                    className="w-full h-auto"
                   />
                 </div>
               ))}
             </div>
             <button
-              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700"
+              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
               onClick={handleNext}
             >
               →

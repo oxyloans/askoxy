@@ -118,7 +118,7 @@ const InfoSection: React.FC = () => {
           className="mb-4 text-2xl font-bold text-purple-700 md:text-3xl"
           style={{ textAlign: "center" }}
         >
-          OxyGroup Companies
+          Oxy Group Companies
         </h2>
         <div className="carousel-container">
           <button className="carousel-button prev-button" onClick={handlePrev}>

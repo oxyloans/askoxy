@@ -19,6 +19,8 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+     <link rel="stylesheet" href="https://www.gstatic.com/dialogflow-console/fast/df-messenger/prod/v1/themes/df-messenger-default.css">
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
@@ -50,6 +52,33 @@
   <body>
     <noscript></noscript>
     <div id="root"></div>
+
+
+    <!-- Your page content here -->
+
+  <!-- Dialogflow Messenger -->
+  <df-messenger
+    project-id="quickstart-1561796633673"
+    agent-id="ec2e5708-36d9-4079-bc5b-31987153a564"
+    language-code="en"
+    max-query-length="-1">
+    <df-messenger-chat-bubble chat-title="Chat"></df-messenger-chat-bubble>
+  </df-messenger>
+
+  <script src="https://www.gstatic.com/dialogflow-console/fast/df-messenger/prod/v1/df-messenger.js"></script>
+  <style>
+    df-messenger {
+      z-index: 999;
+      position: fixed;
+      --df-messenger-font-color: #000;
+      --df-messenger-font-family: Google Sans;
+      --df-messenger-chat-background: #f3f6fc;
+      --df-messenger-message-user-background: #d3e3fd;
+      --df-messenger-message-bot-background: #fff;
+      bottom: 16px;
+      right: 16px;
+    }
+  </style>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.

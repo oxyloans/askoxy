@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+const navigate = useNavigate; 
 
 interface OfferDetails {
   id: string | null;
@@ -59,9 +61,12 @@ const Admin: React.FC = () => {
             </button>
           </li>
           <li className="mb-4">
-            <button className="w-full text-left py-2 px-4 hover:bg-gray-700 rounded">
-              Users
-            </button>
+            <Link
+              to="/alluserqueries"
+              className="w-full text-left py-2 px-4 hover:bg-gray-700 rounded"
+            >
+              Users Queries
+            </Link>
           </li>
         </ul>
       </div>

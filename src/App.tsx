@@ -30,6 +30,7 @@ import Flow from "./components/Flow";
 import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
 import LegalService from "./components/LegalService";
 import MyRotaryServices from "./components/MyRotary";
+import AllQueriesforAdmin from "./components/UserQueries";
 import Admin from "./Pages/Admin";
 const App: React.FC = () => {
   return (
@@ -39,7 +40,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
           <Route path="/admin" element={<Admin />} /> 
-
+          <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />   
           {/* <Route path="/vanabhojanam" element={<VanabhojanamSteps />} />
           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
           {/* <Route path="/rudraksha" element={<RudrakshaSteps />} /> */}

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Header1 from "./Header1";
 import Footer from "./Footer";
+import Legal from '../assets/img/legal.png';  
 import Example from "./Example";
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -98,40 +99,94 @@ const LegalService: React.FC = () => {
   return (
     <>
       <div className="text-center">
-        <div className="p-8">
-          <h1 className="text-4xl font-semibold text-purple-700">
-            Legal Service
-          </h1>
-          {/* <h1 className="text-2xl text-orange-500">
-      DTDC Approved Villa Plots Venture
-    </h1> */}
+        <div className="p-8 relative">
+          {/* Layout container */}
+          <div className="flex justify-between items-center">
+            {/* Empty space on the left */}
+            <div className="hidden md:block w-1/3"></div>
+
+            {/* Centered Title */}
+            <h1 className="text-center text-4xl font-semibold text-purple-700 flex-grow">
+              Legal Service
+            </h1>
+
+            {/* Buttons on the right */}
+            <div className="flex flex-col md:flex-row gap-2 items-center">
+              <button
+                className="px-4 py-2 text-base md:text-lg lg:text-xl bg-green-600 text-white rounded-md hover:bg-green-700 shadow-lg transition-all"
+                onClick={() => setIsModalOpen(true)}
+                aria-label="Visit our site"
+              >
+                I'm Interested
+              </button>
+              <button
+                className="px-4 py-2 text-base md:text-lg lg:text-xl bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-lg transition-all"
+                aria-label="Write To Us"
+              >
+                Write To Us
+              </button>
+            </div>
+          </div>
         </div>
 
-        {isLoading && (
+        <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4">
+          {/* Left Section: Image */}
+          <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
+            <img src={Legal} alt="My Rotarian" />
+          </div>
+
+          {/* Right Section: Text */}
+          <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
+            {/* Welcome Heading */}
+            <div className="text-center md:text-left">
+              <strong className="text-[24px] text-[#6A1B9A]">
+                Welcome, Lawyers and Advocates! 2X Your Revenue with AskOxy.ai
+              </strong>
+            </div>
+
+            {/* Details */}
+            <div className=" space-y-4 text-gray-800">
+              <ul className="list-disc pl-6">
+                <li>
+                  <strong>Grow Your Client Base:</strong> Connect with users
+                  actively seeking legal guidance and cases.
+                </li>
+                <li>
+                  <strong>2X Your Revenue:</strong> Maximize your earning
+                  potential through increased visibility and more cases.
+                </li>
+                <li>
+                  <strong>Share Expertise:</strong> Publish legal insights to
+                  educate and establish your authority.
+                </li>
+                <li>
+                  <strong>Collaborate on Legal Publications:</strong> Partner
+                  with professionals to create impactful content.
+                </li>
+                <li>
+                  <strong>Expand Your Network:</strong> Be part of a vibrant,
+                  trusted platform for lawyers and advocates.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* {isLoading && (
           <div className="flex justify-center">
             <Example variant="loading01" />
           </div>
-        )}
+        )} */}
 
-        <div className="flex justify-center items-center my-8">
+        <div className="flex justify-center items-center my-14">
           <iframe
             src="https://drive.google.com/file/d/11AI-em7upR9UVcec1mFuxmIPh1Cfx0Ai/preview"
             frameBorder="0"
             height="1000px"
-            width="80%"
+            width="70%"
             title="PDF Viewer"
             onLoad={handleLoad} // Set loading state to false when the iframe loads
           />
-        </div>
-
-        <div className="flex justify-center mt-8">
-          <button
-            className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-            onClick={() => setIsModalOpen(true)}
-            aria-label="Visit our site"
-          >
-            I'm interested
-          </button>
         </div>
       </div>
 

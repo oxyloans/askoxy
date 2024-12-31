@@ -1,21 +1,17 @@
-
-
-
-
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./Freerudraksha.css";
 import "./DiwaliPage.css";
-import axios from 'axios';
+import axios from "axios";
 import { FaMapMarkerAlt } from "react-icons/fa";
 
-import TeluguShiva from '../assets/img/telugu.png'
-import EnglishShiva from '../assets/img/english.png'
-import Image1 from '../assets/img/WEBSITE (1).png'
-import Image2 from '../assets/img/R2.png'
-import Image3 from '../assets/img/images.png'
-import Image4 from '../assets/img/chat-icon-2048x2048-i7er18st.png'
+import TeluguShiva from "../assets/img/telugu.png";
+import EnglishShiva from "../assets/img/english.png";
+import Image1 from "../assets/img/WEBSITE (1).png";
+import Image2 from "../assets/img/R2.png";
+import Image3 from "../assets/img/images.png";
+import Image4 from "../assets/img/chat-icon-2048x2048-i7er18st.png";
 import Footer from "./Footer";
-import { Modal, Button, Input,message } from "antd";
+import { Modal, Button, Input, message } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
@@ -37,8 +33,6 @@ const images = [
 ];
 
 const Freerudraksha: React.FC = () => {
-
-
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNext = () => {
@@ -57,7 +51,7 @@ const Freerudraksha: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [address, setAddress] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  
+
   const [modalType, setModalType] = useState<string>("");
   const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -66,14 +60,15 @@ const Freerudraksha: React.FC = () => {
   // Fetch user ID from storage if needed.
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
   const [firstRequestDate, setFirstRequestDate] = useState("");
-  const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] = useState(false);
-  const [savedAddress, setSavedAddress] = useState<string>('');
-  const [delivery, setDelivery] = useState<string>('');
+  const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] =
+    useState(false);
+  const [savedAddress, setSavedAddress] = useState<string>("");
+  const [delivery, setDelivery] = useState<string>("");
 
   const [query, setQuery] = useState("");
-const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
+  const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const userId = localStorage.getItem("userId");
-  console.log(userId)
+  console.log(userId);
   const handleWhatsappClick = () => {
     if (storedPhoneNumber) {
       setPhoneNumber(storedPhoneNumber);
@@ -84,43 +79,41 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
     }
   };
 
-
-
-   const handleSend = () => {
-     if (query.trim()) {
-       // Handle sending the query
-       console.log("User Query:", query);
-       setIsModalOpen(false);
-       setQuery("");
-       alert("Your query has been sent successfully!");
-     } else {
-       alert("Please write a query before submitting.");
-     }
-   };
+  const handleSend = () => {
+    if (query.trim()) {
+      // Handle sending the query
+      console.log("User Query:", query);
+      setIsModalOpen(false);
+      setQuery("");
+      alert("Your query has been sent successfully!");
+    } else {
+      alert("Please write a query before submitting.");
+    }
+  };
   const whatsappNumber = "9160463697";
 
-   const handleMessage = (action: string) => {
-     if (action === "Write to Us") {
-       console.log("Navigating to 'Write to Us' feature...");
+  const handleMessage = (action: string) => {
+    if (action === "Write to Us") {
+      console.log("Navigating to 'Write to Us' feature...");
       //  window.location.href = "/contact-form";
-     } else if (action === "Chat with Us") {
-       console.log("Opening WhatsApp chat...");
+    } else if (action === "Chat with Us") {
+      console.log("Opening WhatsApp chat...");
       const message = `Hi`;
       const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
         message
       )}`;
       window.open(url, "_blank");
-     }
-   };
+    }
+  };
 
   const officeDetails = {
-    address: "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
+    address:
+      "CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad, Telangana 500085",
 
-    VisitTimings:"Monday to Friday, 10:00 AM to 6:00 PM",  
+    VisitTimings: "Monday to Friday, 10:00 AM to 6:00 PM",
     googleMapLink: "https://maps.app.goo.gl/MC1EmbY4DSdFcpke9",
     contact: "099668 88825",
   };
-
 
   const fetchUserAddress = async () => {
     try {
@@ -131,9 +124,9 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
       if (response.ok) {
         const data = await response.json();
         console.log(data);
-        console.log(address)
-        setSavedAddress(address); 
-        setDelivery(delivery)// Assuming the API response has the address under 'address' key
+        console.log(address);
+        setSavedAddress(address);
+        setDelivery(delivery); // Assuming the API response has the address under 'address' key
         setModalType("success"); // Move to address confirmation modal
       } else {
         message.error("Failed to fetch saved address. Please try again.");
@@ -153,10 +146,11 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
     }
     if (hasSubmitted) {
       // If the user has already submitted once, show the message with first request date
-      message.info(`We have received your first request on ${firstRequestDate}". Every user can participate only once!`);
+      message.info(
+        `We have received your first request on ${firstRequestDate}". Every user can participate only once!`
+      );
       return; // Prevent submitting again
     }
-   
 
     const endpoint =
       "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
@@ -190,15 +184,15 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const handleConfirmPhone = () => {
     setModalType("addressEntry"); // Move to address entry modal
   };
-   // Handle address confirmation
-   const handleConfirmAddress = () => {
+  // Handle address confirmation
+  const handleConfirmAddress = () => {
     setIsModalOpen(false); // Close the modal
     message.success("Address confirmed successfully!");
   };
 
   // Fetch the saved address and submission status when the component mounts
-   // Fetch the saved address and submission status when the component mounts
-   useEffect(() => {
+  // Fetch the saved address and submission status when the component mounts
+  useEffect(() => {
     const savedHasSubmitted = localStorage.getItem(`${userId}_hasSubmitted`);
     const savedDate = localStorage.getItem(`${userId}_firstRequestDate`);
 
@@ -208,16 +202,18 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
       setFirstRequestDate(savedDate);
     }
   }, [userId]);
-  
 
   const submitRequest = async (deliveryType: string) => {
     if (hasSubmitted) {
       // If the user has already submitted once, show the message with first request date
-      message.info(`We have received your first request on ${firstRequestDate}`);
+      message.info(
+        `We have received your first request on ${firstRequestDate}`
+      );
       return; // Prevent submitting again
     }
-   
-    const endpoint = "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
+
+    const endpoint =
+      "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
     const payload = { userId, deliveryType };
 
     try {
@@ -264,19 +260,41 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   };
   return (
     <div>
-      <header className="header text-center">
-        <h1 style={{ color: "rgba(91, 5, 200, 0.85)" }}>
-          <strong>The Two Worlds</strong>
-        </h1>
+      <header className="header relative p-4 md:p-6 lg:p-8 bg-gray-50">
+        {/* Title and Buttons Container */}
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between">
+          {/* Title */}
+          <h1 className="text-left md:text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-6 md:mb-0"></h1>
+          <h1 className="text-center md:text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-6 md:mb-0">
+            The Two Worlds
+          </h1>
+
+          {/* Buttons */}
+          <div className="flex flex-col md:flex-row justify-center md:justify-end items-center gap-4">
+            <button
+              className="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 text-sm md:text-base lg:text-lg transition duration-300"
+              aria-label="Write To Us"
+            >
+              Write To Us
+            </button>
+            {/* Uncomment below button if needed */}
+            {/* <button
+        className="w-full md:w-auto px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 text-sm md:text-base lg:text-lg transition duration-300"
+        aria-label="Chat With Us"
+      >
+        Chat With Us
+      </button> */}
+          </div>
+        </div>
       </header>
 
       {/* Main Content */}
       <div className="worlds flex justify-center mt-8">
         <section className="spiritual-world text-center mx-4">
-          <h2 id="h2" style={{ fontWeight: "bold" }}>
+          <h2 id="h2" style={{ fontWeight: "bold"}}>
             Spiritual World
           </h2>
-          <img src={Image1} alt="Spiritual World" className="world-image" />
+          <img src={Image1} alt="Spiritual World" className="world-image w-103 h-100" />
         </section>
         <section className="ai-world text-center mx-4">
           <h2 id="h2" style={{ fontWeight: "bold" }}>
@@ -321,69 +339,6 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
           aria-label="Request Free Rudraksha"
         >
           I Want Free Rudraksha
-        </button>
-      </div>
-      <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 flex flex-col items-end space-y-4">
-        {/* Write to Us Button */}
-        <button
-          onClick={() => setIsModalOpen1(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-        >
-          <img
-            src={Image3} // Replace with your icon path or fallback
-            alt="Write to Us"
-            className="w-6 h-6 mr-2"
-          />
-          <span className="font-medium text-sm md:text-base">Write to Us</span>
-        </button>
-
-        {/* Modal */}
-        {isModalOpen1 && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
-              
-
-              {/* Modal content */}
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                Write to Us
-              </h2>
-              <textarea
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full border text-black border-gray-300 rounded-lg p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Write your query here..."
-              />
-              <div className="mt-4 flex justify-end space-x-4">
-                <button
-                  onClick={() => setIsModalOpen1(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSend}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Chat with Us Button */}
-        <button
-          onClick={() => handleMessage("Chat with Us")}
-          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 w-full max-w-xs md:max-w-md"
-        >
-          {/* <img
-            src={Image4 || "/default-icon.png"} // Replace with your fallback icon path if needed
-            alt="Chat with Us"
-            className="w-6 h-6 mr-2"
-          /> */}
-          <FaSquareWhatsapp className="w-7 h-7 text-white mr-2" />{" "}
-          {/* Adjust size and spacing */}
-          <span className="font-medium text-sm md:text-base">Chat with Us</span>
         </button>
       </div>
 
@@ -649,8 +604,6 @@ const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
             </div>
           </div>
         </div>
-
-      
 
         <div className="event-container1">
           <div className="event-content1" style={{ borderColor: "#583e99" }}>
