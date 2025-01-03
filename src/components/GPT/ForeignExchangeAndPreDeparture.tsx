@@ -196,11 +196,7 @@ const handleSend = async (queryInput: string) => {
     const response = await axios.post(
       apiUrl,
       {}, // Empty body for the POST request
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_BEARER_TOKEN}`,
-        },
-      }
+      
     );
 
     // Process the API response and update the chat
