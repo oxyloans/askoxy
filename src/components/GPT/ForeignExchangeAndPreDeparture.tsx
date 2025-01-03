@@ -198,8 +198,7 @@ const handleSend = async (queryInput: string) => {
       {}, // Empty body for the POST request
       {
         headers: {
-          Authorization:
-            "Bearer sk-proj-XOcan9MKnjSV2wNIoIpLT3BlbkFJqt7cSuWvxIC9MWtzOmQ8",
+          'Authorization': `Bearer ${process.env.REACT_APP_BEARER_TOKEN}`,
         },
       }
     );
