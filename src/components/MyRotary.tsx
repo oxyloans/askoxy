@@ -1,28 +1,11 @@
 import React, { useState, useEffect } from "react";
-import MyRotary from "../assets/img/myrotary.png"
+import MyRotary from "../assets/img/myrotray (1).png"
 import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import axios from "axios";
-import {
-  FaMapMarkerAlt,
-  FaUniversity,
-  FaGlobe,
-  FaPlane,
-  FaBook,
-} from "react-icons/fa"; // Import icons
-import { FaSquareWhatsapp } from "react-icons/fa6";
-import TeluguShiva from "../assets/img/telugu.png";
-import EnglishShiva from "../assets/img/english.png";
-import Image1 from "../assets/img/WEBSITE.png";
-import Image3 from "../assets/img/R33.jpg";
-import Image2 from "../assets/img/R2.png";
-import Image5 from "../assets/img/images.png";
-import Image4 from "../assets/img/chat-icon-2048x2048-i7er18st.png";
+import { message } from "antd";  
 import Footer from "./Footer";
-import { Modal, Button, Input, message } from "antd";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import FG from "../assets/img/GEN AI (1).png";
+
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
 import img3 from "../assets/img/image3.png";
@@ -38,6 +21,7 @@ const images = [
   { src: img3, alt: "Image 3" },
   { src: img4, alt: "Image 4" },
 ];
+
 const MyRotaryServices = () => {
   // Add any logic or state you need here, if necessary.
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -46,7 +30,7 @@ const MyRotaryServices = () => {
       setCurrentIndex(currentIndex + 1);
     }
   };
-
+ const storedPhoneNumber = localStorage.getItem("whatsappNumber");
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
@@ -64,84 +48,85 @@ const MyRotaryServices = () => {
     mobileNumber: "",
     projectType: "ASKOXY",
   });
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
 
-    // Real-time mobile number validation
-    if (name === "mobileNumber") {
-      if (!/^\d{0,10}$/.test(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          mobileNumber: "Please enter a valid mobile number with only digits.",
-        }));
-      } else {
-        setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
-      }
-    }
-  };
+   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     const { name, value } = e.target;
+     setFormData({ ...formData, [name]: value });
 
-  const handleSubmit = async () => {
-    const { mobileNumber } = formData;
-    const newErrors: { mobileNumber?: string } = {};
+     // Real-time mobile number validation
+     if (name === "mobileNumber") {
+       if (!/^\d{0,10}$/.test(value)) {
+         setErrors((prev) => ({
+           ...prev,
+           mobileNumber: "Please enter a valid mobile number with only digits.",
+         }));
+       } else {
+         setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
+       }
+     }
+   };
 
-    // Validation
-    if (!mobileNumber) {
-      newErrors.mobileNumber = "Mobile number is required.";
-    } else if (!/^\d{10}$/.test(mobileNumber)) {
-      newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
-    }
+   const handleSubmit = async () => {
+     const { mobileNumber } = formData;
+     const newErrors: { mobileNumber?: string } = {};
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors); // Set errors if validation fails
-      return; // Do not proceed with the form submission
-    }
+     // Validation
+     if (!mobileNumber) {
+       newErrors.mobileNumber = "Mobile number is required.";
+     } else if (!/^\d{10}$/.test(mobileNumber)) {
+       newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
+     }
 
-    try {
-      // API request to submit the form data
-      const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-        formData
-      );
-      console.log("API Response:", response.data);
-      message.success("Your interest has been submitted successfully!");
-      setIsModalOpen(false); // Close modal on success
-    } catch (error) {
-      console.error("API Error:", error);
-      message.error("Failed to submit your interest. Please try again.");
-    }
-  };
+     if (Object.keys(newErrors).length > 0) {
+       setErrors(newErrors); // Set errors if validation fails
+       return; // Do not proceed with the form submission
+     }
+
+     try {
+       // API request to submit the form data
+       const response = await axios.post(
+         "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+         formData
+       );
+       console.log("API Response:", response.data);
+
+       message.success("Your interest has been submitted successfully!");
+       setIsModalOpen(false); // Close modal on success
+     } catch (error) {
+       console.error("API Error:", error);
+       message.error("Failed to submit your interest. Please try again.");
+     }
+   };
   return (
     <div>
       <div>
-        <header className="relative text-center p-4">
-          {/* Wrapper with flexbox to justify between title and buttons */}
-          <div className="flex justify-between items-center">
-            {/* Left empty space (on larger screens) */}
-            <div className="hidden md:block w-1/3"></div>
+        <header>
+          {/* Layout container */}
+          <div className="flex flex-col items-center justify-center md:flex-row  px-4 md:px-6 lg:px-8">
+            {/* Title */}
+            {/* <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
+              Legal Services
+            </h3> */}
+          </div>
 
-            {/* Centered title */}
-            <h3 className="flex-grow text-[rgba(91,5,200,0.85)] font-bold text-base md:text-lg lg:text-xl leading-relaxed">
-              {/* <strong>Free Rice Samples & Steel Container</strong> */}
-            </h3>
+          {/* Buttons on the right */}
+          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
+            {/* Button: I'm Interested */}
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              onClick={() => setIsModalOpen(true)}
+              aria-label="Visit our site"
+            >
+              I'm Interested
+            </button>
 
-            {/* Right side buttons */}
-            <div className="flex flex-col md:flex-row gap-2 items-center">
-              <button
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all text-sm md:text-base"
-                onClick={() => setIsModalOpen(true)}
-                aria-label="Visit our site"
-              >
-                I'm Interested
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition-all text-sm md:text-base">
-                Write To Us
-              </button>
-              {/* Uncomment for Chat Button */}
-              {/* <button className="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 text-sm md:text-base">
-        Chat With Us
-      </button> */}
-            </div>
+            {/* Button: Write To Us */}
+            {/* <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              aria-label="Write To Us"
+            >
+              Write To Us
+            </button> */}
           </div>
         </header>
 
@@ -149,14 +134,18 @@ const MyRotaryServices = () => {
         <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4">
           {/* Left Section: Image */}
           <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
-            <img src={MyRotary} alt="My Rotarian" />
+            <img
+              src={MyRotary}
+              alt="My Rotarian"
+              className="w-full h-auto rounded-lg"
+            />
           </div>
 
           {/* Right Section: Text */}
           <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
             {/* Welcome Heading */}
             <div className="text-center md:text-left">
-              <strong className="text-[24px] text-[#6A1B9A]">
+              <strong className="text-[24px] md:text-[28px] text-[#6A1B9A] font-semibold">
                 Welcome, Rotarian!
               </strong>
             </div>

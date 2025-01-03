@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import axios from "axios";
@@ -7,8 +7,7 @@ import { BiLogoPlayStore } from "react-icons/bi";
 import FR from "../assets/img/ricesample (2).png";
 
 import Footer from "./Footer";
-import { Modal, Button, Input, message } from "antd";
-
+import { message } from "antd";
 
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -43,12 +42,10 @@ const FreeSample: React.FC = () => {
     }
   };
 
-
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
- 
-const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
-  const userId = localStorage.getItem("userId");
 
+  const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
+  const userId = localStorage.getItem("userId");
 
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
@@ -56,134 +53,110 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
     mobileNumber: "",
     projectType: "ASKOXY",
   });
-  
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+  setFormData({ ...formData, [name]: value });
 
- const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-   const { name, value } = e.target;
-   setFormData({ ...formData, [name]: value });
+  // Real-time mobile number validation
+  if (name === "mobileNumber") {
+    if (!/^\d{0,10}$/.test(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        mobileNumber: "Please enter a valid mobile number with only digits.",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
+    }
+  }
+};
 
-   // Real-time mobile number validation
-   if (name === "mobileNumber") {
-     if (!/^\d{0,10}$/.test(value)) {
-       setErrors((prev) => ({
-         ...prev,
-         mobileNumber: "Please enter a valid mobile number with only digits.",
-       }));
-     } else {
-       setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
-     }
-   }
- };
+const handleSubmit = async () => {
+  const { mobileNumber } = formData;
+  const newErrors: { mobileNumber?: string } = {};
 
- const handleSubmit = async () => {
-   const { mobileNumber } = formData;
-   const newErrors: { mobileNumber?: string } = {};
+  // Validation
+  if (!mobileNumber) {
+    newErrors.mobileNumber = "Mobile number is required.";
+  } else if (!/^\d{10}$/.test(mobileNumber)) {
+    newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
+  }
 
-   // Validation
-   if (!mobileNumber) {
-     newErrors.mobileNumber = "Mobile number is required.";
-   } else if (!/^\d{10}$/.test(mobileNumber)) {
-     newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
-   }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors); // Set errors if validation fails
+    return; // Do not proceed with the form submission
+  }
 
-   if (Object.keys(newErrors).length > 0) {
-     setErrors(newErrors); // Set errors if validation fails
-     return; // Do not proceed with the form submission
-   }
+  try {
+    // API request to submit the form data
+    const response = await axios.post(
+      "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+      formData
+    );
+    console.log("API Response:", response.data);
 
-   try {
-     // API request to submit the form data
-     const response = await axios.post(
-       "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-       formData
-     );
-     console.log("API Response:", response.data);
-     message.success("Your interest has been submitted successfully!");
-     setIsModalOpen(false); // Close modal on success
-   } catch (error) {
-     console.error("API Error:", error);
-     message.error("Failed to submit your interest. Please try again.");
-   }
-  };
+    message.success("Your interest has been submitted successfully!");
+    setIsModalOpen(false); // Close modal on success
+  } catch (error) {
+    console.error("API Error:", error);
+    message.error("Failed to submit your interest. Please try again.");
+  }
+};
 
-
- 
   return (
     <div>
       <div>
-        <header className="relative p-4 bg-gray-50">
-          <div className="flex justify-between items-center">
-            {/* Empty space on the left */}
-            <div className="hidden md:block w-1/3"></div>
-
-            {/* Title in the center */}
-            <h3 className="text-[rgba(91,5,200,0.85)] font-bold text-base md:text-lg lg:text-xl text-center leading-relaxed">
-              <strong>Free Rice Samples & Steel Container</strong>
+        <header>
+          <div className="flex flex-col items-center justify-center md:flex-row  px-4 md:px-6 lg:px-8">
+            {/* Title */}
+            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
+              Free Rice Samples & Steel Container
             </h3>
+          </div>
 
-            {/* Buttons on the right */}
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              {/* Button: I'm Interested */}
-              <button
-                className="px-4 py-2 text-sm md:text-base lg:text-lg bg-green-600 text-white rounded-md hover:bg-green-700 shadow-lg transition-all"
-                onClick={() => setIsModalOpen(true)}
-                aria-label="Visit our site"
-              >
-                I'm Interested
-              </button>
+          {/* Buttons on the right */}
+          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
+            {/* Button: I'm Interested */}
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              onClick={() => setIsModalOpen(true)}
+              aria-label="Visit our site"
+            >
+              I'm Interested
+            </button>
 
-              {/* Button: Write To Us */}
-              <button
-                className="px-4 py-2 text-sm md:text-base lg:text-lg bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-lg transition-all"
-                aria-label="Write To Us"
-              >
-                Write To Us
-              </button>
-            </div>
+            {/* Button: Write To Us */}
+            {/* <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              aria-label="Write To Us"
+            >
+              Write To Us
+            </button> */}
           </div>
         </header>
-
-        <div className="flex flex-col md:flex-row justify-center mt-4 space-y-6 md:space-y-0 md:space-x-5">
-          {/* Rice Sample 1kg */}
-          <div className="w-full md:w-[450px] h-[450px] text-center bg-white shadow-lg p-4 rounded">
-            <img
-              src={ricesample1kgGif}
-              alt="Rice Sample 1kg"
-              className="w-full h-full object-cover rounded-lg"
-            />
-            <h5 className="text-blue-600 font-bold mt-5">Rice Sample 1kg</h5>
-          </div>
-
-          {/* Rice Bag 26kgs */}
-          <div className="w-full md:w-[450px] h-[450px] text-center bg-white shadow-lg p-4 rounded">
-            <img
-              src={ricebag26kgsGif}
-              alt="Rice Bag 26kgs"
-              className="w-full h-full object-cover rounded-lg"
-            />
-            <h5 className="text-blue-600 font-bold mt-5">Rice Bag 26kgs</h5>
-          </div>
-        </div>
 
         {/* Details Section */}
         <div className="flex flex-col md:flex-row items-center justify-center mt-10 px-4">
           {/* Left Section: Image */}
           <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
-            <img src={FR} alt="Free Sample" />
+            <img
+              src={FR}
+              alt="Free Sample"
+              className="w-11/12 max-w-sm md:max-w-md lg:max-w-lg"
+            />
           </div>
 
           {/* Right Section: Text */}
-          <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
+          <div className="w-full md:w-1/2 text-center md:text-left md:pl-8 space-y-6">
             {/* Offer Heading */}
-            <div className="text-center md:text-left p-3 space-y-6">
-              <strong className="text-[#6A1B9A] text-[24px]">
+            <div className="p-3">
+              <strong className="text-[#6A1B9A] text-lg md:text-xl lg:text-2xl font-bold">
                 Free Rice Samples & Steel Container
               </strong>
             </div>
 
             {/* Details */}
             <div className="space-y-4 text-gray-800">
-              <p>
+              <p className="text-sm md:text-base lg:text-lg">
                 <strong>ASKOXY.AI</strong> offers an exclusive deal: get{" "}
                 <strong>1 KG of free rice samples</strong> with a{" "}
                 <strong>free steel container</strong>. This sleek container
@@ -196,12 +169,13 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
             </div>
 
             {/* Playstore Button */}
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center md:justify-center mt-6">
               <a
                 href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-52 h-12 mt-4 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-800 transition-all flex items-center justify-center"
+                className="w-52 h-12 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-800 transition-all flex items-center justify-center"
+                aria-label="Download App from Google Play"
               >
                 <BiLogoPlayStore className="w-6 h-6 mr-2" />
                 Download App
@@ -210,24 +184,50 @@ const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
           </div>
         </div>
 
+        <div className="flex flex-col md:flex-row justify-center mt-8 space-y-6 md:space-y-0 md:space-x-5 px-4">
+          {/* Rice Sample 1kg */}
+          <div className="w-full sm:w-[300px] md:w-[400px] lg:w-[450px] h-[400px] md:h-[450px] text-center p-6 rounded">
+            <img
+              src={ricesample1kgGif} // Replace with actual image path
+              alt="Rice Sample 1kg"
+              className="w-full h-[80%] object-cover rounded-lg"
+            />
+            <h5 className="text-blue-600 font-bold mt-3 text-base md:text-lg">
+              Rice Sample 1kg
+            </h5>
+          </div>
+
+          {/* Rice Bag 26kgs */}
+          <div className="w-full sm:w-[300px] md:w-[400px] lg:w-[450px] h-[400px] md:h-[450px] text-center    p-6 rounded">
+            <img
+              src={ricebag26kgsGif} // Replace with actual image path
+              alt="Rice Bag 26kgs"
+              className="w-full h-[80%] object-cover rounded-lg"
+            />
+            <h5 className="text-blue-600 font-bold mt-3 text-base md:text-lg">
+              Rice Bag 26kgs
+            </h5>
+          </div>
+        </div>
+
         {/* New Image Section */}
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-2 px-4">
           <img
             src={img6} // Replace with the actual image path
             alt="New Image"
-            className="w-full max-w-5xl h-auto object-contain"
+            className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-4xl h-auto object-contain"
           />
         </div>
 
         {/* Modal Section */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-lg w-11/12 md:w-96">
+            <div className="bg-white p-6 rounded shadow-lg w-96">
               <h2 className="text-xl font-semibold mb-4">Enter Your Details</h2>
               <div className="space-y-4">
                 <label className="text-black">
                   Enter your mobile number
-                  <span className="text-red-500">*</span>
+                  <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
                   type="text"

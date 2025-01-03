@@ -1,9 +1,9 @@
 // src/components/PdfViewer.tsx
-import React, { useState } from "react";
-import Header1 from "./Header1";
+import React, { useState ,useEffect} from "react";
+
 import Footer from "./Footer";
 import Legal from '../assets/img/legal.png';  
-import Example from "./Example";
+
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
 import img3 from "../assets/img/image3.png";
@@ -11,7 +11,7 @@ import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import axios from "axios";
-import { Modal, Button, Input, message } from "antd";
+import {  message } from "antd";
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -45,11 +45,10 @@ const LegalService: React.FC = () => {
 
   const [formData, setFormData] = useState({
     askOxyOfers: "LEGALSERVICES",
-    id: userId,
+   id:userId,
     mobileNumber: "",
     projectType: "ASKOXY",
-  });
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  });const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
@@ -65,6 +64,7 @@ const LegalService: React.FC = () => {
       }
     }
   };
+
   const handleSubmit = async () => {
     const { mobileNumber } = formData;
     const newErrors: { mobileNumber?: string } = {};
@@ -88,6 +88,7 @@ const LegalService: React.FC = () => {
         formData
       );
       console.log("API Response:", response.data);
+
       message.success("Your interest has been submitted successfully!");
       setIsModalOpen(false); // Close modal on success
     } catch (error) {
@@ -95,57 +96,60 @@ const LegalService: React.FC = () => {
       message.error("Failed to submit your interest. Please try again.");
     }
   };
-  
   return (
-    <>
-      <div className="text-center">
-        <div className="p-8 relative">
+    <div>
+      <div>
+        <header>
           {/* Layout container */}
-          <div className="flex justify-between items-center">
-            {/* Empty space on the left */}
-            <div className="hidden md:block w-1/3"></div>
-
-            {/* Centered Title */}
-            <h1 className="text-center text-4xl font-semibold text-purple-700 flex-grow">
-              Legal Service
-            </h1>
-
-            {/* Buttons on the right */}
-            <div className="flex flex-col md:flex-row gap-2 items-center">
-              <button
-                className="px-4 py-2 text-base md:text-lg lg:text-xl bg-green-600 text-white rounded-md hover:bg-green-700 shadow-lg transition-all"
-                onClick={() => setIsModalOpen(true)}
-                aria-label="Visit our site"
-              >
-                I'm Interested
-              </button>
-              <button
-                className="px-4 py-2 text-base md:text-lg lg:text-xl bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-lg transition-all"
-                aria-label="Write To Us"
-              >
-                Write To Us
-              </button>
-            </div>
+          <div className="flex flex-col items-center justify-center md:flex-row  px-4 md:px-6 lg:px-8">
+            {/* Title */}
+            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
+              Legal Services
+            </h3>
           </div>
-        </div>
+
+          {/* Buttons on the right */}
+          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
+            {/* Button: I'm Interested */}
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              onClick={() => setIsModalOpen(true)}
+              aria-label="Visit our site"
+            >
+              I'm Interested
+            </button>
+
+            {/* Button: Write To Us */}
+            {/* <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              aria-label="Write To Us"
+            >
+              Write To Us
+            </button> */}
+          </div>
+        </header>
 
         <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4">
           {/* Left Section: Image */}
           <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
-            <img src={Legal} alt="My Rotarian" />
+            <img
+              src={Legal}
+              alt="My Rotarian"
+              className="w-full md:w-auto h-auto"
+            />
           </div>
 
           {/* Right Section: Text */}
           <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
             {/* Welcome Heading */}
             <div className="text-center md:text-left">
-              <strong className="text-[24px] text-[#6A1B9A]">
+              <strong className="text-[20px] md:text-[24px] text-[#6A1B9A]">
                 Welcome, Lawyers and Advocates! 2X Your Revenue with AskOxy.ai
               </strong>
             </div>
 
             {/* Details */}
-            <div className=" space-y-4 text-gray-800">
+            <div className="space-y-4 text-gray-800">
               <ul className="list-disc pl-6">
                 <li>
                   <strong>Grow Your Client Base:</strong> Connect with users
@@ -172,18 +176,11 @@ const LegalService: React.FC = () => {
           </div>
         </div>
 
-        {/* {isLoading && (
-          <div className="flex justify-center">
-            <Example variant="loading01" />
-          </div>
-        )} */}
-
         <div className="flex justify-center items-center my-14">
           <iframe
             src="https://drive.google.com/file/d/11AI-em7upR9UVcec1mFuxmIPh1Cfx0Ai/preview"
             frameBorder="0"
-            height="1000px"
-            width="70%"
+            className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 h-[500px] sm:h-[600px] md:h-[800px] lg:h-[1000px] max-w-full"
             title="PDF Viewer"
             onLoad={handleLoad} // Set loading state to false when the iframe loads
           />
@@ -490,7 +487,7 @@ const LegalService: React.FC = () => {
         </div>
       </div>
       <Footer />
-    </>
+    </div>
   );
 };
 

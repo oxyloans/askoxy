@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import Sidebar from "./Sider";
 const navigate = useNavigate; 
 
 interface OfferDetails {
@@ -43,32 +44,10 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-800 text-white p-4 overflow-y-auto fixed h-screen">
-        <h2 className="text-2xl font-semibold text-center mb-8">
-          Admin Dashboard
-        </h2>
-        <ul>
-          <li className="mb-4">
-            <button className="w-full text-left py-2 px-4 hover:bg-gray-700 rounded">
-              Dashboard
-            </button>
-          </li>
-          <li className="mb-4">
-            <button className="w-full text-left py-2 px-4 hover:bg-gray-700 rounded">
-              Offers
-            </button>
-          </li>
-          <li className="mb-4">
-            <Link
-              to="/alluserqueries"
-              className="w-full text-left py-2 px-4 hover:bg-gray-700 rounded"
-            >
-              Users Queries
-            </Link>
-          </li>
-        </ul>
+      <div>
+      <Sidebar/>
       </div>
 
       {/* Main Content */}

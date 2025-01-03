@@ -39,23 +39,33 @@ const InfoSection: React.FC = () => {
     setQuery(e.target.value);
   };
 
-  const handleSearch = async () => {
-    if (query.trim() === "") {
-      alert("Please enter a valid question");
-      return;
-    }
+  // const handleSearch = async () => {
+  //   if (query.trim() === "") {
+  //     alert("Please enter a valid question");
+  //     return;
+  //   }
 
-    try {
-      const result = await axios.post(
-        `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${query}`
-      );
-      setResponse(result.data); // Assuming the response data you want is directly in `data`
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      alert("Something went wrong. Please try again later.");
-    }
-  };
+  //   try {
+  //     const result = await axios.post(
+  //       `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?InfoType=${query}`
+  //     );
+  //     setResponse(result.data); // Assuming the response data you want is directly in `data`
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //     alert("Something went wrong. Please try again later.");
+  //   }
+  // };
 
+     const userId = localStorage.getItem("userId");
+     const handleSearch = () => {
+       if (userId) {
+         // If user is signed in, redirect to dashboard
+         window.location.href = `/dashboard`;
+       } else {
+         // Otherwise, redirect to normal page
+         window.location.href = `/normal?query=${query}`;
+       }
+     };
   return (
     <div className="py-8">
       {/* Advice Section */}
@@ -187,23 +197,19 @@ const InfoSection: React.FC = () => {
             <div className="relative w-100 ">
               <input
                 type="text"
-                placeholder="Ask any question..."
-                className="search-input w-full px-4 py-2 pr-12 rounded-md border border-gray-300 shadow-sm focus:outline-none"
+                placeholder="Ask question..."
+                className="search-input"
                 value={query}
                 onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    // Trigger redirection when Enter is pressed
-                    window.location.href = `/normal?${query}`;
+                    handleSearch(); // Trigger the search action on Enter
                   }
                 }}
               />
               <button
                 className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full hover:bg-blue-600"
-                onClick={() => {
-                  // Trigger redirection when the button is clicked
-                  window.location.href = `/normal?${query}`;
-                }}
+                onClick={handleSearch}  
               >
                 <FaSearch />
               </button>

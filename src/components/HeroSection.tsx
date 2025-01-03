@@ -335,7 +335,7 @@ const HeroSection: React.FC = () => {
     setQuery(e.target.value);
   };
 
-  const handleSearch = async () => {
+  const handleSearch1 = async () => {
     if (query.trim() === "") {
       alert("Please enter a valid question");
       return;
@@ -388,6 +388,16 @@ const HeroSection: React.FC = () => {
   const imageGroup2 = repeatAndShuffleImages(images, 20);
   const imageGroup3 = repeatAndShuffleImages(images, 20);
 
+   const userId = localStorage.getItem("userId");
+ const handleSearch = () => {
+   if (userId) {
+     // If user is signed in, redirect to dashboard
+     window.location.href = `/dashboard?query=${encodeURIComponent(query)}`;
+   } else {
+     // Otherwise, redirect to normal page
+     window.location.href = `/normal?${query}`;
+   }
+ };
   return (
     <section className="section">
       {/* Header Section */}
@@ -420,29 +430,15 @@ const HeroSection: React.FC = () => {
                   onChange={handleInputChange}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      // Trigger redirection when Enter is pressed
-                      window.location.href = `/normal?${query}`;
+                      handleSearch(); // Trigger the search action on Enter
                     }
                   }}
                 />
-                <button
-                  className="search-button"
-                  onClick={() => {
-                    window.location.href = `/normal?${query}`;
-                  }}
-                >
+                <button className="search-button" onClick={handleSearch}>
                   <span className="search-icon icons">&#128269;</span>{" "}
                   {/* Placeholder for Search Icon */}
                 </button>
               </div>
-
-              {/* Optional: Display the API response */}
-              {/* {response && (
-    <div className="response-container">
-      <h3></h3>
-      <p><ReactMarkdown>{JSON.stringify(response, null, 2)}</ReactMarkdown></p>
-    </div>
-  )} */}
             </div>
           </div>
         </div>
@@ -454,9 +450,8 @@ const HeroSection: React.FC = () => {
               {imageGroup1.map((image, index) => (
                 <div className="image-item" key={index}>
                   <div onClick={() => handleImageClick(image)}>
-                    
-                      <img src={image.src} alt={image.alt} />
-                 
+                    <img src={image.src} alt={image.alt} />
+
                     <div className="image-text">{image.text}</div>
                   </div>
                 </div>
@@ -529,9 +524,8 @@ const HeroSection: React.FC = () => {
               {imageGroup2.map((image, index) => (
                 <div className="image-item" key={index}>
                   <div onClick={() => handleImageClick(image)}>
-                  
-                      <img src={image.src} alt={image.alt} />
-                    
+                    <img src={image.src} alt={image.alt} />
+
                     <div className="image-text">{image.text}</div>
                   </div>
                 </div>
@@ -544,9 +538,8 @@ const HeroSection: React.FC = () => {
               {imageGroup3.map((image, index) => (
                 <div className="image-item" key={index}>
                   <div onClick={() => handleImageClick(image)}>
-                    
-                      <img src={image.src} alt={image.alt} />
-                   
+                    <img src={image.src} alt={image.alt} />
+
                     <div className="image-text">{image.text}</div>
                   </div>
                 </div>

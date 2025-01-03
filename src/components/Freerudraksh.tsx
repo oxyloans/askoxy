@@ -3,7 +3,7 @@ import "./Freerudraksha.css";
 import "./DiwaliPage.css";
 import axios from "axios";
 import { FaMapMarkerAlt } from "react-icons/fa";
-
+import ScrollToTop from "./ScrollToTop";
 import TeluguShiva from "../assets/img/telugu.png";
 import EnglishShiva from "../assets/img/english.png";
 import Image1 from "../assets/img/WEBSITE (1).png";
@@ -260,41 +260,44 @@ const Freerudraksha: React.FC = () => {
   };
   return (
     <div>
-      <header className="header relative p-4 md:p-6 lg:p-8 bg-gray-50">
+      <header>
         {/* Title and Buttons Container */}
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-center">
           {/* Title */}
-          <h1 className="text-left md:text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-6 md:mb-0"></h1>
-          <h1 className="text-center md:text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-6 md:mb-0">
+          <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text45xl leading-tight mb-6 md:mb-0">
             The Two Worlds
           </h1>
+        </div>
 
-          {/* Buttons */}
-          <div className="flex flex-col md:flex-row justify-center md:justify-end items-center gap-4">
-            <button
+        {/* Buttons */}
+        <div className="flex flex-col md:flex-row justify-center md:justify-end items-center gap-4">
+          {/* <button
               className="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 text-sm md:text-base lg:text-lg transition duration-300"
               aria-label="Write To Us"
             >
               Write To Us
-            </button>
-            {/* Uncomment below button if needed */}
-            {/* <button
+            </button> */}
+          {/* Uncomment below button if needed */}
+          {/* <button
         className="w-full md:w-auto px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 text-sm md:text-base lg:text-lg transition duration-300"
         aria-label="Chat With Us"
       >
         Chat With Us
       </button> */}
-          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="worlds flex justify-center mt-8">
         <section className="spiritual-world text-center mx-4">
-          <h2 id="h2" style={{ fontWeight: "bold"}}>
+          <h2 id="h2" style={{ fontWeight: "bold" }}>
             Spiritual World
           </h2>
-          <img src={Image1} alt="Spiritual World" className="world-image w-103 h-100" />
+          <img
+            src={Image1}
+            alt="Spiritual World"
+            className="world-image w-103 h-100"
+          />
         </section>
         <section className="ai-world text-center mx-4">
           <h2 id="h2" style={{ fontWeight: "bold" }}>

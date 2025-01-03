@@ -72,7 +72,7 @@ const Header: React.FC = () => {
         </button>
     
       </div>
-      <div   
+      {/* <div   
         className="sign-in-container"
         style={{
           width: 'auto',
@@ -84,13 +84,13 @@ const Header: React.FC = () => {
           textAlign: 'center',
           fontWeight: 'bold',
         }}
-      >
+      > */}
         {/* SignIn button with redirection functionality */}
 
-        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/whatapplogin')}}>
+        {/* <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/whatapplogin')}}>
           SignOut
-        </button>
-      </div>
+        </button> */}
+      {/* </div> */}
       </div>
       {/* Media Queries for Mobile */}
       <style>

@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
-
+import Machine from '../assets/img/manufacturing.png'
 const MachinesManufacturingServices = () => {
   // Add any logic or state you need here, if necessary.
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div>
-        <h1 className="text-center text-black text-3xl font-bold mt-10">Coming Soon</h1>
-        <p className="text-center text-lg text-gray-600 mt-4">
-          Stay tuned for our upcoming machines manufacturing services!
-        </p>
+      <div className="flex flex-col md:flex-row items-center justify-center mt-10 px-4">
+        {/* Left Section: Image */}
+        <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
+          <img
+            src={Machine}
+            alt="Machines Manufacturing Services"
+            
+          />
+        </div>
       </div>
     </div>
   );

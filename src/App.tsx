@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import Erice from "./components/Erice";
+
 import Landingpage from "./components/Landingpage";
 import Dasboard from "./components/Dashboard";
 import Normal from "./components/Normal";
@@ -32,16 +33,37 @@ import LegalService from "./components/LegalService";
 import MyRotaryServices from "./components/MyRotary";
 import AllQueriesforAdmin from "./components/UserQueries";
 import Admin from "./Pages/Admin";
+import AuthorInfo from "./components/AuthorInfo";
+import TravelGPT from "./components/TravelGPT";
+// import Universities from "./components/GPT/University";
+import ForeignExchangeAndPreDeparture from "./components/GPT/ForeignExchangeAndPreDeparture";
+import Courses from "./components/GPT/Courses";
+import Accomidation from "./components/GPT/Accomidation";
+import UniversityAgents from "./components/GPT/UniversityAgents";
+import ScrollToTop from "./components/ScrollToTop"; 
+import FileUpload from "./Pages/FileUpload";
+import Sidebar from "./Pages/Sider";
+import CampaignsAdd from "./Pages/CampaignsAdd";
+import AllCampaignsDetails from "./Pages/AllCampaignDetail";
 const App: React.FC = () => {
   return (
     <Router>
+      <ScrollToTop />
       <div className="App">
         <Routes>
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
-          <Route path="/admin" element={<Admin />} /> 
-          <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />   
-          {/* <Route path="/vanabhojanam" element={<VanabhojanamSteps />} />
+          <Route path="/sider" element={<Sidebar />} />
+          <Route path="/fileupload" element={<FileUpload />} />   
+          <Route
+            path="/allcampaignsdetails"
+            element={<AllCampaignsDetails />}
+          />
+          <Route path="/campaignsadd" element={<CampaignsAdd />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
+          <Route path="/university-agents" element={<UniversityAgents />} />
+          {/* <Route path="/AuthorInfo" element={<AuthorInfo />} />
           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
           {/* <Route path="/rudraksha" element={<RudrakshaSteps />} /> */}
           <Route path="/freerudraksha" Component={Freerudraksha} />
@@ -54,6 +76,7 @@ const App: React.FC = () => {
           <Route path="/meeting" element={<Meeting />} />
           <Route path="/legalservice" element={<LegalService />} />
           <Route path="/myrotary" element={<MyRotaryServices />} />
+          <Route path="/courses-gpt" element={<Courses />} />
           <Route
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
@@ -71,14 +94,18 @@ const App: React.FC = () => {
           />
 
           {/* <Route path="/freerudraksha/" element={<Freerudraksha />} /> */}
-
+          <Route
+            path="/foreign-exchange"
+            element={<ForeignExchangeAndPreDeparture />}
+          />
+          <Route path="/accommodation-gpt" element={<Accomidation />} />
           <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />
           <Route path="/greenproject" element={<Greenproject />} />
           <Route path="/el-dorado" element={<EL_Dorado />} />
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           {/* <Route path="/example-component" element={<ExampleComponent />} /> */}
-          <Route path="/user-profile-model" element={<UserProfileModel />} />
+          <Route path="/user-profile" element={<UserProfileModel />} />
           {/* <Route path="/30NoV24Vanabhojanam" element={<PresentationViewer />} /> */}
         </Routes>
       </div>

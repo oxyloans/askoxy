@@ -532,8 +532,8 @@ const truncateText = (
 
         {/* Right Section: Profile and SignOut */}
         <div className="flex flex-col md:flex-row items-center  space-y-2 md:space-y-0 md:space-x-4">
-          {/* SignOut Button */}
-          <button
+        
+          {/* <button
             onClick={() => {
               if (localStorage.getItem("userId")) {
                 localStorage.removeItem("userId");
@@ -545,8 +545,8 @@ const truncateText = (
             className="text-white bg-[#ffa800] px-4 py-2 rounded-full font-bold"
           >
             SignOut
-          </button>
-          {/* Profile Info Section (AuthorInfo) */}
+          </button> */}
+          
 
           <div className="flex items-center space-x-2">
             <AuthorInfo
