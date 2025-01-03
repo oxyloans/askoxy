@@ -171,8 +171,7 @@ const ForeignExchangeAndPreDeparture = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
-const accessToken =
-  "Bearer sk-proj-XOcan9MKnjSV2wNIoIpLT3BlbkFJqt7cSuWvxIC9MWtzOmQ8";
+
 
 const handleSend = async (queryInput: string) => {
   if (queryInput.trim() === "") return;
@@ -199,7 +198,8 @@ const handleSend = async (queryInput: string) => {
       {}, // Empty body for the POST request
       {
         headers: {
-          Authorization: accessToken,
+          Authorization:
+            "Bearer sk-proj-XOcan9MKnjSV2wNIoIpLT3BlbkFJqt7cSuWvxIC9MWtzOmQ8",
         },
       }
     );
