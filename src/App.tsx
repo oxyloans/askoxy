@@ -43,6 +43,8 @@ import FileUpload from "./Pages/FileUpload";
 import Sidebar from "./Pages/Sider";
 import CampaignsAdd from "./Pages/CampaignsAdd";
 import AllCampaignsDetails from "./Pages/AllCampaignDetail";
+import Placements from "./components/GPT/Placements";
+import ForeignExchange from "./components/GPT/ForeignExchange";
 const App: React.FC = () => {
   return (
     <Router>
@@ -92,6 +94,8 @@ const App: React.FC = () => {
           />
 
           <Route path="/accommodation-gpt" element={<Accomidation />} />
+          <Route path="placements-gpt" element={<Placements />} />
+          <Route path="/foreign-exchange" element={<ForeignExchange />} />
           <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />
           <Route path="/greenproject" element={<Greenproject />} />

@@ -179,7 +179,7 @@ const StudyAbroad: React.FC = () => {
                     className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
                     onClick={() => navigate("/accommodation-gpt")}
                   >
-                    AccommodationGPT
+                    Accommodation GPT
                   </li>
                   <li
                     className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
@@ -198,6 +198,12 @@ const StudyAbroad: React.FC = () => {
                     onClick={() => handleNavigation("/foreign-exchange")}
                   >
                     Foreign Exchange
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() => handleNavigation("/placements-gpt")}
+                  >
+                    Placements Gpt
                   </li>
                 </ul>
               )}

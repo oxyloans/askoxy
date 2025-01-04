@@ -106,7 +106,20 @@ const Dasboard = () => {
   const [showLegalService, setShowLegalService] = useState(false);
 
   const scrollableRef = useRef<HTMLDivElement | null>(null);
+  const componentRef = useRef<HTMLDivElement | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Detect viewport size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768); // Define your mobile breakpoint here
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const section = params.get("section");
@@ -157,50 +170,98 @@ const Dasboard = () => {
       handleSend(query);
     }
 
-    if (scrollableRef.current) {
-      scrollableRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [location.search]);
+
+      // Scroll logic
+      if (isMobile) {
+        componentRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    
+
+    // if (scrollableRef.current) {
+    //   scrollableRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    // }
+  }, [location.search, isMobile]);
 
   const handleFreerudrakshaClick = () => {
     navigate("/dashboard?section=freerudraksha", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   const handleStudyAbroadClick = () => {
     navigate("/dashboard?section=study-abroad", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   const handleFreeSampleClick = () => {
     navigate("/dashboard?section=free-sample", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   const handleFreeAiandGenAiClick = () => {
     navigate("/dashboard?section=free-ai-gen-ai", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   const handleMachinesandManufacturingClick = () => {
     navigate("/dashboard?section=machines-manufacturing", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   const handleMyRotaryClick = () => {
     navigate("/dashboard?section=my-rotary", { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   const handledLegalServiceClick = () => {
     navigate("/dashboard?section=legal-service", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
   };
 
   useEffect(() => {
@@ -874,20 +935,20 @@ const Dasboard = () => {
             className="relative  overflow-y-auto  flex flex-col flex-grow w-full    p-6 md:w-1/2 bg-gray-50"
           >
             {showFreerudraksha && (
-              <div>
+              <div ref={componentRef}>
                 <Freerudraksha />
               </div>
             )}
             {showStudyAbroad && (
-              <div>
+              <div ref={componentRef}>
                 <StudyAbroad />
               </div>
             )}
-            {showFreeSample && <FreeSample />}
-            {showFreeaiandgenai && <FreeAiandGenAi />}
+            {showFreeSample && ( <div ref={componentRef}><FreeSample /></div>)}
+            {showFreeaiandgenai && (<div ref={componentRef}><FreeAiandGenAi /></div>)}
             {showMachinesManufacturing && <MachinesManufacturingServices />}
-            {showMyRotaryService && <MyRotaryServices />}
-            {showLegalService && <LegalService />}
+            {showMyRotaryService && (<div ref={componentRef}><MyRotaryServices /></div>)}
+            {showLegalService && (<div ref={componentRef}><LegalService /></div>)}
             {!showFreerudraksha &&
               !showStudyAbroad &&
               !showFreeSample &&
