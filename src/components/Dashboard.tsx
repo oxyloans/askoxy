@@ -613,7 +613,7 @@ const Dasboard = () => {
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
     setShowLegalService(false);
-
+    navigate("/dashboard");
     if (inputRef.current) {
       inputRef.current.value = ""; // Clear the input field
       setShowSendButton(false); // Hide the send button
@@ -902,7 +902,10 @@ const Dasboard = () => {
               </div>
             </div>
 
-            <div className="mt-4 h-80 border-t border-gray-300 pt-2">
+            <div
+              className="mt-4 h-80 border-t border-gray-300 pt-2"
+              // hidden md:block
+            >
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
                   No history available.
@@ -918,7 +921,6 @@ const Dasboard = () => {
                       className="text-sm text-gray-800"
                       to={`?${encodeURIComponent(item.userQuations)}`}
                     >
-                      {/* Truncate text with a minimum of 20 characters */}
                       {truncateText(item.userQuations, 25)}
                     </Link>
                   </div>
@@ -944,11 +946,27 @@ const Dasboard = () => {
                 <StudyAbroad />
               </div>
             )}
-            {showFreeSample && ( <div ref={componentRef}><FreeSample /></div>)}
-            {showFreeaiandgenai && (<div ref={componentRef}><FreeAiandGenAi /></div>)}
+            {showFreeSample && (
+              <div ref={componentRef}>
+                <FreeSample />
+              </div>
+            )}
+            {showFreeaiandgenai && (
+              <div ref={componentRef}>
+                <FreeAiandGenAi />
+              </div>
+            )}
             {showMachinesManufacturing && <MachinesManufacturingServices />}
-            {showMyRotaryService && (<div ref={componentRef}><MyRotaryServices /></div>)}
-            {showLegalService && (<div ref={componentRef}><LegalService /></div>)}
+            {showMyRotaryService && (
+              <div ref={componentRef}>
+                <MyRotaryServices />
+              </div>
+            )}
+            {showLegalService && (
+              <div ref={componentRef}>
+                <LegalService />
+              </div>
+            )}
             {!showFreerudraksha &&
               !showStudyAbroad &&
               !showFreeSample &&
@@ -971,6 +989,7 @@ const Dasboard = () => {
                   {showStaticBubbles && (
                     <>
                       <div className="absolute inset-0 flex items-center justify-center p-4">
+                        
                         <div className="grid grid-cols-2 gap-4 overflow-y-auto max-h-60">
                           {" "}
                           {/* Add max-height and overflow */}
@@ -1082,7 +1101,7 @@ const Dasboard = () => {
                       value={input}
                       onChange={handleInputChangeWithVisibility}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask questions..."
+                      placeholder="Ask quetion...."
                       className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
                     />
                     {showSendButton && (

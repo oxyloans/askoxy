@@ -176,70 +176,63 @@ const StudyAbroad: React.FC = () => {
               {isDropdownOpen && (
                 <ul className="absolute bg-white text-black shadow-lg rounded-md mt-2 w-48 md:w-60">
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => navigate("/accommodation-gpt")}
                   >
                     Accommodation GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => handleNavigation("/courses-gpt")}
                   >
                     Courses GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                    onClick={() => handleNavigation("/university-agents")}
-                  >
-                    University Agents
-                  </li>
-                  <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => handleNavigation("/foreign-exchange")}
                   >
-                    Foreign Exchange
+                    Foreign Exchange GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => handleNavigation("/placements-gpt")}
                   >
-                    Placements Gpt
+                    Placements GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => handleNavigation("/universities-gpt")}
                   >
-                    Universities Gpt
+                    Universities GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                    onClick={() => handleNavigation("/assistants-gpt")}
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/testandinterview-gpt")}
                   >
-                    Assistant Gpt
+                    Test & Interview Preparation GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                    onClick={() => handleNavigation("/agencies-gpt")}
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/universitiesagents-gpt")}
                   >
-                    Agencies GPT
+                    University Agents GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() =>
                       handleNavigation("/qualificationspecialization-gpt")
                     }
                   >
-                    QualificationSpecializationGPT
+                    Qualification & Specialization GPT
                   </li>
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => handleNavigation("/reviews-gpt")}
                   >
                     Reviews GPT
                   </li>
-
                   <li
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() =>
                       handleNavigation("/informationaboutcountries-gpt")
                     }

@@ -58,7 +58,10 @@ const App: React.FC = () => {
       <div className="App">
         <Routes>
           <Route path="/reviews-gpt" element={<Reviews />} />
-          <Route path="/informationaboutcountries-gpt" element={<InformationAboutCountries />} />
+          <Route
+            path="/informationaboutcountries-gpt"
+            element={<InformationAboutCountries />}
+          />
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
           <Route path="/sider" element={<Sidebar />} />
@@ -69,12 +72,15 @@ const App: React.FC = () => {
           />
           <Route path="/campaignsadd" element={<CampaignsAdd />} />{" "}
           <Route path="/universities-gpt" element={<University />} />
-          <Route path="/agencies-gpt" element={<AuthorizeandAgencies />} />
+          <Route
+            path="/universitiesagents-gpt"
+            element={<AuthorizeandAgencies />}
+          />
           <Route
             path="/qualificationspecialization-gpt"
             element={<QualificationSpecializationGPT />}
           />
-          <Route path="/assistants-gpt" element={<Assistants />} />
+          <Route path="/testandinterview-gpt" element={<Assistants />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
           <Route path="/university-agents" element={<UniversityAgents />} />

@@ -432,7 +432,7 @@ const Accomidation = () => {
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
               <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 ">
                   {/* Map over rice topics to create chat bubbles */}
                   {riceTopics.map((topic) => (
                     <div
