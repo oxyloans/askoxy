@@ -192,10 +192,10 @@ const Placements = () => {
       const accessToken = localStorage.getItem("accessToken"); // Retrieve access token
       const apiurl =
         userId !== null
-          ? `https://meta.oxyloans.com/api/student-service/user/placements?query=${encodeURIComponent(
+          ? `https://meta.oxyloans.com/api/student-service/user/placements?placement=${encodeURIComponent(
               queryInput
             )}`
-          : `https://meta.oxyloans.com/api/student-service/user/placements?query=${encodeURIComponent(
+          : `https://meta.oxyloans.com/api/student-service/user/placements?placement=${encodeURIComponent(
               queryInput
             )}`;
 

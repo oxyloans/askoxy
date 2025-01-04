@@ -45,12 +45,20 @@ import CampaignsAdd from "./Pages/CampaignsAdd";
 import AllCampaignsDetails from "./Pages/AllCampaignDetail";
 import Placements from "./components/GPT/Placements";
 import ForeignExchange from "./components/GPT/ForeignExchange";
+import University from "./components/GPT/University";
+import Assistants from "./components/GPT/Assistants";
+import AuthorizeandAgencies from "./components/GPT/Authorize&Agencies";
+import QualificationSpecializationGPT from "./components/GPT/QualificationSpecializationGPT";
+import Reviews from "./components/GPT/Reviews";
+import InformationAboutCountries from "./components/GPT/InformationAboutCountries";
 const App: React.FC = () => {
   return (
     <Router>
       <ScrollToTop />
       <div className="App">
         <Routes>
+          <Route path="/reviews-gpt" element={<Reviews />} />
+          <Route path="/informationaboutcountries-gpt" element={<InformationAboutCountries />} />
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
           <Route path="/sider" element={<Sidebar />} />
@@ -59,7 +67,14 @@ const App: React.FC = () => {
             path="/allcampaignsdetails"
             element={<AllCampaignsDetails />}
           />
-          <Route path="/campaignsadd" element={<CampaignsAdd />} />
+          <Route path="/campaignsadd" element={<CampaignsAdd />} />{" "}
+          <Route path="/universities-gpt" element={<University />} />
+          <Route path="/agencies-gpt" element={<AuthorizeandAgencies />} />
+          <Route
+            path="/qualificationspecialization-gpt"
+            element={<QualificationSpecializationGPT />}
+          />
+          <Route path="/assistants-gpt" element={<Assistants />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
           <Route path="/university-agents" element={<UniversityAgents />} />
@@ -82,7 +97,6 @@ const App: React.FC = () => {
             element={<MachinesManufacturingServices />}
           />
           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
-
           {/* Redirect to add a trailing slash if missing */}
           <Route
             path="/freerudraksha"
@@ -92,7 +106,6 @@ const App: React.FC = () => {
             path="/StudyAbroad"
             element={<Navigate to="/StudyAbroad/" />}
           />
-
           <Route path="/accommodation-gpt" element={<Accomidation />} />
           <Route path="placements-gpt" element={<Placements />} />
           <Route path="/foreign-exchange" element={<ForeignExchange />} />

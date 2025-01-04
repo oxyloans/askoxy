@@ -205,6 +205,47 @@ const StudyAbroad: React.FC = () => {
                   >
                     Placements Gpt
                   </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() => handleNavigation("/universities-gpt")}
+                  >
+                    Universities Gpt
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() => handleNavigation("/assistants-gpt")}
+                  >
+                    Assistant Gpt
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() => handleNavigation("/agencies-gpt")}
+                  >
+                    Agencies GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() =>
+                      handleNavigation("/qualificationspecialization-gpt")
+                    }
+                  >
+                    QualificationSpecializationGPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() => handleNavigation("/reviews-gpt")}
+                  >
+                    Reviews GPT
+                  </li>
+
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                    onClick={() =>
+                      handleNavigation("/informationaboutcountries-gpt")
+                    }
+                  >
+                    Information About Countries GPT
+                  </li>
                 </ul>
               )}
             </div>
