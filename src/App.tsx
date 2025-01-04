@@ -34,13 +34,11 @@ import MyRotaryServices from "./components/MyRotary";
 import AllQueriesforAdmin from "./components/UserQueries";
 import Admin from "./Pages/Admin";
 import AuthorInfo from "./components/AuthorInfo";
-import TravelGPT from "./components/TravelGPT";
-// import Universities from "./components/GPT/University";
-import ForeignExchangeAndPreDeparture from "./components/GPT/ForeignExchangeAndPreDeparture";
+
 import Courses from "./components/GPT/Courses";
 import Accomidation from "./components/GPT/Accomidation";
 import UniversityAgents from "./components/GPT/UniversityAgents";
-import ScrollToTop from "./components/ScrollToTop"; 
+import ScrollToTop from "./components/ScrollToTop";
 import FileUpload from "./Pages/FileUpload";
 import Sidebar from "./Pages/Sider";
 import CampaignsAdd from "./Pages/CampaignsAdd";
@@ -54,7 +52,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Landingpage />} />
           <Route path="/erice" element={<Erice />} />
           <Route path="/sider" element={<Sidebar />} />
-          <Route path="/fileupload" element={<FileUpload />} />   
+          <Route path="/fileupload" element={<FileUpload />} />
           <Route
             path="/allcampaignsdetails"
             element={<AllCampaignsDetails />}
@@ -93,11 +91,6 @@ const App: React.FC = () => {
             element={<Navigate to="/StudyAbroad/" />}
           />
 
-          {/* <Route path="/freerudraksha/" element={<Freerudraksha />} /> */}
-          <Route
-            path="/foreign-exchange"
-            element={<ForeignExchangeAndPreDeparture />}
-          />
           <Route path="/accommodation-gpt" element={<Accomidation />} />
           <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />

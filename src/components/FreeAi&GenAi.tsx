@@ -94,7 +94,7 @@ const FreeAiandGenAi: React.FC = () => {
       );
       console.log("API Response:", response.data);
 
-      message.success("Your interest has been submitted successfully!");
+      message.success("Your interest has been submitted successfully!");  
       setIsModalOpen(false); // Close modal on success
     } catch (error) {
       console.error("API Error:", error);
