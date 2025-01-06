@@ -228,7 +228,7 @@ const Accomidation = () => {
   const riceTopics = [
     {
       id: 1,
-      title: "Types of Student Accommodation",
+      title: "Student Accommodation Types",
       content:
         "What are the different types of accommodations available for international students, such as dormitories, shared apartments, and homestays?",
     },
@@ -240,7 +240,7 @@ const Accomidation = () => {
     },
     {
       id: 3,
-      title: "Location and Proximity to Campus",
+      title: "Location & Campus Proximity",
       content:
         "What should students consider when choosing accommodation based on its location, proximity to campus, and public transportation?",
     },
@@ -420,7 +420,7 @@ const Accomidation = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -428,16 +428,16 @@ const Accomidation = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4 ">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {riceTopics.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -459,7 +459,7 @@ const Accomidation = () => {
             {/* Chat messages */}
             <div
               className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
+            
             >
               <div>
                 {isLoading ? (

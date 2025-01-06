@@ -57,15 +57,17 @@ const InfoSection: React.FC = () => {
   // };
 
      const userId = localStorage.getItem("userId");
-     const handleSearch = () => {
-       if (userId) {
-         // If user is signed in, redirect to dashboard
-         window.location.href = `/dashboard`;
-       } else {
-         // Otherwise, redirect to normal page
-         window.location.href = `/normal?query=${query}`;
-       }
-     };
+      const handleSearch = () => {
+        if (userId) {
+          // If user is signed in, redirect to dashboard
+          window.location.href = `/dashboard?query=${encodeURIComponent(
+            query
+          )}`;
+        } else {
+          // Otherwise, redirect to normal page
+          window.location.href = `/normal?query=${encodeURIComponent(query)}`;
+        }
+      };
   return (
     <div className="py-8">
       {/* Advice Section */}

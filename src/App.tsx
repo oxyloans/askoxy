@@ -51,6 +51,13 @@ import AuthorizeandAgencies from "./components/GPT/Authorize&Agencies";
 import QualificationSpecializationGPT from "./components/GPT/QualificationSpecializationGPT";
 import Reviews from "./components/GPT/Reviews";
 import InformationAboutCountries from "./components/GPT/InformationAboutCountries";
+import Loans from "./components/GPT/Lonsgpt";
+import Scholarship from "./components/GPT/Scholarships";
+import Logistics from "./components/GPT/Logistics";
+import Visa from "./components/GPT/Visa";
+import AccreditationsRecognization from "./components/GPT/AccreditationsRecognization";
+import ApplicationSupport from "./components/GPT/AppliocationSupport";
+import AcceptanceLetter from "./components/GPT/AcceptanceLetter";
 const App: React.FC = () => {
   return (
     <Router>
@@ -98,6 +105,7 @@ const App: React.FC = () => {
           <Route path="/legalservice" element={<LegalService />} />
           <Route path="/myrotary" element={<MyRotaryServices />} />
           <Route path="/courses-gpt" element={<Courses />} />
+          <Route path="/loans-gpt" element={<Loans />} />
           <Route
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
@@ -113,7 +121,22 @@ const App: React.FC = () => {
             element={<Navigate to="/StudyAbroad/" />}
           />
           <Route path="/accommodation-gpt" element={<Accomidation />} />
+          <Route path="/logistics-gpt" element={<Logistics />} />
+          <Route
+            path="/applicationsupport-gpt"
+            element={<ApplicationSupport />}
+          />
+          <Route
+            path="/acceptanceletter-gpt"
+            element={<AcceptanceLetter />}
+          />
+          <Route path="/visa-gpt" element={<Visa />} />
+          <Route
+            path="/accreditations-gpt"
+            element={<AccreditationsRecognization />}
+          />
           <Route path="placements-gpt" element={<Placements />} />
+          <Route path="scholarships-gpt" element={<Scholarship />} />
           <Route path="/foreign-exchange" element={<ForeignExchange />} />
           <Route path="/happy-diwali" element={<Happy_Diwali />} />
           <Route path="/example" element={<Example variant="loading01" />} />

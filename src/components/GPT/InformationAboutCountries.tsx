@@ -232,27 +232,25 @@ const InformationAboutCountries = () => {
   const ForeignExchange = [
     {
       id: 1,
-      title:
-        "What is the capital city of Japan, and what are its key attractions?",
+      title: "Capital of Japan Attractions",
       content:
         "Learn about the best ways to handle foreign currency, including opening international bank accounts and using student-friendly exchange services.",
     },
     {
       id: 2,
-      title: "Which countries have the largest populations in the world?",
+      title: "Most Populous Countries",
       content:
         "Explore the most reliable and cost-effective methods for transferring money overseas, such as wire transfers, online services, and currency cards.",
     },
     {
       id: 3,
-      title: "What are the official languages spoken in Switzerland?",
+      title: "Official Languages of Switzerland",
       content:
         "Understand essential steps like securing accommodation, purchasing travel insurance, and understanding local laws before traveling abroad.",
     },
     {
       id: 4,
-      title:
-        "Can you provide insights into the economy and major industries of Germany?",
+      title: "Germany Economy and Industries",
       content:
         "Get tips on what to pack for your study abroad experience, including essentials like clothing, documents, and academic supplies.",
     },
@@ -425,7 +423,7 @@ const InformationAboutCountries = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -433,16 +431,16 @@ const InformationAboutCountries = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {ForeignExchange.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -462,10 +460,7 @@ const InformationAboutCountries = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -537,7 +532,7 @@ const InformationAboutCountries = () => {
                 value={input}
                 onChange={handleInputChangeWithVisibility}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about information about countries for studying abroad...."
+                placeholder="Ask about countries for studying abroad...."
                 className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
               />
               {showSendButton && (

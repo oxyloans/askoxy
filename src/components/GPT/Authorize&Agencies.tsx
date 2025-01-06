@@ -229,34 +229,33 @@ const AuthorizeandAgencies = () => {
   };
 
   // Dummy data for Authorization & Agencies for studying abroad
-  const AuthorizationAgencies = [
-    {
-      id: 1,
-      title:
-        "What is the role of an educational agency in the study abroad process?",
-      content:
-        "Learn how educational agencies assist students with university applications, visa processes, accommodation, and other services to ensure a smooth study abroad experience.",
-    },
-    {
-      id: 2,
-      title: "How can I verify the authenticity of a study abroad agency?",
-      content:
-        "Discover steps to check the credibility of a study abroad agency, such as reading reviews, checking certifications, and ensuring they are registered with relevant authorities.",
-    },
-    {
-      id: 3,
-      title: "What documents are needed for obtaining a student visa?",
-      content:
-        "Understand the key documents required for a student visa application, such as proof of acceptance, financial documents, passport copies, and medical insurance.",
-    },
-    {
-      id: 4,
-      title:
-        "How do I choose the right agency to help with my student visa application?",
-      content:
-        "Explore tips on selecting a reliable agency for visa applications, including assessing their experience, reputation, and success rate in handling student visa processes.",
-    },
-  ];
+ const AuthorizationAgencies = [
+   {
+     id: 1,
+     title: "Educational Agency Role",
+     content:
+       "Learn how educational agencies assist students with university applications, visa processes, accommodation, and other services to ensure a smooth study abroad experience.",
+   },
+   {
+     id: 2,
+     title: "Verify Study Abroad Agency Authenticity",
+     content:
+       "Discover steps to check the credibility of a study abroad agency, such as reading reviews, checking certifications, and ensuring they are registered with relevant authorities.",
+   },
+   {
+     id: 3,
+     title: "Student Visa Documents Required",
+     content:
+       "Understand the key documents required for a student visa application, such as proof of acceptance, financial documents, passport copies, and medical insurance.",
+   },
+   {
+     id: 4,
+     title: "Choosing the Right Visa Agency",
+     content:
+       "Explore tips on selecting a reliable agency for visa applications, including assessing their experience, reputation, and success rate in handling student visa processes.",
+   },
+ ];
+
 
   // Handle input change to manage send button visibility and bubble visibility
   const handleInputChangeWithVisibility = (
@@ -425,7 +424,7 @@ const AuthorizeandAgencies = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -433,16 +432,16 @@ const AuthorizeandAgencies = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {AuthorizationAgencies.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -462,10 +461,7 @@ const AuthorizeandAgencies = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -537,7 +533,7 @@ const AuthorizeandAgencies = () => {
                 value={input}
                 onChange={handleInputChangeWithVisibility}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about universities agents for studying abroad...."
+                placeholder="Ask about accommodation for studying abroad...."
                 className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
               />
               {showSendButton && (

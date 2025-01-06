@@ -420,7 +420,7 @@ const UniversityAgents = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -428,16 +428,16 @@ const UniversityAgents = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {riceTopics.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -457,10 +457,7 @@ const UniversityAgents = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -532,7 +529,7 @@ const UniversityAgents = () => {
                 value={input}
                 onChange={handleInputChangeWithVisibility}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about rice information..."
+                placeholder="Ask about accommodation for studying abroad...."
                 className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
               />
               {showSendButton && (

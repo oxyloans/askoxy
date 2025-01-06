@@ -246,13 +246,13 @@ const Placements = () => {
     },
     {
       id: 3,
-      title: "Placement Assistance by Universities",
+      title: "University Placement Support",
       content:
         "How do universities support international students in securing placements through career services or job fairs?",
     },
     {
       id: 4,
-      title: "Industry-Specific Placement Trends",
+      title: "Industry Placement Trends",
       content:
         "What are the current placement trends in industries like technology, healthcare, and finance for international graduates?",
     },
@@ -425,7 +425,7 @@ const Placements = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -433,16 +433,16 @@ const Placements = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {placementTopics.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -462,10 +462,7 @@ const Placements = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -553,7 +550,6 @@ const Placements = () => {
               )}
             </div>
           </section>
-
           {/* Right Panel */}
           {/* {questionCount >= 3 && (
             <div className="w-full bg-white rounded-lg shadow-md md:w-1/4">

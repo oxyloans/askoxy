@@ -595,30 +595,36 @@ const Dasboard = () => {
       setInput(content);
       setShowStaticBubbles(false);
       setShowSendButton(true);
-      setriceTopicsshow(false);
-      navigate(`/dashboard?query=${encodeURIComponent(content)}`, {
-        replace: true,
-      });
+      setriceTopicsshow(true);
+      // navigate(`/dashboard?query=${encodeURIComponent(content)}`, {
+      //   replace: true,
+      // });
+       if (inputRef.current) {
+         inputRef.current.focus(); // Focus the input field
+       }
     }
   };
 
-  // Handle new chat click
-  const handleNewChatClick = () => {
-    setMessages([]); // Clear the messages
-    setShowStaticBubbles(true); // Show the static chat bubbles
-    setShowFreerudraksha(false); // Reset to main chat
-    setShowStudyAbroad(false); // Reset to main chat interface
-    setShowFreeSample(false);
-    setShowFreeaiandgenai(false);
-    setShowMachinesManufacturing(false);
-    setShowMyRotaryService(false);
-    setShowLegalService(false);
-    navigate("/dashboard");
-    if (inputRef.current) {
-      inputRef.current.value = ""; // Clear the input field
-      setShowSendButton(false); // Hide the send button
-    }
-  };
+const handleNewChatClick = () => {
+  setMessages([]); // Clear the messages
+  setShowFreerudraksha(false);
+  setShowStudyAbroad(false);
+  setShowFreeSample(false);
+  setShowFreeaiandgenai(false);
+  setShowMachinesManufacturing(false);
+  setShowMyRotaryService(false);
+  setShowLegalService(false);
+  setriceTopicsshow(true);
+
+  navigate("/dashboard"); // Navigate first
+  setShowStaticBubbles(true); // Show static chat bubbles after navigation
+
+   if (inputRef.current) {
+     inputRef.current.value = ""; // Clear the input field
+     setShowSendButton(false); // Hide the send button
+   }
+};
+
   const handleHistoryItemClick = (historyItem: string) => {
     setInput(historyItem); // Set input to the history item
     setShowSendButton(true); // Show send button
@@ -754,10 +760,7 @@ const Dasboard = () => {
                     />
                   </svg>
                 </div>
-              </button>
-              <span className="flex-1 text-center text-[#351664] ">
-                History
-              </span>
+              </button>{" "}
               <button
                 onClick={handleNewChatClick}
                 className=" rounded-md"
@@ -902,10 +905,10 @@ const Dasboard = () => {
               </div>
             </div>
 
-            <div
-              className="mt-4 h-80 border-t border-gray-300 pt-2"
-              // hidden md:block
-            >
+            <div className="mt-2 h-80 border-gray-300 pt-2   hidden md:block">
+              <div className="flex mt-3 mb-2 text-[#3c1973] text-md">
+                History
+              </div>
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
                   No history available.
@@ -988,9 +991,8 @@ const Dasboard = () => {
 
                   {showStaticBubbles && (
                     <>
-                      <div className="absolute inset-0 flex items-center justify-center p-4">
-                        
-                        <div className="grid grid-cols-2 gap-4 overflow-y-auto max-h-60">
+                      <div className="absolute inset-0 flex items-center justify-center p-2">
+                        <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-60">
                           {" "}
                           {/* Add max-height and overflow */}
                           {riceTopicsshow && (
@@ -998,7 +1000,7 @@ const Dasboard = () => {
                               {riceTopics.map((topic) => (
                                 <div
                                   key={topic.id}
-                                  className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                                  className="flex items-center justify-center max-w-xs p-3 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                                   style={{
                                     wordWrap: "break-word",
                                     zIndex: "10",

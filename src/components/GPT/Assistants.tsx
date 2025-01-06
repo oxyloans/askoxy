@@ -229,27 +229,25 @@ const Assistants = () => {
   const StudyAbroadPreparation = [
     {
       id: 1,
-      title: "How can I improve my speaking skills for the IELTS exam?",
+      title: "Tips to Improve IELTS Speaking",
       content:
         "Learn strategies for improving your fluency and coherence in speaking, including practicing with native speakers, recording yourself, and focusing on pronunciation.",
     },
     {
       id: 2,
-      title:
-        "What are some effective ways to prepare for the TOEFL writing section?",
+      title: "TOEFL Writing Prep Tips",
       content:
         "Discover tips for structuring your essays, brainstorming ideas, and practicing timed writing exercises to improve your performance in the TOEFL writing section.",
     },
     {
       id: 3,
-      title:
-        "How should I prepare for common questions in an embassy interview?",
+      title: "Embassy Interview Prep",
       content:
         "Understand how to answer common embassy questions like 'Why do you want to study in this country?' and 'How will you finance your studies?' with confidence and clarity.",
     },
     {
       id: 4,
-      title: "What documents should I bring to my embassy interview?",
+      title: "Documents for Embassy Interview",
       content:
         "Learn about the essential documents for your embassy interview, such as your passport, university acceptance letter, proof of financial support, and any required language test scores.",
     },
@@ -422,7 +420,7 @@ const Assistants = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -430,16 +428,16 @@ const Assistants = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {StudyAbroadPreparation.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -459,10 +457,7 @@ const Assistants = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -534,7 +529,7 @@ const Assistants = () => {
                 value={input}
                 onChange={handleInputChangeWithVisibility}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about test and interview preparation for studying abroad...."
+                placeholder="Ask about accommodation for studying abroad...."
                 className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
               />
               {showSendButton && (

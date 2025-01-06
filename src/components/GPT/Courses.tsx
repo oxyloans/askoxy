@@ -223,25 +223,25 @@ const Courses = () => {
   const riceTopics = [
     {
       id: 1,
-      title: "Which courses are in demand globally?",
+      title: "In-Demand Global Courses",
       content:
         "Discover courses that are highly sought after in the global job market.",
     },
     {
       id: 2,
-      title: "What are the best universities for this course?",
+      title: "Top Universities for Popular Courses",
       content:
         "Find out which universities excel in your chosen field of study.",
     },
     {
       id: 3,
-      title: "What is the course structure and curriculum?",
+      title: "Course Structure & Curriculum",
       content:
         "Learn about the subjects and practical experiences offered in the course.",
     },
     {
       id: 4,
-      title: "What are the entry requirements for this course?",
+      title: "Entry Requirements for Courses",
       content: "Understand the academic and other prerequisites for admission.",
     },
   ];
@@ -415,7 +415,7 @@ const Courses = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -423,16 +423,16 @@ const Courses = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {riceTopics.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -452,10 +452,7 @@ const Courses = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -527,7 +524,7 @@ const Courses = () => {
                 value={input}
                 onChange={handleInputChangeWithVisibility}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about cources information..."
+                placeholder="Ask about Course for studying abroad...."
                 className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
               />
               {showSendButton && (
@@ -543,7 +540,6 @@ const Courses = () => {
               )}
             </div>
           </section>
-
           {/* Right Panel */}
           {/* {questionCount >= 3 && (
             <div className="w-full bg-white rounded-lg shadow-md md:w-1/4">

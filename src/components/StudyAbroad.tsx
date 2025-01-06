@@ -154,13 +154,6 @@ const StudyAbroad: React.FC = () => {
           {/* Buttons on the right */}
           <div className="flex flex-col md:flex-row gap-4 items-center justify-end w-full px-4">
             {/* 'I'm Interested' Button */}
-            <button
-              className="px-4 py-2 text-sm md:text-base bg-green-600 text-white rounded-md hover:bg-green-700 shadow-md transition-all"
-              onClick={() => setIsModalOpen(true)}
-              aria-label="Visit our site"
-            >
-              I'm Interested
-            </button>
 
             {/* Dropdown Menu Button */}
             <div className="relative">
@@ -174,7 +167,7 @@ const StudyAbroad: React.FC = () => {
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <ul className="absolute bg-white text-black shadow-lg rounded-md mt-2 w-48 md:w-60">
+                <ul className="absolute bg-white text-black shadow-lg rounded-md mt-2 w-48 md:w-60 overflow-y-auto max-h-60">
                   <li
                     className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => navigate("/accommodation-gpt")}
@@ -229,7 +222,7 @@ const StudyAbroad: React.FC = () => {
                     className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
                     onClick={() => handleNavigation("/reviews-gpt")}
                   >
-                    Reviews GPT
+                    University Reviews GPT
                   </li>
                   <li
                     className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
@@ -239,9 +232,58 @@ const StudyAbroad: React.FC = () => {
                   >
                     Information About Countries GPT
                   </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/loans-gpt")}
+                  >
+                    Loans GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/scholarships-gpt")}
+                  >
+                    Scholarships GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/logistics-gpt")}
+                  >
+                    Logistics GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/visa-gpt")}
+                  >
+                    Visa GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/accreditations-gpt")}
+                  >
+                    Accreditations Recognization GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/applicationsupport-gpt")}
+                  >
+                    Application Support GPT
+                  </li>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                    onClick={() => handleNavigation("/applicationsupport-gpt")}
+                  >
+                    Offer Letter & Acceptance Visa GPT
+                  </li>
                 </ul>
               )}
             </div>
+            <button
+              className="px-4 py-2 text-sm md:text-base bg-green-600 text-white rounded-md hover:bg-green-700 shadow-md transition-all"
+              onClick={() => setIsModalOpen(true)}
+              aria-label="Visit our site"
+            >
+              I'm Interested
+            </button>
           </div>
         </header>
 
@@ -299,13 +341,19 @@ const StudyAbroad: React.FC = () => {
               Students Studying Abroad
             </h2>
             <p className="text-sm md:text-base text-gray-700">
-              Thousands of students are realizing their dream of studying
-              abroad. Join them and explore top universities and opportunities
-              across the world. Get started today to make your{" "}
+              Join thousands of students making their study abroad dreams a
+              reality. Discover top universities with
               <strong className="text-purple-600">
-                global education journey
-              </strong>{" "}
-              a reality.
+                {" "}
+                StudentX.world, the World's 1st AI & Blockchain-powered platform{" "}
+              </strong>
+              for university admissions. Access
+              <strong className="text-purple-600">
+                {" "}
+                bAnkD's innovative education loan marketplace{" "}
+              </strong>
+              , connecting students with leading Banks and NBFCs to finance
+              their global education journey.
             </p>
           </div>
 
@@ -319,7 +367,7 @@ const StudyAbroad: React.FC = () => {
               rel="noopener noreferrer"
               aria-label="Visit University Platform"
             >
-              Explore Universities
+              StudentX.world
             </a>
 
             {/* Button 2 */}
@@ -330,7 +378,7 @@ const StudyAbroad: React.FC = () => {
               rel="noopener noreferrer"
               aria-label="Visit Scholarship Platform"
             >
-              Find Scholarships
+              bankd
             </a>
           </div>
         </div>

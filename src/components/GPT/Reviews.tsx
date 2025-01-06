@@ -239,28 +239,25 @@ const Reviews = () => {
   const ForeignExchange = [
     {
       id: 1,
-      title:
-        "Can you provide reviews about the University of Toronto for international students?",
+      title: "University of Toronto Reviews",
       content:
         "Learn about the best ways to handle foreign currency, including opening international bank accounts and using student-friendly exchange services.",
     },
     {
       id: 2,
-      title:
-        "What are the top universities for computer science and engineering in the United States?",
+      title: "US Computer Science Universities",
       content:
         "Explore the most reliable and cost-effective methods for transferring money overseas, such as wire transfers, online services, and currency cards.",
     },
     {
       id: 3,
-      title:
-        "What are the pros and cons of studying at the Australian National University?",
+      title: "Pros and Cons of ANU",
       content:
         "Understand essential steps like securing accommodation, purchasing travel insurance, and understanding local laws before traveling abroad.",
     },
     {
       id: 4,
-      title: "How do students rate the MBA program at INSEAD?",
+      title: "INSEAD MBA Program Reviews",
       content:
         "Get tips on what to pack for your study abroad experience, including essentials like clothing, documents, and academic supplies.",
     },
@@ -433,7 +430,7 @@ const Reviews = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -441,16 +438,16 @@ const Reviews = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {ForeignExchange.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -470,10 +467,7 @@ const Reviews = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">
@@ -545,7 +539,7 @@ const Reviews = () => {
                 value={input}
                 onChange={handleInputChangeWithVisibility}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about university riviews for studying abroad...."
+                placeholder="Ask about universities reviews for studying abroad...."
                 className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
               />
               {showSendButton && (

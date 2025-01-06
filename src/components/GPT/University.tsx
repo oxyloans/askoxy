@@ -230,32 +230,33 @@ const University = () => {
 
   // Dummy data for rice-related topics
   // Dummy data for university-related topics
-  const UniversityDetailsGPT4 = [
-    {
-      id: 1,
-      title: "What should I consider when choosing a university abroad?",
-      content:
-        "Learn about key factors like academic reputation, location, tuition fees, and available scholarships to make an informed decision.",
-    },
-    {
-      id: 2,
-      title: "How can I research universities and programs effectively?",
-      content:
-        "Explore tips for using university ranking platforms, official websites, and student forums to gather detailed insights about programs and campuses.",
-    },
-    {
-      id: 3,
-      title: "What documents are needed for university applications?",
-      content:
-        "Understand the common requirements, including transcripts, recommendation letters, statement of purpose, and proof of language proficiency.",
-    },
-    {
-      id: 4,
-      title: "How can I prepare for university interviews abroad?",
-      content:
-        "Get guidance on acing your interviews with tips on researching the university, practicing common questions, and presenting yourself confidently.",
-    },
-  ];
+ const UniversityDetailsGPT4 = [
+   {
+     id: 1,
+     title: "Choosing a University Abroad",
+     content:
+       "Learn about key factors like academic reputation, location, tuition fees, and available scholarships to make an informed decision.",
+   },
+   {
+     id: 2,
+     title: "Researching Universities and Programs",
+     content:
+       "Explore tips for using university ranking platforms, official websites, and student forums to gather detailed insights about programs and campuses.",
+   },
+   {
+     id: 3,
+     title: "University Application Documents",
+     content:
+       "Understand the common requirements, including transcripts, recommendation letters, statement of purpose, and proof of language proficiency.",
+   },
+   {
+     id: 4,
+     title: "Preparing for University Interviews",
+     content:
+       "Get guidance on acing your interviews with tips on researching the university, practicing common questions, and presenting yourself confidently.",
+   },
+ ];
+
 
   // Handle input change to manage send button visibility and bubble visibility
   const handleInputChangeWithVisibility = (
@@ -424,7 +425,7 @@ const University = () => {
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-            <h1
+            <h2
               className="fw-500"
               style={{ zIndex: "10", color: "black", fontWeight: "600" }}
             >
@@ -432,16 +433,16 @@ const University = () => {
               {profileData
                 ? `    ${profileData.firstName} ${profileData.lastName}`
                 : "Guest"}
-            </h1>
+            </h2>
             {/* Static Rice Related Text */}
             {showStaticBubbles && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="absolute inset-0 flex items-center justify-center p-3 ">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Map over rice topics to create chat bubbles */}
                   {UniversityDetailsGPT4.map((topic) => (
                     <div
                       key={topic.id}
-                      className="flex items-center justify-center max-w-xs p-4 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
+                      className="flex items-center justify-center max-w-xs p-2 text-black transition duration-200 bg-gray-200 rounded-lg chat-bubble hover:bg-gray-300"
                       style={{
                         wordWrap: "break-word",
                         zIndex: "10",
@@ -461,10 +462,7 @@ const University = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-              style={{ maxHeight: "calc(100vh - 12rem)" }}
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">

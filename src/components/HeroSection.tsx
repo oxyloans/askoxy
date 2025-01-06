@@ -395,7 +395,7 @@ const HeroSection: React.FC = () => {
      window.location.href = `/dashboard?query=${encodeURIComponent(query)}`;
    } else {
      // Otherwise, redirect to normal page
-     window.location.href = `/normal?${query}`;
+     window.location.href = `/normal?query=${encodeURIComponent(query)}`;
    }
  };
   return (
