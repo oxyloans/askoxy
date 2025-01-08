@@ -362,6 +362,7 @@ const Accomidation = () => {
               location={profileData?.city || ""}
               email={profileData?.email || ""}
               icon={<FaUserCircle />}
+              number={profileData?.mobileNumber || ""}
             />
           </div>
         </div>
@@ -457,10 +458,7 @@ const Accomidation = () => {
             )}
 
             {/* Chat messages */}
-            <div
-              className="relative flex-grow p-2 overflow-y-auto chat-container"
-            
-            >
+            <div className="relative flex-grow p-2 overflow-y-auto chat-container">
               <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-24">

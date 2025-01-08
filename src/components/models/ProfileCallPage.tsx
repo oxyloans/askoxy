@@ -94,7 +94,10 @@ const UserProfile = () => {
         const response = await axios.get<UserProfile>(
           `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`
         );
+
         setUserProfile(response.data);
+        localStorage.setItem("email", response.data.email); // Store email in localStorage  
+        // Store mobile number in localStorage
       } catch (error) {
         console.error("Error fetching user profile:", error);
         Swal.fire({
@@ -199,15 +202,7 @@ const UserProfile = () => {
               setUserProfile({ ...userProfile, email: e.target.value })
             }
           />
-          <InputField
-            name="mobileNumber"
-            type="tel"
-            value={userProfile.mobileNumber}
-            placeholder="Mobile Number"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, mobileNumber: e.target.value })
-            }
-          />
+         
           <InputField
             name="dateOfBirth"
             type="date"

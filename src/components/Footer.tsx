@@ -56,7 +56,7 @@ const Footer: React.FC = () => {
           <ul className="text-sm space-y-2 text-gray-800">
             <li>
               <a
-                href="/about"
+                href=""
                 className="hover:text-blue-600 hover:underline"
                 aria-label="Learn About Us"
               >
@@ -65,7 +65,7 @@ const Footer: React.FC = () => {
             </li>
             <li>
               <a
-                href="/privacy-policy"
+                href=""
                 className="hover:text-blue-600 hover:underline"
                 aria-label="View Privacy Policy"
               >
@@ -74,7 +74,7 @@ const Footer: React.FC = () => {
             </li>
             <li>
               <a
-                href="/terms-of-service"
+                href=""
                 className="hover:text-blue-600 hover:underline"
                 aria-label="View Terms of Service"
               >
@@ -83,7 +83,7 @@ const Footer: React.FC = () => {
             </li>
             <li>
               <a
-                href="/contact"
+                href=""
                 className="hover:text-blue-600 hover:underline"
                 aria-label="Contact Us"
               >

@@ -367,6 +367,7 @@ const University = () => {
               location={profileData?.city || ""}
               email={profileData?.email || ""}
               icon={<FaUserCircle />}
+              number={profileData?.mobileNumber || ""}
             />
           </div>
         </div>

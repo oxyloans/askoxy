@@ -362,6 +362,7 @@ const Assistants = () => {
               location={profileData?.city || ""}
               email={profileData?.email || ""}
               icon={<FaUserCircle />}
+              number={profileData?.mobileNumber || ""}
             />
           </div>
         </div>

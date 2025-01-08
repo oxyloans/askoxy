@@ -58,6 +58,7 @@ import Visa from "./components/GPT/Visa";
 import AccreditationsRecognization from "./components/GPT/AccreditationsRecognization";
 import ApplicationSupport from "./components/GPT/AppliocationSupport";
 import AcceptanceLetter from "./components/GPT/AcceptanceLetter";
+import AllQueries from "./Pages/AllQueries";
 const App: React.FC = () => {
   return (
     <Router>
@@ -95,6 +96,7 @@ const App: React.FC = () => {
           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
           {/* <Route path="/rudraksha" element={<RudrakshaSteps />} /> */}
           <Route path="/freerudraksha" Component={Freerudraksha} />
+          <Route path="/userqueries" Component={AllQueries} />
           <Route path="/freesample&steelcontainer" element={<FreeSample />} />
           <Route path="/freeaiandgenai" element={<FreeAiandGenAi />} />
           <Route path="/studyabroad" element={<StudyAbroad />} />
@@ -126,10 +128,7 @@ const App: React.FC = () => {
             path="/applicationsupport-gpt"
             element={<ApplicationSupport />}
           />
-          <Route
-            path="/acceptanceletter-gpt"
-            element={<AcceptanceLetter />}
-          />
+          <Route path="/acceptanceletter-gpt" element={<AcceptanceLetter />} />
           <Route path="/visa-gpt" element={<Visa />} />
           <Route
             path="/accreditations-gpt"

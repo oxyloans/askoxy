@@ -357,46 +357,52 @@ const Examplecomponet = () => {
       <header className="flex flex-col md:flex-row justify-between items-center p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
         <button
-      className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-      onClick={handleRedirect}
-    >
-      <span className="text-white">ASKOXY</span>
-      <span className="text-[#ffa800]">.AI</span>
-    </button>
-<div></div> 
-    <div   
-        className="sign-in-container"
-        style={{
-          width: 'auto',
-          height: 'auto',
-          backgroundColor: 'gray',
-          padding: '7px 20px',
-          borderRadius: '50px',
-          color: 'white',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          position:'absolute',
-          right:'5rem'
-        }}
-      >
-        {/* SignIn button with redirection functionality */}
-
-        <button className="" onClick={()=>{localStorage.removeItem("userId");navigate('/login')}}>
-          SignOut
+          className="flex items-center m-2 text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+          onClick={handleRedirect}
+        >
+          <span className="text-white">ASKOXY</span>
+          <span className="text-[#ffa800]">.AI</span>
         </button>
-      </div>
+        <div></div>
+        <div
+          className="sign-in-container"
+          style={{
+            width: "auto",
+            height: "auto",
+            backgroundColor: "gray",
+            padding: "7px 20px",
+            borderRadius: "50px",
+            color: "white",
+            textAlign: "center",
+            fontWeight: "bold",
+            position: "absolute",
+            right: "5rem",
+          }}
+        >
+          {/* SignIn button with redirection functionality */}
+
+          <button
+            className=""
+            onClick={() => {
+              localStorage.removeItem("userId");
+              navigate("/login");
+            }}
+          >
+            SignOut
+          </button>
+        </div>
 
         {/* SignIn/SignUp Buttons */}
         <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
-
-        <AuthorInfo
-  name={`${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()} // Combines first and last name, falls back to empty string if either is undefined
-  location={profileData?.city || 'Unknown'} // Falls back to 'Unknown' if city is null or undefined
-  email={profileData?.email || 'No email available'} // Falls back to a default if email is not provided
-  icon={<FaUserCircle />}// Optional, falls back to placeholder image
-/>
-
-      
+          <AuthorInfo
+            name={`${profileData?.firstName || ""} ${
+              profileData?.lastName || ""
+            }`.trim()} // Combines first and last name, falls back to empty string if either is undefined
+            location={profileData?.city || "Unknown"} // Falls back to 'Unknown' if city is null or undefined
+            email={profileData?.email || "No email available"} // Falls back to a default if email is not provided
+            icon={<FaUserCircle />} // Optional, falls back to placeholder image
+            number={profileData?.mobileNumber || ""}
+          />
         </div>
       </header>
 
@@ -438,27 +444,31 @@ const Examplecomponet = () => {
 
               </button> */}
             </div>
-            {isEditing && <p className="text-sm text-[#351664]">Editing mode enabled...</p>}
+            {isEditing && (
+              <p className="text-sm text-[#351664]">Editing mode enabled...</p>
+            )}
 
             {/* History List */}
-        <ChatHistory />
+            <ChatHistory />
           </aside>
 
           {/* Center Panel */}
           <section className="relative flex flex-col flex-grow w-full p-6 md:w-1/2 bg-gray-50">
-      {/* Static Rice Related Text */}
-      <h1 className='fw-500' style={{ zIndex: '10', color: 'black', fontWeight: '600' }}>
-  Welcome {profileData ? `${profileData.firstName} ${profileData.lastName}` : 'Guest'}
-</h1>
+            {/* Static Rice Related Text */}
+            <h1
+              className="fw-500"
+              style={{ zIndex: "10", color: "black", fontWeight: "600" }}
+            >
+              Welcome{" "}
+              {profileData
+                ? `${profileData.firstName} ${profileData.lastName}`
+                : "Guest"}
+            </h1>
 
-
-   
-   <ProfileCallPage />
-    </section>
-
+            <ProfileCallPage />
+          </section>
 
           {/* Right Panel */}
-  
         </div>
       </main>
     </div>

@@ -3,6 +3,7 @@ import Image1 from "../assets/img/AD1 (1).jpg";
 import Image2 from "../assets/img/AD2.jpg";
 import ReactMarkdown from "react-markdown";
 import axios from "axios";
+import HiringService from "./HiringService";
 import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
@@ -14,6 +15,7 @@ import FR3 from "../assets/img/freeaiandgenai.png";
 import FR4 from "../assets/img/machines.png";
 import FR5 from "../assets/img/legail.jpg";
 import LegalService from "./LegalService";
+import FR6 from "../assets/img/wearehiring.png";
 import Pushpa2GPT from "./Pushpa2GPT";
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
@@ -104,6 +106,7 @@ const Dasboard = () => {
     useState(false);
   const [showMyRotaryService, setShowMyRotaryService] = useState(false);
   const [showLegalService, setShowLegalService] = useState(false);
+  const [showHiringService, setShowHiringService] = useState(false);
 
   const scrollableRef = useRef<HTMLDivElement | null>(null);
   const componentRef = useRef<HTMLDivElement | null>(null);
@@ -128,6 +131,7 @@ const Dasboard = () => {
     // Reset all states
     setShowFreerudraksha(false);
     setShowStudyAbroad(false);
+    setShowHiringService(false);
     setShowFreeSample(false);
     setShowFreeaiandgenai(false);
     setShowMachinesManufacturing(false);
@@ -158,6 +162,9 @@ const Dasboard = () => {
         case "legal-service":
           setShowLegalService(true);
           break;
+        case "we-are-hiring":
+          setShowHiringService(true);
+          break;
       }
       // Clear messages when switching sections
       setMessages([]);
@@ -170,14 +177,12 @@ const Dasboard = () => {
       handleSend(query);
     }
 
-
-      // Scroll logic
-      if (isMobile) {
-        componentRef.current?.scrollIntoView({ behavior: "smooth" });
-      } else {
-        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    
+    // Scroll logic
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
     // if (scrollableRef.current) {
     //   scrollableRef.current.scrollTo({ top: 0, behavior: "smooth" });
@@ -189,11 +194,11 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleStudyAbroadClick = () => {
@@ -201,11 +206,11 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleFreeSampleClick = () => {
@@ -213,11 +218,11 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleFreeAiandGenAiClick = () => {
@@ -225,43 +230,53 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleMachinesandManufacturingClick = () => {
     navigate("/dashboard?section=machines-manufacturing", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+  const handledWeAreHiring = () => {
+    navigate("/dashboard?section=we-are-hiring", { replace: true });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleMyRotaryClick = () => {
     navigate("/dashboard?section=my-rotary", { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handledLegalServiceClick = () => {
     navigate("/dashboard?section=legal-service", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
-     if (isMobile) {
-       componentRef.current?.scrollIntoView({ behavior: "smooth" });
-     } else {
-       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-     }
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   useEffect(() => {
@@ -294,6 +309,8 @@ const Dasboard = () => {
       .then((response) => {
         console.log(response.data);
         setProfileData(response.data); // Set the profile data to state
+        localStorage.setItem("email", response.data.email);
+        localStorage.setItem("mobileNumber", response.data.mobileNumber);
       })
       .catch((error) => {
         console.error("There was an error making the request:", error);
@@ -599,31 +616,31 @@ const Dasboard = () => {
       // navigate(`/dashboard?query=${encodeURIComponent(content)}`, {
       //   replace: true,
       // });
-       if (inputRef.current) {
-         inputRef.current.focus(); // Focus the input field
-       }
+      if (inputRef.current) {
+        inputRef.current.focus(); // Focus the input field
+      }
     }
   };
 
-const handleNewChatClick = () => {
-  setMessages([]); // Clear the messages
-  setShowFreerudraksha(false);
-  setShowStudyAbroad(false);
-  setShowFreeSample(false);
-  setShowFreeaiandgenai(false);
-  setShowMachinesManufacturing(false);
-  setShowMyRotaryService(false);
-  setShowLegalService(false);
-  setriceTopicsshow(true);
+  const handleNewChatClick = () => {
+    setMessages([]); // Clear the messages
+    setShowFreerudraksha(false);
+    setShowStudyAbroad(false);
+    setShowFreeSample(false);
+    setShowFreeaiandgenai(false);
+    setShowMachinesManufacturing(false);
+    setShowMyRotaryService(false);
+    setShowLegalService(false);
+    setriceTopicsshow(true);
 
-  navigate("/dashboard"); // Navigate first
-  setShowStaticBubbles(true); // Show static chat bubbles after navigation
+    navigate("/dashboard"); // Navigate first
+    setShowStaticBubbles(true); // Show static chat bubbles after navigation
 
-   if (inputRef.current) {
-     inputRef.current.value = ""; // Clear the input field
-     setShowSendButton(false); // Hide the send button
-   }
-};
+    if (inputRef.current) {
+      inputRef.current.value = ""; // Clear the input field
+      setShowSendButton(false); // Hide the send button
+    }
+  };
 
   const handleHistoryItemClick = (historyItem: string) => {
     setInput(historyItem); // Set input to the history item
@@ -703,8 +720,12 @@ const handleNewChatClick = () => {
           {/* SignOut Button */}
           <button
             onClick={() => {
-              if (localStorage.getItem("userId")) {
+              if (
+                localStorage.getItem("userId") &&
+                localStorage.getItem("email")
+              ) {
                 localStorage.removeItem("userId");
+                localStorage.removeItem("email");
                 navigate("/");
               } else {
                 navigate("/");
@@ -716,7 +737,7 @@ const handleNewChatClick = () => {
           </button>
           {/* Profile Info Section (AuthorInfo) */}
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2 sm:space-x-2">
             <AuthorInfo
               name={`${profileData?.firstName || ""} ${
                 profileData?.lastName || ""
@@ -724,6 +745,7 @@ const handleNewChatClick = () => {
               location={profileData?.city || ""}
               email={profileData?.email || ""}
               icon={<FaUserCircle />}
+              number={profileData?.mobileNumber || ""}
             />
           </div>
         </div>
@@ -898,15 +920,31 @@ const handleNewChatClick = () => {
                     alt="Machines and Manufacturing Services"
                     className="w-7 h-7 rounded-full"
                   />
-                  <span className=" text-[#3c1973] text-sm leading-tight">
+                  <span className=" text-[#3c1973] ml-2 text-sm leading-tight">
                     Machines & Manufacturing Services
+                  </span>
+                </button>
+              </div>
+
+              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                <button
+                  onClick={handledWeAreHiring}
+                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                >
+                  <img
+                    src={FR6} // Replace with the actual image path
+                    alt="We Are Hiring"
+                    className="w-7 h-7 rounded-full"
+                  />
+                  <span className=" text-[#3c1973] text-sm ml-2 leading-tight">
+                    We Are Hiring
                   </span>
                 </button>
               </div>
             </div>
 
             <div className="mt-2 h-80 border-gray-300 pt-2   hidden md:block">
-              <div className="flex mt-3 mb-2 text-[#3c1973] text-md">
+              <div className="flex mt-3 mb-2 ml-2 text-[#3c1973] text-md">
                 History
               </div>
               {chathistory.length === 0 ? (
@@ -931,8 +969,6 @@ const handleNewChatClick = () => {
               )}
             </div>
           </aside>
-
-          {/* }) */}
 
           {/* Center Panel */}
           <section
@@ -959,10 +995,19 @@ const handleNewChatClick = () => {
                 <FreeAiandGenAi />
               </div>
             )}
-            {showMachinesManufacturing && <MachinesManufacturingServices />}
+            {showMachinesManufacturing && (
+              <div ref={componentRef}>
+                <MachinesManufacturingServices />
+              </div>
+            )}
             {showMyRotaryService && (
               <div ref={componentRef}>
                 <MyRotaryServices />
+              </div>
+            )}
+            {showHiringService && (
+              <div ref={componentRef}>
+                <HiringService />{" "}
               </div>
             )}
             {showLegalService && (
@@ -971,6 +1016,7 @@ const handleNewChatClick = () => {
               </div>
             )}
             {!showFreerudraksha &&
+              !showHiringService &&
               !showStudyAbroad &&
               !showFreeSample &&
               !showFreeaiandgenai &&
@@ -992,7 +1038,7 @@ const handleNewChatClick = () => {
                   {showStaticBubbles && (
                     <>
                       <div className="absolute inset-0 flex items-center justify-center p-2">
-                        <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-60">
+                        <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-70">
                           {" "}
                           {/* Add max-height and overflow */}
                           {riceTopicsshow && (
@@ -1103,13 +1149,13 @@ const handleNewChatClick = () => {
                       value={input}
                       onChange={handleInputChangeWithVisibility}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask quetion...."
-                      className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
+                      placeholder="Ask question..."
+                      className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black text-sm md:text-base"
                     />
                     {showSendButton && (
                       <button
                         onClick={() => handleSend(input)}
-                        className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
+                        className={`ml-2 bg-[#ffa800] text-white px-3 py-1 md:px-4 md:py-2 rounded-full shadow-md ${
                           isLoading ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                         disabled={isLoading}

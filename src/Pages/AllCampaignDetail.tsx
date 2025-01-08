@@ -13,10 +13,8 @@ const AllCampaignsDetails: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Define the base URL for the images (adjust according to your API or CDN)
-  const imageBaseUrl = "https://meta.oxyloans.com/"; // Example base URL, replace if necessary
+  const imageBaseUrl = "https://meta.oxyloans.com/";
 
-  // Fetch campaigns data from the API
   useEffect(() => {
     const fetchCampaigns = async () => {
       setLoading(true);
@@ -29,7 +27,6 @@ const AllCampaignsDetails: React.FC = () => {
             },
           }
         );
-
         setCampaigns(response.data);
       } catch (error) {
         console.error("Error fetching campaigns:", error);
@@ -38,7 +35,6 @@ const AllCampaignsDetails: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchCampaigns();
   }, []);
 
@@ -52,37 +48,36 @@ const AllCampaignsDetails: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Sidebar */}
-      <div className="w-1/4 text-white p-6">
+      <div className="lg:w-1/4 w-full text-white p-6">
         <Sidebar />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 mx-auto max-w-7xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 mx-auto w-full max-w-full md:max-w-7xl">
+        <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
           All Campaign Details
         </h1>
         {loading ? (
-          <p className="text-gray-600">Loading campaigns...</p>
+          <p className="text-gray-600">Loading ca mpaigns...</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300 bg-white shadow">
+          <div className="overflow-x-auto overflow-y-auto scrollbar-hide">
+            <table className="min-w-full border-collapse border border-gray-300 bg-white shadow-md">
               <thead>
                 <tr className="bg-blue-50">
-                  <th className="border border-gray-300 p-3 text-left text-gray-700">
+                  <th className="border border-gray-300 p-2 md:p-3 text-left text-sm md:text-base text-gray-700">
                     Image
                   </th>
-                  <th className="border border-gray-300 p-3 text-left text-gray-700">
+                  <th className="border border-gray-300 p-2 md:p-3 text-left text-sm md:text-base text-gray-700">
                     Campaign Type
                   </th>
-                  <th className="border border-gray-300 p-3 text-left text-gray-700">
+                  <th className="border border-gray-300 p-2 md:p-3 text-left text-sm md:text-base text-gray-700">
                     Description
                   </th>
-                  <th className="border border-gray-300 p-3 text-left text-gray-700">
+                  <th className="border border-gray-300 p-2 md:p-3 text-left text-sm md:text-base text-gray-700">
                     Added By
                   </th>
-                  <th className="border border-gray-300 p-3 text-center text-gray-700">
+                  <th className="border border-gray-300 p-2 md:p-3 text-center text-sm md:text-base text-gray-700">
                     Actions
                   </th>
                 </tr>
@@ -94,34 +89,26 @@ const AllCampaignsDetails: React.FC = () => {
                       key={index}
                       className="hover:bg-blue-50 transition duration-150 ease-in-out"
                     >
-                      <td className="border border-gray-300 p-3">
+                      <td className="border border-gray-300 p-2 md:p-3">
                         <img
-                          src={`${imageBaseUrl}${campaign.imageUrl}`} // Assuming the image URL needs to be appended to the base URL
+                          src={`${imageBaseUrl}${campaign.imageUrl}`}
                           alt={campaign.campaignType}
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-12 h-12 md:w-20 md:h-20 rounded-md object-cover"
                         />
                       </td>
-                      <td className="border border-gray-300 p-3">
+                      <td className="border border-gray-300 p-2 md:p-3">
                         {campaign.campaignType}
                       </td>
-                      <td className="border border-gray-300 p-3">
+                      <td className="border border-gray-300 p-2 md:p-3">
                         {campaign.campaignDescription}
                       </td>
-                      <td className="border border-gray-300 p-3">
+                      <td className="border border-gray-300 p-2 md:p-3">
                         {campaign.campaignTypeAddBy}
                       </td>
-                      <td className="border border-gray-300 p-3 text-center">
-                        <button
-                          onClick={() =>
-                            alert(`Edit Campaign: ${campaign.campaignType}`)
-                          }
-                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2 transition"
-                        >
-                          Edit
-                        </button>
+                      <td className="border border-gray-300 p-2 md:p-3 text-center">
                         <button
                           onClick={() => handleDelete(campaign.campaignType)}
-                          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                          className="bg-red-500 hover:bg-red-600 text-white text-sm md:text-base font-semibold py-1 px-3 rounded shadow"
                         >
                           Delete
                         </button>
@@ -130,11 +117,8 @@ const AllCampaignsDetails: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="text-center p-6 text-gray-500 bg-gray-50"
-                    >
-                      No campaigns found.
+                    <td colSpan={5} className="text-center text-gray-500 py-4">
+                      No campaigns available.
                     </td>
                   </tr>
                 )}

@@ -9,16 +9,18 @@ interface AuthorInfoProps {
   name: string;
   location: string;
   email: string;
-  icon?: React.ReactNode; // Optional prop for avatar image URL
+  icon?: React.ReactNode;
+  number: string; // Optional prop for avatar image URL
 }
 
-const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, icon }) => {
+const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email,number, icon }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [updatedFirstName, setUpdatedFirstName] = useState(name.split(" ")[0] || ""); // Extract first name
   const [updatedLastName, setUpdatedLastName] = useState(name.split(" ")[1] || ""); // Extract last name
   const [updatedLocation, setUpdatedLocation] = useState(location);
   const [updatedEmail, setUpdatedEmail] = useState(email);
+  const[updateMobileNumber,setUpdateMobileNumber] = useState(number)  
   const popoverRef = useRef<HTMLDivElement>(null);
   
 
@@ -27,7 +29,8 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, icon }) 
   const [lastNameError, setLastNameError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
-
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [mobileError, setMobileError] = useState("");
   // Regular expression to allow only alphabetic characters and spaces
   const nameValidationRegex = /^[A-Za-z\s]*$/;
 
@@ -112,15 +115,21 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, icon }) 
   
 
     try {
-      const response = await axios.patch("https://meta.oxyloans.com/api/student-service/user/profile/update", {
-        userId,
-        firstName: updatedFirstName,
-        lastName: updatedLastName,
-        city: updatedLocation,
-        email: updatedEmail,
-      });
+      const response = await axios.patch(
+        "https://meta.oxyloans.com/api/student-service/user/profile/update",
+        {
+          userId,
+          firstName: updatedFirstName,
+          lastName: updatedLastName,
+          city: updatedLocation,
+          email: updatedEmail,
+          mobileNumber:updateMobileNumber
+        }
+      );
 
       console.log("Profile updated successfully:", response.data);
+      localStorage.setItem("email", updatedEmail); // Store email in localStorage 
+   // Store mobile number in localStorage  
       message.success('Profile updated successfully');
       setShowModal(false); // Close modal after save
     } catch (error) {
@@ -129,7 +138,26 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ name, location, email, icon }) 
      
     }
   };
+const handleMobileNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value;
 
+  // Allow only digits and limit to 10 characters
+  if (/^\d{0,10}$/.test(value)) {
+    setMobileNumber(value);
+    setMobileError(""); // Clear error if input is valid
+  } else {
+    setMobileError("Please enter a valid 10-digit mobile number.");
+  }
+};
+
+const validateMobileNumber = () => {
+  if (mobileNumber.length !== 10) {
+    setMobileError("Mobile number must be exactly 10 digits.");
+    return false;
+  }
+  setMobileError(""); // Clear error if validation passes
+  return true;
+};
   // Ensure the modal fields reflect the correct state when opened
   useEffect(() => {
     if (showModal) {
@@ -195,6 +223,17 @@ const isProfileUpdated = name && name.trim() !== "";
               </span>
             </div>
           </div>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-2">
+              <span className="font-semibold text-gray-800">
+                Mobile Number:
+              </span>
+              <span className="text-sm text-gray-600">
+                {number || "Not provided"}
+              </span>
+            </div>
+           
+          </div>
 
           {/* Edit Button */}
           <button
@@ -242,6 +281,23 @@ const isProfileUpdated = name && name.trim() !== "";
                 />
                 {lastNameError && (
                   <p className="text-red-500 text-sm mt-1">{lastNameError}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-black text-sm font-semibold mb-1">
+                  Enter Your Mobile Number
+                </label>
+                <input
+                  type="text" // Changed to text for better control over input
+                  className="w-full border border-gray-300 p-2 rounded-full text-black placeholder-gray-500"
+                  value={mobileNumber}
+                  onChange={handleMobileNumberChange}
+                  onBlur={validateMobileNumber}
+                  required
+                  placeholder="Enter your Mobile Number"
+                />
+                {mobileError && (
+                  <p className="text-red-500 text-sm mt-1">{mobileError}</p>
                 )}
               </div>
               <div>

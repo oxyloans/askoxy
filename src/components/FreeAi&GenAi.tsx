@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 import Footer from "./Footer";
 import { message } from "antd";
@@ -42,9 +43,13 @@ const FreeAiandGenAi: React.FC = () => {
 
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
   const [firstRequestDate, setFirstRequestDate] = useState("");
+  const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
   const userId = localStorage.getItem("userId");
+  const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
+  const [query, setQuery] = useState("");
 
   const [formData, setFormData] = useState({
     askOxyOfers: "FREEAI",
@@ -94,11 +99,92 @@ const FreeAiandGenAi: React.FC = () => {
       );
       console.log("API Response:", response.data);
 
-      message.success("Your interest has been submitted successfully!");  
+      message.success("Your interest has been submitted successfully!");
       setIsModalOpen(false); // Close modal on success
+    } catch (error:any) {
+       if (error.response && error.response.status === 500) {
+            // Handle duplicate participation error
+            message.warning("You have already participated. Thank you!");
+          } else {
+            console.error("API Error:", error);
+            message.error("Failed to submit your interest. Please try again.");
+          }
+    }
+  };
+
+  const email = localStorage.getItem("email");
+  const mobileNumber = localStorage.getItem("whatsappNumber");
+
+  const navigate = useNavigate();
+
+  const handlePopUOk = () => {
+    setIsOpen(false);
+    navigate("/user-profile");
+  };
+
+  const handleWriteToUs = () => {
+    if (
+      !email ||
+      email === "null" ||
+      !mobileNumber ||
+      mobileNumber === "null"
+    ) {
+      setIsprofileOpen(true);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    if (issuccessOpen) {
+      const timer = setTimeout(() => {
+        setSuccessOpen(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [issuccessOpen]);
+  const handleWriteToUsSubmitButton = async () => {
+    // Payload with the data to send to the API
+    const payload = {
+      email: email, // You might want to replace this with dynamic values
+      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      queryStatus: "PENDING",
+      projectType: "ASKOXY",
+      askOxyOfers: "FREEAI",
+      adminDocumentId: "",
+      comments: "",
+      id: "",
+      resolvedBy: "",
+      resolvedOn: "",
+      status: "",
+      userDocumentId: "",
+      query: query,
+      userId: userId,
+    };
+
+    // Log the query to check the input before sending
+    console.log("Query:", query);
+    const accessToken = localStorage.getItem("accessToken");
+
+    const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
+    };
+
+    try {
+      // Sending the POST request to the API
+      const response = await axios.post(apiUrl, payload, { headers: headers });
+
+      // Check if the response was successful
+      if (response.data) {
+        console.log("Response:", response.data);
+        setSuccessOpen(true);
+        setIsOpen(false);
+      }
     } catch (error) {
-      console.error("API Error:", error);
-      message.error("Failed to submit your interest. Please try again.");
+      // Handle error if the request fails
+      console.error("Error sending the query:", error);
+      // alert("Failed to send query. Please try again.");
     }
   };
 
@@ -125,12 +211,134 @@ const FreeAiandGenAi: React.FC = () => {
             </button>
 
             {/* Button: Write To Us */}
-            {/* <button
+            <button
               className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
               aria-label="Write To Us"
+              onClick={handleWriteToUs}
             >
               Write To Us
-            </button> */}
+            </button>
+
+            {isOpen && (
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
+                <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+                  {/* Close Button */}
+                  <i
+                    className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
+                    onClick={() => setIsOpen(false)}
+                    aria-label="Close"
+                  />
+
+                  {/* Modal Content */}
+                  <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
+                    Write To Us
+                  </h2>
+
+                  {/* Mobile Number Field */}
+                  <div className="mb-4">
+                    <label
+                      className="block text-m text-black font-medium mb-1"
+                      htmlFor="phone"
+                    >
+                      Mobile Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      disabled={true}
+                      value={mobileNumber || ""}
+                      // value={"9908636995"}
+                      className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                      placeholder="Enter your mobile number"
+                      style={{ fontSize: "0.8rem" }}
+                    />
+                  </div>
+
+                  {/* Email Field */}
+                  <div className="mb-4">
+                    <label
+                      className="block text-m text-black font-medium mb-1"
+                      htmlFor="email"
+                    >
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email || ""}
+                      // value={"kowthavarapuanusha@gmail.com"}
+                      disabled={true}
+                      className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                      placeholder="Enter your email"
+                      style={{ fontSize: "0.8rem" }}
+                    />
+                  </div>
+
+                  {/* Query Field */}
+                  <div className="mb-4">
+                    <label
+                      className="block text-m text-black font-medium mb-1"
+                      htmlFor="query"
+                    >
+                      Query
+                    </label>
+                    <textarea
+                      id="query"
+                      rows={3}
+                      className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                      placeholder="Write to us"
+                      style={{ fontSize: "0.8rem" }}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
+                    onClick={handleWriteToUsSubmitButton}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isprofileOpen && (
+              <div className="fixed inset-0 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                  <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-xl text-[#3d2a71] font-bold">
+                      Alert...!
+                    </h2>
+                    <button
+                      className="font-bold text-3xl text-red-500 hover:text-red-900"
+                      onClick={() => setIsprofileOpen(false)}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <p className="mb-2 text-black ">
+                    Please fill your profile details.
+                  </p>
+                  <div className="flex justify-end">
+                    <button
+                      className="bg-[#f9b91a] text-white px-3 py-1 rounded "
+                      onClick={handlePopUOk}
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {issuccessOpen && (
+              <div className="fixed top-18 right-4 z-50">
+                <div className="w-[200] h-[400] bg-white text-green-500 p-4 rounded shadow-lg transition-opacity duration-500 ease-in-out">
+                  Query submitted successfully...!
+                </div>
+              </div>
+            )}
           </div>
         </header>
 

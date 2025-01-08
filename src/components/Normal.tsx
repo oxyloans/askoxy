@@ -558,6 +558,7 @@ const truncateText = (
               location={profileData?.city || ""}
               email={profileData?.email || ""}
               icon={<FaUserCircle />}
+              number={profileData?.mobileNumber || ""}
             />
           </div>
         </div>
@@ -597,8 +598,7 @@ const truncateText = (
               </button>
               <span className="flex-1 text-center text-[#351664] ">
                 History
-              </span>
-              {" "}
+              </span>{" "}
               <button
                 onClick={handleNewChatClick}
                 className=" rounded-md"
@@ -629,7 +629,7 @@ const truncateText = (
                 Editing mode enabled...
               </p>
             )}
-           
+
             <div className="mt-4 h-80 border-t border-gray-300 pt-2 ">
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
