@@ -70,6 +70,7 @@ const Freerudraksha: React.FC = () => {
   const [delivery, setDelivery] = useState<string>("");
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
+  const [queryError, setQueryError] = useState<string>("");
   const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const userId = localStorage.getItem("userId");
   console.log(userId);
@@ -80,33 +81,6 @@ const Freerudraksha: React.FC = () => {
       setIsModalOpen(true);
     } else {
       message.error("Phone number is not available in local storage.");
-    }
-  };
-
-  const handleSend = () => {
-    if (query.trim()) {
-      // Handle sending the query
-      console.log("User Query:", query);
-      setIsModalOpen(false);
-      setQuery("");
-      alert("Your query has been sent successfully!");
-    } else {
-      alert("Please write a query before submitting.");
-    }
-  };
-  const whatsappNumber = "9160463697";
-
-  const handleMessage = (action: string) => {
-    if (action === "Write to Us") {
-      console.log("Navigating to 'Write to Us' feature...");
-      //  window.location.href = "/contact-form";
-    } else if (action === "Chat with Us") {
-      console.log("Opening WhatsApp chat...");
-      const message = `Hi`;
-      const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-        message
-      )}`;
-      window.open(url, "_blank");
     }
   };
 
@@ -295,6 +269,10 @@ const Freerudraksha: React.FC = () => {
     }
   }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return; // Exit the function if the query is invalid
+    }
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
@@ -361,11 +339,11 @@ const Freerudraksha: React.FC = () => {
           </button>
           {/* Uncomment below button if needed */}
           {/* <button
-        className="w-full md:w-auto px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 text-sm md:text-base lg:text-lg transition duration-300"
-        aria-label="Chat With Us"
-      >
-        Chat With Us
-      </button> */}
+            className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 text-sm md:text-base lg:text-lg transition duration-300"
+            aria-label="Chat With Us"
+          >
+           Ticket History
+          </button> */}
 
           {isOpen && (
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
@@ -438,6 +416,9 @@ const Freerudraksha: React.FC = () => {
                     style={{ fontSize: "0.8rem" }}
                     onChange={(e) => setQuery(e.target.value)}
                   />
+                  {queryError && (
+                    <p className="text-red-500 text-sm mt-1">{queryError}</p>
+                  )}
                 </div>
 
                 {/* Submit Button */}
@@ -452,25 +433,25 @@ const Freerudraksha: React.FC = () => {
           )}
 
           {isprofileOpen && (
-            <div className="fixed inset-0 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-xl text-[#3d2a71] font-bold">
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl text-[#3d2a71] font-bold">
                     Alert...!
                   </h2>
                   <button
-                    className="font-bold text-3xl text-red-500 hover:text-red-900"
+                    className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
                     onClick={() => setIsprofileOpen(false)}
                   >
                     &times;
                   </button>
                 </div>
-                <p className="mb-2 text-black ">
+                <p className="text-center text-black mb-6">
                   Please fill your profile details.
                 </p>
-                <div className="flex justify-end">
+                <div className="flex justify-center">
                   <button
-                    className="bg-[#f9b91a] text-white px-3 py-1 rounded "
+                    className="bg-[#f9b91a] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#f4a307] focus:outline-none"
                     onClick={handlePopUOk}
                   >
                     OK
@@ -481,9 +462,22 @@ const Freerudraksha: React.FC = () => {
           )}
 
           {issuccessOpen && (
-            <div className="fixed top-18 right-4 z-50">
-              <div className="w-[200] h-[400] bg-white text-green-500 p-4 rounded shadow-lg transition-opacity duration-500 ease-in-out">
-                Query submitted successfully...!
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105 text-center">
+                <h2 className="text-xl text-green-600 font-bold mb-4">
+                  Success!
+                </h2>
+                <p className="text-black mb-6">
+                  Query submitted successfully...!
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    className="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-600 focus:outline-none"
+                    onClick={() => setSuccessOpen(false)}
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             </div>
           )}

@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Input, Button, Typography, message } from "antd";
 import axios from "axios";
 import img1 from "../assets/img/image1.png";
@@ -26,14 +26,12 @@ const HiringService: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [queryError, setQueryError] = useState<string | undefined>();
+  const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
+  const [query, setQuery] = useState("");
 
-    const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
-    const [isOpen, setIsOpen] = useState<boolean>(false);
-  
-    
-    const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
-    const [query, setQuery] = useState("");
-  
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -69,46 +67,35 @@ const HiringService: React.FC = () => {
     }
   };
 
-const handleSubmit = async () => {
-  const { mobileNumber } = formData;
-  const newErrors: { mobileNumber?: string } = {};
+  const handleSubmit = async () => {
+    const { mobileNumber } = formData;
+    const newErrors: { mobileNumber?: string } = {};
 
-  // Validation
-  if (!mobileNumber) {
-    newErrors.mobileNumber = "Mobile number is required.";
-  } else if (!/^\d{10}$/.test(mobileNumber)) {
-    newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
-  }
+    // Validation
+    if (!mobileNumber) {
+      newErrors.mobileNumber = "Mobile number is required.";
+    } else if (!/^\d{10}$/.test(mobileNumber)) {
+      newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
+    }
 
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors); // Set errors if validation fails
-    return; // Do not proceed with the form submission
-  }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Set errors if validation fails
+      return; // Do not proceed with the form submission
+    }
 
-  try {
-    // API request to submit the form data
-    const response = await axios.post(
-      "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-      formData
-    );
+    try {
+      // API request to submit the form data
+      const response = await axios.post(
+        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        formData
+      );
 
-   
-
-    message.success("Your interest has been submitted successfully!");
-    setIsModalOpen(false); // Close modal on success
-  } catch (error: any) {
-    
-    if (error.response && error.response.status === 400) {
-      // Handle duplicate participation error
-      message.warning("You have already participated. Thank you!");
-    } else {
-      console.error("API Error:", error);
+      message.success("Your interest has been submitted successfully!");
+      setIsModalOpen(false); // Close modal on success
+    } catch (error: any) {
       message.error("Failed to submit your interest. Please try again.");
     }
-  }
-};
-
-
+  };
 
   const email = localStorage.getItem("email");
   const mobileNumber = localStorage.getItem("whatsappNumber");
@@ -142,6 +129,10 @@ const handleSubmit = async () => {
     }
   }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return; // Exit the function if the query is invalid
+    }
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
@@ -185,7 +176,6 @@ const handleSubmit = async () => {
       // alert("Failed to send query. Please try again.");
     }
   };
-
 
   return (
     <>
@@ -274,6 +264,9 @@ const handleSubmit = async () => {
                     style={{ fontSize: "0.8rem" }}
                     onChange={(e) => setQuery(e.target.value)}
                   />
+                  {queryError && (
+                    <p className="text-red-500 text-sm mt-1">{queryError}</p>
+                  )}
                 </div>
 
                 {/* Submit Button */}
@@ -288,25 +281,25 @@ const handleSubmit = async () => {
           )}
 
           {isprofileOpen && (
-            <div className="fixed inset-0 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-xl text-[#3d2a71] font-bold">
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl text-[#3d2a71] font-bold">
                     Alert...!
                   </h2>
                   <button
-                    className="font-bold text-3xl text-red-500 hover:text-red-900"
+                    className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
                     onClick={() => setIsprofileOpen(false)}
                   >
                     &times;
                   </button>
                 </div>
-                <p className="mb-2 text-black ">
+                <p className="text-center text-black mb-6">
                   Please fill your profile details.
                 </p>
-                <div className="flex justify-end">
+                <div className="flex justify-center">
                   <button
-                    className="bg-[#f9b91a] text-white px-3 py-1 rounded "
+                    className="bg-[#f9b91a] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#f4a307] focus:outline-none"
                     onClick={handlePopUOk}
                   >
                     OK
@@ -317,9 +310,22 @@ const handleSubmit = async () => {
           )}
 
           {issuccessOpen && (
-            <div className="fixed top-18 right-4 z-50">
-              <div className="w-[200] h-[400] bg-white text-green-500 p-4 rounded shadow-lg transition-opacity duration-500 ease-in-out">
-                Query submitted successfully...!
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105 text-center">
+                <h2 className="text-xl text-green-600 font-bold mb-4">
+                  Success!
+                </h2>
+                <p className="text-black mb-6">
+                  Query submitted successfully...!
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    className="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-600 focus:outline-none"
+                    onClick={() => setSuccessOpen(false)}
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -329,7 +335,7 @@ const handleSubmit = async () => {
         <div className="container mx-auto px-6 lg:px-12 py-16 bg-white rounded-2xl shadow-2xl">
           <div className="text-center mb-12 px-4 sm:px-6 md:px-8">
             <Title level={2}>
-              Digital <span className="text-blue-400">Ambassadors</span>
+              Digital <span>Ambassadors</span>
             </Title>
             <Paragraph>
               Join Our Dynamic Team and Embark on a Digital Journey!

@@ -33,6 +33,7 @@ const LegalService: React.FC = () => {
 
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
+  const[queryError,setQueryError]=useState<string | undefined>(undefined);  
 
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
@@ -99,14 +100,8 @@ const LegalService: React.FC = () => {
 
       message.success("Your interest has been submitted successfully!");
       setIsModalOpen(false); // Close modal on success
-    } catch (error: any) {
-      if (error.response && error.response.status === 500) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
+    } catch (error) {
+     message.error("Failed to submit your interest. Please try again.");
     }
   };
 
@@ -142,6 +137,11 @@ const LegalService: React.FC = () => {
     }
   }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
+    
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return; // Exit the function if the query is invalid
+    }
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
@@ -289,6 +289,9 @@ const LegalService: React.FC = () => {
                       style={{ fontSize: "0.8rem" }}
                       onChange={(e) => setQuery(e.target.value)}
                     />
+                    {queryError && (
+                      <p className="text-red-500 text-sm">{queryError}</p>
+                    )}
                   </div>
 
                   {/* Submit Button */}
@@ -303,25 +306,25 @@ const LegalService: React.FC = () => {
             )}
 
             {isprofileOpen && (
-              <div className="fixed inset-0 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-                  <div className="flex justify-between items-center mb-3">
-                    <h2 className="text-xl text-[#3d2a71] font-bold">
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl text-[#3d2a71] font-bold">
                       Alert...!
                     </h2>
                     <button
-                      className="font-bold text-3xl text-red-500 hover:text-red-900"
+                      className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
                       onClick={() => setIsprofileOpen(false)}
                     >
                       &times;
                     </button>
                   </div>
-                  <p className="mb-2 text-black ">
+                  <p className="text-center text-black mb-6">
                     Please fill your profile details.
                   </p>
-                  <div className="flex justify-end">
+                  <div className="flex justify-center">
                     <button
-                      className="bg-[#f9b91a] text-white px-3 py-1 rounded "
+                      className="bg-[#f9b91a] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#f4a307] focus:outline-none"
                       onClick={handlePopUOk}
                     >
                       OK
@@ -330,11 +333,23 @@ const LegalService: React.FC = () => {
                 </div>
               </div>
             )}
-
             {issuccessOpen && (
-              <div className="fixed top-18 right-4 z-50">
-                <div className="w-[200] h-[400] bg-white text-green-500 p-4 rounded shadow-lg transition-opacity duration-500 ease-in-out">
-                  Query submitted successfully...!
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105 text-center">
+                  <h2 className="text-xl text-green-600 font-bold mb-4">
+                    Success!
+                  </h2>
+                  <p className="text-black mb-6">
+                    Query submitted successfully...!
+                  </p>
+                  <div className="flex justify-center">
+                    <button
+                      className="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-600 focus:outline-none"
+                      onClick={() => setSuccessOpen(false)}
+                    >
+                      OK
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

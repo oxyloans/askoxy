@@ -80,6 +80,10 @@ const UserProfile = () => {
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true); // Loading state
+  const [emailError, setEmailError] = useState<string>(""); // Email error state
+  const [firstNameError, setFirstNameError] = useState<string>(""); // First name error state
+  const [lastNameError, setLastNameError] = useState<string>(""); // Last name error state
+  const [cityError, setCityError] = useState<string>(""); // City error state
   const navigate = useNavigate(); // Initialize useNavigate
 
   // Fetch user profile data
@@ -96,8 +100,7 @@ const UserProfile = () => {
         );
 
         setUserProfile(response.data);
-        localStorage.setItem("email", response.data.email); // Store email in localStorage  
-        // Store mobile number in localStorage
+        localStorage.setItem("email", response.data.email); // Store email in localStorage
       } catch (error) {
         console.error("Error fetching user profile:", error);
         Swal.fire({
@@ -114,31 +117,48 @@ const UserProfile = () => {
 
   // Validate inputs before form submission
   const validateInputs = () => {
+    let isValid = true;
+
+    // Validate email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userProfile.email)) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Email",
-        text: "Please enter a valid email address.",
-      });
-      return false;
+      setEmailError("Please enter a valid email address.");
+      isValid = false;
+    } else {
+      setEmailError(""); // Clear the error if valid
     }
-    if (!/^\d{10}$/.test(userProfile.mobileNumber)) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Mobile Number",
-        text: "Mobile number should be 10 digits.",
-      });
-      return false;
+
+    // Regular expression for name validation
+    const nameRegex = /^[a-zA-Z\s]+$/;
+
+    // Validate first name
+    if (!nameRegex.test(userProfile.firstName)) {
+      setFirstNameError(
+        "First name should not contain numbers or special characters."
+      );
+      isValid = false;
+    } else {
+      setFirstNameError(""); // Clear the error if valid
     }
-    if (!/^\d{6}$/.test(userProfile.pinCode)) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Pin Code",
-        text: "Pin code should be 6 digits.",
-      });
-      return false;
+
+    // Validate last name
+    if (!nameRegex.test(userProfile.lastName)) {
+      setLastNameError(
+        "Last name should not contain numbers or special characters."
+      );
+      isValid = false;
+    } else {
+      setLastNameError(""); // Clear the error if valid
     }
-    return true;
+
+    // Validate city
+    if (!nameRegex.test(userProfile.city)) {
+      setCityError("City should not contain numbers or special characters.");
+      isValid = false;
+    } else {
+      setCityError(""); // Clear the error if valid
+    }
+
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -177,97 +197,63 @@ const UserProfile = () => {
       </h2>
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4 mt-4">
-          <InputField
-            name="firstName"
-            value={userProfile.firstName}
-            placeholder="First Name"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, firstName: e.target.value })
-            }
-          />
-          <InputField
-            name="lastName"
-            value={userProfile.lastName}
-            placeholder="Last Name"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, lastName: e.target.value })
-            }
-          />
-          <InputField
-            name="email"
-            type="email"
-            value={userProfile.email}
-            placeholder="Email"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, email: e.target.value })
-            }
-          />
-         
-          <InputField
-            name="dateOfBirth"
-            type="date"
-            value={userProfile.dateOfBirth}
-            placeholder="Date of Birth"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, dateOfBirth: e.target.value })
-            }
-          />
-          <InputField
-            name="address"
-            value={userProfile.address}
-            placeholder="Address"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, address: e.target.value })
-            }
-          />
-          <InputField
-            name="city"
-            value={userProfile.city}
-            placeholder="City"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, city: e.target.value })
-            }
-          />
-          <InputField
-            name="pinCode"
-            value={userProfile.pinCode}
-            placeholder="Pin Code"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, pinCode: e.target.value })
-            }
-          />
-          <InputField
-            name="organization"
-            value={userProfile.organization}
-            placeholder="Organization"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, organization: e.target.value })
-            }
-          />
-          <InputField
-            name="designation"
-            value={userProfile.designation}
-            placeholder="Designation"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, designation: e.target.value })
-            }
-          />
-          <InputField
-            name="state"
-            value={userProfile.state}
-            placeholder="State"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, state: e.target.value })
-            }
-          />
-          <InputField
-            name="country"
-            value={userProfile.country}
-            placeholder="Country"
-            onChange={(e) =>
-              setUserProfile({ ...userProfile, country: e.target.value })
-            }
-          />
+          <div>
+            <label>Please Enter Your First Name:</label>
+            <InputField
+              name="firstName"
+              value={userProfile.firstName}
+              placeholder="First Name"
+              onChange={(e) =>
+                setUserProfile({ ...userProfile, firstName: e.target.value })
+              }
+            />
+            {firstNameError && (
+              <p className="text-red-500 text-sm mt-1">{firstNameError}</p>
+            )}
+          </div>
+          <div>
+            <label>Please Enter Your Last Name:</label>
+            <InputField
+              name="lastName"
+              value={userProfile.lastName}
+              placeholder="Last Name"
+              onChange={(e) =>
+                setUserProfile({ ...userProfile, lastName: e.target.value })
+              }
+            />
+            {lastNameError && (
+              <p className="text-red-500 text-sm mt-1">{lastNameError}</p>
+            )}
+          </div>
+          <div>
+            <label>Please Enter Your Email:</label>
+            <InputField
+              name="email"
+              type="email"
+              value={userProfile.email}
+              placeholder="Email"
+              onChange={(e) =>
+                setUserProfile({ ...userProfile, email: e.target.value })
+              }
+            />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            )}
+          </div>
+          <div>
+            <label>Please Enter Your City:</label>
+            <InputField
+              name="city"
+              value={userProfile.city}
+              placeholder="City"
+              onChange={(e) =>
+                setUserProfile({ ...userProfile, city: e.target.value })
+              }
+            />
+            {cityError && (
+              <p className="text-red-500 text-sm mt-1">{cityError}</p>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 flex justify-end">

@@ -223,7 +223,7 @@ const isProfileUpdated = name && name.trim() !== "";
               </span>
             </div>
           </div>
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             <div className="flex items-start space-x-2">
               <span className="font-semibold text-gray-800">
                 Mobile Number:
@@ -233,7 +233,7 @@ const isProfileUpdated = name && name.trim() !== "";
               </span>
             </div>
            
-          </div>
+          </div> */}
 
           {/* Edit Button */}
           <button

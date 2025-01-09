@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Layout, Button, Modal } from "antd";
+import { Layout, Select, Table, Modal, Spin } from "antd";
 import Sider from "./Sider";
+import { setEmitFlags } from "typescript";
 
 const { Content } = Layout;
+const { Option } = Select;
 
 interface Query {
   id: string;
@@ -24,26 +26,33 @@ interface Query {
 }
 
 const AllQueries: React.FC = () => {
-  const [queryStatus, setQueryStatus] = useState<string>();
+  const [queryStatus, setQueryStatus] = useState<string>("PENDING");
+  const [askOxyOffersFilter, setAskOxyOffersFilter] = useState<string>("");
   const [queries, setQueries] = useState<Query[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedQuery, setSelectedQuery] = useState<Query | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [comments, setComments] = useState("");
+
+  const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken"); // Get access token from localStorage
-
+      const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) {
         console.error("Access token is missing");
         return;
       }
 
       const requestPayload = {
-        askOxyOfers: "FREEAI",
+        askOxyOfers:
+          askOxyOffersFilter ||
+          "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
         projectType: "ASKOXY",
-        queryStatus: queryStatus,
+        queryStatus,
+        userId,
       };
 
       const response = await axios.post(
@@ -51,10 +60,11 @@ const AllQueries: React.FC = () => {
         requestPayload,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`, // Pass access token in the Authorization header
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
+
       setQueries(response.data);
     } catch (error) {
       console.error("Error fetching queries:", error);
@@ -66,7 +76,7 @@ const AllQueries: React.FC = () => {
 
   useEffect(() => {
     fetchQueries();
-  }, [queryStatus]);
+  }, [queryStatus, askOxyOffersFilter]);
 
   const handlePendingClick = (query: Query) => {
     setSelectedQuery(query);
@@ -76,7 +86,160 @@ const AllQueries: React.FC = () => {
   const handleModalClose = () => {
     setModalVisible(false);
     setSelectedQuery(null);
+    setSelectedFile(null);
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]); // Set the file
+    }
+  };
+
+  const handleActionButtonClick = async (action: "PENDING" | "COMPLETED") => {
+    let data = {};
+    if (action === "PENDING") {
+      data = {
+        adminDocumentId: "",
+        askOxyOfers: askOxyOffersFilter,
+        comments: comments,
+        email: selectedQuery?.email,
+        id: selectedQuery?.id,
+        mobileNumber: selectedQuery?.mobileNumber,
+        projectType: "ASKOXY",
+        query: "",
+        queryStatus: action,
+        resolvedBy: "admin",
+        resolvedOn: "",
+        status: "",
+        userDocumentId: "",
+        userId: userId,
+      };
+    }
+    if (action === "COMPLETED") {
+      data = {
+        adminDocumentId: "",
+        askOxyOfers: askOxyOffersFilter,
+        comments: comments,
+        email: selectedQuery?.email,
+        id: selectedQuery?.id,
+        mobileNumber: selectedQuery?.mobileNumber,
+        projectType: "ASKOXY",
+        query: "",
+        queryStatus: "COMPLETED",
+        resolvedBy: "admin",
+        resolvedOn: "",
+        status: "",
+        userDocumentId: "",
+        userId: userId,
+      };
+    }
+
+    try {
+      const response = await fetch(
+        "https://meta.oxyloans.com/api/write-to-us/student/saveData",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(data),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        if (action === "PENDING") {
+          alert("Query is marked as Pending");
+        } else {
+          alert("Query is Completed");
+        }
+        setModalVisible(false);
+      } else {
+        console.error("Error saving data:", result);
+        // Handle error (e.g., show error message)
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      // Handle network error
+    } finally {
+      setModalVisible(false);
+      fetchQueries();
+    }
+  };
+
+  const isImage = (file: File | null) => {
+    return file && file.type.startsWith("image/");
+  };
+
+  const columns = [
+    {
+      title: "SL.NO",
+      dataIndex: "id",
+      render: (_: any, __: any, index: number) => index + 1,
+    },
+    {
+      title: "User Info",
+      dataIndex: "userInfo",
+      render: (_: any, record: Query) => (
+        <div>
+          <div>
+            <strong>Name:</strong> {record.name}
+          </div>
+          <div>
+            <strong>Email:</strong> {record.email}
+          </div>
+          <div>
+            <strong>Mobile Number:</strong> {record.mobileNumber}
+          </div>
+          <div>
+            <strong>Ticket Id:</strong> {record.randomTicketId}
+          </div>
+          <div>
+            <strong>Created At:</strong> {record.createdAt}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "User Query",
+      dataIndex: "query",
+    },
+    {
+      title: "Admin & User Replies",
+      dataIndex: "replies",
+      render: (_: any, record: any) => (
+        <div>
+          {record.userPendingQueries && record.userPendingQueries.length > 0
+            ? record.userPendingQueries.map((query: any, index: number) => (
+                <div key={index}>
+                  <strong>coments : </strong>
+                  {query.pendingComments || null}
+                </div>
+              ))
+            : null}
+        </div>
+      ),
+    },
+
+    ...(queryStatus === "PENDING"
+      ? [
+          {
+            title: "Uploaded File",
+            dataIndex: "uploadedFile",
+            render: (_: any, record: Query) => (
+              <button
+                className="bg-blue-500 text-white py-1 px-4 rounded focus:outline-blue-500"
+                onClick={() => handlePendingClick(record)}
+              >
+                Pending
+              </button>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
@@ -87,88 +250,52 @@ const AllQueries: React.FC = () => {
             Query Management
           </h1>
 
-          <div className="mb-4 max-w-md mx-auto">
-            <label
-              htmlFor="queryStatus"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Select Query Status:
-            </label>
-            <select
-              id="queryStatus"
+          <div className="flex flex-wrap justify-center gap-4 mb-4">
+            {/* Query Status Dropdown */}
+            <Select
+              placeholder="Select Query Status"
               value={queryStatus}
-              onChange={(e) => setQueryStatus(e.target.value)}
-              className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              onChange={(value) => setQueryStatus(value)}
+              className="w-72"
             >
-              <option value="PENDING">PENDING</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="CANCELLED">CANCELLED</option>
-            </select>
+              <Option value="PENDING">PENDING</Option>
+              <Option value="COMPLETED">COMPLETED</Option>
+              <Option value="CANCELLED">CANCELLED</Option>
+            </Select>
+
+            {/* ASK OXY Offers Filter */}
+            <Select
+              placeholder="Filter by ASK OXY Offers"
+              value={askOxyOffersFilter}
+              onChange={(value) => setAskOxyOffersFilter(value)}
+              className="w-72"
+              allowClear
+            >
+              <Option value="">All Offers</Option>
+              <Option value="FREERUDRAKSHA">FREERUDRAKSHA</Option>
+              <Option value="FREEAI">FREEAI</Option>
+              <Option value="ROTARIAN">ROTARIAN</Option>
+              <Option value="WEAREHIRING">WE ARE HIRING</Option>
+              <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
+              <Option value="STUDYABROAD">STUDY ABROAD</Option>
+              <Option value="FREESAMPLE">FREE SAMPLE</Option>
+            </Select>
           </div>
 
           {loading ? (
-            <div className="text-center text-blue-500">Loading...</div>
-          ) : queries.length > 0 ? (
-            <div className="overflow-x-auto w-full flex justify-center">
-              <div className="w-full max-w-8xl px-4">
-                {" "}
-                {/* Adjusted max-width to 8xl */}
-                <table className="min-w-full table-auto border-collapse border border-gray-300">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600 border">
-                        SL.NO
-                      </th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600 border">
-                        UserInfo
-                      </th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600 border">
-                        UserQuery
-                      </th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600 border">
-                        Admin & User Replies
-                      </th>
-                      {/* <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600 border">Upload file</th> */}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    {queries.map((query, index) => (
-                      <tr key={query.id}>
-                        <td className="px-4 py-2 text-sm text-gray-700 border">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-700 border">
-                          <div>
-                            <strong>Name:</strong> {query.name}
-                          </div>
-                          <div>
-                            <strong>Email:</strong> {query.email}
-                          </div>
-                          <div>
-                            <strong>Mobile Number:</strong> {query.mobileNumber}
-                          </div>
-                          <div>
-                            <strong>Ticket Id:</strong> {query.randomTicketId}
-                          </div>
-                          <div>
-                            <strong>Created At:</strong> {query.createdAt}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-700 border">
-                          {query.query}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-700 border"></td>
-                        {/* <td className="px-4 py-2 text-sm text-gray-700 border">
-                        <Button onClick={() => handlePendingClick(query)} type="primary">
-                          Pending
-                        </Button>
-                      </td> */}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="text-center">
+              <Spin size="large" />
             </div>
+          ) : queries.length > 0 ? (
+            <Table
+              dataSource={queries}
+              columns={columns}
+              rowKey={(record) => record.id}
+              bordered
+              pagination={{ pageSize: 10 }}
+              className="w-full max-w-7xl mx-auto"
+              scroll={{ x: true }}
+            />
           ) : (
             <div className="text-center text-gray-500">No queries found.</div>
           )}
@@ -179,58 +306,54 @@ const AllQueries: React.FC = () => {
         visible={modalVisible}
         onCancel={handleModalClose}
         footer={null}
-        width={600} // Adjust modal width if needed
+        width={500}
       >
         {selectedQuery && (
           <div>
             <h3 className="text-lg font-bold mb-4">Review the Document</h3>
-
-            {/* Upload Document */}
-            <div className="flex items-center mb-4">
-              <label
-                htmlFor="upload"
-                className="mr-2 text-sm font-semibold text-gray-700"
-              >
-                Upload Document:
-              </label>
+            <div className="mb-4">
               <input
-                id="upload"
                 type="file"
-                className="border border-gray-300 rounded-md p-2 w-full"
+                onChange={handleFileUpload}
+                className="border p-2"
               />
             </div>
 
-            {/* Query and Comments */}
+            {selectedFile && isImage(selectedFile) && (
+              <div className="mb-4">
+                <img
+                  src={URL.createObjectURL(selectedFile)} // Create an object URL to preview the image
+                  alt="Selected"
+                  className="w-full h-auto"
+                />
+              </div>
+            )}
             <div className="mb-4">
-              <div>
-                <strong>Comments:</strong>
-                <textarea
-                  className="mt-2 w-full max-w-full h-40 border border-gray-300 p-2"
-                  placeholder="Add your comments here"
-                ></textarea>
-              </div>
+              <textarea
+                className="w-full border p-2"
+                placeholder="Enter comments here..."
+                onChange={(e) => setComments(e.target.value)}
+              />
             </div>
-
-            {/* Buttons */}
-            <div className="flex justify-between mt-4">
-              <Button type="default" onClick={handleModalClose}>
-                Close
-              </Button>
-              <div className="flex space-x-2">
-                <Button
-                  type="primary"
-                  onClick={() => console.log("Mark as Pending")}
-                >
-                  Mark as Pending
-                </Button>
-                <Button
-                  type="primary"
-                  style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }} // Blue color for Approve button
-                  onClick={() => console.log("Approve")}
-                >
-                  Approve
-                </Button>
-              </div>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => handleActionButtonClick("PENDING")}
+                className=" text-black border-2 border-gray-500 py-1 px-3 rounded"
+              >
+                Mark as Pending
+              </button>
+              <button
+                onClick={() => handleActionButtonClick("COMPLETED")}
+                className="bg-blue-500 text-white py-1 px-3 rounded"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => setModalVisible(false)}
+                className="text-black border-2 border-gray-500 py-1 px-3 rounded"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
