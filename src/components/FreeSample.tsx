@@ -4,6 +4,7 @@ import "./DiwaliPage.css";
 import axios from "axios";
 import { BiLogoPlayStore } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
+import { notification } from "antd";
 
 import FR from "../assets/img/ricesample (2).png";
 
@@ -45,70 +46,87 @@ const FreeSample: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
+  
   const userId = localStorage.getItem("userId");
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
-  const[queryError,setQueryError] = useState<string | undefined>(undefined);  
-
+  const [queryError, setQueryError] = useState<string | undefined>(undefined);
+  const mobileNumber = localStorage.getItem("whatsappNumber");
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
-    id: userId,
-    mobileNumber: "",
+    userId: userId,
+    
     projectType: "ASKOXY",
   });
+
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-
-    // Real-time mobile number validation
-    if (name === "mobileNumber") {
-      if (!/^\d{0,10}$/.test(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          mobileNumber: "Please enter a valid mobile number with only digits.",
-        }));
-      } else {
-        setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
-      }
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async () => {
-    const { mobileNumber } = formData;
-    const newErrors: { mobileNumber?: string } = {};
-
-    // Validation
-    if (!mobileNumber) {
-      newErrors.mobileNumber = "Mobile number is required.";
-    } else if (!/^\d{10}$/.test(mobileNumber)) {
-      newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors); // Set errors if validation fails
-      return; // Do not proceed with the form submission
-    }
-
-    try {
-      // API request to submit the form data
-      const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-        formData
-      );
-      console.log("API Response:", response.data);
-
-      message.success("Your interest has been submitted successfully!");
-      setIsModalOpen(false); // Close modal on success
-    } catch (error) {
-     message.error("Failed to submit your interest. Please try again.");
-    }
-  };
+ const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+   const handleSubmit = async () => {
+     try {
+       setIsButtonDisabled(true);
+       // API request to submit the form data
+       const response = await axios.post(
+         "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+         formData
+       );
+       console.log("API Response:", response.data);
+       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+       // Show success notification
+       notification.success({
+         message: "Success!",
+         description: "Your interest has been submitted successfully!",
+         placement: "top", // Center the success notification
+         duration: 2,
+         style: {
+           width: 300, // Set small width
+           fontSize: "14px", // Reduce font size
+           padding: "10px", // Adjust padding
+         }, // Duration in seconds
+       });
+     } catch (error: any) {
+       if (error.response.status === 500 || error.response.status === 400) {
+         // Handle duplicate participation error
+         notification.warning({
+           message: "Warning!",
+           description: "You have already participated. Thank you!",
+           placement: "top",
+           duration: 2, // Duration before auto-close
+           style: {
+             width: 300, // Set small width
+             fontSize: "14px", // Reduce font size
+             padding: "10px", // Adjust padding
+           },
+         });
+       } else {
+         console.error("API Error:", error);
+         notification.error({
+           message: "Error!",
+           description: "Failed to submit your interest. Please try again.",
+           duration: 2,
+           placement: "top",
+           style: {
+             width: 300, // Set small width
+             fontSize: "14px", // Reduce font size
+             padding: "10px", // Adjust padding
+           }, // The notification will close after 2 seconds
+         });
+       }
+       setIsButtonDisabled(false);
+     }
+   };
 
   const email = localStorage.getItem("email");
-  const mobileNumber = localStorage.getItem("whatsappNumber");
+ 
 
   const navigate = useNavigate();
 
@@ -139,7 +157,6 @@ const FreeSample: React.FC = () => {
     }
   }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
-    
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
       return; // Exit the function if the query is invalid
@@ -204,7 +221,8 @@ const FreeSample: React.FC = () => {
             {/* Button: I'm Interested */}
             <button
               className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleSubmit}
+              disabled={isButtonDisabled}
               aria-label="Visit our site"
             >
               I'm Interested
@@ -444,47 +462,6 @@ const FreeSample: React.FC = () => {
         </div>
 
         {/* Modal Section */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
-              <h2 className="text-xl font-semibold mb-4">Enter Your Details</h2>
-              <div className="space-y-4">
-                <label className="text-black">
-                  Enter your mobile number
-                  <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="mobileNumber"
-                  placeholder="Mobile Number"
-                  value={formData.mobileNumber}
-                  onChange={handleInputChange}
-                  maxLength={10} // Limit the input to 10 digits
-                  className={`w-full px-4 text-black py-2 border rounded ${
-                    errors.mobileNumber ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.mobileNumber && (
-                  <p className="text-red-500 text-sm">{errors.mobileNumber}</p>
-                )}
-              </div>
-              <div className="flex justify-end mt-6 space-x-2">
-                <button
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-                  onClick={handleSubmit}
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <div>

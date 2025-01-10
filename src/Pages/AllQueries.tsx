@@ -34,6 +34,8 @@ const AllQueries: React.FC = () => {
   const [selectedQuery, setSelectedQuery] = useState<Query | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [comments, setComments] = useState("");
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(false);
 
   const userId = localStorage.getItem("userId");
 
@@ -87,16 +89,27 @@ const AllQueries: React.FC = () => {
     setModalVisible(false);
     setSelectedQuery(null);
     setSelectedFile(null);
+    setError("");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]); // Set the file
+      setSelectedFile(e.target.files[0]);
     }
   };
 
   const handleActionButtonClick = async (action: "PENDING" | "COMPLETED") => {
     let data = {};
+    if (comments === "") {
+      setError("Please Enter your comments...!");
+      setLoading(false);
+      return;
+    } else {
+      setError("");
+      setLoading(true);
+      setModalVisible(false);
+      setComments("");
+    }
     if (action === "PENDING") {
       data = {
         adminDocumentId: "",
@@ -149,13 +162,17 @@ const AllQueries: React.FC = () => {
 
       const result = await response.json();
 
-      if (response.ok) {
-        if (action === "PENDING") {
-          alert("Query is marked as Pending");
-        } else {
-          alert("Query is Completed");
+      if (result != null) {
+        setLoading(false);
+        setComments("");
+
+        if (result.queryStatus === "COMPLETED") {
+          setSuccessMessage(true);
+          // Hide success message after 3 seconds
+          setTimeout(() => {
+            setSuccessMessage(false);
+          }, 3000);
         }
-        setModalVisible(false);
       } else {
         console.error("Error saving data:", result);
         // Handle error (e.g., show error message)
@@ -166,6 +183,7 @@ const AllQueries: React.FC = () => {
     } finally {
       setModalVisible(false);
       fetchQueries();
+      setComments("");
     }
   };
 
@@ -240,6 +258,10 @@ const AllQueries: React.FC = () => {
         ]
       : []),
   ];
+
+  const handleOnChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setComments(e.target.value);
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
@@ -332,8 +354,10 @@ const AllQueries: React.FC = () => {
               <textarea
                 className="w-full border p-2"
                 placeholder="Enter comments here..."
-                onChange={(e) => setComments(e.target.value)}
+                value={comments}
+                onChange={handleOnChange}
               />
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
             <div className="flex justify-end gap-4">
               <button
@@ -349,7 +373,11 @@ const AllQueries: React.FC = () => {
                 Approve
               </button>
               <button
-                onClick={() => setModalVisible(false)}
+                onClick={() => {
+                  setModalVisible(false);
+                  setError("");
+                  setComments("");
+                }}
                 className="text-black border-2 border-gray-500 py-1 px-3 rounded"
               >
                 Cancel
@@ -358,6 +386,13 @@ const AllQueries: React.FC = () => {
           </div>
         )}
       </Modal>
+      {successMessage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-green-500 p-4 text-white text-center rounded-md">
+            Query saved successfully!
+          </div>
+        </div>
+      )}
     </div>
   );
 };

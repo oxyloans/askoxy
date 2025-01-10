@@ -24,14 +24,12 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 
 interface OfferDetails {
   id: string | null;
-  mobileNumber: string;
   projectType: string;
   askOxyOfers: string;
 }
 
 const Admin: React.FC = () => {
   const [offers, setOffers] = useState<OfferDetails[]>([]);
-  const [filteredOffers, setFilteredOffers] = useState<OfferDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,10 +41,9 @@ const Admin: React.FC = () => {
         "https://meta.oxyloans.com/api/auth-service/auth/usersOfferesDetails"
       );
       setOffers(response.data);
-      setFilteredOffers(response.data);
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch data");
+      setError(err.response?.statusText || "Failed to fetch data");
       setLoading(false);
     }
   };
@@ -59,7 +56,7 @@ const Admin: React.FC = () => {
     const filteredData = offers.filter(
       (offer) => offer.askOxyOfers === offerType
     );
-    setFilteredOffers(filteredData);
+    setOffers(filteredData);
   };
 
   return (
@@ -130,7 +127,7 @@ const Admin: React.FC = () => {
         <div className="flex flex-wrap gap-4 mb-6">
           <button
             onClick={() => handleFilter("FREESAMPLE")}
-            className="bg-green-200  hover:bg-blue-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+            className="bg-green-200 hover:bg-blue-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Free Sample
           </button>
@@ -142,31 +139,31 @@ const Admin: React.FC = () => {
           </button>
           <button
             onClick={() => handleFilter("STUDYABROAD")}
-            className="bg-indigo-200  hover:bg-purple-600 hover:text-white  text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+            className="bg-indigo-200 hover:bg-purple-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Study Abroad
           </button>
           <button
             onClick={() => handleFilter("LEGALSERVICES")}
-            className="bg-yellow-200 hover:bg-yellow-600 hover:text-white  text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+            className="bg-yellow-200 hover:bg-yellow-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Legal Services
           </button>
           <button
             onClick={() => handleFilter("ROTARIAN")}
-            className="bg-pink-200 hover:bg-purple-600  hover:text-white  text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+            className="bg-pink-200 hover:bg-purple-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             My Rotary
           </button>
           <button
             onClick={() => handleFilter("WEAREHIRING")}
-            className="bg-orange-200 hover:bg-yellow-600 hover:text-white  text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+            className="bg-orange-200 hover:bg-yellow-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             We Are Hiring
           </button>
           <button
-            onClick={() => setFilteredOffers(offers)}
-            className="bg-gray-500 hover:bg-gray-600 hover:text-white  text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+            onClick={() => fetchOffers()}
+            className="bg-gray-500 hover:bg-gray-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Show All
           </button>
@@ -177,7 +174,7 @@ const Admin: React.FC = () => {
           <p className="text-center text-gray-500">Loading...</p>
         ) : error ? (
           <p className="text-center text-red-500">{error}</p>
-        ) : filteredOffers.length === 0 ? (
+        ) : offers.length === 0 ? (
           <p className="text-center text-gray-500">No data available</p>
         ) : (
           <div className="overflow-x-auto overflow-y-auto scrollbar-hide">
@@ -186,25 +183,19 @@ const Admin: React.FC = () => {
                 <tr className="bg-gray-200 text-gray-700">
                   <th className="border border-gray-300 px-4 py-2">S.No</th>
                   <th className="border border-gray-300 px-4 py-2">
-                    Mobile Number
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">
                     Project Type
                   </th>
                   <th className="border border-gray-300 px-4 py-2">Offer</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredOffers.map((offer, index) => (
+                {offers.map((offer, index) => (
                   <tr
                     key={offer.id || index}
                     className="text-center hover:bg-gray-100"
                   >
                     <td className="border border-gray-300 px-4 py-2">
                       {index + 1}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {offer.mobileNumber}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {offer.projectType}

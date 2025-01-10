@@ -34,6 +34,7 @@ import FreeSample from "./FreeSample";
 import FreeAiandGenAi from "./FreeAi&GenAi";
 import MachinesManufacturingServices from "./Machines&ManufacturingService";
 import MyRotaryServices from "./MyRotary";
+import TicketHistory from "./TicketHistory";
 interface ChatMessage {
   type: "question" | "answer";
   content: string;
@@ -107,7 +108,7 @@ const Dasboard = () => {
   const [showMyRotaryService, setShowMyRotaryService] = useState(false);
   const [showLegalService, setShowLegalService] = useState(false);
   const [showHiringService, setShowHiringService] = useState(false);
-
+const [ticketHistory, setTicketHistory] = useState(false);  
   const scrollableRef = useRef<HTMLDivElement | null>(null);
   const componentRef = useRef<HTMLDivElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -137,6 +138,7 @@ const Dasboard = () => {
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
     setShowLegalService(false);
+    setTicketHistory(false);  
 
     // Handle section navigation (don't store in history)
     if (section) {
@@ -164,6 +166,9 @@ const Dasboard = () => {
           break;
         case "we-are-hiring":
           setShowHiringService(true);
+          break;
+        case "tickethistory":
+          setTicketHistory(true);
           break;
       }
       // Clear messages when switching sections
@@ -200,6 +205,17 @@ const Dasboard = () => {
       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
+    const handletickethistory = () => {
+      navigate("/dashboard?section=tickethistory", { replace: true });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      if (isMobile) {
+        componentRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
 
   const handleStudyAbroadClick = () => {
     navigate("/dashboard?section=study-abroad", { replace: true });
@@ -631,6 +647,7 @@ const Dasboard = () => {
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
     setShowLegalService(false);
+    setTicketHistory(false)
     setriceTopicsshow(true);
 
     navigate("/dashboard"); // Navigate first
@@ -783,6 +800,16 @@ const Dasboard = () => {
                   </svg>
                 </div>
               </button>{" "}
+              <div className="mt-4 flex justify-center items-center">
+                <button
+                  onClick={handletickethistory}
+                  className="px-4 py-2 text-black bg-green-500 text-center rounded-md cursor-pointer flex items-center justify-center"
+                >
+                  <span className="text-white text-sm leading-tight">
+                    Ticket History
+                  </span>
+                </button>
+              </div>
               <button
                 onClick={handleNewChatClick}
                 className=" rounded-md"
@@ -813,7 +840,7 @@ const Dasboard = () => {
                 Editing mode enabled...
               </p>
             )}
-            <div className="mt-4 border-t border-gray-300 pt-2">
+            <div className="mt-4 border-t border-gray-300 ">
               <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
                 <button
                   onClick={handleFreerudrakshaClick}
@@ -1015,6 +1042,11 @@ const Dasboard = () => {
                 <LegalService />
               </div>
             )}
+            {ticketHistory && (
+              <div ref={componentRef}>
+                <TicketHistory />
+              </div>
+            )}
             {!showFreerudraksha &&
               !showHiringService &&
               !showStudyAbroad &&
@@ -1022,6 +1054,7 @@ const Dasboard = () => {
               !showFreeaiandgenai &&
               !showMachinesManufacturing &&
               !showMyRotaryService &&
+              !ticketHistory &&
               !showLegalService && (
                 <>
                   {/* Static Rice Related Text */}

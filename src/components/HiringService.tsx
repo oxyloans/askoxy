@@ -8,6 +8,8 @@ import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import { useNavigate } from "react-router-dom";
+import { notification } from "antd";
+
 import Footer from "./Footer";
 const { Title, Paragraph } = Typography;
 
@@ -46,56 +48,74 @@ const HiringService: React.FC = () => {
 
   const [formData, setFormData] = useState({
     askOxyOfers: "WEAREHIRING",
-    id: userId,
-    mobileNumber: "",
+    userId: userId,
     projectType: "ASKOXY",
   });
 
+  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-
-    if (name === "mobileNumber") {
-      if (!/^\d{0,10}$/.test(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          mobileNumber: "Please enter a valid mobile number with only digits.",
-        }));
-      } else {
-        setErrors((prev) => ({ ...prev, mobileNumber: undefined }));
-      }
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async () => {
-    const { mobileNumber } = formData;
-    const newErrors: { mobileNumber?: string } = {};
-
-    // Validation
-    if (!mobileNumber) {
-      newErrors.mobileNumber = "Mobile number is required.";
-    } else if (!/^\d{10}$/.test(mobileNumber)) {
-      newErrors.mobileNumber = "Mobile number must be exactly 10 digits.";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors); // Set errors if validation fails
-      return; // Do not proceed with the form submission
-    }
-
-    try {
-      // API request to submit the form data
-      const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-        formData
-      );
-
-      message.success("Your interest has been submitted successfully!");
-      setIsModalOpen(false); // Close modal on success
-    } catch (error: any) {
-      message.error("Failed to submit your interest. Please try again.");
-    }
-  };
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+   const handleSubmit = async () => {
+     try {
+       setIsButtonDisabled(true);
+       // API request to submit the form data
+       const response = await axios.post(
+         "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+         formData
+       );
+       console.log("API Response:", response.data);
+       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+       // Show success notification
+       notification.success({
+         message: "Success!",
+         description: "Your interest has been submitted successfully!",
+         placement: "top", // Center the success notification
+         duration: 2,
+         style: {
+           width: 300, // Set small width
+           fontSize: "14px", // Reduce font size
+           padding: "10px", // Adjust padding
+         }, // Duration in seconds
+       });
+     } catch (error: any) {
+       if (error.response.status === 500 || error.response.status === 400) {
+         // Handle duplicate participation error
+         notification.warning({
+           message: "Warning!",
+           description: "You have already participated. Thank you!",
+           placement: "top",
+           duration: 2, // Duration before auto-close
+           style: {
+             width: 300, // Set small width
+             fontSize: "14px", // Reduce font size
+             padding: "10px", // Adjust padding
+           },
+         });
+       } else {
+         console.error("API Error:", error);
+         notification.error({
+           message: "Error!",
+           description: "Failed to submit your interest. Please try again.",
+           duration: 2,
+           placement: "top",
+           style: {
+             width: 300, // Set small width
+             fontSize: "14px", // Reduce font size
+             padding: "10px", // Adjust padding
+           }, // The notification will close after 2 seconds
+         });
+       }
+       setIsButtonDisabled(false);
+     }
+   };
 
   const email = localStorage.getItem("email");
   const mobileNumber = localStorage.getItem("whatsappNumber");
@@ -180,11 +200,17 @@ const HiringService: React.FC = () => {
   return (
     <>
       <header>
-        {/* Buttons on the right */}
         <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
-          {/* Button: I'm Interested */}
-
           {/* Button: Write To Us */}
+          <button
+            className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+            onClick={handleSubmit}
+            disabled={isButtonDisabled}
+            aria-label="Visit our site"
+          >
+           Join Us Now
+          </button>
+
           <button
             className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
             aria-label="Write To Us"
@@ -193,146 +219,59 @@ const HiringService: React.FC = () => {
             Write To Us
           </button>
 
-          {isOpen && (
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
-              <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-                {/* Close Button */}
-                <i
-                  className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
-                  onClick={() => setIsOpen(false)}
-                  aria-label="Close"
-                />
-
-                {/* Modal Content */}
-                <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
-                  Write To Us
-                </h2>
-
-                {/* Mobile Number Field */}
-                <div className="mb-4">
-                  <label
-                    className="block text-m text-black font-medium mb-1"
-                    htmlFor="phone"
-                  >
-                    Mobile Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    disabled={true}
-                    value={mobileNumber || ""}
-                    // value={"9908636995"}
-                    className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                    placeholder="Enter your mobile number"
-                    style={{ fontSize: "0.8rem" }}
-                  />
-                </div>
-
-                {/* Email Field */}
-                <div className="mb-4">
-                  <label
-                    className="block text-m text-black font-medium mb-1"
-                    htmlFor="email"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email || ""}
-                    // value={"kowthavarapuanusha@gmail.com"}
-                    disabled={true}
-                    className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                    placeholder="Enter your email"
-                    style={{ fontSize: "0.8rem" }}
-                  />
-                </div>
-
-                {/* Query Field */}
-                <div className="mb-4">
-                  <label
-                    className="block text-m text-black font-medium mb-1"
-                    htmlFor="query"
-                  >
-                    Query
-                  </label>
-                  <textarea
-                    id="query"
-                    rows={3}
-                    className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                    placeholder="Write to us"
-                    style={{ fontSize: "0.8rem" }}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                  {queryError && (
-                    <p className="text-red-500 text-sm mt-1">{queryError}</p>
-                  )}
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                  onClick={handleWriteToUsSubmitButton}
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          )}
-
-          {isprofileOpen && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl text-[#3d2a71] font-bold">
-                    Alert...!
-                  </h2>
-                  <button
-                    className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
-                    onClick={() => setIsprofileOpen(false)}
-                  >
-                    &times;
-                  </button>
-                </div>
-                <p className="text-center text-black mb-6">
-                  Please fill your profile details.
-                </p>
-                <div className="flex justify-center">
-                  <button
-                    className="bg-[#f9b91a] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#f4a307] focus:outline-none"
-                    onClick={handlePopUOk}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {issuccessOpen && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105 text-center">
-                <h2 className="text-xl text-green-600 font-bold mb-4">
-                  Success!
-                </h2>
-                <p className="text-black mb-6">
-                  Query submitted successfully...!
-                </p>
-                <div className="flex justify-center">
-                  <button
-                    className="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-600 focus:outline-none"
-                    onClick={() => setSuccessOpen(false)}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Button: Join Us Now */}
         </div>
+
+        {/* Modal: Write To Us */}
+        {isOpen && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
+            <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+              <i
+                className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close"
+              />
+              <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
+                Write To Us
+              </h2>
+              <div className="mb-4">
+                <label
+                  htmlFor="phone"
+                  className="block text-m text-black font-medium mb-1"
+                >
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  disabled
+                  value={mobileNumber || ""}
+                  className="block w-full text-black px-4 py-2 border rounded-lg focus:outline-none"
+                  placeholder="Enter your mobile number"
+                />
+              </div>
+              <textarea
+                id="query"
+                rows={3}
+                className="block w-full text-black px-4 py-2 border rounded-lg focus:outline-none"
+                placeholder="Write to us"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {queryError && (
+                <p className="text-red-500 text-sm mt-1">{queryError}</p>
+              )}
+              <button
+                className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a]"
+                onClick={handleWriteToUsSubmitButton}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        )}
       </header>
-      <div className="bg-gradient-to-r  from-gray-50  min-h-screen flex items-center justify-center">
-        <div className="container mx-auto px-6 lg:px-12 py-16 bg-white rounded-2xl shadow-2xl">
+      <div className="bg-gradient-to-r from-gray-50 min-h-screen flex items-center justify-center p-4">
+        <div className="container mx-auto px-6 lg:px-12 p-16 bg-white rounded-2xl shadow-2xl">
           <div className="text-center mb-12 px-4 sm:px-6 md:px-8">
             <Title level={2}>
               Digital <span>Ambassadors</span>
@@ -398,60 +337,7 @@ const HiringService: React.FC = () => {
               </div>
             </div>
           </div>
-
-          <div className="flex justify-center mt-16">
-            <Button
-              type="primary"
-              size="large"
-              className="rounded-lg"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Join Us Now
-            </Button>
-          </div>
         </div>
-
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
-              <h2 className="text-xl font-semibold mb-4">Enter Your Details</h2>
-              <div className="space-y-4">
-                <label className="text-black">
-                  Enter your mobile number
-                  <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="mobileNumber"
-                  placeholder="Mobile Number"
-                  value={formData.mobileNumber}
-                  onChange={handleInputChange}
-                  maxLength={10} // Limit the input to 10 digits
-                  className={`w-full px-4 text-black py-2 border rounded ${
-                    errors.mobileNumber ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.mobileNumber && (
-                  <p className="text-red-500 text-sm">{errors.mobileNumber}</p>
-                )}
-              </div>
-              <div className="flex justify-end mt-6 space-x-2">
-                <button
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-                  onClick={handleSubmit}
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <div>
