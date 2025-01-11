@@ -140,14 +140,14 @@ const HiringService: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (issuccessOpen) {
-      const timer = setTimeout(() => {
-        setSuccessOpen(false);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [issuccessOpen]);
+  // useEffect(() => {
+  //   if (issuccessOpen) {
+  //     const timer = setTimeout(() => {
+  //       setSuccessOpen(false);
+  //     }, 5000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
@@ -208,7 +208,7 @@ const HiringService: React.FC = () => {
             disabled={isButtonDisabled}
             aria-label="Visit our site"
           >
-           Join Us Now
+            Join Us Now
           </button>
 
           <button
@@ -226,46 +226,132 @@ const HiringService: React.FC = () => {
         {isOpen && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
             <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+              {/* Close Button */}
               <i
                 className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close"
               />
+
+              {/* Modal Content */}
               <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
                 Write To Us
               </h2>
+
+              {/* Mobile Number Field */}
               <div className="mb-4">
                 <label
-                  htmlFor="phone"
                   className="block text-m text-black font-medium mb-1"
+                  htmlFor="phone"
                 >
                   Mobile Number
                 </label>
                 <input
                   type="tel"
                   id="phone"
-                  disabled
+                  disabled={true}
                   value={mobileNumber || ""}
-                  className="block w-full text-black px-4 py-2 border rounded-lg focus:outline-none"
+                  // value={"9908636995"}
+                  className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                   placeholder="Enter your mobile number"
+                  style={{ fontSize: "0.8rem" }}
                 />
               </div>
-              <textarea
-                id="query"
-                rows={3}
-                className="block w-full text-black px-4 py-2 border rounded-lg focus:outline-none"
-                placeholder="Write to us"
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              {queryError && (
-                <p className="text-red-500 text-sm mt-1">{queryError}</p>
-              )}
+
+              {/* Email Field */}
+              <div className="mb-4">
+                <label
+                  className="block text-m text-black font-medium mb-1"
+                  htmlFor="email"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email || ""}
+                  // value={"kowthavarapuanusha@gmail.com"}
+                  disabled={true}
+                  className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                  placeholder="Enter your email"
+                  style={{ fontSize: "0.8rem" }}
+                />
+              </div>
+
+              {/* Query Field */}
+              <div className="mb-4">
+                <label
+                  className="block text-m text-black font-medium mb-1"
+                  htmlFor="query"
+                >
+                  Query
+                </label>
+                <textarea
+                  id="query"
+                  rows={3}
+                  className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                  placeholder="Enter your query"
+                  style={{ fontSize: "0.8rem" }}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                {queryError && (
+                  <p className="text-red-500 text-sm">{queryError}</p>
+                )}
+              </div>
+
+              {/* Submit Button */}
               <button
-                className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a]"
+                className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
                 onClick={handleWriteToUsSubmitButton}
               >
                 Submit
               </button>
+            </div>
+          </div>
+        )}
+        {isprofileOpen && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl text-[#3d2a71] font-bold">Alert...!</h2>
+                <button
+                  className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
+                  onClick={() => setIsprofileOpen(false)}
+                >
+                  &times;
+                </button>
+              </div>
+              <p className="text-center text-black mb-6">
+                Please fill your profile details.
+              </p>
+              <div className="flex justify-center">
+                <button
+                  className="bg-[#f9b91a] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#f4a307] focus:outline-none"
+                  onClick={handlePopUOk}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {issuccessOpen && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105 text-center">
+              <h2 className="text-xl text-green-600 font-bold mb-4">
+                Success!
+              </h2>
+              <p className="text-black mb-6">
+                Query submitted successfully...!
+              </p>
+              <div className="flex justify-center">
+                <button
+                  className="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-600 focus:outline-none"
+                  onClick={() => setSuccessOpen(false)}
+                >
+                  OK
+                </button>
+              </div>
             </div>
           </div>
         )}

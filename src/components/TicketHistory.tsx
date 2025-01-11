@@ -50,7 +50,7 @@ const CancelModal: React.FC<CancelModalProps> = ({
 
   const handleSubmit = () => {
     if (!comment.trim()) {
-      setError("Please enter a comment before cancelling");
+      setError("Please enter a comments before cancelling");
       return;
     }
     onSubmit(comment);
@@ -124,7 +124,7 @@ const ReplyModal: React.FC<ReplyModalProps> = ({
 
   const handleSubmit = () => {
     if (!comment.trim()) {
-      setError("Please enter your reply");
+      setError("Please enter your comments");
       return;
     }
     onSubmit(comment);
@@ -140,7 +140,6 @@ const ReplyModal: React.FC<ReplyModalProps> = ({
 
   return (
     <Modal
-      title="Reply to Query"
       open={visible}
       onCancel={handleCancel}
       footer={[
@@ -164,7 +163,7 @@ const ReplyModal: React.FC<ReplyModalProps> = ({
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Enter your reply
+            Enter your comments
           </label>
           <TextArea
             rows={4}
@@ -175,7 +174,7 @@ const ReplyModal: React.FC<ReplyModalProps> = ({
                 setError("");
               }
             }}
-            placeholder="Type your reply here..."
+            placeholder="Enter your comments..."
             className={`w-full border ${
               error ? "border-red-500" : "border-gray-300"
             } rounded-md`}
@@ -196,6 +195,7 @@ const TicketHistory: React.FC = () => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [replyLoading, setReplyLoading] = useState(false);
+    const [askOxyOffersFilter, setAskOxyOffersFilter] = useState<string>("FREERUDRAKSHA");
 
   const userId = localStorage.getItem("userId");
 
@@ -205,7 +205,9 @@ const TicketHistory: React.FC = () => {
       const response = await axios.post(
         "https://meta.oxyloans.com/api/write-to-us/student/getAllQueries",
         {
-          askOxyOfers: "FREERUDRAKSHA",
+          askOxyOfers:
+            askOxyOffersFilter ||
+            "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
           projectType: "ASKOXY",
           queryStatus: selectedStatus,
           userId: userId,
@@ -266,7 +268,7 @@ const TicketHistory: React.FC = () => {
 
   useEffect(() => {
     fetchQueries();
-  }, [selectedStatus]);
+  }, [selectedStatus, askOxyOffersFilter]);
 
   const handleCancelClick = (record: Query) => {
     setSelectedQuery(record);
@@ -314,28 +316,37 @@ const TicketHistory: React.FC = () => {
   const getColumns = (status: string) => {
     const baseColumns = [
       {
+        title: "S.No",
+        dataIndex: "sno",
+        key: "sno",
+        render: (_: any, __: any, index: number) => index + 1, // Generate S.No dynamically
+      },
+
+      {
         title: "User Info",
         key: "userInfo",
         width: "25%",
         render: (text: string, record: Query) => (
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              {/* <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-medium">
                   {record.name.charAt(0)}
                 </span>
-              </div>
+              </div> */}
               <div className="flex flex-col">
-                <span className="text-gray-800 font-medium">{record.name}</span>
                 <span className="text-gray-500 text-sm">
-                  {record.mobileNumber}
+                  Name: {record.name}
                 </span>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500">
-              <div>Ticket ID: {record.randomTicketId}</div>
-              <div>
-                Created on: {new Date(record.createdAt).toLocaleDateString()}
+                <span className="text-gray-500 text-sm">
+                  Mobile Number: {record.mobileNumber}
+                </span>
+                <span className="text-gray-500 text-sm">
+                  Ticket ID: {record.randomTicketId}
+                </span>
+                <span className="text-gray-500 text-sm">
+                  Created on: {new Date(record.createdAt).toLocaleDateString()}
+                </span>
               </div>
             </div>
           </div>
@@ -364,10 +375,7 @@ const TicketHistory: React.FC = () => {
           render: (text: string, record: Query) => (
             <div className="space-y-2">
               {record.userPendingQueries?.map((reply, index) => (
-                <div
-                  key={index}
-                  className="p-2 border rounded-lg mb-2 bg-gray-50"
-                >
+                <div key={index} className="p-2 rounded-lg mb-2 ">
                   <div className="flex items-center justify-between mb-1">
                     <span
                       className={`text-sm font-medium ${
@@ -401,10 +409,10 @@ const TicketHistory: React.FC = () => {
           key: "actions",
           width: "20%",
           render: (text: string, record: Query) => (
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-center">
               <button
                 onClick={() => handleReplyClick(record)}
-                className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors duration-200 text-sm"
+                className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors duration-200 text-sm"
               >
                 Reply
               </button>
@@ -443,18 +451,41 @@ const TicketHistory: React.FC = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Ticket History</h1>
 
-      <div className="mb-6 flex justify-end">
-        <Select
-          defaultValue="PENDING"
-          value={selectedStatus}
-          onChange={(value) => setSelectedStatus(value)}
-          style={{ width: 200 }}
-          className="shadow-sm"
-        >
-          <Option value="PENDING">PENDING</Option>
-          <Option value="COMPLETED">COMPLETED</Option>
-          <Option value="CANCELLED">CANCELLED</Option>
-        </Select>
+      <div className="mb-6 flex flex-wrap gap-4 justify-end items-center">
+        {/* Status Filter */}
+        <div className="w-full sm:w-auto">
+          <Select
+            defaultValue="PENDING"
+            value={selectedStatus}
+            onChange={(value) => setSelectedStatus(value)}
+            style={{ width: "100%" }} // Ensures it stretches to container width on smaller screens
+            className="shadow-sm"
+          >
+            <Option value="PENDING">PENDING</Option>
+            <Option value="COMPLETED">COMPLETED</Option>
+            <Option value="CANCELLED">CANCELLED</Option>
+          </Select>
+        </div>
+
+        {/* ASK OXY Offers Filter */}
+        <div className="w-full sm:w-72">
+          <Select
+            defaultValue="FREERUDRAKSHA"
+            placeholder="Filter by ASK OXY Offers"
+            value={askOxyOffersFilter}
+            onChange={(value) => setAskOxyOffersFilter(value)}
+            className="w-full"
+            allowClear
+          >
+            <Option value="FREERUDRAKSHA">FREE RUDRAKSHA</Option>
+            <Option value="FREEAI">FREE AI</Option>
+            <Option value="ROTARIAN">ROTARIAN</Option>
+            <Option value="WEAREHIRING">WE ARE HIRING</Option>
+            <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
+            <Option value="STUDYABROAD">STUDY ABROAD</Option>
+            <Option value="FREESAMPLE">FREE SAMPLE</Option>
+          </Select>
+        </div>
       </div>
 
       {loading ? (
@@ -463,14 +494,17 @@ const TicketHistory: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <Table
-            dataSource={queries}
-            columns={getColumns(selectedStatus)}
-            rowKey={(record) => record.id}
-            pagination={{ pageSize: 10 }}
-            className="w-full"
-            
-          />
+          <div className="overflow-x-auto">
+            <Table
+              dataSource={queries}
+              columns={getColumns(selectedStatus)}
+              rowKey={(record) => record.id}
+              pagination={{ pageSize: 10 }}
+              className="w-full"
+              bordered
+              scroll={{ x: 800 }} // Add horizontal scroll for responsiveness
+            />
+          </div>
         </div>
       )}
 

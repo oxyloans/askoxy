@@ -134,6 +134,7 @@ const App: React.FC = () => {
             path="/accreditations-gpt"
             element={<AccreditationsRecognization />}
           />
+         
           <Route path="placements-gpt" element={<Placements />} />
           <Route path="scholarships-gpt" element={<Scholarship />} />
           <Route path="/foreign-exchange" element={<ForeignExchange />} />

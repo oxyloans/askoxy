@@ -800,16 +800,6 @@ const [ticketHistory, setTicketHistory] = useState(false);
                   </svg>
                 </div>
               </button>{" "}
-              <div className="mt-4 flex justify-center items-center">
-                <button
-                  onClick={handletickethistory}
-                  className="px-4 py-2 text-black bg-green-500 text-center rounded-md cursor-pointer flex items-center justify-center"
-                >
-                  <span className="text-white text-sm leading-tight">
-                    Ticket History
-                  </span>
-                </button>
-              </div>
               <button
                 onClick={handleNewChatClick}
                 className=" rounded-md"
@@ -841,6 +831,17 @@ const [ticketHistory, setTicketHistory] = useState(false);
               </p>
             )}
             <div className="mt-4 border-t border-gray-300 ">
+              <div className="mt-2 flex justify-center items-center">
+                <button
+                  onClick={handletickethistory}
+                  className="px-4 py-2 text-black bg-green-500 text-center rounded-md cursor-pointer flex items-center justify-center"
+                >
+                  <span className="text-white text-sm leading-tight">
+                    Ticket History
+                  </span>
+                </button>
+              </div>
+
               <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
                 <button
                   onClick={handleFreerudrakshaClick}
@@ -970,7 +971,7 @@ const [ticketHistory, setTicketHistory] = useState(false);
               </div>
             </div>
 
-            <div className="mt-2 h-80 border-gray-300 pt-2   hidden md:block">
+            <div className="mt-2 h-80 border-gray-300 pt-   hidden md:block">
               <div className="flex mt-3 mb-2 ml-2 text-[#3c1973] text-md">
                 History
               </div>

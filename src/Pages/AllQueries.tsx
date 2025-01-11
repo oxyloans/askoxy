@@ -27,7 +27,8 @@ interface Query {
 
 const AllQueries: React.FC = () => {
   const [queryStatus, setQueryStatus] = useState<string>("PENDING");
-  const [askOxyOffersFilter, setAskOxyOffersFilter] = useState<string>("");
+  const [askOxyOffersFilter, setAskOxyOffersFilter] =
+    useState<string>("FREERUDRAKSHA");
   const [queries, setQueries] = useState<Query[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -100,15 +101,16 @@ const AllQueries: React.FC = () => {
 
   const handleActionButtonClick = async (action: "PENDING" | "COMPLETED") => {
     let data = {};
-    if (comments === "") {
-      setError("Please Enter your comments...!");
+    if (comments.trim() === "") {
+      setError("Please enter any comments.");
+
       setLoading(false);
       return;
     } else {
-      setError("");
+      setComments(""); // Optionally clear comments after submission
+      setError(""); // Clear error on successful submission
       setLoading(true);
       setModalVisible(false);
-      setComments("");
     }
     if (action === "PENDING") {
       data = {
@@ -293,7 +295,6 @@ const AllQueries: React.FC = () => {
               className="w-72"
               allowClear
             >
-              <Option value="">All Offers</Option>
               <Option value="FREERUDRAKSHA">FREERUDRAKSHA</Option>
               <Option value="FREEAI">FREEAI</Option>
               <Option value="ROTARIAN">ROTARIAN</Option>
@@ -353,7 +354,7 @@ const AllQueries: React.FC = () => {
             <div className="mb-4">
               <textarea
                 className="w-full border p-2"
-                placeholder="Enter comments here..."
+                placeholder="Enter comments..."
                 value={comments}
                 onChange={handleOnChange}
               />

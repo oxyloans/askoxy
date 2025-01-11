@@ -145,14 +145,15 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
     }
   };
 
-  useEffect(() => {
-    if (issuccessOpen) {
-      const timer = setTimeout(() => {
-        setSuccessOpen(false);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [issuccessOpen]);
+  // useEffect(() => {
+  //   if (issuccessOpen) {
+  //     const timer = setTimeout(() => {
+  //       setSuccessOpen(false);
+  //     }, 5000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [issuccessOpen]);
+
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
@@ -301,7 +302,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
                       id="query"
                       rows={3}
                       className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                      placeholder="Write to us"
+                      placeholder="Enter your query"
                       style={{ fontSize: "0.8rem" }}
                       onChange={(e) => setQuery(e.target.value)}
                     />
@@ -370,8 +371,6 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
                 </div>
               </div>
             )}
-
-            
           </div>
         </header>
 
