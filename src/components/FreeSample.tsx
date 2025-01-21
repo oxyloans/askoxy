@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { HiOutlineDocument } from "react-icons/hi";
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/WhatsApp Image 2025-01-21 at 19.21.00.jpeg"
+import FR from "../assets/img/WhatsApp Image 2025-01-21 at 19.21.00.png"
 
 import Footer from "./Footer";
 import { message } from "antd";
@@ -81,18 +81,31 @@ const FreeSample: React.FC = () => {
       console.log("API Response:", response.data);
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
       // Show success notification
-      notification.success({
-        message: "Success!",
-        description:
-          "Thank you for showing interest in our *Free Rice Sample and Steel Container* offer.",
-        placement: "top", // Center the success notification
-        duration: 2,
-        style: {
-          width: 300, // Set small width
-          fontSize: "14px", // Reduce font size
-          padding: "10px", // Adjust padding
-        }, // Duration in seconds
-      });
+     notification.success({
+       message: "Success!",
+       description: (
+         <div>
+           Thank you for showing interest in our *Free Rice Sample and Steel
+           Container* offer.
+           <a
+             href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+             target="_blank"
+             rel="noopener noreferrer"
+             className="px-6 py-3 font-bold bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#039F5B] transition-all text-sm md:text-base lg:text-lg mt-2 inline-block"
+             aria-label="Download App"
+           >
+             Download App
+           </a>
+         </div>
+       ),
+       placement: "top",
+       style: {
+         width: 300,
+         fontSize: "14px",
+         padding: "10px",
+       },
+     });
+
     } catch (error: any) {
       if (error.response.status === 500 || error.response.status === 400) {
         // Handle duplicate participation error
@@ -439,16 +452,7 @@ const FreeSample: React.FC = () => {
                 I'm Interested
               </button>
 
-              <button>
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 font-bold bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#039F5B] transition-all text-sm md:text-base lg:text-lg"
-                >
-                  Download App
-                </a>
-              </button>
+             
             </div>
           </div>
         </div>
