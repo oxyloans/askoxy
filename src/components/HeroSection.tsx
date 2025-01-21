@@ -456,20 +456,20 @@ const HeroSection: React.FC = () => {
             </div>
           </div>
         </div>
-        <div>
-          {/* Fixed Button: Container Policy */}
+        {/* <div>
+          
           <button
             className="fixed bottom-8 right-8 px-6 py-3 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#B71C1C] transition-all text-sm md:text-base lg:text-lg flex items-center justify-center z-50"
             aria-label="Open Container Policy PDF"
             onClick={handleButtonClick} // Attach click handler to the button
           >
-            {/* <HiOutlineDocument className="w-5 h-5 text-white mr-2" /> */}
+         
             Container Policy Preview
           </button>
 
-          {/* Optionally, conditionally render the Container component */}
+
           {showContainer && <Container />}
-        </div>
+        </div> */}
 
         {/* Image Section - 40% of screen width */}
         <div className="div2 ">

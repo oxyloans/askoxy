@@ -228,8 +228,8 @@ const FreeSample: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 pt-8 lg:px-8">
             {/* Button: I'm Interested */}
 
-            <div>
-              {/* Fixed Button: Container Policy */}
+            {/* <div>
+             
               <button
                 className="bottom-8 right-8 px-4 py-2 bg-[#D32F2F] text-white rounded-lg shadow-lg hover:bg-[#B71C1C] transition-all text-sm md:text-base lg:text-lg flex items-center justify-center z-50"
                 aria-label="Open Container Policy PDF"
@@ -239,9 +239,9 @@ const FreeSample: React.FC = () => {
                 Container Policy Preview
               </button>
 
-              {/* Optionally, conditionally render the Container component */}
+             
               {showContainer && <Container />}
-            </div>
+            </div> */}
 
             {/* Button: Write To Us */}
             <button
