@@ -31,7 +31,6 @@ import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import { notification } from "antd";
 
-
 const images = [
   { src: img1, alt: "Image 1" },
   { src: img2, alt: "Image 2" },
@@ -73,11 +72,9 @@ const StudyAbroad: React.FC = () => {
   const [formData, setFormData] = useState({
     askOxyOfers: "STUDYABROAD",
     userId: userId,
-
+    mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
-
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -88,59 +85,60 @@ const StudyAbroad: React.FC = () => {
   };
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-    const handleSubmit = async () => {
-      try {
-        setIsButtonDisabled(true);
-        // API request to submit the form data
-        const response = await axios.post(
-          "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-          formData
-        );
-        console.log("API Response:", response.data);
-        localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-        // Show success notification
-        notification.success({
-          message: "Success!",
-          description: "Your interest has been submitted successfully!",
-          placement: "top", // Center the success notification
-          duration: 2,
+  const handleSubmit = async () => {
+    try {
+      setIsButtonDisabled(true);
+      // API request to submit the form data
+      const response = await axios.post(
+        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        formData
+      );
+      console.log("API Response:", response.data);
+      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+      // Show success notification
+      notification.success({
+        message: "Success!",
+       description: `Thank you for expressing interest in our *Study Abroad* offer. We're excited to help you explore new opportunities!`,
+
+        placement: "top", // Center the success notification
+        duration: 2,
+        style: {
+          width: 300, // Set small width
+          fontSize: "14px", // Reduce font size
+          padding: "10px", // Adjust padding
+        }, // Duration in seconds
+      });
+    } catch (error: any) {
+      if (error.response.status === 500 || error.response.status === 400) {
+        // Handle duplicate participation error
+        notification.warning({
+          message: "Warning!",
+          description: "You have already participated. Thank you!",
+          placement: "top",
+          duration: 2, // Duration before auto-close
           style: {
             width: 300, // Set small width
             fontSize: "14px", // Reduce font size
             padding: "10px", // Adjust padding
-          }, // Duration in seconds
+          },
         });
-      } catch (error: any) {
-        if (error.response.status === 500 || error.response.status === 400) {
-          // Handle duplicate participation error
-          notification.warning({
-            message: "Warning!",
-            description: "You have already participated. Thank you!",
-            placement: "top",
-            duration: 2, // Duration before auto-close
-            style: {
-              width: 300, // Set small width
-              fontSize: "14px", // Reduce font size
-              padding: "10px", // Adjust padding
-            },
-          });
-        } else {
-          console.error("API Error:", error);
-          notification.error({
-            message: "Error!",
-            description: "Failed to submit your interest. Please try again.",
-            duration: 2,
-            placement: "top",
-            style: {
-              width: 300, // Set small width
-              fontSize: "14px", // Reduce font size
-              padding: "10px", // Adjust padding
-            }, // The notification will close after 2 seconds
-          });
-        }
-        setIsButtonDisabled(false);
+      } else {
+        console.error("API Error:", error);
+        notification.error({
+          message: "Error!",
+          description: "Failed to submit your interest. Please try again.",
+          duration: 2,
+          placement: "top",
+          style: {
+            width: 300, // Set small width
+            fontSize: "14px", // Reduce font size
+            padding: "10px", // Adjust padding
+          }, // The notification will close after 2 seconds
+        });
       }
-    };
+      setIsButtonDisabled(false);
+    }
+  };
 
   // Handle click outside to close the dropdown
   useEffect(() => {
@@ -260,7 +258,7 @@ const StudyAbroad: React.FC = () => {
             {/* Dropdown Menu Button */}
             <div className="relative">
               <button
-                className="px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-md transition-all"
+                className="px-4 py-2 text-sm md:text-base bg-[#ea4c89] text-white rounded-md hover:bg-[#ea4c89] shadow-md transition-all"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 aria-label="Navigate options"
               >
@@ -327,7 +325,7 @@ const StudyAbroad: React.FC = () => {
               )}
             </div>
             <button
-              className="px-4 py-2 text-sm md:text-base bg-green-600 text-white rounded-md hover:bg-green-700 shadow-md transition-all"
+              className="px-4 py-2 text-sm md:text-base bg-[#04AA6D] text-white rounded-md hover:bg-[#04AA6D] shadow-md transition-all"
               onClick={handleSubmit}
               aria-label="Visit our site"
               disabled={isButtonDisabled}
@@ -335,7 +333,7 @@ const StudyAbroad: React.FC = () => {
               I'm Interested
             </button>
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#008CBA] transition-all text-sm md:text-base lg:text-lg"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -419,12 +417,14 @@ const StudyAbroad: React.FC = () => {
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                    onClick={handleWriteToUsSubmitButton}
-                  >
-                    Submit
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                      onClick={handleWriteToUsSubmitButton}
+                    >
+                      Submit Query
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -528,7 +528,7 @@ const StudyAbroad: React.FC = () => {
           </section>
         </div>
 
-        <div className="px-4 py-8">
+        <div className="px-6 py-8">
           {/* Text Section */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-black mb-4">
@@ -552,11 +552,11 @@ const StudyAbroad: React.FC = () => {
           </div>
 
           {/* Button Section */}
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-6 mt-6">
             {/* Button 1 */}
             <a
               href="https://bmv.money/StudentX.world/index.html"
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-md text-sm md:text-base transition-all"
+              className="px-6 py-3 bg-[#008CBA] text-white rounded-md hover:bg-[#005F75] shadow-md text-sm md:text-base transition-all"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit University Platform"
@@ -567,7 +567,7 @@ const StudyAbroad: React.FC = () => {
             {/* Button 2 */}
             <a
               href="https://bmv.money/bankd/index.html"
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-md text-sm md:text-base transition-all"
+              className="px-6 py-3 bg-[#04AA6D] text-white rounded-md hover:bg-[#038258] shadow-md text-sm md:text-base transition-all"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit Scholarship Platform"
@@ -578,7 +578,7 @@ const StudyAbroad: React.FC = () => {
         </div>
 
         {/* Details Section */}
-        <div className="details px-4 py-8">
+        <div className="details px-6 py-8">
           <strong className="text-purple-600 text-lg sm:text-xl md:text-2xl">
             Our Mission & Vision
           </strong>
@@ -591,53 +591,50 @@ const StudyAbroad: React.FC = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 justify-center px-4">
-          <div className="p-4 bg-white border rounded-lg shadow-md flex flex-col items-center">
-            <FaUniversity className="w-12 h-12 mb-2 text-purple-600" />
-            <h3 className="text-center font-bold mb-1 text-black">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 px-6">
+          <div className="p-6 bg-white border rounded-lg shadow-md flex flex-col items-center text-center">
+            <FaUniversity className="w-16 h-16 mb-4 text-purple-600" />
+            <h3 className="font-bold text-xl text-black mb-2">
               3000+ Students
             </h3>
-            <p className="text-center text-black text-sm">
+            <p className="text-black text-sm">
               Availed this platform and currently studying in universities
               abroad
             </p>
           </div>
-          <div className="p-4 border bg-white rounded-lg shadow-md flex flex-col items-center">
-            <FaGlobe className="w-12 h-12 mb-2 text-purple-600" />
-            <h3 className="text-center font-bold mb-1 text-black">
+          <div className="p-6 bg-white border rounded-lg shadow-md flex flex-col items-center text-center">
+            <FaGlobe className="w-16 h-16 mb-4 text-purple-600" />
+            <h3 className="font-bold text-xl text-black mb-2">
               150+ Recruiters
             </h3>
-            <p className="text-center text-black text-sm">
+            <p className="text-black text-sm">
               Support in mapping students to the university and have registered
               85% accuracy in mapping
             </p>
           </div>
-          <div className="p-4 border bg-white rounded-lg shadow-md flex flex-col items-center">
-            <FaPlane className="w-12 h-12 mb-2 text-purple-600" />
-            <h3 className="text-center font-bold mb-1 text-black">
+          <div className="p-6 bg-white border rounded-lg shadow-md flex flex-col items-center text-center">
+            <FaPlane className="w-16 h-16 mb-4 text-purple-600" />
+            <h3 className="font-bold text-xl text-black mb-2">
               100+ Universities
             </h3>
-            <p className="text-center text-black text-sm">
+            <p className="text-black text-sm">
               Spread across the UK, Europe, US, Canada, Australia, New Zealand
             </p>
           </div>
-          <div className="p-4 border bg-white rounded-lg shadow-md flex flex-col items-center">
-            <FaBook className="w-12 h-12 mb-2 text-purple-600" />
-            <h3 className="text-center font-bold mb-1 text-black">Free</h3>
-            <p className="text-center text-black text-sm">
-              Lifetime Access to students
-            </p>
+          <div className="p-6 bg-white border rounded-lg shadow-md flex flex-col items-center text-center">
+            <FaBook className="w-16 h-16 mb-4 text-purple-600" />
+            <h3 className="font-bold text-xl text-black mb-2">Free</h3>
+            <p className="text-black text-sm">Lifetime Access to students</p>
           </div>
         </div>
       </div>
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-green-600">
+          <span className="text-[#04AA6D]">
             <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">COMPANIES</span>
+          <span className="text-[#FFA400]">COMPANIES</span>
         </h1>
-
         <div className="event-container1">
           <div className="event-content1">
             <div className="diwali-images1">
@@ -792,7 +789,7 @@ const StudyAbroad: React.FC = () => {
         </div>
 
         {/* Group Section */}
-        <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
+        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
           <h1
             className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
@@ -831,7 +828,7 @@ const StudyAbroad: React.FC = () => {
               →
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

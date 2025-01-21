@@ -23,6 +23,11 @@ interface Query {
   projectType: string;
   askOxyOfers: string | null;
   queryCount: number;
+  userPendingQueries: Array<{
+    pendingComments: string;
+    resolvedOn: string;
+    resolvedBy: string;
+  }>;
 }
 
 const AllQueries: React.FC = () => {
@@ -89,6 +94,7 @@ const AllQueries: React.FC = () => {
   const handleModalClose = () => {
     setModalVisible(false);
     setSelectedQuery(null);
+    setComments("");
     setSelectedFile(null);
     setError("");
   };
@@ -229,16 +235,28 @@ const AllQueries: React.FC = () => {
     {
       title: "Admin & User Replies",
       dataIndex: "replies",
-      render: (_: any, record: any) => (
-        <div>
-          {record.userPendingQueries && record.userPendingQueries.length > 0
-            ? record.userPendingQueries.map((query: any, index: number) => (
-                <div key={index}>
-                  <strong>coments : </strong>
-                  {query.pendingComments || null}
-                </div>
-              ))
-            : null}
+      render: (_: any, record: Query) => (
+        <div className="space-y-0">
+          {record.userPendingQueries?.map((reply, index) => (
+            <div key={index} className="flex items-center">
+              <span
+                className={`text-sm font-medium ${
+                  reply.resolvedBy === "admin"
+                    ? "text-blue-600"
+                    : "text-green-600"
+                }`}
+              >
+                {reply.resolvedBy === "admin" ? "Admin" : "User"}:
+              </span>
+              <span className="text-sm text-gray-700 ml-2">
+                {reply.pendingComments}
+              </span>
+            </div>
+          ))}
+          {(!record.userPendingQueries ||
+            record.userPendingQueries.length === 0) && (
+            <div className="text-sm text-gray-500 italic">No replies yet</div>
+          )}
         </div>
       ),
     },
@@ -275,7 +293,6 @@ const AllQueries: React.FC = () => {
           </h1>
 
           <div className="flex flex-wrap justify-center gap-4 mb-4">
-            {/* Query Status Dropdown */}
             <Select
               placeholder="Select Query Status"
               value={queryStatus}
@@ -345,7 +362,7 @@ const AllQueries: React.FC = () => {
             {selectedFile && isImage(selectedFile) && (
               <div className="mb-4">
                 <img
-                  src={URL.createObjectURL(selectedFile)} // Create an object URL to preview the image
+                  src={URL.createObjectURL(selectedFile)}
                   alt="Selected"
                   className="w-full h-auto"
                 />
@@ -357,6 +374,7 @@ const AllQueries: React.FC = () => {
                 placeholder="Enter comments..."
                 value={comments}
                 onChange={handleOnChange}
+                rows={4}
               />
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>

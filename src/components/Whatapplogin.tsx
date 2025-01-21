@@ -199,7 +199,7 @@ const Whatapplogin: React.FC = () => {
             {otpSession ? "Submit OTP" : "Submit"}
           </button>
 
-          {isButtonEnabled && (
+          {/* {isButtonEnabled && (
             <button
               type="button"
               onClick={() => setOtpShow(false)}
@@ -207,7 +207,7 @@ const Whatapplogin: React.FC = () => {
             >
               Change Number
             </button>
-          )}
+          )} */}
         </form>
         {/* <p className="or-divider">OR</p>
   

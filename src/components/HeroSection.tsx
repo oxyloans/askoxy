@@ -4,7 +4,8 @@ import { FaSearch } from "react-icons/fa";
 import "./herosection.css";
 import Header from "./Header";
 import ReactMarkdown from "react-markdown";
-
+import { HiOutlineDocument } from "react-icons/hi";
+import Container from "./ContainerPolicy";
 import { Link, useNavigate } from "react-router-dom";
 import HM1 from "../assets/img/1.png";
 import HM2 from "../assets/img/2.png";
@@ -378,26 +379,36 @@ const HeroSection: React.FC = () => {
   const closeModal = () => {
     setShowModal(false);
   };
+      const [showContainer, setShowContainer] = useState(false);
+  
+      const handleButtonClick = () => {
+          window.open(
+            "https://drive.google.com/file/d/1x_0b6DIt5-rbq1fubeHcIMO5Grxr46p1/view",
+            "_blank"
+          ); // Set state to show the container when the button is clicked
+      };
+  
 
   const handleLoginClick = () => {
     closeModal();
     navigate("/whatapplogin"); // Navigate to the login page
   };
+  const [isSearchInProgress, setIsSearchInProgress] = useState(false);
 
   const imageGroup1 = repeatAndShuffleImages(images, 20);
   const imageGroup2 = repeatAndShuffleImages(images, 20);
   const imageGroup3 = repeatAndShuffleImages(images, 20);
 
    const userId = localStorage.getItem("userId");
- const handleSearch = () => {
-   if (userId) {
-     // If user is signed in, redirect to dashboard
-     window.location.href = `/dashboard?query=${encodeURIComponent(query)}`;
-   } else {
-     // Otherwise, redirect to normal page
-     window.location.href = `/normal?query=${encodeURIComponent(query)}`;
-   }
- };
+  const handleSearch = () => {
+    if (userId) {
+      // If user is signed in, redirect to dashboard
+      window.location.href = `/dashboard?query=${encodeURIComponent(query)}`;
+    } else {
+      // Otherwise, redirect to normal page
+      window.location.href = `/normal?query=${encodeURIComponent(query)}`;
+    }
+  };
   return (
     <section className="section">
       {/* Header Section */}
@@ -434,13 +445,30 @@ const HeroSection: React.FC = () => {
                     }
                   }}
                 />
-                <button className="search-button" onClick={handleSearch}>
+                <button
+                  className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full "
+                  onClick={handleSearch}
+                >
                   <span className="search-icon icons">&#128269;</span>{" "}
                   {/* Placeholder for Search Icon */}
                 </button>
               </div>
             </div>
           </div>
+        </div>
+        <div>
+          {/* Fixed Button: Container Policy */}
+          <button
+            className="fixed bottom-8 right-8 px-6 py-3 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#B71C1C] transition-all text-sm md:text-base lg:text-lg flex items-center justify-center z-50"
+            aria-label="Open Container Policy PDF"
+            onClick={handleButtonClick} // Attach click handler to the button
+          >
+            {/* <HiOutlineDocument className="w-5 h-5 text-white mr-2" /> */}
+            Container Policy Preview
+          </button>
+
+          {/* Optionally, conditionally render the Container component */}
+          {showContainer && <Container />}
         </div>
 
         {/* Image Section - 40% of screen width */}

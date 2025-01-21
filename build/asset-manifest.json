@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.cee7784e.css",
-    "main.js": "/static/js/main.42347d53.js",
+    "main.css": "/static/css/main.8824135f.css",
+    "main.js": "/static/js/main.827a48e6.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/ricesample1kg (1).gif": "/static/media/ricesample1kg (1).348e977b5ecc1f8b2f9e.gif",
@@ -13,12 +13,12 @@
     "static/media/1.2.png": "/static/media/1.2.3fda519193f532efdc2d.png",
     "static/media/1.1.png": "/static/media/1.1.a365169679f2c47648ca.png",
     "static/media/R1.png": "/static/media/R1.c5abc3bb1aa03be79519.png",
-    "static/media/ricesample (2).png": "/static/media/ricesample (2).db1f6909d771cb5c9192.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
     "static/media/legal.png": "/static/media/legal.dd57ac21e6673f622ae7.png",
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
     "static/media/machines.png": "/static/media/machines.8a2c5d9604b7fe5261f4.png",
+    "static/media/WhatsApp Image 2025-01-21 at 17.03.24.png": "/static/media/WhatsApp Image 2025-01-21 at 17.03.24.26342a3b8cf06eea8952.png",
     "static/media/Diwali2.jpg": "/static/media/Diwali2.6f6ebe2f2b7a4f8996bf.jpg",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
     "static/media/wearehiring.png": "/static/media/wearehiring.c29a887ac83bca5d7bd6.png",
@@ -84,12 +84,12 @@
     "static/media/fa-v4compatibility.ttf": "/static/media/fa-v4compatibility.da94ef451f4969af06e6.ttf",
     "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
     "index.html": "/index.html",
-    "main.cee7784e.css.map": "/static/css/main.cee7784e.css.map",
-    "main.42347d53.js.map": "/static/js/main.42347d53.js.map",
+    "main.8824135f.css.map": "/static/css/main.8824135f.css.map",
+    "main.827a48e6.js.map": "/static/js/main.827a48e6.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.cee7784e.css",
-    "static/js/main.42347d53.js"
+    "static/css/main.8824135f.css",
+    "static/js/main.827a48e6.js"
   ]
 }

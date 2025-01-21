@@ -59,6 +59,7 @@ import AccreditationsRecognization from "./components/GPT/AccreditationsRecogniz
 import ApplicationSupport from "./components/GPT/AppliocationSupport";
 import AcceptanceLetter from "./components/GPT/AcceptanceLetter";
 import AllQueries from "./Pages/AllQueries";
+import TicketHistory from "./components/TicketHistory";
 const App: React.FC = () => {
   return (
     <Router>
@@ -108,6 +109,7 @@ const App: React.FC = () => {
           <Route path="/myrotary" element={<MyRotaryServices />} />
           <Route path="/courses-gpt" element={<Courses />} />
           <Route path="/loans-gpt" element={<Loans />} />
+          <Route path="/ticket-history" element={<TicketHistory />} />
           <Route
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
@@ -134,7 +136,6 @@ const App: React.FC = () => {
             path="/accreditations-gpt"
             element={<AccreditationsRecognization />}
           />
-         
           <Route path="placements-gpt" element={<Placements />} />
           <Route path="scholarships-gpt" element={<Scholarship />} />
           <Route path="/foreign-exchange" element={<ForeignExchange />} />

@@ -195,7 +195,8 @@ const TicketHistory: React.FC = () => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [replyLoading, setReplyLoading] = useState(false);
-    const [askOxyOffersFilter, setAskOxyOffersFilter] = useState<string>("FREERUDRAKSHA");
+  const [askOxyOffersFilter, setAskOxyOffersFilter] =
+    useState<string>("FREERUDRAKSHA");
 
   const userId = localStorage.getItem("userId");
 
@@ -316,49 +317,46 @@ const TicketHistory: React.FC = () => {
   const getColumns = (status: string) => {
     const baseColumns = [
       {
-        title: "S.No",
+        title: <div className="text-center">S.No</div>,
         dataIndex: "sno",
         key: "sno",
-        render: (_: any, __: any, index: number) => index + 1, // Generate S.No dynamically
+        render: (_: any, __: any, index: number) => index + 1,
       },
-
       {
-        title: "User Info",
+        title: <div className="text-center">User Info</div>,
         key: "userInfo",
         width: "25%",
         render: (text: string, record: Query) => (
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
-              {/* <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-medium">
-                  {record.name.charAt(0)}
-                </span>
-              </div> */}
               <div className="flex flex-col">
-                <span className="text-gray-500 text-sm">
-                  Name: {record.name}
-                </span>
-                <span className="text-gray-500 text-sm">
-                  Mobile Number: {record.mobileNumber}
-                </span>
-                <span className="text-gray-500 text-sm">
-                  Ticket ID: {record.randomTicketId}
-                </span>
-                <span className="text-gray-500 text-sm">
-                  Created on: {new Date(record.createdAt).toLocaleDateString()}
-                </span>
+                <div>
+                  <strong>Name:</strong> {record.name}
+                </div>
+                <div>
+                  <strong>Email:</strong> {record.email}
+                </div>
+                <div>
+                  <strong>Mobile Number:</strong> {record.mobileNumber}
+                </div>
+                <div>
+                  <strong>Ticket Id:</strong> {record.randomTicketId}
+                </div>
+                <div>
+                  <strong>Created At:</strong> {record.createdAt}
+                </div>
               </div>
             </div>
           </div>
         ),
       },
       {
-        title: "User Query",
+        title: <div className="text-center">User Query</div>,
         dataIndex: "query",
         key: "query",
         width: "35%",
         render: (text: string, record: Query) => (
-          <div className="whitespace-pre-wrap">
+          <div className="whitespace-pre-wrap flex justify-center">
             {text || "No query provided"}
           </div>
         ),
@@ -369,14 +367,14 @@ const TicketHistory: React.FC = () => {
       return [
         ...baseColumns,
         {
-          title: "Admin Replies",
+          title: <div className="text-center">Admin Replies</div>,
           key: "adminReplies",
           width: "20%",
           render: (text: string, record: Query) => (
-            <div className="space-y-2">
+            <div className="space-y-0">
               {record.userPendingQueries?.map((reply, index) => (
-                <div key={index} className="p-2 rounded-lg mb-2 ">
-                  <div className="flex items-center justify-between mb-1">
+                <div key={index} className=" rounded-lg">
+                  <div className="flex items-center">
                     <span
                       className={`text-sm font-medium ${
                         reply.resolvedBy === "admin"
@@ -387,12 +385,12 @@ const TicketHistory: React.FC = () => {
                       {reply.resolvedBy === "admin" ? "Admin" : "User"}:
                     </span>
                     <span className="text-xs text-gray-500">
-                      {new Date(reply.resolvedOn).toLocaleString()}
+                      {new Date(reply.resolvedOn).toLocaleString().slice(0, -2)}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-700">
+                  <span className="text-sm text-gray-700">
                     {reply.pendingComments}
-                  </div>
+                  </span>
                 </div>
               ))}
               {(!record.userPendingQueries ||
@@ -405,7 +403,7 @@ const TicketHistory: React.FC = () => {
           ),
         },
         {
-          title: "Actions",
+          title: <div className="text-center">Actions</div>,
           key: "actions",
           width: "20%",
           render: (text: string, record: Query) => (
@@ -430,7 +428,7 @@ const TicketHistory: React.FC = () => {
       return [
         ...baseColumns,
         {
-          title: "Admin Reply",
+          title: <div className="text-center">Admin Replies</div>,
           key: "adminReply",
           width: "25%",
           render: (text: string, record: Query) => (
@@ -448,7 +446,7 @@ const TicketHistory: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-50 p-4 ">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Ticket History</h1>
 
       <div className="mb-6 flex flex-wrap gap-4 justify-end items-center">
@@ -458,7 +456,7 @@ const TicketHistory: React.FC = () => {
             defaultValue="PENDING"
             value={selectedStatus}
             onChange={(value) => setSelectedStatus(value)}
-            style={{ width: "100%" }} // Ensures it stretches to container width on smaller screens
+            style={{ width: "100%" }}
             className="shadow-sm"
           >
             <Option value="PENDING">PENDING</Option>
@@ -502,7 +500,7 @@ const TicketHistory: React.FC = () => {
               pagination={{ pageSize: 10 }}
               className="w-full"
               bordered
-              scroll={{ x: 800 }} // Add horizontal scroll for responsiveness
+              scroll={{ x: window.innerWidth < 768 ? 800 : undefined }}
             />
           </div>
         </div>

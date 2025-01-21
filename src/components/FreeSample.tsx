@@ -5,8 +5,9 @@ import axios from "axios";
 import { BiLogoPlayStore } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
-
-import FR from "../assets/img/ricesample (2).png";
+import { HiOutlineDocument } from "react-icons/hi";
+import Container from "./ContainerPolicy";
+import FR from "../assets/img/WhatsApp Image 2025-01-21 at 17.03.24.png";
 
 import Footer from "./Footer";
 import { message } from "antd";
@@ -46,7 +47,6 @@ const FreeSample: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  
   const userId = localStorage.getItem("userId");
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -57,10 +57,9 @@ const FreeSample: React.FC = () => {
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
     userId: userId,
-    
+    mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -70,63 +69,63 @@ const FreeSample: React.FC = () => {
     }));
   };
 
- const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-   const handleSubmit = async () => {
-     try {
-       setIsButtonDisabled(true);
-       // API request to submit the form data
-       const response = await axios.post(
-         "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-         formData
-       );
-       console.log("API Response:", response.data);
-       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-       // Show success notification
-       notification.success({
-         message: "Success!",
-         description: "Your interest has been submitted successfully!",
-         placement: "top", // Center the success notification
-         duration: 2,
-         style: {
-           width: 300, // Set small width
-           fontSize: "14px", // Reduce font size
-           padding: "10px", // Adjust padding
-         }, // Duration in seconds
-       });
-     } catch (error: any) {
-       if (error.response.status === 500 || error.response.status === 400) {
-         // Handle duplicate participation error
-         notification.warning({
-           message: "Warning!",
-           description: "You have already participated. Thank you!",
-           placement: "top",
-           duration: 2, // Duration before auto-close
-           style: {
-             width: 300, // Set small width
-             fontSize: "14px", // Reduce font size
-             padding: "10px", // Adjust padding
-           },
-         });
-       } else {
-         console.error("API Error:", error);
-         notification.error({
-           message: "Error!",
-           description: "Failed to submit your interest. Please try again.",
-           duration: 2,
-           placement: "top",
-           style: {
-             width: 300, // Set small width
-             fontSize: "14px", // Reduce font size
-             padding: "10px", // Adjust padding
-           }, // The notification will close after 2 seconds
-         });
-       }
-       setIsButtonDisabled(false);
-     }
-   };
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const handleSubmit = async () => {
+    try {
+      setIsButtonDisabled(true);
+      // API request to submit the form data
+      const response = await axios.post(
+        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        formData
+      );
+      console.log("API Response:", response.data);
+      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+      // Show success notification
+      notification.success({
+        message: "Success!",
+        description:
+          "Thank you for showing interest in our *Free Rice Sample and Steel Container* offer.",
+        placement: "top", // Center the success notification
+        duration: 2,
+        style: {
+          width: 300, // Set small width
+          fontSize: "14px", // Reduce font size
+          padding: "10px", // Adjust padding
+        }, // Duration in seconds
+      });
+    } catch (error: any) {
+      if (error.response.status === 500 || error.response.status === 400) {
+        // Handle duplicate participation error
+        notification.warning({
+          message: "Warning!",
+          description: "You have already participated. Thank you!",
+          placement: "top",
+          duration: 2, // Duration before auto-close
+          style: {
+            width: 300, // Set small width
+            fontSize: "14px", // Reduce font size
+            padding: "10px", // Adjust padding
+          },
+        });
+      } else {
+        console.error("API Error:", error);
+        notification.error({
+          message: "Error!",
+          description: "Failed to submit your interest. Please try again.",
+          duration: 2,
+          placement: "top",
+          style: {
+            width: 300, // Set small width
+            fontSize: "14px", // Reduce font size
+            padding: "10px", // Adjust padding
+          }, // The notification will close after 2 seconds
+        });
+      }
+      setIsButtonDisabled(false);
+    }
+  };
 
   const email = localStorage.getItem("email");
- 
 
   const navigate = useNavigate();
 
@@ -204,6 +203,15 @@ const FreeSample: React.FC = () => {
       // alert("Failed to send query. Please try again.");
     }
   };
+    const [showContainer, setShowContainer] = useState(false);
+    
+        const handleButtonClick = () => {
+            window.open(
+              "https://drive.google.com/file/d/1x_0b6DIt5-rbq1fubeHcIMO5Grxr46p1/view",
+              "_blank"
+            ); // Set state to show the container when the button is clicked
+        };
+    
 
   return (
     <div>
@@ -217,20 +225,34 @@ const FreeSample: React.FC = () => {
           </div>
 
           {/* Buttons on the right */}
-          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 pt-8 lg:px-8">
             {/* Button: I'm Interested */}
             <button
-              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#04AA6D] transition-all text-sm md:text-base lg:text-lg"
               onClick={handleSubmit}
               disabled={isButtonDisabled}
               aria-label="Visit our site"
             >
               I'm Interested
             </button>
+            <div>
+              {/* Fixed Button: Container Policy */}
+              <button
+                className="bottom-8 right-8 px-4 py-2 bg-[#D32F2F] text-white rounded-lg shadow-lg hover:bg-[#B71C1C] transition-all text-sm md:text-base lg:text-lg flex items-center justify-center z-50"
+                aria-label="Open Container Policy PDF"
+                onClick={handleButtonClick} // Attach click handler to the button
+              >
+                <HiOutlineDocument className="w-5 h-5 text-white mr-2" />
+                Container Policy Preview
+              </button>
+
+              {/* Optionally, conditionally render the Container component */}
+              {showContainer && <Container />}
+            </div>
 
             {/* Button: Write To Us */}
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#008CBA] transition-all text-sm md:text-base lg:text-lg"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -314,12 +336,14 @@ const FreeSample: React.FC = () => {
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                    onClick={handleWriteToUsSubmitButton}
-                  >
-                    Submit
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                      onClick={handleWriteToUsSubmitButton}
+                    >
+                      Submit Query
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -377,99 +401,158 @@ const FreeSample: React.FC = () => {
         </header>
 
         {/* Details Section */}
-        <div className="flex flex-col md:flex-row items-center justify-center mt-10 px-4">
-          {/* Left Section: Image */}
-          <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center mt-10 px-4 space-y-6 lg:space-y-0 lg:space-x-6">
+          {/* Image Section */}
+          <div className="w-full lg:w-1/2 flex justify-center p-4">
             <img
               src={FR}
               alt="Free Sample"
-              className="w-11/12 max-w-sm md:max-w-md lg:max-w-lg"
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-lg shadow-lg object-cover"
             />
           </div>
 
-          {/* Right Section: Text */}
-          <div className="w-full md:w-1/2 text-center md:text-left md:pl-8 space-y-6">
-            {/* Offer Heading */}
-            <div className="p-3">
-              <strong className="text-[#6A1B9A] text-lg md:text-xl lg:text-2xl font-bold">
-                Free Rice Samples & Steel Container
-              </strong>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-4 text-gray-800">
-              <p className="text-sm md:text-base lg:text-lg">
-                <strong>ASKOXY.AI</strong> offers an exclusive deal: get{" "}
-                <strong>1 KG of free rice samples</strong> with a{" "}
-                <strong>free steel container</strong>. This sleek container
-                ensures freshness and sustainability, reflecting{" "}
-                <strong>ASKOXY.AI's commitment to quality</strong>.{" "}
-                <strong>Download the app now</strong> from the{" "}
-                <strong>App Store or Google Play</strong> by scanning the QR
-                code, and enjoy premium rice ordering online!
-              </p>
-            </div>
-
-            {/* Playstore Button */}
-            <div className="flex justify-center md:justify-center mt-6">
-              <a
-                href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-52 h-12 text-lg font-bold bg-blue-600 text-white rounded-md hover:bg-blue-800 transition-all flex items-center justify-center"
-                aria-label="Download App from Google Play"
-              >
-                <BiLogoPlayStore className="w-6 h-6 mr-2" />
-                Download App
-              </a>
-            </div>
+          {/* Offer Details Section */}
+          <div className="w-full lg:w-1/2 bg-white shadow-md rounded-lg p-5">
+            <h4 className="text-[#2c3e50] font-semibold text-base sm:text-lg lg:text-xl mb-3">
+              Greetings from Radhakrishna Thatavarti, CEO and Founder of
+              AskOxy.ai
+            </h4>
+            <h6 className="text-[#2c3e50] font-semibold sm:text-lg lg:text-xl mb-3">
+              Offer Details
+            </h6>
+            <ul className="list-disc list-inside space-y-3 text-gray-700 text-sm sm:text-base">
+              <li>
+                Purchase any rice bag and receive a{" "}
+                <strong>free steel container</strong> proportional to your
+                purchase:
+              </li>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>
+                  <strong>1 kg rice bag:</strong> Free{" "}
+                  <strong>1+ kg steel container</strong>
+                </li>
+                <li>
+                  <strong>5 kg rice bag:</strong> Free{" "}
+                  <strong>5+ kg steel container</strong>
+                </li>
+                <li>
+                  <strong>10 kg rice bag:</strong> Free{" "}
+                  <strong>10+ kg steel container</strong>
+                </li>
+                <li>
+                  <strong>26 kg rice bag:</strong> Free{" "}
+                  <strong>26+ kg steel container</strong>
+                </li>
+              </ul>
+              <li>
+                Additionally, receive a <strong>free 1 kg rice sample</strong>{" "}
+                with your first order.
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-center mt-8 space-y-6 md:space-y-0 md:space-x-5 px-4">
-          {/* Rice Sample 1kg */}
-          <div className="w-full sm:w-[300px] md:w-[400px] lg:w-[450px] h-[400px] md:h-[450px] text-center p-6 rounded">
+        {/* Cards Section */}
+        <div className="w-full px-4 mt-10">
+          {/* Cards Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Card 1: Container Policy */}
+            <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+              <h2 className="text-[#2c3e50] font-semibold text-lg mb-4">
+                Container Policy
+              </h2>
+              <ul className="list-disc list-inside space-y-3 text-gray-700">
+                <li>
+                  Containers are custom-ordered based on demand, and delivery
+                  may take additional time.
+                </li>
+                <li>
+                  The container remains the property of{" "}
+                  <strong>OXY Group</strong> and is provided as a free asset for
+                  your usage, contingent on regular rice purchases from us.
+                </li>
+              </ul>
+            </div>
+
+            {/* Card 2: Usage and Recovery Terms */}
+            <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+              <h2 className="text-[#2c3e50] font-semibold text-lg mb-4">
+                Usage and Recovery Terms
+              </h2>
+              <ul className="list-disc list-inside space-y-3 text-gray-700">
+                <li>
+                  If no purchase is made within <strong>45 days</strong>, you
+                  will receive a notification.
+                </li>
+                <li>
+                  If no purchase is made within <strong>60 days</strong>,{" "}
+                  <strong>OXY Group</strong> reserves the right to recover the
+                  container.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Download App Section */}
+          <div className="flex flex-col items-center justify-center mt-8 space-y-6 md:flex-row md:space-y-0 md:space-x-6">
+            <h1 className="text-center text-xl font-bold text-gray-800">
+              Buy Rice Online with Our App
+            </h1>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center px-6 py-3 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-full shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 hover:scale-105"
+            >
+              
+              Download Now
+            </a>
+          </div>
+
+          {/* Images Section */}
+          <div className="flex flex-wrap justify-center gap-8 mt-12 px-4">
+            {/* Rice Sample 1kg */}
+            <div className="w-full sm:w-[300px] md:w-[350px] lg:w-[400px] text-center">
+              <img
+                src={ricesample1kgGif}
+                alt="Rice Sample 1kg"
+                className="w-full h-auto object-cover rounded-lg shadow-lg"
+              />
+              <h5 className="text-blue-600 font-semibold mt-4 text-lg">
+                Rice Sample 1kg
+              </h5>
+            </div>
+
+            {/* Rice Bag 26kgs */}
+            <div className="w-full sm:w-[300px] md:w-[350px] lg:w-[400px] text-center">
+              <img
+                src={ricebag26kgsGif}
+                alt="Rice Bag 26kgs"
+                className="w-full h-auto object-cover rounded-lg shadow-lg"
+              />
+              <h5 className="text-blue-600 font-semibold mt-4 text-lg">
+                Rice Bag 26kgs
+              </h5>
+            </div>
+          </div>
+
+          {/* Final Image Section */}
+          <div className="flex justify-center mt-12 px-4">
             <img
-              src={ricesample1kgGif} // Replace with actual image path
-              alt="Rice Sample 1kg"
-              className="w-full h-[80%] object-cover rounded-lg"
+              src={img6}
+              alt="Promotional Image"
+              className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-4xl h-auto object-contain rounded-lg shadow-lg"
             />
-            <h5 className="text-blue-600 font-bold mt-3 text-base md:text-lg">
-              Rice Sample 1kg
-            </h5>
-          </div>
-
-          {/* Rice Bag 26kgs */}
-          <div className="w-full sm:w-[300px] md:w-[400px] lg:w-[450px] h-[400px] md:h-[450px] text-center    p-6 rounded">
-            <img
-              src={ricebag26kgsGif} // Replace with actual image path
-              alt="Rice Bag 26kgs"
-              className="w-full h-[80%] object-cover rounded-lg"
-            />
-            <h5 className="text-blue-600 font-bold mt-3 text-base md:text-lg">
-              Rice Bag 26kgs
-            </h5>
           </div>
         </div>
-
-        {/* New Image Section */}
-        <div className="flex justify-center mt-2 px-4">
-          <img
-            src={img6} // Replace with the actual image path
-            alt="New Image"
-            className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-4xl h-auto object-contain"
-          />
-        </div>
-
-        {/* Modal Section */}
       </div>
 
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-green-600">
+          <span className="text-[#04AA6D]">
             <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">COMPANIES</span>
+          <span className="text-[#FFA400]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -629,7 +712,7 @@ const FreeSample: React.FC = () => {
         </div>
 
         {/* Group Section */}
-        <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
+        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
           <h1
             className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
@@ -668,7 +751,7 @@ const FreeSample: React.FC = () => {
               →
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

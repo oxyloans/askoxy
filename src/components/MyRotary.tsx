@@ -52,7 +52,7 @@ const MyRotaryServices = () => {
   const [formData, setFormData] = useState({
     askOxyOfers: "ROTARIAN",
     userId: userId,
-
+    mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
 
@@ -80,7 +80,8 @@ const MyRotaryServices = () => {
        // Show success notification
        notification.success({
          message: "Success!",
-         description: "Your interest has been submitted successfully!",
+         description: "Thank you for your interest in our *Rotarian* offer. We look forward to connecting with you and exploring exciting opportunities.",
+
          placement: "top", // Center the success notification
          duration: 2,
          style: {
@@ -216,7 +217,7 @@ const MyRotaryServices = () => {
           <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
             {/* Button: I'm Interested */}
             <button
-              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#04AA6D] transition-all text-sm md:text-base lg:text-lg"
               onClick={handleSubmit}
               disabled={isButtonDisabled}
               aria-label="Visit our site"
@@ -226,7 +227,7 @@ const MyRotaryServices = () => {
 
             {/* Button: Write To Us */}
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#008CBA] transition-all text-sm md:text-base lg:text-lg"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -310,12 +311,14 @@ const MyRotaryServices = () => {
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                    onClick={handleWriteToUsSubmitButton}
-                  >
-                    Submit
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                      onClick={handleWriteToUsSubmitButton}
+                    >
+                      Submit Query
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -379,7 +382,7 @@ const MyRotaryServices = () => {
             <img
               src={MyRotary}
               alt="My Rotarian"
-              className="w-full h-auto rounded-lg"
+              className="w-full h-auto rounded-lg shadow-md" // Added shadow for a professional look
             />
           </div>
 
@@ -387,28 +390,30 @@ const MyRotaryServices = () => {
           <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
             {/* Welcome Heading */}
             <div className="text-center md:text-left">
-              <strong className="text-[24px] md:text-[28px] text-[#6A1B9A] font-semibold">
+              <strong className="text-[24px] md:text-[28px] text-[#6A1B9A] font-semibold leading-tight">
                 Welcome, Rotarian!
               </strong>
             </div>
 
             {/* Details */}
-            <div className="space-y-4 text-gray-800">
+            <div className="space-y-4 text-gray-800 text-sm sm:text-base md:text-lg">
               <p>
-                <strong>0% Fee Marketplace:</strong> List your products and
-                services exclusively for fellow Rotarians.
+                <strong className="font-medium">0% Fee Marketplace:</strong>{" "}
+                List your products and services exclusively for fellow
+                Rotarians.
               </p>
               <p>
-                <strong>Sell Directly:</strong> Reach our vast user base and
-                grow your revenues.
+                <strong className="font-medium">Sell Directly:</strong> Reach
+                our vast user base and grow your revenues.
               </p>
               <p>
-                <strong>Bulk Purchase Program:</strong> We help you maximize
-                profits by buying in bulk.
+                <strong className="font-medium">Bulk Purchase Program:</strong>{" "}
+                We help you maximize profits by buying in bulk.
               </p>
               <p>
-                <strong>Double Your Revenues:</strong> Connect with new
-                customers and expand your business effortlessly.
+                <strong className="font-medium">Double Your Revenues:</strong>{" "}
+                Connect with new customers and expand your business
+                effortlessly.
               </p>
             </div>
           </div>
@@ -417,12 +422,11 @@ const MyRotaryServices = () => {
 
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-green-600">
+          <span className="text-[#04AA6D]">
             <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">COMPANIES</span>
+          <span className="text-[#FFA400]">COMPANIES</span>
         </h1>
-
         <div className="event-container1">
           <div className="event-content1">
             <div className="diwali-images1">
@@ -577,7 +581,7 @@ const MyRotaryServices = () => {
         </div>
 
         {/* Group Section */}
-        <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
+        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
           <h1
             className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
@@ -616,7 +620,7 @@ const MyRotaryServices = () => {
               →
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

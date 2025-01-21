@@ -63,6 +63,8 @@ interface ProfileData {
   panVerified: boolean | null;
   whatsappVerified: boolean | null;
   name: string | null;
+  multiChainId: string | null;
+  coinAllocated: number | null;
 }
 
 type ChatHistoryItem = {
@@ -88,6 +90,7 @@ const Dasboard = () => {
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [profiledata, setprofiledata] = useState({});
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
@@ -108,7 +111,7 @@ const Dasboard = () => {
   const [showMyRotaryService, setShowMyRotaryService] = useState(false);
   const [showLegalService, setShowLegalService] = useState(false);
   const [showHiringService, setShowHiringService] = useState(false);
-const [ticketHistory, setTicketHistory] = useState(false);  
+  const [ticketHistory, setTicketHistory] = useState(false);
   const scrollableRef = useRef<HTMLDivElement | null>(null);
   const componentRef = useRef<HTMLDivElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -138,7 +141,7 @@ const [ticketHistory, setTicketHistory] = useState(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
     setShowLegalService(false);
-    setTicketHistory(false);  
+    setTicketHistory(false);
 
     // Handle section navigation (don't store in history)
     if (section) {
@@ -205,17 +208,17 @@ const [ticketHistory, setTicketHistory] = useState(false);
       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
-    const handletickethistory = () => {
-      navigate("/dashboard?section=tickethistory", { replace: true });
+  const handletickethistory = () => {
+    navigate("/dashboard?section=tickethistory", { replace: true });
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
-      if (isMobile) {
-        componentRef.current?.scrollIntoView({ behavior: "smooth" });
-      } else {
-        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    };
+    if (isMobile) {
+      componentRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const handleStudyAbroadClick = () => {
     navigate("/dashboard?section=study-abroad", { replace: true });
@@ -392,71 +395,6 @@ const [ticketHistory, setTicketHistory] = useState(false);
     }
   }, [messages]);
 
-  let queryString = window.location.search;
-  useEffect(() => {
-    // Parse the query string properly
-    const params = new URLSearchParams(queryString);
-    const query = params.get("query");
-    const section = params.get("section");
-
-    // Only process if it's a search query, not a section navigation
-    if (query && !section) {
-      const handleSend = async (queryInput: string) => {
-        if (queryInput.trim() === "") return;
-
-        // Add the user's question to the chat
-        setMessages((prev) => [
-          ...prev,
-          { type: "question", content: queryInput },
-        ]);
-
-        // Save the query to history only for actual search queries
-        setHistory((prevHistory) => [queryInput, ...prevHistory]);
-
-        setInput("");
-        setIsLoading(true);
-        setQuestionCount((prevCount) => prevCount + 1);
-
-        const apiurl =
-          userId !== null
-            ? `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
-                queryInput
-              )}&userId=${userId}`
-            : `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
-                queryInput
-              )}`;
-
-        try {
-          setriceTopicsshow(false);
-          const response = await axios.post(apiurl);
-          setMessages((prev) => [
-            ...prev,
-            { type: "answer", content: response.data },
-          ]);
-        } catch (error) {
-          console.error("Error fetching response:", error);
-          setMessages((prev) => [
-            ...prev,
-            {
-              type: "answer",
-              content: "Sorry, there was an error. Please try again later.",
-            },
-          ]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      // Only call handleSend for search queries
-      handleSend(query);
-    }
-  }, [queryString]);
-
-  // Handle image enlargement
-  const handleImageClick = (image: string) => {
-    setEnlargedImage(image);
-  };
-
   useEffect(() => {
     const islogin = localStorage.getItem("userId");
     if (questionCount > 3) {
@@ -530,7 +468,6 @@ const [ticketHistory, setTicketHistory] = useState(false);
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
-
   const handleSend = async (queryInput: string) => {
     if (queryInput.trim() === "") return;
 
@@ -550,10 +487,7 @@ const [ticketHistory, setTicketHistory] = useState(false);
           )}`;
 
     try {
-      const response = await axios.post(
-        // `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`
-        apiurl
-      );
+      const response = await axios.post(apiurl);
 
       // Add the API response to chat
       setMessages((prev) => [
@@ -647,7 +581,7 @@ const [ticketHistory, setTicketHistory] = useState(false);
     setShowMachinesManufacturing(false);
     setShowMyRotaryService(false);
     setShowLegalService(false);
-    setTicketHistory(false)
+    setTicketHistory(false);
     setriceTopicsshow(true);
 
     navigate("/dashboard"); // Navigate first
@@ -676,29 +610,6 @@ const [ticketHistory, setTicketHistory] = useState(false);
     setChatHistory(savedHistory);
   }, []);
 
-  // Delete history permanently
-  const handleDeleteHistory = (index: number) => {
-    const updatedHistory = chathistory.filter((_, i) => i !== index);
-    setChatHistory(updatedHistory);
-
-    // Update localStorage
-    localStorage.setItem("chathistory", JSON.stringify(updatedHistory));
-  };
-
-  const questions = messages.filter((msg) => msg.type === "question");
-  const answers = messages.filter((msg) => msg.type === "answer");
-
-  const imageData = [
-    {
-      oxyLoans: Image1,
-      link: "https://oxyloans.com/login",
-    },
-    {
-      oxyLoans: Image2,
-      link: "https://erice.in/",
-    },
-  ];
-
   const navigate = useNavigate(); // Initialize navigate function
 
   // Function to handle the click event
@@ -719,10 +630,12 @@ const [ticketHistory, setTicketHistory] = useState(false);
     return text.slice(0, length) + "..."; // Truncate text and add ellipsis
   };
 
+  
+
   return (
     <div className="max-h-screen  fixed bg-[#351664] text-white overflow-y-auto  w-full flex flex-col">
       {/* Header */}
-      <header className="flex flex-col md:flex-row items-center justify-between p-4 bg-[#351664] border-b-2 border-white">
+      <header className="hidden flex flex-col md:flex-row items-center justify-between p-4 bg-[#351664] border-b-2 border-white">
         {/* Logo with Icon */}
         <button
           className="flex items-center text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none mb-2 md:mb-0"
@@ -733,8 +646,15 @@ const [ticketHistory, setTicketHistory] = useState(false);
         </button>
 
         {/* Right Section: Profile and SignOut */}
-        <div className="flex flex-col md:flex-row items-center  space-y-2 md:space-y-0 md:space-x-4">
-          {/* SignOut Button */}
+        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2">
+          {/* Hidden on mobile */}
+          <button
+            onClick={handletickethistory}
+            className="text-white bg-[#04AA6D] px-4 py-2 rounded-full font-bold md:block hidden"
+          >
+            Ticket History
+          </button>
+
           <button
             onClick={() => {
               if (
@@ -752,8 +672,8 @@ const [ticketHistory, setTicketHistory] = useState(false);
           >
             SignOut
           </button>
-          {/* Profile Info Section (AuthorInfo) */}
 
+          {/* Profile Info Section (AuthorInfo) */}
           <div className="flex flex-wrap items-center gap-2 sm:space-x-2">
             <AuthorInfo
               name={`${profileData?.firstName || ""} ${
@@ -831,16 +751,16 @@ const [ticketHistory, setTicketHistory] = useState(false);
               </p>
             )}
             <div className="mt-4 border-t border-gray-300 ">
-              <div className="mt-2 flex justify-center items-center">
+              {/* <div className="mt-2 flex justify-center items-center">
                 <button
                   onClick={handletickethistory}
-                  className="px-4 py-2 text-black bg-green-500 text-center rounded-md cursor-pointer flex items-center justify-center"
+                  className="px-4 py-2 text-black bg-[#04AA6D] text-center rounded-md cursor-pointer flex items-center justify-center"
                 >
                   <span className="text-white text-sm leading-tight">
                     Ticket History
                   </span>
                 </button>
-              </div>
+              </div> */}
 
               <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
                 <button
@@ -1059,15 +979,34 @@ const [ticketHistory, setTicketHistory] = useState(false);
               !showLegalService && (
                 <>
                   {/* Static Rice Related Text */}
-                  <h2
-                    className="fw-500"
-                    style={{ zIndex: "10", color: "black", fontWeight: "700" }}
-                  >
-                    Welcome{" "}
-                    {profileData
-                      ? `    ${profileData.firstName} ${profileData.lastName}`
-                      : "Guest"}
-                  </h2>
+                  {
+                    <div className="flex items-center justify-between p-2">
+                      {/* Left side: Welcome Text */}
+                      <h2
+                        className="fw-500"
+                        style={{
+                          zIndex: "10",
+                          color: "black",
+                          fontWeight: "700",
+                        }}
+                      >
+                        Welcome{" "}
+                        {profileData
+                          ? `    ${profileData.firstName} ${profileData.lastName}`
+                          : "Guest"}
+                      </h2>
+
+                      
+                      {/* <button
+                        className="bg-[#04AA6D] text-white px-4 py-2 rounded-full font-bold"
+                        
+                      >
+                        Multi Chain ID
+                      </button> */}
+
+                    
+                    </div>
+                  }
 
                   {showStaticBubbles && (
                     <>

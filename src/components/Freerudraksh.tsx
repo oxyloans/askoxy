@@ -331,12 +331,21 @@ const Freerudraksha: React.FC = () => {
         {/* Buttons */}
         <div className="flex flex-col md:flex-row justify-center md:justify-end items-center gap-4">
           <button
-            className="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 text-sm md:text-base lg:text-lg transition duration-300"
+            className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
+            onClick={handleWhatsappClick}
+            aria-label="Request Free Rudraksha"
+          >
+            I Want Free Rudraksha
+          </button>
+
+          <button
+            className="w-full md:w-auto px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
             aria-label="Write To Us"
             onClick={handleWriteToUs}
           >
             Write To Us
           </button>
+
           {/* Uncomment below button if needed */}
           {/* <button
             className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 text-sm md:text-base lg:text-lg transition duration-300"
@@ -422,12 +431,14 @@ const Freerudraksha: React.FC = () => {
                 </div>
 
                 {/* Submit Button */}
-                <button
-                  className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                  onClick={handleWriteToUsSubmitButton}
-                >
-                  Submit
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                    onClick={handleWriteToUsSubmitButton}
+                  >
+                    Submit Query
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -485,25 +496,34 @@ const Freerudraksha: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <div className="worlds flex justify-center mt-8">
-        <section className="spiritual-world text-center mx-4">
-          <h2 id="h2" style={{ fontWeight: "bold" }}>
+      <div className="flex flex-col md:flex-row justify-center mt-8 px-4">
+        {/* Spiritual World Section */}
+        <section className="spiritual-world text-center mx-4 mb-8 md:mb-0">
+          <h2
+            id="h2"
+            className="font-bold text-xl sm:text-2xl md:text-3xl text-[#6A1B9A]"
+          >
             Spiritual World
           </h2>
           <img
             src={Image1}
             alt="Spiritual World"
-            className="world-image w-103 h-100"
+            className="world-image w-full sm:w-80 md:w-96 h-auto rounded-lg shadow-lg mt-4"
           />
         </section>
-        <section className="ai-world text-center mx-4">
-          <h2 id="h2" style={{ fontWeight: "bold" }}>
+
+        {/* AI & Generative AI World Section */}
+        <section className="ai-world text-center mx-4 mb-8 md:mb-0">
+          <h2
+            id="h2"
+            className="font-bold text-xl sm:text-2xl md:text-3xl text-[#6A1B9A]"
+          >
             AI & Generative AI World
           </h2>
           <img
             src={Image2}
             alt="AI & Generative AI World"
-            className="world-image"
+            className="world-image w-full sm:w-80 md:w-96 h-auto rounded-lg shadow-lg mt-4"
           />
         </section>
       </div>
@@ -532,15 +552,6 @@ const Freerudraksha: React.FC = () => {
       </div>
 
       {/* Button Section */}
-      <div className="flex justify-center mt-8">
-        <button
-          className="w-52 h-12 text-lg font-bold bg-green-600 text-white rounded-md hover:bg-green-700 transition-all"
-          onClick={handleWhatsappClick}
-          aria-label="Request Free Rudraksha"
-        >
-          I Want Free Rudraksha
-        </button>
-      </div>
 
       {/* Modals */}
       <Modal
@@ -719,10 +730,10 @@ const Freerudraksha: React.FC = () => {
 
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-green-600">
+          <span className="text-[#04AA6D]">
             <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">COMPANIES</span>
+          <span className="text-[#FFA400]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -882,7 +893,7 @@ const Freerudraksha: React.FC = () => {
         </div>
 
         {/* Group Section */}
-        <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
+        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
           <h1
             className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
@@ -921,7 +932,7 @@ const Freerudraksha: React.FC = () => {
               →
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

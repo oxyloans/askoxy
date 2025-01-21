@@ -56,7 +56,7 @@ const LegalService: React.FC = () => {
   const [formData, setFormData] = useState({
     askOxyOfers: "LEGALSERVICES",
     userId: userId,
-
+    mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
 
@@ -83,7 +83,8 @@ const LegalService: React.FC = () => {
         // Show success notification
         notification.success({
           message: "Success!",
-          description: "Your interest has been submitted successfully!",
+          description: "Thank you for your interest in our *Legal Service* offer. We're here to assist you with expert legal solutions.",
+
           placement: "top", // Center the success notification
           duration: 2,
           style: {
@@ -219,7 +220,7 @@ const LegalService: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
             {/* Button: I'm Interested */}
             <button
-              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#04AA6D] transition-all text-sm md:text-base lg:text-lg"
               onClick={handleSubmit}
               aria-label="Visit our site"
               disabled={isButtonDisabled}
@@ -229,7 +230,7 @@ const LegalService: React.FC = () => {
 
             {/* Button: Write To Us */}
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#008CBA] transition-all text-sm md:text-base lg:text-lg"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -313,12 +314,14 @@ const LegalService: React.FC = () => {
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                    onClick={handleWriteToUsSubmitButton}
-                  >
-                    Submit
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                      onClick={handleWriteToUsSubmitButton}
+                    >
+                      Submit Query
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -371,8 +374,6 @@ const LegalService: React.FC = () => {
                 </div>
               </div>
             )}
-
-         
           </div>
         </header>
 
@@ -382,7 +383,7 @@ const LegalService: React.FC = () => {
             <img
               src={Legal}
               alt="My Rotarian"
-              className="w-full md:w-auto h-auto"
+              className="w-full md:w-auto h-auto rounded-lg shadow-lg" // Adding rounded corners and shadow for a polished look
             />
           </div>
 
@@ -390,7 +391,7 @@ const LegalService: React.FC = () => {
           <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
             {/* Welcome Heading */}
             <div className="text-center md:text-left">
-              <strong className="text-[20px] md:text-[24px] text-[#6A1B9A]">
+              <strong className="text-[20px] md:text-[24px] text-[#6A1B9A] font-semibold">
                 Welcome, Lawyers and Advocates! 2X Your Revenue with AskOxy.ai
               </strong>
             </div>
@@ -427,19 +428,18 @@ const LegalService: React.FC = () => {
           <iframe
             src="https://drive.google.com/file/d/11AI-em7upR9UVcec1mFuxmIPh1Cfx0Ai/preview"
             frameBorder="0"
-            className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 h-[500px] sm:h-[600px] md:h-[800px] lg:h-[1000px] max-w-full"
+            className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 h-[500px] sm:h-[600px] md:h-[800px] lg:h-[1000px] max-w-full rounded-lg shadow-lg"
             title="PDF Viewer"
-            onLoad={handleLoad} // Set loading state to false when the iframe loads
           />
         </div>
       </div>
 
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-green-600">
+          <span className="text-[#04AA6D]">
             <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">COMPANIES</span>
+          <span className="text-[#FFA400]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -650,7 +650,7 @@ const LegalService: React.FC = () => {
         </div>
 
         {/* Group Section */}
-        <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
+        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
           <h1
             className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
@@ -689,7 +689,7 @@ const LegalService: React.FC = () => {
               →
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

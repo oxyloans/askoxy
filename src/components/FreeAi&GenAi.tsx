@@ -54,6 +54,7 @@ const FreeAiandGenAi: React.FC = () => {
   const mobileNumber = localStorage.getItem("whatsappNumber");
   const [formData, setFormData] = useState({
     askOxyOfers: "FREEAI",
+    mobileNumber: mobileNumber, 
     userId: userId,
     projectType: "ASKOXY",
   });
@@ -81,7 +82,8 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
       // Show success notification
       notification.success({
         message: "Success!",
-        description: `Your interest has been submitted successfully!`,
+        description: `Thank you for your interest in our *FREE AI & Gen AI TRAINING*! We're excited to help you explore AI's endless possibilities.`,
+
         placement: "top", // Center the success notification
         duration: 2,
         style: {
@@ -218,7 +220,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
           <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
             {/* Button: I'm Interested */}
             <button
-              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#04AA6D] transition-all text-sm md:text-base lg:text-lg"
               onClick={handleSubmit}
               aria-label="Visit our site"
               disabled={isButtonDisabled} // Disable the button dynamically
@@ -228,7 +230,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
 
             {/* Button: Write To Us */}
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-sm md:text-base lg:text-lg"
+              className="px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#008CBA] transition-all text-sm md:text-base lg:text-lg"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -312,12 +314,14 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    className="mt-3 w-full text-lg font-semibold rounded-lg px-4 py-2 text-[#3d2a71] bg-[#f9b91a] hover:bg-[#e0a019] transition-colors"
-                    onClick={handleWriteToUsSubmitButton}
-                  >
-                    Submit
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                      onClick={handleWriteToUsSubmitButton}
+                    >
+                      Submit Query
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -382,7 +386,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
             <img
               src={FG}
               alt="My Rotarian"
-              className="max-w-full h-auto rounded-lg shadow-lg"
+              className="max-w-full h-auto rounded-lg shadow-lg object-cover"
             />
           </div>
 
@@ -390,7 +394,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
           <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
             {/* Offer Heading */}
             <div className="text-center md:text-left p-3">
-              <strong className="text-[#6A1B9A] text-xl md:text-2xl lg:text-3xl">
+              <strong className="text-[#6A1B9A] text-xl md:text-2xl lg:text-3xl font-semibold">
                 Our Offer: Free AI & Gen AI Training
               </strong>
             </div>
@@ -415,6 +419,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
           </div>
         </div>
 
+        {/* Call-to-action Button */}
         <div className="flex justify-center mt-8 px-4">
           <a
             href="https://sites.google.com/view/globalecommercemarketplace/home" // Replace with your Google site link
@@ -422,7 +427,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
             rel="noopener noreferrer"
             aria-label="Oxyloans Training Guide"
           >
-            <button className="w-full md:w-52 h-12 text-base md:text-lg font-bold bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all">
+            <button className="w-full md:w-52 h-12 text-base md:text-lg font-bold bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#006F8E] transition-all">
               Our Training Guide
             </button>
           </a>
@@ -431,10 +436,10 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
 
       <div>
         <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-green-600">
+          <span className="text-[#04AA6D]">
             <span className="text-[#0a6fba]">OXY</span> GROUP
           </span>{" "}
-          <span className="text-[#FFA500]">COMPANIES</span>
+          <span className="text-[#FFA400]">COMPANIES</span>
         </h1>
 
         <div className="event-container1">
@@ -591,7 +596,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
         </div>
 
         {/* Group Section */}
-        <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
+        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
           <h1
             className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
             style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
@@ -630,7 +635,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
               →
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

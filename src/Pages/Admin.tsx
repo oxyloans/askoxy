@@ -26,12 +26,14 @@ interface OfferDetails {
   id: string | null;
   projectType: string;
   askOxyOfers: string;
+  mobileNumber: string;
 }
 
 const Admin: React.FC = () => {
   const [offers, setOffers] = useState<OfferDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [allOffers, setAllOffers] = useState<OfferDetails[]>([]);
 
   // Fetch offers data from the API
   const fetchOffers = async () => {
@@ -41,6 +43,7 @@ const Admin: React.FC = () => {
         "https://meta.oxyloans.com/api/auth-service/auth/usersOfferesDetails"
       );
       setOffers(response.data);
+      setAllOffers(response.data);
       setLoading(false);
     } catch (err: any) {
       setError(err.response?.statusText || "Failed to fetch data");
@@ -53,7 +56,7 @@ const Admin: React.FC = () => {
   }, []);
 
   const handleFilter = (offerType: string) => {
-    const filteredData = offers.filter(
+    const filteredData = allOffers.filter(
       (offer) => offer.askOxyOfers === offerType
     );
     setOffers(filteredData);
@@ -185,6 +188,9 @@ const Admin: React.FC = () => {
                   <th className="border border-gray-300 px-4 py-2">
                     Project Type
                   </th>
+                  <th className="border border-gray-300 px-4 py-2">
+                    Mobile Number
+                  </th>
                   <th className="border border-gray-300 px-4 py-2">Offer</th>
                 </tr>
               </thead>
@@ -199,6 +205,9 @@ const Admin: React.FC = () => {
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {offer.projectType}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {offer.mobileNumber}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {offer.askOxyOfers}

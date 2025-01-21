@@ -268,15 +268,15 @@ const Normal = () => {
   //   })
 
   // },[])
-  useEffect(() => {
-    const islogin = localStorage.getItem("userId");
-    if (questionCount > 3) {
-      if (islogin) {
-      } else {
-        histary("/login");
-      }
-    }
-  }, [questionCount]);
+  // useEffect(() => {
+  //   const islogin = localStorage.getItem("userId");
+  //   if (questionCount > 3) {
+  //     if (islogin) {
+  //     } else {
+  //       histary("/login");
+  //     }
+  //   }
+  // }, [questionCount]);
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -363,7 +363,7 @@ const Normal = () => {
 
     try {
       const response = await axios.post(
-        // `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(queryInput)}`
+       
         apiurl
       );
 
@@ -434,13 +434,19 @@ const Normal = () => {
 
   // Handle click on static chat bubble
   const handleBubbleClick = (content: string) => {
-    console.log("Bubble clicked:", content); // Debugging log
-    setInput(content); // Set input value when a bubble is clicked
-    setShowStaticBubbles(false); // Hide static bubbles after click
-    setShowSendButton(true);
-    // Show send button
-    if (inputRef.current) {
-      inputRef.current.focus(); // Focus the input field
+    if (content.includes("section=")) {
+      navigate(`/normal?${content}`, { replace: true });
+    } else {
+      setInput(content);
+      setShowStaticBubbles(false);
+      setShowSendButton(true);
+      setriceTopicsshow(true);
+      // navigate(`/dashboard?query=${encodeURIComponent(content)}`, {
+      //   replace: true,
+      // });
+      if (inputRef.current) {
+        inputRef.current.focus(); // Focus the input field
+      }
     }
   };
   // const handleBackToChatClick = () => {
@@ -477,28 +483,8 @@ const Normal = () => {
     setChatHistory(savedHistory);
   }, []);
 
-  // Delete history permanently
-  const handleDeleteHistory = (index: number) => {
-    const updatedHistory = chathistory.filter((_, i) => i !== index);
-    setChatHistory(updatedHistory);
 
-    // Update localStorage
-    localStorage.setItem("chathistory", JSON.stringify(updatedHistory));
-  };
 
-  const questions = messages.filter((msg) => msg.type === "question");
-  const answers = messages.filter((msg) => msg.type === "answer");
-
-  const imageData = [
-    {
-      oxyLoans: Image1,
-      link: "https://oxyloans.com/login",
-    },
-    {
-      oxyLoans: Image2,
-      link: "https://erice.in/",
-    },
-  ];
 
   const navigate = useNavigate(); // Initialize navigate function
 
@@ -536,10 +522,10 @@ const truncateText = (
 
         {/* Right Section: Profile and SignOut */}
         <div className="flex flex-col md:flex-row items-center  space-y-2 md:space-y-0 md:space-x-4">
-          {/* <button
+          <button
             onClick={() => {
               if (localStorage.getItem("userId")) {
-                localStorage.removeItem("userId");
+               
                 navigate("/whatapplogin");
               } else {
                 navigate("/whatapplogin");
@@ -547,10 +533,10 @@ const truncateText = (
             }}
             className="text-white bg-[#ffa800] px-4 py-2 rounded-full font-bold"
           >
-            SignOut
-          </button> */}
+            SignIn
+          </button>
 
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             <AuthorInfo
               name={`${profileData?.firstName || ""} ${
                 profileData?.lastName || ""
@@ -560,7 +546,7 @@ const truncateText = (
               icon={<FaUserCircle />}
               number={profileData?.mobileNumber || ""}
             />
-          </div>
+          </div> */}
         </div>
       </header>
 
