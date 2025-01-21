@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { HiOutlineDocument } from "react-icons/hi";
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/WhatsApp Image 2025-01-21 at 17.03.24.png";
+import FR from "../assets/img/WhatsApp Image 2025-01-21 at 19.21.00.jpeg"
 
 import Footer from "./Footer";
 import { message } from "antd";
@@ -100,7 +100,7 @@ const FreeSample: React.FC = () => {
           message: "Warning!",
           description: "You have already participated. Thank you!",
           placement: "top",
-          duration: 2, // Duration before auto-close
+           // Duration before auto-close
           style: {
             width: 300, // Set small width
             fontSize: "14px", // Reduce font size
@@ -227,14 +227,7 @@ const FreeSample: React.FC = () => {
           {/* Buttons on the right */}
           <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 pt-8 lg:px-8">
             {/* Button: I'm Interested */}
-            <button
-              className="px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#04AA6D] transition-all text-sm md:text-base lg:text-lg"
-              onClick={handleSubmit}
-              disabled={isButtonDisabled}
-              aria-label="Visit our site"
-            >
-              I'm Interested
-            </button>
+
             <div>
               {/* Fixed Button: Container Policy */}
               <button
@@ -401,9 +394,9 @@ const FreeSample: React.FC = () => {
         </header>
 
         {/* Details Section */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center mt-10 px-4 space-y-6 lg:space-y-0 lg:space-x-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10 px-4">
           {/* Image Section */}
-          <div className="w-full lg:w-1/2 flex justify-center p-4">
+          <div className="flex justify-center p-4">
             <img
               src={FR}
               alt="Free Sample"
@@ -411,138 +404,52 @@ const FreeSample: React.FC = () => {
             />
           </div>
 
-          {/* Offer Details Section */}
-          <div className="w-full lg:w-1/2 bg-white shadow-md rounded-lg p-5">
-            <h4 className="text-[#2c3e50] font-semibold text-base sm:text-lg lg:text-xl mb-3">
-              Greetings from Radhakrishna Thatavarti, CEO and Founder of
-              AskOxy.ai
-            </h4>
-            <h6 className="text-[#2c3e50] font-semibold sm:text-lg lg:text-xl mb-3">
-              Offer Details
-            </h6>
-            <ul className="list-disc list-inside space-y-3 text-gray-700 text-sm sm:text-base">
-              <li>
-                Purchase any rice bag and receive a{" "}
-                <strong>free steel container</strong> proportional to your
-                purchase:
-              </li>
-              <ul className="list-disc pl-6 space-y-2">
+          {/* Text and Button Section */}
+          <div className="text-center lg:text-left p-4">
+            <p className="text-black mb-4 text-sm sm:text-base lg:text-lg">
+              <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kg
+              rice bag & get a FREE rice container! (Container remains Oxy Group
+              asset until ownership is earned.)
+              <br />
+              <strong>How to Earn Ownership:</strong>
+              <ol className="list-decimal list-inside mt-2">
+                <li>Refer 9 people to ASKOXY.AI.</li>
+                <li>Buy 9 rice bags in 1 year.</li>
+              </ol>
+              <br />
+              <strong>Important Info:</strong>
+              <ul className="list-disc list-inside mt-2">
                 <li>
-                  <strong>1 kg rice bag:</strong> Free{" "}
-                  <strong>1+ kg steel container</strong>
-                </li>
-                <li>
-                  <strong>5 kg rice bag:</strong> Free{" "}
-                  <strong>5+ kg steel container</strong>
-                </li>
-                <li>
-                  <strong>10 kg rice bag:</strong> Free{" "}
-                  <strong>10+ kg steel container</strong>
-                </li>
-                <li>
-                  <strong>26 kg rice bag:</strong> Free{" "}
-                  <strong>26+ kg steel container</strong>
+                  No purchase in 45 days or gap of 45 days between purchases =
+                  Container will be taken back.
                 </li>
               </ul>
-              <li>
-                Additionally, receive a <strong>free 1 kg rice sample</strong>{" "}
-                with your first order.
-              </li>
-            </ul>
-          </div>
-        </div>
+              <br />
+              If you are interested in buying a rice bag, please click the{" "}
+              <strong> I am Interested </strong>button
+            </p>
 
-        {/* Cards Section */}
-        <div className="w-full px-4 mt-10">
-          {/* Cards Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Card 1: Container Policy */}
-            <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
-              <h2 className="text-[#2c3e50] font-semibold text-lg mb-4">
-                Container Policy
-              </h2>
-              <ul className="list-disc list-inside space-y-3 text-gray-700">
-                <li>
-                  Containers are custom-ordered based on demand, and delivery
-                  may take additional time.
-                </li>
-                <li>
-                  The container remains the property of{" "}
-                  <strong>OXY Group</strong> and is provided as a free asset for
-                  your usage, contingent on regular rice purchases from us.
-                </li>
-              </ul>
+            <div className="space-x-4">
+              <button
+                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#039F5B] transition-all text-sm md:text-base lg:text-lg"
+                onClick={handleSubmit}
+                disabled={isButtonDisabled}
+                aria-label="I'm Interested"
+              >
+                I'm Interested
+              </button>
+
+              <button>
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 font-bold bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#039F5B] transition-all text-sm md:text-base lg:text-lg"
+                >
+                  Download App
+                </a>
+              </button>
             </div>
-
-            {/* Card 2: Usage and Recovery Terms */}
-            <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
-              <h2 className="text-[#2c3e50] font-semibold text-lg mb-4">
-                Usage and Recovery Terms
-              </h2>
-              <ul className="list-disc list-inside space-y-3 text-gray-700">
-                <li>
-                  If no purchase is made within <strong>45 days</strong>, you
-                  will receive a notification.
-                </li>
-                <li>
-                  If no purchase is made within <strong>60 days</strong>,{" "}
-                  <strong>OXY Group</strong> reserves the right to recover the
-                  container.
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Download App Section */}
-          <div className="flex flex-col items-center justify-center mt-8 space-y-6 md:flex-row md:space-y-0 md:space-x-6">
-            <h1 className="text-center text-xl font-bold text-gray-800">
-              Buy Rice Online with Our App
-            </h1>
-            <a
-              href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center px-6 py-3 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-full shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 hover:scale-105"
-            >
-              
-              Download Now
-            </a>
-          </div>
-
-          {/* Images Section */}
-          <div className="flex flex-wrap justify-center gap-8 mt-12 px-4">
-            {/* Rice Sample 1kg */}
-            <div className="w-full sm:w-[300px] md:w-[350px] lg:w-[400px] text-center">
-              <img
-                src={ricesample1kgGif}
-                alt="Rice Sample 1kg"
-                className="w-full h-auto object-cover rounded-lg shadow-lg"
-              />
-              <h5 className="text-blue-600 font-semibold mt-4 text-lg">
-                Rice Sample 1kg
-              </h5>
-            </div>
-
-            {/* Rice Bag 26kgs */}
-            <div className="w-full sm:w-[300px] md:w-[350px] lg:w-[400px] text-center">
-              <img
-                src={ricebag26kgsGif}
-                alt="Rice Bag 26kgs"
-                className="w-full h-auto object-cover rounded-lg shadow-lg"
-              />
-              <h5 className="text-blue-600 font-semibold mt-4 text-lg">
-                Rice Bag 26kgs
-              </h5>
-            </div>
-          </div>
-
-          {/* Final Image Section */}
-          <div className="flex justify-center mt-12 px-4">
-            <img
-              src={img6}
-              alt="Promotional Image"
-              className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-4xl h-auto object-contain rounded-lg shadow-lg"
-            />
           </div>
         </div>
       </div>
