@@ -33,11 +33,11 @@ const sidebarItems: SidebarItem[] = [
     icon: <FaUser className="text-purple-500" />,
     link: "/allcampaignsdetails",
   },
-  {
-    title: "FileUpload",
-    icon: <FaCog className="text-yellow-500" />,
-    link: "/fileupload",
-  },
+  // {
+  //   title: "FileUpload",
+  //   icon: <FaCog className="text-yellow-500" />,
+  //   link: "/fileupload",
+  // },
   {
     title: "AllQueries",
     icon: <FaDatabase className="text-yellow-500" />,

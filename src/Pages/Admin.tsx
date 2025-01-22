@@ -2,11 +2,28 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
 
-// DashboardCard component for reusable cards
 interface DashboardCardProps {
   title: string;
   count: number;
   color: string;
+}
+
+interface User {
+  deliveryType: string | null;
+  whatsappNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  transportType: string | null;
+  scriptId: string | null;
+  familyCount: number;
+}
+
+interface OfferDetails {
+  id: string | null;
+  projectType: string;
+  askOxyOfers: string;
+  mobileNumber: string;
 }
 
 const DashboardCard: React.FC<DashboardCardProps> = ({
@@ -22,18 +39,14 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   );
 };
 
-interface OfferDetails {
-  id: string | null;
-  projectType: string;
-  askOxyOfers: string;
-  mobileNumber: string;
-}
-
 const Admin: React.FC = () => {
   const [offers, setOffers] = useState<OfferDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [allOffers, setAllOffers] = useState<OfferDetails[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [combinedData, setCombinedData] = useState<OfferDetails[]>([]);
 
   // Fetch offers data from the API
   const fetchOffers = async () => {
@@ -42,24 +55,89 @@ const Admin: React.FC = () => {
       const response = await axios.get(
         "https://meta.oxyloans.com/api/auth-service/auth/usersOfferesDetails"
       );
-      setOffers(response.data);
-      setAllOffers(response.data);
+      const validUsers = response.data.filter(
+        (offerDetails: OfferDetails) =>
+          offerDetails.mobileNumber !== null && offerDetails.mobileNumber !== ""
+      );
+      setOffers(validUsers);
+      setAllOffers(validUsers);
       setLoading(false);
     } catch (err: any) {
       setError(err.response?.statusText || "Failed to fetch data");
       setLoading(false);
     }
   };
+  const fetchRudrakshaUsers = async () => {
+    try {
+      const response = await axios.get(
+        "https://meta.oxyloans.com/api/auth-service/auth/AllusersAddress"
+      );
+      setUsers(response.data);
+      const validUsers = response.data.filter(
+        (user: User) =>
+          user.deliveryType !== null &&
+          user.deliveryType !== "" &&
+          user.whatsappNumber !== null &&
+          user.whatsappNumber !== ""
+      );
+
+      setFilteredUsers(validUsers);
+    } catch (error) {
+      console.error("Failed to fetch user addresses:", error);
+    }
+  };
 
   useEffect(() => {
     fetchOffers();
+    fetchRudrakshaUsers();
   }, []);
 
+  useEffect(() => {
+    const allData = [
+      ...allOffers,
+      ...filteredUsers.map((user, index) => ({
+        id: user.scriptId || `${index}`,
+        projectType: "ASKOXY",
+        mobileNumber: user.whatsappNumber || "N/A",
+        askOxyOfers: "Free Rudhraksha",
+      })),
+    ];
+    setOffers(allData);
+    setCombinedData(allData);
+  }, [allOffers, filteredUsers]);
+
   const handleFilter = (offerType: string) => {
-    const filteredData = allOffers.filter(
-      (offer) => offer.askOxyOfers === offerType
-    );
-    setOffers(filteredData);
+    if (offerType === "FREERUDRAKSHA") {
+      const freeRudrakshaData = filteredUsers.map((user, index) => ({
+        id: user.scriptId || `${index}`,
+        projectType: "ASKOXY",
+        mobileNumber: user.whatsappNumber || "N/A",
+        askOxyOfers: "Free Rudhraksha",
+      }));
+      setOffers(freeRudrakshaData);
+
+      console.log({ offers });
+    } else if (offerType === "ALL") {
+      const allData = [
+        ...allOffers,
+        ...filteredUsers.map((user, index) => ({
+          id: user.scriptId || `${index}`,
+          projectType: "ASKOXY",
+          mobileNumber: user.whatsappNumber || "N/A",
+          askOxyOfers: "Free Rudhraksha",
+        })),
+      ];
+      setOffers(allData);
+
+      console.log({ offers });
+    } else {
+      const filteredData = allOffers.filter(
+        (offer) => offer.askOxyOfers === offerType
+      );
+      setOffers(filteredData);
+
+      console.log({ offers });
+    }
   };
 
   return (
@@ -75,8 +153,16 @@ const Admin: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 mb-4">
           <DashboardCard
             title="Total Offers"
-            count={offers.length}
+            count={combinedData.length}
             color="blue"
+          />
+          <DashboardCard
+            title="Free Rudraksha"
+            count={
+              offers.filter((offer) => offer.askOxyOfers === "Free Rudhraksha")
+                .length
+            }
+            color="gray"
           />
           <DashboardCard
             title="Free Samples"
@@ -94,14 +180,6 @@ const Admin: React.FC = () => {
             color="teal"
           />
           <DashboardCard
-            title="Legal Service"
-            count={
-              offers.filter((offer) => offer.askOxyOfers === "LEGALSERVICES")
-                .length
-            }
-            color="yellow"
-          />
-          <DashboardCard
             title="Study Abroad"
             count={
               offers.filter((offer) => offer.askOxyOfers === "STUDYABROAD")
@@ -109,6 +187,15 @@ const Admin: React.FC = () => {
             }
             color="indigo"
           />
+          <DashboardCard
+            title="Legal Service"
+            count={
+              offers.filter((offer) => offer.askOxyOfers === "LEGALSERVICES")
+                .length
+            }
+            color="yellow"
+          />
+
           <DashboardCard
             title="My Rotary"
             count={
@@ -133,6 +220,12 @@ const Admin: React.FC = () => {
             className="bg-green-200 hover:bg-blue-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Free Sample
+          </button>
+          <button
+            onClick={() => handleFilter("FREERUDRAKSHA")}
+            className="bg-gray-200 hover:bg-gray-700 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+          >
+            Free Rudhraksha
           </button>
           <button
             onClick={() => handleFilter("FREEAI")}
@@ -165,7 +258,7 @@ const Admin: React.FC = () => {
             We Are Hiring
           </button>
           <button
-            onClick={() => fetchOffers()}
+            onClick={() => handleFilter("ALL")}
             className="bg-gray-500 hover:bg-gray-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Show All

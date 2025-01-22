@@ -70,73 +70,41 @@ const FreeSample: React.FC = () => {
   };
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const handleSubmit = async () => {
-    try {
-      setIsButtonDisabled(true);
-      // API request to submit the form data
-      const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-        formData
-      );
-      console.log("API Response:", response.data);
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-      // Show success notification
-     notification.success({
-       message: "Success!",
-       description: (
-         <div>
-           Thank you for showing interest in our *Free Rice Sample and Steel
-           Container* offer.
-           <a
-             href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-             target="_blank"
-             rel="noopener noreferrer"
-             className="px-6 py-3 font-bold bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#039F5B] transition-all text-sm md:text-base lg:text-lg mt-2 inline-block"
-             aria-label="Download App"
-           >
-             Download App
-           </a>
-         </div>
-       ),
-       placement: "top",
-       style: {
-         width: 300,
-         fontSize: "14px",
-         padding: "10px",
-       },
-     });
+const handleSubmit = async () => {
+  try {
+    setIsButtonDisabled(true);
+    // API request to submit the form data
+    const response = await axios.post(
+      "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+      formData
+    );
+    console.log("API Response:", response.data);
+    localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-    } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        notification.warning({
-          message: "Warning!",
-          description: "You have already participated. Thank you!",
-          placement: "top",
-           // Duration before auto-close
-          style: {
-            width: 300, // Set small width
-            fontSize: "14px", // Reduce font size
-            padding: "10px", // Adjust padding
-          },
-        });
-      } else {
-        console.error("API Error:", error);
-        notification.error({
-          message: "Error!",
-          description: "Failed to submit your interest. Please try again.",
-          duration: 2,
-          placement: "top",
-          style: {
-            width: 300, // Set small width
-            fontSize: "14px", // Reduce font size
-            padding: "10px", // Adjust padding
-          }, // The notification will close after 2 seconds
-        });
-      }
-      setIsButtonDisabled(false);
+    // Display success message in the UI (you can implement this based on your UI library)
+    message.success(
+      "Thank you for showing interest in our *Free Rice Sample and Steel Container* offer!"
+    );
+
+    // Redirect to the link after the success message
+    setTimeout(() => {
+      window.open(
+        "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer",
+        "_blank"
+      );
+    }, 1000); // Set a 1-second delay before redirecting
+  } catch (error: any) {
+    if (error.response.status === 500 || error.response.status === 400) {
+      // Handle duplicate participation error
+      message.warning("You have already participated. Thank you!");
+    } else {
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
     }
-  };
+    setIsButtonDisabled(false);
+  }
+};
+
 
   const email = localStorage.getItem("email");
 

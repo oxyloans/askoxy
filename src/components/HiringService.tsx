@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Input, Button, Typography, notification } from "antd";
+import { Modal, Input, Button, Typography, notification, message } from "antd";
 import axios from "axios";
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -64,60 +64,32 @@ const HiringService: React.FC = () => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
-  const handleSubmit = async () => {
-    try {
-      setIsButtonDisabled(true);
-      // API request to submit the form data
-      const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-        formData
-      );
-      console.log("API Response:", response.data);
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-      // Show success notification
-      notification.success({
-        message: "Success!",
-       description: "Thank you for your interest in our *We Are Hiring* offer. We're excited to explore potential opportunities with you!",
+ const handleSubmit = async () => {
+   try {
+     setIsButtonDisabled(true);
+     // API request to submit the form data
+     const response = await axios.post(
+       "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+       formData
+     );
+     console.log("API Response:", response.data);
+     localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-        placement: "top", // Center the success notification
-        duration: 2,
-        style: {
-          width: 300, // Set small width
-          fontSize: "14px", // Reduce font size
-          padding: "10px", // Adjust padding
-        },
-      });
-    } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        notification.warning({
-          message: "Warning!",
-          description: "You have already participated. Thank you!",
-          placement: "top",
-          duration: 2, // Duration before auto-close
-          style: {
-            width: 300, // Set small width
-            fontSize: "14px", // Reduce font size
-            padding: "10px", // Adjust padding
-          },
-        });
-      } else {
-        console.error("API Error:", error);
-        notification.error({
-          message: "Error!",
-          description: "Failed to submit your interest. Please try again.",
-          duration: 2,
-          placement: "top",
-          style: {
-            width: 300, // Set small width
-            fontSize: "14px", // Reduce font size
-            padding: "10px", // Adjust padding
-          },
-        });
-      }
-      setIsButtonDisabled(false);
-    }
-  };
+     // Display success message in the UI (you can implement this based on your UI library)
+     message.success(
+       "Thank you for showing interest in our *We Are Hiring* offer!"
+     );
+   } catch (error: any) {
+     if (error.response.status === 500 || error.response.status === 400) {
+       // Handle duplicate participation error
+       message.warning("You have already participated. Thank you!");
+     } else {
+       console.error("API Error:", error);
+       message.error("Failed to submit your interest. Please try again.");
+     }
+     setIsButtonDisabled(false);
+   }
+ };
 
   const email = localStorage.getItem("email");
 

@@ -95,46 +95,18 @@ const StudyAbroad: React.FC = () => {
       );
       console.log("API Response:", response.data);
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-      // Show success notification
-      notification.success({
-        message: "Success!",
-       description: `Thank you for expressing interest in our *Study Abroad* offer. We're excited to help you explore new opportunities!`,
 
-        placement: "top", // Center the success notification
-        duration: 2,
-        style: {
-          width: 300, // Set small width
-          fontSize: "14px", // Reduce font size
-          padding: "10px", // Adjust padding
-        }, // Duration in seconds
-      });
+      // Display success message in the UI (you can implement this based on your UI library)
+      message.success(
+        "Thank you for showing interest in our *Study Abroad* offer!"
+      );
     } catch (error: any) {
       if (error.response.status === 500 || error.response.status === 400) {
         // Handle duplicate participation error
-        notification.warning({
-          message: "Warning!",
-          description: "You have already participated. Thank you!",
-          placement: "top",
-          duration: 2, // Duration before auto-close
-          style: {
-            width: 300, // Set small width
-            fontSize: "14px", // Reduce font size
-            padding: "10px", // Adjust padding
-          },
-        });
+        message.warning("You have already participated. Thank you!");
       } else {
         console.error("API Error:", error);
-        notification.error({
-          message: "Error!",
-          description: "Failed to submit your interest. Please try again.",
-          duration: 2,
-          placement: "top",
-          style: {
-            width: 300, // Set small width
-            fontSize: "14px", // Reduce font size
-            padding: "10px", // Adjust padding
-          }, // The notification will close after 2 seconds
-        });
+        message.error("Failed to submit your interest. Please try again.");
       }
       setIsButtonDisabled(false);
     }
