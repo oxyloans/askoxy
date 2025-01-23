@@ -60,6 +60,9 @@ import ApplicationSupport from "./components/GPT/AppliocationSupport";
 import AcceptanceLetter from "./components/GPT/AcceptanceLetter";
 import AllQueries from "./Pages/AllQueries";
 import TicketHistory from "./components/TicketHistory";
+import ThankYouPage from "./components/ThankYouPage";
+import RiceSalePage from "./components/Communities";
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -97,6 +100,7 @@ const App: React.FC = () => {
           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
           {/* <Route path="/rudraksha" element={<RudrakshaSteps />} /> */}
           <Route path="/freerudraksha" Component={Freerudraksha} />
+          <Route path="/thank-you" Component={ThankYouPage} />
           <Route path="/userqueries" Component={AllQueries} />
           <Route path="/freesample&steelcontainer" element={<FreeSample />} />
           <Route path="/freeaiandgenai" element={<FreeAiandGenAi />} />
@@ -114,6 +118,7 @@ const App: React.FC = () => {
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
           />
+          <Route path="/communities/poojitha" element={<RiceSalePage />} />  
           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
           {/* Redirect to add a trailing slash if missing */}
           <Route

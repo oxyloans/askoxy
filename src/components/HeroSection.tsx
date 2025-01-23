@@ -55,7 +55,6 @@ interface ImageData {
   alt: string;
   text: string;
   link: string;
-  
 }
 
 // Images and their metadata with page links
@@ -379,15 +378,14 @@ const HeroSection: React.FC = () => {
   const closeModal = () => {
     setShowModal(false);
   };
-      const [showContainer, setShowContainer] = useState(false);
-  
-      const handleButtonClick = () => {
-          window.open(
-            "https://drive.google.com/file/d/1x_0b6DIt5-rbq1fubeHcIMO5Grxr46p1/view",
-            "_blank"
-          ); // Set state to show the container when the button is clicked
-      };
-  
+  const [showContainer, setShowContainer] = useState(false);
+
+  const handleButtonClick = () => {
+    window.open(
+      "https://drive.google.com/file/d/1x_0b6DIt5-rbq1fubeHcIMO5Grxr46p1/view",
+      "_blank"
+    ); // Set state to show the container when the button is clicked
+  };
 
   const handleLoginClick = () => {
     closeModal();
@@ -399,7 +397,7 @@ const HeroSection: React.FC = () => {
   const imageGroup2 = repeatAndShuffleImages(images, 20);
   const imageGroup3 = repeatAndShuffleImages(images, 20);
 
-   const userId = localStorage.getItem("userId");
+  const userId = localStorage.getItem("userId");
   const handleSearch = () => {
     if (userId) {
       // If user is signed in, redirect to dashboard
@@ -449,8 +447,7 @@ const HeroSection: React.FC = () => {
                   className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full "
                   onClick={handleSearch}
                 >
-                  <span className="search-icon icons">&#128269;</span>{" "}
-                  {/* Placeholder for Search Icon */}
+                  <FaSearch />
                 </button>
               </div>
             </div>

@@ -84,6 +84,7 @@ const Normal = () => {
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [profiledata, setprofiledata] = useState({});
+  const scrollableRef = useRef<HTMLDivElement | null>(null);
 
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
@@ -490,7 +491,7 @@ const Normal = () => {
 
   // Function to handle the click event
   const handleRedirect = () => {
-    navigate("/"); // Redirect to the login page
+    navigate("/normal"); // Redirect to the login page
   };
 
   
@@ -510,10 +511,10 @@ const truncateText = (
   return (
     <div className="max-h-screen  fixed bg-[#351664] text-white overflow-y-auto  w-full flex flex-col">
       {/* Header */}
-      <header className="flex flex-col md:flex-row items-center justify-between p-4 bg-[#351664] border-b-2 border-white">
+      <header className="flex md:flex-row items-center justify-between gap-1 p-4 bg-[#351664] border-b-4 border-white">
         {/* Logo with Icon */}
         <button
-          className="flex items-center text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none mb-2 md:mb-0"
+          className="flex items-center text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none mb-4 md:mb-0"
           onClick={handleRedirect}
         >
           <span className="text-white">ASKOXY</span>
@@ -521,51 +522,47 @@ const truncateText = (
         </button>
 
         {/* Right Section: Profile and SignOut */}
-        <div className="flex flex-col md:flex-row items-center  space-y-2 md:space-y-0 md:space-x-4">
+        <div className="flex items-center  gap-1 bg-transparent border-none cursor-pointer focus:outline-none mb-4 md:mb-0">
+     
+        
+
+          {/* SignOut Button */}
           <button
             onClick={() => {
-              if (localStorage.getItem("userId")) {
-               
-                navigate("/whatapplogin");
-              } else {
-                navigate("/whatapplogin");
-              }
+             
+             
+              navigate("/whatapplogin");
             }}
-            className="text-white bg-[#ffa800] px-4 py-2 rounded-full font-bold"
+            // bg-[#04AA6D]
+            className="flex items-center 
+           
+            text-black bg-white   px-4 py-2 rounded-full font-bold"
           >
+            
             SignIn
           </button>
 
-          {/* <div className="flex items-center space-x-2">
-            <AuthorInfo
-              name={`${profileData?.firstName || ""} ${
-                profileData?.lastName || ""
-              }`.trim()}
-              location={profileData?.city || ""}
-              email={profileData?.email || ""}
-              icon={<FaUserCircle />}
-              number={profileData?.mobileNumber || ""}
-            />
-          </div> */}
+         
+
+         
         </div>
       </header>
 
       {/* <ModalComponent /> */}
-      <main className="flex  flex-col flex-grow w-full overflow-y-auto p-3 md:flex-row">
+      <main className="flex hidden md:block flex-col flex-grow w-full overflow-y-auto p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
         <div className="flex flex-col  flex-grow bg-white rounded-lg shadow-md lg:flex-row">
           {/* Left Panel */}
           {/* {showLeftPanel && ( */}
-          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col overflow-y-auto">
-            <div className="flex items-center justify-between font-bold ">
+          <aside className=" w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col overflow-y-auto">
+            <div className="flex items-center  justify-between font-bold">
+              {/* Edit Button */}
               <button
                 onClick={() => handleEditClick()}
-                className=" rounded-md"
+                className="rounded-md"
                 title="Edit"
               >
                 <div className="hover:bg-gray-200 p-2 rounded-full">
-                  {" "}
-                  {/* Add background color here */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -582,17 +579,17 @@ const truncateText = (
                   </svg>
                 </div>
               </button>
-              <span className="flex-1 text-center text-[#351664] ">
-                History
-              </span>{" "}
+
+              {/* History Title */}
+              <span className="flex-1 text-center text-[#351664]">History</span>
+
+              {/* New Chat Button */}
               <button
                 onClick={handleNewChatClick}
-                className=" rounded-md"
+                className="rounded-md"
                 title="New Chat"
               >
                 <div className="hover:bg-gray-200 p-2 rounded-full">
-                  {" "}
-                  {/* Add background color here */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -610,13 +607,16 @@ const truncateText = (
                 </div>
               </button>
             </div>
+
+            {/* Editing Mode Indicator */}
             {isEditing && (
               <p className="text-sm text-[#351664] mb-4 text-center">
                 Editing mode enabled...
               </p>
             )}
 
-            <div className="mt-4 h-80 border-t border-gray-300 pt-2 ">
+            {/* Chat History */}
+            <div className="mt-4 hidden md:block h-80 border-t border-gray-300 pt-2">
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
                   No history available.
@@ -626,13 +626,12 @@ const truncateText = (
                   <div
                     key={index}
                     className="flex items-center justify-between p-2 mb-4 bg-gray-200 rounded cursor-pointer"
-                    onClick={() => handleHistoryItemClick(item.userQuations)} // Update input with selected history item
+                    onClick={() => handleHistoryItemClick(item.userQuations)}
                   >
                     <Link
                       className="text-sm text-gray-800"
                       to={`?${encodeURIComponent(item.userQuations)}`}
                     >
-                      {/* Display a truncated version if necessary */}
                       {truncateText(item.userQuations, 25)}
                     </Link>
                   </div>
@@ -644,23 +643,42 @@ const truncateText = (
           {/* }) */}
 
           {/* Center Panel */}
-          <section className="relative  overflow-y-auto  flex flex-col flex-grow w-full    p-6 md:w-1/2 bg-gray-50">
+          <section
+            ref={scrollableRef}
+            className="relative overflow-y-auto rounded-r-lg  rounded-l-lg flex flex-col flex-grow w-full  p-6 md:w-1/2 bg-gray-50"
+          >
             <>
               {/* Static Rice Related Text */}
-              <h2
-                className="fw-500"
-                style={{ zIndex: "10", color: "black", fontWeight: "700" }}
-              >
-                Welcome{" "}
-                {profileData
-                  ? `    ${profileData.firstName} ${profileData.lastName}`
-                  : "Guest"}
-              </h2>
+              {
+                <div className="flex items-center justify-between p-2">
+                  {/* Left side: Welcome Text */}
+                  <h2
+                    className="fw-500"
+                    style={{
+                      zIndex: "10",
+                      color: "black",
+                      fontWeight: "700",
+                    }}
+                  >
+                    Welcome{" "}
+                    {profileData
+                      ? `    ${profileData.firstName} ${profileData.lastName}`
+                      : "Guest"}
+                  </h2>
+
+                  {/* <button
+                        className="bg-[#04AA6D] text-white px-4 py-2 rounded-full font-bold"
+                        
+                      >
+                        Multi Chain ID
+                      </button> */}
+                </div>
+              }
 
               {showStaticBubbles && (
                 <>
                   <div className="absolute inset-0 flex items-center justify-center p-2">
-                    <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-60">
+                    <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-70">
                       {" "}
                       {/* Add max-height and overflow */}
                       {riceTopicsshow && (
@@ -767,13 +785,13 @@ const truncateText = (
                   value={input}
                   onChange={handleInputChangeWithVisibility}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask questions..."
-                  className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black"
+                  placeholder="Ask question..."
+                  className="flex-grow p-2 rounded-full shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-black text-sm md:text-base"
                 />
                 {showSendButton && (
                   <button
                     onClick={() => handleSend(input)}
-                    className={`ml-2 bg-[#ffa800] text-white px-4 py-2 rounded-full shadow-md ${
+                    className={`ml-2 bg-[#ffa800] text-white px-3 py-1 md:px-4 md:py-2 rounded-full shadow-md ${
                       isLoading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                     disabled={isLoading}

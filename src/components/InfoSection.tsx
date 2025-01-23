@@ -210,7 +210,7 @@ const InfoSection: React.FC = () => {
                 }}
               />
               <button
-                className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full hover:bg-blue-600"
+                className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full "
                 onClick={handleSearch}  
               >
                 <FaSearch />

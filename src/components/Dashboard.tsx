@@ -4,6 +4,7 @@ import Image2 from "../assets/img/AD2.jpg";
 import ReactMarkdown from "react-markdown";
 import axios from "axios";
 import HiringService from "./HiringService";
+
 import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import B1 from "../assets/img/B1.jpg";
@@ -20,6 +21,8 @@ import Pushpa2GPT from "./Pushpa2GPT";
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import { error } from "console";
 import ChatHistory from "./ChatHistory";
+import { FaSignOutAlt } from "react-icons/fa";
+
 import Example from "./Example";
 import AuthorInfo from "./AuthorInfo";
 import ModalComponent from "./ModalComponent";
@@ -197,27 +200,33 @@ const Dasboard = () => {
     // }
   }, [location.search, isMobile]);
 
-  const handleFreerudrakshaClick = () => {
-    navigate("/dashboard?section=freerudraksha", { replace: true });
+const handleFreerudrakshaClick = () => {
+  navigate("/dashboard?section=freerudraksha", { replace: true });
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
+  // Force a reflow and then scroll
+  setTimeout(() => {
     if (isMobile) {
       componentRef.current?.scrollIntoView({ behavior: "smooth" });
     } else {
       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
+  }, 50); // 50ms delay to ensure DOM updates first
+};
+
   const handletickethistory = () => {
     navigate("/dashboard?section=tickethistory", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
+  setTimeout(() => {
     if (isMobile) {
       componentRef.current?.scrollIntoView({ behavior: "smooth" });
     } else {
       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }, 50);
   };
 
   const handleStudyAbroadClick = () => {
@@ -225,11 +234,13 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+   setTimeout(() => {
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
+   }, 50);
   };
 
   const handleFreeSampleClick = () => {
@@ -237,11 +248,13 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setTimeout(() => {
+      if (isMobile) {
+        componentRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 50);
   };
 
   const handleFreeAiandGenAiClick = () => {
@@ -249,53 +262,63 @@ const Dasboard = () => {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setTimeout(() => {
+      if (isMobile) {
+        componentRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 50);
   };
 
   const handleMachinesandManufacturingClick = () => {
     navigate("/dashboard?section=machines-manufacturing", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setTimeout(() => {
+      if (isMobile) {
+        componentRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 50);
   };
   const handledWeAreHiring = () => {
     navigate("/dashboard?section=we-are-hiring", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setTimeout(() => {
+      if (isMobile) {
+        componentRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 50);
   };
 
   const handleMyRotaryClick = () => {
     navigate("/dashboard?section=my-rotary", { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+   setTimeout(() => {
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
+   }, 50);
   };
 
   const handledLegalServiceClick = () => {
     navigate("/dashboard?section=legal-service", { replace: true });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (isMobile) {
-      componentRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }
+   setTimeout(() => {
+     if (isMobile) {
+       componentRef.current?.scrollIntoView({ behavior: "smooth" });
+     } else {
+       scrollableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+     }
+   }, 50);
   };
 
   useEffect(() => {
@@ -614,7 +637,7 @@ const Dasboard = () => {
 
   // Function to handle the click event
   const handleRedirect = () => {
-    navigate("/"); // Redirect to the login page
+    navigate("/dashboard"); // Redirect to the login page
   };
 
   const truncateText = (
@@ -629,16 +652,20 @@ const Dasboard = () => {
     }
     return text.slice(0, length) + "..."; // Truncate text and add ellipsis
   };
+  const [isHistoryVisible, setIsHistoryVisible] = useState(false); // State to control history visibility
 
+  const handleHistoryButtonClick = () => {
+    setIsHistoryVisible(!isHistoryVisible); // Toggle the drawer visibility
+  };
   
 
   return (
     <div className="max-h-screen  fixed bg-[#351664] text-white overflow-y-auto  w-full flex flex-col">
       {/* Header */}
-      <header className="hidden flex flex-col md:flex-row items-center justify-between p-4 bg-[#351664] border-b-2 border-white">
+      <header className="flex md:flex-row items-center justify-between gap-1 p-4 bg-[#351664] border-b-4 border-white">
         {/* Logo with Icon */}
         <button
-          className="flex items-center text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none mb-2 md:mb-0"
+          className="flex items-center text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none mb-4 md:mb-0"
           onClick={handleRedirect}
         >
           <span className="text-white">ASKOXY</span>
@@ -646,8 +673,8 @@ const Dasboard = () => {
         </button>
 
         {/* Right Section: Profile and SignOut */}
-        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2">
-          {/* Hidden on mobile */}
+        <div className="flex items-center  gap-1 bg-transparent border-none cursor-pointer focus:outline-none mb-4 md:mb-0">
+          {/* Ticket History Button - Hidden on Mobile */}
           <button
             onClick={handletickethistory}
             className="text-white bg-[#04AA6D] px-4 py-2 rounded-full font-bold md:block hidden"
@@ -655,6 +682,7 @@ const Dasboard = () => {
             Ticket History
           </button>
 
+          {/* SignOut Button */}
           <button
             onClick={() => {
               if (
@@ -663,95 +691,73 @@ const Dasboard = () => {
               ) {
                 localStorage.removeItem("userId");
                 localStorage.removeItem("email");
-                navigate("/");
-              } else {
-                navigate("/");
               }
+              // Assuming navigate is a hook or function to navigate to different pages
+              navigate("/");
             }}
-            className="text-white bg-[#ffa800] px-4 py-2 rounded-full font-bold"
+            // bg-[#04AA6D]
+            className="flex items-center 
+           
+            text-black bg-white  px-4 py-2 rounded-full font-bold"
           >
+            <FaSignOutAlt className="mr-2" /> {/* Icon with margin-right */}
             SignOut
           </button>
 
-          {/* Profile Info Section (AuthorInfo) */}
-          <div className="flex flex-wrap items-center gap-2 sm:space-x-2">
+          <div className="flex  items-center gap-1 sm:space-x-2">
             <AuthorInfo
               name={`${profileData?.firstName || ""} ${
                 profileData?.lastName || ""
-              }`.trim()}
+              }`}
               location={profileData?.city || ""}
               email={profileData?.email || ""}
               icon={<FaUserCircle />}
               number={profileData?.mobileNumber || ""}
             />
           </div>
+
+          {/* Profile Info Section */}
         </div>
       </header>
 
       {/* <ModalComponent /> */}
       <main className="flex  flex-col flex-grow w-full overflow-y-auto p-3 md:flex-row">
         {/* Combined Left, Center, and Right Panel */}
-        <div className="flex flex-col  flex-grow bg-white rounded-lg shadow-md lg:flex-row">
+        <div className="flex flex-col bg-white flex-grow gap-1 rounded-lg shadow-md lg:flex-row">
           {/* Left Panel */}
           {/* {showLeftPanel && ( */}
-          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg md:w-1/6 flex flex-col overflow-y-auto">
+          <aside className="w-full p-3 text-black bg-gray-100 rounded-l-lg  rounded-r-lg md:w-1/6 flex flex-col overflow-y-auto">
             <div className="flex items-center justify-between font-bold ">
               <button
-                onClick={() => handleEditClick()}
-                className=" rounded-md"
-                title="Edit"
+                onClick={handleHistoryButtonClick}
+                className="rounded-md"
+                title={isHistoryVisible ? "Back to Services" : "Chat History"}
               >
-                <div className="hover:bg-gray-200 p-2 rounded-full">
-                  {" "}
-                  {/* Add background color here */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-[#351664]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
-                    />
-                  </svg>
+                <div className="hover:bg-gray-200 p-1 text-[#3c1973] rounded-lg">
+                  {isHistoryVisible ? "Services" : "History"}
                 </div>
-              </button>{" "}
+              </button>
               <button
                 onClick={handleNewChatClick}
                 className=" rounded-md"
                 title="New Chat"
               >
-                <div className="hover:bg-gray-200 p-2 rounded-full">
+                <div className="hover:bg-gray-200 text-[#3c1973] p-1  rounded-lg">
                   {" "}
                   {/* Add background color here */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-[#351664]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
+                  Free ChatGPT
                 </div>
               </button>
             </div>
-            {isEditing && (
+            {/* {isEditing && (
               <p className="text-sm text-[#351664] mb-4 text-center">
                 Editing mode enabled...
               </p>
-            )}
-            <div className="mt-4 border-t border-gray-300 ">
-              {/* <div className="mt-2 flex justify-center items-center">
+            )} */}
+
+            {!isHistoryVisible && (
+              <div className="mt-4 border-t border-gray-300 ">
+                {/* <div className="mt-2 flex justify-center items-center">
                 <button
                   onClick={handletickethistory}
                   className="px-4 py-2 text-black bg-[#04AA6D] text-center rounded-md cursor-pointer flex items-center justify-center"
@@ -762,138 +768,143 @@ const Dasboard = () => {
                 </button>
               </div> */}
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleFreerudrakshaClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR} // Replace with the actual image path
-                    alt="Free Rudraksha"
-                    className="w-7 h-7 mr-2 rounded-full" // Adjust image size and margin
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Free Rudraksha
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handleFreerudrakshaClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR} // Replace with the actual image path
+                      alt="Free Rudraksha"
+                      className="w-7 h-7 mr-2 rounded-full" // Adjust image size and margin
+                    />
+                    <span className="text-[#3c1973] text-sm">
+                      Free Rudraksha
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleFreeAiandGenAiClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR3} // Replace with the actual image path
-                    alt="FreeAI & GenAI"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Free AI & GenAI Training
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handleFreeAiandGenAiClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR3} // Replace with the actual image path
+                      alt="FreeAI & GenAI"
+                      className="w-7 h-7 mr-2 rounded-full"
+                    />
+                    <span className="text-[#3c1973] text-sm leading-tight">
+                      Free AI & GenAI Training
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleFreeSampleClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR2} // Replace with the actual image path
-                    alt="Free Rice Samples"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Free Rice Samples & Steel Container
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handleFreeSampleClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR2} // Replace with the actual image path
+                      alt="Free Rice Samples"
+                      className="w-7 h-7 mr-2 rounded-full"
+                    />
+                    <span className="text-[#3c1973] text-sm leading-tight">
+                      Free Rice Samples & Steel Container
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleStudyAbroadClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR1} // Replace with the actual image path
-                    alt="Study Abroad"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Study Abroad
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handleStudyAbroadClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR1} // Replace with the actual image path
+                      alt="Study Abroad"
+                      className="w-7 h-7 mr-2 rounded-full"
+                    />
+                    <span className="text-[#3c1973] text-sm leading-tight">
+                      Study Abroad
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handledLegalServiceClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR5} // Replace with the actual image path
-                    alt="Legail Service"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className="text-[#3c1973] text-sm leading-tight">
-                    Legal Service
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handledLegalServiceClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR5} // Replace with the actual image path
+                      alt="Legail Service"
+                      className="w-7 h-7 mr-2 rounded-full"
+                    />
+                    <span className="text-[#3c1973] text-sm leading-tight">
+                      Legal Service
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleMyRotaryClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR3} // Replace with the actual image path
-                    alt="My Rotary"
-                    className="w-7 h-7 mr-2 rounded-full"
-                  />
-                  <span className=" text-[#3c1973] text-sm leading-tight">
-                    My Rotary
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handleMyRotaryClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR3} // Replace with the actual image path
+                      alt="My Rotary"
+                      className="w-7 h-7 mr-2 rounded-full"
+                    />
+                    <span className=" text-[#3c1973] text-sm leading-tight">
+                      My Rotary
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handleMachinesandManufacturingClick}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR4} // Replace with the actual image path
-                    alt="Machines and Manufacturing Services"
-                    className="w-7 h-7 rounded-full"
-                  />
-                  <span className=" text-[#3c1973] ml-2 text-sm leading-tight">
-                    Machines & Manufacturing Services
-                  </span>
-                </button>
-              </div>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handleMachinesandManufacturingClick}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR4} // Replace with the actual image path
+                      alt="Machines and Manufacturing Services"
+                      className="w-7 h-7 rounded-full"
+                    />
+                    <span className=" text-[#3c1973] ml-2 text-sm leading-tight">
+                      Machines & Manufacturing Services
+                    </span>
+                  </button>
+                </div>
 
-              <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
-                <button
-                  onClick={handledWeAreHiring}
-                  className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
-                >
-                  <img
-                    src={FR6} // Replace with the actual image path
-                    alt="We Are Hiring"
-                    className="w-7 h-7 rounded-full"
-                  />
-                  <span className=" text-[#3c1973] text-sm ml-2 leading-tight">
-                    We Are Hiring
-                  </span>
-                </button>
+                <div className="mt-4 flex hover:bg-gray-200 hover:rounded-lg items-center">
+                  <button
+                    onClick={handledWeAreHiring}
+                    className="px-1 py-1 text-black rounded-md cursor-pointer flex items-center"
+                  >
+                    <img
+                      src={FR6} // Replace with the actual image path
+                      alt="We Are Hiring"
+                      className="w-7 h-7 rounded-full"
+                    />
+                    <span className=" text-[#3c1973] text-sm ml-2 leading-tight">
+                      We Are Hiring
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="mt-2 h-80 border-gray-300 pt-   hidden md:block">
+            <div
+              className={`mt-2 h-80 border-gray-300 pt-2 transition-all duration-300 ${
+                isHistoryVisible ? "block" : "hidden"
+              }`}
+            >
               <div className="flex mt-3 mb-2 ml-2 text-[#3c1973] text-md">
-                History
+                Previous History
               </div>
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
@@ -921,7 +932,7 @@ const Dasboard = () => {
           {/* Center Panel */}
           <section
             ref={scrollableRef}
-            className="relative  overflow-y-auto  flex flex-col flex-grow w-full    p-6 md:w-1/2 bg-gray-50"
+            className="relative overflow-y-auto rounded-r-lg  rounded-l-lg flex flex-col flex-grow w-full  p-6 md:w-1/2 bg-gray-50"
           >
             {showFreerudraksha && (
               <div ref={componentRef}>
@@ -996,15 +1007,12 @@ const Dasboard = () => {
                           : "Guest"}
                       </h2>
 
-                      
                       {/* <button
                         className="bg-[#04AA6D] text-white px-4 py-2 rounded-full font-bold"
                         
                       >
                         Multi Chain ID
                       </button> */}
-
-                    
                     </div>
                   }
 

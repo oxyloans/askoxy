@@ -6,11 +6,12 @@ import { BiLogoPlayStore } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { HiOutlineDocument } from "react-icons/hi";
+
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/WhatsApp Image 2025-01-21 at 19.21.00.png"
+import FR from "../assets/img/WhatsApp Image 2025-01-23 at 15.50.44.png"
 
 import Footer from "./Footer";
-import { message } from "antd";
+import { message, Modal } from "antd";
 
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -60,6 +61,7 @@ const FreeSample: React.FC = () => {
     mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
+   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,18 +83,8 @@ const handleSubmit = async () => {
     console.log("API Response:", response.data);
     localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-    // Display success message in the UI (you can implement this based on your UI library)
-    message.success(
-      "Thank you for showing interest in our *Free Rice Sample and Steel Container* offer!"
-    );
-
-    // Redirect to the link after the success message
-    setTimeout(() => {
-      window.open(
-        "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer",
-        "_blank"
-      );
-    }, 1000); // Set a 1-second delay before redirecting
+    // Redirect to the thank-you page
+    navigate("/thank-you");
   } catch (error: any) {
     if (error.response.status === 500 || error.response.status === 400) {
       // Handle duplicate participation error
@@ -104,6 +96,7 @@ const handleSubmit = async () => {
     setIsButtonDisabled(false);
   }
 };
+
 
 
   const email = localStorage.getItem("email");
@@ -198,15 +191,8 @@ const handleSubmit = async () => {
     <div>
       <div>
         <header>
-          <div className="flex flex-col items-center justify-center md:flex-row  px-4 md:px-6 lg:px-8">
-            {/* Title */}
-            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
-              Free Rice Samples & Steel Container
-            </h3>
-          </div>
-
           {/* Buttons on the right */}
-          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 pt-8 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6    lg:px-8">
             {/* Button: I'm Interested */}
 
             {/* <div>
@@ -372,10 +358,16 @@ const handleSubmit = async () => {
               </div>
             )}
           </div>
+          <div className="flex flex-col items-center justify-center md:flex-row  pt-4 md:px-6 lg:px-8">
+            {/* Title */}
+            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
+              Free Rice Samples & Steel Container
+            </h3>
+          </div>
         </header>
 
         {/* Details Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2 px-4">
           {/* Image Section */}
           <div className="flex justify-center p-4">
             <img
@@ -386,20 +378,27 @@ const handleSubmit = async () => {
           </div>
 
           {/* Text and Button Section */}
-          <div className="text-center lg:text-left p-4">
+          <div className="text-center lg:text-left p-4 ">
             <p className="text-black mb-4 text-sm sm:text-base lg:text-lg">
               <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kg
               rice bag & get a FREE rice container! (Container remains Oxy Group
               asset until ownership is earned.)
               <br />
               <strong>How to Earn Ownership:</strong>
-              <ol className="list-decimal list-inside mt-2">
-                <li>Refer 9 people to ASKOXY.AI.</li>
-                <li>Buy 9 rice bags in 1 year.</li>
-              </ol>
+              <div className="mt-2">
+                <p>
+                  <strong>Plan A:</strong> Buy 9 bags during the next 1 year,
+                  and the container is yours forever.
+                </p>
+                <p className="my-2 text-center font-bold">OR</p>
+                <p>
+                  <strong>Plan B:</strong> Refer 9 people, and when they buy
+                  their first bag, the container is yours forever.
+                </p>
+              </div>
               <br />
               <strong>Important Info:</strong>
-              <ul className="list-disc list-inside mt-2">
+              <ul className="list-disc list-inside ">
                 <li>
                   No purchase in 45 days or gap of 45 days between purchases =
                   Container will be taken back.
@@ -412,16 +411,16 @@ const handleSubmit = async () => {
 
             <div className="space-x-4">
               <button
-                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#039F5B] transition-all text-sm md:text-base lg:text-lg"
+                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg  transition-all text-sm md:text-base lg:text-lg"
                 onClick={handleSubmit}
                 disabled={isButtonDisabled}
                 aria-label="I'm Interested"
               >
                 I'm Interested
               </button>
-
-             
             </div>
+
+            
           </div>
         </div>
       </div>
