@@ -101,6 +101,31 @@ const RiceSalePage: React.FC = () => {
             <br />
             <span className="font-bold">Timing:</span> 9am to 7pm
           </p>
+          <div className="mb-6 md:mb-0 text-center md:text-left p-4">
+            <p className="text-lg font-semibold mb-4">
+              Download our app to place the order and collect at the stall:
+            </p>
+            <div className="flex justify-center md:justify-start gap-4">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+                className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg shadow hover:bg-green-700"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaGooglePlay className="mr-2" />
+                Buy Rice From PlayStore
+              </a>
+              <a
+                href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaApple className="mr-2" />
+                Buy Rice From AppStore
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -134,31 +159,6 @@ const RiceSalePage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-purple-900 text-white py-8 mt-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-6 md:mb-0 text-center md:text-left p-4">
-            <p className="text-lg font-semibold mb-4">
-              Download our app to place the order and collect at the stall:
-            </p>
-            <div className="flex justify-center md:justify-start gap-4">
-              <a
-                href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-                className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg shadow hover:bg-green-700"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FaGooglePlay className="mr-2" />
-                Buy Rice From PlayStore
-              </a>
-              <a
-                href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
-                className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FaApple className="mr-2" />
-                Buy Rice From AppStore
-              </a>
-            </div>
-          </div>
           <div>
             <p className="text-lg font-semibold mb-2 pl-5">Our Platforms:</p>
             <ul className="space-y-1 text-center md:text-left flex justify-center gap-6">
