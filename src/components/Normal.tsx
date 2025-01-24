@@ -2,6 +2,10 @@ import React, { useEffect, useState, useRef } from "react";
 import Image1 from "../assets/img/AD1 (1).jpg";
 import Image2 from "../assets/img/AD2.jpg";
 import ReactMarkdown from "react-markdown";
+import { FaRegEdit } from "react-icons/fa";
+import { MdMenu } from "react-icons/md";
+
+
 import axios from "axios";
 import "./erice.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -85,7 +89,7 @@ const Normal = () => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [profiledata, setprofiledata] = useState({});
   const scrollableRef = useRef<HTMLDivElement | null>(null);
-
+ const [showModal, setShowModal] = useState(false);
   // New State for History
   const [history, setHistory] = useState<string[]>([]);
 
@@ -94,10 +98,6 @@ const Normal = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
   const [chathistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
-
- 
-
-
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -269,15 +269,12 @@ const Normal = () => {
   //   })
 
   // },[])
-  // useEffect(() => {
-  //   const islogin = localStorage.getItem("userId");
-  //   if (questionCount > 3) {
-  //     if (islogin) {
-  //     } else {
-  //       histary("/login");
-  //     }
-  //   }
-  // }, [questionCount]);
+   useEffect(() => {
+     const isLogin = localStorage.getItem("userId");
+     if (questionCount > 3 && !isLogin) {
+       setShowModal(true);
+     }
+   }, [questionCount]);
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -363,10 +360,7 @@ const Normal = () => {
           )}`;
 
     try {
-      const response = await axios.post(
-       
-        apiurl
-      );
+      const response = await axios.post(apiurl);
 
       // Add the API response to chat
       setMessages((prev) => [
@@ -456,17 +450,17 @@ const Normal = () => {
   //   setShowVanabhojanam(false)     // Show the left panel again
   // };
   // Handle new chat click
- const handleNewChatClick = () => {
-   setMessages([]); // Clear messages
-  setriceTopicsshow(true);
-  
-   navigate("/normal");
-   setShowStaticBubbles(true); 
+  const handleNewChatClick = () => {
+    setMessages([]); // Clear messages
+    setriceTopicsshow(true);
+
+    navigate("/normal");
+    setShowStaticBubbles(true);
     if (inputRef.current) {
       inputRef.current.value = ""; // Clear the input field
       setShowSendButton(false); // Hide the send button
     }
- };
+  };
   const handleHistoryItemClick = (historyItem: string) => {
     setInput(historyItem); // Set input to the history item
     setShowSendButton(true); // Show send button
@@ -484,9 +478,6 @@ const Normal = () => {
     setChatHistory(savedHistory);
   }, []);
 
-
-
-
   const navigate = useNavigate(); // Initialize navigate function
 
   // Function to handle the click event
@@ -494,20 +485,23 @@ const Normal = () => {
     navigate("/normal"); // Redirect to the login page
   };
 
-  
-  
-const truncateText = (
-  text: string | null | undefined,
-  length: number
-): string => {
-  if (!text) {
-    return ""; // Return an empty string if the text is null or undefined
-  }
-  if (text.length <= length) {
-    return text; // Return the text as it is if it's shorter than the specified length
-  }
-  return text.slice(0, length) + "..."; // Truncate text and add ellipsis
-};
+  const truncateText = (
+    text: string | null | undefined,
+    length: number
+  ): string => {
+    if (!text) {
+      return ""; // Return an empty string if the text is null or undefined
+    }
+    if (text.length <= length) {
+      return text; // Return the text as it is if it's shorter than the specified length
+    }
+    return text.slice(0, length) + "..."; // Truncate text and add ellipsis
+  };
+
+
+  const handleSignIn = () => {
+    navigate("/whatapplogin");
+  };
   return (
     <div className="max-h-screen  fixed bg-[#351664] text-white overflow-y-auto  w-full flex flex-col">
       {/* Header */}
@@ -523,14 +517,9 @@ const truncateText = (
 
         {/* Right Section: Profile and SignOut */}
         <div className="flex items-center  gap-1 bg-transparent border-none cursor-pointer focus:outline-none mb-4 md:mb-0">
-     
-        
-
           {/* SignOut Button */}
           <button
             onClick={() => {
-             
-             
               navigate("/whatapplogin");
             }}
             // bg-[#04AA6D]
@@ -538,13 +527,8 @@ const truncateText = (
            
             text-black bg-white   px-4 py-2 rounded-full font-bold"
           >
-            
             SignIn
           </button>
-
-         
-
-         
         </div>
       </header>
 
@@ -560,23 +544,10 @@ const truncateText = (
               <button
                 onClick={() => handleEditClick()}
                 className="rounded-md"
-                title="Edit"
+                title="Colse SideBar"
               >
-                <div className="hover:bg-gray-200 p-2 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-[#351664]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16.862 3.487a2.25 2.25 0 113.18 3.18L8.754 17.955l-4.504.5.5-4.504 11.112-11.112z"
-                    />
-                  </svg>
+                <div className=" p-2 rounded-full">
+                  <MdMenu className="w-8 h-6" />
                 </div>
               </button>
 
@@ -589,34 +560,14 @@ const truncateText = (
                 className="rounded-md"
                 title="New Chat"
               >
-                <div className="hover:bg-gray-200 p-2 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-[#351664]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
+                <div className=" p-2 rounded-full">
+                  <FaRegEdit className="h-6 w-8" />
                 </div>
               </button>
             </div>
 
-            {/* Editing Mode Indicator */}
-            {isEditing && (
-              <p className="text-sm text-[#351664] mb-4 text-center">
-                Editing mode enabled...
-              </p>
-            )}
-
             {/* Chat History */}
-            <div className="mt-4 hidden md:block h-80 border-t border-gray-300 pt-2">
+            <div className="mt-4 h-80 border-t border-gray-300 pt-2">
               {chathistory.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center">
                   No history available.
@@ -803,7 +754,33 @@ const truncateText = (
             </>
           </section>
 
-          {/* Right Panel */}
+          {showModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm sm:max-w-md w-full">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                  Access More Features with Your Account!
+                </h2>
+                <p className="text-sm text-gray-600 mb-6 text-center">
+                  Log in to access exclusive services and features made just for
+                  you.
+                </p>
+                <div className="flex justify-center items-center space-x-4">
+                  <button
+                    onClick={() => setShowModal(false)} // Keeps modal persistent
+                    className="px-4 py-2 text-sm text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSignIn}
+                    className="px-4 py-2 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

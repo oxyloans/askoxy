@@ -62,7 +62,7 @@ import AllQueries from "./Pages/AllQueries";
 import TicketHistory from "./components/TicketHistory";
 import ThankYouPage from "./components/ThankYouPage";
 import RiceSalePage from "./components/Communities";
-
+import RiceSalePage1 from "./components/Srila";
 const App: React.FC = () => {
   return (
     <Router>
@@ -118,7 +118,8 @@ const App: React.FC = () => {
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
           />
-          <Route path="/communities/poojitha" element={<RiceSalePage />} />  
+          <Route path="/communities/poojitha" element={<RiceSalePage />} />
+          <Route path="/communities/srila" element={<RiceSalePage1 />} />
           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
           {/* Redirect to add a trailing slash if missing */}
           <Route

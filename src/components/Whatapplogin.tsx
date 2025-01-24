@@ -72,7 +72,7 @@ const Whatapplogin: React.FC = () => {
           setTimeout(() => {
             setShowSuccessPopup(false);
             setMessage("");
-          }, 2000);
+          }, 3000);
         }
       } else {
         setError("Failed to send OTP. Please try again.");
@@ -110,7 +110,7 @@ const Whatapplogin: React.FC = () => {
         localStorage.setItem("userId", response.data.userId);
 
         setMessage("Registration SuccessFull");
-        setTimeout(() => navigate("/whatsapplogin"), 500);
+        setTimeout(() => navigate("/whatapplogin"), 1000);
         setTimeout(() => window.location.reload(), 1000);
       } else {
         setOtpError("Invalid OTP. Please try again.");
