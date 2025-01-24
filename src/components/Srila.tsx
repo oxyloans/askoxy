@@ -97,7 +97,7 @@ const RiceSalePage1: React.FC = () => {
             be shared in the group.
           </p>
           <p className="text-gray-700 mt-4">
-            <span className="font-bold">We are coming on:</span> 24-01-2025
+            <span className="font-bold">We are coming on:</span> 25-01-2025
             <br />
             <span className="font-bold">Timing:</span> 9am to 7pm
           </p>

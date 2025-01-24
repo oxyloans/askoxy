@@ -234,7 +234,7 @@ const StudyAbroad: React.FC = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 aria-label="Navigate options"
               >
-                Explore GPT'S
+                Explore GPTS
               </button>
 
               {/* Dropdown Menu */}
@@ -544,7 +544,7 @@ const StudyAbroad: React.FC = () => {
               rel="noopener noreferrer"
               aria-label="Visit Scholarship Platform"
             >
-              bankd
+             BankD
             </a>
           </div>
         </div>

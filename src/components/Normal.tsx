@@ -757,16 +757,15 @@ const Normal = () => {
           {showModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm sm:max-w-md w-full">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                  Access More Features with Your Account!
-                </h2>
+                {/* Modal Message */}
                 <p className="text-sm text-gray-600 mb-6 text-center">
-                  Log in to access exclusive services and features made just for
-                  you.
+                  You are currently logged in as a guest. Access to our services
+                  is restricted. Please sign in to continue.
                 </p>
+                {/* Action Buttons */}
                 <div className="flex justify-center items-center space-x-4">
                   <button
-                    onClick={() => setShowModal(false)} // Keeps modal persistent
+                    onClick={() => setShowModal(false)}
                     className="px-4 py-2 text-sm text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
                   >
                     Cancel

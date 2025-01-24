@@ -110,7 +110,7 @@ const Whatapplogin: React.FC = () => {
         localStorage.setItem("userId", response.data.userId);
 
         setMessage("Registration SuccessFull");
-        setTimeout(() => navigate("/whatapplogin"), 1000);
+        setTimeout(() => navigate("/whatapplogin"), 2000);
         setTimeout(() => window.location.reload(), 1000);
       } else {
         setOtpError("Invalid OTP. Please try again.");

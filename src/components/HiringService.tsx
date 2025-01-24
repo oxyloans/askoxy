@@ -254,29 +254,31 @@ const HiringService: React.FC = () => {
         )}
 
         {isprofileOpen && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
-            <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-              <i
-                className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
-                onClick={() => setIsprofileOpen(false)}
-                aria-label="Close"
-              />
-              <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
-                Profile Missing
-              </h2>
-              <p className="mb-4 text-black">Please complete your profile.</p>
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl text-[#3d2a71] font-bold">Alert...!</h2>
+                <button
+                  className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
+                  onClick={() => setIsprofileOpen(false)}
+                >
+                  &times;
+                </button>
+              </div>
+              <p className="text-center text-black mb-6">
+                Please fill your profile details.
+              </p>
               <div className="flex justify-center">
                 <button
-                  className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                  className="bg-[#f9b91a] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#f4a307] focus:outline-none"
                   onClick={handlePopUOk}
                 >
-                  Go to Profile
+                  OK
                 </button>
               </div>
             </div>
           </div>
         )}
-
         {issuccessOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
             <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105 text-center">
@@ -303,7 +305,7 @@ const HiringService: React.FC = () => {
         <div className="container mx-auto px-6 lg:px-12 p-16 bg-white rounded-sm">
           <div className="text-center mb-12 px-4 sm:px-6 md:px-8">
             <Title level={2} className="text-3xl font-semibold text-[#3d2a71]">
-              Digital <span className="text-[#04AA6D]">Ambassadors</span>
+              <span className="text-[#04AA6D]"> Digital Ambassadors</span>
             </Title>
             <Paragraph className="text-lg text-gray-600">
               Join Our Dynamic Team and Embark on a Digital Journey!
