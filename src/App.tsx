@@ -118,8 +118,8 @@ const App: React.FC = () => {
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
           />
-          <Route path="/communities/poojitha" element={<RiceSalePage />} />
-          <Route path="/communities/srila" element={<RiceSalePage1 />} />
+          <Route path="/communities/sairaghava" element={<RiceSalePage />} />
+          <Route path="/communities/sankalpa" element={<RiceSalePage1 />} />
           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
           {/* Redirect to add a trailing slash if missing */}
           <Route

@@ -2,7 +2,7 @@ import React from "react";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
 import oxy1 from "../assets/img/oxywhite.png";
 import askoxy1 from "../assets/img/ask oxy white.png";
-import poojitha from "../assets/img/poojitha.png";
+import poojitha from '../assets/img/WhatsApp Image 2025-01-28 at 11.20.43.png'
 import srilalitha from "../assets/img/srihmt.png";
 import Kurnoolpremium from "../assets/img/Kurnool.png";
 import Gajrajhmt from "../assets/img/gajrajever.png";
@@ -70,7 +70,7 @@ const RiceSalePage: React.FC = () => {
         {/* Right Section (Content) */}
         <div className="md:w-1/2">
           <h1 className="text-3xl font-bold text-purple-800 mb-4 mt-5">
-            Dear Poojitha Enclave Residents!!
+            Dear Sai Raghava GNR Enclave Residents!!
           </h1>
           <p className="text-lg text-gray-700 mb-4">
             Greetings from <span className="font-bold">OXY GROUP!</span>
@@ -83,7 +83,7 @@ const RiceSalePage: React.FC = () => {
             We request you to come and take 1 Kg & 1/2 Kg samples for free.
           </p>
           <a
-            href="https://chat.whatsapp.com/Eu6f7wXwWUuA93HGVUhXoa"
+            href="https://chat.whatsapp.com/CwGa2kMKBKH8hLjj07h2ZH"
             className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 transition duration-300"
             target="_blank"
             rel="noopener noreferrer"
@@ -97,9 +97,9 @@ const RiceSalePage: React.FC = () => {
             be shared in the group.
           </p>
           <p className="text-gray-700 mt-4">
-            <span className="font-bold">We are coming on:</span> 24-01-2025
+            <span className="font-bold">We are coming on:</span> 29-01-2025
             <br />
-            <span className="font-bold">Timing:</span> 9am to 7pm
+            <span className="font-bold">Timing:</span> 8:30am to 8:30pm
           </p>
           <div className="mb-6 md:mb-0 text-center md:text-left p-4">
             <p className="text-lg font-semibold mb-4">
