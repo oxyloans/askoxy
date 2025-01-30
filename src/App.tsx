@@ -63,6 +63,7 @@ import TicketHistory from "./components/TicketHistory";
 import ThankYouPage from "./components/ThankYouPage";
 import RiceSalePage from "./components/Communities";
 import RiceSalePage1 from "./components/Srila";
+import QR from "./components/qr";
 const App: React.FC = () => {
   return (
     <Router>
@@ -70,6 +71,7 @@ const App: React.FC = () => {
       <div className="App">
         <Routes>
           <Route path="/reviews-gpt" element={<Reviews />} />
+          <Route path="/qrcode" element={<QR />} />
           <Route
             path="/informationaboutcountries-gpt"
             element={<InformationAboutCountries />}
@@ -118,7 +120,7 @@ const App: React.FC = () => {
             path="/machines&manufacturing"
             element={<MachinesManufacturingServices />}
           />
-          <Route path="/communities/sairaghava" element={<RiceSalePage />} />
+          <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
           <Route path="/communities/sankalpa" element={<RiceSalePage1 />} />
           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
           {/* Redirect to add a trailing slash if missing */}
