@@ -364,7 +364,8 @@ const LegalService: React.FC = () => {
             {/* Welcome Heading */}
             <div className="text-center md:text-left">
               <strong className="text-[20px] md:text-[24px] text-[#6A1B9A] font-semibold">
-                Welcome, Lawyers and Advocates! 2X Your Revenue with AskOxy.ai
+                Welcome, Lawyers and Advocates! Elevate Your Legal Practice with
+                AskOxy.ai
               </strong>
             </div>
 
@@ -372,24 +373,22 @@ const LegalService: React.FC = () => {
             <div className="space-y-4 text-gray-800">
               <ul className="list-disc pl-6">
                 <li>
-                  <strong>Grow Your Client Base:</strong> Connect with users
-                  actively seeking legal guidance and cases.
+                  <strong>Enhance Your Professional Presence:</strong>Increase
+                  your visibility among individuals seeking legal guidance.
                 </li>
                 <li>
-                  <strong>2X Your Revenue:</strong> Maximize your earning
-                  potential through increased visibility and more cases.
-                </li>
-                <li>
-                  <strong>Share Expertise:</strong> Publish legal insights to
+                  <strong>Share Expertise:</strong>Publish legal insights to
                   educate and establish your authority.
                 </li>
                 <li>
                   <strong>Collaborate on Legal Publications:</strong> Partner
-                  with professionals to create impactful content.
+                  with professionals to create impactful legal content.
                 </li>
+
                 <li>
-                  <strong>Expand Your Network:</strong> Be part of a vibrant,
-                  trusted platform for lawyers and advocates.
+                  <strong>Expand Your Legal Network:</strong> Be part of a
+                  vibrant, trusted platform for knowledge sharing and
+                  collaboration.
                 </li>
               </ul>
             </div>
