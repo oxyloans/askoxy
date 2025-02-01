@@ -2,7 +2,7 @@ import React from "react";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
 import oxy1 from "../assets/img/oxywhite.png";
 import askoxy1 from "../assets/img/ask oxy white.png";
-import poojitha from '../assets/img/WhatsApp Image 2025-01-30 at 17.09.32.png'
+import poojitha from '../assets/img/WhatsApp Image 2025-02-01 at 18.01.13.png'
 import srilalitha from "../assets/img/srihmt.png";
 import Kurnoolpremium from "../assets/img/Kurnool.png";
 import Gajrajhmt from "../assets/img/gajrajever.png";
@@ -70,7 +70,7 @@ const RiceSalePage: React.FC = () => {
         {/* Right Section (Content) */}
         <div className="md:w-1/2">
           <h1 className="text-3xl font-bold text-purple-800 mb-4 mt-5">
-            Dear Sri Lakshmi Subham Arcade Spoorthy!!
+            Dear Landmark Residency Residents!!
           </h1>
           <p className="text-lg text-gray-700 mb-4">
             Greetings from <span className="font-bold">OXY GROUP!</span>
@@ -83,7 +83,7 @@ const RiceSalePage: React.FC = () => {
             We request you to come and take 1 Kg & 1/2 Kg samples for free.
           </p>
           <a
-            href="https://chat.whatsapp.com/EtdSSigc5EvFmVDkaratQb"
+            href="https://chat.whatsapp.com/Fg4i4l3UucpAwL6KVdI5FJ"
             className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 transition duration-300"
             target="_blank"
             rel="noopener noreferrer"
@@ -97,7 +97,7 @@ const RiceSalePage: React.FC = () => {
             be shared in the group.
           </p>
           <p className="text-gray-700 mt-4">
-            <span className="font-bold">We are coming on:</span> 01-02-2025
+            <span className="font-bold">We are coming on:</span> 03-02-2025
             <br />
             <span className="font-bold">Timing:</span> 8:30am to 8:30pm
           </p>
@@ -193,25 +193,25 @@ const RiceSalePage: React.FC = () => {
             </ul>
           </div>
           <div className="flex justify-center md:justify-start gap-4">
-                      <a
-                        href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-                        className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg shadow hover:bg-green-700"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FaGooglePlay className="mr-2" />
-                        Buy Rice From PlayStore
-                      </a>
-                      <a
-                        href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
-                        className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FaApple className="mr-2" />
-                        Buy Rice From AppStore
-                      </a>
-                    </div>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+              className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg shadow hover:bg-green-700"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaGooglePlay className="mr-2" />
+              Buy Rice From PlayStore
+            </a>
+            <a
+              href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+              className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaApple className="mr-2" />
+              Buy Rice From AppStore
+            </a>
+          </div>
         </div>
         <div className="mt-6 p-2 text-center">
           <p>Thanks Team OXY Group</p>

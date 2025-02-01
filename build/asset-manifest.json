@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.5fdfaa78.css",
-    "main.js": "/static/js/main.4af02fcf.js",
+    "main.js": "/static/js/main.43c45ebc.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/1.3.png": "/static/media/1.3.b07ed907b217a6c9cb49.png",
@@ -21,6 +21,7 @@
     "static/media/Diwali2.jpg": "/static/media/Diwali2.6f6ebe2f2b7a4f8996bf.jpg",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
     "static/media/jsr.png": "/static/media/jsr.64de972fa7a43ac39c6f.png",
+    "static/media/WhatsApp Image 2025-02-01 at 18.01.13.png": "/static/media/WhatsApp Image 2025-02-01 at 18.01.13.aaa385f83db2924cd687.png",
     "static/media/srihmt.png": "/static/media/srihmt.8ac41c993ef8fb63d5a0.png",
     "static/media/fivestar.png": "/static/media/fivestar.0bd3f1470c7d62af722a.png",
     "static/media/gajrajever.png": "/static/media/gajrajever.c775e11363169c5c2a27.png",
@@ -35,7 +36,6 @@
     "static/media/shubodayam.png": "/static/media/shubodayam.6b2f1f5d436124e61db2.png",
     "static/media/1.6.png": "/static/media/1.6.5a2d3cc5eaeccdf31263.png",
     "static/media/BG1.jpg": "/static/media/BG1.73ad94a0c4546e5fffc8.jpg",
-    "static/media/WhatsApp Image 2025-01-30 at 17.09.32.png": "/static/media/WhatsApp Image 2025-01-30 at 17.09.32.3c74eba0e307016b26a3.png",
     "static/media/BG.jpg": "/static/media/BG.b949b1a77589a17ce6eb.jpg",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
     "static/media/6.png": "/static/media/6.c305f3465aad505f3e2f.png",
@@ -100,11 +100,11 @@
     "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
     "index.html": "/index.html",
     "main.5fdfaa78.css.map": "/static/css/main.5fdfaa78.css.map",
-    "main.4af02fcf.js.map": "/static/js/main.4af02fcf.js.map",
+    "main.43c45ebc.js.map": "/static/js/main.43c45ebc.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.5fdfaa78.css",
-    "static/js/main.4af02fcf.js"
+    "static/js/main.43c45ebc.js"
   ]
 }
