@@ -55,6 +55,7 @@ const FreeSample: React.FC = () => {
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const mobileNumber = localStorage.getItem("whatsappNumber");
+   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
     userId: userId,
@@ -134,13 +135,15 @@ const handleSubmit = async () => {
       setQueryError("Please enter the query before submitting.");
       return; // Exit the function if the query is invalid
     }
+    // Set loading state to true when starting the request
+    setIsLoading(true);
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
       mobileNumber: mobileNumber, // You might want to replace this with dynamic values
       queryStatus: "PENDING",
       projectType: "ASKOXY",
-      askOxyOfers: "FREESAMPLE",
+      askOxyOfers: "FREEAI",
       adminDocumentId: "",
       comments: "",
       id: "",
@@ -175,8 +178,12 @@ const handleSubmit = async () => {
       // Handle error if the request fails
       console.error("Error sending the query:", error);
       // alert("Failed to send query. Please try again.");
+    } finally {
+      // Reset the loading state once the request is finished (success or error)
+      setIsLoading(false);
     }
   };
+
     const [showContainer, setShowContainer] = useState(false);
     
         const handleButtonClick = () => {
@@ -300,8 +307,9 @@ const handleSubmit = async () => {
                     <button
                       className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
                       onClick={handleWriteToUsSubmitButton}
+                      disabled={isLoading}
                     >
-                      Submit Query
+                      {isLoading ? "Sending..." : "Submit Query"}
                     </button>
                   </div>
                 </div>
@@ -373,7 +381,7 @@ const handleSubmit = async () => {
             <img
               src={FR}
               alt="Free Sample"
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-lg shadow-lg object-cover"
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-lg shadow-lg pointer-events-none select-none"
             />
           </div>
 
@@ -419,8 +427,6 @@ const handleSubmit = async () => {
                 I'm Interested
               </button>
             </div>
-
-            
           </div>
         </div>
       </div>

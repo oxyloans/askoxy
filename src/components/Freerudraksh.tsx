@@ -268,54 +268,60 @@ const Freerudraksha: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [issuccessOpen]);
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
-      return; // Exit the function if the query is invalid
-    }
-    // Payload with the data to send to the API
-    const payload = {
-      email: email, // You might want to replace this with dynamic values
-      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
-      queryStatus: "PENDING",
-      projectType: "ASKOXY",
-      askOxyOfers: "FREERUDRAKSHA",
-      adminDocumentId: "",
-      comments: "",
-      id: "",
-      resolvedBy: "",
-      resolvedOn: "",
-      status: "",
-      userDocumentId: "",
-      query: query,
-      userId: userId,
-    };
+ const handleWriteToUsSubmitButton = async () => {
+   if (!query || query.trim() === "") {
+     setQueryError("Please enter the query before submitting.");
+     return; // Exit the function if the query is invalid
+   }
+   // Set loading state to true when starting the request
+   setIsLoading(true);
+   // Payload with the data to send to the API
+   const payload = {
+     email: email, // You might want to replace this with dynamic values
+     mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+     queryStatus: "PENDING",
+     projectType: "ASKOXY",
+     askOxyOfers: "FREEAI",
+     adminDocumentId: "",
+     comments: "",
+     id: "",
+     resolvedBy: "",
+     resolvedOn: "",
+     status: "",
+     userDocumentId: "",
+     query: query,
+     userId: userId,
+   };
 
-    // Log the query to check the input before sending
-    console.log("Query:", query);
-    const accessToken = localStorage.getItem("accessToken");
+   // Log the query to check the input before sending
+   console.log("Query:", query);
+   const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
-    const headers = {
-      Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
-    };
+   const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
+   const headers = {
+     Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
+   };
 
-    try {
-      // Sending the POST request to the API
-      const response = await axios.post(apiUrl, payload, { headers: headers });
+   try {
+     // Sending the POST request to the API
+     const response = await axios.post(apiUrl, payload, { headers: headers });
 
-      // Check if the response was successful
-      if (response.data) {
-        console.log("Response:", response.data);
-        setSuccessOpen(true);
-        setIsOpen(false);
-      }
-    } catch (error) {
-      // Handle error if the request fails
-      console.error("Error sending the query:", error);
-      // alert("Failed to send query. Please try again.");
-    }
-  };
+     // Check if the response was successful
+     if (response.data) {
+       console.log("Response:", response.data);
+       setSuccessOpen(true);
+       setIsOpen(false);
+     }
+   } catch (error) {
+     // Handle error if the request fails
+     console.error("Error sending the query:", error);
+     // alert("Failed to send query. Please try again.");
+   } finally {
+     // Reset the loading state once the request is finished (success or error)
+     setIsLoading(false);
+   }
+ };
+
 
   return (
     <div>
@@ -435,8 +441,9 @@ const Freerudraksha: React.FC = () => {
                   <button
                     className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
                     onClick={handleWriteToUsSubmitButton}
+                    disabled={isLoading}
                   >
-                    Submit Query
+                    {isLoading ? "Sending..." : "Submit Query"}
                   </button>
                 </div>
               </div>

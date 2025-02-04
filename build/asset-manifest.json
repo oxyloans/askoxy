@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.5fdfaa78.css",
-    "main.js": "/static/js/main.43c45ebc.js",
+    "main.css": "/static/css/main.ea599558.css",
+    "main.js": "/static/js/main.fe3e25bf.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/1.3.png": "/static/media/1.3.b07ed907b217a6c9cb49.png",
@@ -10,7 +10,6 @@
     "static/media/1.5.png": "/static/media/1.5.90c0cea7da0f7d28edf4.png",
     "static/media/1.2.png": "/static/media/1.2.3fda519193f532efdc2d.png",
     "static/media/1.1.png": "/static/media/1.1.a365169679f2c47648ca.png",
-    "static/media/WhatsApp Image 2025-01-28 at 12.00.30.png": "/static/media/WhatsApp Image 2025-01-28 at 12.00.30.e4315721fd87fe15dbe1.png",
     "static/media/R1.png": "/static/media/R1.c5abc3bb1aa03be79519.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
     "static/media/legal.png": "/static/media/legal.dd57ac21e6673f622ae7.png",
@@ -18,7 +17,6 @@
     "static/media/WhatsApp Image 2025-01-23 at 15.50.44.png": "/static/media/WhatsApp Image 2025-01-23 at 15.50.44.cc50636b969ab3db4528.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
     "static/media/machines.png": "/static/media/machines.8a2c5d9604b7fe5261f4.png",
-    "static/media/Diwali2.jpg": "/static/media/Diwali2.6f6ebe2f2b7a4f8996bf.jpg",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
     "static/media/jsr.png": "/static/media/jsr.64de972fa7a43ac39c6f.png",
     "static/media/WhatsApp Image 2025-02-01 at 18.01.13.png": "/static/media/WhatsApp Image 2025-02-01 at 18.01.13.aaa385f83db2924cd687.png",
@@ -43,9 +41,7 @@
     "static/media/7.png": "/static/media/7.3d41b0f8891fd3c86d68.png",
     "static/media/soon.png": "/static/media/soon.aaac8fa8addbc7dfe4df.png",
     "static/media/10.png": "/static/media/10.59573404b783a304c318.png",
-    "static/media/meeting.jpeg": "/static/media/meeting.0877a90cb466020716f9.jpeg",
     "static/media/freesample.jpg": "/static/media/freesample.bed9cf31fa4032d1bab4.jpg",
-    "static/media/AD2.jpg": "/static/media/AD2.0edc54299486b90a9400.jpg",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.1815e00441357e01619e.ttf",
     "static/media/X9.png": "/static/media/X9.bcf9982a2c466659b624.png",
     "static/media/X14.png": "/static/media/X14.985bec4721102f5beba3.png",
@@ -57,7 +53,6 @@
     "static/media/X1.png": "/static/media/X1.28805154a853916ba097.png",
     "static/media/4.png": "/static/media/4.e72349b70160e7053256.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
-    "static/media/AD1 (1).jpg": "/static/media/AD1 (1).42bd369ac23adcda2f1e.jpg",
     "static/media/X7.png": "/static/media/X7.18696966852eb429258e.png",
     "static/media/11.png": "/static/media/11.94dc00ebe8ce3658ee96.png",
     "static/media/5.png": "/static/media/5.55ab32fb8ce24f4f9aee.png",
@@ -99,12 +94,12 @@
     "static/media/fa-v4compatibility.ttf": "/static/media/fa-v4compatibility.da94ef451f4969af06e6.ttf",
     "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
     "index.html": "/index.html",
-    "main.5fdfaa78.css.map": "/static/css/main.5fdfaa78.css.map",
-    "main.43c45ebc.js.map": "/static/js/main.43c45ebc.js.map",
+    "main.ea599558.css.map": "/static/css/main.ea599558.css.map",
+    "main.fe3e25bf.js.map": "/static/js/main.fe3e25bf.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5fdfaa78.css",
-    "static/js/main.43c45ebc.js"
+    "static/css/main.ea599558.css",
+    "static/js/main.fe3e25bf.js"
   ]
 }

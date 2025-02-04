@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import "./Whatsapp.css";
+import "./Whatsapp.css"; // Updated CSS file
 import { Link } from "react-router-dom";
+
 const Whatapplogin: React.FC = () => {
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
@@ -19,6 +20,7 @@ const Whatapplogin: React.FC = () => {
   const [showOtp, setOtpShow] = useState<boolean | null>(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState<boolean | null>(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleOtpChange = (value: string, index: number) => {
     const newOtp = [...credentials.otp];
@@ -30,14 +32,15 @@ const Whatapplogin: React.FC = () => {
     }
   };
 
-  // Handle submission of the phone number to receive OTP
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setMessage("");
+    setIsLoading(true); // Start loading
 
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
       setError("Please Enter a valid WhatsApp Number with Country code.");
+      setIsLoading(false); // Stop loading
       return;
     }
     localStorage.setItem("whatsappNumber", phoneNumber);
@@ -61,7 +64,7 @@ const Whatapplogin: React.FC = () => {
         if (response.data.userId !== null) {
           setShowSuccessPopup(true);
           localStorage.setItem("userId", response.data.userId);
-          localStorage.setItem("accessToken", response.data.accessToken); 
+          localStorage.setItem("accessToken", response.data.accessToken);
 
           setMessage("Login Successful!");
           setTimeout(() => navigate("/dashboard"), 2000);
@@ -79,17 +82,20 @@ const Whatapplogin: React.FC = () => {
       }
     } catch (err) {
       setError("An error occurred. Please try again later.");
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
-  // Handle OTP submission for verification
   const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setOtpError("");
     setMessage("");
+    setIsLoading(true); // Start loading
 
-    if (credentials.otp.join("").length != 4) {
+    if (credentials.otp.join("").length !== 4) {
       setOtpError("Please Enter the OTP");
+      setIsLoading(false); // Stop loading
       return;
     }
 
@@ -109,7 +115,7 @@ const Whatapplogin: React.FC = () => {
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
 
-        setMessage("Registration SuccessFull");
+        setMessage("Registration Successful");
         setTimeout(() => navigate("/whatapplogin"), 2000);
         setTimeout(() => window.location.reload(), 1000);
       } else {
@@ -119,26 +125,13 @@ const Whatapplogin: React.FC = () => {
     } catch (err: any) {
       setOtpError("Invalid OTP");
       setOtpSession(err);
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
-  const otpInputStyle: React.CSSProperties = {
-    display: "flex",
-    gap: "10px",
-    justifyContent: "center",
-  };
-
-  const otpCircleStyle: React.CSSProperties = {
-    width: "40px",
-    height: "40px",
-    textAlign: "center",
-    borderRadius: "50%",
-    border: "1px solid #003300",
-    fontSize: "1.5rem",
-  };
-
   return (
-    <div className="login-container">
+    <div className="telegram-login-container">
       {showSuccessPopup && (
         <div className="popup-message">
           <p>{message}</p>
@@ -150,21 +143,17 @@ const Whatapplogin: React.FC = () => {
         <form onSubmit={showOtp ? handleOtpSubmit : handleSubmit}>
           <div className="form-group">
             <label>
-              WhatsApp Number <span style={{ color: "red" }}>*</span>
+              WhatsApp Number <span className="required">*</span>
             </label>
-            <div className="phoneinputfield">
-              <PhoneInput
-                value={phoneNumber}
-                onChange={setPhoneNumber}
-                defaultCountry="IN"
-                international
-                countrySelectProps={{
-                  ariaLabel: "Phone number country",
-                  className: "PhoneInputCountrySelect",
-                }}
-                className="PhoneInputInput"
-              />
-            </div>
+            <PhoneInput
+              value={phoneNumber}
+              onChange={setPhoneNumber}
+              defaultCountry="IN"
+              international
+              countrySelectProps={{ ariaLabel: "Phone number country" }}
+              className="PhoneInput"
+              
+            />
             {error && <span className="error-message">{error}</span>}
           </div>
 
@@ -193,27 +182,10 @@ const Whatapplogin: React.FC = () => {
             <span className="success-message">{message}</span>
           )}
 
-          <button type="submit" className="button">
-            {otpSession ? "Submit OTP" : "Submit"}
+          <button type="submit" className="button" disabled={isLoading}>
+            {isLoading ? "Submitting..." : "Submit"}
           </button>
-
-          {/* {isButtonEnabled && (
-            <button
-              type="button"
-              onClick={() => setOtpShow(false)}
-              className="change-number-button"
-            >
-              Change Number
-            </button>
-          )} */}
         </form>
-        {/* <p className="or-divider">OR</p>
-  
-        <div className="alternate-login">
-          <Link to="/login" style={{ textDecoration: 'none' }}>
-            <h1 style={{color:'#3d5afe', fontSize:'18px'}}>Login with Mobile Number</h1>
-          </Link>
-        </div> */}
       </div>
     </div>
   );

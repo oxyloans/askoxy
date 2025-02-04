@@ -1,158 +1,284 @@
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-.login-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-image: url('/src/assets/img/BG1.jpg');
-    background-size: cover;
-    background-position: center;
-    padding: 20px;
-  }
-  
-  
-  
-  
- 
- 
-  
- 
-  
+/* Main Login Container */
+.telegram-login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image: url('/src/assets/img/BG1.jpg');
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+  font-family: 'Roboto', sans-serif;
+}
 
-  
-  .otp-inputs {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* Form Container */
+.form-container {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Softer shadow */
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Header */
+.login-header {
+  font-size: 2rem;
+  color: #3c1973; /* Dark Gray */
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+/* Phone Input */
+.PhoneInput {
+  width: 100%;
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid #ccc; /* Light gray border */
+  font-size: 16px;
+  background-color: #f9f9f9; /* Light gray background */
+}
+
+.PhoneInput input {
+  padding-left: 35px;
+}
+
+/* OTP Input */
+.otp-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* OTP Circles */
+.otp-circle {
+  width: 45px;
+  height: 45px;
+  text-align: center;
+  font-size: 18px;
+  border: 1px solid #a6a6a6; /* Neutral gray border */
+  border-radius: 50%;
+  background-color: #ffffff;
+}
+
+.otp-circle:focus {
+  border-color: #4caf50; /* Green color on focus */
+  outline: none;
+}
+
+/* Submit Button */
+.button {
+  width: 100%;
+  padding: 12px;
+  background-color: #4caf50; /* Green background for professionalism */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #388e3c; /* Slightly darker green for hover */
+}
+
+/* Error & Success Messages */
+.error-message {
+  color: #e74c3c; /* Red for error */
+  font-size: 14px;
+}
+
+.success-message {
+  color: #4caf50; /* Green for success */
+  font-size: 14px;
+}
+
+/* Popup Message */
+.popup-message {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #04AA6D;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+}
+.required{
+  color:red
+}
+
+/* Mobile and Tablet Responsiveness */
+
+/* 1024px screen width (Tablet Landscape) */
+@media (max-width: 1024px) {
+  .telegram-login-container {
+    padding: 20px 10px;
   }
-  /* === Phone Input Container === */
-.phoneinputfield {
-    position: relative;
-    width: 100%;
-    max-width: 350px; /* Adjust to fit your design */
+
+  .form-container {
+    padding: 30px;
+    max-width: 350px;
   }
-  
-  /* === PhoneInput Component === */
-  .PhoneInputInput {
-    width: 100%;
-    padding: 10px 20px 10px 10px; /* Add padding to ensure the country select doesn't overlap the input */
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    font-size: 16px;
-    box-sizing: border-box;
+
+  .login-header {
+    font-size: 1.75rem;
   }
-  
-  /* === Country Select Dropdown Style === */
-  .PhoneInputCountrySelect {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    border-radius: 4px;
-    border: none;
-    height: 100%;
+
+  .PhoneInput {
     padding: 10px;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
-  
-  /* === Optional: Add custom styles for focus/hover states === */
-  .PhoneInputInput:focus {
-    border-color: #3d5afe;
-    outline: none;
-  }
-  
-  .PhoneInputCountrySelect:focus {
-    border-color: #3d5afe;
-    outline: none;
-  }
-  
-  
+
   .otp-circle {
     width: 40px;
     height: 40px;
-    margin: 0 5px;
-    text-align: center;
-    font-size: 18px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-  
-  .otp-circle:focus {
-    border-color: #3d5afe;
-    outline: none;
-  }
-  
-  /* === Submit Button === */
-  .button {
-    width: 100%;
-    padding: 12px;
-    background-color: #f9cc15;
-    color: #333;
-    border: none;
-    border-radius: 5px;
     font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s;
   }
-  
-  .button:hover {
-    background-color: #e6b812;
-  }
-  
-  /* === Change Number Button === */
-  .change-number-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
+
+  .button {
     padding: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-top: 10px;
-    transition: background-color 0.3s;
-  }
-  
-  .change-number-button:hover {
-    background-color: #0056b3;
-  }
-  
-  /* === Error Message === */
-  .error-message {
-    color: #e74c3c;
     font-size: 14px;
   }
-  
-  /* === OR Divider === */
-  .or-divider {
-    text-align: center;
-    padding-top: 8px;
-    color: #666;
-    font-size: 18px;
+}
+
+/* 768px screen width (Tablet Portrait) */
+@media (max-width: 768px) {
+  .telegram-login-container {
+    padding: 20px 5px;
   }
-  
-  /* === Alternate Login Link === */
-  .alternate-login {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 10px;
+
+  .form-container {
+    padding: 25px;
+    max-width: 300px;
   }
-  
-  .alternate-login h1 {
-    text-align: center;
-    font-size: 18px;
-    color: #3d5afe;
-    cursor: pointer;
-    transition: color 0.3s;
+
+  .login-header {
+    font-size: 1.6rem;
   }
-  
-  .alternate-login h1:hover {
-    color: #2c47d1;
+
+  .PhoneInput {
+    padding: 10px;
   }
-  
+
+  .otp-circle {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+
+  .button {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+/* 425px screen width (Mobile Small) */
+@media (max-width: 425px) {
+  .telegram-login-container {
+    padding: 15px;
+  }
+
+  .form-container {
+    padding: 20px;
+    max-width: 280px;
+  }
+
+  .login-header {
+    font-size: 1.4rem;
+  }
+
+  .PhoneInput {
+    padding: 8px;
+  }
+
+  .otp-circle {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .button {
+    padding: 8px;
+    font-size: 14px;
+  }
+}
+
+/* 375px screen width (Mobile Portrait) */
+@media (max-width: 375px) {
+  .telegram-login-container {
+    padding: 10px;
+  }
+
+  .form-container {
+    padding: 15px;
+    max-width: 250px;
+  }
+
+  .login-header {
+    font-size: 1.3rem;
+  }
+
+  .PhoneInput {
+    padding: 8px;
+  }
+
+  .otp-circle {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .button {
+    padding: 8px;
+    font-size: 13px;
+  }
+}
+
+/* 320px screen width (Mobile Small) */
+@media (max-width: 320px) {
+  .telegram-login-container {
+    padding: 10px;
+  }
+
+  .form-container {
+    padding: 15px;
+    max-width: 230px;
+  }
+
+  .login-header {
+    font-size: 1.2rem;
+  }
+
+  .PhoneInput {
+    padding: 7px;
+  }
+
+  .otp-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .button {
+    padding: 8px;
+    font-size: 12px;
+  }
+}

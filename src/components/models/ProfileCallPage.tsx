@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Swal from "sweetalert2"; // Import SweetAlert
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
-// Define types for EducationDetails and UserProfile
 interface EducationDetail {
   graduationType: string;
   qualification: string;
@@ -29,28 +28,39 @@ interface UserProfile {
   educationDetailsModelList: EducationDetail[];
 }
 
-// Reusable InputField Component
 const InputField = ({
+  label,
   name,
   value,
   placeholder,
   type = "text",
   onChange,
+  error,
 }: {
+  label: string;
   name: string;
   value: string;
   placeholder: string;
   type?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
 }) => (
-  <input
-    type={type}
-    name={name}
-    value={value}
-    onChange={onChange}
-    className="border border-gray-300 rounded-md p-2 text-sm text-black w-full focus:outline-none focus:border-indigo-500"
-    placeholder={placeholder}
-  />
+  <div className="w-full">
+    <label className="text-gray-700 font-medium">{label}</label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      className={`border p-2 rounded-md w-full text-gray-900 focus:outline-none focus:ring-2 ${
+        error
+          ? "border-red-500 focus:ring-red-400"
+          : "border-gray-300 focus:ring-indigo-500"
+      }`}
+      placeholder={placeholder}
+    />
+    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+  </div>
 );
 
 const UserProfile = () => {
@@ -79,88 +89,57 @@ const UserProfile = () => {
     ],
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Loading state
-  const [emailError, setEmailError] = useState<string>(""); // Email error state
-  const [firstNameError, setFirstNameError] = useState<string>(""); // First name error state
-  const [lastNameError, setLastNameError] = useState<string>(""); // Last name error state
-  const [cityError, setCityError] = useState<string>(""); // City error state
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const navigate = useNavigate();
 
-  // Fetch user profile data
   useEffect(() => {
     const fetchUserProfile = async () => {
       const userId = localStorage.getItem("userId");
-      if (!userId) {
-        console.error("User ID not found.");
-        return;
-      }
+      if (!userId) return;
       try {
         const response = await axios.get<UserProfile>(
           `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`
         );
-
+                setIsLoading(true);
         setUserProfile(response.data);
-        localStorage.setItem("email", response.data.email); // Store email in localStorage
+
+        localStorage.setItem("email", response.data.email);
       } catch (error) {
-        console.error("Error fetching user profile:", error);
         Swal.fire({
           icon: "error",
           title: "Error",
           text: "Failed to fetch user profile.",
         });
       } finally {
-        setIsLoading(false); // Set loading to false once data is fetched
+        setIsLoading(false);
       }
     };
     fetchUserProfile();
   }, []);
 
-  // Validate inputs before form submission
   const validateInputs = () => {
-    let isValid = true;
+    let validationErrors: { [key: string]: string } = {};
+    const nameRegex = /^[A-Za-z\s]+$/;
 
-    // Validate email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userProfile.email)) {
-      setEmailError("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(""); // Clear the error if valid
+      validationErrors.email = "Please enter a valid email address.";
+    }
+    if (!nameRegex.test(userProfile.firstName.trim())) {
+      validationErrors.firstName = "First name should only contain letters.";
+    }
+    if (!nameRegex.test(userProfile.lastName.trim())) {
+      validationErrors.lastName = "Last name should only contain letters.";
+    }
+    if (!nameRegex.test(userProfile.city.trim())) {
+      validationErrors.city = "City name should not contain numbers.";
     }
 
-    // Regular expression for name validation
-    const nameRegex = /^[a-zA-Z\s]+$/;
-
-    // Validate first name
-    if (!nameRegex.test(userProfile.firstName)) {
-      setFirstNameError(
-        "First name should not contain numbers or special characters."
-      );
-      isValid = false;
-    } else {
-      setFirstNameError(""); // Clear the error if valid
-    }
-
-    // Validate last name
-    if (!nameRegex.test(userProfile.lastName)) {
-      setLastNameError(
-        "Last name should not contain numbers or special characters."
-      );
-      isValid = false;
-    } else {
-      setLastNameError(""); // Clear the error if valid
-    }
-
-    // Validate city
-    if (!nameRegex.test(userProfile.city)) {
-      setCityError("City should not contain numbers or special characters.");
-      isValid = false;
-    } else {
-      setCityError(""); // Clear the error if valid
-    }
-
-    return isValid;
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
 
+ 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateInputs()) return;
@@ -170,103 +149,94 @@ const UserProfile = () => {
         "https://meta.oxyloans.com/api/student-service/user/profile/update",
         userProfile
       );
+
+      localStorage.setItem("user", JSON.stringify({ profileCompleted: true }));
       Swal.fire({
         icon: "success",
         title: "Success",
         text: "Profile updated successfully!",
       });
-      navigate("/dashboard"); // Redirect to dashboard on success
+
+      navigate("/dashboard");
     } catch (error) {
-      console.error("Error updating profile:", error);
       Swal.fire({
         icon: "error",
         title: "Update Failed",
-        text: "Failed to update profile. Please try again.",
+        text: "Failed to update profile.",
       });
     }
   };
 
-  if (isLoading) {
-    return <div className="spinner">Loading...</div>; // Loading state (replace with a spinner or animation)
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex justify-center items-center min-h-screen text-xl">
+  //       Loading...
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-xl font-semibold" style={{ color: "gray" }}>
+    <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-xl">
+      <h2 className="text-3xl font-semibold text-gray-900 text-center mb-6">
         Profile Information
       </h2>
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <div>
-            <label>Please Enter Your First Name:</label>
-            <InputField
-              name="firstName"
-              value={userProfile.firstName}
-              placeholder="First Name"
-              onChange={(e) =>
-                setUserProfile({ ...userProfile, firstName: e.target.value })
-              }
-            />
-            {firstNameError && (
-              <p className="text-red-500 text-sm mt-1">{firstNameError}</p>
-            )}
-          </div>
-          <div>
-            <label>Please Enter Your Last Name:</label>
-            <InputField
-              name="lastName"
-              value={userProfile.lastName}
-              placeholder="Last Name"
-              onChange={(e) =>
-                setUserProfile({ ...userProfile, lastName: e.target.value })
-              }
-            />
-            {lastNameError && (
-              <p className="text-red-500 text-sm mt-1">{lastNameError}</p>
-            )}
-          </div>
-          <div>
-            <label>Please Enter Your Email:</label>
-            <InputField
-              name="email"
-              type="email"
-              value={userProfile.email}
-              placeholder="Email"
-              onChange={(e) =>
-                setUserProfile({ ...userProfile, email: e.target.value })
-              }
-            />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
-            )}
-          </div>
-          <div>
-            <label>Please Enter Your City:</label>
-            <InputField
-              name="city"
-              value={userProfile.city}
-              placeholder="City"
-              onChange={(e) =>
-                setUserProfile({ ...userProfile, city: e.target.value })
-              }
-            />
-            {cityError && (
-              <p className="text-red-500 text-sm mt-1">{cityError}</p>
-            )}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <InputField
+            label="First Name"
+            name="firstName"
+            value={userProfile.firstName}
+            placeholder="Enter your first name"
+            onChange={(e) =>
+              setUserProfile({ ...userProfile, firstName: e.target.value })
+            }
+            error={errors.firstName}
+          />
+          <InputField
+            label="Last Name"
+            name="lastName"
+            value={userProfile.lastName}
+            placeholder="Enter your last name"
+            onChange={(e) =>
+              setUserProfile({ ...userProfile, lastName: e.target.value })
+            }
+            error={errors.lastName}
+          />
+          <InputField
+            label="Email"
+            name="email"
+            type="email"
+            value={userProfile.email}
+            placeholder="Enter your email"
+            onChange={(e) =>
+              setUserProfile({ ...userProfile, email: e.target.value })
+            }
+            error={errors.email}
+          />
+          <InputField
+            label="City"
+            name="city"
+            value={userProfile.city}
+            placeholder="Enter your city"
+            onChange={(e) =>
+              setUserProfile({ ...userProfile, city: e.target.value })
+            }
+            error={errors.city}
+          />
         </div>
-
-        <div className="mt-4 flex justify-end">
+        <div className="mt-8 flex justify-center">
           <button
             type="submit"
-            className="bg-green-500 text-white py-2 px-4 rounded"
+            className="bg-indigo-600 text-white py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none transition duration-300 transform hover:scale-105"
+            disabled={isLoading}
           >
-            Save Changes
+            {isLoading ? "Submitting..." : "Submit"}
           </button>
         </div>
       </form>
     </div>
   );
+
 };
 
 export default UserProfile;
