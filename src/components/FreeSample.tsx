@@ -374,7 +374,7 @@ const handleSubmit = async () => {
           </div>
         </header>
 
-        {/* Details Section */}
+        
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2 px-4">
           {/* Image Section */}
           <div className="flex justify-center p-4">
