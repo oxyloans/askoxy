@@ -221,7 +221,7 @@ const App: React.FC = () => {
       <div className="App">
         <Routes>
           <Route path="/whatapplogin" element={<Whatapplogin />} />
-          <Route path="/communities/landmarkresidents" element={<RiceSalePage />} />
+          <Route path="/communities/maruthielite" element={<RiceSalePage />} />
           <Route path="/qrcode" element={<QR />}/>
           {/* Landing Page (First Page) */}
           <Route path="/" element={<Landingpage />} />

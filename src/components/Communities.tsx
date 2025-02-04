@@ -70,7 +70,7 @@ const RiceSalePage: React.FC = () => {
         {/* Right Section (Content) */}
         <div className="md:w-1/2">
           <h1 className="text-3xl font-bold text-purple-800 mb-4 mt-5">
-            Dear Landmark Residency Residents!!
+            Dear Maruti Elite Residents!!
           </h1>
           <p className="text-lg text-gray-700 mb-4">
             Greetings from <span className="font-bold">OXY GROUP!</span>
@@ -83,7 +83,8 @@ const RiceSalePage: React.FC = () => {
             We request you to come and take 1 Kg & 1/2 Kg samples for free.
           </p>
           <a
-            href="https://chat.whatsapp.com/Fg4i4l3UucpAwL6KVdI5FJ"
+            href="https://chat.whatsapp.com/F2Z1pDZBftHCDeL3jAR4CK
+"
             className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 transition duration-300"
             target="_blank"
             rel="noopener noreferrer"
@@ -97,13 +98,13 @@ const RiceSalePage: React.FC = () => {
             be shared in the group.
           </p>
           <p className="text-gray-700 mt-4">
-            <span className="font-bold">We are coming on:</span> 03-02-2025
+            <span className="font-bold">We are coming on:</span> 05-02-2025
             <br />
-            <span className="font-bold">Timing:</span> 8:30am to 8:30pm
+            <span className="font-bold">Timing:</span> 8:30am to 7:00pm
           </p>
           <div className="mb-6 md:mb-0 text-center md:text-left p-4">
             <p className="text-lg font-semibold mb-4">
-              Download our app to place the order and collect at the stall:
+            Download our app to place the order and collect at the stall:
             </p>
             <div className="flex justify-center md:justify-start gap-4">
               <a
