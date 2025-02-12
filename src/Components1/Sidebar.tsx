@@ -185,12 +185,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   
  return (
    <aside
-     className={`bg-gray-100 text-[#3c1973] text-sm fixed overflow-y-auto font-semibold h-full transform transition-transform duration-300 z-40 w-64 shadow-lg ${
+     className={`bg-gray-50 text-[#3c1973] text-sm fixed overflow-y-auto font-semibold h-full transform transition-transform duration-300 z-40 w-64 shadow-lg ${
        isOpen ? "translate-x-0" : "-translate-x-full"
      } lg:translate-x-0`}
    >
      {/* Sidebar Header */}
-     <div className="flex items-center justify-between p-4 border-b border-gray-300">
+     <div className="flex items-center justify-between pt-2 pl-2 pb-5 pr-2 border-b border-gray-200">
        <button
          className="hover:bg-gray-200 p-2 rounded-md transition-all duration-150"
          onClick={handleHistoryButtonClick}
@@ -235,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
      {/* Chat History Section */}
      {isHistoryVisible && (
-       <div className="mt-4 p-3 border-t border-gray-300">
+       <div className="mt-4 p-3">
          <h3 className="text-md font-semibold text-[#3c1973]">
            Previous History
          </h3>

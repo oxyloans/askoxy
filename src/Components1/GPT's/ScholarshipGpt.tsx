@@ -266,136 +266,133 @@ const ScholarshipGpt: React.FC = () => {
   const query = new URLSearchParams(location.search).get("search") || "";
 
   return (
-    <main className="flex flex-col h-screen sm:p-2">
-      {/* Main Content Section */}
-      <div className="flex flex-col flex-grow">
-        {/* Header */}
-        <div className="flex w-full justify-between items-center p-4 bg-white border-b border-gray-300 shadow-md">
-          <h2 className="text-[#3c1973] text-lg sm:text-xl tracking-wide">
-            Welcome {profileData ? `${profileData.firstName} ` : "Guest"}
-          </h2>
-          <div
-            className="flex items-center bg-gray-200 rounded-lg p-1 space-x-2 cursor-pointer"
-            onClick={handleNewChatClick}
-          >
-            <h3 className="font-semibold text-[#3c1973]">New Chat</h3>
-            <PencilSquareIcon className="w-6 h-6 text-[#3c1973]" />
-          </div>
-        </div>
+    <main className="flex flex-col h-screen  w-full sm:p-2 ">
+      {/*  //sm:left-64 */}
 
-        {/* Scrollable Chat Container */}
+      {/* Header */}
+
+      <div className="fixed top-16 left-0 lg:left-64 right-0 border-b p-3 md:p-4 flex flex-wrap items-center justify-between bg-white z-10 gap-3">
+        {/* Left Side - Welcome Message */}
+        <h2 className="text-[#3c1973] text-lg sm:text-xl tracking-wide">
+          Welcome {profileData ? `${profileData.firstName} ` : "Guest"}
+        </h2>
+
+        {/* Right Side - New Chat Button */}
         <div
-          className="flex-grow overflow-y-auto border border-gray-300 bg-white shadow-md relative"
-          style={{ maxHeight: "calc(100vh - 120px)" }} // Adjust height for header and input bar
+          className="flex items-center bg-gray-200 rounded-lg p-2 space-x-2 cursor-pointer hover:bg-gray-300 transition"
+          onClick={handleNewChatClick}
         >
-          {/* Static Bubbles - Centered */}
-          {showStaticBubbles && (
-            <div className="absolute inset-0 flex items-center justify-center p-4 bg-opacity-75 bg-gray-50">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {riceTopics &&
-                  riceTopics.map((topic) => (
-                    <div
-                      key={topic.id}
-                      className="p-3 bg-gray-100 text-black rounded-lg shadow hover:bg-gray-300 transition duration-200 cursor-pointer text-center"
-                      style={{ wordWrap: "break-word" }}
-                      onClick={() => {
-                        handleBubbleClick(topic.title);
-                        setInput(topic.title);
-                      }}
-                    >
-                      <ReactMarkdown className="font-medium">
-                        {topic.title}
-                      </ReactMarkdown>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
+          <h3 className="font-semibold text-[#3c1973]">New Chat</h3>
+          <PencilSquareIcon className="w-6 h-6 text-[#3c1973]" />
+        </div>
+      </div>
 
-          {/* Chat Messages */}
-          <div className="space-y-4 p-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-24">
-                <Example variant="loading01" />
-              </div>
-            ) : (
-              messages.map((message, index) => (
+      {/* Chat Section */}
+      <div className="flex flex-col justify-center items-center fixed top-[177px] left-0 lg:left-64 right-0 bottom-[90px] px-4 bg-white">
+        {/* Static Bubbles (Shown When Not Loading) */}
+        {!isLoading && showStaticBubbles && (
+          <div className="absolute inset-0 flex items-center justify-center bg-opacity-75 z-10">
+            <div className="grid grid-cols-2 gap-4 p-6 w-full max-w-screen-sm mx-auto">
+              {riceTopics?.map((topic) => (
                 <div
-                  key={index}
-                  className={`p-4 rounded-md shadow-md ${
-                    message.type === "question"
-                      ? "bg-blue-100 text-black"
-                      : "bg-green-100 text-black"
-                  }`}
+                  key={topic.id}
+                  className="p-3 bg-gray-100 text-black rounded-lg shadow-md hover:bg-gray-300 transition cursor-pointer text-center"
+                  onClick={() => {
+                    handleBubbleClick(topic.title);
+                    setInput(topic.title);
+                  }}
                 >
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                  <div className="flex items-center mt-2 space-x-2">
-                    <button
-                      className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                      onClick={() => handleCopy(message.content)}
-                      title="Copy"
-                    >
-                      <FaRegCopy />
-                    </button>
-                    {isReading ? (
-                      <button
-                        className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                        onClick={() => window.speechSynthesis.cancel()}
-                        title="Stop Read Aloud"
-                      >
-                        <FaVolumeOff />
-                      </button>
-                    ) : (
-                      <button
-                        className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                        onClick={() => handleReadAloud(message.content)}
-                        title="Read Aloud"
-                      >
-                        <FaVolumeUp />
-                      </button>
-                    )}
-                    <button
-                      className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                      onClick={() => handleShare(message.content)}
-                      title="Share"
-                    >
-                      <FaShareAlt />
-                    </button>
-                  </div>
+                  <ReactMarkdown className="font-medium">
+                    {topic.title}
+                  </ReactMarkdown>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Chat Messages Section (Non-Scrollable) */}
+        <div className="w-full max-w-screen-lg flex flex-col space-y-2 flex-grow overflow-y-auto">
+          {/* Loading Indicator (Centered Inside Chat Box) */}
+          {isLoading ? (
+            <div className="flex items-center justify-center flex-grow">
+              <Example variant="loading01" />
+            </div>
+          ) : (
+            messages.map((message, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-md shadow-md w-full ${
+                  message.type === "question"
+                    ? "bg-blue-50 border border-blue-300 text-black"
+                    : "bg-green-50 border border-green-300 text-black"
+                }`}
+              >
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                <div className="flex items-center mt-2 space-x-2">
+                  <button
+                    className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                    title="Copy"
+                    onClick={() => handleCopy(message.content)}
+                  >
+                    <FaRegCopy />
+                  </button>
+                  {isReading ? (
+                    <button
+                      className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                      title="Stop Read Aloud"
+                      onClick={() => window.speechSynthesis.cancel()}
+                    >
+                      <FaVolumeOff />
+                    </button>
+                  ) : (
+                    <button
+                      className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                      title="Read Aloud"
+                      onClick={() => handleReadAloud(message.content)}
+                    >
+                      <FaVolumeUp />
+                    </button>
+                  )}
+                  <button
+                    className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                    title="Share"
+                    onClick={() => handleShare(message.content)}
+                  >
+                    <FaShareAlt />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
           <div ref={bottomRef}></div>
         </div>
+      </div>
 
-        {/* Input Bar (Fixed at Bottom) */}
-        <div className="sticky bottom-0 w-full bg-white p-3 border-t border-gray-300 shadow-lg">
-          <div className="flex items-center">
-            <div className="flex-grow relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={handleInputChangeWithVisibility}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask a question..."
-                className="w-full p-4 pl-5 pr-14 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-gray-800 text-sm md:text-base shadow-md"
-              />
-              {showSendButton && (
-                <button
-                  onClick={() => handleSend(input)}
-                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 px-5 py-2 rounded-full text-white font-semibold shadow-lg transition ${
-                    isLoading
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-[#ffa800] hover:bg-[#ff8c00]"
-                  }`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sending" : "➤"}
-                </button>
-              )}
-            </div>
+      {/* Input Bar */}
+      <div className="fixed bottom-0 left-0  lg:left-64 right-0 bg-white p-2 border-t shadow-lg">
+        <div className="flex items-center max-w-screen-lg mx-auto px-4">
+          <div className="flex-grow relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
+              placeholder="Ask a question..."
+              className="w-full p-4 pl-5 pr-14 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-gray-800 text-sm md:text-base shadow-md"
+            />
+            <button
+              onClick={() => handleSend(input)}
+              className={`absolute right-4 top-1/2 transform -translate-y-1/2 px-5 py-2 rounded-full text-white font-semibold shadow-lg transition ${
+                isLoading
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-[#ffa800] hover:bg-[#ff8c00]"
+              }`}
+              disabled={isLoading}
+            >
+              {isLoading ? "Sending..." : "➤"}
+            </button>
           </div>
         </div>
       </div>

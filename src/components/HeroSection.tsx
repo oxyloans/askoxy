@@ -93,7 +93,7 @@ const images: ImageData[] = [
     src: HM6,
     alt: "Image 6",
     text: "Food & Beverage",
-    link: "/dashboard",
+    link: "/dashboard/free-chatgpt",
   },
   {
     src: HM7,
@@ -117,13 +117,13 @@ const images: ImageData[] = [
     src: HM10,
     alt: "Event Management Services",
     text: "Event Management Services",
-    link: "/dashboard",
+    link: "/dashboard/free-chatgpt",
   },
   {
     src: HM11,
     alt: "Image 11",
     text: "Influencer Marketing Services",
-    link: "/dashboard",
+    link: "/dashboard/free-chatgpt",
   },
   {
     src: HM12,
@@ -147,7 +147,7 @@ const images: ImageData[] = [
     src: HM15,
     alt: "Health and Wellness Services",
     text: "Health and Wellness Services",
-    link: "/dashboard",
+    link: "/dashboard/free-chatgpt",
   },
 
   {

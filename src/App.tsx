@@ -214,6 +214,11 @@ import RiceSalePage from "./components/Communities";
 import AllQueriesforAdmin from "./components/UserQueries";
 import Admin from "./Pages/Admin";
 import QR from "./components/qr";
+import Erice from "./components/Erice";
+import Greenproject from "./components/Greenproject";
+import EL_Dorado from "./components/EL_Dorado";
+import ThankYouPage from "./components/ThankYouPage";
+import Meeting from "./components/Meeting";
 const App: React.FC = () => {
   return (
     <Router>
@@ -222,12 +227,16 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/communities/maruthielite" element={<RiceSalePage />} />
-          <Route path="/qrcode" element={<QR />}/>
+          <Route path="/qrcode" element={<QR />} />
           {/* Landing Page (First Page) */}
           <Route path="/" element={<Landingpage />} />
-         
           <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/erice" element={<Erice />} />
+          <Route path="/greenproject" element={<Greenproject />} />
+          <Route path="/el-dorado" element={<EL_Dorado />} />
+          <Route path="/thank-you" Component={ThankYouPage} />
+          <Route path="/meeting" element={<Meeting />} />
           <Route
             path="/allcampaignsdetails"
             element={<AllCampaignsDetails />}
@@ -240,7 +249,6 @@ const App: React.FC = () => {
           <Route path="/normal" element={<Normal />}>
             <Route index element={<NormalGpt />} />
           </Route>
-
           <Route path="/dashboard" element={<Layout />}>
             {/* Default Route */}
             <Route index element={<FreeChatGpt />} />
@@ -293,7 +301,6 @@ const App: React.FC = () => {
             <Route path="universities-gpt" element={<University />} />
             {/* Add more nested routes as needed */}
           </Route>
-
           {/* Redirect Unknown Routes to Landing Page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

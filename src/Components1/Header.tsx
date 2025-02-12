@@ -146,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 >
                   <FaUserEdit className="mr-3 text-gray-600" size={24} />
                   <span className="font-bold text-[#351664]">
-                    Profile Updated
+                    Profile Update
                   </span>
                 </a>
 

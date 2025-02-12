@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import Footer from "./Footer";
 import { message } from "antd";
 import { notification } from "antd";
+import Companies from "../Components1/Companies";
 
 import FG from "../assets/img/genai.png";
 import img1 from "../assets/img/image1.png";
@@ -187,18 +188,18 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
     <div>
       <div>
         <header>
-          <div className="flex flex-col items-center justify-center md:flex-row  px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start pt-5 justify-center">
             {/* Title */}
-            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
+            <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text45xl leading-tight mb-6 md:mb-0">
               FREE AI & GEN AI TRAINING
-            </h3>
+            </h1>
           </div>
 
           {/* Buttons on the right */}
           <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
             {/* Button: I'm Interested */}
             <button
-              className="px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-lg hover:bg-[#03a15c] transition-all text-sm md:text-base lg:text-lg"
+              className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
               onClick={handleSubmit}
               aria-label="I'm Interested"
               disabled={isButtonDisabled} // Disable the button dynamically
@@ -208,7 +209,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
 
             {/* Button: Write To Us */}
             <button
-              className="px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-lg hover:bg-[#007aa7] transition-all text-sm md:text-base lg:text-lg"
+              className="w-full md:w-auto px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -360,32 +361,34 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
 
         {/* Main Content */}
 
-        <div className="flex flex-col items-center justify-center px-6 py-12 ">
+        <div className="flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 py-10 min-h-screen">
           {/* Main Container */}
-          <div className="flex flex-col md:flex-row items-center max-w-5xl w-full bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center max-w-6xl w-full bg-white shadow-lg rounded-2xl overflow-hidden">
             {/* Left Section - Image */}
             <div className="w-full md:w-1/2 p-6 flex justify-center">
               <img
                 src={FG}
-                alt="My Rotarian"
-                className="w-full max-w-md h-auto rounded-lg shadow-lg"
+                alt="AI Training Offer"
+                className="w-full max-w-md md:max-w-lg h-auto rounded-xl shadow-md"
               />
             </div>
 
             {/* Right Section - Content */}
             <div className="w-full md:w-1/2 p-6 space-y-6 text-center md:text-left">
               {/* Offer Heading */}
-              <h2 className="text-[#6A1B9A] text-2xl md:text-3xl font-bold leading-tight">
-                🚀 Our Offer: Free AI & Gen AI Training
+              <h2 className="text-[#6A1B9A] text-3xl md:text-4xl font-bold">
+                🚀 Free AI & Gen AI Training
               </h2>
 
               {/* Details */}
-              <p className="text-gray-700 leading-relaxed text-lg">
+              <p className="text-gray-700 text-lg leading-relaxed">
                 <strong>Unlock your career potential</strong> with{" "}
                 <span className="text-[#008CBA] font-semibold">ASKOXY.AI</span>
                 ’s free AI & Generative AI training, combined with Java and
                 Microservices expertise.
-                <br />
+              </p>
+
+              <p className="text-gray-700 text-lg leading-relaxed">
                 <strong className="text-[#D81B60]">
                   Open to all graduates, pass or fail
                 </strong>
@@ -393,7 +396,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
                 helps experienced professionals achieve high-salary roles. 🎓
               </p>
 
-              <p className="text-gray-700 leading-relaxed text-lg">
+              <p className="text-gray-700 text-lg leading-relaxed">
                 Gain hands-on experience with free project training, guided by
                 visionary leader{" "}
                 <strong className="text-[#D81B60]">
@@ -407,14 +410,14 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
               </p>
 
               {/* Call-to-action Button */}
-              <div className="mt-6 flex justify-center md:justify-start">
+              <div className="flex justify-center md:justify-start">
                 <a
                   href="https://sites.google.com/view/globalecommercemarketplace/home"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Oxyloans Training Guide"
                 >
-                  <button className="px-6 py-3 text-lg font-bold bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#006F8E] transition-transform transform hover:scale-105">
+                  <button className="px-6 py-3 text-lg font-bold bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#006F8E] transition-transform transform hover:scale-105 focus:ring-4 focus:ring-blue-300">
                     📖 Our Training Guide
                   </button>
                 </a>
@@ -424,209 +427,7 @@ const askOxyOfers = localStorage.getItem("askOxyOfers");
         </div>
       </div>
 
-      <div>
-        <h1 className="text-center mx-4 my-12 text-3xl md:text-5xl font-bold">
-          <span className="text-[#04AA6D]">
-            <span className="text-[#0a6fba]">OXY</span> GROUP
-          </span>{" "}
-          <span className="text-[#FFA400]">COMPANIES</span>
-        </h1>
-
-        <div className="event-container1">
-          <div className="event-content1">
-            <div className="diwali-images1">
-              <div className="image-container1">
-                <img src={img1} alt="Diwali Diyas" className="diwali-diya" />
-              </div>
-            </div>
-            <div className="event-details">
-              <h1 className="diwali-title1" style={{ color: "#0a6fba" }}>
-                Lend & Earn 1.5% - 2.5% Monthly RoI
-              </h1>
-              <h3
-                className="diwali-subtitle1"
-                style={{ padding: "0px", margin: "0px" }}
-              >
-                OxyLoans.com is an RBI-approved P2P NBFC, a revolutionary
-                fintech platform. We onboard tax-paying Individuals, and HNIs as
-                Lenders. We enable lenders/ investors to exchange funds directly
-                with borrowers. Our proprietary algorithms include credit
-                scoring, underwriting, and loan agreement preparation.
-              </h3>
-              <h3 className="diwali-subtitle1" style={{ fontWeight: "bold" }}>
-                ₹1000000000+<b>DISBURSAL</b> <br></br> 30000+ <b>LENDERS</b>
-                <br></br> 270000+ <b>BORROWERS</b>
-              </h3>
-              <div className="buttons">
-                <a
-                  href="https://oxyloans.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button className="button demo">Start Lending</button>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="event-container1">
-          <div className="event-content1" style={{ borderColor: "#c26c27" }}>
-            <div className="diwali-images1">
-              <div className="image-container1">
-                <img src={img2} alt="Diwali Diyas" className="diwali-diya" />
-              </div>
-            </div>
-            <div className="event-details">
-              <h1 className="diwali-title1" style={{ color: "#c26c27" }}>
-                Fractional Investments in Lands & Buildings
-              </h1>
-              <h3
-                className="diwali-subtitle1"
-                style={{ padding: "0px", margin: "0px", paddingBottom: "20px" }}
-              >
-                OXYBRICKS is the first Blockchain platform that enables
-                fractional investment in lands & buildings: a Blockchain tech
-                platform that allows principal guarantee, monthly earnings, and
-                property appreciation.
-              </h3>
-
-              <div className="buttons">
-                <a
-                  href="https://oxybricks.world/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button
-                    className="button demo"
-                    style={{ backgroundColor: "#c26c27" }}
-                  >
-                    Know More
-                  </button>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="event-container1">
-          <div className="event-content1" style={{ borderColor: "#583e99" }}>
-            <div className="diwali-images1">
-              <div className="image-container1">
-                <img src={img4} alt="Diwali Diyas" className="diwali-diya" />
-              </div>
-            </div>
-            <div className="event-details">
-              <h1 className="diwali-title1" style={{ color: "#583e99" }}>
-                All your ideas at one place
-              </h1>
-              <h3
-                className="diwali-subtitle1"
-                style={{ padding: "0px", margin: "0px", paddingBottom: "20px" }}
-              >
-                BMV.Money is an Bridgital Marketplace connecting stakeholders in
-                global immigration services, property management, machinery
-                purchases, startup mentoring, and job orientation programs.
-              </h3>
-
-              <div className="buttons">
-                <a
-                  href="https://bmv.money/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button
-                    className="button demo"
-                    style={{ backgroundColor: "#583e99" }}
-                  >
-                    Know More
-                  </button>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="event-container1">
-          <div className="event-content1" style={{ borderColor: "#189c9e" }}>
-            <div className="diwali-images1">
-              <div className="image-container1">
-                <img src={img5} alt="Diwali Diyas" className="diwali-diya" />
-              </div>
-            </div>
-            <div className="event-details">
-              <h1 className="diwali-title1" style={{ color: "#189c9e" }}>
-                Find your dream home
-              </h1>
-              <h3
-                className="diwali-subtitle1"
-                style={{ padding: "0px", margin: "0px", paddingBottom: "20px" }}
-              >
-                XPERT HOMES is a leading property management company offering
-                transparent, high-quality services. We help property owners
-                maximize ROI and find verified tenants through our comprehensive
-                360° management solutions.
-              </h3>
-
-              <div className="buttons">
-                <a
-                  href="https://xperthomes.in/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button
-                    className="button demo"
-                    style={{ backgroundColor: "#189c9e" }}
-                  >
-                    Know More
-                  </button>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Group Section */}
-        {/* <div className="px-6 py-5 bg-[#f1f1f1] md:p-10 rounded-md">
-          <h1
-            className="text-center my-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
-            style={{ fontSize: "clamp(2rem, 8vw, 50px)" }} // Responsively scales font size
-          >
-            <b className="text-green-600">
-              <span className="text-[#0a6fba]">OXY</span> GROUP
-            </b>{" "}
-            <span className="text-[#FFA500]">COMPANIES</span>
-          </h1>
-
-          <div className="relative w-full max-w-[700px] mx-auto overflow-hidden">
-            <button
-              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full left-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
-              onClick={handlePrev}
-            >
-              ←
-            </button>
-            <div
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-              {images.map((image, idx) => (
-                <div key={idx} className="flex-shrink-0 w-full">
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="w-full h-auto"
-                  />
-                </div>
-              ))}
-            </div>
-            <button
-              className="absolute z-10 p-2 text-2xl transform -translate-y-1/2 bg-blue-600 text-white rounded-full right-2 top-1/2 hover:bg-blue-700" // Adds blue background and white text color
-              onClick={handleNext}
-            >
-              →
-            </button>
-          </div>
-        </div> */}
-      </div>
+      <Companies/>
       <Footer />
     </div>
   );
