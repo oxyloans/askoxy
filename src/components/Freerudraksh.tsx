@@ -244,7 +244,7 @@ const Freerudraksha: React.FC = () => {
   const navigate = useNavigate();
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/user-profile");
+    navigate("/dashboard/user-profile");
   };
 
   const handleWriteToUs = () => {

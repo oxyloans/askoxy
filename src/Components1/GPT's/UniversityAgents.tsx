@@ -89,17 +89,17 @@ const UniversityAgents: React.FC = () => {
        const userId = localStorage.getItem("userId");
        const apiurl =
          userId !== null
-           ? `http://65.0.147.157:9001/api/student-service/user/chat?InfoType=${encodeURIComponent(
+           ? `https://meta.oxyloans.com/api/student-service/user/chat?InfoType=${encodeURIComponent(
                queryInput
              )}`
-           : `http://65.0.147.157:9001/api/student-service/user/chat?InfoType=${encodeURIComponent(
+           : `https://meta.oxyloans.com/api/student-service/user/chat?InfoType=${encodeURIComponent(
                queryInput
              )}`;
 
        // Make API request to the specified endpoint
        const response = await axios.post(
          // // `https://meta.oxyloans.com/api/student-service/user/erice?infoType=${encodeURIComponent(queryInput)}`
-         `http://65.0.147.157:9001/api/student-service/user/enterChat?prompt=${encodeURIComponent(
+         `https://meta.oxyloans.com/api/student-service/user/enterChat?prompt=${encodeURIComponent(
            queryInput
          )}`
        );
@@ -369,7 +369,10 @@ const UniversityAgents: React.FC = () => {
               ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                handleInputChangeWithVisibility(e);
+              }}
               onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
               placeholder="Ask a question..."
               className="w-full p-4 pl-5 pr-14 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-gray-800 text-sm md:text-base shadow-md"

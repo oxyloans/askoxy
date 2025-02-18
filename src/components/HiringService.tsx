@@ -97,7 +97,7 @@ const HiringService: React.FC = () => {
 
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/user-profile");
+    navigate("/dashboard/user-profile");
   };
 
   const handleWriteToUs = () => {

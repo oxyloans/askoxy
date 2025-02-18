@@ -136,7 +136,7 @@ const StudyAbroad: React.FC = () => {
 
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/user-profile");
+     navigate("/dashboard/user-profile");
   };
 
   const handleWriteToUs = () => {
@@ -236,7 +236,7 @@ const StudyAbroad: React.FC = () => {
             {/* Dropdown Menu Button */}
             <div className="relative">
               <button
-                className="bg-[#ea4c89] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
+                className="bg-[#ea4c89] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md  text-sm md:text-base lg:text-lg transition duration-300"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 aria-label="Navigate options"
               >
@@ -259,7 +259,7 @@ const StudyAbroad: React.FC = () => {
                       label: "Application Support GPT",
                       path: "/dashboard/applicationsupport-gpt",
                     },
-                    { label: "Courses GPT", path: "/courses-gpt" },
+                    { label: "Courses GPT", path: "/dashboard/courses-gpt" },
                     {
                       label: "Foreign Exchange & Predeparture GPT",
                       path: "/dashboard/foreign-exchange",
@@ -291,7 +291,7 @@ const StudyAbroad: React.FC = () => {
                     },
                     {
                       label: "English Test & Interview Preparation GPT",
-                      path: "/testandinterview-gpt",
+                      path: "/dashboard/testandinterview-gpt",
                     },
                     {
                       label: "Universities GPT",

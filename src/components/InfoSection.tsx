@@ -2,38 +2,14 @@
 import React, { useState } from "react";
 import { FaSearch } from "react-icons/fa"; // Import the search icon
 import axios from "axios";
-import img1 from "../assets/img/image1.png"; // Import your images
-import img2 from "../assets/img/image2.png";
-import img3 from "../assets/img/image3.png";
-import img4 from "../assets/img/image4.png";
-import img5 from "../assets/img/image4.png";
-import img6 from "../assets/img/image6.png";
 
-const images = [
-  { src: img1, alt: "Image 1" },
-  { src: img2, alt: "Image 2" },
-  { src: img5, alt: "Image 5" },
-  { src: img6, alt: "Image 6" },
-  { src: img3, alt: "Image 3" },
-  { src: img4, alt: "Image 4" },
-];
 
 const InfoSection: React.FC = () => {
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleNext = () => {
-    if (currentIndex < images.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
@@ -56,18 +32,7 @@ const InfoSection: React.FC = () => {
   //   }
   // };
 
-     const userId = localStorage.getItem("userId");
-      const handleSearch = () => {
-        if (userId) {
-          // If user is signed in, redirect to dashboard
-          window.location.href = `/dashboard?query=${encodeURIComponent(
-            query
-          )}`;
-        } else {
-          // Otherwise, redirect to normal page
-          window.location.href = `/normal?query=${encodeURIComponent(query)}`;
-        }
-      };
+    
   return (
     <div className="py-8">
       {/* Advice Section */}
@@ -124,102 +89,10 @@ const InfoSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Group Section */}
-      <div className="px-6 py-5 bg-[#f1f1f1] md:p-10">
-        <h2
-          className="mb-4 text-2xl font-bold text-purple-700 md:text-3xl"
-          style={{ textAlign: "center" }}
-        >
-          Oxy Group Companies
-        </h2>
-        <div className="carousel-container">
-          <button className="carousel-button prev-button" onClick={handlePrev}>
-            ←
-          </button>
-          <div className="carousel-wrapper">
-            <div
-              className="carousel-images-wrapper"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-              {images.map((image, idx) => (
-                <div key={idx} className="carousel-image-item">
-                  <img src={image.src} alt={image.alt} className="carousel" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button className="carousel-button next-button" onClick={handleNext}>
-            →
-          </button>
-        </div>
-
-        {/* <div className="carousel-container">
-          <button
-            className="carousel-button prev-button"
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-          >
-            ←
-          </button>
-          <div className="carousel-wrapper">
-            <div
-              className="carousel-images-wrapper"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-              {images.map((image, idx) => (
-                <div key={idx} className="carousel-image-item">
-                  <img src={image.src} alt={image.alt} className="carousel" />
-                </div>
-              ))}
-            </div>
-          </div>
-          <button
-            className="carousel-button next-button"
-            onClick={handleNext}
-            disabled={currentIndex === images.length - 1}
-          >
-            →
-          </button>
-        </div> */}
-      </div>
+     
 
       {/* Search Section */}
-      <div className="py-8 text-center bg-purple-700 bg-gradient-to-b from-purple-500 to-purple-900">
-        <h2 className="mb-4 text-2xl font-bold text-yellow-500 md:text-3xl">
-          Search anything you want
-        </h2>
-        <p className="mb-6 text-sm text-gray-300 md:text-lg">
-          We're here to help you achieve your goals with tailored solutions and
-          end-to-end support.
-        </p>
-
-        <div className="flex items-center justify-center">
-          <div className="search-placeholder1">
-            <div className="relative w-100 ">
-              <input
-                type="text"
-                placeholder="Ask question..."
-                className="search-input"
-                value={query}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch(); // Trigger the search action on Enter
-                  }
-                }}
-              />
-              <button
-                className="absolute top-1/2 right-2 transform -translate-y-1/2  text-black p-2 rounded-full "
-                onClick={handleSearch}  
-              >
-                <FaSearch />
-              </button>
-            </div>
-          </div>
-        </div>
-        {response && <div className="response-section">{response}</div>}
-      </div>
+     
 
       <style>
         {`

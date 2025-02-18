@@ -1,45 +1,52 @@
-import React from 'react';
-import { FaSearch } from "react-icons/fa";  // Import the search icon
-import HeroSection from './HeroSection';
-import InfoSection from './InfoSection';
-import ProductsSection from './ProductsSection';
-import Testimonials from './Testimonials';
-import Footer from './Footer';
+import React from "react";
 
-// You can customize the styling based on your project's requirements
+import HeroSection from "./HeroSection";
+import InfoSection from "./InfoSection";
+
+import Footer from "./Footer";
+
+import PdfPages from "./PdfPages";
+import OxyGroupCarousel from "./OxyGroupCarousel";
+import SearchSection from "./SearchSection";
+import OurPeople from "./OurTeam";
+
+
 const Landingpage: React.FC = () => {
   return (
-    <>
+    <div className="flex flex-col">
       {/* Hero Section */}
-      <section>
+      <section className="mb-8">
         <HeroSection />
       </section>
 
       {/* Info Section */}
-      <section>
+      <section className="">
         <InfoSection />
       </section>
 
-      {/* Products Section */}
-      {/* <section>
-        <ProductsSection />
-      </section> */}
+      {/* Search Section */}
+      <section className="">
+        <SearchSection />
+      </section>
 
-      {/* Testimonials Section */}
-      {/* <section>
-        <Testimonials />
-      </section> */}
+      {/* Our People Section */}
+      <section className="">
+        <OurPeople />
+      </section>
+      <section>
+        <PdfPages />
+      </section>
+
+      {/* Oxy Group Carousel */}
+      <section className="mb-2">
+        <OxyGroupCarousel />
+      </section>
 
       {/* Footer Section */}
-      <footer>
+      <footer className="m-0">
         <Footer />
       </footer>
-
-      {/* Example of how to integrate the search icon (you can place it wherever appropriate) */}
-      {/* <div style={{ position: 'fixed', bottom: '20px', right: '20px', backgroundColor: '#fff', padding: '10px', borderRadius: '50%', boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
-        <FaSearch size={24} />
-      </div> */}
-    </>
+    </div>
   );
 };
 

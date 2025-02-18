@@ -106,7 +106,7 @@ const handleSubmit = async () => {
 
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/user-profile");
+    navigate("/dashboard/user-profile");
   };
 
   const handleWriteToUs = () => {
@@ -382,18 +382,18 @@ const handleSubmit = async () => {
           </div> */}
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2 px-4">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 px-4 py-6">
           {/* Image Section */}
-          <div className="flex justify-center p-4">
+          <div className="flex justify-center lg:w-1/2 p-4">
             <img
-              src={FR}
+              src={FR} // Replace with the actual image source
               alt="Free Sample"
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-lg shadow-lg pointer-events-none select-none"
+              className="world-image w-full sm:w-80 md:w-96 h-auto rounded-lg shadow-lg transition-transform transform hover:scale-110"
             />
           </div>
 
           {/* Text and Button Section */}
-          <div className="text-center lg:text-left p-4 ">
+          <div className="flex flex-col justify-center text-center lg:text-left lg:w-1/2 p-4">
             <p className="text-black mb-4 text-sm sm:text-base lg:text-lg">
               <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kg
               rice bag & get a FREE rice container! (Container remains Oxy Group
@@ -421,12 +421,12 @@ const handleSubmit = async () => {
               </ul>
               <br />
               If you are interested in buying a rice bag, please click the{" "}
-              <strong> I am Interested </strong>button
+              <strong> I am Interested </strong> button
             </p>
 
             <div className="space-x-4">
               <button
-                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg  transition-all text-sm md:text-base lg:text-lg"
+                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg transition-all text-sm md:text-base lg:text-lg"
                 onClick={handleSubmit}
                 disabled={isButtonDisabled}
                 aria-label="I'm Interested"
@@ -438,7 +438,7 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-     <Companies/>
+      <Companies />
       <Footer />
     </div>
   );

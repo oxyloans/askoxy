@@ -219,6 +219,7 @@ import Greenproject from "./components/Greenproject";
 import EL_Dorado from "./components/EL_Dorado";
 import ThankYouPage from "./components/ThankYouPage";
 import Meeting from "./components/Meeting";
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -261,6 +262,7 @@ const App: React.FC = () => {
             <Route path="studyabroad" element={<StudyAbroad />} />
             <Route path="free-chatgpt" element={<FreeChatGpt />} />
             <Route path="user-profile" element={<UserProfile />} />
+            <Route path="testandinterview-gpt" element={<PreparationGpt />} />
             <Route
               path="machines-manufacturing"
               element={<MachinesManufacturingServices />}

@@ -359,7 +359,10 @@ const NormalGpt: React.FC = () => {
               ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                handleInputChangeWithVisibility(e);
+              }}
               onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
               placeholder="Ask a question..."
               className="w-full p-4 pl-5 pr-14 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-gray-800 text-sm md:text-base shadow-md"
@@ -379,8 +382,7 @@ const NormalGpt: React.FC = () => {
         </div>
       </div>
 
-        {
-      showModal && (
+      {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-8 shadow-xl max-w-sm sm:max-w-md w-full">
             {/* Modal Message */}
@@ -405,8 +407,7 @@ const NormalGpt: React.FC = () => {
             </div>
           </div>
         </div>
-      )
-    }
+      )}
     </main>
   );
 };
