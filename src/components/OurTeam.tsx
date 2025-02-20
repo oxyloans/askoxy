@@ -68,7 +68,7 @@ const OurPeople: React.FC = () => {
       {/* Header Section */}
       <div className="text-center px-6 md:px-12">
         <h2 className="text-3xl md:text-4xl font-extrabold text-[rgba(91,5,200,0.85)]">
-          Our Team
+          Executive Team
         </h2>
         <span className="block w-16 h-1 bg-gradient-to-r from-orange-300 to-purple-300 mt-2 mx-auto"></span>
         <p className="text-gray-600 mt-3 max-w-2xl mx-auto font-bold text-lg">

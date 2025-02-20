@@ -41,12 +41,12 @@ const sidebarItems: SidebarItem[] = [
   {
     title: "AllQueries",
     icon: <FaDatabase className="text-yellow-500" />,
-    link: "/alluserqueries",
+    link: "/userqueries",
   },
   {
     title: "Logout",
     icon: <FaSignOutAlt className="text-red-500" />,
-    link: "/logout",
+    link: "/admin",
   },
 ];
 

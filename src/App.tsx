@@ -163,9 +163,6 @@
 
 // export default App;
 
-
-
-
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -219,6 +216,8 @@ import Greenproject from "./components/Greenproject";
 import EL_Dorado from "./components/EL_Dorado";
 import ThankYouPage from "./components/ThankYouPage";
 import Meeting from "./components/Meeting";
+import AllQueries from "./Pages/AllQueries";
+import CampaignDetails from "./Components1/campaignDetails";
 
 const App: React.FC = () => {
   return (
@@ -243,6 +242,7 @@ const App: React.FC = () => {
             element={<AllCampaignsDetails />}
           />
           <Route path="/campaignsadd" element={<CampaignsAdd />} />
+          <Route path="/userqueries" element={<AllQueries />} />
           <Route path="/sider" element={<Sidebar />} />
           {/* WhatsApp Login (Before Clicking Sign-in) */}
           <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
@@ -301,6 +301,7 @@ const App: React.FC = () => {
               element={<UniversityAgents />}
             />
             <Route path="universities-gpt" element={<University />} />
+            <Route path="campaign/:type" element={<CampaignDetails />} />
             {/* Add more nested routes as needed */}
           </Route>
           {/* Redirect Unknown Routes to Landing Page */}

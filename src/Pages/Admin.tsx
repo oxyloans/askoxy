@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
+import { Select, Table, TableProps } from "antd";
+import "antd/dist/reset.css";
+import moment from "moment";
 
 interface DashboardCardProps {
   title: string;
   count: number;
   color: string;
+}
+
+interface DateRange {
+  startDate: string | null;
+  endDate: string | null;
+}
+
+interface DateFilterProps {
+  selectedFilter: string;
 }
 
 interface User {
@@ -24,15 +36,25 @@ interface OfferDetails {
   projectType: string;
   askOxyOfers: string;
   mobileNumber: string;
+  registrationDate: string;
 }
 
+interface UserCount {
+  userId: string;
+  phoneNumber: string;
+  projectType: string;
+  askOxyOfers: string;
+  createdAt: string;
+}
 const DashboardCard: React.FC<DashboardCardProps> = ({
   title,
   count,
   color,
 }) => {
   return (
-    <div className={`bg-${color}-200 p-4 md:p-6 rounded-lg shadow-md`}>
+    <div
+      className={`bg-${color}-200 p-4 md:p-6 rounded-lg shadow-md h-36 md:h-36`}
+    >
       <h3 className="text-lg font-semibold">{title}</h3>
       <p className="text-3xl font-bold">{count}</p>
     </div>
@@ -47,89 +69,237 @@ const Admin: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [combinedData, setCombinedData] = useState<OfferDetails[]>([]);
+  const [userCount, setUserCount] = useState<UserCount[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(
+    "REGISTEREDUSERS"
+  );
+  const [showRegisteredColumn, setShowRegisteredColumn] = useState(true);
+  const [registeredUserCount, setRegisteredUserCount] = useState<UserCount[]>(
+    []
+  );
+  const [dateRange, setDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
+  const [currentPage, setCurrentPage] = useState(1); // Track the current page
+  const pageSize = 50;
 
-  // Fetch offers data from the API
-  const fetchOffers = async () => {
+  const fetchData = async (
+    startDate: string | null,
+    endDate: string | null
+  ) => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        "https://meta.oxyloans.com/api/auth-service/auth/usersOfferesDetails"
-      );
-      const validUsers = response.data.filter(
-        (offerDetails: OfferDetails) =>
-          offerDetails.mobileNumber !== null && offerDetails.mobileNumber !== ""
-      );
-      setOffers(validUsers);
-      setAllOffers(validUsers);
-      setLoading(false);
+
+      // Perform multiple API requests in parallel
+      const responses = await Promise.allSettled([
+        axios.get(
+          "https://meta.oxyloans.com/api/auth-service/auth/usersOfferesDetails"
+        ),
+        axios.get(
+          "https://meta.oxyloans.com/api/auth-service/auth/AllusersAddress"
+        ),
+        axios.post(
+          "https://meta.oxyloans.com/api/auth-service/auth/getalluserdetailsbyrange",
+          {
+            endingDate: endDate,
+            startingDate: startDate,
+          }
+        ),
+      ]);
+
+      // Check the result of each request
+      if (responses[0].status === "fulfilled") {
+        const validOffers = responses[0].value.data.filter(
+          (offerDetails: OfferDetails) =>
+            offerDetails.mobileNumber !== null &&
+            offerDetails.mobileNumber !== ""
+        );
+        setOffers(validOffers);
+        setAllOffers(validOffers);
+      } else {
+        console.error("Failed to fetch offers:", responses[0].reason);
+        setError("Failed to load offers.");
+      }
+
+      if (responses[1].status === "fulfilled") {
+        setUsers(responses[1].value.data);
+        const validUsers = responses[1].value.data.filter(
+          (user: User) =>
+            user.deliveryType !== null &&
+            user.deliveryType !== "" &&
+            user.whatsappNumber !== null &&
+            user.whatsappNumber !== ""
+        );
+        setFilteredUsers(validUsers);
+      } else {
+        console.error("Failed to fetch user addresses:", responses[1].reason);
+        setError("Failed to load user addresses.");
+      }
+      if (responses[2].status === "fulfilled") {
+        setUserCount(responses[2].value.data);
+        setRegisteredUserCount(responses[2].value.data);
+      } else {
+        console.error("Failed to fetch user addresses:", responses[2].reason);
+        setError("Failed to load user addresses.");
+      }
     } catch (err: any) {
-      setError(err.response?.statusText || "Failed to fetch data");
+      // Handle any unexpected errors
+      console.error("An unexpected error occurred:", err);
+      setError("An unexpected error occurred.");
+    } finally {
+      // Ensure loading state is cleared after the process
       setLoading(false);
     }
   };
-  const fetchRudrakshaUsers = async () => {
+
+  const fetchDataByDateRange = async (
+    startDate: string | null,
+    endDate: string | null
+  ) => {
     try {
-      const response = await axios.get(
-        "https://meta.oxyloans.com/api/auth-service/auth/AllusersAddress"
-      );
-      setUsers(response.data);
-      const validUsers = response.data.filter(
-        (user: User) =>
-          user.deliveryType !== null &&
-          user.deliveryType !== "" &&
-          user.whatsappNumber !== null &&
-          user.whatsappNumber !== ""
+      setLoading(true);
+
+      const response = await axios.post(
+        "https://meta.oxyloans.com/api/auth-service/auth/getalluserdetailsbyrange",
+        {
+          endingDate: endDate,
+          startingDate: startDate,
+        }
       );
 
-      setFilteredUsers(validUsers);
-    } catch (error) {
-      console.error("Failed to fetch user addresses:", error);
+      setUserCount(response.data);
+      setLoading(false);
+    } catch (err: any) {
+      // setError("An unexpected error occurred");
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOffers();
-    fetchRudrakshaUsers();
+    fetchData(null, null);
   }, []);
+
+  const handleDateChange = (value: string) => {
+    let endDate = moment().format("YYYY-MM-DD"); // Current date
+    let startDate: string | null = null;
+    console.log(value);
+
+    switch (value) {
+      case "today":
+        startDate = moment().format("YYYY-MM-DD");
+        break;
+      case "yesterday":
+        startDate = moment().subtract(1, "days").format("YYYY-MM-DD");
+        break;
+      case "thisWeek":
+        startDate = moment().startOf("week").format("YYYY-MM-DD");
+        break;
+      case "last10Days":
+        startDate = moment().subtract(10, "days").format("YYYY-MM-DD");
+        break;
+      case "thisMonth":
+        startDate = moment().startOf("month").format("YYYY-MM-DD");
+        break;
+      case "lastMonth":
+        startDate = moment()
+          .subtract(1, "months")
+          .startOf("month")
+          .format("YYYY-MM-DD");
+        endDate = moment()
+          .subtract(1, "months")
+          .endOf("month")
+          .format("YYYY-MM-DD");
+        break;
+      default:
+        startDate = null;
+    }
+
+    setDateRange({ startDate, endDate });
+    console.log({ startDate, endDate });
+    // fetchDataByDateRange(startDate, endDate);
+    handleFilter("REGISTEREDUSERS", { startDate, endDate });
+  };
 
   useEffect(() => {
     const allData = [
       ...allOffers,
       ...filteredUsers.map((user, index) => ({
-        id: user.scriptId || `${index}`,
+        id: `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
-        askOxyOfers: "Free Rudhraksha",
+        askOxyOfers: "FREERUDHRAKSHA",
+        registrationDate: "N/A",
       })),
     ];
     setOffers(allData);
     setCombinedData(allData);
   }, [allOffers, filteredUsers]);
 
-  const handleFilter = (offerType: string) => {
+  useEffect(() => {
+    const userCountData = userCount?.map((user, index) => ({
+      id: `${index}`,
+      projectType: "ASKOXY",
+      mobileNumber: user.phoneNumber || "N/A",
+      askOxyOfers: "REGISTERED USERS",
+      registrationDate: new Date(user.createdAt).toLocaleString(),
+    }));
+    setOffers(userCountData);
+  }, [userCount]);
+
+  const handleFilter = (
+    offerType: string,
+    dates?: { startDate: string | null; endDate: string | null }
+  ) => {
+    setCurrentPage(1);
+    setSelectedFilter(offerType);
+    setShowRegisteredColumn(offerType === "REGISTEREDUSERS");
+    if (dates) {
+      fetchDataByDateRange(dates.startDate, dates.endDate);
+    }
     if (offerType === "FREERUDRAKSHA") {
       const freeRudrakshaData = filteredUsers.map((user, index) => ({
-        id: user.scriptId || `${index}`,
+        id: `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
-        askOxyOfers: "Free Rudhraksha",
+        askOxyOfers: "FREERUDHRAKSHA",
+        registrationDate: "N/A",
       }));
-      setOffers(freeRudrakshaData);
 
-      console.log({ offers });
+      setOffers(freeRudrakshaData);
     } else if (offerType === "ALL") {
       const allData = [
         ...allOffers,
         ...filteredUsers.map((user, index) => ({
-          id: user.scriptId || `${index}`,
+          id: `${index}`,
           projectType: "ASKOXY",
           mobileNumber: user.whatsappNumber || "N/A",
-          askOxyOfers: "Free Rudhraksha",
+          askOxyOfers: "FREERUDHRAKSHA",
+          registrationDate: "N/A",
         })),
       ];
       setOffers(allData);
 
-      console.log({ offers });
+      // console.log({ offers });
+    } else if (offerType === "REGISTEREDUSERS") {
+      // fetchDataByDateRange(date.startDate, date.endDate);
+      const userCountData = userCount?.map((user, index) => ({
+        id: `${index}`,
+        projectType: "ASKOXY",
+        mobileNumber: user.phoneNumber || "N/A",
+        askOxyOfers: "REGISTERED USERS",
+        registrationDate: new Date(user.createdAt).toLocaleString(),
+      }));
+      // console.log({ userCount });
+
+      // console.log({ userCountData });
+
+      setOffers(userCountData);
     } else {
       const filteredData = allOffers.filter(
         (offer) => offer.askOxyOfers === offerType
@@ -140,16 +310,133 @@ const Admin: React.FC = () => {
     }
   };
 
+  const columns: TableProps<OfferDetails>["columns"] = [
+    {
+      title: "S.No",
+      dataIndex: "index",
+      key: "index",
+      align: "center",
+      render: (_: any, __: any, index: number) =>
+        index + 1 + (currentPage - 1) * pageSize,
+    },
+    {
+      title: "Project Type",
+      dataIndex: "projectType",
+      key: "projectType",
+      align: "center",
+    },
+    {
+      title: "Mobile Number",
+      dataIndex: "mobileNumber",
+      key: "mobileNumber",
+      align: "center",
+    },
+    {
+      title: "Offer",
+      dataIndex: "askOxyOfers",
+      key: "askOxyOfers",
+      align: "center",
+    },
+    ...(showRegisteredColumn
+      ? [
+          {
+            title: "Registration Date",
+            dataIndex: "registrationDate",
+            key: "registrationDate",
+            align: "center" as "center",
+          },
+        ]
+      : []),
+  ];
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  const convertToCSV = (data: any[]) => {
+    if (data.length === 0) return "";
+
+    // Get headers excluding unwanted fields
+    const headers = ["S.No", "Project Type", "Mobile Number", "Offer"];
+    if (showRegisteredColumn) {
+      headers.push("Registration Date");
+    }
+
+    // Create CSV header row
+    const csvRows = [headers.join(",")];
+
+    // Add data rows
+    data.forEach((item, index) => {
+      const row = [
+        index + 1,
+        item.projectType || "",
+        item.mobileNumber || "",
+        item.askOxyOfers || "",
+      ];
+
+      if (showRegisteredColumn) {
+        row.push(item.registrationDate || "");
+      }
+
+      // Handle commas in content by wrapping in quotes
+      const formattedRow = row.map((cell) => {
+        const cellStr = cell.toString();
+        return cellStr.includes(",") ? `"${cellStr}"` : cellStr;
+      });
+
+      csvRows.push(formattedRow.join(","));
+    });
+
+    return csvRows.join("\n");
+  };
+
+  const handleDownload = () => {
+    try {
+      if (!offers || offers.length === 0) {
+        alert("No data available to download");
+        return;
+      }
+
+      // Generate filename based on selected filter and date
+      let filename = "askoxy-data";
+      if (selectedFilter) {
+        filename += `-${selectedFilter.toLowerCase()}`;
+      }
+      if (dateRange.startDate) {
+        filename += `-${dateRange.startDate}`;
+      }
+      filename += ".csv";
+
+      const csvData = convertToCSV(offers);
+
+      // Add BOM for Excel to properly recognize UTF-8
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csvData], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading data:", error);
+      alert("Failed to download data. Please try again.");
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 bg-gray-50 p-4 md:p-6 md:ml-55">
+      <div className="flex-1 bg-gray-50 p-4 md:p-6 md:ml-55 overflow-hidden">
         <h1 className="text-2xl font-semibold mb-4">Admin Dashboard</h1>
 
-        {/* Dashboard Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 mb-4">
           <DashboardCard
             title="Total Offers"
@@ -159,15 +446,16 @@ const Admin: React.FC = () => {
           <DashboardCard
             title="Free Rudraksha"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "Free Rudhraksha")
-                .length
+              combinedData.filter(
+                (offer) => offer.askOxyOfers === "FREERUDHRAKSHA"
+              ).length
             }
             color="gray"
           />
           <DashboardCard
             title="Free Samples"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "FREESAMPLE")
+              combinedData.filter((offer) => offer.askOxyOfers === "FREESAMPLE")
                 .length
             }
             color="green"
@@ -175,23 +463,26 @@ const Admin: React.FC = () => {
           <DashboardCard
             title="FreeAI & GenAI"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "FREEAI").length
+              combinedData.filter((offer) => offer.askOxyOfers === "FREEAI")
+                .length
             }
             color="teal"
           />
           <DashboardCard
             title="Study Abroad"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "STUDYABROAD")
-                .length
+              combinedData.filter(
+                (offer) => offer.askOxyOfers === "STUDYABROAD"
+              ).length
             }
             color="indigo"
           />
           <DashboardCard
             title="Legal Service"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "LEGALSERVICES")
-                .length
+              combinedData.filter(
+                (offer) => offer.askOxyOfers === "LEGALSERVICES"
+              ).length
             }
             color="yellow"
           />
@@ -199,17 +490,24 @@ const Admin: React.FC = () => {
           <DashboardCard
             title="My Rotary"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "ROTARIAN").length
+              combinedData.filter((offer) => offer.askOxyOfers === "ROTARIAN")
+                .length
             }
             color="pink"
           />
           <DashboardCard
             title="We Are Hiring"
             count={
-              offers.filter((offer) => offer.askOxyOfers === "WEAREHIRING")
-                .length
+              combinedData.filter(
+                (offer) => offer.askOxyOfers === "WEAREHIRING"
+              ).length
             }
             color="orange"
+          />
+          <DashboardCard
+            title="Registered Users"
+            count={registeredUserCount.length}
+            color="pink"
           />
         </div>
 
@@ -263,9 +561,62 @@ const Admin: React.FC = () => {
           >
             Show All
           </button>
+
+          <button
+            onClick={() => handleFilter("REGISTEREDUSERS")}
+            className="bg-indigo-200 hover:bg-indigo-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+          >
+            Registered Users
+          </button>
         </div>
 
-        {/* Offers Table */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-8">
+            {selectedFilter === "REGISTEREDUSERS" && (
+              <>
+                <Select
+                  defaultValue="Select a Date Range"
+                  style={{ width: 200 }}
+                  onChange={handleDateChange}
+                  className="border rounded"
+                >
+                  <Select.Option value="today">Today</Select.Option>
+                  <Select.Option value="thisWeek">This Week</Select.Option>
+                  <Select.Option value="last10Days">Last 10 Days</Select.Option>
+                  <Select.Option value="thisMonth">This Month</Select.Option>
+                  <Select.Option value="lastMonth">Last Month</Select.Option>
+                </Select>
+
+                <div className="flex items-center space-x-3">
+                  <span className="text-gray-600">Total :</span>
+                  <span className="text-2xl font-bold text-black-600">
+                    {userCount.length}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={handleDownload}
+            className="ml-auto px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-blue-600 flex items-center space-x-2 shadow-sm"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>Download CSV</span>
+          </button>
+        </div>
+
         {loading ? (
           <p className="text-center text-gray-500">Loading...</p>
         ) : error ? (
@@ -273,43 +624,21 @@ const Admin: React.FC = () => {
         ) : offers.length === 0 ? (
           <p className="text-center text-gray-500">No data available</p>
         ) : (
-          <div className="overflow-x-auto overflow-y-auto scrollbar-hide">
-            <table className="table-auto w-full border-collapse border border-gray-300 rounded-md">
-              <thead>
-                <tr className="bg-gray-200 text-gray-700">
-                  <th className="border border-gray-300 px-4 py-2">S.No</th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    Project Type
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    Mobile Number
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">Offer</th>
-                </tr>
-              </thead>
-              <tbody>
-                {offers.map((offer, index) => (
-                  <tr
-                    key={offer.id || index}
-                    className="text-center hover:bg-gray-100"
-                  >
-                    <td className="border border-gray-300 px-4 py-2">
-                      {index + 1}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {offer.projectType}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {offer.mobileNumber}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {offer.askOxyOfers}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            dataSource={offers.map((offer, index) => ({
+              ...offer,
+              key: offer.id || index,
+            }))}
+            columns={columns}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              onChange: handlePageChange,
+              showSizeChanger: false,
+            }}
+            className="shadow-lg rounded-lg text-center"
+            scroll={{ x: window.innerWidth < 768 ? 800 : undefined }}
+          />
         )}
       </div>
     </div>
