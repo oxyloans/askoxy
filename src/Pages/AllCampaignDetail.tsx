@@ -81,7 +81,12 @@ const AllCampaignsDetails: React.FC = () => {
           const response = await axios.patch(
             "https://meta.oxyloans.com/api/auth-service/auth/activate_deactivate-campaign",
             {
-              askOxyCampaignDto: [{ campaignType: campaign.campaignType }],
+              askOxyCampaignDto: [
+                {
+                  campaignType: campaign.campaignType,
+                  campaignStatus: !campaign.campaignStatus,
+                },
+              ],
             },
             {
               headers: {

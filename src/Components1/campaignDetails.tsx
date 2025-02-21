@@ -227,7 +227,7 @@ const CampaignDetails: React.FC = () => {
           </div>
 
           {/* Main Content Container */}
-          <div className="flex flex-col gap-8 mb-8">
+          <div className="flex flex-col gap-6 bg-gray-50 mb-8">
             {/* Image Container */}
             {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
               campaign.imageUrls.length === 1 ? (
@@ -341,7 +341,7 @@ const CampaignDetails: React.FC = () => {
             {/* Content Container */}
 
             {/* Content Container */}
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full text-left sm:w-full lg:w-full">
+            <div className=" p-6 w-full text-left sm:w-full lg:w-full">
               {campaign.campaignDescription && (
                 <div className="prose max-w-none text-center">
                   {campaign.campaignDescription
@@ -386,11 +386,11 @@ const CampaignDetails: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="mt-8">
+       
             <Companies/>
             <Footer />
           </div>
-        </div>
+       
       )}
 
       {isOpen && (

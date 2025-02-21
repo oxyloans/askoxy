@@ -218,6 +218,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleCampaignsClick = (campaignType: string) => {
     navigate(`/dashboard/campaign/${campaignType}`);
+    toggleSidebar();
   };
 
   return (

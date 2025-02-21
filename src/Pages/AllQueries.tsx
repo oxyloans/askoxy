@@ -60,7 +60,7 @@ const AllQueries: React.FC = () => {
           "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
         projectType: "ASKOXY",
         queryStatus,
-        userId,
+        // userId,
       };
 
       const response = await axios.post(

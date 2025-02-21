@@ -247,7 +247,14 @@ const Admin: React.FC = () => {
       projectType: "ASKOXY",
       mobileNumber: user.phoneNumber || "N/A",
       askOxyOfers: "REGISTERED USERS",
-      registrationDate: new Date(user.createdAt).toLocaleString(),
+      registrationDate: new Date(user.createdAt).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
     }));
     setOffers(userCountData);
   }, [userCount]);
@@ -293,7 +300,14 @@ const Admin: React.FC = () => {
         projectType: "ASKOXY",
         mobileNumber: user.phoneNumber || "N/A",
         askOxyOfers: "REGISTERED USERS",
-        registrationDate: new Date(user.createdAt).toLocaleString(),
+        registrationDate: new Date(user.createdAt).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
       }));
       // console.log({ userCount });
 
