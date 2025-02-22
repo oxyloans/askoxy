@@ -2,7 +2,7 @@ import React from "react";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
 import oxy1 from "../assets/img/oxywhite.png";
 import askoxy1 from "../assets/img/ask oxy white.png";
-import poojitha from '../assets/img/WhatsApp Image 2025-02-01 at 18.01.13.png'
+import poojitha from "../assets/img/WhatsApp Image 2025-02-01 at 18.01.13.png";
 import srilalitha from "../assets/img/srihmt.png";
 import Kurnoolpremium from "../assets/img/Kurnool.png";
 import Gajrajhmt from "../assets/img/gajrajever.png";
@@ -104,7 +104,7 @@ const RiceSalePage: React.FC = () => {
           </p>
           <div className="mb-6 md:mb-0 text-center md:text-left p-4">
             <p className="text-lg font-semibold mb-4">
-            Download our app to place the order and collect at the stall:
+              Download our app to place the order and collect at the stall:
             </p>
             <div className="flex justify-center md:justify-start gap-4">
               <a
@@ -117,7 +117,7 @@ const RiceSalePage: React.FC = () => {
                 Buy Rice From PlayStore
               </a>
               <a
-                href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+                href="https://apps.apple.com/in/app/askoxy-ai-rice-delivery/id6738732000"
                 className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -204,7 +204,7 @@ const RiceSalePage: React.FC = () => {
               Buy Rice From PlayStore
             </a>
             <a
-              href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+              href="https://apps.apple.com/in/app/askoxy-ai-rice-delivery/id6738732000"
               className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
               target="_blank"
               rel="noopener noreferrer"

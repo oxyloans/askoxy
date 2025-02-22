@@ -39,7 +39,7 @@ const ThankYouPage = () => {
 
           {/* Android APK Link */}
           <a
-            href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+            href="https://apps.apple.com/in/app/askoxy-ai-rice-delivery/id6738732000"
             download
             className="flex items-center bg-[#04AA6D] px-4 py-3 rounded-lg shadow-md hover:bg-green-600 transition duration-300"
           >
@@ -50,7 +50,7 @@ const ThankYouPage = () => {
 
         {/* Footer Note */}
         <p className="text-xs text-gray-500">
-          Available for Android devices. Tap the button to download now!
+          Available for All devices. Tap the button to download now!
         </p>
       </div>
     </div>

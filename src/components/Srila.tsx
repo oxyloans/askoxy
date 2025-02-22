@@ -2,7 +2,7 @@ import React from "react";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
 import oxy1 from "../assets/img/oxywhite.png";
 import askoxy1 from "../assets/img/ask oxy white.png";
-import poojitha from "../assets/img/WhatsApp Image 2025-01-28 at 12.00.30.png"
+import poojitha from "../assets/img/WhatsApp Image 2025-01-28 at 12.00.30.png";
 import srilalitha from "../assets/img/srihmt.png";
 import Kurnoolpremium from "../assets/img/Kurnool.png";
 import Gajrajhmt from "../assets/img/gajrajever.png";
@@ -116,7 +116,7 @@ const RiceSalePage1: React.FC = () => {
                 Buy Rice From PlayStore
               </a>
               <a
-                href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+                href="https://apps.apple.com/in/app/askoxy-ai-rice-delivery/id6738732000"
                 className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -203,7 +203,7 @@ const RiceSalePage1: React.FC = () => {
               Buy Rice From PlayStore
             </a>
             <a
-              href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
+              href="https://apps.apple.com/in/app/askoxy-ai-rice-delivery/id6738732000"
               className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700"
               target="_blank"
               rel="noopener noreferrer"
