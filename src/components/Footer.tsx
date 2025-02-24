@@ -4,17 +4,14 @@ import {
   Facebook,
   Instagram,
   Linkedin,
-  Apple,
-  PlayCircle,
   MapPin,
   Mail,
   Phone,
 } from "lucide-react";
 import Logo from "../assets/img/logo.png";
 
-const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
+// Social Media Links Component
+const SocialLinks = () => {
   const socialLinks = [
     {
       icon: <Facebook className="h-5 w-5 text-[#1877F2]" />,
@@ -36,18 +33,26 @@ const Footer = () => {
     },
   ];
 
-  const services = [
-    { name: "Free Rudraksha", path: "/dashboard/freerudraksha" },
-    {
-      name: "Free AI & GEN AI Training",
-      path: "/dashboard/freeai-genai",
-    },
-    { name: "Legal Knowledge Hub", path: "/dashboard/legalservice" },
-    { name: "Study Abroad", path: "/dashboard/studyabroad" },
-    { name: "My Rotary", path: "/dashboard/myrotary" },
-    { name: "We are hiring", path: "/dashboard/we-are-hiring" },
-  ];
+  return (
+    <div className="flex space-x-4 pt-2">
+      {socialLinks.map((social) => (
+        <a
+          key={social.label}
+          href={social.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={social.label}
+          className={`text-gray-300 hover:text-white transition-colors duration-300 ${social.hoverColor}`}
+        >
+          {social.icon}
+        </a>
+      ))}
+    </div>
+  );
+};
 
+// Contact Info Component
+const ContactInfo = () => {
   const contactInfo = [
     {
       icon: <MapPin className="h-5 w-5" />,
@@ -56,8 +61,7 @@ const Footer = () => {
           <strong>OXYKART TECHNOLOGIES PVT LTD</strong>
           <br />
           CC-02, Ground Floor, Block-C, Indu Fortune Fields, The Annexe
-          Phase-13, KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad,
-          Telangana - 500085
+          Phase-13, KPHB Colony, Kukatpally, Hyderabad, Telangana - 500085
         </>
       ),
       type: "text",
@@ -75,38 +79,56 @@ const Footer = () => {
   ];
 
   return (
+    <div className="space-y-3">
+      {contactInfo.map((info, index) => (
+        <div key={index} className="flex items-start space-x-3">
+          <div className="text-[#ffa800] mt-1">{info.icon}</div>
+          {info.type === "text" ? (
+            <p className="text-sm text-gray-300 whitespace-pre-line">
+              {info.content}
+            </p>
+          ) : (
+            <a
+              href={`${info.type === "email" ? "mailto:" : "tel:"}${
+                info.content
+              }`}
+              className="text-sm text-gray-300 hover:text-[#ffa800] transition-colors duration-200"
+            >
+              {info.content}
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Footer Component
+const Footer = React.memo(() => {
+  const currentYear = new Date().getFullYear();
+
+  const services = [
+    { name: "Free Rudraksha", path: "/dashboard/freerudraksha" },
+    { name: "Free AI & GEN AI Training", path: "/dashboard/freeai-genai" },
+    { name: "Legal Knowledge Hub", path: "/dashboard/legalservice" },
+    { name: "Study Abroad", path: "/dashboard/studyabroad" },
+    { name: "My Rotary", path: "/dashboard/myrotary" },
+    { name: "We are hiring", path: "/dashboard/we-are-hiring" },
+  ];
+
+  return (
     <footer className="bg-[#351664] text-white border-t border-[#ffa800]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-5">
-            <div className="flex items-center justify-start">
-              <img
-                src={Logo}
-                alt="AskOxy.AI Logo"
-                className="h-16 w-auto object-contain"
-              />
-            </div>
-
+            <img src={Logo} alt="AskOxy.AI Logo" className="h-16 w-auto" />
             <p className="text-gray-300 text-sm leading-relaxed">
               AskOxy.AI delivers boundless freedom with unlimited ChatGPT
               prompts, empowering learners, researchers, and businesses to
               innovate without cost constraints.
             </p>
-
-            <div className="flex space-x-4 pt-2">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-gray-300 hover:text-white transition-colors duration-300 ${social.hoverColor}`}
-                >
-                  {social.icon}
-                </a>
-              ))}
-            </div>
+            <SocialLinks />
           </div>
 
           {/* Services Navigation */}
@@ -119,13 +141,9 @@ const Footer = () => {
                 <a
                   key={service.name}
                   href={service.path}
-                  className="block text-sm text-gray-300 hover:text-[#ffa800] transition-colors duration-200 group"
+                  className="block text-sm text-gray-300 hover:text-[#ffa800] transition-colors duration-200"
                 >
-                  <div className="flex items-center">
-                    <span className="transform translate-x-0 group-hover:translate-x-1 transition-transform duration-200">
-                      {service.name}
-                    </span>
-                  </div>
+                  {service.name}
                 </a>
               ))}
             </nav>
@@ -136,27 +154,7 @@ const Footer = () => {
             <h3 className="text-base font-semibold text-[#ffa800]">
               Contact Us
             </h3>
-            <div className="space-y-3">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="text-[#ffa800] mt-1">{info.icon}</div>
-                  {info.type === "text" ? (
-                    <p className="text-sm text-gray-300 whitespace-pre-line">
-                      {info.content}
-                    </p>
-                  ) : (
-                    <a
-                      href={`${info.type === "email" ? "mailto:" : "tel:"}${
-                        info.content
-                      }`}
-                      className="text-sm text-gray-300 hover:text-[#ffa800] transition-colors duration-200"
-                    >
-                      {info.content}
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
+            <ContactInfo />
           </div>
 
           {/* Mobile App */}
@@ -164,63 +162,55 @@ const Footer = () => {
             <h3 className="text-base font-semibold text-[#ffa800]">
               Get Our App
             </h3>
-            <p className="text-sm text-gray-300 mb-4">
-              Download AskOxy.AI mobile app for seamless experience
+            <p className="text-sm text-gray-300">
+              Download AskOxy.AI mobile app for a seamless experience
             </p>
             <div className="space-y-3">
               <a
                 href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
                 target="_blank"
-                className="flex items-center justify-center bg-white border border-gray-300 rounded-lg px-4 py-2.5 hover:bg-gray-50 transition-colors duration-200"
+                className="block"
               >
-                <Apple className="h-5 w-5 mr-2 text-black" />
-                <span className="text-sm font-medium text-[#351664]">
-                  App Store
-                </span>
+                <img
+                  src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                  alt="Download on the App Store"
+                  className="w-48"
+                />
               </a>
               <a
                 href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
                 target="_blank"
-                className="flex items-center justify-center bg-white border border-gray-300 rounded-lg px-4 py-2.5 hover:bg-gray-50 transition-colors duration-200"
+                className="block"
               >
-                <PlayCircle className="h-5 w-5 mr-2 text-black" />
-                <span className="text-sm font-medium text-[#351664]">
-                  Google Play
-                </span>
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
+                  alt="Get it on Google Play"
+                  className="w-48"
+                />
               </a>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-[#ffa800] mt-10 pt-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-sm text-gray-300">
-              &copy; {currentYear}{" "}
-              <span className="font-semibold">ASKOXY.AI</span>. All rights
-              reserved.
-            </div>
-            <div className="text-sm text-gray-300">
-              CIN: U72900TG2020PTC142391
-            </div>
-            <div className="flex items-center space-x-4">
-              {[
-                { name: "Privacy Policy", path: "/privacypolicy" },
-                { name: "Terms of Service", path: "/terms" },
-              ].map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className="text-sm text-gray-300 hover:text-[#ffa800] transition-colors duration-200 flex items-center"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+        {/* Footer Bottom Section */}
+        <div className="border-t border-[#ffa800] mt-10 pt-6 text-sm text-gray-300 flex flex-col md:flex-row justify-between items-center">
+          <div>
+            &copy; {currentYear} <strong>ASKOXY.AI</strong>. All rights
+            reserved.
+          </div>
+          <div>CIN: U72900TG2020PTC142391</div>
+          <div className="flex space-x-4">
+            <Link to="/privacypolicy" className="hover:text-[#ffa800]">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-[#ffa800]">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>
     </footer>
   );
-};
+});
 
 export default Footer;

@@ -307,7 +307,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Chat History Section */}
       {isHistoryVisible && (
-        <div className="mt-4 p-3 border-t border-gray-300">
+        <div className="mt-4 p-3">
           <h3 className="text-md font-semibold text-[#3c1973]">
             Previous History
           </h3>

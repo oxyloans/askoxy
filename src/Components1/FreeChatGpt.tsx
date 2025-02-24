@@ -6,6 +6,7 @@ import Example from "../components/Example";
 import { FaVolumeOff, FaVolumeUp, FaRegCopy, FaShareAlt } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import { IoIosSend } from "react-icons/io";
+
 import {
   PencilSquareIcon,
   ChatBubbleLeftEllipsisIcon,
@@ -58,7 +59,7 @@ const FreeChatGpt: React.FC = () => {
   const scrollableRef = useRef<HTMLDivElement | null>(null);
   const [isReading, setIsReading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -150,16 +151,18 @@ const FreeChatGpt: React.FC = () => {
 
  const handleNewChatClick = () => {
    setMessages([]); // Clear the messages
+   setShowStaticBubbles(true); // Show static chat bubbles
+   setInput(""); // Reset the input state
+   setShowSendButton(false); // Hide the send button
 
-
-   navigate("/dashboard"); // Navigate first
-   setShowStaticBubbles(true); // Show static chat bubbles after navigation
+   navigate("/dashboard"); // Navigate to the dashboard
 
    if (inputRef.current) {
-     inputRef.current.value = ""; // Clear the input field
-     setShowSendButton(false); // Hide the send button
+     inputRef.current.value = ""; // Clear the input field manually
+     inputRef.current.placeholder = "Ask anything..."; // Reset the placeholder
    }
  };
+
 
   // Dummy rice topics
   const riceTopics = [
@@ -211,180 +214,186 @@ const FreeChatGpt: React.FC = () => {
   };
 
   const handleInputChangeWithVisibility = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLTextAreaElement>
   ) => {
     const value = e.target.value;
     setInput(value); // Update input value
     setShowSendButton(value.trim() !== "");
-    if (showStaticBubbles && value.trim() !== "") {
-      setShowStaticBubbles(false);
+
+    if (value.trim() !== "") {
+      setShowStaticBubbles(false); // Hide when typing
+    } else if (!isLoading && messages.length === 0) {
+      setShowStaticBubbles(true); // Show only if no response is pending and no messages exist
     }
   };
 
+  // Detect viewport size
+  useEffect(() => {}, []);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
 
-    // Detect viewport size
-    useEffect(() => {
-     
-  
-     
-    }, []);
-    useEffect(() => {
-      const params = new URLSearchParams(location.search);
-     
-      const query = params.get("query");
-  
+    const query = params.get("query");
 
-  
-      // Handle search query (store in history)
-      if (query) {
-        setShowStaticBubbles(false); // Hide rice topics when there's a query
-        handleSend(query);
-      }
-  
-  
-      // if (scrollableRef.current) {
-      //   scrollableRef.current.scrollTo({ top: 0, behavior: "smooth" });
-      // }
-    }, [location.search]);
+    // Handle search query (store in history)
+    if (query) {
+      setShowStaticBubbles(false); // Hide rice topics when there's a query
+      handleSend(query);
+    }
 
-   const query = new URLSearchParams(location.search).get("search") || "";
-return (
-  <main className="flex flex-col h-screen  w-full sm:p-2 ">
-    {/*  //sm:left-64 */}
+    // if (scrollableRef.current) {
+    //   scrollableRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    // }
+  }, [location.search]);
 
-    {/* Header */}
+  const query = new URLSearchParams(location.search).get("search") || "";
+  return (
+    <main className="flex flex-col h-screen  w-full sm:p-2 ">
+      {/*  //sm:left-64 */}
 
-    <div className="fixed top-16 left-0 lg:left-64 right-0 border-b p-3 md:p-4 flex flex-wrap items-center justify-between bg-white z-10 gap-3">
-      {/* Left Side - Welcome Message */}
-      <h2 className="text-[#3c1973] text-lg sm:text-xl tracking-wide">
-        Welcome {profileData ? `${profileData.firstName} ` : "Guest"}
-      </h2>
+      {/* Header */}
 
-      {/* Right Side - New Chat Button */}
-      <div
-        className="flex items-center bg-gray-200 rounded-lg p-2 space-x-2 cursor-pointer hover:bg-gray-300 transition"
-        onClick={handleNewChatClick}
-      >
-        <h3 className="font-semibold text-[#3c1973]">New Chat</h3>
-        <PencilSquareIcon className="w-6 h-6 text-[#3c1973]" />
+      <div className="fixed top-16 left-0 lg:left-64 right-0 p-3 md:p-4 flex items-center justify-between z-10 ">
+        {/* Left Side - Welcome Message */}
+        <h2 className="text-[#3c1973] bg-gray-100 rounded-lg px-4 py-2 text-lg sm:text-xl tracking-wide">
+          Welcome {profileData ? `${profileData.firstName}` : "Guest"}
+        </h2>
+
+        {/* Right Side - New Chat Button */}
+        <button
+          className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-[#3c1973] font-semibold px-4 py-2 rounded-lg transition duration-200 shadow-sm"
+          onClick={handleNewChatClick}
+        >
+          <span>New Chat</span>
+          {/* Uncomment below if you want an icon */}
+          {/* <PencilSquareIcon className="w-5 h-5 text-[#3c1973]" /> */}
+        </button>
       </div>
-    </div>
 
-    {/* Chat Section */}
-    <div className="flex flex-col justify-center items-center fixed top-[177px] left-0 lg:left-64 right-0 bottom-[90px] px-4 bg-white">
-      {/* Static Bubbles (Shown When Not Loading) */}
-      {!isLoading && showStaticBubbles && (
-        <div className="absolute inset-0 flex items-center justify-center bg-opacity-75 z-10">
-          <div className="grid grid-cols-2 gap-4 p-6 w-full max-w-screen-sm mx-auto">
-            {riceTopics?.map((topic) => (
-              <div
-                key={topic.id}
-                className="p-3 bg-gray-100 text-black rounded-lg shadow-md hover:bg-gray-300 transition cursor-pointer text-center"
-                onClick={() => {
-                  handleBubbleClick(topic.title);
-                  setInput(topic.title);
-                }}
-              >
-                <ReactMarkdown className="font-medium">
-                  {topic.title}
-                </ReactMarkdown>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Chat Messages Section (Non-Scrollable) */}
-      <div className="w-full max-w-screen-lg flex flex-col space-y-2 flex-grow overflow-y-auto">
-        {/* Loading Indicator (Centered Inside Chat Box) */}
-        {isLoading ? (
-          <div className="flex items-center justify-center flex-grow">
-            <Example variant="loading01" />
-          </div>
-        ) : (
-          messages.map((message, index) => (
-            <div
-              key={index}
-              className={`p-4 rounded-md shadow-md w-full ${
-                message.type === "question"
-                  ? "bg-blue-50 border border-blue-300 text-black"
-                  : "bg-green-50 border border-green-300 text-black"
-              }`}
-            >
-              <ReactMarkdown>{message.content}</ReactMarkdown>
-              <div className="flex items-center mt-2 space-x-2">
-                <button
-                  className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                  title="Copy"
-                  onClick={() => handleCopy(message.content)}
+      {/* Chat Section */}
+      <div className="flex flex-col justify-center items-center fixed top-[177px] left-0 lg:left-64 right-0 bottom-[90px] px-4 bg-white">
+        {/* Static Bubbles (Shown When Not Loading) */}
+        {!isLoading && showStaticBubbles && (
+          <div className="absolute inset-0 flex items-center justify-center bg-opacity-75 z-10">
+            <div className="grid grid-cols-2 gap-4 p-8 w-full max-w-screen-sm mx-auto">
+              {riceTopics?.map((topic) => (
+                <div
+                  key={topic.id}
+                  className="p-3 bg-purple-50 text-black rounded-lg shadow-md hover:bg-purple-100 transition cursor-pointer text-center"
+                  onClick={() => {
+                    handleBubbleClick(topic.title);
+                    setInput(topic.title);
+                  }}
                 >
-                  <FaRegCopy />
-                </button>
-                {isReading ? (
-                  <button
-                    className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                    title="Stop Read Aloud"
-                    onClick={() => window.speechSynthesis.cancel()}
-                  >
-                    <FaVolumeOff />
-                  </button>
-                ) : (
-                  <button
-                    className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                    title="Read Aloud"
-                    onClick={() => handleReadAloud(message.content)}
-                  >
-                    <FaVolumeUp />
-                  </button>
-                )}
-                <button
-                  className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
-                  title="Share"
-                  onClick={() => handleShare(message.content)}
-                >
-                  <FaShareAlt />
-                </button>
-              </div>
+                  <ReactMarkdown className="font-medium">
+                    {topic.title}
+                  </ReactMarkdown>
+                </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
-        <div ref={bottomRef}></div>
-      </div>
-    </div>
 
-    {/* Input Bar */}
-    <div className="fixed bottom-0 left-0  lg:left-64 right-0 bg-white p-2 border-t shadow-lg">
-      <div className="flex items-center max-w-screen-lg mx-auto px-4">
-        <div className="flex-grow relative">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              handleInputChangeWithVisibility(e);
-            }}
-            onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
-            placeholder="Ask a question..."
-            className="w-full p-4 pl-5 pr-14 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ffa800] text-gray-800 text-sm md:text-base shadow-md"
-          />
+        {/* Chat Messages Section (Non-Scrollable) */}
+        <div className="w-full max-w-screen-lg flex flex-col space-y-2 flex-grow overflow-y-auto">
+          {/* Loading Indicator (Centered Inside Chat Box) */}
+          {isLoading ? (
+            <div className="flex items-center justify-center flex-grow">
+              <Example variant="loading01" />
+            </div>
+          ) : (
+            messages.map((message, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-md shadow-md w-full ${
+                  message.type === "question"
+                    ? "bg-blue-50 border border-blue-300 text-black"
+                    : "bg-green-50 border border-green-300 text-black"
+                }`}
+              >
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                <div className="flex items-center mt-2 space-x-2">
+                  <button
+                    className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                    title="Copy"
+                    onClick={() => handleCopy(message.content)}
+                  >
+                    <FaRegCopy />
+                  </button>
+                  {isReading ? (
+                    <button
+                      className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                      title="Stop Read Aloud"
+                      onClick={() => window.speechSynthesis.cancel()}
+                    >
+                      <FaVolumeOff />
+                    </button>
+                  ) : (
+                    <button
+                      className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                      title="Read Aloud"
+                      onClick={() => handleReadAloud(message.content)}
+                    >
+                      <FaVolumeUp />
+                    </button>
+                  )}
+                  <button
+                    className="p-2 bg-white rounded-full shadow hover:bg-gray-200 transition"
+                    title="Share"
+                    onClick={() => handleShare(message.content)}
+                  >
+                    <FaShareAlt />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={bottomRef}></div>
+        </div>
+      </div>
+
+      {/* Input Bar */}
+      <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white p-2 border-t shadow-lg">
+        <div className="max-w-screen-lg mx-auto flex items-center space-x-2">
+          {/* Textarea Input */}
+          <div className="flex-grow relative">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                handleInputChangeWithVisibility(e);
+              }}
+              onKeyDown={(e) =>
+                e.key === "Enter" && !e.shiftKey && handleSend(input)
+              }
+              placeholder="Ask anything..."
+              className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
+              aria-label="Type your message"
+              style={{
+                minHeight: "3rem",
+                maxHeight: "12rem",
+                overflowY: "auto",
+                height: "46px",
+              }}
+            />
+          </div>
+
+          {/* Send Button (Outside) */}
           <button
             onClick={() => handleSend(input)}
-            className={`absolute right-4 top-1/2 transform -translate-y-1/2 px-5 py-2 rounded-full text-white font-semibold shadow-lg transition ${
+            className={`px-5 py-2 rounded-lg text-white font-semibold shadow-md transition ${
               isLoading
                 ? "bg-gray-300 cursor-not-allowed"
-                : "bg-[#ffa800] hover:bg-[#ff8c00]"
+                : "bg-purple-600 hover:bg-purple-700"
             }`}
             disabled={isLoading}
           >
-            {isLoading ? "Sending..." : "➤"}
+            {isLoading ? "..." : "➤"}
           </button>
         </div>
       </div>
-    </div>
-  </main>
-);
-
+    </main>
+  );
 };
 
 export default FreeChatGpt;
