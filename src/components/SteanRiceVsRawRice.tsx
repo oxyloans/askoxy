@@ -27,9 +27,30 @@ const RiceComparison: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <h1 className="title">Steamed Rice vs. Raw Rice</h1>
+        <h1 className="title">Steame Rice vs. Raw Rice</h1> {/* Fixed typo */}
         <p className="greeting">Greetings from Radha</p>
       </motion.header>
+
+      <motion.section
+        className="video-section card"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+        viewport={{ once: true }}
+      >
+        {/* <h3 className="video-title">Steame Rice vs. Raw Rice</h3>{" "} */}
+        {/* Restored */}
+        <div className="video-wrapper">
+          <iframe
+            className="youtube-video"
+            src="https://www.youtube.com/embed/0Pd9td3kFNk?rel=0"
+            title="Steame Rice vs. Raw Rice" /* Fixed typo */
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
+      </motion.section>
 
       <div className="content">
         <motion.section
@@ -39,10 +60,11 @@ const RiceComparison: React.FC = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           viewport={{ once: true }}
         >
-          <h2 className="section-title steamed">Steamed Rice vs Raw Rice</h2>
+          <h2 className="section-title steamed">Steame Rice vs Raw Rice</h2>{" "}
+          {/* Fixed typo */}
           <p className="section-text">
             Paddy is brought from farmers to the mill. Once it reaches the mill,
-            both types of rice—steamed and raw—undergo processing. In both
+            both types of rice—steame and raw—undergo processing. In both
             cases, the husk must be removed. However, the key difference lies in
             how the husk is treated.
           </p>
@@ -58,11 +80,11 @@ const RiceComparison: React.FC = () => {
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <h3>Steamed Rice Process:</h3>
+              <h3>Steame Rice Process:</h3> {/* Fixed typo */}
               <p>
-                In the steaming process, the paddy is first steamed before being
+                In the steaming process, the paddy is first steame before being
                 polished. As a result, the nutrients from the husk get absorbed
-                into the grain, making steamed rice a better choice.
+                into the grain, making steame rice a better choice.
               </p>
             </motion.div>
             <motion.div
@@ -74,16 +96,17 @@ const RiceComparison: React.FC = () => {
               <p>
                 Raw rice is polished directly without steaming, losing the
                 husk’s nutrients. It requires thorough cleaning before cooking
-                and isn’t as ready-to-cook as steamed rice.
+                and isn’t as ready-to-cook as steame rice.
               </p>
             </motion.div>
           </motion.div>
           <p className="section-text tip">
             <strong>Tip:</strong> For something light and easy to digest, choose
-            steamed rice.
+            steame rice. {/* Fixed typo */}
           </p>
           <p className="section-text highlight">
-            <strong>My Choice:</strong> Steamed Rice – 51%, Raw Rice – 49%
+            <strong>My Choice:</strong> Steame Rice – 51%, Raw Rice – 49%{" "}
+            {/* Fixed typo */}
           </p>
         </motion.section>
 
@@ -144,26 +167,6 @@ const RiceComparison: React.FC = () => {
           </p>
         </motion.section>
       </div>
-
-      <motion.section
-        className="video-section card"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-        viewport={{ once: true }}
-      >
-        <h3 className="video-title">Steamed Rice vs. Raw Rice</h3>
-        <div className="video-wrapper">
-          <iframe
-            className="youtube-video"
-            src="https://www.youtube.com/embed/0Pd9td3kFNk?rel=0" // Correct embed URL
-            title="Steamed Rice vs. Raw Rice"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
-      </motion.section>
     </div>
   );
 };
