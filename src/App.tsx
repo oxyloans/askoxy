@@ -218,6 +218,7 @@ import ThankYouPage from "./components/ThankYouPage";
 import Meeting from "./components/Meeting";
 import AllQueries from "./Pages/AllQueries";
 import CampaignDetails from "./Components1/campaignDetails";
+import RiceComparison from "./components/SteanRiceVsRawRice";
 
 const App: React.FC = () => {
   return (
@@ -228,6 +229,7 @@ const App: React.FC = () => {
           <Route path="/whatapplogin" element={<Whatapplogin />} />
           <Route path="/communities/maruthielite" element={<RiceSalePage />} />
           <Route path="/qrcode" element={<QR />} />
+          <Route path="/steamricevsrawrice" element={<RiceComparison/>}/>
           {/* Landing Page (First Page) */}
           <Route path="/" element={<Landingpage />} />
           <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
