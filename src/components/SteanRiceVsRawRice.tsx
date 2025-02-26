@@ -27,7 +27,7 @@ const RiceComparison: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <h1 className="title">Steame Rice vs. Raw Rice</h1> {/* Fixed typo */}
+        <h1 className="title">Steam Rice vs. Raw Rice</h1> {/* Fixed typo */}
         <p className="greeting">Greetings from Radha</p>
       </motion.header>
 
@@ -44,7 +44,7 @@ const RiceComparison: React.FC = () => {
           <iframe
             className="youtube-video"
             src="https://www.youtube.com/embed/0Pd9td3kFNk?rel=0"
-            title="Steame Rice vs. Raw Rice" /* Fixed typo */
+            title="Steam Rice vs. Raw Rice" /* Fixed typo */
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -60,11 +60,11 @@ const RiceComparison: React.FC = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           viewport={{ once: true }}
         >
-          <h2 className="section-title steamed">Steame Rice vs Raw Rice</h2>{" "}
+          <h2 className="section-title steamed">Steam Rice vs Raw Rice</h2>{" "}
           {/* Fixed typo */}
           <p className="section-text">
             Paddy is brought from farmers to the mill. Once it reaches the mill,
-            both types of rice—steame and raw—undergo processing. In both
+            both types of rice—steam and raw—undergo processing. In both
             cases, the husk must be removed. However, the key difference lies in
             how the husk is treated.
           </p>
@@ -80,11 +80,11 @@ const RiceComparison: React.FC = () => {
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <h3>Steame Rice Process:</h3> {/* Fixed typo */}
+              <h3>Steam Rice Process:</h3> {/* Fixed typo */}
               <p>
-                In the steaming process, the paddy is first steame before being
+                In the steaming process, the paddy is first steam before being
                 polished. As a result, the nutrients from the husk get absorbed
-                into the grain, making steame rice a better choice.
+                into the grain, making steam rice a better choice.
               </p>
             </motion.div>
             <motion.div
@@ -96,16 +96,16 @@ const RiceComparison: React.FC = () => {
               <p>
                 Raw rice is polished directly without steaming, losing the
                 husk’s nutrients. It requires thorough cleaning before cooking
-                and isn’t as ready-to-cook as steame rice.
+                and isn’t as ready-to-cook as steam rice.
               </p>
             </motion.div>
           </motion.div>
           <p className="section-text tip">
             <strong>Tip:</strong> For something light and easy to digest, choose
-            steame rice. {/* Fixed typo */}
+            steam rice. {/* Fixed typo */}
           </p>
           <p className="section-text highlight">
-            <strong>My Choice:</strong> Steame Rice – 51%, Raw Rice – 49%{" "}
+            <strong>My Choice:</strong> Steam Rice – 51%, Raw Rice – 49%{" "}
             {/* Fixed typo */}
           </p>
         </motion.section>
