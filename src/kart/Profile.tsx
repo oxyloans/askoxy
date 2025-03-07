@@ -239,7 +239,7 @@ useEffect(() => {
       const response = await axios.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
-          chatId: formData.whatsappNumber,
+          chatId: formData.whatsappNumber.replace(countryCode,""),
           countryCode: countryCode,
           id:customerId
         },
@@ -277,7 +277,7 @@ useEffect(() => {
       const response = await axios.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
-          chatId: formData.whatsappNumber,
+          chatId: formData.whatsappNumber.replace(countryCode,""),
           countryCode: countryCode,
           id:customerId,
           whatsappOtp: whatsappVerificationCode,
