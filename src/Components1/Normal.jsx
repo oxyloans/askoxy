@@ -25,7 +25,7 @@ const Normal = () => {
         <Header1 toggleSidebar={toggleSidebar} />
       </header>
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden pt-16">
+      <div className="flex flex-1 overflow-hidden">
         {" "}
         {/* Add padding-top to prevent content overlap with fixed header */}
         {/* Sidebar */}

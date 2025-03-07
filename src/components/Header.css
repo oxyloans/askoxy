@@ -1,0 +1,224 @@
+/* Header Styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  font-family: "Roboto", sans-serif;
+  height: 80px;
+  width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Push page content below the fixed header */
+.main-content {
+  padding-top: 50px; /* Matches header height */
+}
+
+/* Logo Styles */
+.logo img {
+  width: 130px;
+  height: auto;
+  display: block; /* Ensures proper alignment */
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Cart Icon */
+.cart-icon {
+  font-size: 2rem;
+  cursor: pointer;
+  color: #4b5563;
+  line-height: 1; /* Ensures consistent vertical alignment */
+}
+
+.cart-icon:hover {
+  color: #2563eb;
+}
+
+/* Sign-in Button */
+.sign-in-btn {
+  padding: 0.75rem 1.75rem;
+  background: linear-gradient(90deg, #9333ea, #1e3a8a);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sign-in-btn:hover {
+  background: linear-gradient(90deg, #9333ea, #1e5a9a);
+}
+
+.sign-in-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 400px; /* Slightly smaller than max-w-md for compactness */
+  text-align: center;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 1024px) {
+  .header {
+    padding: 0.875rem 1.5rem;
+    height: 70px;
+  }
+  .logo img {
+    width: 115px;
+  }
+  .cart-icon {
+    font-size: 1.8rem;
+  }
+  .sign-in-btn {
+    padding: 0.65rem 1.5rem;
+    font-size: 1rem;
+  }
+  .header-actions {
+    gap: 1.25rem;
+  }
+  .main-content {
+    padding-top: 70px;
+  }
+  .modal-container {
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0.75rem 1.25rem;
+    height: 60px;
+  }
+  .logo img {
+    width: 100px;
+  }
+  .cart-icon {
+    font-size: 1.6rem;
+  }
+  .sign-in-btn {
+    padding: 0.55rem 1.25rem;
+    font-size: 0.95rem;
+  }
+  .header-actions {
+    gap: 1rem;
+  }
+  .main-content {
+    padding-top: 60px;
+  }
+  .modal-container {
+    max-width: 320px;
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.625rem 1rem;
+    height: 50px;
+  }
+  .logo img {
+    width: 85px;
+  }
+  .cart-icon {
+    font-size: 1.4rem;
+  }
+  .sign-in-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+  }
+  .header-actions {
+    gap: 0.75rem;
+  }
+  .main-content {
+    padding-top: 50px;
+  }
+  .modal-container {
+    max-width: 280px;
+    padding: 1rem;
+  }
+  .modal-container h3 {
+    font-size: 1rem;
+  }
+  .modal-container p {
+    font-size: 0.875rem;
+  }
+  .modal-actions button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .header {
+    padding: 0.5rem 0.75rem;
+    height: 45px;
+  }
+  .logo img {
+    width: 75px;
+  }
+  .cart-icon {
+    font-size: 1.3rem;
+  }
+  .sign-in-btn {
+    padding: 0.45rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+  .header-actions {
+    gap: 0.5rem;
+  }
+  .main-content {
+    padding-top: 45px;
+  }
+  .modal-container {
+    max-width: 260px;
+    padding: 0.875rem;
+  }
+  .modal-container h3 {
+    font-size: 0.9375rem;
+  }
+  .modal-container p {
+    font-size: 0.8125rem;
+  }
+  .modal-actions button {
+    padding: 0.45rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+}

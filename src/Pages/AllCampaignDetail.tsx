@@ -37,12 +37,15 @@ const AllCampaignsDetails: React.FC = () => {
     campaignStatus: "",
   });
 
+  const TestUrl = window.location.href.includes("sandbox")
+    ? "https://www.sandbox.askoxy.ai/main/services/campaign/"
+    : "https://www.askoxy.ai/dashboard/";
+
   useEffect(() => {
     fetchCampaigns();
   }, []);
 
   useEffect(() => {
-    // console.log(formData);
     console.log(fileList);
   }, [formData, fileList]);
 
@@ -50,7 +53,7 @@ const AllCampaignsDetails: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        "https://meta.oxyloans.com/api/auth-service/auth/getAllCampaignDetails",
+        "https://meta.oxyglobal.tech/api/marketing-service/campgin/getAllCampaignDetails",
         {
           headers: {
             accept: "application/json",
@@ -79,7 +82,7 @@ const AllCampaignsDetails: React.FC = () => {
       onOk: async () => {
         try {
           const response = await axios.patch(
-            "https://meta.oxyloans.com/api/auth-service/auth/activate_deactivate-campaign",
+            "https://meta.oxyglobal.tech/api/marketing-service/campgin/activate-deactivate-campaign",
             {
               askOxyCampaignDto: [
                 {
@@ -206,6 +209,27 @@ const AllCampaignsDetails: React.FC = () => {
     }));
   };
 
+  const handleCopy = (url: string) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => message.success("URL copied to clipboard!"))
+        .catch(() => fallbackCopy(url));
+    } else {
+      fallbackCopy(url);
+    }
+  };
+
+  const fallbackCopy = (url: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = url;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+    message.success("URL copied to clipboard!");
+  };
+
   const handleUpdateSubmit = async () => {
     setIsSubmitting(true);
     setImageErrorMessage("");
@@ -229,7 +253,7 @@ const AllCampaignsDetails: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://meta.oxyloans.com/api/auth-service/auth/addCampaignTypes",
+        "https://meta.oxyglobal.tech/api/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
           headers: {
@@ -301,6 +325,34 @@ const AllCampaignsDetails: React.FC = () => {
       key: "campaignTypeAddBy",
     },
     {
+      title: <div className="text-center">Campaign Url</div>,
+      key: "campaignUrl",
+      render: (_: any, record: Campaign) => {
+        const encodedCampaignType = encodeURIComponent(record.campaignType);
+        const campaignUrl = `${TestUrl}${encodedCampaignType}`;
+
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={campaignUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 underline break-all"
+              style={{ wordBreak: "break-word" }} // Ensures wrapping
+            >
+              {campaignUrl}
+            </a>
+            <button
+              onClick={() => handleCopy(campaignUrl)}
+              className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-300"
+            >
+              Copy
+            </button>
+          </div>
+        );
+      },
+    },
+    {
       title: <div className="text-center">Actions</div>,
       key: "actions",
       render: (_: any, campaign: Campaign) => (
@@ -344,7 +396,7 @@ const AllCampaignsDetails: React.FC = () => {
               dataSource={campaigns}
               rowKey={(record) => record.campaignType}
               pagination={false}
-              className="border border-gray-300"
+              className="border border-gray-300 table-auto"
               scroll={{ x: window.innerWidth < 768 ? 800 : undefined }}
             />
           </div>

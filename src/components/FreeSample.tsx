@@ -6,9 +6,10 @@ import { BiLogoPlayStore } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { HiOutlineDocument } from "react-icons/hi";
-import Companies from "../Components1/Companies";
+import BASE_URL from "../Config";
+
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/WhatsApp Image 2025-01-23 at 15.50.44.png"
+import FR from "../assets/img/WhatsApp Image 2025-01-23 at 15.50.44.png";
 
 import Footer from "./Footer";
 import { message, Modal } from "antd";
@@ -50,19 +51,19 @@ const FreeSample: React.FC = () => {
 
   const userId = localStorage.getItem("userId");
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const mobileNumber = localStorage.getItem("whatsappNumber");
-   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
     userId: userId,
     mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
-   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -73,32 +74,30 @@ const FreeSample: React.FC = () => {
   };
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-const handleSubmit = async () => {
-  try {
-    setIsButtonDisabled(true);
-    // API request to submit the form data
-    const response = await axios.post(
-      "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
-      formData
-    );
-    console.log("API Response:", response.data);
-    localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+  const handleSubmit = async () => {
+    try {
+      setIsButtonDisabled(true);
+      // API request to submit the form data
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
+        formData
+      );
+      console.log("API Response:", response.data);
+      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-    // Redirect to the thank-you page
-    navigate("/thank-you");
-  } catch (error: any) {
-    if (error.response.status === 500 || error.response.status === 400) {
-      // Handle duplicate participation error
-      message.warning("You have already participated. Thank you!");
-    } else {
-      console.error("API Error:", error);
-      message.error("Failed to submit your interest. Please try again.");
+      // Redirect to the thank-you page
+      navigate("/thank-you");
+    } catch (error: any) {
+      if (error.response.status === 500 || error.response.status === 400) {
+        // Handle duplicate participation error
+        message.warning("You have already participated. Thank you!");
+      } else {
+        console.error("API Error:", error);
+        message.error("Failed to submit your interest. Please try again.");
+      }
+      setIsButtonDisabled(false);
     }
-    setIsButtonDisabled(false);
-  }
-};
-
-
+  };
 
   const email = localStorage.getItem("email");
 
@@ -106,7 +105,7 @@ const handleSubmit = async () => {
 
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/dashboard/user-profile");
+    navigate("/main/profile");
   };
 
   const handleWriteToUs = () => {
@@ -135,15 +134,13 @@ const handleSubmit = async () => {
       setQueryError("Please enter the query before submitting.");
       return; // Exit the function if the query is invalid
     }
-    // Set loading state to true when starting the request
-    setIsLoading(true);
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
       mobileNumber: mobileNumber, // You might want to replace this with dynamic values
       queryStatus: "PENDING",
       projectType: "ASKOXY",
-      askOxyOfers: "FREEAI",
+      askOxyOfers: "FREESAMPLE",
       adminDocumentId: "",
       comments: "",
       id: "",
@@ -159,7 +156,7 @@ const handleSubmit = async () => {
     console.log("Query:", query);
     const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
+    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
     const headers = {
       Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
     };
@@ -178,23 +175,17 @@ const handleSubmit = async () => {
       // Handle error if the request fails
       console.error("Error sending the query:", error);
       // alert("Failed to send query. Please try again.");
-    } finally {
-      // Reset the loading state once the request is finished (success or error)
-      setIsLoading(false);
     }
   };
+  const [showContainer, setShowContainer] = useState(false);
 
-    const [showContainer, setShowContainer] = useState(false);
-    
-        const handleButtonClick = () => {
-            window.open(
-              "https://drive.google.com/file/d/1x_0b6DIt5-rbq1fubeHcIMO5Grxr46p1/view",
-              "_blank"
-            ); // Set state to show the container when the button is clicked
-        };
-    
+  const handleButtonClick = () => {
+    window.open(
+      "https://drive.google.com/file/d/1x_0b6DIt5-rbq1fubeHcIMO5Grxr46p1/view",
+      "_blank"
+    ); // Set state to show the container when the button is clicked
+  };
 
- 
   return (
     <div>
       <div>
@@ -382,18 +373,18 @@ const handleSubmit = async () => {
           </div> */}
         </header>
 
-        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2 px-4">
           {/* Image Section */}
-          <div className="flex justify-center lg:w-1/2 p-4">
+          <div className="flex justify-center p-4">
             <img
-              src={FR} // Replace with the actual image source
+              src={FR}
               alt="Free Sample"
-              className="world-image w-full sm:w-80 md:w-96 h-auto rounded-lg shadow-lg transition-transform transform hover:scale-110"
+              className="w-auto h-auto max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-lg shadow-lg pointer-events-none select-none object-contain"
             />
           </div>
 
           {/* Text and Button Section */}
-          <div className="flex flex-col justify-center text-center lg:text-left lg:w-1/2 p-4">
+          <div className="text-center lg:text-left p-4 ">
             <p className="text-black mb-4 text-sm sm:text-base lg:text-lg">
               <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kg
               rice bag & get a FREE rice container! (Container remains Oxy Group
@@ -421,12 +412,12 @@ const handleSubmit = async () => {
               </ul>
               <br />
               If you are interested in buying a rice bag, please click the{" "}
-              <strong> I am Interested </strong> button
+              <strong> I am Interested </strong>button
             </p>
 
             <div className="space-x-4">
               <button
-                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg transition-all text-sm md:text-base lg:text-lg"
+                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg  transition-all text-sm md:text-base lg:text-lg"
                 onClick={handleSubmit}
                 disabled={isButtonDisabled}
                 aria-label="I'm Interested"
@@ -437,8 +428,6 @@ const handleSubmit = async () => {
           </div>
         </div>
       </div>
-
-      <Companies />
       <Footer />
     </div>
   );

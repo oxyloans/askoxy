@@ -1,6 +1,5 @@
 // src/components/PdfViewer.tsx
 import React, { useState } from 'react';
-import Header1 from "./Header1";
 import Footer from "./Footer";
 
 const EL_Dorado: React.FC = () => {
@@ -13,7 +12,7 @@ const EL_Dorado: React.FC = () => {
 
   return (
     <>
-      <Header1 />
+   
       <div style={{ textAlign: 'center', marginTop: "80px" }}>
         <div style={{padding:'30px'}}>
         <h1 style={{fontSize:"50px" }}>EL_Dorado</h1>

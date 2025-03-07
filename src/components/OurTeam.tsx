@@ -1,5 +1,7 @@
 import React from "react";
-import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { FaLinkedinIn } from "react-icons/fa";
+
 import Radha from "../assets/img/radha sir.png";
 import Rama from "../assets/img/rama mam.png";
 import Sneha from "../assets/img/sneha.png";
@@ -8,7 +10,7 @@ import Srinivas from "../assets/img/srinivas.png";
 import Ramesh from "../assets/img/ramesh.png";
 import Narendra from "../assets/img/narendra.png";
 import Umamaheswara from "../assets/img/mahesh.png";
-import { CiLinkedin } from "react-icons/ci";
+
 const teamMembers = [
   {
     name: "RadhaKrishna.T",
@@ -50,8 +52,7 @@ const teamMembers = [
     name: "Narendra Kumar",
     role: "Co-Founder",
     img: Narendra,
-    linkedin:
-      "https://www.linkedin.com/in/narendra-kumar-balijepalli-bb4a96129/",
+    linkedin: "https://www.linkedin.com/in/narendra-kumar-balijepalli-bb4a96129/",
   },
   {
     name: "Umamaheswara Rao",
@@ -61,59 +62,139 @@ const teamMembers = [
   },
 ];
 
+const OurPeople = () => {
+  // Animation variants for staggered children
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
 
-const OurPeople: React.FC = () => {
+  // Animation variants for team cards
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
+
+  // Animation for the header underline
+  const underlineVariants = {
+    hidden: { width: 0 },
+    visible: { 
+      width: "120px",
+      transition: { duration: 0.8, delay: 0.3 }
+    },
+  };
+
   return (
-    <section className="bg-gradient-to-b from-purple-50 to-purple-50 py-16">
-      {/* Header Section */}
-      <div className="text-center px-6 md:px-12">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-[rgba(91,5,200,0.85)]">
-          Executive Team
-        </h2>
-        <span className="block w-16 h-1 bg-gradient-to-r from-orange-300 to-purple-300 mt-2 mx-auto"></span>
-        <p className="text-gray-600 mt-3 max-w-2xl mx-auto font-bold text-lg">
-          Meet the talented individuals behind our success.
-        </p>
+    <section className="bg-gradient-to-b from-purple-50 to-white shadow-lg py-12 px-4 md:px-8">
+      {/* Header Section with improved styling */}
+      <div className="text-center mb-20">
+        <motion.div
+          className="inline-block relative mb-2"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+         
+        </motion.div>
+        
+        <motion.h2
+          className="text-4xl md:text-5xl font-bold text-purple-700 mb-4"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          viewport={{ once: true }}
+        >
+          Meet Our Executive Team
+        </motion.h2>
+        
+        <motion.div 
+          className="h-1.5 bg-purple-400 mx-auto rounded-full"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={underlineVariants}
+        ></motion.div>
+        
+        <motion.p
+          className="text-gray-600 mt-6 max-w-3xl mx-auto text-lg md:text-xl font-normal"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          viewport={{ once: true }}
+        >
+          The visionary leaders who combine decades of expertise to drive innovation and excellence in everything we do.
+        </motion.p>
       </div>
 
-      {/* Team Members Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 px-6 md:px-12 mt-10">
+      {/* Team Members Section with improved card design */}
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+      >
         {teamMembers.map((member, index) => (
-          <div
+          <motion.div
             key={index}
-            className="bg-white shadow-lg rounded-xl p-6 text-center transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
+            className="bg-white rounded-xl overflow-hidden shadow-lg group"
+            variants={cardVariants}
+            whileHover={{
+              y: -10,
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)",
+              transition: { duration: 0.3 }
+            }}
           >
-            {/* Profile Image */}
-            <img
-              src={member.img}
-              alt={member.name}
-              className="w-28 h-28 mx-auto rounded-full border-4 border-orange-500 shadow-sm"
-            />
+            {/* Profile Image with improved cropping */}
+            <div className="relative overflow-hidden h-72">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10"></div>
+              <motion.div
+                className="w-full h-full"
+                initial={{ scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.5 }}
+              >
+                <img
+                  src={member.img}
+                  alt={member.name}
+                  className="w-full h-full object-cover object-center object-top"
+                />
+              </motion.div>
+            </div>
 
-            {/* Name & Role */}
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              {member.name}
-            </h3>
-            <p className="text-orange-500 font-medium">{member.role}</p>
-            <p className="text-xs text-gray-500 italic">
-              Empowering the future with bold ideas and strong leadership.
-            </p>
-
-            {/* Social Media Icons */}
-            <div className="flex justify-center mt-4 space-x-4">
+            {/* Info Card with improved styling */}
+            <div className="p-6 text-center">
+              <h3 className="text-xl font-bold text-gray-900 mb-1 truncate">
+                {member.name}
+              </h3>
+              <p className="text-purple-600 font-medium text-sm mb-5">
+                {member.role}
+              </p>
+              
+              {/* LinkedIn Link with better styling */}
               <a
                 href={member.linkedin}
-                className="text-gray-500 hover:text-blue-600 text-xl transition duration-300"
+                className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 hover:text-white hover:bg-indigo-600 transition-all duration-300 transform group-hover:scale-110"
                 aria-label={`${member.name} on LinkedIn`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <CiLinkedin />
+                <FaLinkedinIn className="text-xl" />
               </a>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 };

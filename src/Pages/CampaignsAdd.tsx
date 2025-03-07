@@ -165,7 +165,7 @@ const CampaignsAdd: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://meta.oxyloans.com/api/auth-service/auth/addCampaignTypes",
+        "https://meta.oxyglobal.tech/api/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
           headers: {

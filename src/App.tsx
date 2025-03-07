@@ -1,168 +1,3 @@
-// import React from "react";
-// import {
-//   BrowserRouter as Router,
-//   Route,
-//   Routes,
-//   Navigate,
-// } from "react-router-dom";
-// import Erice from "./components/Erice";
-
-// import Landingpage from "./components/Landingpage";
-// import Dasboard from "./components/Dashboard";
-// import Normal from "./components/Normal";
-// import Example from "./components/Example";
-// import UserProfileModel from "./components/models/ProfileCallPage";
-// import Whatapplogin from "./components/Whatapplogin";
-// import Meeting from "./components/Meeting";
-// import Happy_Diwali from "./components/Happy_Diwali";
-// import Greenproject from "./components/Greenproject";
-// import EL_Dorado from "./components/EL_Dorado";
-// import Freerudraksha from "./components/Freerudraksh";
-// import Login from "./components/login";
-// import ExampleComponent from "./components/Examplecomponet";
-// import Vanabhojanam from "./components/Vanabhojanam";
-// import PresentationViewer from "./components/PresentationViewer";
-// import VanabhojanamSteps from "./components/VanabhojanamaSteps";
-// import RudrakshaSteps from "./components/RudrakshaSteps";
-// import FreeSample from "./components/FreeSample";
-// import FreeAiandGenAi from "./components/FreeAi&GenAi";
-// import StudyAbroad from "./components/StudyAbroad";
-// import Flow from "./components/Flow";
-// import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
-// import LegalService from "./components/LegalService";
-// import MyRotaryServices from "./components/MyRotary";
-// import AllQueriesforAdmin from "./components/UserQueries";
-// import Admin from "./Pages/Admin";
-// import AuthorInfo from "./components/AuthorInfo";
-
-// import Courses from "./components/GPT/Courses";
-// import Accomidation from "./components/GPT/Accomidation";
-// import UniversityAgents from "./components/GPT/UniversityAgents";
-// import ScrollToTop from "./components/ScrollToTop";
-// import FileUpload from "./Pages/FileUpload";
-// import Sidebar from "./Pages/Sider";
-// import CampaignsAdd from "./Pages/CampaignsAdd";
-// import AllCampaignsDetails from "./Pages/AllCampaignDetail";
-// import Placements from "./components/GPT/Placements";
-// import ForeignExchange from "./components/GPT/ForeignExchange";
-// import University from "./components/GPT/University";
-// import Assistants from "./components/GPT/Assistants";
-// import AuthorizeandAgencies from "./components/GPT/Authorize&Agencies";
-// import QualificationSpecializationGPT from "./components/GPT/QualificationSpecializationGPT";
-// import Reviews from "./components/GPT/Reviews";
-// import InformationAboutCountries from "./components/GPT/InformationAboutCountries";
-// import Loans from "./components/GPT/Lonsgpt";
-// import Scholarship from "./components/GPT/Scholarships";
-// import Logistics from "./components/GPT/Logistics";
-// import Visa from "./components/GPT/Visa";
-// import AccreditationsRecognization from "./components/GPT/AccreditationsRecognization";
-// import ApplicationSupport from "./components/GPT/AppliocationSupport";
-// import AcceptanceLetter from "./components/GPT/AcceptanceLetter";
-// import AllQueries from "./Pages/AllQueries";
-// import TicketHistory from "./components/TicketHistory";
-// import ThankYouPage from "./components/ThankYouPage";
-// import RiceSalePage from "./components/Communities";
-// import RiceSalePage1 from "./components/Srila";
-// import QR from "./components/qr";
-// const App: React.FC = () => {
-//   return (
-//     <Router>
-//       <ScrollToTop />
-//       <div className="App">
-//         <Routes>
-//           <Route path="/reviews-gpt" element={<Reviews />} />
-//           <Route path="/qrcode" element={<QR />} />
-//           <Route
-//             path="/informationaboutcountries-gpt"
-//             element={<InformationAboutCountries />}
-//           />
-//           <Route path="/" element={<Landingpage />} />
-//           <Route path="/erice" element={<Erice />} />
-//           <Route path="/sider" element={<Sidebar />} />
-//           <Route path="/fileupload" element={<FileUpload />} />
-//           <Route
-//             path="/allcampaignsdetails"
-//             element={<AllCampaignsDetails />}
-//           />
-//           <Route path="/campaignsadd" element={<CampaignsAdd />} />{" "}
-//           <Route path="/universities-gpt" element={<University />} />
-//           <Route
-//             path="/universitiesagents-gpt"
-//             element={<AuthorizeandAgencies />}
-//           />
-//           <Route
-//             path="/qualificationspecialization-gpt"
-//             element={<QualificationSpecializationGPT />}
-//           />
-//           <Route path="/testandinterview-gpt" element={<Assistants />} />
-//           <Route path="/admin" element={<Admin />} />
-//           <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
-//           <Route path="/university-agents" element={<UniversityAgents />} />
-//           {/* <Route path="/AuthorInfo" element={<AuthorInfo />} />
-//           <Route path="/rudraksha-vanabhojanam" element={<Flow />} /> */}
-//           {/* <Route path="/rudraksha" element={<RudrakshaSteps />} /> */}
-//           <Route path="/freerudraksha" Component={Freerudraksha} />
-//           <Route path="/thank-you" Component={ThankYouPage} />
-//           <Route path="/userqueries" Component={AllQueries} />
-//           <Route path="/freesample&steelcontainer" element={<FreeSample />} />
-//           <Route path="/freeaiandgenai" element={<FreeAiandGenAi />} />
-//           <Route path="/studyabroad" element={<StudyAbroad />} />
-//           <Route path="/login" element={<Login />} />
-//           <Route path="/dashboard" element={<Dasboard />} />
-//           <Route path="/normal" element={<Normal />} />
-//           <Route path="/meeting" element={<Meeting />} />
-//           <Route path="/legalservice" element={<LegalService />} />
-//           <Route path="/myrotary" element={<MyRotaryServices />} />
-//           <Route path="/courses-gpt" element={<Courses />} />
-//           <Route path="/loans-gpt" element={<Loans />} />
-//           <Route path="/ticket-history" element={<TicketHistory />} />
-//           <Route
-//             path="/machines&manufacturing"
-//             element={<MachinesManufacturingServices />}
-//           />
-//           <Route path="/communities/landmarkresidents" element={<RiceSalePage />} />
-//           <Route path="/communities/sankalpa" element={<RiceSalePage1 />} />
-//           {/* <Route path="/vanabhojanam" element={<Vanabhojanam/>}/> */}
-//           {/* Redirect to add a trailing slash if missing */}
-//           <Route
-//             path="/freerudraksha"
-//             element={<Navigate to="/freerudraksha/" />}
-//           />
-//           <Route
-//             path="/StudyAbroad"
-//             element={<Navigate to="/StudyAbroad/" />}
-//           />
-//           <Route path="/accommodation-gpt" element={<Accomidation />} />
-//           <Route path="/logistics-gpt" element={<Logistics />} />
-//           <Route
-//             path="/applicationsupport-gpt"
-//             element={<ApplicationSupport />}
-//           />
-//           <Route path="/acceptanceletter-gpt" element={<AcceptanceLetter />} />
-//           <Route path="/visa-gpt" element={<Visa />} />
-//           <Route
-//             path="/accreditations-gpt"
-//             element={<AccreditationsRecognization />}
-//           />
-//           <Route path="placements-gpt" element={<Placements />} />
-//           <Route path="scholarships-gpt" element={<Scholarship />} />
-//           <Route path="/foreign-exchange" element={<ForeignExchange />} />
-//           <Route path="/happy-diwali" element={<Happy_Diwali />} />
-//           <Route path="/example" element={<Example variant="loading01" />} />
-//           <Route path="/greenproject" element={<Greenproject />} />
-//           <Route path="/el-dorado" element={<EL_Dorado />} />
-//           <Route path="/whatapplogin" element={<Whatapplogin />} />
-//           {/* <Route path="/example-component" element={<ExampleComponent />} /> */}
-//           <Route path="/user-profile" element={<UserProfileModel />} />
-//           {/* <Route path="/30NoV24Vanabhojanam" element={<PresentationViewer />} /> */}
-//         </Routes>
-//       </div>
-//     </Router>
-//   );
-// };
-
-// export default App;
-
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -170,9 +5,9 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+import CartProvider from "./until/CartProvider";
 
 import Landingpage from "./components/Landingpage";
-import Whatapplogin from "./components/Whatapplogin";
 import Freerudraksha from "./components/Freerudraksh";
 import FreeSample from "./components/FreeSample";
 import FreeAiandGenAi from "./components/FreeAi&GenAi";
@@ -208,43 +43,63 @@ import ScholarshipGpt from "./Components1/GPT's/ScholarshipGpt";
 import UniversityAgents from "./Components1/GPT's/UniversityAgents";
 import University from "./Components1/GPT's/UniversityGpt";
 import RiceSalePage from "./components/Communities";
-import AllQueriesforAdmin from "./components/UserQueries";
 import Admin from "./Pages/Admin";
 import QR from "./components/qr";
-import Erice from "./components/Erice";
-import Greenproject from "./components/Greenproject";
-import EL_Dorado from "./components/EL_Dorado";
 import ThankYouPage from "./components/ThankYouPage";
-import Meeting from "./components/Meeting";
+import BMVCOIN from "./Components1/BMVCOIN";
+import WhatsappLogin from "./Components1/Auth/WhatsappLogin";
+import WhatsappRegister from "./Components1/Auth/WhatsappRegister";
 import AllQueries from "./Pages/AllQueries";
+import RequireAuth from "./auth/RequireAuth";
+import ItemDisplayPage from "./kart/itemsdisplay";
+import MyWalletPage from "./kart/Wallet";
+import CartPage from "./kart/Cart";
+import MyOrders from "./kart/Myorders";
+import ProfilePage from "./kart/Profile";
+import SubscriptionPage from "./kart/Subscription";
+import WriteToUs from "./kart/Writetous";
+import TicketHistoryPage from "./kart/Tickethistory";
+import ManageAddressesPage from "./kart/Address";
+import CheckoutPage from "./kart/Checkout";
+import PrivacyPolicy from "./kart/Privacypolicy";
+import ReferralPage from "./kart/Referral";
+import DashboardMain from "./Dashboard/Dashboardmain";
+import BMVPDF from "./components/bmvpdf";
+import FreeChatGPTmain from "./Dashboard/FreechatGPTmain";
+import BMVCOINmain from "./Dashboard/BMVcoinmain";
+import Content1 from "./Dashboard/Content";
 import CampaignDetails from "./Components1/campaignDetails";
-import RiceComparison from "./components/SteanRiceVsRawRice";
+import FreeChatGPTnormal
+ from "./Dashboard/Freechatgptnormal";
+import HiddenLogin from "./Components1/Auth/HiddenLogin";
 
 const App: React.FC = () => {
   return (
+    <CartProvider>
     <Router>
       <ScrollToTop />
       <div className="App">
         <Routes>
-          <Route path="/whatapplogin" element={<Whatapplogin />} />
+          <Route path="/whatsapplogin" element={<WhatsappLogin />} />
+          <Route path="/whatsappregister" element={<WhatsappRegister />} />
+          <Route path="/hiddenlogin" element = {<HiddenLogin/>}/>
           <Route path="/communities/maruthielite" element={<RiceSalePage />} />
           <Route path="/qrcode" element={<QR />} />
-          <Route path="/steamricevsrawrice" element={<RiceComparison/>}/>
+          <Route path="/thank-you" element={<ThankYouPage />} />
+          <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
+
           {/* Landing Page (First Page) */}
           <Route path="/" element={<Landingpage />} />
-          <Route path="/alluserqueries" element={<AllQueriesforAdmin />} />
+
+         
+          <Route path="/allqueries" element={<AllQueries />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/erice" element={<Erice />} />
-          <Route path="/greenproject" element={<Greenproject />} />
-          <Route path="/el-dorado" element={<EL_Dorado />} />
-          <Route path="/thank-you" Component={ThankYouPage} />
-          <Route path="/meeting" element={<Meeting />} />
           <Route
             path="/allcampaignsdetails"
             element={<AllCampaignsDetails />}
           />
           <Route path="/campaignsadd" element={<CampaignsAdd />} />
-          <Route path="/userqueries" element={<AllQueries />} />
+          {/* <Route path="/example" element={<Example />} /> */}
           <Route path="/sider" element={<Sidebar />} />
           {/* WhatsApp Login (Before Clicking Sign-in) */}
           <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
@@ -252,26 +107,22 @@ const App: React.FC = () => {
           <Route path="/normal" element={<Normal />}>
             <Route index element={<NormalGpt />} />
           </Route>
+
           <Route path="/dashboard" element={<Layout />}>
             {/* Default Route */}
             <Route index element={<FreeChatGpt />} />
 
             {/* Nested Routes */}
             <Route path="freerudraksha" element={<Freerudraksha />} />
+         
             <Route path="ticket-history" element={<TicketHistory />} />
-            <Route path="freesample-steelcontainer" element={<FreeSample />} />
-            <Route path="freeai-genai" element={<FreeAiandGenAi />} />
-            <Route path="studyabroad" element={<StudyAbroad />} />
+            
+            
+            
             <Route path="free-chatgpt" element={<FreeChatGpt />} />
             <Route path="user-profile" element={<UserProfile />} />
-            <Route path="testandinterview-gpt" element={<PreparationGpt />} />
-            <Route
-              path="machines-manufacturing"
-              element={<MachinesManufacturingServices />}
-            />
-            <Route path="legalservice" element={<LegalService />} />
-            <Route path="we-are-hiring" element={<HiringService />} />
-            <Route path="myrotary" element={<MyRotaryServices />} />
+            <Route path="bmvcoin" element={<BMVCOIN />} />
+            
             <Route path="accommodation-gpt" element={<AccomidationGpt />} />
             <Route
               path="applicationsupport-gpt"
@@ -303,14 +154,58 @@ const App: React.FC = () => {
               element={<UniversityAgents />}
             />
             <Route path="universities-gpt" element={<University />} />
-            <Route path="campaign/:type" element={<CampaignDetails />} />
             {/* Add more nested routes as needed */}
           </Route>
+
           {/* Redirect Unknown Routes to Landing Page */}
           <Route path="*" element={<Navigate to="/" replace />} />
+
+          {/* {kartpage routes} */}
+          {/* <Route path="/buyRice" element={<Ricebags />} /> */}
+          
+          
+          <Route path="/privacypolicy" element={<PrivacyPolicy/>}/>
+          <Route path="/bmvpdf" element={<BMVPDF />} />
+          
+          {/* {Dashboard Main routes} */}
+          <Route path="/main" element={<RequireAuth><Content1/></RequireAuth>} >
+          <Route
+              index
+              element={<Navigate to="/main/dashboard/products" replace />}
+            />
+          <Route path="dashboard/:tab" element={<DashboardMain />} />
+          {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
+          <Route path="services/freerudraksha" element={<Freerudraksha />} />
+          <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
+          <Route path="services/campaign/:type" element={<CampaignDetails />} />
+          <Route path="services/studyabroad" element={<StudyAbroad />} />
+          <Route path="services/Freechatgpt" element={<FreeChatGPTmain/>} />
+          <Route path="services/myrotary" element={<MyRotaryServices />} />
+          <Route path="services/bmvcoin" element={<BMVCOINmain/>} />
+          <Route path="services/freesample-steelcontainer" element={<FreeSample />} />
+          <Route
+              path="services/machines-manufacturing"
+              element={<MachinesManufacturingServices />}
+            />
+          <Route path="services/legalservice" element={<LegalService />} />
+          <Route path="services/we-are-hiring" element={<HiringService />} />
+          <Route path="wallet" element={<RequireAuth><MyWalletPage /></RequireAuth>} />
+          <Route path="mycart" element={<CartPage />} />
+          <Route path="myorders" element={<RequireAuth><MyOrders /></RequireAuth>} />
+          <Route path="profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+          <Route path="referral" element={<RequireAuth><ReferralPage /></RequireAuth>} />
+          <Route path="itemsdisplay/:itemId" element={<ItemDisplayPage />} />
+          <Route path="subscription" element={<RequireAuth><SubscriptionPage /></RequireAuth>} />
+          <Route path="writetous/:id" element={<RequireAuth><WriteToUs /></RequireAuth>} />
+          <Route path="writetous" element={<RequireAuth><WriteToUs /></RequireAuth>} />
+          <Route path="tickethistory" element={<RequireAuth><TicketHistoryPage /></RequireAuth>} />
+          <Route path="checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
+          <Route path="manageaddresses" element={<RequireAuth><ManageAddressesPage /></RequireAuth>} />
+          </Route>
         </Routes>
       </div>
     </Router>
+  </CartProvider>
   );
 };
 

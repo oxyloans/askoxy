@@ -53,9 +53,9 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 }) => {
   return (
     <div
-      className={`bg-${color}-200 p-4 md:p-6 rounded-lg shadow-md h-36 md:h-36`}
+      className={`bg-${color}-200 p-4 md:p-5 rounded-lg shadow-md h-36 md:h-36`}
     >
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h1 className="text-m py-1 font-bold">{title}</h1>
       <p className="text-3xl font-bold">{count}</p>
     </div>
   );
@@ -77,6 +77,7 @@ const Admin: React.FC = () => {
   const [registeredUserCount, setRegisteredUserCount] = useState<UserCount[]>(
     []
   );
+  const BASE_URL = `https://meta.oxyglobal.tech/api/`;
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -96,19 +97,12 @@ const Admin: React.FC = () => {
 
       // Perform multiple API requests in parallel
       const responses = await Promise.allSettled([
-        axios.get(
-          "https://meta.oxyloans.com/api/auth-service/auth/usersOfferesDetails"
-        ),
-        axios.get(
-          "https://meta.oxyloans.com/api/auth-service/auth/AllusersAddress"
-        ),
-        axios.post(
-          "https://meta.oxyloans.com/api/auth-service/auth/getalluserdetailsbyrange",
-          {
-            endingDate: endDate,
-            startingDate: startDate,
-          }
-        ),
+        axios.get(`${BASE_URL}marketing-service/campgin/getAllInterestedUsres`),
+        axios.get(`${BASE_URL}marketing-service/campgin/AllusersAddress`),
+        axios.post(`${BASE_URL}user-service/getalluserdetailsbyrange`, {
+          endingDate: endDate,
+          startingDate: startDate,
+        }),
       ]);
 
       // Check the result of each request
@@ -118,6 +112,8 @@ const Admin: React.FC = () => {
             offerDetails.mobileNumber !== null &&
             offerDetails.mobileNumber !== ""
         );
+        console.log(validOffers);
+
         setOffers(validOffers);
         setAllOffers(validOffers);
       } else {
@@ -164,7 +160,7 @@ const Admin: React.FC = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/getalluserdetailsbyrange",
+        `${BASE_URL}user-service/getalluserdetailsbyrange`,
         {
           endingDate: endDate,
           startingDate: startDate,
@@ -263,6 +259,8 @@ const Admin: React.FC = () => {
     offerType: string,
     dates?: { startDate: string | null; endDate: string | null }
   ) => {
+    // console.log({ combinedData });
+
     setCurrentPage(1);
     setSelectedFilter(offerType);
     setShowRegisteredColumn(offerType === "REGISTEREDUSERS");

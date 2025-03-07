@@ -4,7 +4,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthorInfo from "../components/AuthorInfo";
 import axios from "axios";
 import { FaUserEdit } from "react-icons/fa";
-import Fr from '../assets/img/logo.png'
+import Fr from '../assets/img/logo.png';
+import buyrice from "../assets/img/buyrice.png";
+import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -45,6 +47,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     const userId = localStorage.getItem("userId");
     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
 
+    
+
     axios
       .get(apiUrl)
       .then((response) => {
@@ -57,9 +61,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         console.error("There was an error making the request:", error);
       });
   }, []);
+  const handleBuyRice = () => {
+    navigate("/buyRice");
+  };
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
   //[#351664]
   return (
-    <header className={`bg-white w-full text-black shadow-md p-2`}>
+    <header className={`bg-white w-full text-black shadow-md p-3`}>
       <div className="mx-auto flex justify-between items-center">
         {/* Mobile Menu Toggle Button */}
         <button
@@ -70,19 +80,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           <Menu size={24} className="text-[#351664] font-bold" />
         </button>
 
-        {/* Sidebar Component */}
-
         {/* Logo Section */}
-        <button
-          className="flex items-center text-2xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
-          aria-label="Go to home"
-        >
-          {/* <span className="text-white">ASKOXY</span>
-          <span className="text-[#ffa800]">.AI</span> */}
-          <img src={Fr} alt="logo" className="w-28 pl-4 h-17" />
-        </button>
+        <img
+                src={AskOxyLogo} 
+                className="h-8 w-auto sm:h-14 object-contain cursor-pointer"
+                alt="AskOxyLogo"
+                onClick={() => handleNavigation('/dashboard')}
+              />
 
-        {/* Profile Dropdown */}
+
         {/* Profile Dropdown */}
         <div className="relative lg:block">
           {/* Profile Button */}

@@ -23,7 +23,8 @@ import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import { FaSquareWhatsapp } from "react-icons/fa6";
-import Companies from "../Components1/Companies";
+import BASE_URL from "../Config";
+
 const images = [
   { src: img1, alt: "Image 1" },
   { src: img2, alt: "Image 2" },
@@ -97,15 +98,15 @@ const Freerudraksha: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `https://meta.oxyloans.com/api/auth-service/auth/getuserAddress?userId=${userId}`
+        `${BASE_URL}/auth-service/auth/getuserAddress?userId=${userId}`
       );
       if (response.ok) {
         const data = await response.json();
         console.log(data);
         console.log(address);
         setSavedAddress(address);
-        setDelivery(delivery); // Assuming the API response has the address under 'address' key
-        setModalType("success"); // Move to address confirmation modal
+        setDelivery(delivery);
+        setModalType("success");
       } else {
         message.error("Failed to fetch saved address. Please try again.");
       }
@@ -130,8 +131,7 @@ const Freerudraksha: React.FC = () => {
       return; // Prevent submitting again
     }
 
-    const endpoint =
-      "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
+    const endpoint = `${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`;
     const payload = { address, userId };
 
     try {
@@ -190,8 +190,7 @@ const Freerudraksha: React.FC = () => {
       return; // Prevent submitting again
     }
 
-    const endpoint =
-      "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution";
+    const endpoint = `${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`;
     const payload = { userId, deliveryType };
 
     try {
@@ -244,7 +243,7 @@ const Freerudraksha: React.FC = () => {
   const navigate = useNavigate();
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/dashboard/user-profile");
+    navigate("/main/profile");
   };
 
   const handleWriteToUs = () => {
@@ -268,66 +267,60 @@ const Freerudraksha: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [issuccessOpen]);
- const handleWriteToUsSubmitButton = async () => {
-   if (!query || query.trim() === "") {
-     setQueryError("Please enter the query before submitting.");
-     return; // Exit the function if the query is invalid
-   }
-   // Set loading state to true when starting the request
-   setIsLoading(true);
-   // Payload with the data to send to the API
-   const payload = {
-     email: email, // You might want to replace this with dynamic values
-     mobileNumber: mobileNumber, // You might want to replace this with dynamic values
-     queryStatus: "PENDING",
-     projectType: "ASKOXY",
-     askOxyOfers: "FREEAI",
-     adminDocumentId: "",
-     comments: "",
-     id: "",
-     resolvedBy: "",
-     resolvedOn: "",
-     status: "",
-     userDocumentId: "",
-     query: query,
-     userId: userId,
-   };
+  const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return; // Exit the function if the query is invalid
+    }
+    // Payload with the data to send to the API
+    const payload = {
+      email: email, // You might want to replace this with dynamic values
+      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      queryStatus: "PENDING",
+      projectType: "ASKOXY",
+      askOxyOfers: "FREERUDRAKSHA",
+      adminDocumentId: "",
+      comments: "",
+      id: "",
+      resolvedBy: "",
+      resolvedOn: "",
+      status: "",
+      userDocumentId: "",
+      query: query,
+      userId: userId,
+    };
 
-   // Log the query to check the input before sending
-   console.log("Query:", query);
-   const accessToken = localStorage.getItem("accessToken");
+    // Log the query to check the input before sending
+    console.log("Query:", query);
+    const accessToken = localStorage.getItem("accessToken");
 
-   const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
-   const headers = {
-     Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
-   };
+    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
+    };
 
-   try {
-     // Sending the POST request to the API
-     const response = await axios.post(apiUrl, payload, { headers: headers });
+    try {
+      // Sending the POST request to the API
+      const response = await axios.post(apiUrl, payload, { headers: headers });
 
-     // Check if the response was successful
-     if (response.data) {
-       console.log("Response:", response.data);
-       setSuccessOpen(true);
-       setIsOpen(false);
-     }
-   } catch (error) {
-     // Handle error if the request fails
-     console.error("Error sending the query:", error);
-     // alert("Failed to send query. Please try again.");
-   } finally {
-     // Reset the loading state once the request is finished (success or error)
-     setIsLoading(false);
-   }
- };
-
+      // Check if the response was successful
+      if (response.data) {
+        console.log("Response:", response.data);
+        setSuccessOpen(true);
+        setIsOpen(false);
+      }
+    } catch (error) {
+      // Handle error if the request fails
+      console.error("Error sending the query:", error);
+      // alert("Failed to send query. Please try again.");
+    }
+  };
 
   return (
     <div>
       <header>
         {/* Title and Buttons Container */}
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-center pt-5">
+        <div className="flex flex-col md:flex-row items-center md:items-start pt-5 justify-center">
           {/* Title */}
           <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text45xl leading-tight mb-6 md:mb-0">
             The Two Worlds
@@ -335,7 +328,7 @@ const Freerudraksha: React.FC = () => {
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col md:flex-row justify-center md:justify-end items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
           <button
             className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
             onClick={handleWhatsappClick}
@@ -735,7 +728,7 @@ const Freerudraksha: React.FC = () => {
         </div>
       )}
 
-      <Companies></Companies>
+     
       <Footer />
     </div>
   );

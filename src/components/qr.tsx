@@ -46,7 +46,7 @@ const QR = () => {
           </a>
 
           <a
-            href="https://apps.apple.com/in/app/askoxy-ai-rice-delivery/id6738732000"
+            href="https://apps.apple.com/in/app/e-rice-rice-grocery-delivery/id1566140961"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between items-center px-6 py-3 bg-black text-white rounded-lg shadow-md hover:bg-gray-800 transition duration-300 w-full"

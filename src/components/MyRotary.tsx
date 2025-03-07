@@ -6,7 +6,7 @@ import axios from "axios";
 import { message } from "antd";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
-import Companies from "../Components1/Companies";
+
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
 import img3 from "../assets/img/image3.png";
@@ -14,7 +14,7 @@ import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import { notification } from "antd";
-
+import BASE_URL from "../Config";
 
 const images = [
   { src: img1, alt: "Image 1" },
@@ -56,9 +56,6 @@ const MyRotaryServices = () => {
     mobileNumber: mobileNumber,
     projectType: "ASKOXY",
   });
-
- 
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -73,7 +70,7 @@ const MyRotaryServices = () => {
       setIsButtonDisabled(true);
       // API request to submit the form data
       const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
@@ -95,14 +92,13 @@ const MyRotaryServices = () => {
     }
   };
 
-
   const email = localStorage.getItem("email");
 
   const navigate = useNavigate();
 
   const handlePopUOk = () => {
     setIsOpen(false);
-   navigate("/dashboard/user-profile");
+    navigate("/main/profile");
   };
 
   const handleWriteToUs = () => {
@@ -126,59 +122,54 @@ const MyRotaryServices = () => {
   //     return () => clearTimeout(timer);
   //   }
   // }, [issuccessOpen]);
- const handleWriteToUsSubmitButton = async () => {
-   if (!query || query.trim() === "") {
-     setQueryError("Please enter the query before submitting.");
-     return; // Exit the function if the query is invalid
-   }
-   // Set loading state to true when starting the request
-   setIsLoading(true);
-   // Payload with the data to send to the API
-   const payload = {
-     email: email, // You might want to replace this with dynamic values
-     mobileNumber: mobileNumber, // You might want to replace this with dynamic values
-     queryStatus: "PENDING",
-     projectType: "ASKOXY",
-     askOxyOfers: "FREEAI",
-     adminDocumentId: "",
-     comments: "",
-     id: "",
-     resolvedBy: "",
-     resolvedOn: "",
-     status: "",
-     userDocumentId: "",
-     query: query,
-     userId: userId,
-   };
+  const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return; // Exit the function if the query is invalid
+    }
+    // Payload with the data to send to the API
+    const payload = {
+      email: email, // You might want to replace this with dynamic values
+      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      queryStatus: "PENDING",
+      projectType: "ASKOXY",
+      askOxyOfers: "ROTARIAN",
+      adminDocumentId: "",
+      comments: "",
+      id: "",
+      resolvedBy: "",
+      resolvedOn: "",
+      status: "",
+      userDocumentId: "",
+      query: query,
+      userId: userId,
+    };
 
-   // Log the query to check the input before sending
-   console.log("Query:", query);
-   const accessToken = localStorage.getItem("accessToken");
+    // Log the query to check the input before sending
+    console.log("Query:", query);
+    const accessToken = localStorage.getItem("accessToken");
 
-   const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
-   const headers = {
-     Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
-   };
+    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
+    };
 
-   try {
-     // Sending the POST request to the API
-     const response = await axios.post(apiUrl, payload, { headers: headers });
+    try {
+      // Sending the POST request to the API
+      const response = await axios.post(apiUrl, payload, { headers: headers });
 
-     // Check if the response was successful
-     if (response.data) {
-       console.log("Response:", response.data);
-       setSuccessOpen(true);
-       setIsOpen(false);
-     }
-   } catch (error) {
-     // Handle error if the request fails
-     console.error("Error sending the query:", error);
-     // alert("Failed to send query. Please try again.");
-   } finally {
-     // Reset the loading state once the request is finished (success or error)
-     setIsLoading(false);
-   }
- };
+      // Check if the response was successful
+      if (response.data) {
+        console.log("Response:", response.data);
+        setSuccessOpen(true);
+        setIsOpen(false);
+      }
+    } catch (error) {
+      // Handle error if the request fails
+      console.error("Error sending the query:", error);
+      // alert("Failed to send query. Please try again.");
+    }
+  };
 
   return (
     <div>
@@ -356,13 +347,12 @@ const MyRotaryServices = () => {
         </header>
 
         {/* Main Content */}
-        <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4">
+        <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4 pb-12">
           {/* Left Section: Image */}
           <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
             <img
               src={MyRotary}
               alt="My Rotarian"
-              className="w-full h-auto rounded-lg shadow-md" // Added shadow for a professional look
             />
           </div>
 
@@ -399,8 +389,6 @@ const MyRotaryServices = () => {
           </div>
         </div>
       </div>
-
-      <Companies></Companies>
       <Footer />
     </div>
   );

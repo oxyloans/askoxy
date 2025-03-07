@@ -182,14 +182,17 @@ const Sidebar1: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`bg-gray-50 text-[#3c1973] text-sm fixed  overflow-y-auto font-bold  h-full transform transition-transform duration-300 z-40 w-64 ${
+      className={`bg-gray-100 text-[#3c1973] text-sm fixed  overflow-y-auto font-bold  h-full transform transition-transform duration-300 z-40 w-64 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0`}
     >
-      <div className="flex items-center  justify-between pt-4 pl-2 pb-3 pr-2 border-b border-gray-200">
-        <button className="hover:bg-gray-200 p-2 rounded-md">
+      <div className="flex items-center pt-2 px-2 justify-between font-bold border-b pb-2 border-gray-300">
+        <button
+          className="hover:bg-gray-200 p-2 rounded-md"
+
+        >
           <div className="hover:bg-gray-200 p-1 text-[#3c1973] rounded-lg">
-            Chat History
+          Chat History
           </div>
         </button>
         <button
@@ -203,6 +206,7 @@ const Sidebar1: React.FC<SidebarProps> = ({
         </button>
       </div>
 
+     
       <div
         className={`mt-2 h-80 border-gray-300 pt-2 transition-all  duration-300`}
       >

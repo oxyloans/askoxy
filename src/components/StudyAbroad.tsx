@@ -3,6 +3,7 @@ import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import "./Freerudraksha.css";
 import axios from "axios";
+import { ArrowLeft } from 'lucide-react';
 
 import {
   FaMapMarkerAlt,
@@ -22,7 +23,8 @@ import S5 from "../assets/img/1.6.png";
 
 import Footer from "./Footer";
 import { message } from "antd";
-import Companies from "../Components1/Companies";
+import BASE_URL from "../Config";
+
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
 import img3 from "../assets/img/image3.png";
@@ -90,7 +92,7 @@ const StudyAbroad: React.FC = () => {
       setIsButtonDisabled(true);
       // API request to submit the form data
       const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
@@ -136,7 +138,7 @@ const StudyAbroad: React.FC = () => {
 
   const handlePopUOk = () => {
     setIsOpen(false);
-     navigate("/dashboard/user-profile");
+    navigate("/main/profile");
   };
 
   const handleWriteToUs = () => {
@@ -160,60 +162,54 @@ const StudyAbroad: React.FC = () => {
   //     return () => clearTimeout(timer);
   //   }
   // }, [issuccessOpen]);
- const handleWriteToUsSubmitButton = async () => {
-   if (!query || query.trim() === "") {
-     setQueryError("Please enter the query before submitting.");
-     return; // Exit the function if the query is invalid
-   }
-   // Set loading state to true when starting the request
-   setIsLoading(true);
-   // Payload with the data to send to the API
-   const payload = {
-     email: email, // You might want to replace this with dynamic values
-     mobileNumber: mobileNumber, // You might want to replace this with dynamic values
-     queryStatus: "PENDING",
-     projectType: "ASKOXY",
-     askOxyOfers: "FREEAI",
-     adminDocumentId: "",
-     comments: "",
-     id: "",
-     resolvedBy: "",
-     resolvedOn: "",
-     status: "",
-     userDocumentId: "",
-     query: query,
-     userId: userId,
-   };
+  const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return; // Exit the function if the query is invalid
+    }
+    // Payload with the data to send to the API
+    const payload = {
+      email: email, // You might want to replace this with dynamic values
+      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      queryStatus: "PENDING",
+      projectType: "ASKOXY",
+      askOxyOfers: "STUDYABROAD",
+      adminDocumentId: "",
+      comments: "",
+      id: "",
+      resolvedBy: "",
+      resolvedOn: "",
+      status: "",
+      userDocumentId: "",
+      query: query,
+      userId: userId,
+    };
 
-   // Log the query to check the input before sending
-   console.log("Query:", query);
-   const accessToken = localStorage.getItem("accessToken");
+    // Log the query to check the input before sending
+    console.log("Query:", query);
+    const accessToken = localStorage.getItem("accessToken");
 
-   const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
-   const headers = {
-     Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
-   };
+    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
 
-   try {
-     // Sending the POST request to the API
-     const response = await axios.post(apiUrl, payload, { headers: headers });
+    try {
+      // Sending the POST request to the API
+      const response = await axios.post(apiUrl, payload, { headers: headers });
 
-     // Check if the response was successful
-     if (response.data) {
-       console.log("Response:", response.data);
-       setSuccessOpen(true);
-       setIsOpen(false);
-     }
-   } catch (error) {
-     // Handle error if the request fails
-     console.error("Error sending the query:", error);
-     // alert("Failed to send query. Please try again.");
-   } finally {
-     // Reset the loading state once the request is finished (success or error)
-     setIsLoading(false);
-   }
- };
-
+      // Check if the response was successful
+      if (response.data) {
+        console.log("Response:", response.data);
+        setSuccessOpen(true);
+        setIsOpen(false);
+      }
+    } catch (error) {
+      // Handle error if the request fails
+      console.error("Error sending the query:", error);
+      // alert("Failed to send query. Please try again.");
+    }
+  };
 
   return (
     <div>
@@ -230,13 +226,26 @@ const StudyAbroad: React.FC = () => {
           </div>
 
           {/* Buttons on the right */}
-          <div className="flex flex-col md:flex-row gap-4 mb-2 mt-2 items-center justify-end w-full px-4">
+          <div className="flex flex-col md:flex-row gap-4 mb-2 mt-2 items-center justify-between w-full px-4">
             {/* 'I'm Interested' Button */}
 
+            <div className="flex items-center gap-4 flex-start">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <ArrowLeft className="h-6 w-6" />
+                </button>
+                <h1 className="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                  Study Abroad
+                </h1>
+              </div>
+
             {/* Dropdown Menu Button */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="relative">
               <button
-                className="bg-[#ea4c89] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md  text-sm md:text-base lg:text-lg transition duration-300"
+                className="bg-[#ea4c89] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 aria-label="Navigate options"
               >
@@ -259,7 +268,7 @@ const StudyAbroad: React.FC = () => {
                       label: "Application Support GPT",
                       path: "/dashboard/applicationsupport-gpt",
                     },
-                    { label: "Courses GPT", path: "/dashboard/courses-gpt" },
+                    { label: "Courses GPT", path: "/courses-gpt" },
                     {
                       label: "Foreign Exchange & Predeparture GPT",
                       path: "/dashboard/foreign-exchange",
@@ -291,7 +300,7 @@ const StudyAbroad: React.FC = () => {
                     },
                     {
                       label: "English Test & Interview Preparation GPT",
-                      path: "/dashboard/testandinterview-gpt",
+                      path: "/testandinterview-gpt",
                     },
                     {
                       label: "Universities GPT",
@@ -425,7 +434,7 @@ const StudyAbroad: React.FC = () => {
                 </div>
               </div>
             )}
-
+</div>
             {isprofileOpen && (
               <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                 <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">
@@ -588,7 +597,7 @@ const StudyAbroad: React.FC = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 px-6 mb-5">
           <div className="p-6 bg-white border rounded-lg shadow-md flex flex-col items-center text-center">
             <FaUniversity className="w-16 h-16 mb-4 text-purple-600" />
             <h3 className="font-bold text-xl text-black mb-2">
@@ -625,7 +634,6 @@ const StudyAbroad: React.FC = () => {
           </div>
         </div>
       </div>
-      <Companies></Companies>
       <Footer />
     </div>
   );

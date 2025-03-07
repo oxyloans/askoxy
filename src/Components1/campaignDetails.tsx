@@ -5,7 +5,7 @@ import axios from "axios";
 import { message, notification } from "antd";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import Companies from "./Companies";
+import BASE_URL from "../Config";
 
 interface Image {
   imageId: string;
@@ -50,7 +50,7 @@ const CampaignDetails: React.FC = () => {
       setIsLoading(true);
       try {
         const response = await axios.get<Campaign[]>(
-          "https://meta.oxyloans.com/api/auth-service/auth/getAllCampaignDetails"
+          `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
         );
         setCampaigns(response.data);
       } catch (err) {
@@ -83,8 +83,8 @@ const CampaignDetails: React.FC = () => {
     }
     // Payload with the data to send to the API
     const payload = {
-      email: email, // You might want to replace this with dynamic values
-      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      email: email,
+      mobileNumber: mobileNumber,
       queryStatus: "PENDING",
       projectType: "ASKOXY",
       askOxyOfers: "FREEAI",
@@ -103,9 +103,9 @@ const CampaignDetails: React.FC = () => {
     console.log("Query:", query);
     const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `https://meta.oxyloans.com/api/write-to-us/student/saveData`;
+    const apiUrl = `${BASE_URL}writetous-service/saveData`;
     const headers = {
-      Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
+      Authorization: `Bearer ${accessToken}`,
     };
 
     try {
@@ -121,7 +121,6 @@ const CampaignDetails: React.FC = () => {
     } catch (error) {
       // Handle error if the request fails
       console.error("Error sending the query:", error);
-      // alert("Failed to send query. Please try again.");
       message.error("Failed to send query. Please try again.");
     }
   };
@@ -132,14 +131,13 @@ const CampaignDetails: React.FC = () => {
     try {
       setIsButtonDisabled(true);
       const response = await axios.post(
-        "https://meta.oxyloans.com/api/auth-service/auth/askOxyOfferes",
+        `${BASE_URL}marketing-service/campgin/askOxyOfferes`,
         {
           askOxyOfers: campaignType,
           userId: userId,
           projectType: "ASKOXY",
         }
       );
-      // localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
       notification.success({
         message: "Success!",
         description: `Your interest has been submitted successfully!`,
@@ -181,9 +179,50 @@ const CampaignDetails: React.FC = () => {
       setIsButtonDisabled(false);
     }
   };
+
   const handlePopUOk = () => {
     setIsOpen(false);
-    navigate("/dashboard/user-profile");
+    navigate("/main/profile");
+  };
+
+  const renderNotFoundPage = () => {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] py-10">
+        <div className="text-center">
+          <div className="mb-6 text-red-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="120"
+              height="120"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mx-auto"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <h1 className="text-5xl font-bold text-gray-800 mb-4">404</h1>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+            Campaign Not Found
+          </h2>
+          <p className="text-lg text-gray-600 mb-6">
+            The campaign "{campaignType}" is currently inactive or unavailable.
+          </p>
+          <button
+            onClick={() => navigate("/main")}
+            className="px-6 py-3 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#2a1d4e] transition-all"
+          >
+            Return Home
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -191,33 +230,35 @@ const CampaignDetails: React.FC = () => {
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Spin size="large" />
-            <p className="mt-4 text-gray-600">Loading campaigns...</p>
+            <Spin
+              indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />}
+              size="large"
+            />
+            <p className="mt-4 text-gray-600">Loading campaign details...</p>
           </div>
         </div>
       ) : !campaign ? (
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-xl text-gray-600">Campaign not found</div>
-        </div>
+        renderNotFoundPage()
+      ) : !campaign.campaignStatus ? (
+        renderNotFoundPage()
       ) : (
         <div>
           <div className="flex flex-col mb-6 w-full">
-            <h1 className="text-3xl font-bold text-[rgba(91,5,200,0.85)]  text-center mb-4">
+            <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">
               {campaign.campaignType}
             </h1>
 
             <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
               <button
-                className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 aria-label="Visit our site"
                 disabled={isButtonDisabled}
               >
                 I'm Interested
               </button>
-
               <button
-                className="w-full md:w-auto px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
+                className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f9b91a] transition-all"
                 aria-label="Write To Us"
                 onClick={handleWriteToUs}
               >
@@ -227,45 +268,51 @@ const CampaignDetails: React.FC = () => {
           </div>
 
           {/* Main Content Container */}
-          <div className="flex flex-col gap-6 bg-gray-50 mb-8">
+          <div className="flex flex-col gap-8 mb-8">
             {/* Image Container */}
             {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
               campaign.imageUrls.length === 1 ? (
                 <div className="flex justify-center px-4 sm:px-6">
                   <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
                     {/* Loading placeholder */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-                      <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
                     </div>
 
-                    <div className="min-h-[180px] bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="min-h-[200px] bg-gray-50 rounded-lg overflow-hidden">
                       <img
                         src={campaign.imageUrls[0].imageUrl}
                         alt={campaign.campaignType}
-                        className="w-full h-full object-contain rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                        className="w-full h-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                         onLoad={(e) => {
                           const img = e.target as HTMLImageElement;
                           const aspectRatio =
                             img.naturalWidth / img.naturalHeight;
                           const container = img.parentElement;
 
+                          // Set container aspect ratio based on image orientation
                           if (container) {
-                            container.style.aspectRatio =
-                              aspectRatio > 1.2
-                                ? "16/9"
-                                : aspectRatio < 0.8
-                                ? "2/3"
-                                : "1";
-                            img.style.maxHeight =
-                              aspectRatio > 1.2
-                                ? "480px"
-                                : aspectRatio < 0.8
-                                ? "600px"
-                                : "500px";
+                            if (aspectRatio > 1.2) {
+                              // Horizontal image
+                              container.style.aspectRatio = "16/9";
+                              img.style.maxHeight = "480px";
+                            } else if (aspectRatio < 0.8) {
+                              // Vertical image
+                              container.style.aspectRatio = "2/3";
+                              img.style.maxHeight = "600px";
+                            } else {
+                              // Square-ish image
+                              container.style.aspectRatio = "1";
+                              img.style.maxHeight = "500px";
+                            }
+                          }
+
+                          // Remove loading spinner
+                          const spinner = container?.previousElementSibling;
+                          if (spinner && spinner.parentElement) {
+                            spinner.remove();
                           }
                           img.style.opacity = "1";
-                          const spinner = container?.previousElementSibling;
-                          if (spinner) spinner.remove();
                         }}
                         style={{
                           opacity: "0",
@@ -280,18 +327,18 @@ const CampaignDetails: React.FC = () => {
                   {campaign.imageUrls.map((image, index) => (
                     <div
                       key={image.imageId}
-                      className="relative bg-gray-100 rounded-lg overflow-hidden"
+                      className="relative bg-gray-50 rounded-lg overflow-hidden"
                     >
                       {/* Loading placeholder */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-                        <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
+                        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
                       </div>
 
-                      <div className="min-h-[200px] bg-gray-100 rounded-lg overflow-hidden">
+                      <div className="min-h-[200px] bg-gray-50 rounded-lg overflow-hidden">
                         <img
                           src={image.imageUrl}
                           alt={`${campaign.campaignType} - ${index + 1}`}
-                          className="w-full h-full object-contain rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                          className="w-full h-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                           onLoad={(e) => {
                             const img = e.target as HTMLImageElement;
                             const aspectRatio =
@@ -299,22 +346,31 @@ const CampaignDetails: React.FC = () => {
                             const container = img.parentElement;
 
                             if (container) {
-                              container.style.aspectRatio =
-                                aspectRatio > 1.2
-                                  ? "16/9"
-                                  : aspectRatio < 0.8
-                                  ? "2/3"
-                                  : "1";
-                              img.style.maxHeight =
-                                aspectRatio > 1.2
-                                  ? "320px"
-                                  : aspectRatio < 0.8
-                                  ? "400px"
-                                  : "360px";
-                              if (img.naturalWidth < img.offsetWidth)
+                              // Set container aspect ratio based on image orientation
+                              if (aspectRatio > 1.2) {
+                                // Horizontal image
+                                container.style.aspectRatio = "16/9";
+                                img.style.maxHeight = "320px";
+                              } else if (aspectRatio < 0.8) {
+                                // Vertical image
+                                container.style.aspectRatio = "2/3";
+                                img.style.maxHeight = "400px";
+                              } else {
+                                // Square-ish image
+                                container.style.aspectRatio = "1";
+                                img.style.maxHeight = "360px";
+                              }
+
+                              // Center the image if it's smaller than container
+                              if (img.naturalWidth < img.offsetWidth) {
                                 img.classList.add("mx-auto");
+                              }
+
+                              // Remove loading spinner
                               const spinner = container.previousElementSibling;
-                              if (spinner) spinner.remove();
+                              if (spinner && spinner.parentElement) {
+                                spinner.remove();
+                              }
                             }
                             img.style.opacity = "1";
                           }}
@@ -339,11 +395,9 @@ const CampaignDetails: React.FC = () => {
             ) : null}
 
             {/* Content Container */}
-
-            {/* Content Container */}
-            <div className=" p-6 w-full text-left sm:w-full lg:w-full">
+            <div className="bg-white rounded-lg shadow-lg p-6">
               {campaign.campaignDescription && (
-                <div className="prose max-w-none text-center">
+                <div className="prose max-w-none">
                   {campaign.campaignDescription
                     .split("\n")
                     .map((paragraph, index) => {
@@ -358,27 +412,26 @@ const CampaignDetails: React.FC = () => {
                         );
                       } else if (paragraph.trim().startsWith("-")) {
                         return (
-                          <ul
-                            key={index}
-                            className="list-disc pl-6 mb-4 text-left"
-                          >
-                            <li className="text-gray-600 font-semibold">
+                          <ul key={index} className="list-disc pl-6 mb-4">
+                            <li className="text-gray-600">
                               {paragraph.replace("-", "").trim()}
                             </li>
                           </ul>
                         );
-                      } else {
-                        // Formatting bold (**) and italic (*) words
-                        const formattedText = paragraph
-                          .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // Bold
-                          .replace(/\*(.*?)\*/g, "<i>$1</i>"); // Italic
-
+                      } else if (paragraph.includes("**")) {
                         return (
                           <p
                             key={index}
-                            className="text-gray-600 mb-4 font-medium text-center"
-                            dangerouslySetInnerHTML={{ __html: formattedText }} // Render formatted HTML
-                          />
+                            className="font-bold text-gray-800 mb-4"
+                          >
+                            {paragraph.replace(/\*\*/g, "").trim()}
+                          </p>
+                        );
+                      } else {
+                        return (
+                          <p key={index} className="text-gray-600 mb-4">
+                            {paragraph.trim()}
+                          </p>
                         );
                       }
                     })}
@@ -386,15 +439,14 @@ const CampaignDetails: React.FC = () => {
               )}
             </div>
           </div>
-       
-            <Companies/>
+          <div className="mt-8">
             <Footer />
           </div>
-       
+        </div>
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
           <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
             {/* Close Button */}
             <i
@@ -421,7 +473,6 @@ const CampaignDetails: React.FC = () => {
                 id="phone"
                 disabled={true}
                 value={mobileNumber || ""}
-                // value={"9908636995"}
                 className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                 placeholder="Enter your mobile number"
                 style={{ fontSize: "0.8rem" }}
@@ -440,7 +491,6 @@ const CampaignDetails: React.FC = () => {
                 type="email"
                 id="email"
                 value={email || ""}
-                // value={"kowthavarapuanusha@gmail.com"}
                 disabled={true}
                 className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                 placeholder="Enter your email"

@@ -1,52 +1,62 @@
-import React from "react";
+import React from 'react';
+import { FaSearch } from "react-icons/fa";  // Import the search icon
+// import HeroSection from './HeroSection';
+// import InfoSection from './InfoSection';
+// import ProductsSection from './ProductsSection';
+// import Testimonials from './Testimonials';
+import Header from './Header';
+import ServicesSlider from './ServicesSlider';
+import HorizontalScrollGallery from './ServicesUI';
+import FreeGPTs from './FreeGPTs';
+import BMVCoinPromo from './BMVCoinPromo';
+import OXYGroupCompanies from './OXYGroupCompanies';
+import Footer from './Footer';
+import OurPeople from './OurTeam';
+import PdfPages from './Presentation';
 
-import HeroSection from "./HeroSection";
-import InfoSection from "./InfoSection";
-
-import Footer from "./Footer";
-
-import PdfPages from "./PdfPages";
-import OxyGroupCarousel from "./OxyGroupCarousel";
-import SearchSection from "./SearchSection";
-import OurPeople from "./OurTeam";
-
-
+// You can customize the styling based on your project's requirements
 const Landingpage: React.FC = () => {
   return (
-    <div className="flex flex-col">
+    <>
       {/* Hero Section */}
-      <section className="mb-8">
-        <HeroSection />
-      </section>
+     
+    <Header/>
+     
 
       {/* Info Section */}
-      <section className="">
-        <InfoSection />
-      </section>
+      
+      
+     <section> <HorizontalScrollGallery/></section>
+     <section className='mt-0'>
+        <ServicesSlider />
+        </section>
+        
+      <FreeGPTs />
+      <OurPeople/>
+     
+      <BMVCoinPromo />
+      <PdfPages/>
+     
+        <OXYGroupCompanies />
+    
 
-      {/* Search Section */}
-      <section className="">
-        <SearchSection />
-      </section>
+      {/* Products Section */}
+      {/* <section>
+        <ProductsSection />
+      </section> */}
 
-      {/* Our People Section */}
-      <section className="">
-        <OurPeople />
-      </section>
-      <section>
-        <PdfPages />
-      </section>
-
-      {/* Oxy Group Carousel */}
-      <section className="mb-2">
-        <OxyGroupCarousel />
-      </section>
+      {/* Testimonials Section */}
+      {/* <section>
+        <Testimonials />
+      </section> */}
 
       {/* Footer Section */}
-      <footer className="m-0">
+     
         <Footer />
-      </footer>
-    </div>
+      
+
+      
+    </>
   );
 };
 

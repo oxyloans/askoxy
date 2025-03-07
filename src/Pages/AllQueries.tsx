@@ -42,7 +42,7 @@ const AllQueries: React.FC = () => {
   const [comments, setComments] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
-
+  const BASE_URL = `https://meta.oxyglobal.tech/api/`;
   const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
@@ -64,7 +64,7 @@ const AllQueries: React.FC = () => {
       };
 
       const response = await axios.post(
-        "https://meta.oxyloans.com/api/write-to-us/student/getAllQueries",
+        `${BASE_URL}writetous-service/getAllQueries`,
         requestPayload,
         {
           headers: {
@@ -156,17 +156,14 @@ const AllQueries: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
-        "https://meta.oxyloans.com/api/write-to-us/student/saveData",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await fetch(`${BASE_URL}writetous-service/saveData`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-          body: JSON.stringify(data),
-        }
-      );
+        body: JSON.stringify(data),
+      });
 
       const result = await response.json();
 
