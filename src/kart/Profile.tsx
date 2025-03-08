@@ -359,6 +359,23 @@ useEffect(() => {
     } else if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
       errors.alterMobileNumber = "Please enter a valid 10-digit mobile number";
       return;
+    }else if(formData.alterMobileNumber === formData.mobileNumber){
+      errors.alterMobileNumber = "Alternate and Mobile number must be different.";
+      errors.mobileNumber = "Alternate and Mobile number must be different.";
+      return;
+    }else if(formData.alterMobileNumber === formData.whatsappNumber){
+      errors.alterMobileNumber = "Alternate and WhatsApp number must be different.";
+      errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
+      return;
+    }
+
+    // Mobile number validation
+    if (!formData.mobileNumber.trim()) {
+      errors.mobileNumber = "Mobile number is required";
+      return;
+    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+      errors.mobileNumber = "Please enter a valid 10-digit mobile number";
+      return;
     }
 
     // WhatsApp number validation
@@ -424,8 +441,8 @@ useEffect(() => {
       setSuccessMessage("Profile updated successfully!");
       setEditStatus(true);
       localStorage.setItem("profileData", JSON.stringify(payload));
-    } catch (error) {
-      setError("Error updating profile. Please try again.");
+    } catch (error:any) {
+      setError(error.response.data || "Error updating profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
