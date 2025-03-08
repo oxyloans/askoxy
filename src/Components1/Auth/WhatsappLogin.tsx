@@ -29,7 +29,7 @@ const WhatsappLogin = () => {
   });
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
-  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("whatsapp");
+  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("mobile");
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
   const [otpError, setOtpError] = useState<string>("");
@@ -493,6 +493,19 @@ const WhatsappLogin = () => {
             <div className="flex flex-col items-center gap-4 p-4 border-b border-gray-100 pb-6">
               <h2 className="text-lg font-semibold text-gray-800">Login</h2>
               <div className="flex gap-4">
+              <button
+                  type="button"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    otpMethod === "mobile"
+                      ? "bg-purple-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                  onClick={() => switchOtpMethod("mobile")}
+                  disabled={isPhoneDisabled || isMethodDisabled}
+                >
+                  <Smartphone className="w-5 h-5" />
+                  SMS
+                </button>
                 <button
                   type="button"
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -505,19 +518,6 @@ const WhatsappLogin = () => {
                 >
                   <MessageCircle className="w-5 h-5" />
                   WhatsApp
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    otpMethod === "mobile"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
-                  onClick={() => switchOtpMethod("mobile")}
-                  disabled={isPhoneDisabled || isMethodDisabled}
-                >
-                  <Smartphone className="w-5 h-5" />
-                  SMS
                 </button>
               </div>
             </div>
@@ -577,7 +577,7 @@ const WhatsappLogin = () => {
                       onChange={(e) => handleOtpChange(e.target.value, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
                       onPaste={handlePaste}
-                      className="w-12 h-12 text-center text-lg font-semibold bg-white border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-800 shadow-sm"
+                      className="w-10 h-10 text-center text-lg font-semibold bg-white border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-800 shadow-sm"
                     />
                   ))}
                 </div>

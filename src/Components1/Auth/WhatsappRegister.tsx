@@ -530,7 +530,7 @@ const WhatsappRegister = () => {
                       onChange={(e) => handleOtpChange(e.target.value, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
                       onPaste={handlePaste}
-                      className="w-14 h-14 text-center text-lg font-semibold border-2 rounded-xl"
+                      className="w-12 h-12 text-center text-lg font-semibold border-2 rounded-xl"
                     />
                   ))}
                 </div>

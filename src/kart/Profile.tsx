@@ -330,15 +330,19 @@ useEffect(() => {
     // First Name validation
     if (!formData.userFirstName.trim()) {
       errors.userFirstName = "First name is required";
+      return;
     } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
       errors.userFirstName = "First name should only contain letters";
+      return;
     }
 
     // Last Name validation
     if (!formData.userLastName.trim()) {
       errors.userLastName = "Last name is required";
+      return;
     } else if (!/^[A-Za-z ]+$/.test(formData.userLastName.trim())) {
       errors.userLastName = "Last name should only contain letters";
+      return;
     }
 
     // Email validation
@@ -351,19 +355,23 @@ useEffect(() => {
     // Alternate mobile number validation
     if (!formData.alterMobileNumber.trim()) {
       errors.alterMobileNumber = "Alternate mobile number is required";
+      return;
     } else if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
       errors.alterMobileNumber = "Please enter a valid 10-digit mobile number";
+      return;
     }
 
     // WhatsApp number validation
     if (!formData.whatsappNumber) {
       errors.whatsappNumber = "WhatsApp number is required";
+      return;
     }
 
     // Cross-number validations
     if (formData.alterMobileNumber === formData.whatsappNumber) {
-      errors.alterMobileNumber = "Alternate mobile number and WhatsApp number must be different.";
-      errors.whatsappNumber = "Alternate mobile number and WhatsApp number must be different.";
+      errors.alterMobileNumber = "Alternate and WhatsApp number must be different.";
+      errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
+      return;
     }
 
     setValidationErrors(errors);

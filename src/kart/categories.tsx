@@ -351,47 +351,47 @@ const Categories: React.FC<CategoriesProps> = ({
 
       {/* Subcategories */}
       {getCurrentSubCategories().length > 0 && (
-        <div className="mb-6 overflow-x-auto scrollbar-hide">
-          <div className="flex space-x-3 pb-2">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                !activeSubCategory
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveSubCategory(null)}
-            >
-              All
-            </motion.button>
-            {getCurrentSubCategories().map((subCategory, index) => (
-              <motion.button
-                key={subCategory.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  activeSubCategory === subCategory.id
-                    ? "bg-purple-100 text-purple-700"
-                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                }`}
-                onClick={() => setActiveSubCategory(subCategory.id)}
-              >
-                <div className="flex items-center space-x-2">
-                  {subCategory.image && (
-                    <img
-                      src={subCategory.image}
-                      alt=""
-                      className="w-4 h-4 rounded-full"
-                    />
-                  )}
-                  <span>{subCategory.name}</span>
-                </div>
-              </motion.button>
-            ))}
+  <div className="mb-6 overflow-x-auto scrollbar whitespace-nowrap">
+    <div className="flex space-x-3 pb-2 w-max">
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+          !activeSubCategory
+            ? "bg-purple-100 text-purple-700"
+            : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+        }`}
+        onClick={() => setActiveSubCategory(null)}
+      >
+        All
+      </motion.button>
+      {getCurrentSubCategories().map((subCategory) => (
+        <motion.button
+          key={subCategory.id}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+            activeSubCategory === subCategory.id
+              ? "bg-purple-100 text-purple-700"
+              : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+          }`}
+          onClick={() => setActiveSubCategory(subCategory.id)}
+        >
+          <div className="flex items-center space-x-2">
+            {subCategory.image && (
+              <img
+                src={subCategory.image}
+                alt=""
+                className="w-4 h-4 rounded-full"
+              />
+            )}
+            <span>{subCategory.name}</span>
           </div>
-        </div>
-      )}
+        </motion.button>
+      ))}
+    </div>
+  </div>
+)}
 
       <AnimatePresence mode="wait">
         <motion.div
