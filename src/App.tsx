@@ -71,6 +71,7 @@ import Content1 from "./Dashboard/Content";
 import CampaignDetails from "./Components1/campaignDetails";
 import FreeChatGPTnormal
  from "./Dashboard/Freechatgptnormal";
+ import WomensDay from "./components/WomensDay";
 import HiddenLogin from "./Components1/Auth/HiddenLogin";
 
 const App: React.FC = () => {
@@ -103,6 +104,10 @@ const App: React.FC = () => {
           <Route path="/sider" element={<Sidebar />} />
           {/* WhatsApp Login (Before Clicking Sign-in) */}
           <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
+          <Route
+              path="/womensday"
+              element={<WomensDay />}
+            />
           {/* Dashboard (After Login) */}
           <Route path="/normal" element={<Normal />}>
             <Route index element={<NormalGpt />} />
