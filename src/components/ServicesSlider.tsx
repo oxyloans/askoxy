@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo1 from "../assets/img/WEBSITE (1).png";
+import logo1 from "../assets/img/freerudraksha.png";
 import logo2 from "../assets/img/FREE RICE SAMPLES AND FREE RICE CONTAINER.png";
 import logo3 from "../assets/img/Free AI and Gen ai training.png";
 import logo4 from "../assets/img/Legal knowledge hub.png";
@@ -7,6 +7,7 @@ import logo5 from '../assets/img/study abroad.png'
 import logo6 from '../assets/img/MY ROTARY.png'
 import logo7 from '../assets/img/Machines manufacturing services.png'
 import logo8 from '../assets/img/Career guidance.png'
+import logo9 from '../assets/img/Business growth.png'
 import { useNavigate } from "react-router-dom";
 
 const ServicesSlider: React.FC = () => {
@@ -25,7 +26,7 @@ const ServicesSlider: React.FC = () => {
     { image: logo6, title: "My Rotary" },
     { image: logo7, title: "Machines Manufacturing Services" },
     { image: logo8, title: "Career Guidance" },
-    { image: logo3, title: "Business Growth" },
+    { image: logo9, title: "Business Growth" },
   ];
 
   const navigate = useNavigate();
