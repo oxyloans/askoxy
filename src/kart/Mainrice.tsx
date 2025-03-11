@@ -8,8 +8,8 @@ import rice1 from "../assets/img/ricecard1.png";
 import rice2 from "../assets/img/ricecard2.png";
 import rice3 from "../assets/img/ricecard3.png";
 import { CartContext } from "../until/CartContext";
-import { FaSearch } from "react-icons/fa";
-import  BASE_URL  from "../Config";
+import { FaSearch, FaTimes } from "react-icons/fa";
+import BASE_URL from "../Config";
 
 interface Item {
   itemName: string;
@@ -50,6 +50,7 @@ const Ricebags: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [noResults, setNoResults] = useState(false);
+  const [showAppModal, setShowAppModal] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,6 +68,40 @@ const Ricebags: React.FC = () => {
     navigate(`/main/itemsdisplay/${item.itemId}`, { 
       state: { item } 
     });
+  };
+
+  // Handle banner image click based on index
+const handleBannerClick = (index: number) => {
+    if (index === 0) {
+      // Rice1 image - Navigate to combo offers
+      setActiveCategory("Combo Offers");
+      
+      // Find the combo offers section
+      const comboSection = document.querySelector('.combo-offers-section') || 
+                           document.getElementById('combo-offers') ||
+                           document.querySelector('[data-category="Combo Offers"]');
+      
+      if (comboSection) {
+        // Scroll with offset to position it better in the viewport
+        const yOffset = -80; // Adjust this value based on your header height
+        const y = comboSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        
+        window.scrollTo({
+          top: y,
+          behavior: 'smooth'
+        });
+      } else {
+        // More controlled scroll if section not found - scroll half a page
+        window.scrollBy({
+          top: window.innerHeight / 2,
+          behavior: 'smooth'
+        });
+      }
+    } else if (index === 2) {
+      // Rice3 image - Show app download modal
+      setShowAppModal(true);
+    }
+    // No special action for Rice2 (index 1)
   };
 
   const sliderVariants = {
@@ -221,12 +256,29 @@ const Ricebags: React.FC = () => {
     setTimeout(() => setIsAutoPlay(true), 5000);
   };
 
+  // Function to detect mobile device
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // Function to open the appropriate app store
+  const openAppStore = () => {
+    if (isMobile()) {
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = "https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000";
+      } else {
+        window.location.href = "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer";
+      }
+    }
+    // On desktop, the modal will show both options
+  };
+
   return (
     <div className="min-h-screen">
       
       {/* Image Slider */}
       <div 
-        className="relative w-full overflow-hidden"
+        className="relative w-full overflow-hidden cursor-pointer"
         style={{
           height: 'min(30vw * 0.5625, 250px)',
           maxHeight: '250px'
@@ -234,6 +286,7 @@ const Ricebags: React.FC = () => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={() => handleBannerClick(currentImageIndex)}
       >
         <AnimatePresence initial={false} custom={1}>
           <motion.div
@@ -267,7 +320,8 @@ const Ricebags: React.FC = () => {
           {bannerImages.map((_, index) => (
             <motion.button
               key={index}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent triggering the parent's onClick
                 setCurrentImageIndex(index);
                 setIsAutoPlay(false);
                 setTimeout(() => setIsAutoPlay(true), 5000);
@@ -283,6 +337,75 @@ const Ricebags: React.FC = () => {
           ))}
         </div>
       </div>
+
+
+      <AnimatePresence>
+  {showAppModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      onClick={() => setShowAppModal(false)}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-purple-800">Get Our Mobile App</h2>
+          <button
+            onClick={() => setShowAppModal(false)}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Close modal"
+          >
+            <FaTimes className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <p className="text-gray-600 mb-6">
+          Download AskOxy.AI for a seamless shopping experience with exclusive app-only offers!
+        </p>
+        
+        <div className="grid grid-cols-2 gap-2 justify-center">
+          <a
+            href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex justify-center"
+          >
+            <img
+              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+              alt="Download on the App Store"
+              className="h-10 w-auto object-contain"
+            />
+          </a>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex justify-center"
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
+              alt="Get it on Google Play"
+              className="h-10 w-auto object-contain"
+            />
+          </a>
+        </div>
+        
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-500 text-center">
+            Enjoy exclusive app-only discounts, faster checkout, and order tracking!
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Search results indicator (if searching) */}
       {searchTerm && (

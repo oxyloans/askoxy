@@ -466,6 +466,7 @@ const CheckoutPage: React.FC = () => {
                 amount: grandTotalAmount,
                 subTotal: grandTotal,
                 gstAmount:subGst,
+                orderFrom: "WEB",
             },
             {
                 headers: { Authorization: `Bearer ${token}` },

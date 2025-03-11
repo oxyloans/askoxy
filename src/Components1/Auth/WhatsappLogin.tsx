@@ -16,8 +16,9 @@ import {
   CheckCircle2,
   Smartphone,
   ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
-import BASE_URL from "../../Config";
+// import BASE_URL from "../../Config";
 
 const WhatsappLogin = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const WhatsappLogin = () => {
   });
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
-  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("mobile");
+  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("whatsapp");
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
   const [otpError, setOtpError] = useState<string>("");
@@ -46,12 +47,15 @@ const WhatsappLogin = () => {
   const [isMethodDisabled, setIsMethodDisabled] = useState(false);
   const [changeNumberClicked, setChangeNumberClicked] = useState(false);
   const [isGetOtpButtonDisabled, setIsGetOtpButtonDisabled] = useState(true);
+  // Add state for showing Erice alert
+  const [showEriceAlert, setShowEriceAlert] = useState(true);
+  
   const queryParams = new URLSearchParams(window.location.search);
-    const params = Object.fromEntries(queryParams.entries());
-    const userType = params.userType;
-  // const BASE_URL = userType === "live" 
-  //   ? "https://meta.oxyloans.com/api" 
-  //   : "https://meta.oxyglobal.tech/api";
+  const params = Object.fromEntries(queryParams.entries());
+  const userType = params.userType;
+  const BASE_URL = userType === "live" 
+    ? "https://meta.oxyloans.com/api" 
+    : "https://meta.oxyglobal.tech/api";
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -100,6 +104,13 @@ const WhatsappLogin = () => {
       setIsMethodDisabled(false); // Enable method selection when number is empty
     }
   }, [phoneNumber]);
+
+  // Automatically set SMS as the default method if Erice is detected in URL
+  useEffect(() => {
+    if (window.location.search.includes("erice") || window.location.pathname.includes("erice")) {
+      setOtpMethod("mobile");
+    }
+  }, []);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -190,6 +201,8 @@ const WhatsappLogin = () => {
     setError("");
     setMessage("");
     setIsLoading(true);
+    // Hide Erice alert when Get OTP is clicked
+    setShowEriceAlert(false);
 
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
       setError("Please enter a valid number with country code");
@@ -197,7 +210,6 @@ const WhatsappLogin = () => {
       return;
     }
   
-
     try {
       // Extract phone number without country code
       const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber);
@@ -310,6 +322,7 @@ const WhatsappLogin = () => {
         requestBody.whatsappOtpValue = credentials.otp.join("");
         requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
+        
       } else {
         requestBody.mobileNumber = phoneWithoutCode;
         requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
@@ -443,6 +456,8 @@ const WhatsappLogin = () => {
     setIsMethodDisabled(false); // Re-enable method selection
     setChangeNumberClicked(true); // Mark as clicked once
     setIsGetOtpButtonDisabled(true); // Disable "Get OTP" button again
+    // Show Erice alert again when changing number
+    setShowEriceAlert(true);
     
     // Reset OTP fields
     setCredentials({
@@ -473,9 +488,22 @@ const WhatsappLogin = () => {
           </div>
         </div>
 
+        {/* Erice Customer Alert - Now conditionally rendered */}
+        {showEriceAlert && (
+          <div className="mx-6 mt-6">
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Attention Erice Customers</p>
+                <p className="text-sm mt-1">Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Success Message */}
         {showSuccessPopup && (
-          <div className="mx-6 mt-6 animate-fadeIn">
+          <div className="mx-6 mt-4 animate-fadeIn">
             <div className="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               {message}
@@ -491,21 +519,7 @@ const WhatsappLogin = () => {
           >
             {/* OTP Method Selection UI */}
             <div className="flex flex-col items-center gap-4 p-4 border-b border-gray-100 pb-6">
-              <h2 className="text-lg font-semibold text-gray-800">Login</h2>
               <div className="flex gap-4">
-              <button
-                  type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    otpMethod === "mobile"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
-                  onClick={() => switchOtpMethod("mobile")}
-                  disabled={isPhoneDisabled || isMethodDisabled}
-                >
-                  <Smartphone className="w-5 h-5" />
-                  SMS
-                </button>
                 <button
                   type="button"
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -518,6 +532,19 @@ const WhatsappLogin = () => {
                 >
                   <MessageCircle className="w-5 h-5" />
                   WhatsApp
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    otpMethod === "mobile"
+                      ? "bg-purple-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                  onClick={() => switchOtpMethod("mobile")}
+                  disabled={isPhoneDisabled || isMethodDisabled}
+                >
+                  <Smartphone className="w-5 h-5" />
+                  SMS
                 </button>
               </div>
             </div>
@@ -537,7 +564,7 @@ const WhatsappLogin = () => {
                   international={otpMethod === "whatsapp"}
                   countrySelectProps={{ disabled: otpMethod === "mobile" }}
                   className="w-full p-3 bg-white shadow-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-800 placeholder-gray-400 [&>*]:outline-none [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:border-none PhoneInput"
-                  maxLength={15}
+                  maxLength={20}
                   placeholder="Enter your number"
                   style={
                     {
@@ -577,7 +604,7 @@ const WhatsappLogin = () => {
                       onChange={(e) => handleOtpChange(e.target.value, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
                       onPaste={handlePaste}
-                      className="w-10 h-10 text-center text-lg font-semibold bg-white border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-800 shadow-sm"
+                      className="w-12 h-12 text-center text-lg font-semibold bg-white border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-800 shadow-sm"
                     />
                   ))}
                 </div>
