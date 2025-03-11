@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   AlertTriangle,
 } from "lucide-react";
-// import BASE_URL from "../../Config";
+import BASE_URL from "../../Config";
 
 const WhatsappLogin = () => {
   const navigate = useNavigate();
@@ -53,9 +53,9 @@ const WhatsappLogin = () => {
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
-  const BASE_URL = userType === "live" 
-    ? "https://meta.oxyloans.com/api" 
-    : "https://meta.oxyglobal.tech/api";
+  // const BASE_URL = userType === "live" 
+  //   ? "https://meta.oxyloans.com/api" 
+  //   : "https://meta.oxyglobal.tech/api";
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -327,7 +327,7 @@ const WhatsappLogin = () => {
         requestBody.mobileNumber = phoneWithoutCode;
         requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
         requestBody.mobileOtpValue = credentials.mobileOTP.join("");
-        requestBody.salt = localStorage.getItem("salt");
+        requestBody.salt = localStorage.getItem("sa lt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
       }
 

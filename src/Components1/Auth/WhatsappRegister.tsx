@@ -17,6 +17,8 @@ import {
   MessageCircle,
   ChevronRight
 } from "lucide-react";
+import BASE_URL from "../../Config";
+
 
 const WhatsappRegister = () => {
   const navigate = useNavigate();
@@ -45,13 +47,16 @@ const WhatsappRegister = () => {
   const [isMethodDisabled, setIsMethodDisabled] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [showEriceAlert, setShowEriceAlert] = useState(true); // New state for Erice alert
+  
 
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
-  const BASE_URL = userType === "live" 
-    ? "https://meta.oxyloans.com/api" 
-    : "https://meta.oxyglobal.tech/api";
+  console.log("User Type:", userType);
+
+  // const BASE_URL = userType === "live" 
+  //   ? "https://meta.oxyloans.com/api" 
+  //   : "https://meta.oxyglobal.tech/api";
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -328,14 +333,14 @@ const WhatsappRegister = () => {
         requestBody.whatsappOtpValue = credentials.otp.join("");
         requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
-        requestBody.registeredFrom = "WEB";
+        requestBody.registerdFrom = "WEB";
       } else {
         requestBody.mobileNumber = phoneNumber?.replace(countryCode, '');
         requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
         requestBody.mobileOtpValue = credentials.mobileOTP.join(""); //Use correct OTP field for SMS
         requestBody.expiryTime = localStorage.getItem("expiryTime");
         requestBody.salt = localStorage.getItem("salt");
-        requestBody.registeredFrom = "WEB";
+        requestBody.registerdFrom = "WEB";
       }
 
       if (reffererId) {

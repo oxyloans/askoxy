@@ -122,7 +122,7 @@ const HiddenLogin = () => {
     }
 
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
-      setError("Pleas   e enter a valid number with country code");
+      setError("Please enter a valid number with country code");
       setIsLoading(false);
       return;
     }
