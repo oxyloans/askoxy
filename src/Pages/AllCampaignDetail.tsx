@@ -5,6 +5,7 @@ import { message, Modal, Button, Input, Upload, Table, Tag } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IndexKind } from "typescript";
 import { imageUrls } from "../assets/images";
+import BASE_URL from "../Config";
 
 interface Image {
   imageId: string;
@@ -53,7 +54,7 @@ const AllCampaignsDetails: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        "https://meta.oxyglobal.tech/api/marketing-service/campgin/getAllCampaignDetails",
+        BASE_URL+"/marketing-service/campgin/getAllCampaignDetails",
         {
           headers: {
             accept: "application/json",
@@ -82,7 +83,7 @@ const AllCampaignsDetails: React.FC = () => {
       onOk: async () => {
         try {
           const response = await axios.patch(
-            "https://meta.oxyglobal.tech/api/marketing-service/campgin/activate-deactivate-campaign",
+            BASE_URL+"/marketing-service/campgin/activate-deactivate-campaign",
             {
               askOxyCampaignDto: [
                 {
@@ -253,7 +254,7 @@ const AllCampaignsDetails: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://meta.oxyglobal.tech/api/marketing-service/campgin/addCampaignTypes",
+        BASE_URL+"/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
           headers: {

@@ -3,6 +3,7 @@ import axios from "axios";
 import Sidebar from "./Sider";
 import { message, Upload, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import BASE_URL from "../Config";
 
 interface images {
   imageUrl: String;
@@ -165,7 +166,7 @@ const CampaignsAdd: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://meta.oxyglobal.tech/api/marketing-service/campgin/addCampaignTypes",
+      BASE_URL+"/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
           headers: {

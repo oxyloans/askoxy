@@ -3,6 +3,7 @@ import axios from "axios";
 import { Layout, Select, Table, Modal, Spin } from "antd";
 import Sider from "./Sider";
 import { setEmitFlags } from "typescript";
+import BASE_URL from "../Config";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -42,7 +43,6 @@ const AllQueries: React.FC = () => {
   const [comments, setComments] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
-  const BASE_URL = `https://meta.oxyglobal.tech/api/`;
   const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
@@ -64,7 +64,7 @@ const AllQueries: React.FC = () => {
       };
 
       const response = await axios.post(
-        `${BASE_URL}writetous-service/getAllQueries`,
+        `${BASE_URL}/writetous-service/getAllQueries`,
         requestPayload,
         {
           headers: {
@@ -156,7 +156,7 @@ const AllQueries: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}writetous-service/saveData`, {
+      const response = await fetch(`${BASE_URL}/writetous-service/saveData`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

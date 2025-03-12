@@ -28,16 +28,18 @@ import axios from "axios";
 import Content1 from "./Content";
 
 // Import your images here
-import RudrakshaImage from "../assets/img/WEBSITE (1).png";
-import FG from "../assets/img/genai.png";
-import FR from "../assets/img/WhatsApp Image 2025-01-23 at 15.50.44.png";
-import StudyImage from "../assets/img/R33.jpg";
-import Legalimage from "../assets/img/legal.png";
-import Rotary from "../assets/img/myrotray (1).png";
-import MMServices from "../assets/img/manufacturing.png";
-import hiring from "../assets/img/wearehiring.png";
+import RudrakshaImage from "../assets/img/freerudraksha.png";
+import FG from "../assets/img/Free AI and Gen ai training.png";
+import FR from "../assets/img/FREE RICE SAMPLES AND FREE RICE CONTAINER.png";
+import StudyImage from "../assets/img/study abroad.png";
+import Legalimage from "../assets/img/Legal knowledge hub.png";
+import Rotary from "../assets/img/MY ROTARY.png";
+import MMServices from "../assets/img/Machines manufacturing services.png";
+import hiring from "../assets/img/Career guidance.png";
 import FreeChatGPTmain from "./FreechatGPTmain";
 import BMVCOINmain from "./BMVcoinmain";
+
+
 import BASE_URL from "../Config";
 interface DashboardItem {
   title: string;

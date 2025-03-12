@@ -41,6 +41,7 @@ interface CategoriesProps {
   updateCart: (cart: { [key: string]: number }) => void;
   customerId: string;
   updateCartCount: (count: number) => void;
+  setActiveCategory: React.Dispatch<React.SetStateAction<string>>;
 }
 
 interface CartItem {

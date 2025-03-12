@@ -54,10 +54,6 @@ const WhatsappRegister = () => {
   const userType = params.userType;
   console.log("User Type:", userType);
 
-  // const BASE_URL = userType === "live" 
-  //   ? "https://meta.oxyloans.com/api" 
-  //   : "https://meta.oxyglobal.tech/api";
-
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");

@@ -4,6 +4,7 @@ import Sidebar from "./Sider";
 import { Select, Table, TableProps } from "antd";
 import "antd/dist/reset.css";
 import moment from "moment";
+import BASE_URL from "../Config";
 
 interface DashboardCardProps {
   title: string;
@@ -77,7 +78,7 @@ const Admin: React.FC = () => {
   const [registeredUserCount, setRegisteredUserCount] = useState<UserCount[]>(
     []
   );
-  const BASE_URL = `https://meta.oxyglobal.tech/api/`;
+ 
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -97,9 +98,9 @@ const Admin: React.FC = () => {
 
       // Perform multiple API requests in parallel
       const responses = await Promise.allSettled([
-        axios.get(`${BASE_URL}marketing-service/campgin/getAllInterestedUsres`),
-        axios.get(`${BASE_URL}marketing-service/campgin/AllusersAddress`),
-        axios.post(`${BASE_URL}user-service/getalluserdetailsbyrange`, {
+        axios.get(`${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`),
+        axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
+        axios.post(`${BASE_URL}/user-service/getalluserdetailsbyrange`, {
           endingDate: endDate,
           startingDate: startDate,
         }),
@@ -160,7 +161,7 @@ const Admin: React.FC = () => {
       setLoading(true);
 
       const response = await axios.post(
-        `${BASE_URL}user-service/getalluserdetailsbyrange`,
+        `${BASE_URL}/user-service/getalluserdetailsbyrange`,
         {
           endingDate: endDate,
           startingDate: startDate,

@@ -17,6 +17,7 @@ import axios from 'axios';
 import 'react-phone-number-input/style.css';
 import { Modal } from 'antd';
 import { Navigate } from 'react-router-dom';
+import BASE_URL from '../Config';
 
 interface RefereeDetail {
   id: string;
@@ -65,57 +66,46 @@ const ReferralPage: React.FC = () => {
   });
   const [faqs, setFaqs] = useState<FAQItem[]>([
     {
-      question: "How does the referral program work?",
-      answer: "Our referral program allows you to invite friends to join our platform. When your referral signs up using your unique link, places an order for rice, and does not cancel it, you (the referrer) will receive a ₹100 cashback reward.",
-      isOpen: false
-    },
-    {
-      question: "Who can I refer?",
-      answer: "You can refer anyone who is not already a registered user on Askoxy.AI. To count as a referral, they must sign up using your referral link.",
-      isOpen: false
-    },
-    {
       question: "How do I refer someone?",
-      answer: "Share your unique referral link with your friends. Your friend must sign up using your referral link during registration. Once they place an order for rice and do not cancel it, you'll receive the reward.",
+      answer: "Share your unique referral link with your friends. Your friend must sign up using your referral link during registration. Once they place an order for rice and do not cancel it, you’ll receive the reward.",
       isOpen: false
     },
     {
       question: "What rewards do I get for referring a friend?",
-      answer: "The rewards vary based on ongoing promotions. Typically, you (the referrer) will receive ₹100 cashback once your referral (the referee) registers using your referral link, places an order for rice, and does not cancel the order.",
+      answer: "Apart from getting a free steel container, you will also receive ₹100 cashback in your ASKOXY.AI wallet when you successfully refer someone.",
       isOpen: false
     },
     {
       question: "When will I receive my referral reward?",
-      answer: "Referral rewards are credited once your referred friend successfully places an order for rice and does not cancel it.",
+      answer: "Referral rewards are credited once your referred friend successfully places an order and does not cancel it.",
       isOpen: false
     },
     {
       question: "Where can I check my referral status?",
-      answer: "You can track your referrals in your Askoxy.AI dashboard.",
+      answer: "You can track your referrals in your ASKOXY.AI dashboard.",
       isOpen: false
     },
     {
       question: "Is there a limit to the number of people I can refer?",
-      answer: "No, there is no limit to the number of people you can refer. You can refer as many friends as you like, and you will receive ₹100 cashback for each successful referral who meets the eligibility criteria. However, specific promotions may have restrictions, so please check the referral terms for details.",
+      answer: "No, you can refer as many friends as you like. You will receive ₹100 cashback for each successful referral, subject to promotional terms.",
       isOpen: false
     },
     {
       question: "What happens if my friend forgets to use my referral link?",
-      answer: "Unfortunately, referrals must use your link at the time of sign-up. If they forget, the referral may not be counted, and you will not receive the reward.",
+      answer: "Referrals must use your link at the time of sign-up. If they forget, the referral may not be counted, and you will not receive the reward.",
       isOpen: false
     },
     {
       question: "Can I refer myself using another account?",
-      answer: "No, self-referrals are not allowed. Any fraudulent activity may result in disqualification from the referral program.",
+      answer: "No, self-referrals are not allowed. Fraudulent activity may lead to disqualification from the referral program.",
       isOpen: false
     },
     {
       question: "Who do I contact if I have issues with my referral reward?",
-      answer: "If you haven't received your reward or have any issues, please contact our support team at Askoxy.AI for assistance.",
+      answer: "If you have any issues with your referral reward, please contact ASKOXY.AI support at: 📞 Phone: +91 81432 71103 📧 Email: SUPPORT@ASKOXY.AI",
       isOpen: false
     }
   ]);
-
   const customerId = localStorage.getItem("userId") || "";
   const token = localStorage.getItem("accessToken") || "";
   const referralLink = `https://www.sandbox.askoxy.ai/whatsappregister?ref=${customerId}`;
@@ -130,7 +120,7 @@ const ReferralPage: React.FC = () => {
   const fetchUserDetails = async () => {
     try {
       const response = await axios.get(
-        `https://meta.oxyglobal.tech/api/user-service/user/${customerId}`,
+        `${BASE_URL}/user-service/user/${customerId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -162,7 +152,7 @@ const ReferralPage: React.FC = () => {
   const fetchRefereeDetails = async () => {
     try {
       const response = await axios.get<RefereeDetail[]>(
-        `https://meta.oxyglobal.tech/api/reference-service/getreferencedetails/${customerId}`,
+        `${BASE_URL}/reference-service/getreferencedetails/${customerId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -241,7 +231,7 @@ const ReferralPage: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        'https://meta.oxyglobal.tech/api/user-service/inviteaUser',
+        BASE_URL+'/user-service/inviteaUser',
         {
           referealId: customerId,
           refereeMobileNumber: phoneNumber.replace(countryCode, ''), // Remove country code
@@ -362,7 +352,7 @@ const ReferralPage: React.FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Invite a Friend</h3>
                 <p className="text-gray-600 mb-4">
-                  Invite your friends to join Askoxy.AI. When they register using your referral link and place an order for rice, you'll receive ₹100 cashback!
+                  Invite your friends to join ASKOXY.AI. When they register using your referral link and place an order for rice, you'll receive ₹100 cashback!
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
                   <button 

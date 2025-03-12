@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.0afefe44.css",
-    "main.js": "/static/js/main.9a706faa.js",
+    "main.css": "/static/css/main.6859a9cd.css",
+    "main.js": "/static/js/main.3f0bc8fa.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -97,7 +97,6 @@
     "static/media/event-management-strategy (1).png": "/static/media/event-management-strategy (1).806428d8d3e25a27cff0.png",
     "static/media/image1.png": "/static/media/image1.553556b36d15fceb7fc0.png",
     "static/media/image5.png": "/static/media/image5.6ab4148cfa99473353b7.png",
-    "static/media/R33.jpg": "/static/media/R33.761495c43afe88631dc2.jpg",
     "static/media/Business growth.png": "/static/media/Business growth.c973c18af4623d3f5d9b.png",
     "static/media/image6.png": "/static/media/image6.db53a679b95dada9ceaa.png",
     "static/media/ORDER RICE ONLINE.png": "/static/media/ORDER RICE ONLINE.d5175c6cfee6e9db8fc4.png",
@@ -116,12 +115,12 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.0afefe44.css.map": "/static/css/main.0afefe44.css.map",
-    "main.9a706faa.js.map": "/static/js/main.9a706faa.js.map",
+    "main.6859a9cd.css.map": "/static/css/main.6859a9cd.css.map",
+    "main.3f0bc8fa.js.map": "/static/js/main.3f0bc8fa.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.0afefe44.css",
-    "static/js/main.9a706faa.js"
+    "static/css/main.6859a9cd.css",
+    "static/js/main.3f0bc8fa.js"
   ]
 }

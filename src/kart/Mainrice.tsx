@@ -8,7 +8,7 @@ import rice1 from "../assets/img/ricecard1.png";
 import rice2 from "../assets/img/ricecard2.png";
 import rice3 from "../assets/img/ricecard3.png";
 import { CartContext } from "../until/CartContext";
-import { FaSearch, FaTimes } from "react-icons/fa";
+import { FaSearch, FaTimes, FaQuestionCircle } from "react-icons/fa";
 import BASE_URL from "../Config";
 
 interface Item {
@@ -73,6 +73,227 @@ const SkeletonLoader: React.FC = () => (
   </>
 );
 
+// New FAQ Component
+const FAQModal: React.FC<{isOpen: boolean; onClose: () => void}> = ({isOpen, onClose}) => {
+  const [activeTab, setActiveTab] = useState<'container' | 'referral'>('container');
+  const [scrolledToTop, setScrolledToTop] = useState(true);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+      setScrolledToTop(true);
+    }
+  }, [activeTab]);
+
+  // Track scroll position
+  const handleScroll = () => {
+    if (contentRef.current) {
+      setScrolledToTop(contentRef.current.scrollTop === 0);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="bg-white rounded-lg shadow-xl w-full max-w-xl mx-auto h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-bold text-purple-800">Frequently Asked Questions</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Close modal"
+          >
+            <FaTimes className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex border-b">
+          <button
+            className={`flex-1 py-3 px-4 font-medium text-sm transition-colors ${
+              activeTab === 'container' 
+                ? 'border-b-2 border-purple-600 text-purple-800' 
+                : 'text-gray-600 hover:text-purple-600'
+            }`}
+            onClick={() => setActiveTab('container')}
+          >
+            Free Steel Container Policy
+          </button>
+          <button
+            className={`flex-1 py-3 px-4 font-medium text-sm transition-colors ${
+              activeTab === 'referral' 
+                ? 'border-b-2 border-purple-600 text-purple-800' 
+                : 'text-gray-600 hover:text-purple-600'
+            }`}
+            onClick={() => setActiveTab('referral')}
+          >
+            Referral Program
+          </button>
+        </div>
+        
+        {/* Shadow when scrolled */}
+        <div className={`h-2 bg-gradient-to-b from-gray-100 to-transparent transition-opacity ${scrolledToTop ? 'opacity-0' : 'opacity-100'}`}></div>
+        
+        {/* Content */}
+        <div 
+          ref={contentRef}
+          className="flex-1 overflow-y-auto p-4 pb-6"
+          onScroll={handleScroll}
+        >
+          {activeTab === 'container' ? (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-purple-800 mb-2">About ASKOXY.AI</h3>
+                <p className="text-gray-700">
+                ASKOXY.AI is an AI-powered platform integrating <em>34+ marketplaces</em>, designed to simplify lives with innovative solutions, including <strong>premium rice delivery</strong>.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-bold text-purple-800 mb-2">Who is the founder of ASKOXY.AI?</h3>
+                <p className="text-gray-700">
+                  AskOxy.ai is led by <em>Radhakrishna Thatavarti</em> (<a href="https://www.linkedin.com/in/oxyradhakrishna/" className="text-blue-600 hover:underline">LinkedIn</a>), an entrepreneur with <em>over 24 years of experience</em> in software technology and business leadership. His vision is to <em>empower communities</em> through sustainable, customer-centric solutions using <em>AI, Blockchain, and Java technologies</em>.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-bold text-purple-800 mb-2">Free Steel Container Policy</h3>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">What is the Free Steel Container offer?</h4>
+                <p className="text-gray-700">
+                  Customers who purchase a <em>26kg rice bag</em> will receive a <em>FREE steel rice container</em>. However, the container remains the <strong>property of OXY Group</strong> until ownership is earned.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">How can I earn ownership of the steel container?</h4>
+                <p className="text-gray-700">
+                  You can <em>own</em> the container by meeting <em>either</em> of the following criteria:
+                </p>
+                <ol className="list-decimal ml-5 mt-2 space-y-1">
+                  <li className="text-gray-700"><em>Refer 9 new users</em> to ASKOXY.AI.</li>
+                  <li className="text-gray-700"><em>Purchase 9 rice bags</em> within <em>1 year</em>.</li>
+                </ol>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">What happens if I do not purchase regularly?</h4>
+                <ul className="list-disc ml-5 space-y-1">
+                  <li className="text-gray-700">If you <em>do not make a purchase within 45 days</em>, or</li>
+                  <li className="text-gray-700">If there is a <em>gap of 45 days between purchases</em>,</li>
+                </ul>
+                <p className="text-gray-700 mt-2">
+                  then the <em>container will be taken back</em>.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">How long does delivery take for the rice bag and container?</h4>
+                <ul className="list-disc ml-5 space-y-1">
+                  <li className="text-gray-700">The <em>rice bag</em> will be delivered <em>within 24 hours</em>.</li>
+                  <li className="text-gray-700">Due to high demand, <em>container delivery</em> may be delayed.</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">Who is eligible to be referred under this program?</h4>
+                <p className="text-gray-700">
+                  Only <em>new users</em> who are <em>not yet registered</em> on ASKOXY.AI can be referred.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-purple-800 mb-2">Referral Program – Earn a Free Container & ₹100 Cashback!</h3>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">How do I refer someone?</h4>
+                <ul className="list-disc ml-5 space-y-1">
+                  <li className="text-gray-700">Share your <em>unique referral link</em> with your friends.</li>
+                  <li className="text-gray-700">Your friend must <em>sign up</em> using your referral link during registration.</li>
+                  <li className="text-gray-700">Once they <em>place an order for rice and do not cancel it</em>, you'll receive the reward.</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">What rewards do I get for referring a friend?</h4>
+                <p className="text-gray-700">
+                  Apart from getting a <em>free steel container</em>, you will also receive <strong>₹100 cashback</strong> in your <em>ASKOXY.AI wallet</em> when you successfully refer someone.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">When will I receive my referral reward?</h4>
+                <p className="text-gray-700">
+                  Referral rewards are credited <em>once your referred friend successfully places an order and does not cancel it</em>.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">Where can I check my referral status?</h4>
+                <p className="text-gray-700">
+                  You can track your referrals in your <em>ASKOXY.AI dashboard</em>.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">Is there a limit to the number of people I can refer?</h4>
+                <p className="text-gray-700">
+                  No, you can refer <em>as many friends as you like</em>. You will receive <strong>₹100 cashback for each successful referral</strong>, subject to promotional terms.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">What happens if my friend forgets to use my referral link?</h4>
+                <p className="text-gray-700">
+                  Referrals must <em>use your link at the time of sign-up</em>. If they forget, the referral may not be counted, and you will <strong>not receive the reward</strong>.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">Can I refer myself using another account?</h4>
+                <p className="text-gray-700">
+                  No, <em>self-referrals</em> are not allowed. Fraudulent activity may lead to disqualification from the referral program.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-purple-700 mb-1">Who do I contact if I have issues with my referral reward?</h4>
+                <p className="text-gray-700">
+                  If you have any issues with your referral reward, please contact <em>ASKOXY.AI support</em> at:
+                </p>
+                <p className="text-gray-700 mt-2">
+                  📞 <em>Phone:</em> <strong>+91 81432 71103</strong><br />
+                  📧 <em>Email:</em> <strong>SUPPORT@ASKOXY.AI</strong>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const Ricebags: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("All Items");
@@ -89,6 +310,8 @@ const Ricebags: React.FC = () => {
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [noResults, setNoResults] = useState(false);
   const [showAppModal, setShowAppModal] = useState(false);
+  // New state for FAQ modal
+  const [showFAQModal, setShowFAQModal] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -427,74 +650,84 @@ const handleBannerClick = (index: number) => {
         </div>
       </div>
 
-
+      {/* App Modal */}
       <AnimatePresence>
-  {showAppModal && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-      onClick={() => setShowAppModal(false)}
-    >
-      <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-purple-800">Get Our Mobile App</h2>
-          <button
+        {showAppModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
             onClick={() => setShowAppModal(false)}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label="Close modal"
           >
-            <FaTimes className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <p className="text-gray-600 mb-6">
-          Download ASKOXY.AI for a seamless shopping experience with exclusive app-only offers!
-        </p>
-        
-        <div className="grid grid-cols-2 gap-2 justify-center">
-          <a
-            href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex justify-center"
-          >
-            <img
-              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-              alt="Download on the App Store"
-              className="h-10 w-auto object-contain"
-            />
-          </a>
-          <a
-            href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex justify-center"
-          >
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
-              alt="Get it on Google Play"
-              className="h-10 w-auto object-contain"
-            />
-          </a>
-        </div>
-        
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-sm text-gray-500 text-center">
-            Enjoy exclusive app-only discounts, faster checkout, and order tracking!
-          </p>
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-purple-800">Get Our Mobile App</h2>
+                <button
+                  onClick={() => setShowAppModal(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label="Close modal"
+                >
+                  <FaTimes className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="text-gray-600 mb-6">
+                Download ASKOXY.AI for a seamless shopping experience with exclusive app-only offers!
+              </p>
+              
+              <div className="grid grid-cols-2 gap-2 justify-center">
+                <a
+                  href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex justify-center"
+                >
+                  <img
+                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                    alt="Download on the App Store"
+                    className="h-10 w-auto object-contain"
+                  />
+                </a>
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex justify-center"
+                >
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
+                    alt="Get it on Google Play"
+                    className="h-10 w-auto object-contain"
+                  />
+                </a>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500 text-center">
+                  Enjoy exclusive app-only discounts, faster checkout, and order tracking!
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FAQ Modal */}
+      <AnimatePresence>
+        {showFAQModal && (
+          <FAQModal 
+            isOpen={showFAQModal} 
+            onClose={() => setShowFAQModal(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* Search results indicator (if searching) */}
       {searchTerm && (
@@ -522,18 +755,38 @@ const handleBannerClick = (index: number) => {
 
       {/* Main Content */}
       <main className="bg-white">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center py-2 md:py-6"
-        >
-          <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent px-4">
-            Premium Quality Rice
-          </h1>
-          <p className="text-m md:text-lg text-gray-600 px-4">
-            Discover our exclusive collection of premium rice varieties
-          </p>
-        </motion.div>
+      <motion.div
+  initial={{ y: -20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  className="text-center py-2 md:py-6 relative"
+>
+  {/* Container for the heading and FAQ button */}
+  <div className="flex justify-between items-center mb-4">
+    {/* Centered Heading */}
+    <div className="flex-1 text-center">
+      <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+        Premium Quality Rice
+      </h1>
+    </div>
+
+    {/* FAQ Button (Right-aligned) */}
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      className="px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg shadow-md hover:bg-purple-700 transition-all"
+      onClick={() => setShowFAQModal(true)}
+      aria-label="View FAQs"
+    >
+      <FaQuestionCircle className="w-5 h-5 inline-block" />
+      <span className="ml-2">FAQs</span>
+    </motion.button>
+  </div>
+
+  {/* Description Text */}
+  <p className="text-m md:text-lg text-gray-600 px-4">
+    Discover our exclusive collection of premium rice varieties
+  </p>
+</motion.div>
 
         {noResults ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -561,7 +814,8 @@ const handleBannerClick = (index: number) => {
             categories={filteredCategories}
             activeCategory={activeCategory}
             onCategoryClick={setActiveCategory}
-            loading={false} // Always pass false here as we handle skeleton loading separately
+            setActiveCategory={setActiveCategory}
+            loading={loading}
             cart={cart}
             onItemClick={handleItemClick}
             updateCart={setCart}

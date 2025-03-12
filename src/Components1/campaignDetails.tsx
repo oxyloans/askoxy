@@ -103,7 +103,7 @@ const CampaignDetails: React.FC = () => {
     console.log("Query:", query);
     const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `${BASE_URL}writetous-service/saveData`;
+    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
     const headers = {
       Authorization: `Bearer ${accessToken}`,
     };
@@ -131,7 +131,7 @@ const CampaignDetails: React.FC = () => {
     try {
       setIsButtonDisabled(true);
       const response = await axios.post(
-        `${BASE_URL}marketing-service/campgin/askOxyOfferes`,
+        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         {
           askOxyOfers: campaignType,
           userId: userId,
