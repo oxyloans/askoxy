@@ -330,19 +330,19 @@ useEffect(() => {
     // First Name validation
     if (!formData.userFirstName.trim()) {
       errors.userFirstName = "First name is required";
-      return;
+
     } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
       errors.userFirstName = "First name should only contain letters";
-      return;
+  
     }
 
     // Last Name validation
     if (!formData.userLastName.trim()) {
       errors.userLastName = "Last name is required";
-      return;
+    
     } else if (!/^[A-Za-z ]+$/.test(formData.userLastName.trim())) {
       errors.userLastName = "Last name should only contain letters";
-      return;
+     
     }
 
     // Email validation
@@ -355,40 +355,40 @@ useEffect(() => {
     // Alternate mobile number validation
     if (!formData.alterMobileNumber.trim()) {
       errors.alterMobileNumber = "Alternate mobile number is required";
-      return;
+      
     } else if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
       errors.alterMobileNumber = "Please enter a valid 10-digit mobile number";
-      return;
+
     }else if(formData.alterMobileNumber === formData.mobileNumber){
       errors.alterMobileNumber = "Alternate and Mobile number must be different.";
       errors.mobileNumber = "Alternate and Mobile number must be different.";
-      return;
+   
     }else if(formData.alterMobileNumber === formData.whatsappNumber){
       errors.alterMobileNumber = "Alternate and WhatsApp number must be different.";
       errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
-      return;
+     
     }
 
     // Mobile number validation
     if (!formData.mobileNumber.trim()) {
       errors.mobileNumber = "Mobile number is required";
-      return;
+      
     } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
       errors.mobileNumber = "Please enter a valid 10-digit mobile number";
-      return;
+   
     }
 
     // WhatsApp number validation
     if (!formData.whatsappNumber) {
       errors.whatsappNumber = "WhatsApp number is required";
-      return;
+   
     }
 
     // Cross-number validations
     if (formData.alterMobileNumber === formData.whatsappNumber) {
       errors.alterMobileNumber = "Alternate and WhatsApp number must be different.";
       errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
-      return;
+  
     }
 
     setValidationErrors(errors);
@@ -787,12 +787,11 @@ useEffect(() => {
                     <label className="text-sm font-medium text-gray-700">
                       Mobile Number {isFromWhatsApp ? "" : <span className="text-red-500">*</span>}
                     </label>
-                    <PhoneInput
-                      international
-                      defaultCountry="IN"
+                    <input
+                    type="tel"
                       value={formData.mobileNumber}
                       disabled={isMobileNumberVerified}
-                      onChange={(value) => setFormData({ ...formData, mobileNumber: value || "" })}
+                      onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value || "" })}
                       className={`w-full px-4 py-3 rounded-lg border transition-all
           ${validationErrors.mobileNumber ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-purple-500"}
         `}
@@ -868,7 +867,7 @@ useEffect(() => {
                     {!editStatus ? (
                       <button
                         onClick={handleSaveProfile}
-                        disabled={isLoading || !isWhatsappVerified}
+                        disabled={isLoading}
                         className="w-full md:w-auto px-6 py-3  bg-gradient-to-r from-purple-600 to-purple-400 text-white rounded-lg transition-colors shadow-md hover:bg-purple-700 disabled:opacity-50"
                       >
                         {isLoading ? "Saving..." : "Save Changes"}

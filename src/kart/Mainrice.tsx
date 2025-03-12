@@ -20,6 +20,7 @@ interface Item {
   quantity: number;
   itemMrp: number;
   units: string;
+  inStock?: boolean; // Add inStock property
 }
 
 interface SubCategory {
@@ -34,6 +35,43 @@ interface Category {
   itemsResponseDtoList: Item[];
   subCategories?: SubCategory[];
 }
+
+// Skeleton Loader Components
+const ProductSkeletonItem: React.FC = () => (
+  <div className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
+    <div className="h-40 bg-gray-200"></div>
+    <div className="p-3">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
+      <div className="flex justify-between items-center">
+        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const CategorySkeletonItem: React.FC = () => (
+  <div className="px-2 py-1 rounded-full bg-gray-200 animate-pulse w-24 h-8 mx-1"></div>
+);
+
+const SkeletonLoader: React.FC = () => (
+  <>
+    {/* Skeleton for category tabs */}
+    <div className="flex overflow-x-auto py-4 px-4 space-x-2 mb-4">
+      {Array(6).fill(0).map((_, index) => (
+        <CategorySkeletonItem key={index} />
+      ))}
+    </div>
+    
+    {/* Skeleton for products grid */}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-4">
+      {Array(10).fill(0).map((_, index) => (
+        <ProductSkeletonItem key={index} />
+      ))}
+    </div>
+  </>
+);
 
 const Ricebags: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -139,6 +177,24 @@ const handleBannerClick = (index: number) => {
     return () => clearInterval(timer);
   }, [isAutoPlay, bannerImages.length]);
 
+  // Sort items function: in-stock items first, out-of-stock items last
+  const sortItemsByStock = (items: Item[]): Item[] => {
+    return [...items].sort((a, b) => {
+      // Assume items with quantity > 0 are in stock
+      const aInStock = a.quantity > 0;
+      const bInStock = b.quantity > 0;
+      
+      // Set the inStock property for each item
+      a.inStock = aInStock;
+      b.inStock = bInStock;
+      
+      // Sort in-stock items first
+      if (aInStock && !bInStock) return -1;
+      if (!aInStock && bInStock) return 1;
+      return 0;
+    });
+  };
+
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -148,19 +204,49 @@ const handleBannerClick = (index: number) => {
         );
         const data: Category[] = response.data;
         
-        // Process the API response to include both all categories and individual categories
-        const allItemsList = data.flatMap(cat => cat.itemsResponseDtoList);
+        // Create a map to deduplicate items based on both itemId and itemName
+        const uniqueItemsMap = new Map<string, Item>();
         
+        // Collect all items and ensure uniqueness by both itemId and itemName
+        data.forEach(category => {
+          category.itemsResponseDtoList.forEach(item => {
+            // Create a combined key using both itemId and normalized itemName
+            const normalizedName = item.itemName.trim().toLowerCase();
+            
+            // Check if we already have an item with this name
+            let isDuplicate = false;
+            uniqueItemsMap.forEach((existingItem) => {
+              if (existingItem.itemName.trim().toLowerCase() === normalizedName) {
+                isDuplicate = true;
+              }
+            });
+            
+            // Only add the item if it's not a duplicate by name
+            if (!isDuplicate) {
+              uniqueItemsMap.set(item.itemId, item);
+            }
+          });
+        });
+        
+        // Convert map values to array for our "All Items" category
+        const uniqueItemsList = Array.from(uniqueItemsMap.values());
+        
+        // Sort all items by stock status
+        const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
+        
+        // Create new categories with sorted items
         const allCategories: Category[] = [
           {
             categoryName: "All Items",
             categoryImage: null,
-            itemsResponseDtoList: allItemsList,
-            subCategories: [] // Initialize empty subcategories for "All Categories"
+            itemsResponseDtoList: sortedUniqueItems,
+            subCategories: []
           },
           ...data.map(category => ({
             ...category,
-            subCategories: category.subCategories || [] // Preserve existing subcategories
+            // Sort items within each category
+            itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
+            subCategories: category.subCategories || []
           }))
         ];
         
@@ -194,9 +280,12 @@ const handleBannerClick = (index: number) => {
         (item.weight && item.weight.toLowerCase().includes(term))
       );
       
+      // Sort filtered items by stock status
+      const sortedFilteredItems = sortItemsByStock(filteredItems);
+      
       return {
         ...category,
-        itemsResponseDtoList: filteredItems
+        itemsResponseDtoList: sortedFilteredItems
       };
     });
     
@@ -367,7 +456,7 @@ const handleBannerClick = (index: number) => {
         </div>
         
         <p className="text-gray-600 mb-6">
-          Download AskOxy.AI for a seamless shopping experience with exclusive app-only offers!
+          Download ASKOXY.AI for a seamless shopping experience with exclusive app-only offers!
         </p>
         
         <div className="grid grid-cols-2 gap-2 justify-center">
@@ -465,12 +554,14 @@ const handleBannerClick = (index: number) => {
               View All Products
             </button>
           </div>
+        ) : loading ? (
+          <SkeletonLoader />
         ) : (
           <Categories
             categories={filteredCategories}
             activeCategory={activeCategory}
             onCategoryClick={setActiveCategory}
-            loading={loading}
+            loading={false} // Always pass false here as we handle skeleton loading separately
             cart={cart}
             onItemClick={handleItemClick}
             updateCart={setCart}
@@ -505,34 +596,30 @@ const handleBannerClick = (index: number) => {
       {/* Mobile Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-10">
         <div className="flex overflow-x-auto py-3 px-4 space-x-4 scrollbar-hide css-hide-scrollbar">
-          {filteredCategories.map((category, index) => (
-            <motion.button
-              key={index}
-              whileTap={{ scale: 0.95 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === category.categoryName
-                  ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-md"
-                  : "bg-purple-50 text-purple-700 hover:bg-purple-100"
-              }`}
-              onClick={() => setActiveCategory(category.categoryName)}
-            >
-              {category.categoryName}
-            </motion.button>
-          ))}
+          {loading ? (
+            // Skeleton navigation items for mobile
+            Array(5).fill(0).map((_, index) => (
+              <div key={index} className="flex-shrink-0 px-4 py-2 rounded-full bg-gray-200 animate-pulse w-24 h-8"></div>
+            ))
+          ) : (
+            filteredCategories.map((category, index) => (
+              <motion.button
+                key={index}
+                whileTap={{ scale: 0.95 }}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeCategory === category.categoryName
+                    ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-md"
+                    : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                }`}
+                onClick={() => setActiveCategory(category.categoryName)}
+              >
+                {category.categoryName}
+              </motion.button>
+            ))
+          )}
         </div>
       </nav>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-10 h-10 md:w-16 md:h-16 border-4 border-purple-600 border-t-transparent rounded-full"
-          />
-        </div>
-      )}
-           
       <Footer />
     </div>
   );

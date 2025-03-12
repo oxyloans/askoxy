@@ -31,6 +31,7 @@ const WhatsappLogin = () => {
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
   const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("whatsapp");
+  const [showEnglish, setShowEnglish] = useState(true);
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
   const [otpError, setOtpError] = useState<string>("");
@@ -81,6 +82,16 @@ const WhatsappLogin = () => {
       return () => clearInterval(timer);
     }
   }, [resendDisabled]);
+
+  useEffect(() => {
+    // Set up an interval to toggle between languages every 7 seconds
+    const intervalId = setInterval(() => {
+      setShowEnglish(prevState => !prevState);
+    }, 7000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Check if phone number is valid to enable/disable "Get OTP" button
   useEffect(() => {
@@ -322,12 +333,11 @@ const WhatsappLogin = () => {
         requestBody.whatsappOtpValue = credentials.otp.join("");
         requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
-        
       } else {
         requestBody.mobileNumber = phoneWithoutCode;
         requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
         requestBody.mobileOtpValue = credentials.mobileOTP.join("");
-        requestBody.salt = localStorage.getItem("sa lt");
+        requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
       }
 
@@ -490,15 +500,24 @@ const WhatsappLogin = () => {
 
         {/* Erice Customer Alert - Now conditionally rendered */}
         {showEriceAlert && (
-          <div className="mx-6 mt-6">
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Attention Erice Customers</p>
-                <p className="text-sm mt-1">Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.</p>
-              </div>
-            </div>
-          </div>
+         <div className="mx-6 mt-4">
+         <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2">
+           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+           <div>
+             {showEnglish ? (
+               <>
+                 <p className="font-bold">Attention Erice Customers</p>
+                 <p className="text-sm">Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.</p>
+               </>
+             ) : (
+               <>
+                 <p className="font-bold">ERICE కస్టమర్లకు గమనిక</p>
+                 <p className="text-xs">మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్ అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు</p>
+               </>
+             )}
+           </div>
+         </div>
+       </div>
         )}
 
         {/* Success Message */}

@@ -597,7 +597,8 @@ const ItemDisplayPage = () => {
                               disabled={
                                 cartItems[itemDetails.itemId] >=
                                 itemDetails.quantity ||
-                                loadingItems.items[itemDetails.itemId]
+                                loadingItems.items[itemDetails.itemId] ||
+                                (itemDetails.itemPrice === 1 && cartItems[itemDetails.itemId] >= 1)
                               }
                             >
                               <Plus className="w-5 h-5" />

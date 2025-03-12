@@ -71,7 +71,7 @@ const Footer = () => {
               className="h-12 w-auto object-contain"
             />
             <p className="text-gray-600 text-xs leading-relaxed">
-              AskOxy.AI offers unlimited ChatGPT prompts, empowering innovation
+              ASKOXY.AI offers unlimited ChatGPT prompts, empowering innovation
               without cost barriers.
             </p>
             <div className="flex space-x-3">
@@ -141,7 +141,7 @@ const Footer = () => {
               Get Our App
             </h3>
             <p className="text-xs text-gray-600">
-              Download AskOxy.AI for a seamless experience.
+              Download ASKOXY.AI for a seamless experience.
             </p>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <a

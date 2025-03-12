@@ -544,7 +544,7 @@ const Categories: React.FC<CategoriesProps> = ({
                           }}
                           disabled={
                             cartItems[item.itemId] >= item.quantity ||
-                            loadingItems.items[item.itemId]
+                            loadingItems.items[item.itemId] || (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
                           }
                         >
                           {/* {loadingItems.items[item.itemId] &&

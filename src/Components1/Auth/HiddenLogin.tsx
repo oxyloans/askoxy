@@ -162,7 +162,7 @@ const HiddenLogin = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/user-service/hiddenLoginByMobileNumber/${otpMethod === "whatsapp"?phoneNumber:requestBody.mobileNumber}`,
+        `${BASE_URL}/user-service/hiddenLoginByMobileNumber/${otpMethod === "whatsapp"?requestBody.whatsappNumber:requestBody.mobileNumber}`,
         {}
       );
       if (response.data) {

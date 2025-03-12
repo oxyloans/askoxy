@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X,Trash2 } from "lucide-react";
 import { isWithinRadius } from "./LocationCheck";
 import { Button, message, Modal, } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
 import  BASE_URL  from "../Config";
+import { motion } from "framer-motion";
 
 interface Address {
   id?: string;
@@ -648,125 +649,139 @@ const CartPage: React.FC = () => {
               ) : (
                 cartData.map((item) => (
                   <div
-                    key={item.itemId}
-                    className="border rounded-lg p-4 mb-4 flex flex-col md:flex-row items-center md:justify-between space-y-4 md:space-y-0"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className="w-20 h-20 bg-gray-200 cursor-pointer"
-                        onClick={() =>
-                          navigate(`/main/itemsdisplay/${item.itemId}`, {
-                            state: { item },
-                          })
-                        }
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.itemName}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div>
-                        {/* Display available stock quantity */}
-                        {item.quantity < 6 && (
-                          <p className="text-xs text-red-500">
-                            Only {item.quantity} item left
-                          </p>
+                  key={item.itemId}
+                  className="border rounded-lg p-4 mb-4 flex flex-col md:flex-row w-full"
+                >
+                  {/* Left Section: Image and Item Details */}
+                  <div className="flex flex-1 mb-4 md:mb-0">
+                    <div
+                      className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
+                      onClick={() =>
+                        navigate(`/main/itemsdisplay/${item.itemId}`, {
+                          state: { item },
+                        })
+                      }
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.itemName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                
+                    <div className="ml-4 flex flex-col justify-center">
+                      {/* Display available stock quantity */}
+                      {item.quantity < 6 && item.quantity > 0 && (
+                        <p className="text-xs font-medium text-red-500 mb-1">
+                          Only {item.quantity} {item.quantity === 1 ? 'item' : 'items'} left
+                        </p>
                         )}
-                        <h3 className="font-bold text-gray-800 truncate flex-1">
+                        <h3 className="text-smc md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
                           {item.itemName}
                         </h3>
-                        <p className="text-sm text-center md:text-left">
-                          Weight: {item.weight} {item.units}
+                        <p className="text-sm text-gray-600">
+                        Weight: {item.weight} {item.units}
+                      </p>
+                      <div className="flex items-center mt-1">
+                        <p className="text-sm line-through text-gray-400 mr-2">
+                          ₹{item.priceMrp}
                         </p>
-                        <p className="text-sm line-through text-red-500 text-center md:text-left">
-                          MRP: ₹{item.priceMrp}
-                        </p>
-                        <p className="text-green-600 font-bold md:text-left">
+                        <p className="text-green-600 font-bold">
                           ₹{item.itemPrice}
                         </p>
                       </div>
                     </div>
-
-                    {item.quantity !== 0 ? (
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="flex items-center justify-between space-x-4 w-full">
-                          <div className="flex items-center border rounded-md">
-                            <button
-                              className="px-3 py-1"
-                              onClick={() => handleDecrease(item)}
-                              disabled={loadingItems[item.itemId]}
-                            >
-                              -
-                            </button>
-                            {loadingItems[item.itemId] ?
-                            <LoadingOutlined
-                                  style={{ fontSize: 16, color: "#722ED1" }}
-                                  spin
-                                />
-                  :
-                            <span className="px-3 py-1">
-                              {cartItems[item.itemId]}
-                            </span>
-}
-                            <button
-                              className={`px-3 py-1 ${
-                                cartItems[item.itemId] >= item.quantity
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
-                              onClick={() => {
-                                if (cartItems[item.itemId] < item.quantity) {
-                                  handleIncrease(item);
-                                }
-                              }}
-                              disabled={
-                                cartItems[item.itemId] >= item.quantity ||
-                                loadingItems[item.itemId]
-                              }
-                            >
-                              +
-                            </button>
-                          </div>
-                          <button
-                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
-                            onClick={async () => {
-                              await removeCartItem(item);
-                            }}
-                            aria-label="Delete item from cart"
+                  </div>
+                
+                  {/* Right Section: Quantity Controls & Price */}
+                  {item.quantity !== 0 ? (
+                    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+                      <div className="flex items-center justify-between md:justify-end w-full">
+                        {/* Quantity Controls - Updated with new design */}
+                        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
+                            onClick={() => handleDecrease(item)}
+                            disabled={loadingItems[item.itemId]}
+                            aria-label="Decrease quantity"
                           >
-                            Delete
-                          </button>
+                            <span className="font-medium">-</span>
+                          </motion.button>
+                          
+                          <div className="px-4">
+                            {loadingItems[item.itemId] ? (
+                              <Loader2 className="animate-spin text-purple-600" />
+                            ) : (
+                              <span className="font-medium text-purple-700">{cartItems[item.itemId]}</span>
+                            )}
+                          </div>
+                          
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                              cartItems[item.itemId] >= item.quantity
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                            onClick={() => {
+                              if (cartItems[item.itemId] < item.quantity) {
+                                handleIncrease(item);
+                              }
+                            }}
+                            disabled={
+                              cartItems[item.itemId] >= item.quantity ||
+                              loadingItems[item.itemId]
+                            }
+                            aria-label="Increase quantity"
+                          >
+                            <span className="font-medium">+</span>
+                          </motion.button>
                         </div>
-
-                        <div className="w-full flex justify-center mt-4">
-                          <p className="text-purple-600 font-bold whitespace-nowrap text-m">
-                            Total : ₹
-                            {(
-                              parseFloat(item.itemPrice) *
-                              (cartItems[item.itemId] || 0)
-                            ).toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center space-y-4">
-                        <p className="text-red-600 font-bold whitespace-nowrap text-m">
-                          Out of Stock
-                        </p>
-                        <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                
+                        {/* Delete Button - Updated with icon */}
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
                           onClick={async () => {
                             await removeCartItem(item);
                           }}
                           aria-label="Delete item from cart"
                         >
-                          Delete
-                        </button>
+                          <Trash2 size={16} />
+                        </motion.button>
                       </div>
-                    )}
-                  </div>
+                
+                      {/* Total Price */}
+                      <div className="w-full flex justify-end">
+                        <p className="text-purple-700 font-bold text-base">
+                          Total: ₹
+                          {(
+                            parseFloat(item.itemPrice) *
+                            (cartItems[item.itemId] || 0)
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+                      <p className="text-red-600 font-bold text-base mb-2">
+                        Out of Stock
+                      </p>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
+                        onClick={async () => {
+                          await removeCartItem(item);
+                        }}
+                        aria-label="Delete item from cart"
+                      >
+                        <Trash2 size={16} className="mr-1" />
+                        Delete
+                      </motion.button>
+                    </div>
+                  )}
+                </div>
                 ))
               )}
             </div>
