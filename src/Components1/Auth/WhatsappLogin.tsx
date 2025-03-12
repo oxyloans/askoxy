@@ -80,15 +80,15 @@ const WhatsappLogin = () => {
     }
   }, [resendDisabled]);
 
-  useEffect(() => {
-    // Set up an interval to toggle between languages every 7 seconds
-    const intervalId = setInterval(() => {
-      setShowEnglish(prevState => !prevState);
-    }, 7000);
+  // useEffect(() => {
+  //   // Set up an interval to toggle between languages every 7 seconds
+  //   const intervalId = setInterval(() => {
+  //     setShowEnglish(prevState => !prevState);
+  //   }, 7000);
     
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  //   // Clean up interval on component unmount
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   // Check if phone number is valid to enable/disable "Get OTP" button
   useEffect(() => {
@@ -474,7 +474,7 @@ const WhatsappLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 row">
       <div
         className={`max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
@@ -498,20 +498,31 @@ const WhatsappLogin = () => {
         {/* Erice Customer Alert - Now conditionally rendered */}
         {showEriceAlert && (
          <div className="mx-6 mt-4">
-         <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2">
+         <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2 relative">
            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
            <div>
              {showEnglish ? (
                <>
-                 <p className="font-bold">Attention Erice Customers</p>
-                 <p className="text-sm">Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.</p>
-               </>
+               <p className="font-bold">ERICE కస్టమర్లకు గమనిక</p>
+               <p className="text-xs">మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్ అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు</p>
+             </>
+               
              ) : (
-               <>
-                 <p className="font-bold">ERICE కస్టమర్లకు గమనిక</p>
-                 <p className="text-xs">మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్ అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు</p>
+              <>
+                 <p className="font-bold">Attention Erice Customers</p>
+                 <p className="text-xs">Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.</p>
                </>
              )}
+             <div className="items-end">
+              <button>
+              <button
+        onClick={() => setShowEnglish(!showEnglish)}
+         className="absolute bottom-2 right-2 px-2 py-1 text-xs bg-amber-50 text-amber-800 rounded"
+      >
+        {showEnglish ? "Switch to English" : "Switch to Telugu"}
+      </button>
+              </button>
+             </div>
            </div>
          </div>
        </div>
