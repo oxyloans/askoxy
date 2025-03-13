@@ -30,7 +30,7 @@ const WhatsappLogin = () => {
   });
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
-  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("whatsapp");
+  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("mobile");
   const [showEnglish, setShowEnglish] = useState(true);
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
@@ -481,15 +481,15 @@ const WhatsappLogin = () => {
         }`}
       >
         {/* Header */}
-        <div className="bg-purple-600 p-6 relative">
+        <div className="bg-purple-600 p-2 relative">
           <button
             onClick={handleClose}
             className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="flex flex-col items-center gap-3">
-            <h2 className="text-2xl font-bold text-white text-center">
+          <div className="flex flex-col items-center gap-3 ">
+            <h2 className="text-2xl font-bold text-white text-center mt-2">
               Login to ASKOXY.AI
             </h2>
           </div>
@@ -547,6 +547,19 @@ const WhatsappLogin = () => {
             {/* OTP Method Selection UI */}
             <div className="flex flex-col items-center gap-4 p-4 border-b border-gray-100 pb-6">
               <div className="flex gap-4">
+              <button
+                  type="button"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    otpMethod === "mobile"
+                      ? "bg-purple-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                  onClick={() => switchOtpMethod("mobile")}
+                  disabled={isPhoneDisabled || isMethodDisabled}
+                >
+                  <Smartphone className="w-5 h-5" />
+                  SMS
+                </button>
                 <button
                   type="button"
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -560,19 +573,7 @@ const WhatsappLogin = () => {
                   <MessageCircle className="w-5 h-5" />
                   WhatsApp
                 </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    otpMethod === "mobile"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
-                  onClick={() => switchOtpMethod("mobile")}
-                  disabled={isPhoneDisabled || isMethodDisabled}
-                >
-                  <Smartphone className="w-5 h-5" />
-                  SMS
-                </button>
+               
               </div>
             </div>
 

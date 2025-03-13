@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.a9759ea3.css",
-    "main.js": "/static/js/main.73191a6c.js",
+    "main.css": "/static/css/main.2b21fb57.css",
+    "main.js": "/static/js/main.98bcabba.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -15,6 +15,7 @@
     "static/media/ricecard1.png": "/static/media/ricecard1.24e05541236f1f34aafa.png",
     "static/media/R1.png": "/static/media/R1.c5abc3bb1aa03be79519.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
+    "static/media/ricecard4.png": "/static/media/ricecard4.5fe58c9f9262e0a2fc77.png",
     "static/media/legal.png": "/static/media/legal.dd57ac21e6673f622ae7.png",
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
     "static/media/WhatsApp Image 2025-01-23 at 15.50.44.png": "/static/media/WhatsApp Image 2025-01-23 at 15.50.44.cc50636b969ab3db4528.png",
@@ -22,6 +23,7 @@
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
     "static/media/machines.png": "/static/media/machines.8a2c5d9604b7fe5261f4.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
+    "static/media/holi.png": "/static/media/holi.2896c2fe05e90d2c9324.png",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
     "static/media/games.png": "/static/media/games.a8a1f4e472b2b491412b.png",
     "static/media/Beauty (1).png": "/static/media/Beauty (1).6d1fc399b6274f1ea4f1.png",
@@ -115,12 +117,12 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.a9759ea3.css.map": "/static/css/main.a9759ea3.css.map",
-    "main.73191a6c.js.map": "/static/js/main.73191a6c.js.map",
+    "main.2b21fb57.css.map": "/static/css/main.2b21fb57.css.map",
+    "main.98bcabba.js.map": "/static/js/main.98bcabba.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.a9759ea3.css",
-    "static/js/main.73191a6c.js"
+    "static/css/main.2b21fb57.css",
+    "static/js/main.98bcabba.js"
   ]
 }

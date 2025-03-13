@@ -38,9 +38,10 @@ import MMServices from "../assets/img/Machines manufacturing services.png";
 import hiring from "../assets/img/Career guidance.png";
 import FreeChatGPTmain from "./FreechatGPTmain";
 import BMVCOINmain from "./BMVcoinmain";
-
-
 import BASE_URL from "../Config";
+// Import Holi welcome image
+import HoliWelcomeImage from "../assets/img/holi.png";
+
 interface DashboardItem {
   title: string;
   image: string;
@@ -76,6 +77,7 @@ const DashboardMain: React.FC = () => {
   const [bmvCoin, setBmvCoin] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(true);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -96,6 +98,21 @@ const DashboardMain: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Check if the user is on a mobile device
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check and event listener
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
@@ -106,6 +123,17 @@ const DashboardMain: React.FC = () => {
       setActiveTab(pathTab);
     }
   }, [location.pathname]);
+
+  // Close welcome modal after 5 seconds
+  useEffect(() => {
+    if (showWelcomeModal) {
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(false);
+      }, 7000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcomeModal]);
 
   const services: DashboardItem[] = [
     {
@@ -230,13 +258,15 @@ const DashboardMain: React.FC = () => {
     navigate(`/main/services/campaign/${campaignType}`);
   };
 
-  const renderItems = (items: DashboardItem[]): JSX.Element => (
-    <div className="space-y-6">
-      {activeTab === "products" ? (
-        <>
-          <Ricebags />
-        </>
-      ) : activeTab === "services" ? (
+  const renderDashboardContent = () => {
+    if (activeTab === "products") {
+      return <Ricebags />;
+    } else if (activeTab === "freegpts") {
+      return <FreeChatGPTmain />;
+    } else if (activeTab === "bmvcoin") {
+      return <BMVCOINmain />;
+    } else if (activeTab === "services") {
+      return (
         <>
           <div className="relative">
             <Search
@@ -252,7 +282,7 @@ const DashboardMain: React.FC = () => {
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems(items).map((item, index) => (
+            {filteredItems(services).map((item, index) => (
               <div
                 key={index}
                 onClick={() => navigate(item.path)}
@@ -313,9 +343,6 @@ const DashboardMain: React.FC = () => {
                   </div>
                   <div className="p-4">
                     <div className="flex items-center gap-3 mb-2">
-                      {/* <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
-                    {campaign.icon}
-                    </div> */}
                       <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                         {campaign.campaignType}
                       </h3>
@@ -328,22 +355,41 @@ const DashboardMain: React.FC = () => {
               ))}
           </div>
         </>
-      ) : activeTab === "freegpts" ? (
-        <>{<FreeChatGPTmain />}</>
-      ) : (
-        activeTab === "bmvcoin" && <>{<BMVCOINmain />}</>
-      )}
-    </div>
-  );
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen">
+      {/* Welcome Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className={`relative bg-white rounded-2xl overflow-hidden shadow-xl transform transition-all 
+            ${isMobile ? 'w-full max-w-sm' : 'w-full max-w-2xl'}`}>
+            <button
+              onClick={() => setShowWelcomeModal(false)}
+              className="absolute top-3 right-3 z-10 p-1 rounded-full bg-white/80 hover:bg-white"
+            >
+              <X size={24} className="text-gray-800" />
+            </button>
+            
+            <div className="relative">
+              <img 
+                src={HoliWelcomeImage} 
+                alt="Holi Welcome" 
+                className="w-full object-cover"
+                style={{ maxHeight: isMobile ? '50vh' : '70vh' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
-          {activeTab === "services" && renderItems(services)}
-          {activeTab === "products" && renderItems(products)}
-          {activeTab === "freegpts" && renderItems(freeGPTs)}
-          {activeTab === "bmvcoin" && renderItems(bmvCoinItems)}
+          <div className="space-y-6">
+            {renderDashboardContent()}
+          </div>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import Categories from "./categories";
 import rice1 from "../assets/img/ricecard1.png";
 import rice2 from "../assets/img/ricecard2.png";
 import rice3 from "../assets/img/ricecard3.png";
+import rice4 from "../assets/img/ricecard4.png";
 import { CartContext } from "../until/CartContext";
 import { FaSearch, FaTimes, FaQuestionCircle } from "react-icons/fa";
 import BASE_URL from "../Config";
@@ -316,7 +317,7 @@ const Ricebags: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const minSwipeDistance = 50;
-  const bannerImages = [rice1, rice2, rice3];
+  const bannerImages = [rice1, rice2, rice3,rice4];
 
   // Get search query from location state if available
   useEffect(() => {
@@ -363,6 +364,10 @@ const handleBannerClick = (index: number) => {
       setShowAppModal(true);
     }
     // No special action for Rice2 (index 1)
+    else if (index === 3) {
+      // Rice3 image - Show app download modal
+      setShowFAQModal(true);
+    }
   };
 
   const sliderVariants = {
