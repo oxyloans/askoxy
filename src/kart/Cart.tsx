@@ -731,7 +731,7 @@ const CartPage: React.FC = () => {
                             }}
                             disabled={
                               cartItems[item.itemId] >= item.quantity ||
-                              loadingItems[item.itemId]
+                              loadingItems[item.itemId] || (parseInt(item.itemPrice) === 1 && cartItems[item.itemId] >= 1)
                             }
                             aria-label="Increase quantity"
                           >
