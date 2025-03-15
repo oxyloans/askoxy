@@ -78,7 +78,7 @@ const Admin: React.FC = () => {
   const [registeredUserCount, setRegisteredUserCount] = useState<UserCount[]>(
     []
   );
- 
+
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -98,12 +98,12 @@ const Admin: React.FC = () => {
 
       // Perform multiple API requests in parallel
       const responses = await Promise.allSettled([
-        axios.get(`${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`),
-        axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
-        axios.post(`${BASE_URL}/user-service/getalluserdetailsbyrange`, {
-          endingDate: endDate,
-          startingDate: startDate,
-        }),
+        axios.get(`${BASE_URL}/auth-service/auth/usersOfferesDetails`),
+        axios.get(`${BASE_URL}/auth-service/auth/AllusersAddress`),
+        // axios.post(`${BASE_URL}/user-service/getalluserdetailsbyrange`, {
+        //   endingDate: endDate,
+        //   startingDate: startDate,
+        // }),
       ]);
 
       // Check the result of each request
@@ -113,7 +113,7 @@ const Admin: React.FC = () => {
             offerDetails.mobileNumber !== null &&
             offerDetails.mobileNumber !== ""
         );
-        console.log(validOffers);
+        // console.log(validOffers);
 
         setOffers(validOffers);
         setAllOffers(validOffers);
@@ -136,13 +136,13 @@ const Admin: React.FC = () => {
         console.error("Failed to fetch user addresses:", responses[1].reason);
         setError("Failed to load user addresses.");
       }
-      if (responses[2].status === "fulfilled") {
-        setUserCount(responses[2].value.data);
-        setRegisteredUserCount(responses[2].value.data);
-      } else {
-        console.error("Failed to fetch user addresses:", responses[2].reason);
-        setError("Failed to load user addresses.");
-      }
+      // if (responses[2].status === "fulfilled") {
+      //   setUserCount(responses[2].value.data);
+      //   setRegisteredUserCount(responses[2].value.data);
+      // } else {
+      //   console.error("Failed to fetch user addresses:", responses[2].reason);
+      //   setError("Failed to load user addresses.");
+      // }
     } catch (err: any) {
       // Handle any unexpected errors
       console.error("An unexpected error occurred:", err);
@@ -185,7 +185,7 @@ const Admin: React.FC = () => {
   const handleDateChange = (value: string) => {
     let endDate = moment().format("YYYY-MM-DD"); // Current date
     let startDate: string | null = null;
-    console.log(value);
+    // console.log(value);
 
     switch (value) {
       case "today":
@@ -273,7 +273,7 @@ const Admin: React.FC = () => {
         id: `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
-        askOxyOfers: "FREERUDHRAKSHA",
+        askOxyOfers: "FREE RUDHRAKSHA",
         registrationDate: "N/A",
       }));
 
@@ -285,7 +285,7 @@ const Admin: React.FC = () => {
           id: `${index}`,
           projectType: "ASKOXY",
           mobileNumber: user.whatsappNumber || "N/A",
-          askOxyOfers: "FREERUDHRAKSHA",
+          askOxyOfers: "FREE RUDHRAKSHA",
           registrationDate: "N/A",
         })),
       ];
@@ -319,7 +319,7 @@ const Admin: React.FC = () => {
       );
       setOffers(filteredData);
 
-      console.log({ offers });
+      // console.log({ offers });
     }
   };
 
@@ -350,16 +350,16 @@ const Admin: React.FC = () => {
       key: "askOxyOfers",
       align: "center",
     },
-    ...(showRegisteredColumn
-      ? [
-          {
-            title: "Registration Date",
-            dataIndex: "registrationDate",
-            key: "registrationDate",
-            align: "center" as "center",
-          },
-        ]
-      : []),
+    // ...(showRegisteredColumn
+    //   ? [
+    //       {
+    //         title: "Registration Date",
+    //         dataIndex: "registrationDate",
+    //         key: "registrationDate",
+    //         align: "center" as "center",
+    //       },
+    //     ]
+    //   : []),
   ];
 
   const handlePageChange = (page: number) => {
@@ -494,7 +494,9 @@ const Admin: React.FC = () => {
             title="Legal Service"
             count={
               combinedData.filter(
-                (offer) => offer.askOxyOfers === "LEGALSERVICES"
+                (offer) =>
+                  offer.askOxyOfers === "LEGALSERVICES" ||
+                  offer.askOxyOfers === "LEGAL SERVICE"
               ).length
             }
             color="yellow"
@@ -517,11 +519,11 @@ const Admin: React.FC = () => {
             }
             color="orange"
           />
-          <DashboardCard
+          {/* <DashboardCard
             title="Registered Users"
             count={registeredUserCount.length}
             color="pink"
-          />
+          /> */}
         </div>
 
         {/* Filter Buttons */}
@@ -575,16 +577,16 @@ const Admin: React.FC = () => {
             Show All
           </button>
 
-          <button
+          {/* <button
             onClick={() => handleFilter("REGISTEREDUSERS")}
             className="bg-indigo-200 hover:bg-indigo-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
             Registered Users
-          </button>
+          </button> */}
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-8">
+          {/* <div className="flex items-center space-x-8">
             {selectedFilter === "REGISTEREDUSERS" && (
               <>
                 <Select
@@ -608,7 +610,7 @@ const Admin: React.FC = () => {
                 </div>
               </>
             )}
-          </div>
+          </div> */}
 
           <button
             onClick={handleDownload}
@@ -637,21 +639,24 @@ const Admin: React.FC = () => {
         ) : offers.length === 0 ? (
           <p className="text-center text-gray-500">No data available</p>
         ) : (
-          <Table
-            dataSource={offers.map((offer, index) => ({
-              ...offer,
-              key: offer.id || index,
-            }))}
-            columns={columns}
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              onChange: handlePageChange,
-              showSizeChanger: false,
-            }}
-            className="shadow-lg rounded-lg text-center"
-            scroll={{ x: window.innerWidth < 768 ? 800 : undefined }}
-          />
+          <div className="overflow-x-auto">
+            <Table
+              dataSource={offers.map((offer, index) => ({
+                ...offer,
+                key: offer.id || index,
+              }))}
+              columns={columns}
+              pagination={{
+                current: currentPage,
+                pageSize: pageSize,
+                onChange: handlePageChange,
+                showSizeChanger: false,
+              }}
+              className="shadow-lg rounded-lg text-center"
+              // scroll={{ x: window.innerWidth < 768 ? 800 : undefined }}
+              scroll={{ x: true }}
+            />
+          </div>
         )}
       </div>
     </div>

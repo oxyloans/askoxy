@@ -40,7 +40,7 @@ const AllCampaignsDetails: React.FC = () => {
 
   const TestUrl = window.location.href.includes("sandbox")
     ? "https://www.sandbox.askoxy.ai/main/services/campaign/"
-    : "https://www.askoxy.ai/dashboard/";
+    : "https://www.askoxy.ai/main/services/campaign/";
 
   useEffect(() => {
     fetchCampaigns();

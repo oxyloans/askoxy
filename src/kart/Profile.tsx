@@ -785,7 +785,7 @@ useEffect(() => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Mobile Number {isFromWhatsApp ? "" : <span className="text-red-500">*</span>}
+                      Primary Mobile Number {isFromWhatsApp ? "" : <span className="text-red-500">*</span>}
                     </label>
                     <input
                     type="tel"
@@ -795,7 +795,7 @@ useEffect(() => {
                       className={`w-full px-4 py-3 rounded-lg border transition-all
           ${validationErrors.mobileNumber ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-purple-500"}
         `}
-                      placeholder="Enter mobile number"
+                      placeholder="Enter Primary Mobile Number"
                     />
                     {validationErrors.mobileNumber && (
                       <p className="text-red-500 text-sm">{validationErrors.mobileNumber}</p>
