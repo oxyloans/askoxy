@@ -33,7 +33,7 @@ interface User {
 }
 
 interface OfferDetails {
-  id: string | null;
+  userId: string | null;
   projectType: string;
   askOxyOfers: string;
   mobileNumber: string;
@@ -100,40 +100,68 @@ const Admin: React.FC = () => {
       const responses = await Promise.allSettled([
         axios.get(`${BASE_URL}/auth-service/auth/usersOfferesDetails`),
         axios.get(`${BASE_URL}/auth-service/auth/AllusersAddress`),
+        axios.get(
+          `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`
+        ),
+        axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
         // axios.post(`${BASE_URL}/user-service/getalluserdetailsbyrange`, {
         //   endingDate: endDate,
         //   startingDate: startDate,
         // }),
       ]);
 
-      // Check the result of each request
-      if (responses[0].status === "fulfilled") {
-        const validOffers = responses[0].value.data.filter(
+      if (
+        responses[0].status === "fulfilled" &&
+        responses[2].status === "fulfilled"
+      ) {
+        const validOffers1 = responses[0].value.data.filter(
           (offerDetails: OfferDetails) =>
             offerDetails.mobileNumber !== null &&
             offerDetails.mobileNumber !== ""
         );
-        // console.log(validOffers);
 
-        setOffers(validOffers);
-        setAllOffers(validOffers);
+        const validOffers2 = responses[2].value.data.filter(
+          (offerDetails: OfferDetails) =>
+            offerDetails.userId !== null &&
+            offerDetails.userId !== "" &&
+            offerDetails.mobileNumber !== null &&
+            offerDetails.mobileNumber !== ""
+        );
+
+        const combinedOffers = [...validOffers1, ...validOffers2];
+        setOffers(combinedOffers);
+        setAllOffers(combinedOffers);
       } else {
-        console.error("Failed to fetch offers:", responses[0].reason);
+        console.error("Failed to fetch offers.");
         setError("Failed to load offers.");
       }
 
-      if (responses[1].status === "fulfilled") {
-        setUsers(responses[1].value.data);
-        const validUsers = responses[1].value.data.filter(
+      // Handling responses for users
+      if (
+        responses[1].status === "fulfilled" &&
+        responses[3].status === "fulfilled"
+      ) {
+        const validUsers1 = responses[1].value.data.filter(
           (user: User) =>
             user.deliveryType !== null &&
             user.deliveryType !== "" &&
             user.whatsappNumber !== null &&
             user.whatsappNumber !== ""
         );
-        setFilteredUsers(validUsers);
+
+        const validUsers2 = responses[3].value.data.filter(
+          (user: User) =>
+            user.deliveryType !== null &&
+            user.deliveryType !== "" &&
+            user.whatsappNumber !== null &&
+            user.whatsappNumber !== ""
+        );
+
+        const combinedUsers = [...validUsers1, ...validUsers2];
+        setUsers(combinedUsers);
+        setFilteredUsers(combinedUsers);
       } else {
-        console.error("Failed to fetch user addresses:", responses[1].reason);
+        console.error("Failed to fetch user addresses.");
         setError("Failed to load user addresses.");
       }
       // if (responses[2].status === "fulfilled") {
@@ -144,7 +172,6 @@ const Admin: React.FC = () => {
       //   setError("Failed to load user addresses.");
       // }
     } catch (err: any) {
-      // Handle any unexpected errors
       console.error("An unexpected error occurred:", err);
       setError("An unexpected error occurred.");
     } finally {
@@ -171,7 +198,6 @@ const Admin: React.FC = () => {
       setUserCount(response.data);
       setLoading(false);
     } catch (err: any) {
-      // setError("An unexpected error occurred");
       setLoading(false);
     } finally {
       setLoading(false);
@@ -227,7 +253,7 @@ const Admin: React.FC = () => {
     const allData = [
       ...allOffers,
       ...filteredUsers.map((user, index) => ({
-        id: `${index}`,
+        userId: `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
         askOxyOfers: "FREERUDHRAKSHA",
@@ -240,7 +266,7 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     const userCountData = userCount?.map((user, index) => ({
-      id: `${index}`,
+      userId: `${index}`,
       projectType: "ASKOXY",
       mobileNumber: user.phoneNumber || "N/A",
       askOxyOfers: "REGISTERED USERS",
@@ -270,7 +296,7 @@ const Admin: React.FC = () => {
     }
     if (offerType === "FREERUDRAKSHA") {
       const freeRudrakshaData = filteredUsers.map((user, index) => ({
-        id: `${index}`,
+        userId: `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
         askOxyOfers: "FREE RUDHRAKSHA",
@@ -282,7 +308,7 @@ const Admin: React.FC = () => {
       const allData = [
         ...allOffers,
         ...filteredUsers.map((user, index) => ({
-          id: `${index}`,
+          userId: `${index}`,
           projectType: "ASKOXY",
           mobileNumber: user.whatsappNumber || "N/A",
           askOxyOfers: "FREE RUDHRAKSHA",
@@ -295,7 +321,7 @@ const Admin: React.FC = () => {
     } else if (offerType === "REGISTEREDUSERS") {
       // fetchDataByDateRange(date.startDate, date.endDate);
       const userCountData = userCount?.map((user, index) => ({
-        id: `${index}`,
+        userId: `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.phoneNumber || "N/A",
         askOxyOfers: "REGISTERED USERS",
@@ -643,7 +669,7 @@ const Admin: React.FC = () => {
             <Table
               dataSource={offers.map((offer, index) => ({
                 ...offer,
-                key: offer.id || index,
+                key: offer.userId || index,
               }))}
               columns={columns}
               pagination={{
