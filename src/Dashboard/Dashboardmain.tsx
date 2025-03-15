@@ -77,7 +77,7 @@ const DashboardMain: React.FC = () => {
   const [bmvCoin, setBmvCoin] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
   const location = useLocation();
   const navigate = useNavigate();
 
