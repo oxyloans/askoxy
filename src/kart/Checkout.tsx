@@ -59,12 +59,15 @@ const CheckoutPage: React.FC = () => {
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
   const [deliveryBoyFee, setDeliveryBoyFee] = useState<number>(0);
   const [subGst,setSubGst] = useState(0);
+  const [insterestShow,setInsterestShow] = useState<boolean>(false);
+  const [orderId1,setOrderId1] = useState<string>();
   const [totalAmount,setTotalAmount]=useState<number>(0);
   const [walletMessage,setWalletMessage]=useState();
   const [grandTotal,setGrandTotal]=useState<number>(0);
   const [afterWallet,setAfterWallet] = useState<number>(0);
   const [usedWalletAmount,setUsedWalletAmount] = useState<number>(0);
    const [orderId,setOrderId] = useState<string>();
+   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileData,setProfileData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -92,6 +95,7 @@ const CheckoutPage: React.FC = () => {
     fetchCartData();
     totalCart();
     getWalletAmount();
+    checkingForInsterest()
     const queryParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(queryParams.entries());
     const order = params.trans;
@@ -276,156 +280,116 @@ const CheckoutPage: React.FC = () => {
       })
   }
 
-  
+  const handleInterested = async (value: string,Id : string) => {
+    try {
+      setIsSubmitting(true);
 
-  // const handlePayment = async () => {
-    
-  //   try {
-  //     // Check if there are out-of-stock items or quantity exceeds available stock
-  //   const hasStockIssues = cartData.some(
-  //     (item) => parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
-  //   );
+      const userId = localStorage.getItem("userId");
+      const mobileNumber = localStorage.getItem("whatsappNumber");
 
-  //   if (hasStockIssues) {
-  //     Modal.error({
-  //       title: "Stock Issues",
-  //       content: "Some items in your cart are out of stock or exceed available stock. Please adjust the quantity or remove them before proceeding.",
-  //       okText: "OK",
-  //       onOk() {
-  //         navigate("/main/mycart");
-  //       }
-  //     });
-  //     return;
-  //   }
-  //     // if (grandTotalAmount === 0) {
-  //     //   message.error("Please add items to cart");
-  //     //   navigate("/main/dashboard/product");
-  //     //   return;
-  //     // }
-  
-  //     setLoading(true); // Prevent multiple clicks
-  
-  //     console.log({ selectedPayment });
-  //     let wallet;
-  //     if (useWallet) {
-  //       wallet = walletAmount;
-  //     } else {
-  //       wallet = null;
-  //     }
-  //     let coupon, coupenAmount;
-  //     if (coupenApplied && coupenDetails > 0) {
-  //       coupon = couponCode;
-  //       coupenAmount = coupenDetails;
-  //     } else {
-  //       coupon = null;
-  //       coupenAmount = 0;
-  //     }
-  //     const response = await axios.post(
-  //       BASE_URL + "/order-service/orderPlacedPaymet",
-  //       {
-  //         address: selectedAddress.address,
-  //         customerId: customerId,
-  //         flatNo: selectedAddress.flatNo,
-  //         landMark: selectedAddress.landMark,
-  //         orderStatus: selectedPayment,
-  //         pincode: selectedAddress.pincode,
-  //         walletAmount: wallet,
-  //         couponCodeUsed: coupon,
-  //         couponCodeValue: coupenDetails,
-  //         deliveryBoyFee: deliveryBoyFee,
-  //         amount: grandTotalAmount,
-  //         subTotal:grandTotal
-  //       },
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-  
-  //     console.log(response.data);
-  
-  //     if (response.status === 200 && response.data) {
-  //       if(response.data.status!=null){
-  //         Modal.error({
-  //           title: "Error",
-  //           content: response.data.status,
-  //           okText: "Ok",
-  //           // cancelText: "No",
-  //           onOk() {
-  //             navigate("/main/mycart");
-  //           },
-  //         })
-  //         return;
-  //       }
-  //       if (selectedPayment === "COD" && response.data.paymentId === null) {
-  //         fetchCartData();
-  //         if(response.data.status === null){
-  //           Modal.success({
-  //                content: "Order placed Successfully",
-  //                onOk: () => {
-  //                  navigate("/main/myorders");
-  //                  fetchCartData();
-  //                },
-  //              })
-  //            }else{
-  //              Modal.error({
-  //                content: response.data.status,
-  //                onOk: () => {
-  //                  navigate("/main/mycart");
-  //                  fetchCartData();
-  //                },
-  //              })
-             
-  //            }
-  //       } else if (
-  //         selectedPayment === "ONLINE" &&
-  //         response.data.paymentId !== null
-  //       ) {
-  //         const number = localStorage.getItem('whatsappNumber')
-  //     const withoutCountryCode = number?.replace("+91", "");
-  //     console.log({withoutCountryCode});
-  //     sessionStorage.setItem('address',JSON.stringify(selectedAddress))
-  //         const data = {
-  //           mid: "1152305",
-  //           // amount: grandTotalAmount,
-  //           amount: 1,
-  //           merchantTransactionId: response.data.paymentId,
-  //           transactionDate: new Date(),
-  //           terminalId: "getepay.merchant128638@icici",
-  //           udf1: withoutCountryCode,
-  //           udf2: `${profileData.firstName}  ${profileData.lastName}`,
-  //           udf3: profileData.email,
-  //           udf4: "",
-  //           udf5: "",
-  //           udf6: "",
-  //           udf7: "",
-  //           udf8: "",
-  //           udf9: "",
-  //           udf10: "",
-  //           ru: "https://sandbox.askoxy.ai/main/checkout?trans=" + response.data.paymentId,
-  //           callbackUrl: `https://sandbox.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-  //           currency: "INR",
-  //           paymentMode: "ALL",
-  //           bankId: "",
-  //           txnType: "single",
-  //           productType: "IPG",
-  //           txnNote: "Rice Order In Live",
-  //           vpa: "getepay.merchant128638@icici",
-  //         };
-  //         console.log({ data });
-  
-  //         // You might need to call a payment function here (e.g., initiatePayment(data))
-  //         getepayPortal(data);
-  //       }
-  //     } else {
-  //       message.error("Order failed");
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Payment error:", error);
-  //     message.error("Payment failed. Please try again.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      const formData = {
+        "freeContainer": value,
+        "orderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "userId": userId
+      };
+
+      const response = await axios.post(
+        `${BASE_URL}/order-service/freeContainer`,
+        formData
+      );
+
+      console.log("API Response:", response.data);
+      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+
+      Modal.success({
+        title: "Thank You!",
+        content: "Your interest has been successfully registered.",
+        okText: "OK",
+        onOk: () => navigate("/main/myorders"),
+      });
+    } catch (error) {
+      const axiosError = error as any;
+
+      if (
+        axiosError.response?.status === 500 ||
+        axiosError.response?.status === 400
+      ) {
+        message.warning("You have already participated. Thank you!");
+      } else {
+        console.error("API Error:", axiosError);
+        message.error("Failed to submit your interest. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false); // Ensure the state is reset even in case of errors
+    }
+  };
+
+  const showSampleModal = (value: string) => {
+    Modal.confirm({
+      title: "Special Offer!",
+      content: (
+        <div className="text-center">
+          <p className="text-lg font-bold text-green-600">
+            Your order has been successfully placed!
+          </p>
+          <p className="text-lg font-bold text-green-600">
+            We are providing a free rice container with your order!
+          </p>
+          <p className="mt-2">
+            Buy 9 bags of 26 kg or 10 kg within 3 years, or refer 9 friends. When they purchase their first bag, the container is yours to keep forever.
+          </p>
+          <p className="mt-2 text-sm text-black-600">
+            <b>
+              * If no purchase is made within 45 days or if there is a gap of 45 days between purchases, the container will be taken back.
+            </b>
+          </p>
+        </div>
+      ),      
+      okText: isSubmitting ? "Submitting..." : "I’m Interested",
+      cancelText: "Not Interested",
+      okButtonProps: {
+        disabled: isSubmitting,
+      },
+      onOk: async () => {
+        if (isSubmitting) return; // Prevent duplicate submissions
+        setIsSubmitting(true); // Enable loading state
+
+        try {
+          await handleInterested("Interested",value); // Calls "I'm Interested" logic
+        } finally {
+          setIsSubmitting(false); // Reset loading state
+        }
+      },
+      onCancel: async() => {
+        if (isSubmitting) return; // Prevent duplicate submissions
+        setIsSubmitting(true); // Enable loading state
+        try {
+          await handleInterested("Notinterested",value); // Calls "Not Interested" logic
+        } finally {
+          setIsSubmitting(false); // Reset loading state
+        }
+      }, // Direct redirection
+    });
+  };
+
+  const checkingForInsterest = () => {
+     axios
+      .get(`${BASE_URL}/order-service/freeContainerBasedOnUserId?userId=${customerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => {
+        console.log("askOxyOfers", response.data);
+        const filteredData = response.data.filter((item:any) => item.freeContainer === "Interested");
+        if (filteredData.length > 0) {
+          setInsterestShow(true);
+        }
+      })
+      .catch((error) => {
+        console.error("Error in getting wallet amount:", error);
+      });
+  }
+
+ 
 
   const handlePayment = async () => {
     try {
@@ -477,22 +441,33 @@ const CheckoutPage: React.FC = () => {
 
         if (response.status === 200 && response.data) {
             if (response.data.status) {
-                Modal.success({
+              if(insterestShow){
+                 Modal.success({
                     title: "Success",
                     content: response.data.status,
                     okText: "Ok",
                     onOk: () => navigate("/main/myorders"),
                 });
+              }else{
+              showSampleModal(response.data.orderId)
+              }
+               
                 return;
             }
 
             await fetchCartData(); // Ensure cart updates
 
             if (selectedPayment === "COD" && !response.data.paymentId) {
+              if(insterestShow){
                 Modal.success({
-                    content: "Order placed Successfully",
-                    onOk: () => navigate("/main/myorders"),
-                });
+                  title: "Success",
+                  content: "Order placed Successfully",
+                  okText: "Ok",
+                  onOk: () => navigate("/main/myorders"),
+              });
+              }else{
+                showSampleModal(response.data.orderId)
+              }
             } else if (selectedPayment === "ONLINE" && response.data.paymentId) {
                 const number = localStorage.getItem("whatsappNumber");
                 const withoutCountryCode = number?.replace("+91", "");
@@ -703,7 +678,9 @@ const CheckoutPage: React.FC = () => {
                                   localStorage.removeItem('merchantTransactionId')
                                   fetchCartData();
                                   if(secondResponse.data.status === null){
-                                   Modal.success({
+                                    
+                                    if(insterestShow){
+                                       Modal.success({
                                         content: "Order placed Successfully",
                                         onOk: () => {
                                           navigate("/main/myorders");
@@ -711,14 +688,21 @@ const CheckoutPage: React.FC = () => {
                                         },
                                       })
                                     }else{
-                                      Modal.success({
+                                      showSampleModal(secondResponse.data.orderId)
+                                    }
+                                    }else{
+                                      
+                                      if(insterestShow){
+                                         Modal.success({
                                         content: secondResponse.data.status,
                                         onOk: () => {
                                           navigate("/main/myorders");
                                           fetchCartData();
                                         },
                                       })
-                                    
+                                      }else{
+                                        showSampleModal(secondResponse.data.orderId)
+                                      }
                                     }
                                   // setLoading(false);
                                 })
@@ -765,7 +749,7 @@ const CheckoutPage: React.FC = () => {
     if(total === 0){
       console.log("Get all Values",{total});
       
-      setSelectedPayment('COD');
+      // setSelectedPayment('COD');
     }
 
     console.log("Used Wallet:", usedWallet);
