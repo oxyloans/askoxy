@@ -85,7 +85,7 @@ const DashboardMain: React.FC = () => {
     const fetchCampaigns = async () => {
       try {
         const response = await axios.get<Campaign[]>(
-          BASE_URL+"/marketing-service/campgin/getAllCampaignDetails"
+          BASE_URL + "/marketing-service/campgin/getAllCampaignDetails"
         );
         setCampaigns(response.data);
       } catch (err) {
@@ -102,13 +102,13 @@ const DashboardMain: React.FC = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     // Initial check and event listener
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
+    window.addEventListener("resize", checkMobile);
+
     return () => {
-      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener("resize", checkMobile);
     };
   }, []);
 
@@ -130,7 +130,7 @@ const DashboardMain: React.FC = () => {
       const timer = setTimeout(() => {
         setShowWelcomeModal(false);
       }, 7000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [showWelcomeModal]);
@@ -289,12 +289,13 @@ const DashboardMain: React.FC = () => {
                 className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg 
                   transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-auto overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-auto max-h-[200px] sm:max-h-[250px] md:max-h-[300px] lg:max-h-[350px] object-cover rounded-sm transition-transform duration-300"
                   />
+
                   {item.category && (
                     <span className="absolute top-2 right-2 px-2 py-1 text-xs font-medium bg-white/90 rounded-full">
                       {item.category}
@@ -364,21 +365,23 @@ const DashboardMain: React.FC = () => {
       {/* Welcome Modal */}
       {showWelcomeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className={`relative bg-white rounded-2xl overflow-hidden shadow-xl transform transition-all 
-            ${isMobile ? 'w-full max-w-sm' : 'w-full max-w-2xl'}`}>
+          <div
+            className={`relative bg-white rounded-2xl overflow-hidden shadow-xl transform transition-all 
+            ${isMobile ? "w-full max-w-sm" : "w-full max-w-2xl"}`}
+          >
             <button
               onClick={() => setShowWelcomeModal(false)}
               className="absolute top-3 right-3 z-10 p-1 rounded-full bg-white/80 hover:bg-white"
             >
               <X size={24} className="text-gray-800" />
             </button>
-            
+
             <div className="relative">
-              <img 
-                src={HoliWelcomeImage} 
-                alt="Holi Welcome" 
+              <img
+                src={HoliWelcomeImage}
+                alt="Holi Welcome"
                 className="w-full object-cover"
-                style={{ maxHeight: isMobile ? '50vh' : '70vh' }}
+                style={{ maxHeight: isMobile ? "50vh" : "70vh" }}
               />
             </div>
           </div>
@@ -387,9 +390,7 @@ const DashboardMain: React.FC = () => {
 
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
-          <div className="space-y-6">
-            {renderDashboardContent()}
-          </div>
+          <div className="space-y-6">{renderDashboardContent()}</div>
         </div>
       </div>
     </div>

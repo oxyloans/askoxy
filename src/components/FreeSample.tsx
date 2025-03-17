@@ -9,7 +9,7 @@ import { HiOutlineDocument } from "react-icons/hi";
 import BASE_URL from "../Config";
 
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/WhatsApp Image 2025-01-23 at 15.50.44.png";
+import FR from "../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png";
 
 import Footer from "./Footer";
 import { message, Modal } from "antd";
@@ -373,51 +373,61 @@ const FreeSample: React.FC = () => {
           </div> */}
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2 px-3 items-center">
           {/* Image Section */}
-          <div className="flex justify-center p-4">
+          <div className="flex justify-center p-2 mb-4 lg:mb-0">
             <img
               src={FR}
               alt="Free Sample"
-              className="w-auto h-auto max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-lg shadow-lg pointer-events-none select-none object-contain"
+              className="w-full max-w-[300px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px] rounded-lg shadow-lg pointer-events-none select-none object-contain"
             />
           </div>
 
           {/* Text and Button Section */}
-          <div className="text-center lg:text-left p-4 ">
-            <p className="text-black mb-4 text-sm sm:text-base lg:text-lg">
-              <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kg
-              rice bag & get a FREE rice container! (Container remains Oxy Group
-              asset until ownership is earned.)
-              <br />
-              <strong>How to Earn Ownership:</strong>
-              <div className="mt-2">
-                <p>
-                  <strong>Plan A:</strong> Buy 9 bags during the next 1 year,
-                  and the container is yours forever.
-                </p>
-                <p className="my-2 text-center font-bold">OR</p>
-                <p>
-                  <strong>Plan B:</strong> Refer 9 people, and when they buy
-                  their first bag, the container is yours forever.
-                </p>
-              </div>
-              <br />
-              <strong>Important Info:</strong>
-              <ul className="list-disc list-inside ">
-                <li>
-                  No purchase in 45 days or gap of 45 days between purchases =
-                  Container will be taken back.
-                </li>
-              </ul>
-              <br />
-              If you are interested in buying a rice bag, please click the{" "}
-              <strong> I am Interested </strong>button
+          <div className="text-center lg:text-left p-1 bg-white">
+            <p className="text-black mb-3 text-sm sm:text-base">
+              <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kgs
+              / 10kgs rice bag & get a FREE rice container! (Container remains
+              Oxy Group asset until ownership is earned.)
             </p>
 
-            <div className="space-x-4">
+            <p className="text-black mb-2 text-sm sm:text-base">
+              <strong>How to Earn Ownership:</strong>
+            </p>
+
+            <div className="">
+              <p className="text-sm sm:text-base">
+                <strong>Plan A:</strong> Buy 9 bags during the next 3 years, and
+                the container is yours forever.
+              </p>
+              <p className="my-2 text-center font-bold text-sm sm:text-base">
+                OR
+              </p>
+              <p className="text-sm sm:text-base">
+                <strong>Plan B:</strong> Refer 9 people, and when they buy their
+                first bag, the container is yours forever.
+              </p>
+            </div>
+
+            <p className="text-black mb-2 text-sm sm:text-base">
+              <strong>Important Info:</strong>
+            </p>
+
+            <ul className="list-disc list-inside mb-3 text-sm sm:text-base">
+              <li>
+                No purchase within 45 days or a gap of 45 days between
+                purchases, will result in the container being taken back.
+              </li>
+            </ul>
+
+            <p className="mb-3 text-sm sm:text-base">
+              If you are interested in buying a rice bag, please click the{" "}
+              <strong>I am Interested</strong> button.
+            </p>
+
+            <div className="space-x-2">
               <button
-                className="px-6 py-3 font-bold bg-[#04AA6D] text-white rounded-lg shadow-lg  transition-all text-sm md:text-base lg:text-lg"
+                className="px-4 py-2 font-bold bg-[#04AA6D] text-white rounded-lg shadow-md transition-all text-sm sm:text-base"
                 onClick={handleSubmit}
                 disabled={isButtonDisabled}
                 aria-label="I'm Interested"
