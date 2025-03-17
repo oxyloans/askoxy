@@ -1,8 +1,7 @@
 import React from "react";
-import "./App1.css";
 import { motion } from "framer-motion";
 
-const RiceComparison: React.FC = () => {
+const RiceComparison = () => {
   // Variants for staggering children animations
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -20,31 +19,31 @@ const RiceComparison: React.FC = () => {
   };
 
   return (
-    <div className="container">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <motion.header
-        className="header"
+        className="text-center mb-12"
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <h1 className="title">Steam Rice vs. Raw Rice</h1> {/* Fixed typo */}
-        <p className="greeting">Greetings from Radha</p>
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          Steam Rice vs. Raw Rice
+        </h1>
+        <p className="text-xl text-gray-600">Greetings from Radha</p>
       </motion.header>
 
       <motion.section
-        className="video-section card"
+        className="bg-white rounded-lg shadow-lg p-6 mb-10"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
         viewport={{ once: true }}
       >
-        {/* <h3 className="video-title">Steame Rice vs. Raw Rice</h3>{" "} */}
-        {/* Restored */}
-        <div className="video-wrapper">
+        <div className="w-full h-0 pb-[56.25%] relative mb-4">
           <iframe
-            className="youtube-video"
+            className="absolute top-0 left-0 w-full h-full rounded-lg"
             src="https://www.youtube.com/embed/0Pd9td3kFNk?rel=0"
-            title="Steam Rice vs. Raw Rice" /* Fixed typo */
+            title="Steam Rice vs. Raw Rice"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -52,92 +51,101 @@ const RiceComparison: React.FC = () => {
         </div>
       </motion.section>
 
-      <div className="content">
+      <div className="grid grid-cols-1 gap-10">
         <motion.section
-          className="section card"
+          className="bg-white rounded-lg shadow-lg p-6"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           viewport={{ once: true }}
         >
-          <h2 className="section-title steamed">Steam Rice vs Raw Rice</h2>{" "}
-          {/* Fixed typo */}
-          <p className="section-text">
+          <h2 className="text-3xl font-bold text-green-600 mb-4">
+            Steam Rice vs Raw Rice
+          </h2>
+          <p className="text-gray-700 mb-6">
             Paddy is brought from farmers to the mill. Once it reaches the mill,
-            both types of rice—steam and raw—undergo processing. In both
-            cases, the husk must be removed. However, the key difference lies in
-            how the husk is treated.
+            both types of rice—steam and raw—undergo processing. In both cases,
+            the husk must be removed. However, the key difference lies in how
+            the husk is treated.
           </p>
           <motion.div
-            className="comparison"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
             <motion.div
-              className="comparison-item steamed-bg"
+              className="bg-green-50 rounded-lg p-6 border-l-4 border-green-500"
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <h3>Steam Rice Process:</h3> {/* Fixed typo */}
-              <p>
+              <h3 className="text-xl font-bold text-green-700 mb-3">
+                Steam Rice Process:
+              </h3>
+              <p className="text-gray-700">
                 In the steaming process, the paddy is first steam before being
                 polished. As a result, the nutrients from the husk get absorbed
                 into the grain, making steam rice a better choice.
               </p>
             </motion.div>
             <motion.div
-              className="comparison-item raw-bg"
+              className="bg-yellow-50 rounded-lg p-6 border-l-4 border-yellow-500"
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <h3>Raw Rice Process:</h3>
-              <p>
+              <h3 className="text-xl font-bold text-yellow-700 mb-3">
+                Raw Rice Process:
+              </h3>
+              <p className="text-gray-700">
                 Raw rice is polished directly without steaming, losing the
-                husk’s nutrients. It requires thorough cleaning before cooking
-                and isn’t as ready-to-cook as steam rice.
+                husk's nutrients. It requires thorough cleaning before cooking
+                and isn't as ready-to-cook as steam rice.
               </p>
             </motion.div>
           </motion.div>
-          <p className="section-text tip">
-            <strong>Tip:</strong> For something light and easy to digest, choose
-            steam rice. {/* Fixed typo */}
+          <p className="text-gray-700 bg-blue-50 p-4 rounded-lg mb-4">
+            <strong className="text-blue-700">Tip:</strong> For something light
+            and easy to digest, choose steam rice.
           </p>
-          <p className="section-text highlight">
-            <strong>My Choice:</strong> Steam Rice – 51%, Raw Rice – 49%{" "}
-            {/* Fixed typo */}
+          <p className="text-gray-700 bg-purple-50 p-4 rounded-lg">
+            <strong className="text-purple-700">My Choice:</strong> Steam Rice –
+            51%, Raw Rice – 49%
           </p>
         </motion.section>
 
         <motion.section
-          className="section card"
+          className="bg-white rounded-lg shadow-lg p-6"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           viewport={{ once: true }}
         >
-          <h2 className="section-title steamed">స్టీమ్ రైస్ vs రా రైస్</h2>
-          <p className="section-text">
+          <h2 className="text-3xl font-bold text-green-600 mb-4">
+            స్టీమ్ రైస్ vs రా రైస్
+          </h2>
+          <p className="text-gray-700 mb-6">
             రైతుల దగ్గర నుంచి వడ్లు మిల్లుకు వస్తాయి. మిల్లుకు వచ్చిన తర్వాత
             స్టీమ్ రైస్, రా రైస్—ఈ రెండూ ప్రాసెస్ చేయబడతాయి. ఏ విధంగానైనా తౌడు
             (husks) తొలగించాల్సిందే. అయితే, తౌడును ఎలా తొలగిస్తారనేదే ప్రధాన
             తేడా.
           </p>
           <motion.div
-            className="comparison"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
             <motion.div
-              className="comparison-item steamed-bg"
+              className="bg-green-50 rounded-lg p-6 border-l-4 border-green-500"
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <h3>స్టీమ్ రైస్ పద్ధతి:</h3>
-              <p>
+              <h3 className="text-xl font-bold text-green-700 mb-3">
+                స్టీమ్ రైస్ పద్ధతి:
+              </h3>
+              <p className="text-gray-700">
                 స్టీమ్ రైస్ తయారీలో ముందుగా వడ్లను ఆవిరి (steam) ద్వారా
                 ఉడికించి, ఆ తర్వాత పాలిష్ (polish) చేస్తారు. దీని వలన తౌడులోని
                 పోషకాలు అన్నీ గింజలోకి చేరతాయి. అందువల్ల స్టీమ్ రైస్ ఎక్కువ పోషక
@@ -145,12 +153,14 @@ const RiceComparison: React.FC = () => {
               </p>
             </motion.div>
             <motion.div
-              className="comparison-item raw-bg"
+              className="bg-yellow-50 rounded-lg p-6 border-l-4 border-yellow-500"
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <h3>రా రైస్ పద్ధతి:</h3>
-              <p>
+              <h3 className="text-xl font-bold text-yellow-700 mb-3">
+                రా రైస్ పద్ధతి:
+              </h3>
+              <p className="text-gray-700">
                 రా రైస్ తయారీలో వడ్లను నేరుగా పాలిష్ చేసి తయారు చేస్తారు, దీంతో
                 తౌడులోని పోషకాలు గింజకు చేరవు. ఇది నేరుగా మన ఇంటికి వస్తుంది,
                 కానీ స్టీమ్ రైస్‌లా సిద్దంగా ఉండదు. రా రైస్‌ను వంటకు ముందుగా
@@ -158,12 +168,13 @@ const RiceComparison: React.FC = () => {
               </p>
             </motion.div>
           </motion.div>
-          <p className="section-text tip">
-            <strong>సలహా:</strong> తేలికగా జీర్ణమయ్యే అన్నం కావాలంటే స్టీమ్ రైస్
-            ఎంచుకోండి.
+          <p className="text-gray-700 bg-blue-50 p-4 rounded-lg mb-4">
+            <strong className="text-blue-700">సలహా:</strong> తేలికగా జీర్ణమయ్యే
+            అన్నం కావాలంటే స్టీమ్ రైస్ ఎంచుకోండి.
           </p>
-          <p className="section-text highlight">
-            <strong>నా ఎంపిక:</strong> స్టీమ్ రైస్ – 51%, రా రైస్ – 49%
+          <p className="text-gray-700 bg-purple-50 p-4 rounded-lg">
+            <strong className="text-purple-700">నా ఎంపిక:</strong> స్టీమ్ రైస్ –
+            51%, రా రైస్ – 49%
           </p>
         </motion.section>
       </div>

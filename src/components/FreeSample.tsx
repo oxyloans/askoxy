@@ -385,16 +385,16 @@ const FreeSample: React.FC = () => {
 
           {/* Text and Button Section */}
           <div className="text-center lg:text-left p-1 bg-white">
+            08:00 AM - 12 :00 PM 12:00 PM - 04 :00 PM 04:00 PM - 08 :00 PM 08:00
+            AM - 08 :00 PM
             <p className="text-black mb-3 text-sm sm:text-base">
               <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kgs
               / 10kgs rice bag & get a FREE rice container! (Container remains
               Oxy Group asset until ownership is earned.)
             </p>
-
             <p className="text-black mb-2 text-sm sm:text-base">
               <strong>How to Earn Ownership:</strong>
             </p>
-
             <div className="">
               <p className="text-sm sm:text-base">
                 <strong>Plan A:</strong> Buy 9 bags during the next 3 years, and
@@ -408,23 +408,19 @@ const FreeSample: React.FC = () => {
                 first bag, the container is yours forever.
               </p>
             </div>
-
             <p className="text-black mb-2 text-sm sm:text-base">
               <strong>Important Info:</strong>
             </p>
-
             <ul className="list-disc list-inside mb-3 text-sm sm:text-base">
               <li>
                 No purchase within 45 days or a gap of 45 days between
                 purchases, will result in the container being taken back.
               </li>
             </ul>
-
             <p className="mb-3 text-sm sm:text-base">
               If you are interested in buying a rice bag, please click the{" "}
               <strong>I am Interested</strong> button.
             </p>
-
             <div className="space-x-2">
               <button
                 className="px-4 py-2 font-bold bg-[#04AA6D] text-white rounded-lg shadow-md transition-all text-sm sm:text-base"
