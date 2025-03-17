@@ -32,24 +32,53 @@ const RiceComparison = () => {
         <p className="text-xl text-gray-600">Greetings from Radha</p>
       </motion.header>
 
-      <motion.section
-        className="bg-white rounded-lg shadow-lg p-6 mb-10"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-        viewport={{ once: true }}
-      >
-        <div className="w-full h-0 pb-[56.25%] relative mb-4">
-          <iframe
-            className="absolute top-0 left-0 w-full h-full rounded-lg"
-            src="https://www.youtube.com/embed/0Pd9td3kFNk?rel=0"
-            title="Steam Rice vs. Raw Rice"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
-      </motion.section>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        {/* Telugu Video - Left Side */}
+        <motion.section
+          className="bg-white rounded-lg shadow-lg p-6"
+          initial={{ opacity: 0, x: -50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          viewport={{ once: true }}
+        >
+          {/* <h3 className="text-xl font-bold text-gray-800 mb-3">
+            తెలుగు వీడియో
+          </h3> */}
+          <div className="w-full h-0 pb-[58.78%] relative mb-4">
+            <iframe
+              className="absolute top-0 left-0 w-full h-full rounded-lg"
+              src="https://www.youtube.com/embed/asyT8Vu_DqQ"
+              title="Steam Rice vs. Raw Rice - Telugu"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </motion.section>
+
+        {/* English Video - Right Side */}
+        <motion.section
+          className="bg-white rounded-lg shadow-lg p-6"
+          initial={{ opacity: 0, x: 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          viewport={{ once: true }}
+        >
+          {/* <h3 className="text-xl font-bold text-gray-800 mb-3">
+            English Video
+          </h3> */}
+          <div className="w-full h-0 pb-[58.78%] relative mb-4">
+            <iframe
+              className="absolute top-0 left-0 w-full h-full rounded-lg"
+              src="https://www.youtube.com/embed/Te772XSOeHg"
+              title="Steam Rice vs. Raw Rice - English"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </motion.section>
+      </div>
 
       <div className="grid grid-cols-1 gap-10">
         <motion.section
