@@ -71,8 +71,7 @@ const Footer = () => {
               className="h-12 w-auto object-contain"
             />
             <p className="text-gray-600 text-xs leading-relaxed">
-              ASKOXY.AI offers unlimited ChatGPT prompts, empowering innovation
-              without cost barriers.
+            Our OXY GROUP solves real-world problems with AI and Blockchain through ASKOXY.AI, delivering goods and services while rewarding users with BMVCOIN, built on Ethereum, for future value.
             </p>
             <div className="flex space-x-3">
               {socialLinks.map((social) => (

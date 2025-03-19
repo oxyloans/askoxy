@@ -11,6 +11,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
+import { RiListUnordered } from "react-icons/ri";
 
 interface SidebarItem {
   title: string;
@@ -31,13 +32,18 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     title: "All Campaign Details",
-    icon: <FaUser className="text-purple-400" />,
+    icon: <RiListUnordered className="text-purple-400" />,
     link: "/allcampaignsdetails",
   },
   {
     title: "All Queries",
     icon: <FaDatabase className="text-yellow-400" />,
     link: "/allqueries",
+  },
+  {
+    title: "Registered Users",
+    icon: <FaUser className="text-purple-400" />,
+    link: "/registeredUsers",
   },
   {
     title: "Logout",
@@ -83,7 +89,7 @@ const Sidebar: React.FC = () => {
                 <FaBars className="h-6 w-6 text-gray-600" />
               )}
             </button>
-            <span className="font-semibold text-gray-800">Admin Panel</span>
+            <span className="font-semibold text-gray-800">Admin</span>
           </div>
         </div>
       </div>
@@ -100,7 +106,7 @@ const Sidebar: React.FC = () => {
         {/* Desktop Header with Toggle Button */}
         <div className="hidden md:flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {!isCollapsed && (
-            <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-gray-800">Admin</h1>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -148,7 +154,7 @@ const Sidebar: React.FC = () => {
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
             <div className="flex items-center px-4 py-2 text-sm text-gray-600">
               <FaUser className="mr-2" />
-              <span>Admin User</span>
+              <span>Admin</span>
             </div>
           </div>
         )}

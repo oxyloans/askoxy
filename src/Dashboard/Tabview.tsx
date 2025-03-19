@@ -1,10 +1,11 @@
 import { Dashboard } from "@mui/icons-material";
 import axios from "axios";
-import { Bot, Check, Coins, Copy, Settings, ShoppingBag } from "lucide-react";
+import { Bot, Check, Coins, Copy, HelpCircle, Info, Settings, ShoppingBag, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardMain from "./Dashboardmain";
 import BASE_URL from "../Config";
+import BMVICON from "../assets/img/bmvlogo.png"; // Make sure to import the BMVICON
 
 interface DashboardItem {
   title: string;
@@ -14,6 +15,7 @@ interface DashboardItem {
   icon: React.ReactNode;
   category?: string;
 }
+
 const Tabview = () => {
   const [multichainId, setMultichainId] = useState<string>("");
   const [bmvCoin, setBmvCoin] = useState<number>(0);
@@ -21,7 +23,8 @@ const Tabview = () => {
   const [activeTab, setActiveTab] = useState<string>("services");
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [isVisible,setIsVisible] =useState<boolean>(false);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [showBmvModal, setShowBmvModal] = useState<boolean>(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,14 +46,13 @@ const Tabview = () => {
     };
   }, []);
 
-    useEffect(() => {
-      const pathTab = location.pathname.split("/").pop();
+  useEffect(() => {
+    const pathTab = location.pathname.split("/").pop();
     
-  
-      if (pathTab) {
-        setActiveTab(pathTab);
-      }
-    }, [location.pathname]);
+    if (pathTab) {
+      setActiveTab(pathTab);
+    }
+  }, [location.pathname]);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
@@ -78,12 +80,11 @@ const Tabview = () => {
     
     if (pathTab === "dashboard") {
       setIsVisible(true);
-    }else{
+    } else {
       setIsVisible(false);
     }
   }, [location.pathname]);
   
-
   const handleCopyMultichainId = async () => {
     if (multichainId) {
       try {
@@ -95,6 +96,7 @@ const Tabview = () => {
       }
     }
   };
+
   const TabButton: React.FC<{
     tab: string;
     icon: React.ReactNode;
@@ -123,6 +125,44 @@ const Tabview = () => {
     </button>
   );
 
+  const BMVInfoModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4 relative">
+        <button
+          onClick={() => setShowBmvModal(false)}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          aria-label="Close modal"
+        >
+          <X size={20} />
+        </button>
+        
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xl font-bold text-purple-700">How to use BMVCoins?</h2>
+        </div>
+        
+        <div className="text-gray-700 space-y-3">
+          <p>You can collect BMVCoins and use them to get discounts on rice bags and other products and services.</p>
+          <div className="bg-purple-50 p-3 rounded-lg">
+            <p className="font-medium">Current value:</p>
+            <p>1,000 BMVCoins = ₹10 discount</p>
+          </div>
+          <p className="font-medium">Important information:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>You need at least 20,000 BMVCoins to redeem</li>
+            <li>The value of the discount may change in the future</li>
+          </ul>
+        </div>
+        
+        <button
+          onClick={() => setShowBmvModal(false)}
+          className="mt-6 w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div
       className={`
@@ -138,27 +178,21 @@ const Tabview = () => {
               tab="products"
               icon={<ShoppingBag size={20} />}
               label="Products"
-              // count={products.length}
             />
             <TabButton
               tab="services"
               icon={<Settings size={20} />}
               label="Services"
-              // count={services.length}
             />
             <TabButton
               tab="freegpts"
               icon={<Bot size={20} />}
               label="Free GPTs"
-              // count={freeGPTs.length}
             />
-           
-
             <TabButton
               tab="bmvcoin"
               icon={<Coins size={20} />}
               label="Cryptocurrency"
-              // count={bmvCoinItems.length}
             />
           </div>
         </div>
@@ -170,7 +204,7 @@ const Tabview = () => {
           <div className="flex items-center overflow-hidden gap-2 bg-white p-3 rounded-lg shadow-lg w-full md:w-auto mt-4">
             <button
               className="text-sm font-medium text-purple-600"
-              onClick={() => window.open("http://bmv.money:2750/")}
+              onClick={() => window.open('http://bmv.money:2750/')}
             >
               Blockchain ID: {multichainId}
             </button>
@@ -188,14 +222,23 @@ const Tabview = () => {
             </button>
           </div>
 
-          {/* BMV Coins Section */}
-          <div className="bg-white p-3 rounded-lg shadow-lg w-full md:w-auto">
-            <span className="text-sm font-medium text-purple-600">
-              BMV Coins: {bmvCoin}
-            </span>
+          {/* BMV Coins Section - Updated with clickable image */}
+          <div className="bg-white p-3 rounded-lg shadow-lg w-full md:w-auto flex items-center justify-end">
+            <div className="flex items-center cursor-pointer" onClick={() => setShowBmvModal(true)}>
+              <img 
+                src={BMVICON} 
+                alt="BMV Coin" 
+                className="w-26 h-8 mr-2 hover:opacity-80 transition-opacity"
+              />
+              <span className="text-m font-bold text-purple-600 mr-1">: {bmvCoin}</span>
+              <HelpCircle size={18} className="text-purple-600" />
+            </div>
           </div>
         </div>
       )}
+
+      {/* BMV Info Modal */}
+      {showBmvModal && <BMVInfoModal />}
     </div>
   );
 };

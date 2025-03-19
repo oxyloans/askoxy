@@ -190,15 +190,15 @@ const FAQModal: React.FC<{isOpen: boolean; onClose: () => void}> = ({isOpen, onC
                 </p>
                 <ol className="list-decimal ml-5 mt-2 space-y-1">
                   <li className="text-gray-700"><em>Refer 9 new users</em> to ASKOXY.AI.</li>
-                  <li className="text-gray-700"><em>Purchase 9 rice bags</em> within <em>1 year</em>.</li>
+                  <li className="text-gray-700"><em>Purchase 9 rice bags</em> within <em>3 years</em>.</li>
                 </ol>
               </div>
               
               <div>
                 <h4 className="font-medium text-purple-700 mb-1">What happens if I do not purchase regularly?</h4>
                 <ul className="list-disc ml-5 space-y-1">
-                  <li className="text-gray-700">If you <em>do not make a purchase within 45 days</em>, or</li>
-                  <li className="text-gray-700">If there is a <em>gap of 45 days between purchases</em>,</li>
+                  <li className="text-gray-700">If you <em>do not make a purchase within 90 days</em>, or</li>
+                  <li className="text-gray-700">If there is a <em>gap of 90 days between purchases</em>,</li>
                 </ul>
                 <p className="text-gray-700 mt-2">
                   then the <em>container will be taken back</em>.

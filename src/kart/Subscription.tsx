@@ -618,7 +618,7 @@ const Subscription: React.FC = () => {
               Choose Your Perfect Plan
               </h1>
               <p className="text-lg text-gray-600">
-              Subscribe & Save Upto ₹500 – Hassle-Free Fresh Rice Delivery!
+              Subscribe & Save Up to Minimum ₹900 – Maximum ₹8,910 – Hassle-Free Fresh Rice Delivery!
               </p>
             </div>
 

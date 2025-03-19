@@ -72,7 +72,9 @@ import CampaignDetails from "./Components1/campaignDetails";
 import FreeChatGPTnormal from "./Dashboard/Freechatgptnormal";
 import WomensDay from "./components/WomensDay";
 import HiddenLogin from "./Components1/Auth/HiddenLogin";
+import TestimonialsPage from "./Dashboard/TestimoinalsOXY";
 import RiceComparison from "./components/SteanRiceVsRawRice";
+import RegisteredUser from "./Pages/RegisteredUser";
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -90,12 +92,14 @@ const App: React.FC = () => {
             <Route path="/qrcode" element={<QR />} />
             <Route path="/thank-you" element={<ThankYouPage />} />
             <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
+            <Route path="/proud-lender/testimonials" element={<TestimonialsPage/>} />
             <Route path="/steamricevsrawrice" element={<RiceComparison />} />
             {/* Landing Page (First Page) */}
             <Route path="/" element={<Landingpage />} />
 
             <Route path="/allqueries" element={<AllQueries />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/registeredUsers" element={<RegisteredUser />} />
             <Route
               path="/allcampaignsdetails"
               element={<AllCampaignsDetails />}
