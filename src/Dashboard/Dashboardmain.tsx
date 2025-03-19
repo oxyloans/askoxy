@@ -26,6 +26,7 @@ import Ricebags from "../kart/Mainrice";
 // import FreeChatGPTmain from './FreechatGPTmain';
 import axios from "axios";
 import Content1 from "./Content";
+import Footer from "../components/Footer";
 
 // Import your images here
 import RudrakshaImage from "../assets/img/freerudraksha.png";
@@ -38,10 +39,9 @@ import MMServices from "../assets/img/Machines manufacturing services.png";
 import hiring from "../assets/img/Career guidance.png";
 import FreeChatGPTmain from "./FreechatGPTmain";
 import BMVCOINmain from "./BMVcoinmain";
-import BASE_URL from "../Config";
-// Import Holi welcome image
-import HoliWelcomeImage from "../assets/img/holi.png";
 
+import BASE_URL from "../Config";
+import { Image } from "antd";
 interface DashboardItem {
   title: string;
   image: string;
@@ -77,9 +77,10 @@ const DashboardMain: React.FC = () => {
   const [bmvCoin, setBmvCoin] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
+  const [userInterest, setUserInterest] = useState<any[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
+  const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -93,24 +94,38 @@ const DashboardMain: React.FC = () => {
       } finally {
       }
     };
-
     fetchCampaigns();
   }, []);
 
   useEffect(() => {
-    // Check if the user is on a mobile device
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    handleGetOffers();
+    const refreshListener = () => {
+      handleGetOffers();
     };
-
-    // Initial check and event listener
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
+    window.addEventListener("refreshOffers", refreshListener);
 
     return () => {
-      window.removeEventListener("resize", checkMobile);
+      window.removeEventListener("refreshOffers", refreshListener);
     };
   }, []);
+
+  const handleGetOffers = async () => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        {
+          userId: userId,
+        }
+      );
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        setUserInterest(response.data); // Update state
+        localStorage.setItem("userInterest", JSON.stringify(response.data)); // Store in localStorage
+      }
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
+    }
+  };
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -123,17 +138,6 @@ const DashboardMain: React.FC = () => {
       setActiveTab(pathTab);
     }
   }, [location.pathname]);
-
-  // Close welcome modal after 5 seconds
-  useEffect(() => {
-    if (showWelcomeModal) {
-      const timer = setTimeout(() => {
-        setShowWelcomeModal(false);
-      }, 7000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [showWelcomeModal]);
 
   const services: DashboardItem[] = [
     {
@@ -152,7 +156,7 @@ const DashboardMain: React.FC = () => {
         "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
       path: "/main/services/freeai-genai",
       icon: <Cpu className="text-purple-600" size={24} />,
-      category: "Education",
+      category: "Jobs",
     },
     {
       title: "Free Rice Samples",
@@ -254,19 +258,17 @@ const DashboardMain: React.FC = () => {
   };
 
   const handleCampaignClick = (campaignType: string) => {
-    console.log(`/services/campaign/${campaignType}`);
+    // console.log(`/services/campaign/${campaignType}`);
     navigate(`/main/services/campaign/${campaignType}`);
   };
 
-  const renderDashboardContent = () => {
-    if (activeTab === "products") {
-      return <Ricebags />;
-    } else if (activeTab === "freegpts") {
-      return <FreeChatGPTmain />;
-    } else if (activeTab === "bmvcoin") {
-      return <BMVCOINmain />;
-    } else if (activeTab === "services") {
-      return (
+  const renderItems = (items: DashboardItem[]): JSX.Element => (
+    <div className="space-y-6">
+      {activeTab === "products" ? (
+        <>
+          <Ricebags />
+        </>
+      ) : activeTab === "services" ? (
         <>
           <div className="relative">
             <Search
@@ -282,27 +284,29 @@ const DashboardMain: React.FC = () => {
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems(services).map((item, index) => (
+            {/* Regular Items */}
+            {filteredItems(items).map((item, index) => (
               <div
                 key={index}
                 onClick={() => navigate(item.path)}
-                className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg 
-                  transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+                className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
+            transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
               >
-                <div className="relative h-auto overflow-hidden">
+                <div className="relative aspect-video overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-auto max-h-[200px] sm:max-h-[250px] md:max-h-[300px] lg:max-h-[350px] object-cover rounded-sm transition-transform duration-300"
+                    className="w-full h-full object-contain bg-gray-50"
                   />
-
                   {item.category && (
-                    <span className="absolute top-2 right-2 px-2 py-1 text-xs font-medium bg-white/90 rounded-full">
-                      {item.category}
-                    </span>
+                    <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
+                      <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
+                        {item.category}
+                      </span>
+                    </div>
                   )}
                 </div>
-                <div className="p-4">
+                <div className="p-4 flex-grow flex flex-col">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
                       {item.icon}
@@ -318,81 +322,65 @@ const DashboardMain: React.FC = () => {
               </div>
             ))}
 
+            {/* Campaign Items */}
             {campaigns
               .filter((campaign) => campaign.campaignStatus !== false)
               .map((campaign, index) => (
                 <div
                   key={index}
                   className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
-                  transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+            transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
                   onClick={() => handleCampaignClick(campaign.campaignType)}
                 >
-                  <div className="relative h-48 overflow-hidden">
-                    {campaign.imageUrls.map((image, imgIndex) => (
+                  <div className="relative aspect-video overflow-hidden bg-gray-50">
+                    {campaign.imageUrls && campaign.imageUrls.length > 0 && (
                       <img
-                        key={imgIndex}
-                        src={image.imageUrl}
-                        alt={`Campaign Image ${imgIndex + 1}`}
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                        src={campaign.imageUrls[0].imageUrl}
+                        alt={`${campaign.campaignType}`}
+                        className="w-full h-full object-contain"
                       />
-                    ))}
+                    )}
                     {campaign.campaignType && (
-                      <span className="absolute top-2 right-2 px-2 py-1 text-xs font-medium bg-white/90 rounded-full">
-                        {campaign.campaignType}
-                      </span>
+                      <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
+                        <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
+                          {campaign.campaignType}
+                        </span>
+                      </div>
                     )}
                   </div>
-                  <div className="p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                        {campaign.campaignType}
-                      </h3>
-                    </div>
+                  <div className="p-4 flex-grow flex flex-col">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
+                      {campaign.campaignType}
+                    </h3>
                     <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
                       {campaign.campaignDescription}
                     </p>
                   </div>
                 </div>
               ))}
-          </div>
+            </div>
+            <Footer/>
+          
         </>
-      );
-    }
-  };
+      ) : activeTab === "freegpts" ? (
+        <>{<FreeChatGPTmain />}</>
+      ) : (
+        activeTab === "bmvcoin" && <>{<BMVCOINmain />}</>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen">
-      {/* Welcome Modal */}
-      {showWelcomeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div
-            className={`relative bg-white rounded-2xl overflow-hidden shadow-xl transform transition-all 
-            ${isMobile ? "w-full max-w-sm" : "w-full max-w-2xl"}`}
-          >
-            <button
-              onClick={() => setShowWelcomeModal(false)}
-              className="absolute top-3 right-3 z-10 p-1 rounded-full bg-white/80 hover:bg-white"
-            >
-              <X size={24} className="text-gray-800" />
-            </button>
-
-            <div className="relative">
-              <img
-                src={HoliWelcomeImage}
-                alt="Holi Welcome"
-                className="w-full object-cover"
-                style={{ maxHeight: isMobile ? "50vh" : "70vh" }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
-          <div className="space-y-6">{renderDashboardContent()}</div>
+          {activeTab === "services" && renderItems(services)}
+          {activeTab === "products" && renderItems(products)}
+          {activeTab === "freegpts" && renderItems(freeGPTs)}
+          {activeTab === "bmvcoin" && renderItems(bmvCoinItems)}
         </div>
       </div>
+      
     </div>
   );
 };

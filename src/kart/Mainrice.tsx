@@ -591,296 +591,304 @@ const handleBannerClick = (index: number) => {
   };
 
   return (
-    <div className="min-h-screen">
-      
-      {/* Image Slider */}
-      <div 
-        className="relative w-full overflow-hidden cursor-pointer"
-        style={{
-          height: 'min(30vw * 0.5625, 250px)',
-          maxHeight: '250px'
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onClick={() => handleBannerClick(currentImageIndex)}
-      >
-        <AnimatePresence initial={false} custom={1}>
-          <motion.div
-            key={currentImageIndex}
-            custom={1}
-            variants={sliderVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 }
-            }}
-            className="absolute inset-0 w-full h-full"
-          >
-            <img
-              src={bannerImages[currentImageIndex]}
-              className="w-full h-full object-cover md:object-contain"
-              onLoad={() => setImageLoaded(true)}
-              style={{ 
-                opacity: imageLoaded ? 1 : 0,
-                transition: 'opacity 0.3s ease-in-out'
+    <>
+      <div className="min-h-screen">
+        {/* Image Slider */}
+        <div
+          className="relative w-full overflow-hidden cursor-pointer"
+          style={{
+            height: "min(30vw * 0.5625, 250px)",
+            maxHeight: "250px",
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={() => handleBannerClick(currentImageIndex)}
+        >
+          <AnimatePresence initial={false} custom={1}>
+            <motion.div
+              key={currentImageIndex}
+              custom={1}
+              variants={sliderVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 },
               }}
-              alt={`Rice banner ${currentImageIndex + 1}`}
-            />
-          </motion.div>
+              className="absolute inset-0 w-full h-full"
+            >
+              <img
+                src={bannerImages[currentImageIndex]}
+                className="w-full h-full object-cover md:object-contain"
+                onLoad={() => setImageLoaded(true)}
+                style={{
+                  opacity: imageLoaded ? 1 : 0,
+                  transition: "opacity 0.3s ease-in-out",
+                }}
+                alt={`Rice banner ${currentImageIndex + 1}`}
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Slider Indicators */}
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2 z-10">
+            {bannerImages.map((_, index) => (
+              <motion.button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent's onClick
+                  setCurrentImageIndex(index);
+                  setIsAutoPlay(false);
+                  setTimeout(() => setIsAutoPlay(true), 5000);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentImageIndex === index
+                    ? "w-6 bg-purple-600"
+                    : "w-1.5 bg-purple-300"
+                }`}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* App Modal */}
+        <AnimatePresence>
+          {showAppModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              onClick={() => setShowAppModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-purple-800">
+                    Get Our Mobile App
+                  </h2>
+                  <button
+                    onClick={() => setShowAppModal(false)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                    aria-label="Close modal"
+                  >
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <p className="text-gray-600 mb-6">
+                  Download ASKOXY.AI for a seamless shopping experience with
+                  exclusive app-only offers!
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 justify-center">
+                  <a
+                    href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex justify-center"
+                  >
+                    <img
+                      src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                      alt="Download on the App Store"
+                      className="h-10 w-auto object-contain"
+                    />
+                  </a>
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex justify-center"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
+                      alt="Get it on Google Play"
+                      className="h-10 w-auto object-contain"
+                    />
+                  </a>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-500 text-center">
+                    Enjoy exclusive app-only discounts, faster checkout, and
+                    order tracking!
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
-        {/* Slider Indicators */}
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2 z-10">
-          {bannerImages.map((_, index) => (
-            <motion.button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering the parent's onClick
-                setCurrentImageIndex(index);
-                setIsAutoPlay(false);
-                setTimeout(() => setIsAutoPlay(true), 5000);
-              }}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                currentImageIndex === index 
-                  ? 'w-6 bg-purple-600' 
-                  : 'w-1.5 bg-purple-300'
-              }`}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
+        {/* FAQ Modal */}
+        <AnimatePresence>
+          {showFAQModal && (
+            <FAQModal
+              isOpen={showFAQModal}
+              onClose={() => setShowFAQModal(false)}
             />
-          ))}
-        </div>
-      </div>
+          )}
+        </AnimatePresence>
 
-      {/* App Modal */}
-      <AnimatePresence>
-        {showAppModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowAppModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-purple-800">Get Our Mobile App</h2>
-                <button
-                  onClick={() => setShowAppModal(false)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                  aria-label="Close modal"
-                >
-                  <FaTimes className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <p className="text-gray-600 mb-6">
-                Download ASKOXY.AI for a seamless shopping experience with exclusive app-only offers!
-              </p>
-              
-              <div className="grid grid-cols-2 gap-2 justify-center">
-                <a
-                  href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex justify-center"
-                >
-                  <img
-                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-                    alt="Download on the App Store"
-                    className="h-10 w-auto object-contain"
-                  />
-                </a>
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex justify-center"
-                >
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
-                    alt="Get it on Google Play"
-                    className="h-10 w-auto object-contain"
-                  />
-                </a>
-              </div>
-              
-              <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-500 text-center">
-                  Enjoy exclusive app-only discounts, faster checkout, and order tracking!
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* FAQ Modal */}
-      <AnimatePresence>
-        {showFAQModal && (
-          <FAQModal 
-            isOpen={showFAQModal} 
-            onClose={() => setShowFAQModal(false)} 
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Search results indicator (if searching) */}
-      {searchTerm && (
-        <div className="bg-purple-50 px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center">
-            <FaSearch className="text-purple-600 mr-2" />
-            <span className="text-purple-800 font-medium">
-              {noResults 
-                ? "No results found for: " 
-                : "Search results for: "}
-              <span className="font-bold">{searchTerm}</span>
-            </span>
-          </div>
-          <button
-            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors text-sm"
-            onClick={() => {
-              setSearchTerm("");
-              setActiveCategory("All Items");
-            }}
-          >
-            View All Products
-          </button>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <main className="bg-white">
-      <motion.div
-  initial={{ y: -20, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
-  className="text-center py-2 md:py-6 relative"
->
-  {/* Container for the heading and FAQ button */}
-  <div className="flex justify-between items-center mb-4">
-    {/* Centered Heading */}
-    <div className="flex-1 text-center">
-      <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-        Premium Quality Rice
-      </h1>
-    </div>
-
-    {/* FAQ Button (Right-aligned) */}
-    <motion.button
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-      className="px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg shadow-md hover:bg-purple-700 transition-all"
-      onClick={() => setShowFAQModal(true)}
-      aria-label="View FAQs"
-    >
-      <FaQuestionCircle className="w-5 h-5 inline-block" />
-      <span className="ml-2">FAQs</span>
-    </motion.button>
-  </div>
-
-  {/* Description Text */}
-  <p className="text-m md:text-lg text-gray-600 px-4">
-    Discover our exclusive collection of premium rice varieties
-  </p>
-</motion.div>
-
-        {noResults ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="bg-gray-100 rounded-full p-4 mb-4">
-              <FaSearch className="text-gray-400 w-10 h-10" />
+        {/* Search results indicator (if searching) */}
+        {searchTerm && (
+          <div className="bg-purple-50 px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center">
+              <FaSearch className="text-purple-600 mr-2" />
+              <span className="text-purple-800 font-medium">
+                {noResults ? "No results found for: " : "Search results for: "}
+                <span className="font-bold">{searchTerm}</span>
+              </span>
             </div>
-            <h2 className="text-xl font-medium text-gray-700 mb-2">No items found</h2>
-            <p className="text-gray-500 mb-6 text-center max-w-md">
-              We couldn't find any items matching your search. Try using different keywords or browse our categories.
-            </p>
             <button
+              className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors text-sm"
               onClick={() => {
                 setSearchTerm("");
                 setActiveCategory("All Items");
               }}
-              className="px-6 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
             >
               View All Products
             </button>
           </div>
-        ) : loading ? (
-          <SkeletonLoader />
-        ) : (
-          <Categories
-            categories={filteredCategories}
-            activeCategory={activeCategory}
-            onCategoryClick={setActiveCategory}
-            setActiveCategory={setActiveCategory}
-            loading={loading}
-            cart={cart}
-            onItemClick={handleItemClick}
-            updateCart={setCart}
-            customerId={customerId}
-            updateCartCount={setCount}
-          />
         )}
-      </main>
 
-      {/* Scroll to Top Button */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className="fixed bottom-24 right-4 p-3 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white z-50"
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      >
-        <svg 
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 10l7-7m0 0l7 7m-7-7v18"
-          />
-        </svg>
-      </motion.button>
+        {/* Main Content */}
+        <main className="bg-white">
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-center py-2 md:py-6 relative"
+          >
+            {/* Container for the heading and FAQ button */}
+            <div className="flex justify-between items-center mb-4">
+              {/* Centered Heading */}
+              <div className="flex-1 text-center">
+                <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                  Premium Quality Rice
+                </h1>
+              </div>
 
-      {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-10">
-        <div className="flex overflow-x-auto py-3 px-4 space-x-4 scrollbar-hide css-hide-scrollbar">
-          {loading ? (
-            // Skeleton navigation items for mobile
-            Array(5).fill(0).map((_, index) => (
-              <div key={index} className="flex-shrink-0 px-4 py-2 rounded-full bg-gray-200 animate-pulse w-24 h-8"></div>
-            ))
-          ) : (
-            filteredCategories.map((category, index) => (
+              {/* FAQ Button (Right-aligned) */}
               <motion.button
-                key={index}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeCategory === category.categoryName
-                    ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-md"
-                    : "bg-purple-50 text-purple-700 hover:bg-purple-100"
-                }`}
-                onClick={() => setActiveCategory(category.categoryName)}
+                className="px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg shadow-md hover:bg-purple-700 transition-all"
+                onClick={() => setShowFAQModal(true)}
+                aria-label="View FAQs"
               >
-                {category.categoryName}
+                <FaQuestionCircle className="w-5 h-5 inline-block" />
+                <span className="ml-2">FAQs</span>
               </motion.button>
-            ))
-          )}
-        </div>
-      </nav>
+            </div>
 
+            {/* Description Text */}
+            <p className="text-m md:text-lg text-gray-600 px-4">
+              Discover our exclusive collection of premium rice varieties
+            </p>
+          </motion.div>
+
+          {noResults ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="bg-gray-100 rounded-full p-4 mb-4">
+                <FaSearch className="text-gray-400 w-10 h-10" />
+              </div>
+              <h2 className="text-xl font-medium text-gray-700 mb-2">
+                No items found
+              </h2>
+              <p className="text-gray-500 mb-6 text-center max-w-md">
+                We couldn't find any items matching your search. Try using
+                different keywords or browse our categories.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setActiveCategory("All Items");
+                }}
+                className="px-6 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+              >
+                View All Products
+              </button>
+            </div>
+          ) : loading ? (
+            <SkeletonLoader />
+          ) : (
+            <Categories
+              categories={filteredCategories}
+              activeCategory={activeCategory}
+              onCategoryClick={setActiveCategory}
+              setActiveCategory={setActiveCategory}
+              loading={loading}
+              cart={cart}
+              onItemClick={handleItemClick}
+              updateCart={setCart}
+              customerId={customerId}
+              updateCartCount={setCount}
+            />
+          )}
+        </main>
+
+        {/* Scroll to Top Button */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="fixed bottom-24 right-4 p-3 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white z-50"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
+            />
+          </svg>
+        </motion.button>
+
+        {/* Mobile Navigation */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-10">
+          <div className="flex overflow-x-auto py-3 px-4 space-x-4 scrollbar-hide css-hide-scrollbar">
+            {loading
+              ? // Skeleton navigation items for mobile
+                Array(5)
+                  .fill(0)
+                  .map((_, index) => (
+                    <div
+                      key={index}
+                      className="flex-shrink-0 px-4 py-2 rounded-full bg-gray-200 animate-pulse w-24 h-8"
+                    ></div>
+                  ))
+              : filteredCategories.map((category, index) => (
+                  <motion.button
+                    key={index}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      activeCategory === category.categoryName
+                        ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-md"
+                        : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                    }`}
+                    onClick={() => setActiveCategory(category.categoryName)}
+                  >
+                    {category.categoryName}
+                  </motion.button>
+                ))}
+          </div>
+        </nav>
+      </div>
       <Footer />
-    </div>
+    </>
   );
 };
 

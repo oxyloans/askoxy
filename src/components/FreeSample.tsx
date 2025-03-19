@@ -9,7 +9,7 @@ import { HiOutlineDocument } from "react-icons/hi";
 import BASE_URL from "../Config";
 
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png";
+import FR from "../assets/img/123.png";
 
 import Footer from "./Footer";
 import { message, Modal } from "antd";
@@ -57,6 +57,7 @@ const FreeSample: React.FC = () => {
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const mobileNumber = localStorage.getItem("whatsappNumber");
+  const [interested, setInterested] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
     userId: userId,
@@ -75,6 +76,10 @@ const FreeSample: React.FC = () => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const handleSubmit = async () => {
+    if (interested) {
+      message.warning("You have already participated. Thank you!");
+      return;
+    }
     try {
       setIsButtonDisabled(true);
       // API request to submit the form data
@@ -118,6 +123,27 @@ const FreeSample: React.FC = () => {
       setIsprofileOpen(true);
     } else {
       setIsOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    handleGetOffer();
+  }, []);
+
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data); // Convert the string back to an array
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "FREESAMPLE"
+      );
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
+      }
+    } else {
+      setInterested(false);
     }
   };
 
@@ -385,8 +411,6 @@ const FreeSample: React.FC = () => {
 
           {/* Text and Button Section */}
           <div className="text-center lg:text-left p-1 bg-white">
-            08:00 AM - 12 :00 PM 12:00 PM - 04 :00 PM 04:00 PM - 08 :00 PM 08:00
-            AM - 08 :00 PM
             <p className="text-black mb-3 text-sm sm:text-base">
               <strong>Special Offer:</strong> Free Rice Container! - Buy a 26kgs
               / 10kgs rice bag & get a FREE rice container! (Container remains

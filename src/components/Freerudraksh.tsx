@@ -60,7 +60,9 @@ const Freerudraksha: React.FC = () => {
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const storedPhoneNumber = localStorage.getItem("whatsappNumber");
+  // const storedPhoneNumber = localStorage.getItem("whatsappNumber");
+
+  const [storedPhoneNumber, setStoredPhoneNumber] = useState<string>(""); // Fetch phone number from storage if needed
   // Fetch user ID from storage if needed.
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
   const [firstRequestDate, setFirstRequestDate] = useState("");
@@ -74,6 +76,8 @@ const Freerudraksha: React.FC = () => {
   const [queryError, setQueryError] = useState<string>("");
   const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
   const userId = localStorage.getItem("userId");
+  const userName = localStorage.getItem("profileData");
+  const [interested, setInterested] = useState<boolean>(false);
   console.log(userId);
   const handleWhatsappClick = () => {
     if (storedPhoneNumber) {
@@ -104,9 +108,6 @@ const Freerudraksha: React.FC = () => {
         const data = await response.json();
         console.log(data);
         console.log(address);
-        setSavedAddress(address);
-        setDelivery(delivery);
-        setModalType("success");
       } else {
         message.error("Failed to fetch saved address. Please try again.");
       }
@@ -144,7 +145,10 @@ const Freerudraksha: React.FC = () => {
 
       if (response.ok) {
         message.success("Address saved successfully!");
-        fetchUserAddress(); // Fetch the saved address after successful save
+        // fetchUserAddress(); // Fetch the saved address after successful save
+        setSavedAddress(address);
+        setDelivery(delivery);
+        setModalType("success");
       } else {
         const errorData = await response.json();
         console.error("Error saving address:", errorData);
@@ -168,14 +172,34 @@ const Freerudraksha: React.FC = () => {
     message.success("Address confirmed successfully!");
   };
 
-  // Fetch the saved address and submission status when the component mounts
-  // Fetch the saved address and submission status when the component mounts
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data); // Convert the string back to an array
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "FREERUDRAKSHA"
+      );
+
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
+      }
+    } else {
+      setInterested(false);
+    }
+  };
+
   useEffect(() => {
+    handleGetOffer();
+    setStoredPhoneNumber(
+      localStorage.getItem("whatsappNumber") ||
+        localStorage.getItem("mobileNumber") ||
+        ""
+    );
     const savedHasSubmitted = localStorage.getItem(`${userId}_hasSubmitted`);
     const savedDate = localStorage.getItem(`${userId}_firstRequestDate`);
-
     if (savedHasSubmitted && savedDate) {
-      // User has already participated
       setHasSubmitted(true);
       setFirstRequestDate(savedDate);
     }
@@ -187,14 +211,14 @@ const Freerudraksha: React.FC = () => {
       message.info(
         `We have received your first request on ${firstRequestDate}`
       );
-      return; // Prevent submitting again
+      return;
     }
 
     const endpoint = `${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`;
     const payload = { userId, deliveryType };
 
     try {
-      setIsLoading(true); // Show loading spinner
+      setIsLoading(true);
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -204,15 +228,14 @@ const Freerudraksha: React.FC = () => {
       });
 
       if (response.ok) {
-        const date = new Date().toLocaleDateString(); // Get current date
+        const date = new Date().toLocaleDateString();
         setFirstRequestDate(date);
         setHasSubmitted(true);
-
-        // Save to localStorage with the userId as part of the key to make it specific to the user
         localStorage.setItem(`${userId}_hasSubmitted`, "true");
         localStorage.setItem(`${userId}_firstRequestDate`, date);
         message.success("Request submitted successfully!");
         setIsPopupVisible(false);
+        setInterested(true);
       } else {
         const errorData = await response.json();
         console.error("Error submitting request:", errorData);
@@ -329,13 +352,22 @@ const Freerudraksha: React.FC = () => {
 
         {/* Buttons */}
         <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
-          <button
-            className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
-            onClick={handleWhatsappClick}
-            aria-label="Request Free Rudraksha"
-          >
-            I Want Free Rudraksha
-          </button>
+          {!interested ? (
+            <button
+              className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
+              onClick={handleWhatsappClick}
+              aria-label="Request Free Rudraksha"
+            >
+              I Want Free Rudraksha
+            </button>
+          ) : (
+            <button
+              className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg duration-300 cursor-default"
+              aria-label="Request Free Rudraksha"
+            >
+              Request Submitted
+            </button>
+          )}
 
           <button
             className="w-full md:w-auto px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
@@ -728,7 +760,6 @@ const Freerudraksha: React.FC = () => {
         </div>
       )}
 
-     
       <Footer />
     </div>
   );

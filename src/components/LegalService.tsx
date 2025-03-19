@@ -33,7 +33,7 @@ const LegalService: React.FC = () => {
 
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
+  const [interested, setInterested] = useState<boolean>(false);
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
@@ -71,6 +71,10 @@ const LegalService: React.FC = () => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const handleSubmit = async () => {
+    if (interested) {
+      message.warning("You have already participated. Thank you!");
+      return;
+    }
     try {
       setIsButtonDisabled(true);
       // API request to submit the form data
@@ -85,14 +89,18 @@ const LegalService: React.FC = () => {
       message.success(
         "Thank you for showing interest in our *Legal Service* offer!"
       );
+      setInterested(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("refreshOffers"));
+      }, 200);
     } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
+      // if (error.response.status === 500 || error.response.status === 400) {
+      //   // Handle duplicate participation error
+      //   message.warning("You have already participated. Thank you!");
+      // } else {
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+      // }
       setIsButtonDisabled(false);
     }
   };
@@ -116,6 +124,26 @@ const LegalService: React.FC = () => {
       setIsprofileOpen(true);
     } else {
       setIsOpen(true);
+    }
+  };
+  useEffect(() => {
+    handleGetOffer();
+  }, []);
+
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data); // Convert the string back to an array
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "LEGALSERVICES"
+      );
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
+      }
+    } else {
+      setInterested(false);
     }
   };
 
@@ -195,7 +223,7 @@ const LegalService: React.FC = () => {
               className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
               onClick={handleSubmit}
               aria-label="Visit our site"
-              disabled={isButtonDisabled}
+              // disabled={isButtonDisabled}
             >
               I'm Interested
             </button>

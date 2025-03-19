@@ -48,8 +48,9 @@ const MyRotaryServices = () => {
   const [queryError, setQueryError] = useState("");
   const mobileNumber = localStorage.getItem("whatsappNumber");
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
+  const [interested, setInterested] = useState<boolean>(false);
   const [query, setQuery] = useState("");
-   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     askOxyOfers: "ROTARIAN",
     userId: userId,
@@ -66,6 +67,10 @@ const MyRotaryServices = () => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const handleSubmit = async () => {
+    if (interested) {
+      message.warning("You have already participated. Thank you!");
+      return;
+    }
     try {
       setIsButtonDisabled(true);
       // API request to submit the form data
@@ -80,14 +85,18 @@ const MyRotaryServices = () => {
       message.success(
         "Thank you for showing interest in our *Rotarian* offer!"
       );
+      setInterested(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("refreshOffers"));
+      }, 200);
     } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
+      // if (error.response.status === 500 || error.response.status === 400) {
+      //   // Handle duplicate participation error
+      //   message.warning("You have already participated. Thank you!");
+      // } else {
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+      // }
       setIsButtonDisabled(false);
     }
   };
@@ -111,6 +120,27 @@ const MyRotaryServices = () => {
       setIsprofileOpen(true);
     } else {
       setIsOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    handleGetOffer();
+  }, []);
+
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data); // Convert the string back to an array
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "ROTARIAN"
+      );
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
+      }
+    } else {
+      setInterested(false);
     }
   };
 
@@ -189,7 +219,7 @@ const MyRotaryServices = () => {
             <button
               className="bg-[#04AA6D] w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
               onClick={handleSubmit}
-              disabled={isButtonDisabled}
+              // disabled={isButtonDisabled}
               aria-label="Visit our site"
             >
               I'm Interested
@@ -350,10 +380,7 @@ const MyRotaryServices = () => {
         <div className="flex flex-col md:flex-row items-center justify-center mt-8 px-4 pb-12">
           {/* Left Section: Image */}
           <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
-            <img
-              src={MyRotary}
-              alt="My Rotarian"
-            />
+            <img src={MyRotary} alt="My Rotarian" />
           </div>
 
           {/* Right Section: Text */}

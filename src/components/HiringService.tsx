@@ -27,11 +27,12 @@ const HiringService: React.FC = () => {
   const [errors, setErrors] = useState<{ mobileNumber?: string }>({});
   const userId = localStorage.getItem("userId");
   const [currentIndex, setCurrentIndex] = useState(0);
- const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [queryError, setQueryError] = useState<string | undefined>();
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
+  const [interested, setInterested] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
@@ -46,7 +47,7 @@ const HiringService: React.FC = () => {
   };
 
   const mobileNumber = localStorage.getItem("whatsappNumber");
-  
+
   const email = localStorage.getItem("email");
 
   const [formData, setFormData] = useState({
@@ -67,6 +68,10 @@ const HiringService: React.FC = () => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   const handleSubmit = async () => {
+    if (interested) {
+      message.warning("You have already participated. Thank you!");
+      return;
+    }
     try {
       setIsButtonDisabled(true);
       // API request to submit the form data
@@ -81,18 +86,42 @@ const HiringService: React.FC = () => {
       message.success(
         "Thank you for showing interest in our *We Are Hiring* offer!"
       );
+      setInterested(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("refreshOffers"));
+      }, 200);
     } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
+      // if (error.response.status === 500 || error.response.status === 400) {
+      //   // Handle duplicate participation error
+      //   message.warning("You have already participated. Thank you!");
+      // } else {
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+
       setIsButtonDisabled(false);
     }
   };
 
+  useEffect(() => {
+    handleGetOffer();
+  }, []);
+
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data); // Convert the string back to an array
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "WEAREHIRING"
+      );
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
+      }
+    } else {
+      setInterested(false);
+    }
+  };
 
   const navigate = useNavigate();
 
@@ -163,7 +192,7 @@ const HiringService: React.FC = () => {
           <button
             className=" bg-[#04AA6D] w-full md:w-auto px-4 py-2 text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
             onClick={handleSubmit}
-            disabled={isButtonDisabled}
+            // disabled={isButtonDisabled}
             aria-label="Join Us Now"
           >
             Join Us Now
@@ -372,7 +401,7 @@ const HiringService: React.FC = () => {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 };

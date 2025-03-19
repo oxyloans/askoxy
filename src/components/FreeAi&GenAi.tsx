@@ -6,7 +6,16 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import Footer from "./Footer";
 import { message } from "antd";
-import { ArrowLeft, ShoppingBag, Coins, Bot, Settings, X, Mail, Heart } from 'lucide-react';
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Coins,
+  Bot,
+  Settings,
+  X,
+  Mail,
+  Heart,
+} from "lucide-react";
 import { notification } from "antd";
 import BASE_URL from "../Config";
 
@@ -52,6 +61,7 @@ const FreeAiandGenAi: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
+  const [interested, setInterested] = useState<boolean>(false);
   const mobileNumber = localStorage.getItem("whatsappNumber");
   const [formData, setFormData] = useState({
     askOxyOfers: "FREEAI",
@@ -59,7 +69,7 @@ const FreeAiandGenAi: React.FC = () => {
     userId: userId,
     projectType: "ASKOXY",
   });
-  
+
   const askOxyOfers = localStorage.getItem("askOxyOfers");
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -70,6 +80,10 @@ const FreeAiandGenAi: React.FC = () => {
   };
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const handleSubmit = async () => {
+    if (interested) {
+      message.warning("You have already participated. Thank you!");
+      return;
+    }
     try {
       setIsButtonDisabled(true);
       // API request to submit the form data
@@ -84,16 +98,21 @@ const FreeAiandGenAi: React.FC = () => {
       message.success(
         "Thank you for showing interest in our *Free AI & Gen Ai Training* offer!"
       );
+      setInterested(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("refreshOffers"));
+      }, 200);
     } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
+      // if (error.response.status === 500 || error.response.status === 400) {
+      //   // Handle duplicate participation error
+      //   message.warning("You have already participated. Thank you!");
+      // } else {
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+      // }
       setIsButtonDisabled(false);
     }
+    window.dispatchEvent(new Event("refreshOffers"));
   };
 
   const email = localStorage.getItem("email");
@@ -104,8 +123,6 @@ const FreeAiandGenAi: React.FC = () => {
     setIsOpen(false);
     navigate("/main/profile");
   };
-
-
 
   const handleWriteToUs = () => {
     if (
@@ -128,6 +145,28 @@ const FreeAiandGenAi: React.FC = () => {
   //     return () => clearTimeout(timer);
   //   }
   // }, [issuccessOpen]);
+
+  useEffect(() => {
+    handleGetOffer();
+  }, []);
+
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data);
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "FREEAI"
+      );
+
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
+      }
+    } else {
+      setInterested(false);
+    }
+  };
 
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
@@ -182,8 +221,6 @@ const FreeAiandGenAi: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
         <div className="bg-white rounded-xl shadow-sm">
-      
-
           {/* Main Content */}
           <div className="max-w-7xl mx-auto p-4">
             <div className="flex items-center justify-between">
@@ -196,8 +233,8 @@ const FreeAiandGenAi: React.FC = () => {
                   <ArrowLeft className="h-6 w-6" />
                 </button>
                 <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text45xl leading-tight mb-6 md:mb-0">
-              FREE AI & GEN AI TRAINING
-            </h1>
+                  FREE AI & GEN AI TRAINING
+                </h1>
               </div>
 
               {/* Right-Aligned Buttons */}
@@ -206,7 +243,7 @@ const FreeAiandGenAi: React.FC = () => {
                   className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
                   onClick={handleSubmit}
                   aria-label="I'm Interested"
-                  disabled={isButtonDisabled} // Disable the button dynamically
+                  // disabled={isButtonDisabled}
                 >
                   I'm Interested
                 </button>
@@ -223,7 +260,6 @@ const FreeAiandGenAi: React.FC = () => {
               {/* Buttons on the right */}
               <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
                 {/* Button: I'm Interested */}
-
 
                 {/* Modal for "Write To Us" */}
                 {isOpen && (
@@ -296,7 +332,9 @@ const FreeAiandGenAi: React.FC = () => {
                           onChange={(e) => setQuery(e.target.value)}
                         />
                         {queryError && (
-                          <p className="text-red-500 text-sm mt-1">{queryError}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {queryError}
+                          </p>
                         )}
                       </div>
 
@@ -369,7 +407,6 @@ const FreeAiandGenAi: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center justify-center sm:px-6 md:px-6 py-8">
-
               {/* Main Container */}
               <div className="flex flex-col md:flex-row items-center max-w-6xl w-full overflow-hidden">
                 {/* Left Section - Image */}
@@ -391,7 +428,9 @@ const FreeAiandGenAi: React.FC = () => {
                   {/* Details */}
                   <p className="text-gray-700 text-lg leading-relaxed">
                     <strong>Unlock your career potential</strong> with{" "}
-                    <span className="text-[#008CBA] font-semibold">ASKOXY.AI</span>
+                    <span className="text-[#008CBA] font-semibold">
+                      ASKOXY.AI
+                    </span>
                     ’s free AI & Generative AI training, combined with Java and
                     Microservices expertise.
                   </p>
@@ -401,12 +440,13 @@ const FreeAiandGenAi: React.FC = () => {
                       Open to all graduates, pass or fail
                     </strong>
                     , this program empowers freshers to land their first job and
-                    helps experienced professionals achieve high-salary roles. 🎓
+                    helps experienced professionals achieve high-salary roles.
+                    🎓
                   </p>
 
                   <p className="text-gray-700 text-lg leading-relaxed">
-                    Gain hands-on experience with free project training, guided by
-                    visionary leader{" "}
+                    Gain hands-on experience with free project training, guided
+                    by visionary leader{" "}
                     <strong className="text-[#D81B60]">
                       Radhakrishna Thatavarti
                     </strong>

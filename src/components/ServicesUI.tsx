@@ -391,9 +391,10 @@ const images = [
   
 
     // Proceed with navigation if validations pass
-    window.location.href = userId
-        ? `/main/dashboard/freegpts?query=${encodeURIComponent(trimmedQuery)}`
-        : `/freechatgptnormal?query=${encodeURIComponent(trimmedQuery)}`;
+   window.location.href = userId
+     ? `/main/dashboard/freegpts?query=${encodeURIComponent(trimmedQuery)}`
+     : `/freechatgptnormal?query=${encodeURIComponent(trimmedQuery)}`;
+
 };
 
 

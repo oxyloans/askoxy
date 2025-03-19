@@ -3,7 +3,7 @@ import "./StudyAbroad.css";
 import "./DiwaliPage.css";
 import "./Freerudraksha.css";
 import axios from "axios";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from "lucide-react";
 
 import {
   FaMapMarkerAlt,
@@ -44,6 +44,29 @@ const images = [
 
 const StudyAbroad: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
+  const [queryError, setQueryError] = useState<string | undefined>(undefined);
+  const [query, setQuery] = useState("");
+  const [interested, setInterested] = useState<boolean>(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
+  const userId = localStorage.getItem("userId");
+  const mobileNumber = localStorage.getItem("whatsappNumber");
+  const email = localStorage.getItem("email");
+  const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [formData, setFormData] = useState({
+    askOxyOfers: "STUDYABROAD",
+    userId: userId,
+    mobileNumber: mobileNumber,
+    projectType: "ASKOXY",
+  });
 
   const handleNext = () => {
     if (currentIndex < images.length - 1) {
@@ -57,27 +80,6 @@ const StudyAbroad: React.FC = () => {
     }
   };
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
- const [isLoading, setIsLoading] = useState<boolean>(false);
-  const userId = localStorage.getItem("userId");
-  const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
-  const [queryError, setQueryError] = useState<string | undefined>(undefined);
-  const [query, setQuery] = useState("");
-  const mobileNumber = localStorage.getItem("whatsappNumber");
-  const [formData, setFormData] = useState({
-    askOxyOfers: "STUDYABROAD",
-    userId: userId,
-    mobileNumber: mobileNumber,
-    projectType: "ASKOXY",
-  });
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -86,8 +88,11 @@ const StudyAbroad: React.FC = () => {
     }));
   };
 
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const handleSubmit = async () => {
+    if (interested) {
+      message.warning("You have already participated. Thank you!");
+      return;
+    }
     try {
       setIsButtonDisabled(true);
       // API request to submit the form data
@@ -102,39 +107,39 @@ const StudyAbroad: React.FC = () => {
       message.success(
         "Thank you for showing interest in our *Study Abroad* offer!"
       );
+      setInterested(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("refreshOffers"));
+      }, 200);
     } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
       setIsButtonDisabled(false);
     }
   };
 
-  // Handle click outside to close the dropdown
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
+  const handleGetOffer = () => {
+    const data = localStorage.getItem("userInterest");
+    if (data) {
+      const parsedData = JSON.parse(data); // Convert the string back to an array
+      const hasFreeRudrakshaOffer = parsedData.some(
+        (offer: any) => offer.askOxyOfers === "STUDYABROAD"
+      );
+
+      if (hasFreeRudrakshaOffer) {
+        setInterested(true);
+      } else {
+        setInterested(false);
       }
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-  const navigate = useNavigate();
+    } else {
+      setInterested(false);
+    }
+  };
 
   const handleNavigation = (path: string) => {
     navigate(path); // Programmatic navigation
     setIsDropdownOpen(false);
   };
-
-  const email = localStorage.getItem("email");
 
   const handlePopUOk = () => {
     setIsOpen(false);
@@ -154,14 +159,6 @@ const StudyAbroad: React.FC = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (issuccessOpen) {
-  //     const timer = setTimeout(() => {
-  //       setSuccessOpen(false);
-  //     }, 5000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
@@ -207,9 +204,31 @@ const StudyAbroad: React.FC = () => {
     } catch (error) {
       // Handle error if the request fails
       console.error("Error sending the query:", error);
-      // alert("Failed to send query. Please try again.");
     }
   };
+
+  // Handle click outside to close the dropdown - Fixed implementation
+  useEffect(() => {
+    handleGetOffer();
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    // Add event listener only when dropdown is open
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]); // Dependency on isDropdownOpen ensures event listeners are managed properly
 
   return (
     <div>
@@ -230,211 +249,214 @@ const StudyAbroad: React.FC = () => {
             {/* 'I'm Interested' Button */}
 
             <div className="flex items-center gap-4 flex-start">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <ArrowLeft className="h-6 w-6" />
-                </button>
-                <h1 className="text-2xl font-bold text-purple-600 flex items-center gap-2">
-                  Study Abroad
-                </h1>
-              </div>
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <ArrowLeft className="h-6 w-6" />
+              </button>
+              <h1 className="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                Study Abroad
+              </h1>
+            </div>
 
             {/* Dropdown Menu Button */}
             <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="relative">
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  className="bg-[#ea4c89] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  aria-label="Navigate options"
+                >
+                  Explore GPTS
+                </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <ul className="absolute bg-white text-black shadow-lg rounded-md mt-2 w-48 md:w-60 overflow-y-auto max-h-60 z-10">
+                    {[
+                      {
+                        label: "Accommodation GPT",
+                        path: "/main/dashboard/accomdation-gpt",
+                      },
+                      {
+                        label: "Accreditations Recognization GPT",
+                        path: "/main/dashboard/accreditations-gpt",
+                      },
+                      {
+                        label: "Application Support GPT",
+                        path: "/dashboard/applicationsupport-gpt",
+                      },
+                      { label: "Courses GPT", path: "/courses-gpt" },
+                      {
+                        label: "Foreign Exchange & Predeparture GPT",
+                        path: "/dashboard/foreign-exchange",
+                      },
+                      {
+                        label: "Information About Countries GPT",
+                        path: "/dashboard/informationaboutcountries-gpt",
+                      },
+                      { label: "Loans GPT", path: "/dashboard/loans-gpt" },
+                      {
+                        label: "Logistics GPT",
+                        path: "/dashboard/logistics-gpt",
+                      },
+                      {
+                        label: "Offer Letter& Acceptance Letter GPT",
+                        path: "/dashboard/applicationsupport-gpt",
+                      },
+                      {
+                        label: "Placements GPT",
+                        path: "/dashboard/placements-gpt",
+                      },
+                      {
+                        label: "Qualification & Specialization GPT",
+                        path: "/dashboard/qualificationspecialization-gpt",
+                      },
+                      {
+                        label: "Scholarships GPT",
+                        path: "/dashboard/scholarships-gpt",
+                      },
+                      {
+                        label: "English Test & Interview Preparation GPT",
+                        path: "/testandinterview-gpt",
+                      },
+                      {
+                        label: "Universities GPT",
+                        path: "/dashboard/universities-gpt",
+                      },
+                      {
+                        label: "University Agents GPT",
+                        path: "/dashboard/universitiesagents-gpt",
+                      },
+                      {
+                        label: "University Reviews GPT",
+                        path: "/dashboard/reviews-gpt",
+                      },
+                      { label: "Visa GPT", path: "/dashboard/visa-gpt" },
+                    ]
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((item) => (
+                        <li
+                          key={item.path}
+                          className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
+                          onClick={() => handleNavigation(item.path)}
+                        >
+                          {item.label}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </div>
               <button
-                className="bg-[#ea4c89] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                aria-label="Navigate options"
+                className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
+                onClick={handleSubmit}
+                aria-label="Visit our site"
+                disabled={isButtonDisabled || interested}
               >
-                Explore GPTS
+                I'm Interested
+              </button>
+              <button
+                className="w-full md:w-auto px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
+                aria-label="Write To Us"
+                onClick={handleWriteToUs}
+              >
+                Write To Us
               </button>
 
-              {/* Dropdown Menu */}
-              {isDropdownOpen && (
-                <ul className="absolute bg-white text-black shadow-lg rounded-md mt-2 w-48 md:w-60 overflow-y-auto max-h-60">
-                  {[
-                    {
-                      label: "Accommodation GPT",
-                      path: "/dashboard/accommodation-gpt",
-                    },
-                    {
-                      label: "Accreditations Recognization GPT",
-                      path: "/dashboard/accreditations-gpt",
-                    },
-                    {
-                      label: "Application Support GPT",
-                      path: "/dashboard/applicationsupport-gpt",
-                    },
-                    { label: "Courses GPT", path: "/courses-gpt" },
-                    {
-                      label: "Foreign Exchange & Predeparture GPT",
-                      path: "/dashboard/foreign-exchange",
-                    },
-                    {
-                      label: "Information About Countries GPT",
-                      path: "/dashboard/informationaboutcountries-gpt",
-                    },
-                    { label: "Loans GPT", path: "/dashboard/loans-gpt" },
-                    {
-                      label: "Logistics GPT",
-                      path: "/dashboard/logistics-gpt",
-                    },
-                    {
-                      label: "Offer Letter& Acceptance Letter GPT",
-                      path: "/dashboard/applicationsupport-gpt",
-                    },
-                    {
-                      label: "Placements GPT",
-                      path: "/dashboard/placements-gpt",
-                    },
-                    {
-                      label: "Qualification & Specialization GPT",
-                      path: "/dashboard/qualificationspecialization-gpt",
-                    },
-                    {
-                      label: "Scholarships GPT",
-                      path: "/dashboard/scholarships-gpt",
-                    },
-                    {
-                      label: "English Test & Interview Preparation GPT",
-                      path: "/testandinterview-gpt",
-                    },
-                    {
-                      label: "Universities GPT",
-                      path: "/dashboard/universities-gpt",
-                    },
-                    {
-                      label: "University Agents GPT",
-                      path: "/dashboard/universitiesagents-gpt",
-                    },
-                    {
-                      label: "University Reviews GPT",
-                      path: "/dashboard/reviews-gpt",
-                    },
-                    { label: "Visa GPT", path: "/dashboard/visa-gpt" },
-                  ]
-                    .sort((a, b) => a.label.localeCompare(b.label))
-                    .map((item) => (
-                      <li
-                        key={item.path}
-                        className="px-4 py-2 hover:bg-gray-200 cursor-pointer break-words whitespace-normal"
-                        onClick={() => handleNavigation(item.path)}
-                      >
-                        {item.label}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-            <button
-              className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
-              onClick={handleSubmit}
-              aria-label="Visit our site"
-              disabled={isButtonDisabled}
-            >
-              I'm Interested
-            </button>
-            <button
-              className="w-full md:w-auto px-4 py-2 bg-[#008CBA] text-white rounded-lg shadow-md hover:bg-[#008CBA] text-sm md:text-base lg:text-lg transition duration-300"
-              aria-label="Write To Us"
-              onClick={handleWriteToUs}
-            >
-              Write To Us
-            </button>
-
-            {isOpen && (
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
-                <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-                  {/* Close Button */}
-                  <i
-                    className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
-                    onClick={() => setIsOpen(false)}
-                    aria-label="Close"
-                  />
-
-                  {/* Modal Content */}
-                  <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
-                    Write To Us
-                  </h2>
-
-                  {/* Mobile Number Field */}
-                  <div className="mb-4">
-                    <label
-                      className="block text-m text-black font-medium mb-1"
-                      htmlFor="phone"
-                    >
-                      Mobile Number
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      disabled={true}
-                      value={mobileNumber || ""}
-                      // value={"9908636995"}
-                      className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                      placeholder="Enter your mobile number"
-                      style={{ fontSize: "0.8rem" }}
-                    />
-                  </div>
-
-                  {/* Email Field */}
-                  <div className="mb-4">
-                    <label
-                      className="block text-m text-black font-medium mb-1"
-                      htmlFor="email"
-                    >
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email || ""}
-                      // value={"kowthavarapuanusha@gmail.com"}
-                      disabled={true}
-                      className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                      placeholder="Enter your email"
-                      style={{ fontSize: "0.8rem" }}
-                    />
-                  </div>
-
-                  {/* Query Field */}
-                  <div className="mb-4">
-                    <label
-                      className="block text-m text-black font-medium mb-1"
-                      htmlFor="query"
-                    >
-                      Query
-                    </label>
-                    <textarea
-                      id="query"
-                      rows={3}
-                      className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
-                      placeholder="Enter your query"
-                      style={{ fontSize: "0.8rem" }}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                    {queryError && (
-                      <p className="text-red-500 text-sm">{queryError}</p>
-                    )}
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="flex justify-center">
+              {isOpen && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+                  <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+                    {/* Close Button */}
                     <button
-                      className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
-                      onClick={handleWriteToUsSubmitButton}
-                      disabled={isLoading}
+                      className="absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
+                      onClick={() => setIsOpen(false)}
+                      aria-label="Close"
                     >
-                      {isLoading ? "Sending..." : "Submit Query"}
+                      ×
                     </button>
+
+                    {/* Modal Content */}
+                    <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
+                      Write To Us
+                    </h2>
+
+                    {/* Mobile Number Field */}
+                    <div className="mb-4">
+                      <label
+                        className="block text-m text-black font-medium mb-1"
+                        htmlFor="phone"
+                      >
+                        Mobile Number
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        disabled={true}
+                        value={mobileNumber || ""}
+                        className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                        placeholder="Enter your mobile number"
+                        style={{ fontSize: "0.8rem" }}
+                      />
+                    </div>
+
+                    {/* Email Field */}
+                    <div className="mb-4">
+                      <label
+                        className="block text-m text-black font-medium mb-1"
+                        htmlFor="email"
+                      >
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email || ""}
+                        disabled={true}
+                        className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                        placeholder="Enter your email"
+                        style={{ fontSize: "0.8rem" }}
+                      />
+                    </div>
+
+                    {/* Query Field */}
+                    <div className="mb-4">
+                      <label
+                        className="block text-m text-black font-medium mb-1"
+                        htmlFor="query"
+                      >
+                        Query
+                      </label>
+                      <textarea
+                        id="query"
+                        rows={3}
+                        className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                        placeholder="Enter your query"
+                        style={{ fontSize: "0.8rem" }}
+                        onChange={(e) => {
+                          setQuery(e.target.value);
+                          setQueryError(undefined);
+                        }}
+                      />
+                      {queryError && (
+                        <p className="text-red-500 text-sm">{queryError}</p>
+                      )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex justify-center">
+                      <button
+                        className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                        onClick={handleWriteToUsSubmitButton}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Sending..." : "Submit Query"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-</div>
+              )}
+            </div>
             {isprofileOpen && (
               <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                 <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-transform scale-105">

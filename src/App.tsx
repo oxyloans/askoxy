@@ -124,15 +124,11 @@ const App: React.FC = () => {
               <Route path="user-profile" element={<UserProfile />} />
               <Route path="bmvcoin" element={<BMVCOIN />} />
 
-              <Route path="accommodation-gpt" element={<AccomidationGpt />} />
               <Route
                 path="applicationsupport-gpt"
                 element={<ApplicationSupport />}
               />
-              <Route
-                path="accreditations-gpt"
-                element={<AccreditationsRecognization />}
-              />
+
               <Route path="courses-gpt" element={<CoursesGpt />} />
               <Route path="preparation-gpt" element={<PreparationGpt />} />
               <Route path="foreign-exchange" element={<ForeignExchange />} />
@@ -179,6 +175,14 @@ const App: React.FC = () => {
               <Route
                 index
                 element={<Navigate to="/main/dashboard/products" replace />}
+              />
+              <Route
+                path="/main/dashboard/accomdation-gpt"
+                element={<AccomidationGpt />}
+              />
+              <Route
+                path="/main/dashboard/accreditations-gpt"
+                element={<AccreditationsRecognization />}
               />
               <Route path="dashboard/:tab" element={<DashboardMain />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
