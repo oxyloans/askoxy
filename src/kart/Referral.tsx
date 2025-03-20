@@ -72,7 +72,7 @@ const ReferralPage: React.FC = () => {
     },
     {
       question: "What rewards do I get for referring a friend?",
-      answer: "Apart from getting a free steel container, you will also receive ₹100 cashback in your ASKOXY.AI wallet when you successfully refer someone.",
+      answer: "Apart from getting a free steel container, you will also receive ₹50 cashback in your ASKOXY.AI wallet when you successfully refer someone.",
       isOpen: false
     },
     {
@@ -87,7 +87,7 @@ const ReferralPage: React.FC = () => {
     },
     {
       question: "Is there a limit to the number of people I can refer?",
-      answer: "No, you can refer as many friends as you like. You will receive ₹100 cashback for each successful referral, subject to promotional terms.",
+      answer: "No, you can refer as many friends as you like. You will receive ₹50 cashback for each successful referral, subject to promotional terms.",
       isOpen: false
     },
     {
@@ -346,13 +346,13 @@ const ReferralPage: React.FC = () => {
 
           {/* Main Content */}
           <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-6 text-purple-600">Refer a Friend & Earn ₹100</h2>
+            <h2 className="text-2xl font-bold mb-6 text-purple-600">Refer a Friend & Earn ₹50</h2>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-lg font-semibold mb-4">Invite a Friend</h3>
                 <p className="text-gray-600 mb-4">
-                  Invite your friends to join ASKOXY.AI. When they register using your referral link and place an order for rice, you'll receive ₹100 cashback!
+                  Invite your friends to join ASKOXY.AI. When they register using your referral link and place an order for rice, you'll receive ₹50 cashback!
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
                   <button 
@@ -369,7 +369,7 @@ const ReferralPage: React.FC = () => {
                 <div className="h-full flex items-center justify-center bg-purple-50 rounded-xl p-6">
                   <div className="text-center">
                     <Gift className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-purple-600 mb-2">Earn ₹100 Cashback</h3>
+                    <h3 className="text-xl font-bold text-purple-600 mb-2">Earn ₹50 Cashback</h3>
                     <p className="text-gray-600">
                       For every successful referral who places an order for rice
                     </p>

@@ -23,10 +23,10 @@ const sidebarItems: SidebarItem[] = [
   {
     title: "Dashboard",
     icon: <FaTachometerAlt className="text-blue-400" />,
-    link: "/admin",
+    link: "/admndashboard",
   },
   {
-    title: "Campaigns Add",
+    title: "Add Campaigns",
     icon: <FaPlusCircle className="text-green-400" />,
     link: "/campaignsadd",
   },
@@ -48,7 +48,7 @@ const sidebarItems: SidebarItem[] = [
   {
     title: "Logout",
     icon: <FaSignOutAlt className="text-red-400" />,
-    link: "/admin",
+    link: "/admndashboard",
   },
 ];
 

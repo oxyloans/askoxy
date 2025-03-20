@@ -56,15 +56,19 @@ const StudyAbroad: React.FC = () => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   const userId = localStorage.getItem("userId");
-  const mobileNumber = localStorage.getItem("whatsappNumber");
-  const email = localStorage.getItem("email");
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
+  const mobileNumber = localStorage.getItem("mobileNumber");
+  const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+
+  const email = profileData.customerEmail || null;
+  const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     askOxyOfers: "STUDYABROAD",
     userId: userId,
-    mobileNumber: mobileNumber,
+    mobileNumber: finalMobileNumber,
     projectType: "ASKOXY",
   });
 
@@ -150,8 +154,8 @@ const StudyAbroad: React.FC = () => {
     if (
       !email ||
       email === "null" ||
-      !mobileNumber ||
-      mobileNumber === "null"
+      !finalMobileNumber ||
+      finalMobileNumber === "null"
     ) {
       setIsprofileOpen(true);
     } else {
@@ -167,7 +171,7 @@ const StudyAbroad: React.FC = () => {
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
-      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      mobileNumber: finalMobileNumber, // You might want to replace this with dynamic values
       queryStatus: "PENDING",
       projectType: "ASKOXY",
       askOxyOfers: "STUDYABROAD",
@@ -186,7 +190,7 @@ const StudyAbroad: React.FC = () => {
     console.log("Query:", query);
     const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+    const apiUrl = `${BASE_URL}/user-service/write/saveData`;
     const headers = {
       Authorization: `Bearer ${accessToken}`,
     };
@@ -396,7 +400,7 @@ const StudyAbroad: React.FC = () => {
                         type="tel"
                         id="phone"
                         disabled={true}
-                        value={mobileNumber || ""}
+                        value={finalMobileNumber || ""}
                         className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                         placeholder="Enter your mobile number"
                         style={{ fontSize: "0.8rem" }}

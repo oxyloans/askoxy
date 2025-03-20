@@ -56,14 +56,17 @@ const HiringService: React.FC = () => {
     }
   };
 
-  const mobileNumber = localStorage.getItem("whatsappNumber");
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
+  const mobileNumber = localStorage.getItem("mobileNumber");
+  const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
 
-  const email = localStorage.getItem("email");
+  const email = profileData.customerEmail || null;
+  const finalMobileNumber = whatsappNumber || mobileNumber || null;
 
   const [formData, setFormData] = useState({
     askOxyOfers: "WEAREHIRING",
     userId: userId,
-    mobileNumber: mobileNumber,
+    mobileNumber: finalMobileNumber,
     projectType: "ASKOXY",
   });
 
@@ -144,8 +147,8 @@ const HiringService: React.FC = () => {
     if (
       !email ||
       email === "null" ||
-      !mobileNumber ||
-      mobileNumber === "null"
+      !finalMobileNumber ||
+      finalMobileNumber === "null"
     ) {
       setIsprofileOpen(true);
     } else {
@@ -160,7 +163,7 @@ const HiringService: React.FC = () => {
     }
     const payload = {
       email: email,
-      mobileNumber: mobileNumber,
+      mobileNumber: finalMobileNumber,
       queryStatus: "PENDING",
       projectType: "ASKOXY",
       askOxyOfers: "FREEAI",
@@ -177,7 +180,7 @@ const HiringService: React.FC = () => {
 
     const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+    const apiUrl = `${BASE_URL}/user-service/write/saveData`;
     const headers = {
       Authorization: `Bearer ${accessToken}`,
     };
@@ -245,7 +248,7 @@ const HiringService: React.FC = () => {
                   type="tel"
                   id="phone"
                   disabled={true}
-                  value={mobileNumber || ""}
+                  value={finalMobileNumber || ""}
                   className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                   placeholder="Enter your mobile number"
                   style={{ fontSize: "0.8rem" }}

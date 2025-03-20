@@ -65,12 +65,17 @@ const FreeSample: React.FC = () => {
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
-  const mobileNumber = localStorage.getItem("whatsappNumber");
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
+  const mobileNumber = localStorage.getItem("mobileNumber");
+  const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+
+  const email = profileData.customerEmail || null;
+  const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [interested, setInterested] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
     userId: userId,
-    mobileNumber: mobileNumber,
+    mobileNumber: finalMobileNumber,
     projectType: "ASKOXY",
   });
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -113,7 +118,7 @@ const FreeSample: React.FC = () => {
     }
   };
 
-  const email = localStorage.getItem("email");
+  // const email = localStorage.getItem("email");
 
   const navigate = useNavigate();
 
@@ -126,8 +131,8 @@ const FreeSample: React.FC = () => {
     if (
       !email ||
       email === "null" ||
-      !mobileNumber ||
-      mobileNumber === "null"
+      !finalMobileNumber ||
+      finalMobileNumber === "null"
     ) {
       setIsprofileOpen(true);
     } else {
@@ -172,7 +177,7 @@ const FreeSample: React.FC = () => {
     // Payload with the data to send to the API
     const payload = {
       email: email, // You might want to replace this with dynamic values
-      mobileNumber: mobileNumber, // You might want to replace this with dynamic values
+      mobileNumber: finalMobileNumber, // You might want to replace this with dynamic values
       queryStatus: "PENDING",
       projectType: "ASKOXY",
       askOxyOfers: "FREESAMPLE",
@@ -191,7 +196,7 @@ const FreeSample: React.FC = () => {
     console.log("Query:", query);
     const accessToken = localStorage.getItem("accessToken");
 
-    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+    const apiUrl = `${BASE_URL}/user-service/write/saveData`;
     const headers = {
       Authorization: `Bearer ${accessToken}`, // Ensure `accessToken` is available in your scope
     };
@@ -295,7 +300,7 @@ const FreeSample: React.FC = () => {
                       type="tel"
                       id="phone"
                       disabled={true}
-                      value={mobileNumber || ""}
+                      value={finalMobileNumber || ""}
                       // value={"9908636995"}
                       className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                       placeholder="Enter your mobile number"

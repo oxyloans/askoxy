@@ -75,6 +75,8 @@ import HiddenLogin from "./Components1/Auth/HiddenLogin";
 import TestimonialsPage from "./Dashboard/TestimoinalsOXY";
 import RiceComparison from "./components/SteanRiceVsRawRice";
 import RegisteredUser from "./Pages/RegisteredUser";
+import Login from "./Pages/Login";
+
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -101,7 +103,8 @@ const App: React.FC = () => {
             <Route path="/" element={<Landingpage />} />
 
             <Route path="/allqueries" element={<AllQueries />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin" element={<Login />} />
+            <Route path="/admndashboard" element={<Admin />} />
             <Route path="/registeredUsers" element={<RegisteredUser />} />
             <Route
               path="/allcampaignsdetails"

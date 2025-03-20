@@ -64,7 +64,7 @@ const AllQueries: React.FC = () => {
       };
 
       const response = await axios.post(
-        `${BASE_URL}/writetous-service/getAllQueries`,
+        `${BASE_URL}/user-service/write/getAllQueries`,
         requestPayload,
         {
           headers: {
@@ -221,6 +221,9 @@ const AllQueries: React.FC = () => {
           </div>
           <div>
             <strong>Created At:</strong> {record.createdAt}
+          </div>
+          <div>
+            <strong>Askoxy Offer:</strong> {record.askOxyOfers}
           </div>
         </div>
       ),

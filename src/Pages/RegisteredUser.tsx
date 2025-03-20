@@ -76,15 +76,8 @@ const timeOptions = [
   { value: "yesterday", label: "Yesterday" },
   { value: "thisWeek", label: "This Week" },
   { value: "thisMonth", label: "This Month" },
+  { value: "custom", label: "Custom Dates" },
 ];
-
-// const staticMetrics = {
-//   totalUsers: 371,
-//   today: 23,
-//   yesterday: 18,
-//   thisWeek: 83,
-//   thisMonth: 247,
-// };
 
 const RegisteredUser: React.FC = () => {
   const [userData, setUserData] = useState<UserData[]>([]);
@@ -95,17 +88,20 @@ const RegisteredUser: React.FC = () => {
   const [loader, setLoader] = useState<boolean>(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<string | null>(null);
+  const [startDate1, setStartDate1] = useState<string>("");
+  const [endDate1, setEndDate1] = useState<string>("");
+  const [isCustomDate, setIsCustomDate] = useState<boolean>(false);
+  const [filteredUserData, setFilteredUserData] = useState<UserData[]>([]);
 
   const [selectedTimeFrame, setSelectedTimeFrame] =
     useState<string>("thisWeek");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 50,
     total: 0,
   });
   const [orderDetailsVisible, setOrderDetailsVisible] =
     useState<boolean>(false);
-  // const [selectedOrder, setSelectedOrder] = useState<UserData | null>(null);
   const [staticMetrics, setStaticMetrics] = useState({
     totalUsers: 0,
     today: 0,
@@ -122,12 +118,11 @@ const RegisteredUser: React.FC = () => {
 
   // Calculate date ranges
   const getDateRange = (timeFrame: string) => {
-    const today = new Date();
+    let today = new Date();
     let startDate = new Date();
 
     switch (timeFrame) {
       case "today":
-        // Start and end are both today
         break;
       case "yesterday":
         startDate.setDate(today.getDate() - 1);
@@ -138,32 +133,38 @@ const RegisteredUser: React.FC = () => {
         startDate.setDate(today.getDate() - daysSinceSunday);
         break;
       case "thisMonth":
-        startDate = new Date(today.getFullYear(), today.getMonth(), 2); // Set to 1st of the current month
+        startDate = new Date(today.getFullYear(), today.getMonth(), 2);
+        break;
+      case "custom":
+        startDate = new Date(startDate1);
+        today = new Date(endDate1);
         break;
     }
-
     return {
       startDate: startDate.toISOString().split("T")[0],
       endDate: today.toISOString().split("T")[0],
     };
   };
 
-  // Fetch user data from API
   const fetchUserData = async () => {
     setLoading(true);
+    console.log("Selected Time Frame:", selectedTimeFrame);
+    console.log(startDate1, endDate1);
+
     const { startDate, endDate } = getDateRange(selectedTimeFrame);
 
     try {
       const response = await axios.get<ApiResponse>(
         `${BASE_URL}/order-service/date-rangeuserdetails?endDate=${endDate}&page=${
           pagination.current - 1
-        }&size=${pagination.pageSize}&startDate=${startDate}`
+        }&size=${1000}&startDate=${startDate}`
       );
 
-      setUserData(response.data.content);
+      setUserData(response.data.content); // Store all data
+      setFilteredUserData(response.data.content); // Initially show all data
       setPagination({
         ...pagination,
-        total: response.data.totalElements,
+        total: response.data.content.length,
       });
 
       setLoading(false);
@@ -173,8 +174,8 @@ const RegisteredUser: React.FC = () => {
     }
   };
 
-  // Handle time frame change
   const handleTimeFrameChange = (value: string) => {
+    setIsCustomDate(value === "custom");
     setSelectedTimeFrame(value);
     setPagination({
       ...pagination,
@@ -184,14 +185,25 @@ const RegisteredUser: React.FC = () => {
 
   // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
-  };
+    const value = e.target.value.toLowerCase();
+    setSearchText(value);
 
-  // Handle table pagination change
-  const handleTableChange = (pagination: any) => {
+    const filteredData = userData.filter(
+      (user) =>
+        user.username?.toLowerCase().includes(value) ||
+        user.mobilenumber?.includes(value)
+    );
+
+    setFilteredUserData(filteredData);
     setPagination({
       ...pagination,
+      current: 1,
+      total: filteredData.length,
     });
+  };
+
+  const handleTableChange = (newPagination: any) => {
+    setPagination(newPagination);
   };
 
   // View order details
@@ -199,7 +211,7 @@ const RegisteredUser: React.FC = () => {
     setLoader(true);
     try {
       const response = await axios.post(
-        BASE_URL+"/order-service/getAllOrders_customerId",
+        BASE_URL + "/order-service/getAllOrders_customerId",
         { userId },
         {
           headers: {
@@ -224,36 +236,40 @@ const RegisteredUser: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "1":
-        return "Incomplete";
+        return "placed";
       case "2":
-        return "Placed";
-      case "3":
         return "Accepted";
+      case "3":
+        return "assigned";
       case "4":
-        return "Picked Up";
-      case "5":
         return "Delivered";
-      case "6":
+      case "5":
         return "Rejected";
+      case "6":
+        return "cancelled";
+      case "picked up":
+        return "picked up";
       default:
-        return "Pending";
+        return "Unknown";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "1":
-        return "default";
+        return "blue";
       case "2":
         return "processing";
       case "3":
-        return "success";
+        return "purple";
       case "4":
-        return "warning";
-      case "5":
         return "success";
+      case "5":
+        return "error";
       case "6":
         return "error";
+      case "picked up":
+        return "orange";
       default:
         return "default";
     }
@@ -282,8 +298,10 @@ const RegisteredUser: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUserData();
-  }, [selectedTimeFrame, pagination.current, pagination.pageSize]);
+    if (selectedTimeFrame !== "custom") {
+      fetchUserData();
+    }
+  }, [selectedTimeFrame]);
 
   useEffect(() => {
     fetchCounts();
@@ -291,9 +309,7 @@ const RegisteredUser: React.FC = () => {
 
   const fetchCounts = async () => {
     try {
-      const response = await axios.get(
-        BASE_URL + "/user-service/counts"
-      );
+      const response = await axios.get(BASE_URL + "/user-service/counts");
       if (response.status === 200) {
         const data = response.data;
         setStaticMetrics({
@@ -343,13 +359,14 @@ const RegisteredUser: React.FC = () => {
       title: "User Details",
       key: "userDetails",
       width: 200,
-      align: "center" as const,
+      // align: "center" as const,
       render: (record: UserData) => (
         <Space direction="vertical" size="small">
-          <Text>{record.username || "N/A"}</Text>
-          <Text type="secondary">{record.email}</Text>
+          <Text>Name : {record.username || "N/A"}</Text>
+          <Text type="secondary">email : {record.email}</Text>
           <Text strong style={{ color: "#67297c" }}>
-            {record.mobilenumber}
+            {" "}
+            Mobile : {record.mobilenumber}
           </Text>
           <Text strong style={{ color: "#0d9488" }}>
             Registered Date : {record.registeredDate}
@@ -405,7 +422,8 @@ const RegisteredUser: React.FC = () => {
             type="primary"
             size="small"
             icon={<SwapOutlined />}
-            // onClick={() => handleToggleTestUser(record)}
+            onClick={() => handleToggleTestUser(record)}
+            loading={loading}
             style={{
               width: "100%",
               backgroundColor: record.testUser ? "#22c55e" : "#ef4444",
@@ -472,17 +490,39 @@ const RegisteredUser: React.FC = () => {
     },
   ];
 
+  const handleToggleTestUser = async (record: UserData) => {
+    setLoading(true);
+    const payload = {
+      userId: record.userid,
+      testUser: !record.testUser,
+    };
+    // console.log(payload);
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/user-service/updateTestUsers`,
+        payload
+      );
+      if (response.status === 200) {
+        message.success("User status updated successfully");
+      } else {
+        message.error("Failed to update user status");
+      }
+    } catch {
+      message.error("Failed to update user status");
+    } finally {
+      setLoading(false);
+      fetchUserData();
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar />
       <div className="flex-1 p-6 overflow-auto bg-gray-50">
-        {/* Header */}
         <Title level={2}>Registered Users</Title>
         <Row gutter={[16, 16]}>
-          {/* Use a nested Row to ensure proper stacking */}
           <Col xs={24} sm={24} md={24} lg={24} xl={24}>
             <Row gutter={[16, 16]}>
-              {/* Total Users Card - Full width on small screens, half width on tablet */}
               <Col xs={24} sm={24} md={24} lg={8} xl={8}>
                 <Card
                   className="bg-gray-100/90 backdrop-blur-lg rounded-2xl border border-gray-200/30 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[100px] p-2"
@@ -644,63 +684,112 @@ const RegisteredUser: React.FC = () => {
 
         {/* Filters */}
         <Card className="mt-4 p-4">
-      <Row gutter={[16, 16]} align="middle" wrap>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Text strong>Time Period:</Text>
-          <Select
-            style={{ width: "100%", marginTop: 8 }}
-            value={selectedTimeFrame}
-            onChange={handleTimeFrameChange}
-          >
-            {timeOptions.map((option) => (
-              <Select.Option key={option.value} value={option.value}>
-                {option.label}
-              </Select.Option>
-            ))}
-          </Select>
-        </Col>
+          <Row gutter={[16, 16]} align="middle">
+            {/* Time Period Section */}
+            <Col
+              xs={isCustomDate ? 24 : 12}
+              sm={isCustomDate ? 8 : 8}
+              md={isCustomDate ? 6 : 6}
+            >
+              <Text strong>Time Period:</Text>
+              <Select
+                className="w-full mt-2"
+                value={selectedTimeFrame}
+                onChange={handleTimeFrameChange}
+              >
+                {timeOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
 
-        <Col xs={24} sm={12} md={16} lg={12} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '150px' }}>
-            <Text strong>Search By:</Text>
-            <Select
-              placeholder="Select Search Type"
-              style={{ width: "100%", marginTop: 8 }}
-              onChange={(value) => setSearchType(value)}
-              options={[{ label: "Name", value: "name" }, { label: "Mobile", value: "mobile" }]}
-              allowClear
-            />
-          </div>
+            {/* Custom Date Controls - Only shown when isCustomDate is true */}
+            {isCustomDate && (
+              <>
+                <Col xs={12} sm={8} md={6}>
+                  <Text strong>Start Date:</Text>
+                  <Input
+                    type="date"
+                    value={startDate1}
+                    onChange={(e) => setStartDate1(e.target.value)}
+                    className="w-full mt-2"
+                  />
+                </Col>
 
-          {searchType && (
-            <Input
-              placeholder={
-                searchType === "name"
-                  ? "Search by Name..."
-                  : "Search by Mobile..."
-              }
-              value={searchText}
-              onChange={handleSearch}
-              style={{ marginTop: 8, paddingLeft: '8px', flex: 1, minWidth: '150px' }}
-              prefix={<SearchOutlined />}
-              allowClear
-            />
-          )}
-        </Col>
-      </Row>
-    </Card>
+                <Col xs={12} sm={8} md={6}>
+                  <Text strong>End Date:</Text>
+                  <Input
+                    type="date"
+                    value={endDate1}
+                    onChange={(e) => setEndDate1(e.target.value)}
+                    className="w-full mt-2"
+                  />
+                </Col>
+
+                <Col xs={24} sm={8} md={6}>
+                  <Button
+                    type="primary"
+                    className="w-full mt-6"
+                    onClick={fetchUserData}
+                    loading={loading}
+                  >
+                    Get Data
+                  </Button>
+                </Col>
+              </>
+            )}
+
+            {/* Search Controls */}
+            <Col
+              xs={isCustomDate ? 12 : 12}
+              sm={isCustomDate ? 12 : 8}
+              md={isCustomDate ? 6 : 6}
+              className={isCustomDate ? "mt-4 sm:mt-0" : ""}
+            >
+              <Text strong>Search By:</Text>
+              <Select
+                className="w-full mt-2"
+                placeholder="Select Search Type"
+                onChange={(value) => setSearchType(value)}
+                options={[
+                  { label: "Name", value: "name" },
+                  { label: "Mobile", value: "mobile" },
+                ]}
+                allowClear
+              />
+            </Col>
+
+            {searchType && (
+              <Col
+                xs={isCustomDate ? 12 : 12}
+                sm={isCustomDate ? 12 : 8}
+                md={isCustomDate ? 6 : 6}
+                className={isCustomDate ? "mt-4 sm:mt-0" : ""}
+              >
+                <Text strong>Enter {searchType}:</Text>
+                <Input
+                  placeholder={
+                    searchType === "name"
+                      ? "Search by Name..."
+                      : "Search by Mobile..."
+                  }
+                  value={searchText}
+                  onChange={handleSearch}
+                  className="w-full mt-2"
+                  prefix={<SearchOutlined />}
+                  allowClear
+                />
+              </Col>
+            )}
+          </Row>
+        </Card>
 
         <div style={{ overflowX: "auto", maxWidth: "100%" }}>
           <Table
             columns={columns}
-            dataSource={userData.filter(
-              (user) =>
-                user.username
-                  ?.toLowerCase()
-                  .includes(searchText.toLowerCase()) ||
-                user.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-                user.mobilenumber?.includes(searchText)
-            )}
+            dataSource={filteredUserData}
             rowKey="orderId"
             pagination={pagination}
             onChange={handleTableChange}
