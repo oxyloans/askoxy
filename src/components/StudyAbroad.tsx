@@ -231,7 +231,7 @@ const StudyAbroad: React.FC = () => {
   }, [isDropdownOpen]); // Dependency on isDropdownOpen ensures event listeners are managed properly
 
   return (
-    <div>
+    <div className="bg-gray-50">
       <div>
         <header>
           {/* Container for layout */}
@@ -285,55 +285,58 @@ const StudyAbroad: React.FC = () => {
                       },
                       {
                         label: "Application Support GPT",
-                        path: "/dashboard/applicationsupport-gpt",
+                        path: "/main/dashboard/applicationsupport-gpt",
                       },
-                      { label: "Courses GPT", path: "/courses-gpt" },
+                      {
+                        label: "Courses GPT",
+                        path: "/main/dashboard/courses-gpt",
+                      },
                       {
                         label: "Foreign Exchange & Predeparture GPT",
-                        path: "/dashboard/foreign-exchange",
+                        path: "/main/dashboard/foreign-exchange",
                       },
                       {
                         label: "Information About Countries GPT",
-                        path: "/dashboard/informationaboutcountries-gpt",
+                        path: "/main/dashboard/informationaboutcountries-gpt",
                       },
-                      { label: "Loans GPT", path: "/dashboard/loans-gpt" },
+                      { label: "Loans GPT", path: "/main/dashboard/loans-gpt" },
                       {
                         label: "Logistics GPT",
-                        path: "/dashboard/logistics-gpt",
+                        path: "/main/dashboard/logistics-gpt",
                       },
-                      {
-                        label: "Offer Letter& Acceptance Letter GPT",
-                        path: "/dashboard/applicationsupport-gpt",
-                      },
+                      // {
+                      //   label: "Offer Letter& Acceptance Letter GPT",
+                      //   path: "/dashboard/applicationsupport-gpt",
+                      // },
                       {
                         label: "Placements GPT",
-                        path: "/dashboard/placements-gpt",
+                        path: "/main/dashboard/placements-gpt",
                       },
                       {
                         label: "Qualification & Specialization GPT",
-                        path: "/dashboard/qualificationspecialization-gpt",
+                        path: "/main/dashboard/qualificationspecialization-gpt",
                       },
                       {
                         label: "Scholarships GPT",
-                        path: "/dashboard/scholarships-gpt",
+                        path: "/main/dashboard/scholarships-gpt",
                       },
                       {
                         label: "English Test & Interview Preparation GPT",
-                        path: "/testandinterview-gpt",
+                        path: "/main/dashboard/preparation-gpt",
                       },
                       {
                         label: "Universities GPT",
-                        path: "/dashboard/universities-gpt",
+                        path: "/main/dashboard/universities-gpt",
                       },
                       {
                         label: "University Agents GPT",
-                        path: "/dashboard/universitiesagents-gpt",
+                        path: "/main/dashboard/universitiesagents-gpt",
                       },
                       {
                         label: "University Reviews GPT",
-                        path: "/dashboard/reviews-gpt",
+                        path: "/main/dashboard/reviews-gpt",
                       },
-                      { label: "Visa GPT", path: "/dashboard/visa-gpt" },
+                      { label: "Visa GPT", path: "/main/dashboard/visa-gpt" },
                     ]
                       .sort((a, b) => a.label.localeCompare(b.label))
                       .map((item) => (

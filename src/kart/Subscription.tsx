@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Footer from "../components/Footer";
-import { Menu, X, Check, AlertCircle, Loader2, ArrowDownUp, Calendar, Clock, CreditCard } from "lucide-react";
+import { Menu, X, Check, AlertCircle, Loader2, ArrowDownUp,CheckCircle,Zap,Calendar, Clock, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FaBars, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
@@ -93,51 +93,127 @@ const SubscriptionCard: React.FC<{
   planDetails: UserSubscriptionPlan;
   Loading: { [key: string]: boolean };
   onSubscribe: (planId: string) => void;
-}> = ({ plan, isSelected, onSubscribe, planDetails, Loading }) => (
-  <div
-    id={plan.planId}
-    className={`relative rounded-xl border ${
-      isSelected 
-        ? 'border-purple-600 ring-2 ring-purple-600 ring-opacity-50' 
-        : 'border-gray-200'
-    } bg-white shadow-lg transition-all duration-300 hover:shadow-xl flex flex-col h-full transform hover:-translate-y-1`}
-  >
-    <div className="p-6 flex-grow">
-      <div className="text-center space-y-4">
-        <div className="space-y-2">
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-            ₹{plan.amount.toLocaleString()}
-          </h2>
-          <p className="text-lg font-medium text-purple-600">
-            Wallet Balance: ₹{plan.getAmount.toLocaleString()}
-          </p>
-          <p className="text-gray-600">
-            Monthly Usage Limit: ₹{plan.limitAmount.toLocaleString()}
-          </p>
+}> = ({ plan, isSelected, onSubscribe, planDetails, Loading }) => {
+  // Calculate savings here to fix the reference error
+  const savings = plan.getAmount - plan.amount;
+
+  return (
+    <div
+      id={plan.planId}
+      className={`relative rounded-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full bg-white ${
+        isSelected
+          ? "border-2 border-purple-500 shadow-md"
+          : "border border-gray-200 hover:border-purple-300 hover:shadow-sm"
+      }`}
+    >
+      {/* Enhanced gradient top accent */}
+      <div className="h-2 w-full bg-gradient-to-r from-purple-500 via-purple-600 to-purple-400"></div>
+
+      {/* Main content */}
+      <div className="p-5 flex-grow">
+        {/* Wallet Balance Section - Now prominently displayed */}
+        <div className="mb-3">
+          <h3 className="text-sm font-medium text-purple-600">
+            Wallet Balance
+          </h3>
+
+          <div className="flex items-baseline mt-1">
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent">
+              ₹{plan.getAmount.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Gradient divider */}
+        <div className="h-px w-full bg-gradient-to-r from-purple-200 via-purple-400 to-purple-200 my-3"></div>
+
+        {/* Plan amount section - Now secondary */}
+        <div className="mb-3">
+          <h3 className="text-sm font-medium text-purple-600">
+            Subscription Price
+          </h3>
+
+          <div className="flex items-center mt-1">
+            <span className="text-lg font-medium text-gray-700">
+              ₹{plan.amount.toLocaleString()}
+            </span>
+
+            {savings > 0 && (
+              <span className="ml-2 text-sm text-gray-400 line-through">
+                ₹{plan.getAmount.toLocaleString()}
+              </span>
+            )}
+
+            {savings > 0 && (
+              <span className="ml-2 inline-block bg-gradient-to-r from-green-500 to-green-400 text-white text-xs font-medium px-2 py-0.5 rounded">
+                Save ₹{savings.toLocaleString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Features with gradient background */}
+        <div>
+          <h3 className="text-sm font-medium text-purple-600 mb-2">Features</h3>
+
+          <div className="flex items-center space-x-3 bg-gradient-to-r from-purple-50 to-purple-100 p-3 rounded-lg border border-purple-200">
+            <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+              <Zap size={16} className="text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-purple-700">
+                Monthly Usage Limit
+              </p>
+              <p className="text-base font-medium text-purple-800">
+                ₹{plan.limitAmount.toLocaleString()}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div className="p-6 pt-0">
-      <button
-        onClick={() => onSubscribe(plan.planId)}
-        className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 
-          ${isSelected || planDetails?.planId === plan.planId
-            ? 'bg-purple-700 text-white shadow-lg cursor-not-allowed'
-            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-          } transform hover:scale-[1.02]`}
-        disabled={isSelected || planDetails?.status || Loading[plan.planId]}
-      >
-        {Loading[plan.planId] ? (
-          <span className="flex items-center justify-center">
-            <Loader2 className="animate-spin mr-2 h-5 w-5" />
-            Processing...
-          </span>
-        ) : isSelected ? 'Selected' : planDetails?.planId === plan.planId ? 'Subscribed' : 'Choose Plan'}
-      </button>
+      {/* Selected indicator with gradient */}
+      {isSelected && (
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full p-1">
+          <CheckCircle size={14} className="text-white" />
+        </div>
+      )}
+
+      {/* Button section with gradient */}
+      <div className="px-5 pb-5 pt-2">
+        <button
+          onClick={() => onSubscribe(plan.planId)}
+          className={`w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center
+            ${
+              isSelected || planDetails?.planId === plan.planId
+                ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600"
+                : "bg-white border border-purple-600 text-purple-600 hover:bg-purple-50"
+            }`}
+          disabled={isSelected || planDetails?.status || Loading[plan.planId]}
+        >
+          {Loading[plan.planId] ? (
+            <span className="flex items-center justify-center">
+              <Loader2 className="animate-spin mr-2 h-4 w-4" />
+              <span>Processing...</span>
+            </span>
+          ) : isSelected ? (
+            <span className="flex items-center justify-center">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              <span>Selected</span>
+            </span>
+          ) : planDetails?.planId === plan.planId ? (
+            <span className="flex items-center justify-center">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              <span>Current Plan</span>
+            </span>
+          ) : (
+            <span>Choose Plan</span>
+          )}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TransactionHistoryCard: React.FC<{ transaction: SubscriptionHistoryItem }> = ({ transaction }) => {
   const statusColor = {

@@ -7,6 +7,16 @@ import ScrollToTop from "./ScrollToTop";
 import TeluguShiva from "../assets/img/telugu.png";
 import EnglishShiva from "../assets/img/english.png";
 import Image1 from "../assets/img/WEBSITE (1).png";
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Coins,
+  Bot,
+  Settings,
+  X,
+  Mail,
+  Heart,
+} from "lucide-react";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Image2 from "../assets/img/R2.png";
 import Image3 from "../assets/img/images.png";
@@ -340,12 +350,20 @@ const Freerudraksha: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="bg-gray-50">
       <header>
         {/* Title and Buttons Container */}
-        <div className="flex flex-col md:flex-row items-center md:items-start pt-5 justify-center">
-          {/* Title */}
-          <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text45xl leading-tight mb-6 md:mb-0">
+        <div className="relative flex items-center justify-center pt-5 w-full">
+          {/* Back Button on the Left */}
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-0 p-2 hover:bg-gray-100 rounded-full"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </button>
+
+          {/* Centered Title */}
+          <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text-4xl leading-tight">
             The Two Worlds
           </h1>
         </div>
@@ -528,59 +546,58 @@ const Freerudraksha: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col md:flex-row justify-center mt-8 px-4">
+      <div className="flex flex-col md:flex-row justify-center items-center mt-8 px-4 gap-8">
         {/* Spiritual World Section */}
-        <section className="spiritual-world text-center mx-4 mb-8 md:mb-0">
-          <h2
-            id="h2"
-            className="font-bold text-xl sm:text-2xl md:text-3xl text-[#6A1B9A]"
-          >
+        <section className="text-center max-w-lg">
+          <h2 className="font-bold text-xl sm:text-2xl md:text-3xl text-[#6A1B9A]">
             Spiritual World
           </h2>
           <img
             src={Image1}
             alt="Spiritual World"
-            className="world-image w-full sm:w-80 md:w-96 h-auto rounded-lg shadow-lg mt-4"
+            className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg shadow-lg mt-4"
           />
         </section>
 
         {/* AI & Generative AI World Section */}
-        <section className="ai-world text-center mx-4 mb-8 md:mb-0">
-          <h2
-            id="h2"
-            className="font-bold text-xl sm:text-2xl md:text-3xl text-[#6A1B9A]"
-          >
+        <section className="text-center max-w-lg">
+          <h2 className="font-bold text-xl sm:text-2xl md:text-3xl text-[#6A1B9A]">
             AI & Generative AI World
           </h2>
           <img
             src={Image2}
             alt="AI & Generative AI World"
-            className="world-image w-full sm:w-80 md:w-96 h-auto rounded-lg shadow-lg mt-4"
+            className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg shadow-lg mt-4"
           />
         </section>
       </div>
 
       {/* Details Section */}
-      <div className="details">
-        <strong>
+      <div className="px-4 text-center">
+        <p className="text-lg font-semibold leading-relaxed">
           The One Lakh Rudraksharchana on 19th November was a grand success! 🌟
-          Click on “I Want Free Rudraksha” now to receive the sacred Rudrakshas
-          used in the Archana. They will be delivered to your doorstep at no
-          cost. Inspired by this success, we aspire to host 99 more
-          Rudraksharchana events to fulfill our vision of One Crore
+          Click on <strong>“I Want Free Rudraksha”</strong> now to receive the
+          sacred Rudrakshas used in the Archana. They will be delivered to your
+          doorstep at no cost. Inspired by this success, we aspire to host 99
+          more Rudraksharchana events to fulfill our vision of One Crore
           Rudraksharchanas! Join us on this divine journey. 🙏
-        </strong>
+        </p>
       </div>
 
-      <div className="details">
-        <strong>
-          నవంబర్ 19న నిర్వహించిన లక్ష రుద్రాక్షార్చన ఘన విజయాన్ని సాధించింది!🌟{" "}
-        </strong>{" "}
-        ఆర్చనలో ఉపయోగించిన పవిత్ర రుద్రాక్షలను పొందడానికి ఇప్పుడు "I want Free
-        Rudraksha" పై క్లిక్ చేయండి. అవి మీ ఇంటి వద్దకు ఉచితంగా పంపబడతాయి. ఈ
-        విజయంతో ప్రేరణ పొందిన మేము, మా లక్ష్యం అయిన కోటి రుద్రాక్షార్చనల సాధన
-        కోసం మరో 99 రుద్రాక్షార్చన కార్యక్రమాలను నిర్వహించేందుకు సంకల్పించాము! ఈ
-        దివ్య ప్రయాణంలో భాగస్వామ్యం అవ్వండి. 🙏
+      {/* Telugu Details Section */}
+      <div className="px-4 text-center mt-4">
+        <p className="text-lg font-semibold leading-relaxed">
+          <strong>
+            నవంబర్ 19న నిర్వహించిన లక్ష రుద్రాక్షార్చన ఘన విజయాన్ని సాధించింది!
+            🌟
+          </strong>
+          ఆర్చనలో ఉపయోగించిన పవిత్ర రుద్రాక్షలను పొందడానికి ఇప్పుడు
+          <strong>"I Want Free Rudraksha"</strong> పై క్లిక్ చేయండి. అవి మీ ఇంటి
+          వద్దకు ఉచితంగా పంపబడతాయి. ఈ విజయంతో ప్రేరణ పొందిన మేము, మా లక్ష్యం
+          అయిన కోటి రుద్రాక్షార్చనల సాధన కోసం మరో 99 రుద్రాక్షార్చన
+          కార్యక్రమాలను నిర్వహించేందుకు సంకల్పించాము! ఈ దివ్య ప్రయాణంలో
+          భాగస్వామ్యం అవ్వండి. 🙏
+        </p>
       </div>
 
       {/* Button Section */}

@@ -7,7 +7,16 @@ import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { HiOutlineDocument } from "react-icons/hi";
 import BASE_URL from "../Config";
-
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Coins,
+  Bot,
+  Settings,
+  X,
+  Mail,
+  Heart,
+} from "lucide-react";
 import Container from "./ContainerPolicy";
 import FR from "../assets/img/123.png";
 
@@ -214,12 +223,20 @@ const FreeSample: React.FC = () => {
 
   return (
     <div>
-      <div>
+      <div className="bg-gray-50">
         <header>
           {/* Buttons on the right */}
-          <div className="flex flex-col md:flex-row items-center md:items-start pt-5 justify-center">
-            {/* Title */}
-            <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text45xl leading-tight mb-6 md:mb-0">
+          <div className="relative flex flex-col items-center pt-5">
+            {/* Back Button (Left Aligned) */}
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
+
+            {/* Title (Centered) */}
+            <h1 className="text-[rgba(91,5,200,0.85)] font-bold text-2xl sm:text-3xl md:text-3xl lg:text-4xl text-center leading-tight">
               Free Rice Samples & Steel Container
             </h1>
           </div>
@@ -437,7 +454,7 @@ const FreeSample: React.FC = () => {
             </p>
             <ul className="list-disc list-inside mb-3 text-sm sm:text-base">
               <li>
-                No purchase within 45 days or a gap of 45 days between
+                No purchase within 90 days or a gap of 90 days between
                 purchases, will result in the container being taken back.
               </li>
             </ul>

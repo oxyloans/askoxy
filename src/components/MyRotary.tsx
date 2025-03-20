@@ -6,6 +6,16 @@ import axios from "axios";
 import { message } from "antd";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Coins,
+  Bot,
+  Settings,
+  X,
+  Mail,
+  Heart,
+} from "lucide-react";
 
 import img1 from "../assets/img/image1.png";
 import img2 from "../assets/img/image2.png";
@@ -208,9 +218,16 @@ const MyRotaryServices = () => {
           {/* Layout container */}
           <div className="flex flex-col items-center justify-center md:flex-row pt-4  px-4 md:px-6 lg:px-8">
             {/* Title */}
+
             {/* <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
               Legal Services
             </h3> */}
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
           </div>
 
           {/* Buttons on the right */}

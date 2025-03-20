@@ -9,6 +9,16 @@ import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Coins,
+  Bot,
+  Settings,
+  X,
+  Mail,
+  Heart,
+} from "lucide-react";
 
 import Footer from "./Footer";
 const { Title, Paragraph } = Typography;
@@ -189,6 +199,12 @@ const HiringService: React.FC = () => {
     <>
       <header>
         <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 pt-4 items-center px-4 md:px-6 lg:px-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </button>
           <button
             className=" bg-[#04AA6D] w-full md:w-auto px-4 py-2 text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
             onClick={handleSubmit}

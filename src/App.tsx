@@ -92,14 +92,17 @@ const App: React.FC = () => {
             <Route path="/qrcode" element={<QR />} />
             <Route path="/thank-you" element={<ThankYouPage />} />
             <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
-            <Route path="/proud-lender/testimonials" element={<TestimonialsPage/>} />
+            <Route
+              path="/proud-lender/testimonials"
+              element={<TestimonialsPage />}
+            />
             <Route path="/steamricevsrawrice" element={<RiceComparison />} />
             {/* Landing Page (First Page) */}
             <Route path="/" element={<Landingpage />} />
 
             <Route path="/allqueries" element={<AllQueries />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/registeredUsers" element={<RegisteredUser />} />
+            <Route path="/registeredUsers" element={<RegisteredUser />} />
             <Route
               path="/allcampaignsdetails"
               element={<AllCampaignsDetails />}
@@ -128,33 +131,6 @@ const App: React.FC = () => {
               <Route path="user-profile" element={<UserProfile />} />
               <Route path="bmvcoin" element={<BMVCOIN />} />
 
-              <Route
-                path="applicationsupport-gpt"
-                element={<ApplicationSupport />}
-              />
-
-              <Route path="courses-gpt" element={<CoursesGpt />} />
-              <Route path="preparation-gpt" element={<PreparationGpt />} />
-              <Route path="foreign-exchange" element={<ForeignExchange />} />
-              <Route
-                path="informationaboutcountries-gpt"
-                element={<InformationAboutCountries />}
-              />
-              <Route path="loans-gpt" element={<LoansGpt />} />
-              <Route path="logistics-gpt" element={<LogisticsGpt />} />
-              <Route path="placements-gpt" element={<PlacementsGpt />} />
-              <Route
-                path="qualificationspecialization-gpt"
-                element={<QualificationSpecializationGPT />}
-              />
-              <Route path="visa-gpt" element={<VisaGpt />} />
-              <Route path="reviews-gpt" element={<ReviewsGpt />} />
-              <Route path="scholarships-gpt" element={<ScholarshipGpt />} />
-              <Route
-                path="universitiesagents-gpt"
-                element={<UniversityAgents />}
-              />
-              <Route path="universities-gpt" element={<University />} />
               {/* Add more nested routes as needed */}
             </Route>
 
@@ -188,6 +164,56 @@ const App: React.FC = () => {
                 path="/main/dashboard/accreditations-gpt"
                 element={<AccreditationsRecognization />}
               />
+              <Route
+                path="/main/dashboard/applicationsupport-gpt"
+                element={<ApplicationSupport />}
+              />
+              <Route
+                path="/main/dashboard/courses-gpt"
+                element={<CoursesGpt />}
+              />{" "}
+              <Route
+                path="/main/dashboard/preparation-gpt"
+                element={<PreparationGpt />}
+              />
+              <Route
+                path="/main/dashboard/foreign-exchange"
+                element={<ForeignExchange />}
+              />
+              <Route
+                path="/main/dashboard/informationaboutcountries-gpt"
+                element={<InformationAboutCountries />}
+              />
+              <Route path="/main/dashboard/loans-gpt" element={<LoansGpt />} />
+              <Route
+                path="/main/dashboard/logistics-gpt"
+                element={<LogisticsGpt />}
+              />
+              <Route
+                path="/main/dashboard/placements-gpt"
+                element={<PlacementsGpt />}
+              />
+              <Route
+                path="/main/dashboard/qualificationspecialization-gpt"
+                element={<QualificationSpecializationGPT />}
+              />
+              <Route
+                path="/main/dashboard/universities-gpt"
+                element={<University />}
+              />
+              <Route
+                path="/main/dashboard/scholarships-gpt"
+                element={<ScholarshipGpt />}
+              />
+              <Route
+                path="/main/dashboard/reviews-gpt"
+                element={<ReviewsGpt />}
+              />
+              <Route
+                path="/main/dashboard/universitiesagents-gpt"
+                element={<UniversityAgents />}
+              />
+              <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
               <Route path="dashboard/:tab" element={<DashboardMain />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               <Route
