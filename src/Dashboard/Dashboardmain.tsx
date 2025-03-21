@@ -9,6 +9,7 @@ import {
   Gem,
   Cpu,
   Package,
+  HandCoins,
   Globe,
   Scale,
   Factory,
@@ -27,7 +28,7 @@ import Ricebags from "../kart/Mainrice";
 import axios from "axios";
 import Content1 from "./Content";
 import Footer from "../components/Footer";
-
+import OxyLoansImage from "../assets/img/oxyloasntemp (1).png";
 // Import your images here
 import RudrakshaImage from "../assets/img/freerudraksha.png";
 import FG from "../assets/img/Free AI and Gen ai training.png";
@@ -49,6 +50,7 @@ interface DashboardItem {
   path: string;
   icon: React.ReactNode;
   category?: string;
+  onClick?: () => void;
 }
 
 interface Campaign {
@@ -140,6 +142,16 @@ const DashboardMain: React.FC = () => {
   }, [location.pathname]);
 
   const services: DashboardItem[] = [
+    // Modify the first item in your services array:
+    {
+      title: "OxyLoans - RBI Approved P2P NBFC",
+      image: OxyLoansImage,
+      description:
+        "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
+      path: "https://oxyloans.com/",
+      icon: <HandCoins className="text-purple-600" size={24} />,
+      category: "Finance",
+    },
     {
       title: "Free Rudraksha",
       image: RudrakshaImage,
@@ -213,6 +225,7 @@ const DashboardMain: React.FC = () => {
       category: "Careers",
     },
   ];
+
 
   const products: DashboardItem[] = [
     {
@@ -288,7 +301,15 @@ const DashboardMain: React.FC = () => {
             {filteredItems(items).map((item, index) => (
               <div
                 key={index}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  // Check if it's an external URL (starts with http)
+                  if (item.path.startsWith("https")) {
+                    window.open(item.path, "_blank");
+                  } else {
+                    // For internal routes
+                    navigate(item.path);
+                  }
+                }}
                 className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
             transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
               >
@@ -358,9 +379,8 @@ const DashboardMain: React.FC = () => {
                   </div>
                 </div>
               ))}
-            </div>
-            <Footer/>
-          
+          </div>
+          <Footer />
         </>
       ) : activeTab === "freegpts" ? (
         <>{<FreeChatGPTmain />}</>

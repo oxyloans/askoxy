@@ -141,15 +141,15 @@ const Tabview = () => {
         </div>
         
         <div className="text-gray-700 space-y-3">
-          <p>You can collect BMVCoins and use them to get discounts on rice bags and other products and services.</p>
+          <p>You can collect BMVCoins and use them to get discounts on rice bags, as well as other products and services.</p>
           <div className="bg-purple-50 p-3 rounded-lg">
             <p className="font-medium">Current value:</p>
             <p>1,000 BMVCoins = ₹10 discount</p>
           </div>
           <p className="font-medium">Important information:</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>You need at least 20,000 BMVCoins to redeem</li>
-            <li>The value of the discount may change in the future</li>
+            <li>A minimum of 20,000 BMVCoins is required for redemption.</li>
+            <li>The discount value may change in the future.</li>
           </ul>
         </div>
         

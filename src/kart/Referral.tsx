@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
-import { 
-  Share2, 
-  Copy, 
-  Link as LinkIcon, 
+import {
+  Share2,
+  Copy,
+  Link as LinkIcon,
   X,
   Gift,
   Users,
@@ -17,7 +17,6 @@ import axios from 'axios';
 import 'react-phone-number-input/style.css';
 import { Modal } from 'antd';
 import { Navigate } from 'react-router-dom';
-import BASE_URL from '../Config';
 
 interface RefereeDetail {
   id: string;
@@ -59,6 +58,7 @@ const ReferralPage: React.FC = () => {
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('');
   const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [stats, setStats] = useState<Stats>({
     totalReferrals: 0,
     activeReferrals: 0,
@@ -67,7 +67,7 @@ const ReferralPage: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQItem[]>([
     {
       question: "How do I refer someone?",
-      answer: "Share your unique referral link with your friends. Your friend must sign up using your referral link during registration. Once they place an order for rice and do not cancel it, you’ll receive the reward.",
+      answer: "Share your unique referral link with your friends. Your friend must sign up using your referral link during registration. Once they place an order for rice and do not cancel it, you'll receive the reward.",
       isOpen: false
     },
     {
@@ -108,7 +108,7 @@ const ReferralPage: React.FC = () => {
   ]);
   const customerId = localStorage.getItem("userId") || "";
   const token = localStorage.getItem("accessToken") || "";
-  const referralLink = `https://www.sandbox.askoxy.ai/whatsappregister?ref=${customerId}`;
+  const referralLink = `https://www.askoxy.ai/whatsappregister?ref=${customerId}`;
 
   useEffect(() => {
     if (token) {
@@ -120,7 +120,7 @@ const ReferralPage: React.FC = () => {
   const fetchUserDetails = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/user-service/user/${customerId}`,
+        `https://meta.oxyglobal.tech/api/user-service/user/${customerId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -128,7 +128,7 @@ const ReferralPage: React.FC = () => {
           }
         }
       );
-      
+
       if (response.data) {
         setUserDetails(response.data);
       }
@@ -152,7 +152,7 @@ const ReferralPage: React.FC = () => {
   const fetchRefereeDetails = async () => {
     try {
       const response = await axios.get<RefereeDetail[]>(
-        `${BASE_URL}/reference-service/getreferencedetails/${customerId}`,
+        `https://meta.oxyglobal.tech/api/reference-service/getreferencedetails/${customerId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -162,7 +162,7 @@ const ReferralPage: React.FC = () => {
       );
 
       setRefereeDetails(response.data);
-      
+
       const total = response.data.length;
       const active = response.data.filter(d => d.referenceStatus === "REGISTERED").length;
       setStats({
@@ -177,9 +177,15 @@ const ReferralPage: React.FC = () => {
 
   const handleShare = (action: 'whatsapp' | 'copy') => {
     setShareAction(action);
-    setPhoneNumber(undefined);
-    setError('');
-    setIsModalOpen(true);
+
+    if (action === 'whatsapp') {
+      setPhoneNumber(undefined);
+      setError('');
+      setIsModalOpen(true);
+    } else if (action === 'copy') {
+      // Directly copy the referral link
+      handleCopyLink();
+    }
   };
 
   // Function to normalize phone numbers for comparison
@@ -191,17 +197,16 @@ const ReferralPage: React.FC = () => {
   useEffect(() => {
     if (phoneNumber) {
       // Extract country code without the + sign
-      const phoneNumberS = parsePhoneNumber(phoneNumber)
-      console.log("phoneNumberS.country", phoneNumberS?.countryCallingCode);
+      const phoneNumberS = parsePhoneNumber(phoneNumber);
       const countryCode = phoneNumberS?.countryCallingCode ? `+${phoneNumberS.countryCallingCode}` : "";
-      setCountryCode(countryCode || ""); 
+      setCountryCode(countryCode || "");
     }
   }, [phoneNumber]);
 
   const handleSubmit = async () => {
     // Reset error state
     setError('');
-    
+
     // Validate phone number format
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
       setError('Please enter a valid phone number');
@@ -231,7 +236,7 @@ const ReferralPage: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        BASE_URL+'/user-service/inviteaUser',
+        'https://meta.oxyglobal.tech/api/user-service/inviteaUser',
         {
           referealId: customerId,
           refereeMobileNumber: phoneNumber.replace(countryCode, ''), // Remove country code
@@ -247,16 +252,17 @@ const ReferralPage: React.FC = () => {
 
       setIsModalOpen(false);
       fetchRefereeDetails();
+
       Modal.success({
         content: response.data.message || 'Referral sent successfully!',
-        onOk: () => {},
+        onOk: () => { },
       });
-    } catch (error: any) {
+    } catch (error: any) { // Type error as 'any' to handle axios error
       console.error('Error inviting user:', error);
-      
+
       // Handle different error scenarios
       let errorMessage = 'Failed to invite user. Please try again.';
-      
+
       if (error.response) {
         if (error.response.data && error.response.data.message) {
           errorMessage = error.response.data.message;
@@ -264,13 +270,13 @@ const ReferralPage: React.FC = () => {
           errorMessage = 'An invitation has already been sent to this user.';
         } else if (error.response.status === 400) {
           // Check if it's a self-referral error from backend
-          if (error.response.data && error.response.data.error && 
-              error.response.data.error.includes('self')) {
+          if (error.response.data && error.response.data.error &&
+            error.response.data.error.includes('self')) {
             errorMessage = 'Self-referral is not allowed. Enter a different referral number.';
           }
         }
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -286,12 +292,12 @@ const ReferralPage: React.FC = () => {
     }));
   };
 
-  const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; bgColor: string; iconColor: string }> = ({ 
-    icon, 
-    title, 
-    value, 
-    bgColor, 
-    iconColor 
+  const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; bgColor: string; iconColor: string }> = ({
+    icon,
+    title,
+    value,
+    bgColor,
+    iconColor
   }) => (
     <div className="bg-white rounded-xl shadow-sm p-4">
       <div className="flex items-center gap-4">
@@ -306,18 +312,26 @@ const ReferralPage: React.FC = () => {
     </div>
   );
 
-  // Function to handle WhatsApp sharing
+  // Function to handle WhatsApp sharing without specific contact
   const handleWhatsAppShare = () => {
-    const message = `Hey! Join Askoxy.AI using my referral link and get amazing benefits: ${referralLink}`;
+    const message = `ASKOXY.AI is an AI-powered platform integrating 34+ marketplaces, designed to
+simplify lives with innovative solutions, including premium rice delivery. - ${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   // Function to copy referral link to clipboard
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
+    setLinkCopied(true);
+
+    // Reset the copied state after 2 seconds
+    setTimeout(() => {
+      setLinkCopied(false);
+    }, 2000);
+
     Modal.success({
       content: 'Referral link copied to clipboard!',
-      onOk: () => {},
+      onOk: () => { },
     });
   };
 
@@ -341,7 +355,6 @@ const ReferralPage: React.FC = () => {
               bgColor="bg-green-100"
               iconColor="text-green-600"
             />
-          
           </div>
 
           {/* Main Content */}
@@ -354,16 +367,40 @@ const ReferralPage: React.FC = () => {
                 <p className="text-gray-600 mb-4">
                   Invite your friends to join ASKOXY.AI. When they register using your referral link and place an order for rice, you'll receive ₹50 cashback!
                 </p>
+
+                {/* Referral Link Display */}
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg mb-4">
+                  <div className="flex-1 overflow-hidden overflow-ellipsis whitespace-nowrap text-sm text-gray-600">
+                    {referralLink}
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className="ml-2 p-2 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors focus:outline-none"
+                    aria-label="Copy referral link"
+                  >
+                    {linkCopied ? (
+                      <span className="text-green-600 text-sm font-medium">Copied!</span>
+                    ) : (
+                      <Copy className="h-5 w-5 text-gray-600" />
+                    )}
+                  </button>
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <button 
+                  <button
                     onClick={() => handleShare('whatsapp')}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
+                  >
+                    <Users className="mr-2 h-5 w-5" /> Invite a Friend
+                  </button>
+
+                  <button
+                    onClick={() => handleWhatsAppShare()}
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
                   >
                     <FaWhatsapp className="mr-2 text-xl" /> Share via WhatsApp
                   </button>
-                 
                 </div>
-                
               </div>
               <div className="hidden md:block">
                 <div className="h-full flex items-center justify-center bg-purple-50 rounded-xl p-6">
@@ -397,12 +434,11 @@ const ReferralPage: React.FC = () => {
                       <td className="border-b p-4 text-gray-600">{referee.whatsappnumber}</td>
                       <td className="border-b p-4 text-gray-600">{formatDate(referee.created_at)}</td>
                       <td className="border-b p-4">
-                        <span 
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            referee.referenceStatus === "REGISTERED" 
-                              ? 'bg-green-100 text-green-800' 
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${referee.referenceStatus === "REGISTERED"
+                              ? 'bg-green-100 text-green-800'
                               : 'bg-amber-100 text-amber-800'
-                          }`}
+                            }`}
                         >
                           {referee.referenceStatus}
                         </span>
@@ -455,7 +491,7 @@ const ReferralPage: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div 
+            <div
               className="fixed inset-0 bg-black bg-opacity-30 transition-opacity"
               onClick={() => setIsModalOpen(false)}
             />
@@ -463,7 +499,7 @@ const ReferralPage: React.FC = () => {
             <div className="relative bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-gray-800">Enter Referee Details</h3>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-400 hover:text-gray-500 transition-colors"
                 >
@@ -495,17 +531,18 @@ const ReferralPage: React.FC = () => {
 
               <div className="flex justify-end space-x-3">
                 <button
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Submit'}
+                </button>
+
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 border rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                >
-                  {isLoading ? 'Processing...' : 'Submit'}
                 </button>
               </div>
             </div>

@@ -1,6 +1,20 @@
 import React, { useEffect, useState } from "react";
 import Footer from "../components/Footer";
-import { Menu, X, Check, AlertCircle, Loader2, ArrowDownUp,CheckCircle,Zap,Calendar, Clock, CreditCard } from "lucide-react";
+import {
+  Menu,
+  X,
+  Check,
+  AlertCircle,
+  Loader2,
+  HelpCircle,
+  RefreshCw,
+  ArrowDownCircle,ArrowDownUp,
+  CheckCircle,
+  Zap,
+  Calendar,
+  Clock,
+  CreditCard,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FaBars, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
@@ -94,124 +108,267 @@ const SubscriptionCard: React.FC<{
   Loading: { [key: string]: boolean };
   onSubscribe: (planId: string) => void;
 }> = ({ plan, isSelected, onSubscribe, planDetails, Loading }) => {
-  // Calculate savings here to fix the reference error
-  const savings = plan.getAmount - plan.amount;
-
+  // State for FAQ modal
+  const [showFaqModal, setShowFaqModal] = useState(false);
+  
+  // Calculate bonus amount
+  const bonusAmount = plan.getAmount - plan.amount;
+  const isPremiumPlan = plan.amount === 99000;
+  
+  // Premium plan FAQ data
+  const premiumFaqs = [
+    {
+      question: "What if I withdraw on the 40th day?",
+      answer: "You will receive the wallet amount in proportion to the days completed. For example, if you withdraw after 40 days, you will receive ₹2,667 (₹2,000 for the first 30 days + ₹667 for the extra 10 days)."
+    },
+    {
+      question: "Can I use both my advance and wallet balance for purchases?",
+      answer: "Your advance can only be withdrawn and cannot be used for purchases. You can purchase only with your wallet balance."
+    },
+    {
+      question: "What happens if I withdraw my advance before 30 days?",
+      answer: "If you withdraw before completing 30 days, you will receive a proportionate wallet amount. For example, if you withdraw after 10 days, you will receive ₹667 (since ₹2,000 is for 30 days, the daily rate is ₹67, so ₹67 × 10 = ₹667)."
+    },
+    {
+      question: "Is there a limit on how many times I can withdraw my advance?",
+      answer: "No, you can withdraw your full advance anytime, but your wallet earnings will be added only for the completed days."
+    },
+    {
+      question: "Will I keep earning ₹2,000 every month indefinitely?",
+      answer: "You will receive ₹2,000 every month as long as the ₹99,000 advance remains in your account and the 30-day period is completed."
+    },
+    {
+      question: "Can I add more advance later to increase my earnings?",
+      answer: "Currently, the earnings are based on a fixed advance of ₹99,000. Any changes will be communicated in the future."
+    },
+    {
+      question: "Will my wallet balance expire if I don't use it?",
+      answer: "No, your wallet balance will not expire. It will accumulate indefinitely month after month."
+    },
+    {
+      question: "Can I withdraw my wallet balance instead of using it for purchases?",
+      answer: "No, the wallet balance can only be used for purchases and cannot be withdrawn."
+    }
+  ];
+  
   return (
-    <div
-      id={plan.planId}
-      className={`relative rounded-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full bg-white ${
-        isSelected
-          ? "border-2 border-purple-500 shadow-md"
-          : "border border-gray-200 hover:border-purple-300 hover:shadow-sm"
-      }`}
-    >
-      {/* Enhanced gradient top accent */}
-      <div className="h-2 w-full bg-gradient-to-r from-purple-500 via-purple-600 to-purple-400"></div>
-
-      {/* Main content */}
-      <div className="p-5 flex-grow">
-        {/* Wallet Balance Section - Now prominently displayed */}
-        <div className="mb-3">
-          <h3 className="text-sm font-medium text-purple-600">
-            Wallet Balance
-          </h3>
-
-          <div className="flex items-baseline mt-1">
-            <span className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent">
-              ₹{plan.getAmount.toLocaleString()}
-            </span>
+    <>
+      <div
+        id={plan.planId}
+        className={`relative rounded-lg overflow-hidden transition-all duration-200 flex flex-col h-full ${
+          isPremiumPlan ? "bg-purple-50" : "bg-white"
+        } ${
+          isSelected
+            ? "border-2 border-purple-500 shadow-lg"
+            : "border border-gray-200 hover:border-purple-300 hover:shadow-md"
+        }`}
+      >
+        {/* Enhanced top accent - taller for premium */}
+        <div className={`w-full ${isPremiumPlan ? "h-2 bg-gradient-to-r from-purple-500 to-purple-700" : "h-1 bg-purple-500"}`}></div>
+        
+        {/* Popular badge for premium plan */}
+        {isPremiumPlan && (
+          <div className="absolute top-0 right-0">
+            <div className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">
+              BEST VALUE
+            </div>
           </div>
-        </div>
-
-        {/* Gradient divider */}
-        <div className="h-px w-full bg-gradient-to-r from-purple-200 via-purple-400 to-purple-200 my-3"></div>
-
-        {/* Plan amount section - Now secondary */}
-        <div className="mb-3">
-          <h3 className="text-sm font-medium text-purple-600">
-            Subscription Price
-          </h3>
-
-          <div className="flex items-center mt-1">
-            <span className="text-lg font-medium text-gray-700">
-              ₹{plan.amount.toLocaleString()}
-            </span>
-
-            {savings > 0 && (
-              <span className="ml-2 text-sm text-gray-400 line-through">
+        )}
+        
+        {/* Main content */}
+        <div className="p-4 sm:p-5 flex-grow">
+          {/* Plan Title */}
+          <div className="text-center mb-4">
+            <h3 className={`text-lg font-semibold ${isPremiumPlan ? "text-purple-800" : "text-gray-800"}`}>
+              {isPremiumPlan ? "Premium Plan" : "Standard Plan"}
+            </h3>
+            <div className={`h-px w-16 ${isPremiumPlan ? "bg-purple-400" : "bg-purple-300"} mx-auto mt-2`}></div>
+          </div>
+          
+          {/* Pay Amount Section */}
+          <div className="mb-4 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <span className={`text-sm font-medium ${isPremiumPlan ? "text-purple-700" : "text-gray-600"}`}>Pay</span>
+              <span className={`text-xl font-bold ${isPremiumPlan ? "text-purple-800" : "text-gray-800"}`}>
+                ₹{plan.amount.toLocaleString()}
+              </span>
+            </div>
+          </div>
+          
+          {/* Get Wallet Balance */}
+          <div className={`mb-4 p-3 rounded border ${
+            isPremiumPlan 
+              ? "bg-purple-100 border-purple-200 shadow-sm" 
+              : "bg-gray-50 border-gray-200"
+          }`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-sm font-medium ${isPremiumPlan ? "text-purple-700" : "text-purple-600"}`}>Get</span>
+              <span className={`text-xl font-bold ${isPremiumPlan ? "text-purple-700" : "text-purple-600"}`}>
                 ₹{plan.getAmount.toLocaleString()}
               </span>
-            )}
-
-            {savings > 0 && (
-              <span className="ml-2 inline-block bg-gradient-to-r from-green-500 to-green-400 text-white text-xs font-medium px-2 py-0.5 rounded">
-                Save ₹{savings.toLocaleString()}
-              </span>
-            )}
+            </div>
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-xs text-gray-500">in your wallet</span>
+              {bonusAmount > 0 && (
+                <span className={`text-xs font-medium ${isPremiumPlan ? "text-green-700" : "text-green-600"}`}>
+                  +₹{bonusAmount.toLocaleString()} bonus
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Features list */}
+          <div className="mb-4">
+            <h4 className={`text-sm font-bold ${isPremiumPlan ? "text-purple-800" : "text-gray-700"} mb-2`}>Benefits</h4>
+            <ul className="space-y-2">
+              {/* Monthly Usage Limit - Only for non-premium plans */}
+              {!isPremiumPlan && (
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 h-5 w-5 text-purple-500 mt-0.5">
+                    <CheckCircle size={16} />
+                  </div>
+                  <span className="ml-2 text-sm font-bold text-gray-600">
+                    ₹{plan.limitAmount.toLocaleString()} Monthly usage limit
+                  </span>
+                </li>
+              )}
+              
+              {/* Plan-specific features */}
+              {isPremiumPlan ? (
+                <>
+                  <li className="flex items-start">
+                    <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
+                      <RefreshCw size={16} />
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-sm font-bold text-purple-700">
+                        ₹2,000 added monthly after 30 days
+                      </span>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
+                      <ArrowDownCircle size={16} />
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-sm font-bold text-purple-700">
+                        Withdraw your ₹99,000 anytime
+                      </span>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="flex items-start">
+                    <div className="flex-shrink-0 h-5 w-5 text-purple-500 mt-0.5">
+                      <Zap size={16} />
+                    </div>
+                    <span className="ml-2 text-sm font-bold text-gray-600">
+                      Instant wallet credit
+                    </span>
+                  </li>
+                </>
+              )}
+            </ul>
           </div>
         </div>
-
-        {/* Features with gradient background */}
-        <div>
-          <h3 className="text-sm font-medium text-purple-600 mb-2">Features</h3>
-
-          <div className="flex items-center space-x-3 bg-gradient-to-r from-purple-50 to-purple-100 p-3 rounded-lg border border-purple-200">
-            <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-              <Zap size={16} className="text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-purple-700">
-                Monthly Usage Limit
-              </p>
-              <p className="text-base font-medium text-purple-800">
-                ₹{plan.limitAmount.toLocaleString()}
-              </p>
-            </div>
+        
+        {/* Selected indicator */}
+        {isSelected && (
+          <div className="absolute top-3 right-3 bg-purple-500 rounded-full p-1">
+            <CheckCircle size={14} className="text-white" />
           </div>
+        )}
+        
+        {/* Button section */}
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
+          {isPremiumPlan && (
+            <button
+              onClick={() => setShowFaqModal(true)}
+              className="w-full mb-2 py-1.5 px-3 rounded text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 transition-colors"
+            >
+              <span className="flex items-center justify-center">
+                <HelpCircle size={12} className="mr-1" />
+                FAQS
+              </span>
+            </button>
+          )}
+          
+          <button
+            onClick={() => onSubscribe(plan.planId)}
+            className={`w-full py-2 px-4 rounded text-sm font-medium transition-colors
+              ${
+                isSelected || planDetails?.planId === plan.planId
+                  ? isPremiumPlan
+                    ? "bg-purple-700 text-white hover:bg-purple-800 shadow-md"
+                    : "bg-purple-600 text-white hover:bg-purple-700"
+                  : isPremiumPlan
+                    ? "bg-white border border-purple-600 text-purple-700 hover:bg-purple-50"
+                    : "bg-white border border-purple-500 text-purple-600 hover:bg-purple-50"
+              }`}
+            disabled={isSelected || planDetails?.status || Loading[plan.planId]}
+          >
+            {Loading[plan.planId] ? (
+              <span className="flex items-center justify-center">
+                <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                <span>Processing...</span>
+              </span>
+            ) : isSelected ? (
+              <span className="flex items-center justify-center">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                <span>Selected</span>
+              </span>
+            ) : planDetails?.planId === plan.planId ? (
+              <span className="flex items-center justify-center">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                <span>Current Plan</span>
+              </span>
+            ) : (
+              <span>{isPremiumPlan ? "Get Premium" : "Choose Plan"}</span>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Selected indicator with gradient */}
-      {isSelected && (
-        <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full p-1">
-          <CheckCircle size={14} className="text-white" />
+      {/* FAQ Modal */}
+      {showFaqModal && isPremiumPlan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-hidden">
+            <div className="flex items-center justify-between border-b border-gray-200 p-4">
+              <h3 className="text-lg font-bold text-purple-800">Premium Plan - Frequently Asked Questions</h3>
+              <button 
+                className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowFaqModal(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 max-h-96 overflow-y-auto">
+              <div className="space-y-4">
+                {premiumFaqs.map((faq, index) => (
+                  <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                    <h4 className="text-sm font-bold text-gray-800 mb-2">{index + 1}. {faq.question}</h4>
+                    <p className="text-sm text-gray-600">{faq.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowFaqModal(false)}
+                className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      {/* Button section with gradient */}
-      <div className="px-5 pb-5 pt-2">
-        <button
-          onClick={() => onSubscribe(plan.planId)}
-          className={`w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center
-            ${
-              isSelected || planDetails?.planId === plan.planId
-                ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600"
-                : "bg-white border border-purple-600 text-purple-600 hover:bg-purple-50"
-            }`}
-          disabled={isSelected || planDetails?.status || Loading[plan.planId]}
-        >
-          {Loading[plan.planId] ? (
-            <span className="flex items-center justify-center">
-              <Loader2 className="animate-spin mr-2 h-4 w-4" />
-              <span>Processing...</span>
-            </span>
-          ) : isSelected ? (
-            <span className="flex items-center justify-center">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              <span>Selected</span>
-            </span>
-          ) : planDetails?.planId === plan.planId ? (
-            <span className="flex items-center justify-center">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              <span>Current Plan</span>
-            </span>
-          ) : (
-            <span>Choose Plan</span>
-          )}
-        </button>
-      </div>
-    </div>
+    </>
   );
 };
 

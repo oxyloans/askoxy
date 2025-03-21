@@ -76,6 +76,7 @@ import TestimonialsPage from "./Dashboard/TestimoinalsOXY";
 import RiceComparison from "./components/SteanRiceVsRawRice";
 import RegisteredUser from "./Pages/RegisteredUser";
 import Login from "./Pages/Login";
+import Erice from "./components/Erice";
 
 const App: React.FC = () => {
   return (
@@ -211,6 +212,10 @@ const App: React.FC = () => {
               <Route
                 path="/main/dashboard/reviews-gpt"
                 element={<ReviewsGpt />}
+              />
+              <Route
+                path="/main/dashboard/rice-gpt"
+                element={<Erice />}
               />
               <Route
                 path="/main/dashboard/universitiesagents-gpt"

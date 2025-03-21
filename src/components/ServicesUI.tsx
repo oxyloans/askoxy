@@ -70,7 +70,7 @@ const images = [
     src: HM1,
     alt: "Order Rice Online",
     category: "Order Rice Online",
-    link: "/erice",
+    link: "/main/dashboard/rice-gpt",
   },
   {
     id: 2,
@@ -140,7 +140,7 @@ const images = [
     src: HM11,
     alt: "Image 11",
     category: "Influencer Marketing Services",
-    link: "https://www.askoxy.ai/dashboard",
+    link: "https://www.askoxy.ai/main/dashboard/freegpts",
   },
   {
     id: 12,
@@ -168,7 +168,7 @@ const images = [
     src: HM15,
     alt: "Health and Wellness Services",
     category: "Health and Wellness Services",
-    link: "https://www.askoxy.ai/dashboard",
+    link: "https://www.askoxy.ai/main/dashboard/freegpts",
   },
 
   {
@@ -199,7 +199,7 @@ const images = [
     src: HM10,
     alt: "Event Management Services",
     category: "Event Management Services",
-    link: "/dashboard",
+    link: "https://www.askoxy.ai/main/dashboard/freegpts",
   },
   {
     id: 20,
