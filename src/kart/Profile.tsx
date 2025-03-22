@@ -336,21 +336,8 @@ useEffect(() => {
   
     }
 
-    // Last Name validation
-    if (!formData.userLastName.trim()) {
-      errors.userLastName = "Last name is required";
     
-    } else if (!/^[A-Za-z ]+$/.test(formData.userLastName.trim())) {
-      errors.userLastName = "Last name should only contain letters";
-     
-    }
-
-    // Email validation
-    if (!formData.customerEmail.trim()) {
-      errors.customerEmail = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail)) {
-      errors.customerEmail = "Please enter a valid email address";
-    }
+    if(formData.alterMobileNumber.trim()!==""){
 
     // Alternate mobile number validation
     if (!formData.alterMobileNumber.trim()) {
@@ -368,6 +355,7 @@ useEffect(() => {
       errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
      
     }
+  }
 
     // Mobile number validation
     if (!formData.mobileNumber.trim()) {
@@ -378,18 +366,6 @@ useEffect(() => {
    
     }
 
-    // WhatsApp number validation
-    if (!formData.whatsappNumber) {
-      errors.whatsappNumber = "WhatsApp number is required";
-   
-    }
-
-    // Cross-number validations
-    if (formData.alterMobileNumber === formData.whatsappNumber) {
-      errors.alterMobileNumber = "Alternate and WhatsApp number must be different.";
-      errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
-  
-    }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -418,10 +394,10 @@ useEffect(() => {
   };
 
   const handleSaveProfile = async () => {
-    if (!validateProfileForm()) {
-      setIsValidationPopupOpen(true);
-      return;
-    }
+    // if (!validateProfileForm()) {
+    //   setIsValidationPopupOpen(true);
+    //   return;
+    // }
 
     try {
       setIsLoading(true);
@@ -694,7 +670,7 @@ useEffect(() => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Last Name <span className="text-red-500">*</span>
+                      Last Name 
                     </label>
                     <input
                       type="text"
@@ -723,7 +699,7 @@ useEffect(() => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Email Address <span className="text-red-500">*</span>
+                      Email Address 
                     </label>
                     <input
                       type="email"
@@ -752,7 +728,7 @@ useEffect(() => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Alternate Mobile Number{" "}
-                      <span className="text-red-500">*</span>
+                     
                       <span className="text-xs text-gray-500 ml-1">
                         (If unavailable, we'll contact this number)
                       </span>
@@ -804,7 +780,7 @@ useEffect(() => {
 
                   <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  WhatsApp Number <span className="text-red-500">*</span>
+                  WhatsApp Number 
                 </label>
                 <div className="flex items-center space-x-2">
                   <PhoneInput

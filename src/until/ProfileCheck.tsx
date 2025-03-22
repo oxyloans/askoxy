@@ -8,16 +8,16 @@ export default function checkProfileCompletion() {
       return !!(
         parsedData.userFirstName &&
         parsedData.userFirstName != "" &&
-        parsedData.userFirstName !== null &&
-        parsedData.userLastName &&
-        parsedData.userLastName != "" &&
-        parsedData.userLastName !== null &&
-        parsedData.customerEmail &&
-        parsedData.customerEmail != "" &&
-        parsedData.customerEmail !== null &&
-        parsedData.alterMobileNumber &&
-        parsedData.alterMobileNumber != " " &&
-        parsedData.alterMobileNumber !== null
+        parsedData.userFirstName !== null 
+        // parsedData.userLastName &&
+        // parsedData.userLastName != "" &&
+        // parsedData.userLastName !== null &&
+        // parsedData.customerEmail &&
+        // parsedData.customerEmail != "" &&
+        // parsedData.customerEmail !== null &&
+        // parsedData.alterMobileNumber &&
+        // parsedData.alterMobileNumber != " " &&
+        // parsedData.alterMobileNumber !== null
       );
     }
     return false;

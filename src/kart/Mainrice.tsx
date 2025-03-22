@@ -330,7 +330,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                     <em>Refer 9 new users</em> to ASKOXY.AI.
                   </li>
                   <li className="text-gray-700">
-                    <em>Purchase 9 rice bags</em> within <em>1 year</em>.
+                    <em>Purchase 9 rice bags</em> within <em>3 years</em>.
                   </li>
                 </ol>
               </div>
@@ -382,7 +382,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-bold text-purple-800 mb-2">
-                  Referral Program – Earn a Free Container & ₹100 Cashback!
+                  Referral Program – Earn a Free Container & ₹50 Cashback!
                 </h3>
               </div>
 
@@ -412,7 +412,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                 </h4>
                 <p className="text-gray-700">
                   Apart from getting a <em>free steel container</em>, you will
-                  also receive <strong>₹100 cashback</strong> in your{" "}
+                  also receive <strong>₹50 cashback</strong> in your{" "}
                   <em>ASKOXY.AI wallet</em> when you successfully refer someone.
                 </p>
               </div>
@@ -448,7 +448,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                 <p className="text-gray-700">
                   No, you can refer <em>as many friends as you like</em>. You
                   will receive{" "}
-                  <strong>₹100 cashback for each successful referral</strong>,
+                  <strong>₹50 cashback for each successful referral</strong>,
                   subject to promotional terms.
                 </p>
               </div>

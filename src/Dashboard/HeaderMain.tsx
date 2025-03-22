@@ -8,6 +8,7 @@ import { CartContext } from "../until/CartContext";
 import axios from "axios";
 
 import  BASE_URL  from "../Config";
+import { message } from "antd";
 
 interface HeaderProps {
   cartCount: number;
@@ -35,6 +36,11 @@ const Header: React.FC<HeaderProps> = ({
   const [showValidationPopup, setShowValidationPopup] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [profileLoader, setProfileLoader] = useState(false);
+const [whatsappVerified, setWhatsappVerified] = useState(false);
+const [mobileVerified, setMobileVerified] = useState(false);
+const [isLoginWithWhatsapp, setIsLoginWithWhatsapp] = useState(false);
+const [firstName, setFirstName] = useState(""); // Only required field
   
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
@@ -131,20 +137,40 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const checkProfileCompletion = () => {
-    const profileData = localStorage.getItem("profileData");
-
-    if (profileData) {
-      const parsedData = JSON.parse(profileData);
-      return !!(
-        parsedData.userFirstName && parsedData.userFirstName !== "" &&
-        parsedData.userLastName && parsedData.userLastName !== "" &&
-        parsedData.customerEmail && parsedData.customerEmail !== "" &&
-        parsedData.alterMobileNumber && parsedData.alterMobileNumber !== ""
+  const checkProfileCompletion = async () => {
+    setProfileLoader(true);
+    try {
+      const response = await axios.get(
+        `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+  
+      if (response.status === 200) {
+        const profileData = response.data;
+  
+        // Update verification statuses
+        setWhatsappVerified(profileData.whatsappVerified);
+        setMobileVerified(profileData.mobileVerified);
+        if (profileData.whatsappVerified) {
+          setIsLoginWithWhatsapp(true);
+        }
+  
+        // Update only required fields
+        setFirstName(profileData.firstName || "");
+  
+        // Check profile completion
+        return !!(profileData.firstName && profileData.firstName.trim() !== "");
+      }
+    } catch (error) {
+      console.error("ERROR", error);
+    } finally {
+      setProfileLoader(false);
     }
     return false;
   };
+  
 
   const handleCartClick = () => {
     if (!checkProfileCompletion()) {

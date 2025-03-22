@@ -241,13 +241,7 @@ const ItemDisplayPage = () => {
       console.log("parsedData", parsedData);
       return !!(
         parsedData.userFirstName &&
-        parsedData.userFirstName != "" &&
-        parsedData.userLastName &&
-        parsedData.userLastName != "" &&
-        parsedData.customerEmail &&
-        parsedData.customerEmail != "" &&
-        parsedData.alterMobileNumber &&
-        parsedData.alterMobileNumber != ""
+        parsedData.userFirstName != "" 
       );
     }
     return false;
