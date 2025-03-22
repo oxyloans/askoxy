@@ -78,6 +78,7 @@ import RegisteredUser from "./Pages/RegisteredUser";
 import Login from "./Pages/Login";
 import Erice from "./components/Erice";
 import OxyGroup from "./components/OxygroupPdf";
+import BarcodeScanner from "./Dashboard/BarcodeScanner";
 
 const App: React.FC = () => {
   return (
@@ -195,6 +196,14 @@ const App: React.FC = () => {
                 path="/main/dashboard/logistics-gpt"
                 element={<LogisticsGpt />}
               />
+              <Route
+               path="/main/dashboard/barcodescanner"
+               element={
+                 <RequireAuth>
+                   <BarcodeScanner />
+                 </RequireAuth>
+               }
+             />
               <Route
                 path="/main/dashboard/placements-gpt"
                 element={<PlacementsGpt />}
@@ -343,6 +352,7 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
+              
             </Route>
           </Routes>
         </div>

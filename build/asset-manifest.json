@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.e1716a74.css",
-    "main.js": "/static/js/main.82994d4b.js",
+    "main.css": "/static/css/main.11bbb343.css",
+    "main.js": "/static/js/main.c3ea498d.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -18,7 +18,6 @@
     "static/media/ricecard4.png": "/static/media/ricecard4.5fe58c9f9262e0a2fc77.png",
     "static/media/legal.png": "/static/media/legal.dd57ac21e6673f622ae7.png",
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
-    "static/media/123.png": "/static/media/123.c514539ecf722bf1bd49.png",
     "static/media/bmvcoin.png": "/static/media/bmvcoin.d4b8d7a173edac896cdc.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
     "static/media/machines.png": "/static/media/machines.8a2c5d9604b7fe5261f4.png",
@@ -151,12 +150,12 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.e1716a74.css.map": "/static/css/main.e1716a74.css.map",
-    "main.82994d4b.js.map": "/static/js/main.82994d4b.js.map",
+    "main.11bbb343.css.map": "/static/css/main.11bbb343.css.map",
+    "main.c3ea498d.js.map": "/static/js/main.c3ea498d.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.e1716a74.css",
-    "static/js/main.82994d4b.js"
+    "static/css/main.11bbb343.css",
+    "static/js/main.c3ea498d.js"
   ]
 }

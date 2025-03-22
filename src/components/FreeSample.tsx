@@ -16,9 +16,10 @@ import {
   X,
   Mail,
   Heart,
+  Scan,
 } from "lucide-react";
 import Container from "./ContainerPolicy";
-import FR from "../assets/img/123.png";
+// import FR from "../assets/img/123.png";
 
 import Footer from "./Footer";
 import { message, Modal } from "antd";
@@ -139,6 +140,10 @@ const FreeSample: React.FC = () => {
       setIsOpen(true);
     }
   };
+  
+  const handleScanBarcode = () => {
+    navigate("/main/dashboard/barcodescanner");
+  };
 
   useEffect(() => {
     handleGetOffer();
@@ -246,27 +251,20 @@ const FreeSample: React.FC = () => {
             </h1>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6    lg:px-8">
-            {/* Button: I'm Interested */}
-
-            {/* <div>
-             
-              <button
-                className="bottom-8 right-8 px-4 py-2 bg-[#D32F2F] text-white rounded-lg shadow-lg hover:bg-[#B71C1C] transition-all text-sm md:text-base lg:text-lg flex items-center justify-center z-50"
-                aria-label="Open Container Policy PDF"
-                onClick={handleButtonClick} // Attach click handler to the button
-              >
-                <HiOutlineDocument className="w-5 h-5 text-white mr-2" />
-                Container Policy Preview
-              </button>
-
-             
-              {showContainer && <Container />}
-            </div> */}
+          <div className="flex flex-col md:flex-row justify-center md:justify-end gap-4 items-center px-4 md:px-6 lg:px-8">
+            {/* Button: Scan Bar Code - NEW BUTTON */}
+            <button
+              className="bg-[#FF9800] w-full md:w-auto px-4 py-2 text-white rounded-lg shadow-md hover:bg-[#F57C00] text-sm md:text-base lg:text-lg transition duration-300 flex items-center justify-center gap-2"
+              aria-label="Scan Bar Code"
+              onClick={handleScanBarcode}
+            >
+              <Scan className="h-5 w-5" />
+              Scan Bar Code
+            </button>
 
             {/* Button: Write To Us */}
             <button
-              className=" bg-[#008CBA] w-full md:w-auto px-4 py-2  text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300 "
+              className="bg-[#008CBA] w-full md:w-auto px-4 py-2 text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
               aria-label="Write To Us"
               onClick={handleWriteToUs}
             >
@@ -413,19 +411,13 @@ const FreeSample: React.FC = () => {
               </div>
             )}
           </div>
-          {/* <div className="flex flex-col items-center justify-center md:flex-row  pt-4 md:px-6 lg:px-8">
-
-            <h3 className="text-center text-[rgba(91,5,200,0.85)] font-bold text-sm sm:text-base md:text-lg lg:text-xl">
-            
-            </h3>
-          </div> */}
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2 px-3 items-center">
           {/* Image Section */}
           <div className="flex justify-center p-2 mb-4 lg:mb-0">
             <img
-              src={FR}
+              // src={FR}
               alt="Free Sample"
               className="w-full max-w-[300px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px] rounded-lg shadow-lg pointer-events-none select-none object-contain"
             />
