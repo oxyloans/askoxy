@@ -77,6 +77,7 @@ import RiceComparison from "./components/SteanRiceVsRawRice";
 import RegisteredUser from "./Pages/RegisteredUser";
 import Login from "./Pages/Login";
 import Erice from "./components/Erice";
+import OxyGroup from "./components/OxygroupPdf";
 
 const App: React.FC = () => {
   return (
@@ -93,6 +94,7 @@ const App: React.FC = () => {
               element={<RiceSalePage />}
             />
             <Route path="/qrcode" element={<QR />} />
+            <Route path="/oxygroup" element={<OxyGroup/>}/>
             <Route path="/thank-you" element={<ThankYouPage />} />
             <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
             <Route
