@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.cc904fd8.css",
-    "main.js": "/static/js/main.aa41b5e2.js",
+    "main.css": "/static/css/main.e1716a74.css",
+    "main.js": "/static/js/main.5288c89f.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -64,6 +64,7 @@
     "static/media/Machines manufacturing services.png": "/static/media/Machines manufacturing services.f5f7abd54ec2b3373b0c.png",
     "static/media/proudlender12.png": "/static/media/proudlender12.53db2d508da021efc032.png",
     "static/media/Education.png": "/static/media/Education.e7e8a28db21bea7913a2.png",
+    "static/media/oxycard1.png": "/static/media/oxycard1.f7c4924f3149fbd678de.png",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
     "static/media/Free AI and Gen ai training.png": "/static/media/Free AI and Gen ai training.4090c6b7d5ff1eb374bd.png",
     "static/media/Transportation.png": "/static/media/Transportation.73d3a5de19f5bf0ab577.png",
@@ -150,12 +151,12 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.cc904fd8.css.map": "/static/css/main.cc904fd8.css.map",
-    "main.aa41b5e2.js.map": "/static/js/main.aa41b5e2.js.map",
+    "main.e1716a74.css.map": "/static/css/main.e1716a74.css.map",
+    "main.5288c89f.js.map": "/static/js/main.5288c89f.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.cc904fd8.css",
-    "static/js/main.aa41b5e2.js"
+    "static/css/main.e1716a74.css",
+    "static/js/main.5288c89f.js"
   ]
 }
