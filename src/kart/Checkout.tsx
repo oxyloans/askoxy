@@ -620,8 +620,9 @@ const CheckoutPage: React.FC = () => {
       }
 
       // Check if delivery time slot is selected
-      if (selectedTimeSlot) {
+      if (!selectedTimeSlot) {
         Modal.error({ title: "Error", content: "Please select a time slot." });
+        return;
       }
 
       if (grandTotalAmount === 0) {
@@ -663,10 +664,10 @@ const CheckoutPage: React.FC = () => {
         await fetchCartData(); // Ensure cart updates
 
         if (selectedPayment === "COD" && !response.data.paymentId) {
-          if (response.data) {
-            showSampleModal(); // Ensure modal appears before any navigation logic
-            return;
-          }
+          // if (response.data) {
+          //   // showSampleModal(); // Ensure modal appears before any navigation logic
+          //   return;
+          // }
           Modal.success({
             content: "Order placed Successfully",
             onOk: () => navigate("/main/myorders"),
@@ -882,10 +883,10 @@ const CheckoutPage: React.FC = () => {
                   localStorage.removeItem("merchantTransactionId");
                   fetchCartData();
                   if (secondResponse.data.status === null) {
-                    if (secondResponse.data.status) {
-                      showSampleModal(); // Ensure modal appears before any navigation logic
-                      return;
-                    }
+                    // if (secondResponse.data.status) {
+                    //   showSampleModal(); // Ensure modal appears before any navigation logic
+                    //   return;
+                    // }
                     Modal.success({
                       content: "Order placed Successfully",
                       onOk: () => {
@@ -894,10 +895,10 @@ const CheckoutPage: React.FC = () => {
                       },
                     });
                   } else {
-                    if (secondResponse.data.status) {
-                      showSampleModal(); // Ensure modal appears before any navigation logic
-                      return;
-                    }
+                    // if (secondResponse.data.status) {
+                    //   showSampleModal(); // Ensure modal appears before any navigation logic
+                    //   return;
+                    // }
                     Modal.success({
                       content: secondResponse.data.status,
                       onOk: () => {
