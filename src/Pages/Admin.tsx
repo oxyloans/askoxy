@@ -1,24 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
-import { Select, Table, TableProps } from "antd";
+import { Table, TableProps } from "antd";
 import "antd/dist/reset.css";
-import moment from "moment";
 import BASE_URL from "../Config";
 
 interface DashboardCardProps {
   title: string;
   count: number;
   color: string;
-}
-
-interface DateRange {
-  startDate: string | null;
-  endDate: string | null;
-}
-
-interface DateFilterProps {
-  selectedFilter: string;
 }
 
 interface User {
@@ -30,6 +20,7 @@ interface User {
   transportType: string | null;
   scriptId: string | null;
   familyCount: number;
+  createdAt: string;
 }
 
 interface OfferDetails {
@@ -38,6 +29,7 @@ interface OfferDetails {
   askOxyOfers: string;
   mobileNumber: string;
   registrationDate: string;
+  createdAt: string;
 }
 
 interface UserCount {
@@ -70,14 +62,7 @@ const Admin: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [combinedData, setCombinedData] = useState<OfferDetails[]>([]);
-  const [userCount, setUserCount] = useState<UserCount[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(
-    "REGISTEREDUSERS"
-  );
-  const [showRegisteredColumn, setShowRegisteredColumn] = useState(true);
-  const [registeredUserCount, setRegisteredUserCount] = useState<UserCount[]>(
-    []
-  );
+  const [selectedFilter, setSelectedFilter] = useState<string | null>();
 
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
@@ -86,17 +71,27 @@ const Admin: React.FC = () => {
     startDate: null,
     endDate: null,
   });
-  const [currentPage, setCurrentPage] = useState(1); // Track the current page
+  const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 50;
 
-  const fetchData = async (
-    startDate: string | null,
-    endDate: string | null
-  ) => {
+  const fetchData = async () => {
     try {
       setLoading(true);
 
-      // Perform multiple API requests in parallel
+      const formatDate = (dateString: string | number | null) => {
+        if (!dateString) return "N/A";
+
+        if (typeof dateString === "number") {
+          return new Date(dateString).toLocaleDateString();
+        }
+
+        if (typeof dateString === "string" && !isNaN(Date.parse(dateString))) {
+          return new Date(dateString).toLocaleDateString();
+        }
+
+        return "N/A";
+      };
+
       const responses = await Promise.allSettled([
         axios.get(`${BASE_URL}/auth-service/auth/usersOfferesDetails`),
         axios.get(`${BASE_URL}/auth-service/auth/AllusersAddress`),
@@ -104,10 +99,6 @@ const Admin: React.FC = () => {
           `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`
         ),
         axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
-        // axios.post(`${BASE_URL}/user-service/getalluserdetailsbyrange`, {
-        //   endingDate: endDate,
-        //   startingDate: startDate,
-        // }),
       ]);
 
       if (
@@ -120,6 +111,11 @@ const Admin: React.FC = () => {
             offerDetails.mobileNumber !== ""
         );
 
+        const offersData = validOffers1.map((offer: OfferDetails) => ({
+          ...offer,
+          createdAt: formatDate(offer.createdAt),
+        }));
+
         const validOffers2 = responses[2].value.data.filter(
           (offerDetails: OfferDetails) =>
             offerDetails.userId !== null &&
@@ -128,7 +124,13 @@ const Admin: React.FC = () => {
             offerDetails.mobileNumber !== ""
         );
 
-        const combinedOffers = [...validOffers1, ...validOffers2];
+        const offersData1 = validOffers2.map((offer: OfferDetails) => ({
+          ...offer,
+          createdAt: formatDate(offer.createdAt),
+        }));
+
+        const combinedOffers = [...offersData, ...offersData1];
+        console.log(combinedOffers);
         setOffers(combinedOffers);
         setAllOffers(combinedOffers);
       } else {
@@ -136,7 +138,6 @@ const Admin: React.FC = () => {
         setError("Failed to load offers.");
       }
 
-      // Handling responses for users
       if (
         responses[1].status === "fulfilled" &&
         responses[3].status === "fulfilled"
@@ -149,6 +150,11 @@ const Admin: React.FC = () => {
             user.whatsappNumber !== ""
         );
 
+        const offersData = validUsers1.map((offer: OfferDetails) => ({
+          ...offer,
+          createdAt: formatDate(offer.createdAt),
+        }));
+
         const validUsers2 = responses[3].value.data.filter(
           (user: User) =>
             user.deliveryType !== null &&
@@ -157,97 +163,29 @@ const Admin: React.FC = () => {
             user.whatsappNumber !== ""
         );
 
-        const combinedUsers = [...validUsers1, ...validUsers2];
+        const offersData1 = validUsers2.map((offer: OfferDetails) => ({
+          ...offer,
+          createdAt: formatDate(offer.createdAt),
+        }));
+
+        const combinedUsers = [...offersData, ...offersData1];
         setUsers(combinedUsers);
         setFilteredUsers(combinedUsers);
       } else {
         console.error("Failed to fetch user addresses.");
         setError("Failed to load user addresses.");
       }
-      // if (responses[2].status === "fulfilled") {
-      //   setUserCount(responses[2].value.data);
-      //   setRegisteredUserCount(responses[2].value.data);
-      // } else {
-      //   console.error("Failed to fetch user addresses:", responses[2].reason);
-      //   setError("Failed to load user addresses.");
-      // }
     } catch (err: any) {
       console.error("An unexpected error occurred:", err);
       setError("An unexpected error occurred.");
-    } finally {
-      // Ensure loading state is cleared after the process
-      setLoading(false);
-    }
-  };
-
-  const fetchDataByDateRange = async (
-    startDate: string | null,
-    endDate: string | null
-  ) => {
-    try {
-      setLoading(true);
-
-      const response = await axios.post(
-        `${BASE_URL}/user-service/getalluserdetailsbyrange`,
-        {
-          endingDate: endDate,
-          startingDate: startDate,
-        }
-      );
-
-      setUserCount(response.data);
-      setLoading(false);
-    } catch (err: any) {
-      setLoading(false);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData(null, null);
+    fetchData();
   }, []);
-
-  const handleDateChange = (value: string) => {
-    let endDate = moment().format("YYYY-MM-DD"); // Current date
-    let startDate: string | null = null;
-    // console.log(value);
-
-    switch (value) {
-      case "today":
-        startDate = moment().format("YYYY-MM-DD");
-        break;
-      case "yesterday":
-        startDate = moment().subtract(1, "days").format("YYYY-MM-DD");
-        break;
-      case "thisWeek":
-        startDate = moment().startOf("week").format("YYYY-MM-DD");
-        break;
-      case "last10Days":
-        startDate = moment().subtract(10, "days").format("YYYY-MM-DD");
-        break;
-      case "thisMonth":
-        startDate = moment().startOf("month").format("YYYY-MM-DD");
-        break;
-      case "lastMonth":
-        startDate = moment()
-          .subtract(1, "months")
-          .startOf("month")
-          .format("YYYY-MM-DD");
-        endDate = moment()
-          .subtract(1, "months")
-          .endOf("month")
-          .format("YYYY-MM-DD");
-        break;
-      default:
-        startDate = null;
-    }
-
-    setDateRange({ startDate, endDate });
-    console.log({ startDate, endDate });
-    // fetchDataByDateRange(startDate, endDate);
-    handleFilter("REGISTEREDUSERS", { startDate, endDate });
-  };
 
   useEffect(() => {
     const allData = [
@@ -258,42 +196,23 @@ const Admin: React.FC = () => {
         mobileNumber: user.whatsappNumber || "N/A",
         askOxyOfers: "FREERUDHRAKSHA",
         registrationDate: "N/A",
+        createdAt: user.createdAt,
       })),
     ];
     setOffers(allData);
     setCombinedData(allData);
   }, [allOffers, filteredUsers]);
 
-  useEffect(() => {
-    const userCountData = userCount?.map((user, index) => ({
-      userId: `${index}`,
-      projectType: "ASKOXY",
-      mobileNumber: user.phoneNumber || "N/A",
-      askOxyOfers: "REGISTERED USERS",
-      registrationDate: new Date(user.createdAt).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-    }));
-    setOffers(userCountData);
-  }, [userCount]);
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString === "N/A" || isNaN(Date.parse(dateString))) {
+      return "N/A";
+    }
+    return new Date(dateString).toLocaleDateString();
+  };
 
-  const handleFilter = (
-    offerType: string,
-    dates?: { startDate: string | null; endDate: string | null }
-  ) => {
-    // console.log({ combinedData });
-
+  const handleFilter = (offerType: string) => {
     setCurrentPage(1);
     setSelectedFilter(offerType);
-    setShowRegisteredColumn(offerType === "REGISTEREDUSERS");
-    if (dates) {
-      fetchDataByDateRange(dates.startDate, dates.endDate);
-    }
     if (offerType === "FREERUDRAKSHA") {
       const freeRudrakshaData = filteredUsers.map((user, index) => ({
         userId: `${index}`,
@@ -301,6 +220,7 @@ const Admin: React.FC = () => {
         mobileNumber: user.whatsappNumber || "N/A",
         askOxyOfers: "FREE RUDHRAKSHA",
         registrationDate: "N/A",
+        createdAt: user.createdAt,
       }));
 
       setOffers(freeRudrakshaData);
@@ -313,39 +233,20 @@ const Admin: React.FC = () => {
           mobileNumber: user.whatsappNumber || "N/A",
           askOxyOfers: "FREE RUDHRAKSHA",
           registrationDate: "N/A",
+          createdAt: user.createdAt,
         })),
       ];
       setOffers(allData);
-
-      // console.log({ offers });
-    } else if (offerType === "REGISTEREDUSERS") {
-      // fetchDataByDateRange(date.startDate, date.endDate);
-      const userCountData = userCount?.map((user, index) => ({
-        userId: `${index}`,
-        projectType: "ASKOXY",
-        mobileNumber: user.phoneNumber || "N/A",
-        askOxyOfers: "REGISTERED USERS",
-        registrationDate: new Date(user.createdAt).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-      }));
-      // console.log({ userCount });
-
-      // console.log({ userCountData });
-
-      setOffers(userCountData);
     } else {
       const filteredData = allOffers.filter(
         (offer) => offer.askOxyOfers === offerType
       );
-      setOffers(filteredData);
 
-      // console.log({ offers });
+      const formattedOffers = filteredData.map((offer) => ({
+        ...offer,
+        createdAt: formatDate(offer.createdAt),
+      }));
+      setOffers(formattedOffers);
     }
   };
 
@@ -359,12 +260,6 @@ const Admin: React.FC = () => {
         index + 1 + (currentPage - 1) * pageSize,
     },
     {
-      title: "Project Type",
-      dataIndex: "projectType",
-      key: "projectType",
-      align: "center",
-    },
-    {
       title: "Mobile Number",
       dataIndex: "mobileNumber",
       key: "mobileNumber",
@@ -376,16 +271,12 @@ const Admin: React.FC = () => {
       key: "askOxyOfers",
       align: "center",
     },
-    // ...(showRegisteredColumn
-    //   ? [
-    //       {
-    //         title: "Registration Date",
-    //         dataIndex: "registrationDate",
-    //         key: "registrationDate",
-    //         align: "center" as "center",
-    //       },
-    //     ]
-    //   : []),
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      align: "center",
+    },
   ];
 
   const handlePageChange = (page: number) => {
@@ -393,17 +284,9 @@ const Admin: React.FC = () => {
   };
   const convertToCSV = (data: any[]) => {
     if (data.length === 0) return "";
-
-    // Get headers excluding unwanted fields
     const headers = ["S.No", "Project Type", "Mobile Number", "Offer"];
-    if (showRegisteredColumn) {
-      headers.push("Registration Date");
-    }
-
-    // Create CSV header row
     const csvRows = [headers.join(",")];
 
-    // Add data rows
     data.forEach((item, index) => {
       const row = [
         index + 1,
@@ -412,11 +295,6 @@ const Admin: React.FC = () => {
         item.askOxyOfers || "",
       ];
 
-      if (showRegisteredColumn) {
-        row.push(item.registrationDate || "");
-      }
-
-      // Handle commas in content by wrapping in quotes
       const formattedRow = row.map((cell) => {
         const cellStr = cell.toString();
         return cellStr.includes(",") ? `"${cellStr}"` : cellStr;
@@ -424,7 +302,6 @@ const Admin: React.FC = () => {
 
       csvRows.push(formattedRow.join(","));
     });
-
     return csvRows.join("\n");
   };
 
@@ -435,7 +312,6 @@ const Admin: React.FC = () => {
         return;
       }
 
-      // Generate filename based on selected filter and date
       let filename = "askoxy-data";
       if (selectedFilter) {
         filename += `-${selectedFilter.toLowerCase()}`;
@@ -447,7 +323,6 @@ const Admin: React.FC = () => {
 
       const csvData = convertToCSV(offers);
 
-      // Add BOM for Excel to properly recognize UTF-8
       const BOM = "\uFEFF";
       const blob = new Blob([BOM + csvData], {
         type: "text/csv;charset=utf-8;",
@@ -469,10 +344,8 @@ const Admin: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
       <div className="flex-1 bg-gray-50 p-4 md:p-6 md:ml-55 overflow-hidden">
         <h1 className="text-2xl font-semibold mb-4">Admin Dashboard</h1>
 
@@ -545,14 +418,8 @@ const Admin: React.FC = () => {
             }
             color="orange"
           />
-          {/* <DashboardCard
-            title="Registered Users"
-            count={registeredUserCount.length}
-            color="pink"
-          /> */}
         </div>
 
-        {/* Filter Buttons */}
         <div className="flex flex-wrap gap-4 mb-6">
           <button
             onClick={() => handleFilter("FREESAMPLE")}
@@ -602,42 +469,9 @@ const Admin: React.FC = () => {
           >
             Show All
           </button>
-
-          {/* <button
-            onClick={() => handleFilter("REGISTEREDUSERS")}
-            className="bg-indigo-200 hover:bg-indigo-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
-          >
-            Registered Users
-          </button> */}
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          {/* <div className="flex items-center space-x-8">
-            {selectedFilter === "REGISTEREDUSERS" && (
-              <>
-                <Select
-                  defaultValue="Select a Date Range"
-                  style={{ width: 200 }}
-                  onChange={handleDateChange}
-                  className="border rounded"
-                >
-                  <Select.Option value="today">Today</Select.Option>
-                  <Select.Option value="thisWeek">This Week</Select.Option>
-                  <Select.Option value="last10Days">Last 10 Days</Select.Option>
-                  <Select.Option value="thisMonth">This Month</Select.Option>
-                  <Select.Option value="lastMonth">Last Month</Select.Option>
-                </Select>
-
-                <div className="flex items-center space-x-3">
-                  <span className="text-gray-600">Total :</span>
-                  <span className="text-2xl font-bold text-black-600">
-                    {userCount.length}
-                  </span>
-                </div>
-              </>
-            )}
-          </div> */}
-
           <button
             onClick={handleDownload}
             className="ml-auto px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-blue-600 flex items-center space-x-2 shadow-sm"

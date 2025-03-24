@@ -2,7 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import PhoneInput, {
+  isValidPhoneNumber,
+  parsePhoneNumber,
+} from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import {
   X,
@@ -15,8 +18,9 @@ import {
   AlertTriangle,
   Smartphone,
   MessageCircle,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
+import BASE_URL from "../../Config";
 
 const WhatsappRegister = () => {
   const navigate = useNavigate();
@@ -49,16 +53,16 @@ const WhatsappRegister = () => {
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
-  const BASE_URL = userType === "live" 
-    ? "https://meta.oxyloans.com/api" 
-    : "https://meta.oxyglobal.tech/api";
+  console.log("User Type:", userType);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
 
     if (userId && accessToken) {
-      navigate(location.state?.from || "/main/dashboard/products", { replace: true });
+      navigate(location.state?.from || "/main/dashboard/products", {
+        replace: true,
+      });
       return;
     }
 
@@ -89,9 +93,11 @@ const WhatsappRegister = () => {
   useEffect(() => {
     if (phoneNumber) {
       // Extract country code without the + sign
-      const phoneNumberS = parsePhoneNumber(phoneNumber)
+      const phoneNumberS = parsePhoneNumber(phoneNumber);
       console.log("phoneNumberS.country", phoneNumberS?.countryCallingCode);
-      const countryCode = phoneNumberS?.countryCallingCode ? `+${phoneNumberS.countryCallingCode}` : "";
+      const countryCode = phoneNumberS?.countryCallingCode
+        ? `+${phoneNumberS.countryCallingCode}`
+        : "";
       setCountryCode(countryCode || "");
       setIsMethodDisabled(true); // Disable method selection when number is entered
     } else {
@@ -128,21 +134,31 @@ const WhatsappRegister = () => {
     // Auto-submit when all fields are filled
     if (otpMethod === "whatsapp" && index === 3 && sanitizedValue) {
       // Check if all fields are filled
-      const isComplete = credentials.otp.every((val, i) => i === index || Boolean(val));
+      const isComplete = credentials.otp.every(
+        (val, i) => i === index || Boolean(val)
+      );
       if (isComplete) {
         const newOtp = [...credentials.otp];
         newOtp[index] = sanitizedValue;
         setCredentials((prev) => ({ ...prev, otp: newOtp }));
-        setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+        setTimeout(
+          () => document.getElementById("otpSubmitButton")?.click(),
+          300
+        );
       }
     } else if (otpMethod === "mobile" && index === 5 && sanitizedValue) {
       // Check if all fields are filled
-      const isComplete = credentials.mobileOTP.every((val, i) => i === index || Boolean(val));
+      const isComplete = credentials.mobileOTP.every(
+        (val, i) => i === index || Boolean(val)
+      );
       if (isComplete) {
         const newMobileOtp = [...credentials.mobileOTP];
         newMobileOtp[index] = sanitizedValue;
         setCredentials((prev) => ({ ...prev, mobileOTP: newMobileOtp }));
-        setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+        setTimeout(
+          () => document.getElementById("otpSubmitButton")?.click(),
+          300
+        );
       }
     }
   };
@@ -154,28 +170,34 @@ const WhatsappRegister = () => {
       .getData("text")
       .replace(/[^0-9]/g, "")
       .slice(0, otpLength);
-    
+
     if (otpMethod === "whatsapp") {
       const newOtp = [...credentials.otp];
       pastedData.split("").forEach((char, index) => {
         if (index < 4) newOtp[index] = char;
       });
-      setCredentials(prev => ({ ...prev, otp: newOtp }));
-      
+      setCredentials((prev) => ({ ...prev, otp: newOtp }));
+
       // Auto-submit if complete
       if (pastedData.length === 4) {
-        setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+        setTimeout(
+          () => document.getElementById("otpSubmitButton")?.click(),
+          300
+        );
       }
     } else {
       const newMobileOtp = [...credentials.mobileOTP];
       pastedData.split("").forEach((char, index) => {
         if (index < 6) newMobileOtp[index] = char;
       });
-      setCredentials(prev => ({ ...prev, mobileOTP: newMobileOtp }));
-      
+      setCredentials((prev) => ({ ...prev, mobileOTP: newMobileOtp }));
+
       // Auto-submit if complete
       if (pastedData.length === 6) {
-        setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+        setTimeout(
+          () => document.getElementById("otpSubmitButton")?.click(),
+          300
+        );
       }
     }
   };
@@ -184,8 +206,9 @@ const WhatsappRegister = () => {
     e: React.KeyboardEvent<HTMLInputElement>,
     index: number
   ) => {
-    const currentOtp = otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP;
-    
+    const currentOtp =
+      otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP;
+
     if (e.key === "Backspace" && !currentOtp[index] && index > 0) {
       otpRefs.current[index - 1]?.focus();
     }
@@ -220,9 +243,9 @@ const WhatsappRegister = () => {
       };
       // Assign the correct number field based on user selection
       if (otpMethod === "whatsapp") {
-        requestBody.whatsappNumber = phoneNumber.replace(countryCode, '');
+        requestBody.whatsappNumber = phoneNumber.replace(countryCode, "");
       } else {
-        requestBody.mobileNumber = phoneNumber.replace(countryCode, '');
+        requestBody.mobileNumber = phoneNumber.replace(countryCode, "");
       }
 
       if (reffererId) {
@@ -233,17 +256,25 @@ const WhatsappRegister = () => {
         `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
         requestBody
       );
-      
+
       if (response.data) {
         // Check for the specific error message indicating user already registered
-        if (response.data.message === "User already registered with this Mobile Number, please log in.") {
+        if (
+          response.data.message ===
+          "User already registered with this Mobile Number, please log in."
+        ) {
           setShowSuccessPopup(false);
-          setError("You are already registered with this number. Please log in.");
+          setError(
+            "You are already registered with this number. Please log in."
+          );
           setTimeout(() => navigate("/whatsapplogin"), 1500);
           return;
         }
-        
-        localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession);
+
+        localStorage.setItem(
+          "mobileOtpSession",
+          response.data.mobileOtpSession
+        );
         localStorage.setItem("salt", response.data.salt);
         localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
         localStorage.setItem("userType", userType);
@@ -256,7 +287,11 @@ const WhatsappRegister = () => {
           setIsButtonEnabled(true);
           setOtpShow(true);
           setShowSuccessPopup(true);
-          setMessage(`OTP sent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`);
+          setMessage(
+            `OTP sent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
+          );
           setResendDisabled(true);
           setisPhoneDisabled(true); // Disable the input field after OTP is sent
           setResendTimer(30);
@@ -270,11 +305,19 @@ const WhatsappRegister = () => {
       // Handle axios error response
       if (err.response && err.response.data) {
         // Check if the error message indicates user is already registered
-        if (err.response.data.message === "User already registered with this Mobile Number, please log in.") {
-          setError("You are already registered with this number. Please log in.");
+        if (
+          err.response.data.message ===
+          "User already registered with this Mobile Number, please log in."
+        ) {
+          setError(
+            "You are already registered with this number. Please log in."
+          );
           setTimeout(() => navigate("/whatsapplogin"), 1500);
         } else {
-          setError(err.response.data.message || "An error occurred. Please try again later.");
+          setError(
+            err.response.data.message ||
+              "An error occurred. Please try again later."
+          );
         }
       } else {
         setError("An error occurred. Please try again later.");
@@ -290,14 +333,14 @@ const WhatsappRegister = () => {
     setMessage("");
     setIsLoading(true);
     setIsRegistering(true);
-    
+
     if (!credentials) {
       setOtpError("Please enter the complete OTP");
       setIsLoading(false);
       setIsRegistering(false);
       return;
     }
-    
+
     if (otpMethod === "whatsapp") {
       if (credentials.otp.join("").length !== 4) {
         setOtpError("Please enter the complete WhatsApp OTP");
@@ -313,7 +356,7 @@ const WhatsappRegister = () => {
         return;
       }
     }
-    
+
     try {
       const requestBody: Record<string, any> = {
         registrationType: otpMethod, // Uses "whatsapp" or "mobile"
@@ -323,17 +366,20 @@ const WhatsappRegister = () => {
 
       // Assign the correct OTP fields
       if (otpMethod === "whatsapp") {
-        requestBody.whatsappNumber = phoneNumber?.replace(countryCode, '');
-        requestBody.whatsappOtpSession = localStorage.getItem("mobileOtpSession");
+        requestBody.whatsappNumber = phoneNumber?.replace(countryCode, "");
+        requestBody.whatsappOtpSession =
+          localStorage.getItem("mobileOtpSession");
         requestBody.whatsappOtpValue = credentials.otp.join("");
         requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
+        requestBody.registerdFrom = "WEB";
       } else {
-        requestBody.mobileNumber = phoneNumber?.replace(countryCode, '');
+        requestBody.mobileNumber = phoneNumber?.replace(countryCode, "");
         requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
         requestBody.mobileOtpValue = credentials.mobileOTP.join(""); //Use correct OTP field for SMS
         requestBody.expiryTime = localStorage.getItem("expiryTime");
         requestBody.salt = localStorage.getItem("salt");
+        requestBody.registerdFrom = "WEB";
       }
 
       if (reffererId) {
@@ -347,23 +393,31 @@ const WhatsappRegister = () => {
 
       if (response.data) {
         // Check for error message in the response
-        if (response.data.message === "User already registered with this Mobile Number, please log in.") {
-          setOtpError("You are already registered with this number. Redirecting to login...");
+        if (
+          response.data.message ===
+          "User already registered with this Mobile Number, please log in."
+        ) {
+          setOtpError(
+            "You are already registered with this number. Redirecting to login..."
+          );
           setTimeout(() => navigate("/whatsapplogin"), 1500);
           return;
         }
-        
+
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
         setMessage("Registration Successful");
-        if(otpMethod === "whatsapp") {
+        if (otpMethod === "whatsapp") {
           localStorage.setItem("whatsappNumber", phoneNumber || "");
         } else {
           localStorage.setItem("mobileNumber", requestBody.mobileNumber);
         }
         localStorage.removeItem("refferrerId");
-        setTimeout(() => navigate(location.state?.from || "/main/dashboard/products"), 500);
+        setTimeout(
+          () => navigate(location.state?.from || "/main/dashboard/products"),
+          500
+        );
         setTimeout(() => window.location.reload(), 1000);
       }
     } catch (err: any) {
@@ -394,9 +448,9 @@ const WhatsappRegister = () => {
           countryCode: countryCode,
         };
         if (otpMethod === "whatsapp") {
-          requestBody.whatsappNumber = phoneNumber?.replace(countryCode, '');
+          requestBody.whatsappNumber = phoneNumber?.replace(countryCode, "");
         } else {
-          requestBody.mobileNumber = phoneNumber?.replace(countryCode, '');
+          requestBody.mobileNumber = phoneNumber?.replace(countryCode, "");
         }
         const response = await axios.post(
           `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
@@ -404,22 +458,37 @@ const WhatsappRegister = () => {
         );
         if (response.data) {
           // Check for error message in the response
-          if (response.data.message === "User already registered with this Mobile Number, please log in.") {
-            setError("You are already registered with this number. Redirecting to login...");
+          if (
+            response.data.message ===
+            "User already registered with this Mobile Number, please log in."
+          ) {
+            setError(
+              "You are already registered with this number. Redirecting to login..."
+            );
             setTimeout(() => navigate("/whatsapplogin"), 1500);
             return;
           }
-          
-          localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession);
+
+          localStorage.setItem(
+            "mobileOtpSession",
+            response.data.mobileOtpSession
+          );
           localStorage.setItem("salt", response.data.salt);
           localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
 
           setShowSuccessPopup(true);
-          setMessage(`OTP resent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`);
+          setMessage(
+            `OTP resent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
+          );
           // Clear existing OTP
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
-            mobileOTP: otpMethod === "mobile" ? ["", "", "", "", "", ""] : prev.mobileOTP,
+            mobileOTP:
+              otpMethod === "mobile"
+                ? ["", "", "", "", "", ""]
+                : prev.mobileOTP,
           }));
           setTimeout(() => {
             setShowSuccessPopup(false);
@@ -464,32 +533,32 @@ const WhatsappRegister = () => {
       >
         {/* Header */}
         <div className="bg-purple-600 p-6 relative">
-        <h2 className="text-2xl font-bold text-white text-center">
-      Register to ASKOXY.AI
-    </h2>
-  <button
-    onClick={handleClose}
-    className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
-  >
-    <X className="w-5 h-5" />
-  </button>
-  <div className="flex flex-col items-center gap-3">
-    <div className="flex gap-4 mt-4">
-      <button
-        onClick={() => window.location.href = '/whatsapplogin'}
-        className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
-      >
-        Login
-      </button>
-      <button
-        onClick={() => window.location.href = '/whatsappregister'}
-        className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
-      >
-        Register
-      </button>
-    </div>
-  </div>
-</div>
+          <h2 className="text-2xl font-bold text-white text-center">
+            Register to ASKOXY.AI
+          </h2>
+          <button
+            onClick={handleClose}
+            className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={() => (window.location.href = "/whatsapplogin")}
+                className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => (window.location.href = "/whatsappregister")}
+                className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
+              >
+                Register
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Erice Customer Alert - Only show when not in OTP mode */}
         {/* {showEriceAlert && (
@@ -530,7 +599,11 @@ const WhatsappRegister = () => {
                       otpMethod === "whatsapp"
                         ? "bg-green-500 text-white shadow-md"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                    } ${
+                      isPhoneDisabled || isMethodDisabled
+                        ? "opacity-70 cursor-not-allowed"
+                        : ""
+                    }`}
                     onClick={() => handleMethodChange("whatsapp")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
@@ -543,7 +616,11 @@ const WhatsappRegister = () => {
                       otpMethod === "mobile"
                         ? "bg-purple-600 text-white shadow-md"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                    } ${
+                      isPhoneDisabled || isMethodDisabled
+                        ? "opacity-70 cursor-not-allowed"
+                        : ""
+                    }`}
                     onClick={() => handleMethodChange("mobile")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
@@ -598,10 +675,13 @@ const WhatsappRegister = () => {
                 <div className="space-y-4 animate-fadeIn">
                   <div className="flex justify-between items-center">
                     <label className="block text-sm font-medium text-gray-700">
-                      Enter {otpMethod === "whatsapp" ? "4-digit" : "6-digit"} OTP
+                      Enter {otpMethod === "whatsapp" ? "4-digit" : "6-digit"}{" "}
+                      OTP
                     </label>
                     <span className="text-xs text-gray-500">
-                      {otpMethod === "whatsapp" ? "Sent via WhatsApp" : "Sent via SMS"}
+                      {otpMethod === "whatsapp"
+                        ? "Sent via WhatsApp"
+                        : "Sent via SMS"}
                     </span>
                   </div>
                   <div className="flex justify-center gap-3">
@@ -652,8 +732,8 @@ const WhatsappRegister = () => {
                   type="submit"
                   disabled={isLoading || (!showOtp && !isOtpButtonEnabled)}
                   className={`w-full py-3 ${
-                    !showOtp && !isOtpButtonEnabled 
-                      ? "bg-gray-400 cursor-not-allowed" 
+                    !showOtp && !isOtpButtonEnabled
+                      ? "bg-gray-400 cursor-not-allowed"
                       : "bg-purple-600 hover:bg-purple-700"
                   } text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
@@ -690,8 +770,12 @@ const WhatsappRegister = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-              <p className="text-lg font-medium text-gray-700">Registering your account...</p>
-              <p className="text-sm text-gray-500">Please wait, this may take a moment</p>
+              <p className="text-lg font-medium text-gray-700">
+                Registering your account...
+              </p>
+              <p className="text-sm text-gray-500">
+                Please wait, this may take a moment
+              </p>
             </div>
           )}
         </div>
