@@ -79,7 +79,7 @@ import Login from "./Pages/Login";
 import Erice from "./components/Erice";
 import OxyGroup from "./components/OxygroupPdf";
 import BarcodeScanner from "./Dashboard/BarcodeScanner";
-
+import FREEAIANDGENAI from "./components/AIandGenAi";
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -103,6 +103,7 @@ const App: React.FC = () => {
               element={<TestimonialsPage />}
             />
             <Route path="/steamricevsrawrice" element={<RiceComparison />} />
+            <Route path="/aiandgenaivsverficationandvalidation" element={<FREEAIANDGENAI/>}/>
             {/* Landing Page (First Page) */}
             <Route path="/" element={<Landingpage />} />
 

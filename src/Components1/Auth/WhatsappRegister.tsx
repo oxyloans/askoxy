@@ -17,8 +17,6 @@ import {
   MessageCircle,
   ChevronRight
 } from "lucide-react";
-import BASE_URL from "../../Config";
-
 
 const WhatsappRegister = () => {
   const navigate = useNavigate();
@@ -47,12 +45,13 @@ const WhatsappRegister = () => {
   const [isMethodDisabled, setIsMethodDisabled] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [showEriceAlert, setShowEriceAlert] = useState(true); // New state for Erice alert
-  
 
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
-  console.log("User Type:", userType);
+  const BASE_URL = userType === "live" 
+    ? "https://meta.oxyloans.com/api" 
+    : "https://meta.oxyglobal.tech/api";
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -329,14 +328,12 @@ const WhatsappRegister = () => {
         requestBody.whatsappOtpValue = credentials.otp.join("");
         requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
-        requestBody.registerdFrom = "WEB";
       } else {
         requestBody.mobileNumber = phoneNumber?.replace(countryCode, '');
         requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
         requestBody.mobileOtpValue = credentials.mobileOTP.join(""); //Use correct OTP field for SMS
         requestBody.expiryTime = localStorage.getItem("expiryTime");
         requestBody.salt = localStorage.getItem("salt");
-        requestBody.registerdFrom = "WEB";
       }
 
       if (reffererId) {
@@ -466,19 +463,33 @@ const WhatsappRegister = () => {
         }`}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-6 relative">
-          <button
-            onClick={handleClose}
-            className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-          <div className="flex flex-col items-center gap-3">
-            <h2 className="text-2xl font-bold text-white text-center">
-              Register to ASKOXY.AI
-            </h2>
-          </div>
-        </div>
+        <div className="bg-purple-600 p-6 relative">
+        <h2 className="text-2xl font-bold text-white text-center">
+      Register to ASKOXY.AI
+    </h2>
+  <button
+    onClick={handleClose}
+    className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
+  >
+    <X className="w-5 h-5" />
+  </button>
+  <div className="flex flex-col items-center gap-3">
+    <div className="flex gap-4 mt-4">
+      <button
+        onClick={() => window.location.href = '/whatsapplogin'}
+        className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
+      >
+        Login
+      </button>
+      <button
+        onClick={() => window.location.href = '/whatsappregister'}
+        className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
+      >
+        Register
+      </button>
+    </div>
+  </div>
+</div>
 
         {/* Erice Customer Alert - Only show when not in OTP mode */}
         {/* {showEriceAlert && (

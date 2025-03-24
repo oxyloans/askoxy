@@ -2,7 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import PhoneInput, {
+  isValidPhoneNumber,
+  parsePhoneNumber,
+} from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import {
   X,
@@ -18,7 +21,7 @@ import {
   ShieldCheck,
   AlertTriangle,
 } from "lucide-react";
-import BASE_URL from "../../Config";
+// import BASE_URL from "../../Config";
 
 const WhatsappLogin = () => {
   const navigate = useNavigate();
@@ -30,7 +33,7 @@ const WhatsappLogin = () => {
   });
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
-  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("mobile");
+  const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("whatsapp");
   const [showEnglish, setShowEnglish] = useState(true);
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
@@ -50,10 +53,14 @@ const WhatsappLogin = () => {
   const [isGetOtpButtonDisabled, setIsGetOtpButtonDisabled] = useState(true);
   // Add state for showing Erice alert
   const [showEriceAlert, setShowEriceAlert] = useState(true);
-  
+
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
+  const BASE_URL =
+    userType === "live"
+      ? "https://meta.oxyloans.com/api"
+      : "https://meta.oxyglobal.tech/api";
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -80,16 +87,6 @@ const WhatsappLogin = () => {
     }
   }, [resendDisabled]);
 
-  // useEffect(() => {
-  //   // Set up an interval to toggle between languages every 7 seconds
-  //   const intervalId = setInterval(() => {
-  //     setShowEnglish(prevState => !prevState);
-  //   }, 7000);
-    
-  //   // Clean up interval on component unmount
-  //   return () => clearInterval(intervalId);
-  // }, []);
-
   // Check if phone number is valid to enable/disable "Get OTP" button
   useEffect(() => {
     if (phoneNumber && isValidPhoneNumber(phoneNumber)) {
@@ -103,8 +100,8 @@ const WhatsappLogin = () => {
   useEffect(() => {
     if (phoneNumber) {
       const phoneNumberObj = parsePhoneNumber(phoneNumber);
-      const countryCode = phoneNumberObj?.countryCallingCode 
-        ? `+${phoneNumberObj.countryCallingCode}` 
+      const countryCode = phoneNumberObj?.countryCallingCode
+        ? `+${phoneNumberObj.countryCallingCode}`
         : "";
       setCountryCode(countryCode);
       setIsMethodDisabled(true); // Disable method selection when number is entered
@@ -115,7 +112,10 @@ const WhatsappLogin = () => {
 
   // Automatically set SMS as the default method if Erice is detected in URL
   useEffect(() => {
-    if (window.location.search.includes("erice") || window.location.pathname.includes("erice")) {
+    if (
+      window.location.search.includes("erice") ||
+      window.location.pathname.includes("erice")
+    ) {
       setOtpMethod("mobile");
     }
   }, []);
@@ -153,7 +153,7 @@ const WhatsappLogin = () => {
       .getData("text")
       .replace(/[^0-9]/g, "")
       .slice(0, otpMethod === "whatsapp" ? 4 : 6);
-    
+
     if (otpMethod === "whatsapp") {
       const newOtp = [...credentials.otp];
       pastedData.split("").forEach((char, index) => {
@@ -161,7 +161,7 @@ const WhatsappLogin = () => {
       });
       setCredentials((prev) => ({
         ...prev,
-        otp: newOtp
+        otp: newOtp,
       }));
     } else {
       const newMobileOtp = [...credentials.mobileOTP];
@@ -170,7 +170,7 @@ const WhatsappLogin = () => {
       });
       setCredentials((prev) => ({
         ...prev,
-        mobileOTP: newMobileOtp
+        mobileOTP: newMobileOtp,
       }));
     }
   };
@@ -200,8 +200,8 @@ const WhatsappLogin = () => {
       return phoneNumberObj.nationalNumber;
     }
     // Fallback to simple extraction
-    const parts = phone.split(' ');
-    return parts.length > 1 ? parts.slice(1).join('') : phone;
+    const parts = phone.split(" ");
+    return parts.length > 1 ? parts.slice(1).join("") : phone;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -217,15 +217,15 @@ const WhatsappLogin = () => {
       setIsLoading(false);
       return;
     }
-  
+
     try {
       // Extract phone number without country code
       const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber);
-      
+
       const requestBody: Record<string, any> = {
         registrationType: otpMethod, // Uses "whatsapp" or "mobile"
         userType: "Login",
-        countryCode // Just pass the country code number (e.g., "91" for India)
+        countryCode, // Just pass the country code number (e.g., "91" for India)
       };
 
       // Assign the correct number field based on user selection
@@ -236,7 +236,7 @@ const WhatsappLogin = () => {
       }
 
       const response = await axios.post(
-        BASE_URL+"/user-service/registerwithMobileAndWhatsappNumber",
+        BASE_URL + "/user-service/registerwithMobileAndWhatsappNumber",
         requestBody
       );
       setIsButtonEnabled(true);
@@ -249,16 +249,25 @@ const WhatsappLogin = () => {
         localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
         localStorage.setItem("userType", userType);
 
-        if (response.data.userId === null && response.data.userId === undefined && response.data.mobileOtpSession === null && response.data.mobileOtpSession === undefined) {
+        if (
+          response.data.userId === null &&
+          response.data.userId === undefined &&
+          response.data.mobileOtpSession === null &&
+          response.data.mobileOtpSession === undefined
+        ) {
           setShowSuccessPopup(true);
-          setMessage("This number is not registered. Please register now.")
+          setMessage("This number is not registered. Please register now.");
           setTimeout(() => navigate("/whatsappregister"), 1000);
         } else {
           setOtpShow(true);
           setAnimateOtp(true);
           setTimeout(() => setAnimateOtp(false), 1000);
           setShowSuccessPopup(true);
-          setMessage(`OTP sent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`);
+          setMessage(
+            `OTP sent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
+          );
           setResendDisabled(true);
           setIsPhoneDisabled(true);
           setResendTimer(30);
@@ -270,14 +279,22 @@ const WhatsappLogin = () => {
           }, 2000);
         }
       }
-    } catch (err:any) {
+    } catch (err: any) {
       if (err.response && err.response.data) {
         // Check if the error message indicates user is already registered
-        if (err.response.data.message === "User already registered with this Mobile Number, please log in.") {
-          setError("You are already registered with this number. Please log in.");
+        if (
+          err.response.data.message ===
+          "User already registered with this Mobile Number, please log in."
+        ) {
+          setError(
+            "You are already registered with this number. Please log in."
+          );
           setTimeout(() => navigate("/whatsapplogin"), 1500);
         } else {
-          setError(err.response.data.message || "An error occurred. Please try again later.");
+          setError(
+            err.response.data.message ||
+              "An error occurred. Please try again later."
+          );
         }
       } else {
         setError("An error occurred. Please try again later.");
@@ -316,11 +333,11 @@ const WhatsappLogin = () => {
     try {
       // Extract phone number without country code
       const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber || "");
-      
+
       const requestBody: Record<string, any> = {
         registrationType: otpMethod,
         userType: "Login",
-        countryCode // Just pass the country code number (e.g., "91" for India)
+        countryCode, // Just pass the country code number (e.g., "91" for India)
       };
 
       if (otpMethod === "whatsapp") {
@@ -339,17 +356,20 @@ const WhatsappLogin = () => {
       }
 
       const response = await axios.post(
-        BASE_URL+"/user-service/registerwithMobileAndWhatsappNumber",
+        BASE_URL + "/user-service/registerwithMobileAndWhatsappNumber",
         requestBody
       );
       if (response.data) {
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
-        if(otpMethod === "whatsapp") {
+        if (otpMethod === "whatsapp") {
           localStorage.setItem("whatsappNumber", phoneWithoutCode);
         } else {
-          localStorage.setItem("mobileNumber", phoneWithoutCode.replace(countryCode, ''));
+          localStorage.setItem(
+            "mobileNumber",
+            phoneWithoutCode.replace(countryCode, "")
+          );
         }
         localStorage.removeItem("mobileOtpSession");
         localStorage.removeItem("salt");
@@ -361,9 +381,12 @@ const WhatsappLogin = () => {
         );
         setTimeout(() => window.location.reload(), 1000);
       }
-    } catch (err:any) {
+    } catch (err: any) {
       if (err.response && err.response.data) {
-        setOtpError(err.response.data.message || "An error occurred. Please try again later.");
+        setOtpError(
+          err.response.data.message ||
+            "An error occurred. Please try again later."
+        );
       } else {
         setError("An error occurred. Please try again later.");
       }
@@ -383,11 +406,11 @@ const WhatsappLogin = () => {
       try {
         // Extract phone number without country code
         const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber || "");
-        
+
         const requestBody: Record<string, any> = {
           registrationType: otpMethod,
           userType: "Login",
-          countryCode // Just pass the country code number (e.g., "91" for India)
+          countryCode, // Just pass the country code number (e.g., "91" for India)
         };
 
         if (otpMethod === "whatsapp") {
@@ -397,7 +420,7 @@ const WhatsappLogin = () => {
         }
 
         const response = await axios.post(
-          BASE_URL+"/user-service/registerwithMobileAndWhatsappNumber",
+          BASE_URL + "/user-service/registerwithMobileAndWhatsappNumber",
           requestBody
         );
         if (response.data) {
@@ -409,24 +432,33 @@ const WhatsappLogin = () => {
           localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
 
           setShowSuccessPopup(true);
-          setMessage(`OTP resent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`);
+          setMessage(
+            `OTP resent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
+          );
           // Clear existing OTP
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
             mobileOTP:
-              otpMethod === "mobile" ? ["", "", "", "", "", ""] : prev.mobileOTP,
+              otpMethod === "mobile"
+                ? ["", "", "", "", "", ""]
+                : prev.mobileOTP,
           }));
           setTimeout(() => {
             setShowSuccessPopup(false);
             setMessage("");
           }, 2000);
         }
-      } catch (err:any) {
+      } catch (err: any) {
         if (err.response && err.response.data) {
-          setError(err.response.data.message || "An error occurred. Please try again later.");
-      } else {
-        setError("An error occurred. Please try again later.");
-      }
+          setError(
+            err.response.data.message ||
+              "An error occurred. Please try again later."
+          );
+        } else {
+          setError("An error occurred. Please try again later.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -444,7 +476,8 @@ const WhatsappLogin = () => {
 
   // Method for switching OTP method
   const switchOtpMethod = (method: "whatsapp" | "mobile") => {
-    if (!isPhoneDisabled && !isMethodDisabled) { // Only allow switching when not in OTP verification mode and no phone number entered
+    if (!isPhoneDisabled && !isMethodDisabled) {
+      // Only allow switching when not in OTP verification mode and no phone number entered
       setOtpMethod(method);
       // Clear errors when switching methods
       setError("");
@@ -465,7 +498,7 @@ const WhatsappLogin = () => {
     setIsGetOtpButtonDisabled(true); // Disable "Get OTP" button again
     // Show Erice alert again when changing number
     setShowEriceAlert(true);
-    
+
     // Reset OTP fields
     setCredentials({
       otp: ["", "", "", ""],
@@ -474,58 +507,69 @@ const WhatsappLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 row">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div
         className={`max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
         {/* Header */}
-        <div className="bg-purple-600 p-2 relative">
+        <div className="bg-purple-600 p-6 relative">
           <button
             onClick={handleClose}
             className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="flex flex-col items-center gap-3 ">
-            <h2 className="text-2xl font-bold text-white text-center mt-2">
+          <div className="flex flex-col items-center gap-3">
+            <h2 className="text-2xl font-bold text-white text-center">
               Login to ASKOXY.AI
             </h2>
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={() => (window.location.href = "/whatsapplogin")}
+                className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => (window.location.href = "/whatsappregister")}
+                className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
+              >
+                Register
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Erice Customer Alert - Now conditionally rendered */}
         {showEriceAlert && (
-         <div className="mx-6 mt-4">
-         <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2 relative">
-           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-           <div>
-             {showEnglish ? (
-               <>
-               <p className="font-bold">ERICE కస్టమర్లకు గమనిక</p>
-               <p className="text-xs">మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్ అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు</p>
-             </>
-               
-             ) : (
-              <>
-                 <p className="font-bold">Attention Erice Customers</p>
-                 <p className="text-xs">Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.</p>
-               </>
-             )}
-             <div className="items-end">
-              <button>
-              <button
-        onClick={() => setShowEnglish(!showEnglish)}
-         className="absolute bottom-2 right-2 px-2 py-1 text-xs bg-amber-50 text-amber-800 rounded"
-      >
-        {showEnglish ? "Switch to English" : "Switch to Telugu"}
-      </button>
-              </button>
-             </div>
-           </div>
-         </div>
-       </div>
+          <div className="mx-6 mt-4">
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                {!showEnglish ? (
+                  <>
+                    <p className="font-bold">ERICE కస్టమర్లకు గమనిక</p>
+                    <p className="text-xs">
+                      మీ డేటా మార్గాంతరం చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్
+                      అవ్వండి. మీ మొబైల్ నంబర్ మరియు WhatsApp నంబర్ ఒకటే అయితే,
+                      WhatsApp ద్వారా కూడా లాగిన్ అవ్వచ్చు.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold">Attention Erice Customers</p>
+                    <p className="text-sm">
+                      Your data has been migrated. Log in using the SMS option.
+                      If your mobile and WhatsApp numbers are the same, you can
+                      also log in via WhatsApp.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Success Message */}
@@ -547,33 +591,40 @@ const WhatsappLogin = () => {
             {/* OTP Method Selection UI */}
             <div className="flex flex-col items-center gap-4 p-4 border-b border-gray-100 pb-6">
               <div className="flex gap-4">
-              <button
-                  type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    otpMethod === "mobile"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
-                  onClick={() => switchOtpMethod("mobile")}
-                  disabled={isPhoneDisabled || isMethodDisabled}
-                >
-                  <Smartphone className="w-5 h-5" />
-                  SMS
-                </button>
                 <button
                   type="button"
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     otpMethod === "whatsapp"
                       ? "bg-green-500 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                  } ${
+                    isPhoneDisabled || isMethodDisabled
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
                   onClick={() => switchOtpMethod("whatsapp")}
                   disabled={isPhoneDisabled || isMethodDisabled}
                 >
                   <MessageCircle className="w-5 h-5" />
                   WhatsApp
                 </button>
-               
+                <button
+                  type="button"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    otpMethod === "mobile"
+                      ? "bg-purple-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  } ${
+                    isPhoneDisabled || isMethodDisabled
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
+                  onClick={() => switchOtpMethod("mobile")}
+                  disabled={isPhoneDisabled || isMethodDisabled}
+                >
+                  <Smartphone className="w-5 h-5" />
+                  SMS
+                </button>
               </div>
             </div>
 
@@ -613,9 +664,15 @@ const WhatsappLogin = () => {
 
             {/* OTP Input */}
             {showOtp && (
-              <div className={`space-y-4 ${animateOtp ? 'animate-fadeIn' : ''}`}>
+              <div
+                className={`space-y-4 ${animateOtp ? "animate-fadeIn" : ""}`}
+              >
                 <label className="block text-sm font-medium text-gray-700">
-                  Enter {otpMethod === "whatsapp" ? "4-digit WhatsApp" : "6-digit SMS"} OTP
+                  Enter{" "}
+                  {otpMethod === "whatsapp"
+                    ? "4-digit WhatsApp"
+                    : "6-digit SMS"}{" "}
+                  OTP
                 </label>
                 <div className="flex justify-center gap-3">
                   {(otpMethod === "whatsapp"
@@ -663,7 +720,11 @@ const WhatsappLogin = () => {
               <button
                 type="submit"
                 disabled={isLoading || (!showOtp && isGetOtpButtonDisabled)}
-                className={`w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${(!showOtp && isGetOtpButtonDisabled) || isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${
+                  (!showOtp && isGetOtpButtonDisabled) || isLoading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

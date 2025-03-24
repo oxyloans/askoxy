@@ -24,38 +24,17 @@ import Container from "./ContainerPolicy";
 import Footer from "./Footer";
 import { message, Modal } from "antd";
 
-import img1 from "../assets/img/image1.png";
-import img2 from "../assets/img/image2.png";
-import img3 from "../assets/img/image3.png";
-import img4 from "../assets/img/image4.png";
-import img5 from "../assets/img/image5.png";
-import img6 from "../assets/img/soon.png";
+import Freesample from "../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png"
 import ricesample1kgGif from "../assets/img/ricesample1kg (1).gif";
 import ricebag26kgsGif from "../assets/img/ricebag26kgsGif (1).gif";
 
-const images = [
-  { src: img1, alt: "Image 1" },
-  { src: img2, alt: "Image 2" },
-  { src: img5, alt: "Image 5" },
-  { src: img6, alt: "Image 6" },
-  { src: img3, alt: "Image 3" },
-  { src: img4, alt: "Image 4" },
-];
+
 
 const FreeSample: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleNext = () => {
-    if (currentIndex < images.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
+
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
@@ -417,7 +396,7 @@ const FreeSample: React.FC = () => {
           {/* Image Section */}
           <div className="flex justify-center p-2 mb-4 lg:mb-0">
             <img
-              // src={FR}
+              src={Freesample}
               alt="Free Sample"
               className="w-full max-w-[300px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px] rounded-lg shadow-lg pointer-events-none select-none object-contain"
             />
