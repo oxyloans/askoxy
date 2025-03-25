@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -87,7 +80,6 @@ const AccomidationGpt: React.FC = () => {
       content: "Find tailored solutions.",
     },
   ];
-
 
   // Auto-resize textarea
   useEffect(() => {
@@ -233,8 +225,9 @@ const AccomidationGpt: React.FC = () => {
 
     try {
       const userId = localStorage.getItem("userId");
-      const apiUrl = `https://meta.oxyloans.com/api/student-service/user/chat?InfoType=${encodeURIComponent(queryInput)
-      }${userId ? `&userId=${userId}` : ""}`;
+      const apiUrl = `https://meta.oxyloans.com/api/student-service/user/chat?InfoType=${encodeURIComponent(
+        queryInput
+      )}${userId ? `&userId=${userId}` : ""}`;
       const response = await axios.post(apiUrl);
 
       setMessages((prev) => [
@@ -322,12 +315,12 @@ const AccomidationGpt: React.FC = () => {
       <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-           <button
-                           onClick={() => navigate(-1)}
-                           className="p-2 hover:bg-gray-100 rounded-full"
-                         >
-                           <ArrowLeft className="h-6 w-6" />
-                         </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -343,8 +336,6 @@ const AccomidationGpt: React.FC = () => {
               <span className="hidden sm:inline">New Chat</span>
             </button>
           </div>
-
-         
         </div>
       </div>
 
@@ -570,13 +561,13 @@ const AccomidationGpt: React.FC = () => {
               <button
                 onClick={() => handleSend(input)}
                 disabled={isLoading || !input.trim()}
-                className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                 aria-label="Send message"
               >
                 {isLoading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 ) : (
-                  <Send className="w-5 h-5" />
+                  <Send className="w-6 h-5" />
                 )}
               </button>
             </div>
@@ -637,4 +628,3 @@ const AccomidationGpt: React.FC = () => {
 };
 
 export default AccomidationGpt;
-

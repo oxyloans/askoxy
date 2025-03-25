@@ -289,19 +289,19 @@ const FreeChatGPTnormal: React.FC = () => {
     }
   };
 
- const handleShare = async (content: string) => {
-   if (navigator.share) {
-     try {
-       await navigator.share({
-         text: content, // Shares only the text content
-       });
-     } catch (err) {
-       console.error("Error sharing:", err);
-     }
-   } else {
-     console.warn("Web Share API is not supported in this browser.");
-   }
- };
+  const handleShare = async (content: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: content, // Shares only the text content
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      console.warn("Web Share API is not supported in this browser.");
+    }
+  };
 
   const loadChatFromHistory = (chat: ChatHistoryItem) => {
     setMessages(chat.messages);
@@ -582,13 +582,13 @@ const FreeChatGPTnormal: React.FC = () => {
               <button
                 onClick={() => handleSend(input)}
                 disabled={isLoading || !input.trim()}
-                className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                 aria-label="Send message"
               >
                 {isLoading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 ) : (
-                  <Send className="w-5 h-5" />
+                  <Send className="w-6 h-5" />
                 )}
               </button>
             </div>
