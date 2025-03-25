@@ -413,7 +413,7 @@ const CheckoutPage: React.FC = () => {
         setCoupenDetails(discount);
         setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
-        grandTotalfunc();
+        // grandTotalfunc();
       })
       .catch((error) => {
         console.error("Error in applying coupon:", error);
@@ -427,7 +427,7 @@ const CheckoutPage: React.FC = () => {
     setCoupenApplied(false);
     setCoupenDetails(null);
     message.info("Coupon removed successfully");
-    grandTotalfunc();
+    // grandTotalfunc();
   };
 
   const getWalletAmount = async () => {
@@ -443,7 +443,7 @@ const CheckoutPage: React.FC = () => {
       setAfterWallet(usableAmount);
       setWalletMessage(response.data.message || '');
       setUsedWalletAmount(0);
-      grandTotalfunc();
+      // grandTotalfunc();
     } catch (error: unknown) {
       console.error("Error fetching wallet amount:", error);
       message.error("Failed to fetch wallet balance");
@@ -453,36 +453,74 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const grandTotalfunc = () => {
-    try {
-      const baseAmount = grandTotal || 0;
-      const totalWithGst = baseAmount + (subGst || 0);
-      const totalWithDelivery = totalWithGst + (deliveryBoyFee || 0);
+  // const grandTotalfunc = () => {
+  //   try {
+  //     const baseAmount = grandTotal || 0;
+  //     const totalWithGst = baseAmount + (subGst || 0);
+  //     const totalWithDelivery = totalWithGst + (deliveryBoyFee || 0);
       
-      const afterCoupon = coupenApplied && coupenDetails
-        ? Math.max(0, totalWithDelivery - coupenDetails)
-        : totalWithDelivery;
+  //     const afterCoupon = coupenApplied && coupenDetails
+  //       ? Math.max(0, totalWithDelivery - coupenDetails)
+  //       : totalWithDelivery;
 
-      let finalUsedWallet = 0;
-      let finalTotal = afterCoupon;
+  //     let finalUsedWallet = 0;
+  //     let finalTotal = afterCoupon;
 
-      if (useWallet && walletAmount > 0) {
-        finalUsedWallet = Math.min(walletAmount, afterCoupon);
-        finalTotal = Math.max(0, afterCoupon - finalUsedWallet);
-      }
+  //     if (useWallet && walletAmount > 0) {
+  //       finalUsedWallet = Math.min(walletAmount, afterCoupon);
+  //       finalTotal = Math.max(0, afterCoupon - finalUsedWallet);
+  //     }
+  //     console.log("finalUsedWallet", finalUsedWallet);
+  //     console.log("finalTotal", finalTotal);
+  //     console.log("Total Amount",walletAmount - finalUsedWallet);
+      
+      
+  //     setUsedWalletAmount(finalUsedWallet);
+  //     setAfterWallet(walletAmount - finalUsedWallet);
+  //     setGrandTotalAmount(finalTotal);
 
-      setUsedWalletAmount(finalUsedWallet);
-      setAfterWallet(walletAmount - finalUsedWallet);
-      setGrandTotalAmount(finalTotal);
+  //     if (finalTotal === 0 && finalUsedWallet > 0) {
+  //       setSelectedPayment("COD");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error calculating grand total:", error);
+  //     message.error("Error calculating total");
+  //   }
+  // };
+  function grandTotalfunc() {
+    let total = totalAmount + deliveryBoyFee; // Start with total including delivery fee
+    let usedWallet = 0; // Track how much wallet is actually used
 
-      if (finalTotal === 0 && finalUsedWallet > 0) {
-        setSelectedPayment("COD");
-      }
-    } catch (error) {
-      console.error("Error calculating grand total:", error);
-      message.error("Error calculating total");
+    if (coupenApplied) {
+        total -= coupenDetails;
     }
-  };
+
+    if (useWallet && walletAmount > 0) {  // Process only if user has wallet balance
+        if (walletAmount >= total) {
+            usedWallet = total;  // Use only what's needed
+            total = 0;  
+        } else {
+            usedWallet = walletAmount; // Use full wallet balance
+            total -= walletAmount;
+        }
+    }
+
+    // Ensure total is never negative
+    total = Math.max(0, total);
+
+    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
+    setUsedWalletAmount(usedWallet);  // Store how much wallet is used
+    setGrandTotalAmount(total);
+
+    if(total === 0){
+      console.log("Get all Values",{total});
+      
+      setSelectedPayment('COD');
+    }
+
+    console.log("Used Wallet:", usedWallet);
+    console.log("Final Grand Total:", total);
+}
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
@@ -499,7 +537,7 @@ const CheckoutPage: React.FC = () => {
         setUseWallet(newValue);
         setUsedWalletAmount(potentialUsedAmount);
         setAfterWallet(walletAmount - potentialUsedAmount);
-        grandTotalfunc();
+        // grandTotalfunc();
         message.success(newValue ? "Wallet applied" : "Wallet removed");
       },
       onCancel: () => {
