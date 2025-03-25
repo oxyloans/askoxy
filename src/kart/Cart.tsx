@@ -470,6 +470,9 @@ const CartPage: React.FC = () => {
       return;
     }
 
+
+    
+
     const isAddressValid = await handleAddressChange(selectedAddress);
     if (isAddressValid?.isWithin) {
       navigate("/main/checkout", { state: { selectedAddress } });
