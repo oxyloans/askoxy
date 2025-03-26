@@ -8,48 +8,46 @@ import {
 import CartProvider from "./until/CartProvider";
 
 import Landingpage from "./components/Landingpage";
-import Freerudraksha from "./components/Freerudraksh";
-import FreeSample from "./components/FreeSample";
-import FreeAiandGenAi from "./components/FreeAi&GenAi";
-import StudyAbroad from "./components/StudyAbroad";
-import MachinesManufacturingServices from "./components/Machines&ManufacturingService";
-import LegalService from "./components/LegalService";
-import MyRotaryServices from "./components/MyRotary";
-import HiringService from "./components/HiringService";
-import Layout from "./Components1/Layout";
-import Sidebar from "./Pages/Sider";
-import CampaignsAdd from "./Pages/CampaignsAdd";
-import AllCampaignsDetails from "./Pages/AllCampaignDetail";
-import FreeChatGpt from "./Components1/FreeChatGpt";
+import Freerudraksha from "./components/Services/Freerudraksh";
+import FreeSample from "./components/Services/FreeSample";
+import FreeAiandGenAi from "./components/Services/FreeAi&GenAi";
+import StudyAbroad from "./components/Services/StudyAbroad";
+import MachinesManufacturingServices from "./components/Services/Machines&ManufacturingService";
+import LegalService from "./components/Services/LegalService";
+import MyRotaryServices from "./components/Services/MyRotary";
+import HiringService from "./components/Services/HiringService";
+
+import Sidebar from "./AskoxyAdmin/Sider";
+import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
+import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
+
 import ScrollToTop from "./components/ScrollToTop";
 import TicketHistory from "./components/TicketHistory";
-import UserProfile from "./components/models/ProfileCallPage";
-import Normal from "./Components1/Normal";
-import NormalGpt from "./Components1/NormalGpt";
-import AccomidationGpt from "./Components1/GPT's/Accomadation";
-import ApplicationSupport from "./Components1/GPT's/ApplicationSupport";
-import AccreditationsRecognization from "./Components1/GPT's/AccreditationsRecognization";
-import CoursesGpt from "./Components1/GPT's/CoursesGpt";
-import PreparationGpt from "./Components1/GPT's/PreparationGpt";
-import ForeignExchange from "./Components1/GPT's/ForeignExchange";
-import InformationAboutCountries from "./Components1/GPT's/InformationAboutCountries";
-import LoansGpt from "./Components1/GPT's/LoansGpt";
-import LogisticsGpt from "./Components1/GPT's/LogisticsGpt";
-import PlacementsGpt from "./Components1/GPT's/PlacementsGpt";
-import QualificationSpecializationGPT from "./Components1/GPT's/QualificationSpecializationGPT";
-import VisaGpt from "./Components1/GPT's/VisaGpt";
-import ReviewsGpt from "./Components1/GPT's/ReviewsGpt";
-import ScholarshipGpt from "./Components1/GPT's/ScholarshipGpt";
-import UniversityAgents from "./Components1/GPT's/UniversityAgents";
-import University from "./Components1/GPT's/UniversityGpt";
+
+import AccomidationGpt from "./components/GPT's/Accomadation";
+import ApplicationSupport from "./components/GPT's/ApplicationSupport";
+import AccreditationsRecognization from "./components/GPT's/AccreditationsRecognization";
+import CoursesGpt from "./components/GPT's/CoursesGpt";
+import PreparationGpt from "./components/GPT's/PreparationGpt";
+import ForeignExchange from "./components/GPT's/ForeignExchange";
+import InformationAboutCountries from "./components/GPT's/InformationAboutCountries";
+import LoansGpt from "./components/GPT's/LoansGpt";
+import LogisticsGpt from "./components/GPT's/LogisticsGpt";
+import PlacementsGpt from "./components/GPT's/PlacementsGpt";
+import QualificationSpecializationGPT from "./components/GPT's/QualificationSpecializationGPT";
+import VisaGpt from "./components/GPT's/VisaGpt";
+import ReviewsGpt from "./components/GPT's/ReviewsGpt";
+import ScholarshipGpt from "./components/GPT's/ScholarshipGpt";
+import UniversityAgents from "./components/GPT's/UniversityAgents";
+import University from "./components/GPT's/UniversityGpt";
 import RiceSalePage from "./components/Communities";
-import Admin from "./Pages/Admin";
+import Admin from "./AskoxyAdmin/Admin";
 import QR from "./components/qr";
 import ThankYouPage from "./components/ThankYouPage";
-import BMVCOIN from "./Components1/BMVCOIN";
-import WhatsappLogin from "./Components1/Auth/WhatsappLogin";
-import WhatsappRegister from "./Components1/Auth/WhatsappRegister";
-import AllQueries from "./Pages/AllQueries";
+
+import WhatsappLogin from "./Pages/Auth/WhatsappLogin";
+import WhatsappRegister from "./Pages/Auth/WhatsappRegister";
+import AllQueries from "./AskoxyAdmin/AllQueries";
 import RequireAuth from "./auth/RequireAuth";
 import ItemDisplayPage from "./kart/itemsdisplay";
 import MyWalletPage from "./kart/Wallet";
@@ -68,15 +66,15 @@ import BMVPDF from "./components/bmvpdf";
 import FreeChatGPTmain from "./Dashboard/FreechatGPTmain";
 import BMVCOINmain from "./Dashboard/BMVcoinmain";
 import Content1 from "./Dashboard/Content";
-import CampaignDetails from "./Components1/campaignDetails";
+import CampaignDetails from "./components/campaignDetails";
 import FreeChatGPTnormal from "./Dashboard/Freechatgptnormal";
 import WomensDay from "./components/WomensDay";
-import HiddenLogin from "./Components1/Auth/HiddenLogin";
+import HiddenLogin from "./Pages/Auth/HiddenLogin";
 import TestimonialsPage from "./Dashboard/TestimoinalsOXY";
 import RiceComparison from "./components/SteanRiceVsRawRice";
-import RegisteredUser from "./Pages/RegisteredUser";
-import Login from "./Pages/Login";
-import Erice from "./components/Erice";
+import RegisteredUser from "./AskoxyAdmin/RegisteredUser";
+import Login from "./AskoxyAdmin/Login";
+import RiceGpt from "./components/RiceGpt";
 import OxyGroup from "./components/OxygroupPdf";
 import BarcodeScanner from "./Dashboard/BarcodeScanner";
 import FREEAIANDGENAI from "./components/AIandGenAi";
@@ -95,7 +93,7 @@ const App: React.FC = () => {
               element={<RiceSalePage />}
             />
             <Route path="/qrcode" element={<QR />} />
-            <Route path="/oxygroup" element={<OxyGroup/>}/>
+            <Route path="/oxygroup" element={<OxyGroup />} />
             <Route path="/thank-you" element={<ThankYouPage />} />
             <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
             <Route
@@ -103,7 +101,10 @@ const App: React.FC = () => {
               element={<TestimonialsPage />}
             />
             <Route path="/steamricevsrawrice" element={<RiceComparison />} />
-            <Route path="/aiandgenaivsverficationandvalidation" element={<FREEAIANDGENAI/>}/>
+            <Route
+              path="/aiandgenaivsverficationandvalidation"
+              element={<FREEAIANDGENAI />}
+            />
             {/* Landing Page (First Page) */}
             <Route path="/" element={<Landingpage />} />
 
@@ -122,25 +123,6 @@ const App: React.FC = () => {
             <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
             <Route path="/womensday" element={<WomensDay />} />
             {/* Dashboard (After Login) */}
-            <Route path="/normal" element={<Normal />}>
-              <Route index element={<NormalGpt />} />
-            </Route>
-
-            <Route path="/dashboard" element={<Layout />}>
-              {/* Default Route */}
-              <Route index element={<FreeChatGpt />} />
-
-              {/* Nested Routes */}
-              <Route path="freerudraksha" element={<Freerudraksha />} />
-
-              <Route path="ticket-history" element={<TicketHistory />} />
-
-              <Route path="free-chatgpt" element={<FreeChatGpt />} />
-              <Route path="user-profile" element={<UserProfile />} />
-              <Route path="bmvcoin" element={<BMVCOIN />} />
-
-              {/* Add more nested routes as needed */}
-            </Route>
 
             {/* Redirect Unknown Routes to Landing Page */}
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -198,13 +180,13 @@ const App: React.FC = () => {
                 element={<LogisticsGpt />}
               />
               <Route
-               path="/main/dashboard/barcodescanner"
-               element={
-                 <RequireAuth>
-                   <BarcodeScanner />
-                 </RequireAuth>
-               }
-             />
+                path="/main/dashboard/barcodescanner"
+                element={
+                  <RequireAuth>
+                    <BarcodeScanner />
+                  </RequireAuth>
+                }
+              />
               <Route
                 path="/main/dashboard/placements-gpt"
                 element={<PlacementsGpt />}
@@ -225,10 +207,7 @@ const App: React.FC = () => {
                 path="/main/dashboard/reviews-gpt"
                 element={<ReviewsGpt />}
               />
-              <Route
-                path="/main/dashboard/rice-gpt"
-                element={<Erice />}
-              />
+              <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
               <Route
                 path="/main/dashboard/universitiesagents-gpt"
                 element={<UniversityAgents />}
@@ -353,7 +332,6 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
-              
             </Route>
           </Routes>
         </div>

@@ -20,7 +20,7 @@ import {
   History,
   Send,
 } from "lucide-react";
-import Example from "../components/Example";
+
 
 interface ChatMessage {
   type: "question" | "answer";

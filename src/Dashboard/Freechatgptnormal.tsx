@@ -20,7 +20,7 @@ import {
   Send,
   User,
 } from "lucide-react";
-import Example from "../components/Example";
+
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
 interface ChatMessage {

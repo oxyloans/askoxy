@@ -2,10 +2,10 @@ import React,{useState,useEffect} from "react";
 import "./Freerudraksha.css";
 import WhatsApp from "../assets/img/WhatsApp.jpeg";
 import WhatsApp2 from "../assets/img/WhatsApp2.jpeg";
-import Header1 from "./Header1";
+
 import VanabhojanamImage from '../assets/img/WhatsApp Image 2024-11-25 at 10.38.19.png'
 import Footer from "./Footer";
-import Header2 from "./Header2";
+
 import  './DiwaliPage.css'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";

@@ -1,14 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Loader2, X,Trash2 } from "lucide-react";
+import { Loader2, X, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
-import { Button, message, Modal, } from "antd";
+import { Button, message, Modal } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
-import  BASE_URL  from "../Config";
-import { motion } from "framer-motion";
+import BASE_URL from "../Config";
 
 interface Address {
   id?: string;
@@ -27,7 +27,7 @@ interface CartItem {
   image: string;
   itemDescription: string;
   units: string;
-  weight: string;
+  weight: string | number | null;
   cartQuantity: number;
   cartId: string;
   quantity: number;
@@ -72,6 +72,7 @@ const CartPage: React.FC = () => {
     addressType: "Home",
   });
 
+  const modalDisplayedRef = useRef<boolean>(false);
   const [addressFormErrors, setAddressFormErrors] = useState({
     flatNo: "",
     landmark: "",
@@ -82,6 +83,22 @@ const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
+
+  const parseWeight = (weight: unknown): number => {
+    console.log("Parsing weight:", weight);
+    if (typeof weight === "number") {
+      console.log(`Weight is a number: ${weight}`);
+      return weight;
+    }
+    if (typeof weight !== "string" || !weight) {
+      console.warn(`Invalid weight value: ${weight}, defaulting to 0`);
+      return 0;
+    }
+    const match = weight.match(/(\d+(\.\d+)?)/);
+    const result = match ? parseFloat(match[0]) : 0;
+    console.log(`Parsed string ${weight} to ${result}`);
+    return result;
+  };
 
   const context = useContext(CartContext);
 
@@ -105,6 +122,36 @@ const CartPage: React.FC = () => {
       console.error("Error fetching addresses:", error);
     }
   };
+
+  //   useEffect(() => {
+  //     const initializeCartPage = async () => {
+  //       await Promise.all([fetchCartData(), fetchAddresses()]); // Ensures both data fetches finish before running modal logic
+  //         // Ensure modal shows only once
+  //         if (!localStorage.getItem("!isInterested") && !modalDisplayedRef.current) {
+  //             showContainerModal();
+  //         }
+  //     };
+  //     initializeCartPage();
+  // }, []);
+
+  useEffect(() => {
+    const initializeCartPage = async () => {
+      setIsLoading(true); // Ensure loading state is set
+      await Promise.all([fetchCartData(), fetchAddresses()]);
+    };
+    initializeCartPage();
+  }, []);
+
+  // New useEffect to handle modal display based on cartData
+  useEffect(() => {
+    if (
+      cartData.length > 0 &&
+      localStorage.getItem("isInterested") !== "true" && // Correct key, skips if accepted
+      !modalDisplayedRef.current
+    ) {
+      showContainerModal();
+    }
+  }, [cartData]);
 
   const fetchCartData = async () => {
     try {
@@ -159,11 +206,95 @@ const CartPage: React.FC = () => {
 
       // Set cart data with ALL items including out-of-stock ones
       setCartData(response.data?.customerCartResponseList || []);
+      console.log("Cart Data:", response.data?.customerCartResponseList);
     } catch (error) {
       console.error("Error fetching cart items:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleInterested = async () => {
+    try {
+      // Determine which container to add based on cart items
+      let containerItemId: string;
+      const hasHeavyBag = cartData.some(
+        (item) => parseWeight(item.weight) > 10
+      );
+
+      if (hasHeavyBag) {
+        // Add container for > 10kg bags
+        containerItemId = "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61";
+      } else {
+        // Add container for ≤ 10kg bags
+        containerItemId = "53d7f68c-f770-4a70-ad67-ee2726a1f8f3";
+      }
+
+      const containerItemData = {
+        itemId: containerItemId,
+        customerId: customerId,
+        cartQuantity: 1, // Add one container
+        itemPrice: 0, // Set container price to ₹0
+      };
+
+      await axios.post(
+        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
+        containerItemData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      localStorage.setItem("isInterested", "true"); // Prevents modal from showing again
+      message.success("Free container added to your cart at ₹0.");
+      await fetchCartData(); // Refresh cart to reflect new item
+    } catch (error) {
+      console.error("Error adding container to cart:", error);
+      message.error("Failed to add free container. Please try again.");
+    }
+  };
+
+  const showContainerModal = () => {
+    if (localStorage.getItem("isInterested") === "true") {
+      return; // Prevents modal from appearing again
+    }
+
+    modalDisplayedRef.current = true;
+
+    const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
+    const containerType = hasHeavyBag
+      ? "Large (for >10kg bags)"
+      : "Standard (for ≤10kg bags)";
+
+    Modal.confirm({
+      title: "Special Offer!",
+      content: (
+        <div className="text-center">
+          <p className="mt-2">
+            Get a free steel container! Buy 9 bags of 26 kg’s / 10 kg’s in 3
+            years or refer 9 friends and when they buy their first bag, the
+            container is yours forever.
+          </p>
+          <p className="mt-2 text-sm text-black-600">
+            <b>
+              * No purchase in 45 days or gap of 45 days between purchases =
+              Container will be taken back
+            </b>
+          </p>
+        </div>
+      ),
+      okText: "I’m Interested",
+      cancelText: "Not Interested",
+      onOk: async () => {
+        await handleInterested();
+      },
+      onCancel: () => {
+        localStorage.setItem("isInterested", "false");
+      },
+    });
   };
 
   const getCoordinates = async (address: string) => {
@@ -470,9 +601,6 @@ const CartPage: React.FC = () => {
       return;
     }
 
-
-    
-
     const isAddressValid = await handleAddressChange(selectedAddress);
     if (isAddressValid?.isWithin) {
       navigate("/main/checkout", { state: { selectedAddress } });
@@ -652,139 +780,142 @@ const CartPage: React.FC = () => {
               ) : (
                 cartData.map((item) => (
                   <div
-                  key={item.itemId}
-                  className="border rounded-lg p-4 mb-4 flex flex-col md:flex-row w-full"
-                >
-                  {/* Left Section: Image and Item Details */}
-                  <div className="flex flex-1 mb-4 md:mb-0">
-                    <div
-                      className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
-                      onClick={() =>
-                        navigate(`/main/itemsdisplay/${item.itemId}`, {
-                          state: { item },
-                        })
-                      }
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.itemName}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                
-                    <div className="ml-4 flex flex-col justify-center">
-                      {/* Display available stock quantity */}
-                      {item.quantity < 6 && item.quantity > 0 && (
-                        <p className="text-xs font-medium text-red-500 mb-1">
-                          Only {item.quantity} {item.quantity === 1 ? 'item' : 'items'} left
-                        </p>
+                    key={item.itemId}
+                    className="border rounded-lg p-4 mb-4 flex flex-col md:flex-row w-full"
+                  >
+                    {/* Left Section: Image and Item Details */}
+                    <div className="flex flex-1 mb-4 md:mb-0">
+                      <div
+                        className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
+                        onClick={() =>
+                          navigate(`/main/itemsdisplay/${item.itemId}`, {
+                            state: { item },
+                          })
+                        }
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.itemName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="ml-4 flex flex-col justify-center">
+                        {/* Display available stock quantity */}
+                        {item.quantity < 6 && item.quantity > 0 && (
+                          <p className="text-xs font-medium text-red-500 mb-1">
+                            Only {item.quantity}{" "}
+                            {item.quantity === 1 ? "item" : "items"} left
+                          </p>
                         )}
                         <h3 className="text-smc md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
                           {item.itemName}
                         </h3>
                         <p className="text-sm text-gray-600">
-                        Weight: {item.weight} {item.units}
-                      </p>
-                      <div className="flex items-center mt-1">
-                        <p className="text-sm line-through text-gray-400 mr-2">
-                          ₹{item.priceMrp}
+                          Weight: {item.weight} {item.units}
                         </p>
-                        <p className="text-green-600 font-bold">
-                          ₹{item.itemPrice}
-                        </p>
+                        <div className="flex items-center mt-1">
+                          <p className="text-sm line-through text-gray-400 mr-2">
+                            ₹{item.priceMrp}
+                          </p>
+                          <p className="text-green-600 font-bold">
+                            ₹{item.itemPrice}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                
-                  {/* Right Section: Quantity Controls & Price */}
-                  {item.quantity !== 0 ? (
-                    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-                      <div className="flex items-center justify-between md:justify-end w-full">
-                        {/* Quantity Controls - Updated with new design */}
-                        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
-                            onClick={() => handleDecrease(item)}
-                            disabled={loadingItems[item.itemId]}
-                            aria-label="Decrease quantity"
-                          >
-                            <span className="font-medium">-</span>
-                          </motion.button>
-                          
-                          <div className="px-4">
-                            {loadingItems[item.itemId] ? (
-                              <Loader2 className="animate-spin text-purple-600" />
-                            ) : (
-                              <span className="font-medium text-purple-700">{cartItems[item.itemId]}</span>
-                            )}
-                          </div>
-                          
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                              cartItems[item.itemId] >= item.quantity
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              if (cartItems[item.itemId] < item.quantity) {
-                                handleIncrease(item);
+
+                    {/* Right Section: Quantity Controls & Price */}
+                    {item.quantity !== 0 ? (
+                      <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+                        <div className="flex items-center justify-between md:justify-end w-full">
+                          {/* Quantity Controls - Updated with new design */}
+                          <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
+                              onClick={() => handleDecrease(item)}
+                              disabled={loadingItems[item.itemId]}
+                              aria-label="Decrease quantity"
+                            >
+                              <span className="font-medium">-</span>
+                            </motion.button>
+
+                            <div className="px-4">
+                              {loadingItems[item.itemId] ? (
+                                <Loader2 className="animate-spin text-purple-600" />
+                              ) : (
+                                <span className="font-medium text-purple-700">
+                                  {cartItems[item.itemId]}
+                                </span>
+                              )}
+                            </div>
+
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                                cartItems[item.itemId] >= item.quantity
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                              onClick={() => {
+                                if (cartItems[item.itemId] < item.quantity) {
+                                  handleIncrease(item);
+                                }
+                              }}
+                              disabled={
+                                cartItems[item.itemId] >= item.quantity ||
+                                loadingItems[item.itemId]
                               }
+                              aria-label="Increase quantity"
+                            >
+                              <span className="font-medium">+</span>
+                            </motion.button>
+                          </div>
+
+                          {/* Delete Button - Updated with icon */}
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
+                            onClick={async () => {
+                              await removeCartItem(item);
                             }}
-                            disabled={
-                              cartItems[item.itemId] >= item.quantity ||
-                              loadingItems[item.itemId] || (parseInt(item.itemPrice) === 1 && cartItems[item.itemId] >= 1)
-                            }
-                            aria-label="Increase quantity"
+                            aria-label="Delete item from cart"
                           >
-                            <span className="font-medium">+</span>
+                            <Trash2 size={16} />
                           </motion.button>
                         </div>
-                
-                        {/* Delete Button - Updated with icon */}
+
+                        {/* Total Price */}
+                        <div className="w-full flex justify-end">
+                          <p className="text-purple-700 font-bold text-base">
+                            Total: ₹
+                            {(
+                              parseFloat(item.itemPrice) *
+                              (cartItems[item.itemId] || 0)
+                            ).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+                        <p className="text-red-600 font-bold text-base mb-2">
+                          Out of Stock
+                        </p>
                         <motion.button
                           whileTap={{ scale: 0.95 }}
-                          className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
+                          className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
                           onClick={async () => {
                             await removeCartItem(item);
                           }}
                           aria-label="Delete item from cart"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} className="mr-1" />
+                          Delete
                         </motion.button>
                       </div>
-                
-                      {/* Total Price */}
-                      <div className="w-full flex justify-end">
-                        <p className="text-purple-700 font-bold text-base">
-                          Total: ₹
-                          {(
-                            parseFloat(item.itemPrice) *
-                            (cartItems[item.itemId] || 0)
-                          ).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-                      <p className="text-red-600 font-bold text-base mb-2">
-                        Out of Stock
-                      </p>
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
-                        onClick={async () => {
-                          await removeCartItem(item);
-                        }}
-                        aria-label="Delete item from cart"
-                      >
-                        <Trash2 size={16} className="mr-1" />
-                        Delete
-                      </motion.button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
                 ))
               )}
             </div>

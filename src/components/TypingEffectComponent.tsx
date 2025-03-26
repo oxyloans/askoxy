@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { FaRegCopy, FaVolumeUp, FaVolumeOff, FaShareAlt } from 'react-icons/fa';
-import Example from './Example';
+// import Example from './Example';
 
 interface Message {
   type: 'question' | 'answer';
@@ -58,7 +58,7 @@ const TypingEffectComponent: React.FC<TypingEffectComponentProps> = ({
       {isLoading ? (
         <div className="flex items-center justify-center h-24">
           {/* Replace with your loading component */}
-          <Example variant="loading01" />
+          {/* <Example variant="loading01" /> */}
         </div>
       ) : (
         <>

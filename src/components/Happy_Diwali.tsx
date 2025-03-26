@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import diyasImage from "../assets/img/Diwali2.jpg";
 import sweetsImage from "../assets/img/sweets.jpeg";
 import "./DiwaliPage.css";
-import Header1 from "./Header1";
+import Header1 from "./Header";
 import Footer from "./Footer";
 import Firecracker from "./Firecracker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

@@ -1,61 +1,53 @@
-import React from 'react';
-import { FaSearch } from "react-icons/fa";  // Import the search icon
-// import HeroSection from './HeroSection';
-// import InfoSection from './InfoSection';
-// import ProductsSection from './ProductsSection';
-// import Testimonials from './Testimonials';
-import Header from './Header';
-import ServicesSlider from './ServicesSlider';
-import HorizontalScrollGallery from './ServicesUI';
-import FreeGPTs from './FreeGPTs';
-import BMVCoinPromo from './BMVCoinPromo';
-import OXYGroupCompanies from './OXYGroupCompanies';
-import Footer from './Footer';
-import OurPeople from './OurTeam';
-import PdfPages from './Presentation';
+import React from "react";
 
-// You can customize the styling based on your project's requirements
+import Header from "./Header";
+import ServicesSlider from "./ServicesSlider";
+import HorizontalScrollGallery from "./ServicesUI";
+import FreeGPTs from "./FreeGPTs";
+import BMVCoinPromo from "./BMVCoinPromo";
+import OXYGroupCompanies from "./OXYGroupCompanies";
+import Footer from "./Footer";
+import OurPeople from "./OurTeam";
+import PdfPages from "./Presentation";
+
 const Landingpage: React.FC = () => {
   return (
     <>
-      {/* Hero Section */}
-     
-    <Header/>
-     
+      <section>
+        <Header />
+      </section>
 
-      {/* Info Section */}
-      
-      
-     <section> <HorizontalScrollGallery/></section>
-     <section className='mt-0'>
+      <section>
+        <HorizontalScrollGallery />
+      </section>
+      <section className="mt-0">
         <ServicesSlider />
-        </section>
-        
-      <FreeGPTs />
-      <OurPeople/>
-     
-      <BMVCoinPromo />
-      <PdfPages/>
-     
+      </section>
+      <section>
+        <FreeGPTs />
+      </section>
+      <section>
+        {" "}
+        <OurPeople />
+      </section>
+      <section>
+        {" "}
+        <BMVCoinPromo />
+      </section>
+
+      <section>
+        {" "}
+        <PdfPages />
+      </section>
+
+      <section>
+        {" "}
         <OXYGroupCompanies />
-    
+      </section>
 
-      {/* Products Section */}
-      {/* <section>
-        <ProductsSection />
-      </section> */}
-
-      {/* Testimonials Section */}
-      {/* <section>
-        <Testimonials />
-      </section> */}
-
-      {/* Footer Section */}
-     
+      <section>
         <Footer />
-      
-
-      
+      </section>
     </>
   );
 };

@@ -1,12 +1,12 @@
 import React from 'react';
 import meeting from "../assets/img/meeting.jpeg";
 import './Card.css';
-import Header1 from './Header1';
+
 import Footer from './Footer';
 
 const Meeting: React.FC = () => {
   return (
-    <>  <Header1 />
+    <>  
       <div className="container1">
       
         <div className="header">
