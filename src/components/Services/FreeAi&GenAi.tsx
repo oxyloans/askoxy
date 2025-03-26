@@ -17,7 +17,7 @@ import BASE_URL from "../../Config";
 import FG from "../../assets/img/genai.png";
 
 const FreeAiandGenAi: React.FC = () => {
-  
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -247,7 +247,9 @@ const FreeAiandGenAi: React.FC = () => {
                       Unlock your career potential
                     </strong>{" "}
                     with{" "}
-                    <span className="text-blue-600 font-semibold">ASKOXY.AI</span>
+                    <span className="text-blue-600 font-semibold">
+                      ASKOXY.AI
+                    </span>
                     's free AI & Generative AI training, combined with Java and
                     Microservices expertise.
                   </p>
@@ -262,8 +264,8 @@ const FreeAiandGenAi: React.FC = () => {
                   </p>
 
                   <p className="text-gray-700 text-lg leading-relaxed">
-                    Gain hands-on experience with free project training, guided by
-                    visionary leader{" "}
+                    Gain hands-on experience with free project training, guided
+                    by visionary leader{" "}
                     <strong className="text-pink-600">
                       Radhakrishna Thatavarti
                     </strong>
@@ -276,21 +278,20 @@ const FreeAiandGenAi: React.FC = () => {
 
                   {/* WhatsApp and Video Section */}
                   <div className="mt-6 grid grid-cols-2 gap-4">
-                    <button 
+                    <button
                       onClick={handleWhatsAppGroupJoin}
                       className="flex items-center justify-center w-full p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300 space-x-2"
                     >
-                     
                       <span>Join WhatsApp Group</span>
                     </button>
 
-                     <button 
+                    <button
                       onClick={handleCommunityLink}
-                      className="flex items-center justify-center w-full p-3 bg-green-700 text-white rounded-lg hover:bg-green-800 transition duration-300 space-x-2"
+                      className="flex items-center justify-center w-full p-2 bg-[#04AA6D] text-white rounded-lg hover:bg-green-600 transition duration-300 space-x-2"
                     >
                       <UsersIcon className="w-5 h-5" />
                       <span>AI & Gen AI Knowledge Sharing</span>
-                    </button> 
+                    </button>
 
                     {/* <button 
                       onClick={handleIntroVideo}
@@ -300,30 +301,27 @@ const FreeAiandGenAi: React.FC = () => {
                       <span>Intro Video</span>
                     </button> */}
 
-                    <button 
+                    <button
                       onClick={handleCourseOverviewVideo}
-                      className="flex items-center justify-center w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 space-x-2"
+                      className="flex items-center justify-center w-full p-3 bg-[#008CBA] text-white rounded-lg hover:bg-blue-600 transition duration-300 space-x-2"
                     >
                       <PlayCircleIcon className="w-5 h-5" />
                       <span>AI & GEN AI VIDEOS</span>
                     </button>
 
                     <button>
-                    <a
-                      href="https://sites.google.com/view/globalecommercemarketplace/home"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Oxyloans Training Guide"
-                      className="inline-block"
-                    >
-                      <button className="px-6 py-3 text-base font-bold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-blue-300 focus:outline-none">
-                        <span className="mr-2">📖</span> Our Training Guide
-                      </button>
-                    </a>
-                    
+                      <a
+                        href="https://sites.google.com/view/globalecommercemarketplace/home"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Oxyloans Training Guide"
+                        className="inline-block"
+                      >
+                        <button className="px-4 py-3 text-base font-bold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-blue-300 focus:outline-none">
+                          <span className="mr-2">📖</span> Our Training Guide
+                        </button>
+                      </a>
                     </button>
-
-
                   </div>
 
                   {/* <div className="flex justify-center md:justify-start pt-2">
