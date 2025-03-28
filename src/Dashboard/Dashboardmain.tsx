@@ -148,7 +148,7 @@ const DashboardMain: React.FC = () => {
       image: OxyLoansImage,
       description:
         "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
-      path: "https://oxyloans.com/",
+      path: "/main/service/oxyloans-service",
       icon: <HandCoins className="text-purple-600" size={24} />,
       category: "Finance",
     },

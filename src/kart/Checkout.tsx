@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { message, Modal } from "antd";
+import { message, Alert, Modal } from "antd";
 import Footer from "../components/Footer";
 import {
   ArrowLeft,
@@ -11,9 +11,11 @@ import {
   ShoppingBag,
   Clock,
 } from "lucide-react";
+import { FaBars, FaTimes } from "react-icons/fa";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { Loader2, X } from "lucide-react";
+import Checkbox from "antd";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
 
@@ -96,6 +98,7 @@ const CheckoutPage: React.FC = () => {
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
   const userData = localStorage.getItem("profileData");
+  const [isButtonDisabled, setisButtonDisabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const context = useContext(CartContext);
@@ -118,7 +121,6 @@ const CheckoutPage: React.FC = () => {
     }
   }, []);
 
-
   useEffect(() => {
     const trans = localStorage.getItem("merchantTransactionId");
     const paymentId = localStorage.getItem("paymentId");
@@ -126,15 +128,6 @@ const CheckoutPage: React.FC = () => {
       Requery(paymentId);
     }
   }, [orderId]);
-
-  useEffect(() => {
-    // Automatically set payment mode based on total amount
-    if (grandTotalAmount < 100) {
-      setSelectedPayment("ONLINE");
-    } else if (grandTotalAmount === 0) {
-      setSelectedPayment("COD");
-    }
-  }, [grandTotalAmount]);
 
   const formatDate = (date: Date, isToday: boolean = false): string => {
     const monthNames = [
@@ -444,16 +437,13 @@ const CheckoutPage: React.FC = () => {
         { customerId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
-      console.log("Wallet Response:", response.data);
-  
+
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
-      console.log("Usable Amount:", usableAmount);
-  
       setWalletAmount(usableAmount);
       setAfterWallet(usableAmount);
       setWalletMessage(response.data.message || '');
       setUsedWalletAmount(0);
+      // grandTotalfunc();
     } catch (error: unknown) {
       console.error("Error fetching wallet amount:", error);
       message.error("Failed to fetch wallet balance");
@@ -463,54 +453,81 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
+  // const grandTotalfunc = () => {
+  //   try {
+  //     const baseAmount = grandTotal || 0;
+  //     const totalWithGst = baseAmount + (subGst || 0);
+  //     const totalWithDelivery = totalWithGst + (deliveryBoyFee || 0);
+      
+  //     const afterCoupon = coupenApplied && coupenDetails
+  //       ? Math.max(0, totalWithDelivery - coupenDetails)
+  //       : totalWithDelivery;
+
+  //     let finalUsedWallet = 0;
+  //     let finalTotal = afterCoupon;
+
+  //     if (useWallet && walletAmount > 0) {
+  //       finalUsedWallet = Math.min(walletAmount, afterCoupon);
+  //       finalTotal = Math.max(0, afterCoupon - finalUsedWallet);
+  //     }
+  //     console.log("finalUsedWallet", finalUsedWallet);
+  //     console.log("finalTotal", finalTotal);
+  //     console.log("Total Amount",walletAmount - finalUsedWallet);
+      
+      
+  //     setUsedWalletAmount(finalUsedWallet);
+  //     setAfterWallet(walletAmount - finalUsedWallet);
+  //     setGrandTotalAmount(finalTotal);
+
+  //     if (finalTotal === 0 && finalUsedWallet > 0) {
+  //       setSelectedPayment("COD");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error calculating grand total:", error);
+  //     message.error("Error calculating total");
+  //   }
+  // };
   function grandTotalfunc() {
-    // Start with the total amount including delivery fee and GST
-    let total = totalAmount + deliveryBoyFee;
-  
-    // Apply coupon discount if available
-    if (coupenApplied && coupenDetails) {
-      total = Math.max(0, total - coupenDetails);
+    let total = totalAmount + deliveryBoyFee; // Start with total including delivery fee
+    let usedWallet = 0; // Track how much wallet is actually used
+
+    if (coupenApplied) {
+        total -= coupenDetails;
     }
-  
-    // Calculate wallet usage
-    let usedWallet = 0;
-    if (useWallet && walletAmount > 0) {
-      // Use wallet amount, but not more than the total
-      usedWallet = Math.min(walletAmount, total);
-      total = Math.max(0, total - usedWallet);
+
+    if (useWallet && walletAmount > 0) {  // Process only if user has wallet balance
+        if (walletAmount >= total) {
+            usedWallet = total;  // Use only what's needed
+            total = 0;  
+        } else {
+            usedWallet = walletAmount; // Use full wallet balance
+            total -= walletAmount;
+        }
     }
-  
-    // Force online payment for amounts less than 100
-    if (total < 100) {
-      setSelectedPayment("ONLINE");
-    }
-  
-    // Update state variables
-    setAfterWallet(walletAmount - usedWallet);
-    setUsedWalletAmount(usedWallet);
+
+    // Ensure total is never negative
+    total = Math.max(0, total);
+
+    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
+    setUsedWalletAmount(usedWallet);  // Store how much wallet is used
     setGrandTotalAmount(total);
-  
-    console.log("Wallet Details:", {
-      originalWalletAmount: walletAmount,
-      usedWallet,
-      afterWallet: walletAmount - usedWallet,
-      total
-    });
-  }
+
+    if(total === 0){
+      console.log("Get all Values",{total});
+      
+      setSelectedPayment('COD');
+    }
+
+    console.log("Used Wallet:", usedWallet);
+    console.log("Final Grand Total:", total);
+}
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
     const potentialUsedAmount = newValue 
       ? Math.min(walletAmount, grandTotalAmount || grandTotal) 
       : 0;
-  
-    console.log("Before Toggle:", {
-      useWallet,
-      walletAmount,
-      grandTotalAmount,
-      potentialUsedAmount
-    });
-  
+
     Modal.confirm({
       title: newValue ? "Confirm Wallet Usage" : "Remove Wallet Usage",
       content: newValue 
@@ -520,15 +537,7 @@ const CheckoutPage: React.FC = () => {
         setUseWallet(newValue);
         setUsedWalletAmount(potentialUsedAmount);
         setAfterWallet(walletAmount - potentialUsedAmount);
-        
-        console.log("After Toggle:", {
-          useWallet: newValue,
-          walletAmount,
-          usedWalletAmount: potentialUsedAmount,
-          afterWallet: walletAmount - potentialUsedAmount
-        });
-        
-        grandTotalfunc(); 
+        // grandTotalfunc();
         message.success(newValue ? "Wallet applied" : "Wallet removed");
       },
       onCancel: () => {
@@ -540,7 +549,6 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     grandTotalfunc();
   }, [grandTotal, subGst, deliveryBoyFee, coupenApplied, coupenDetails, useWallet, walletAmount, totalAmount]);
-  
 
   const handlePayment = async () => {
     try {
@@ -571,13 +579,6 @@ const CheckoutPage: React.FC = () => {
         return;
       }
 
-      const paymentMode = 
-      grandTotalAmount === 0 
-        ? "COD" 
-        : (grandTotalAmount < 100 
-            ? "ONLINE" 
-            : selectedPayment);
-
       setLoading(true);
 
       const response = await axios.post(
@@ -587,7 +588,7 @@ const CheckoutPage: React.FC = () => {
           customerId,
           flatNo: selectedAddress.flatNo,
           landMark: selectedAddress.landMark,
-          orderStatus: paymentMode,
+          orderStatus: selectedPayment,
           pincode: selectedAddress.pincode,
           walletAmount: usedWalletAmount,
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
@@ -606,27 +607,32 @@ const CheckoutPage: React.FC = () => {
       if (response.status === 200 && response.data) {
         await fetchCartData();
 
-        if (paymentMode === "COD" && !response.data.paymentId) {
+        if (selectedPayment === "COD" && !response.data.paymentId) {
+          if (response.data) {
+            showSampleModal();
+            return;
+          }
           Modal.success({
             content: "Order placed Successfully",
             onOk: () => navigate("/main/myorders"),
           });
-        } else if (paymentMode === "ONLINE" && response.data.paymentId) {
+        } else if (selectedPayment === "ONLINE" && response.data.paymentId) {
           const number = localStorage.getItem("whatsappNumber");
           const withoutCountryCode = number?.replace("+91", "");
           sessionStorage.setItem("address", JSON.stringify(selectedAddress));
 
           const paymentData = {
             mid: "1152305",
-            amount: 1,
+            // amount: 1,
+            amount : grandTotalAmount,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
             udf1: withoutCountryCode,
             udf2: `${profileData.firstName} ${profileData.lastName}`,
             udf3: profileData.email,
-            ru: `https://sandbox.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-            callbackUrl: `https://sandbox.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+            ru: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+            callbackUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
             currency: "INR",
             paymentMode: "ALL",
             txnType: "single",
@@ -974,65 +980,48 @@ const CheckoutPage: React.FC = () => {
                     </div>
                   </div>
 
-                {/* Payment method section */}
-      <div className="bg-white border rounded-lg p-4">
-        <div className="flex items-center mb-3">
-          <CreditCard className="w-5 h-5 mr-2 text-purple-500" />
-          <h3 className="font-medium">Payment Method</h3>
-        </div>
-        <div className="space-y-3">
-  {grandTotalAmount >= 100 ? (
-    <>
-      <div
-        className={`p-3 border rounded-md cursor-pointer flex items-center ${
-          selectedPayment === "COD" ? "border-purple-500 bg-purple-50" : "border-gray-200"
-        }`}
-        onClick={() => setSelectedPayment("COD")}
-      >
-        <div
-          className={`w-4 h-4 rounded-full border ${
-            selectedPayment === "COD" ? "border-purple-500 bg-white" : "border-gray-400"
-          }`}
-        >
-          {selectedPayment === "COD" && (
-            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-          )}
-        </div>
-        <span className="ml-2">Cash on Delivery</span>
-      </div>
-
-      <div
-        className={`p-3 border rounded-md cursor-pointer flex items-center ${
-          selectedPayment === "ONLINE" ? "border-purple-500 bg-purple-50" : "border-gray-200"
-        }`}
-        onClick={() => setSelectedPayment("ONLINE")}
-      >
-        <div
-          className={`w-4 h-4 rounded-full border ${
-            selectedPayment === "ONLINE" ? "border-purple-500 bg-white" : "border-gray-400"
-          }`}
-        >
-          {selectedPayment === "ONLINE" && (
-            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-          )}
-        </div>
-        <span className="ml-2">Online Payment</span>
-      </div>
-    </>
-  ) : (
-    <div
-      className={`p-3 border rounded-md flex items-center border-purple-500 bg-purple-50`}
-    >
-      <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
-        <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-      </div>
-      <span className="ml-2">
-        {grandTotalAmount === 0 ? "Cash on Delivery" : "Online Payment"}
-      </span>
-    </div>
-  )}
-</div>
-      </div>
+                  <div className="bg-white border rounded-lg p-4">
+                    <div className="flex items-center mb-3">
+                      <CreditCard className="w-5 h-5 mr-2 text-purple-500" />
+                      <h3 className="font-medium">Payment Method</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div
+                        className={`p-3 border rounded-md cursor-pointer flex items-center ${
+                          selectedPayment === "ONLINE" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                        }`}
+                        onClick={() => setSelectedPayment("ONLINE")}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded-full border ${
+                            selectedPayment === "ONLINE" ? "border-purple-500 bg-white" : "border-gray-400"
+                          }`}
+                        >
+                          {selectedPayment === "ONLINE" && (
+                            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
+                          )}
+                        </div>
+                        <span className="ml-2">Online Payment</span>
+                      </div>
+                      <div
+                        className={`p-3 border rounded-md cursor-pointer flex items-center ${
+                          selectedPayment === "COD" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                        }`}
+                        onClick={() => setSelectedPayment("COD")}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded-full border ${
+                            selectedPayment === "COD" ? "border-purple-500 bg-white" : "border-gray-400"
+                          }`}
+                        >
+                          {selectedPayment === "COD" && (
+                            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
+                          )}
+                        </div>
+                        <span className="ml-2">Cash on Delivery</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="lg:col-span-5">
@@ -1126,7 +1115,7 @@ const CheckoutPage: React.FC = () => {
                         {useWallet && (
                           <div className="mt-2 text-sm text-gray-600 space-y-1">
                             <p>Amount used: ₹{usedWalletAmount.toFixed(2)}</p>
-                            
+                            <p>Remaining balance: ₹{afterWallet.toFixed(2)}</p>
                             {walletMessage && <p className="text-xs">{walletMessage}</p>}
                           </div>
                         )}

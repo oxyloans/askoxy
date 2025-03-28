@@ -78,6 +78,7 @@ import RiceGpt from "./components/RiceGpt";
 import OxyGroup from "./components/OxygroupPdf";
 import BarcodeScanner from "./Dashboard/BarcodeScanner";
 import FREEAIANDGENAI from "./components/AIandGenAi";
+import OxyLoans from "./components/Services/OxyLoans";
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -242,6 +243,7 @@ const App: React.FC = () => {
                 path="services/machines-manufacturing"
                 element={<MachinesManufacturingServices />}
               />
+              <Route path="service/oxyloans-service" element={<OxyLoans/>}/>
               <Route path="services/legalservice" element={<LegalService />} />
               <Route
                 path="services/we-are-hiring"
