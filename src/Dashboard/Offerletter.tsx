@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import DBS from '../assets/img/DBS.pdf';
 
 const DublinBusinessSchool: React.FC = () => {
   const [showOfferLetter, setShowOfferLetter] = useState(false);
@@ -35,7 +34,7 @@ const DublinBusinessSchool: React.FC = () => {
               Dublin Business School (DBS).pdf
             </h3>
             <iframe
-              src={DBS}
+              src="https://drive.google.com/file/d/1Wj2A5-AdgObLRq7Y_ftlUgylaGvWBaOa/preview"
               width="100%"
               height="600px"
               className="mt-4"

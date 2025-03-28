@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.a6511b23.css",
-    "main.js": "/static/js/main.1f9db68d.js",
+    "main.js": "/static/js/main.dd196371.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -104,7 +104,6 @@
     "static/media/Food & Beverage.png": "/static/media/Food & Beverage.f6f559081d73ac0954f1.png",
     "static/media/study abroad.png": "/static/media/study abroad.b44df112b4ab2a4c2bc9.png",
     "static/media/financial advisory (1).png": "/static/media/financial advisory (1).3c31cf1516a9c0f025e1.png",
-    "static/media/DBS.pdf": "/static/media/DBS.3dc93f955dbfc052c179.pdf",
     "static/media/Career guidance.png": "/static/media/Career guidance.fe6ea3668fa6a02f6294.png",
     "static/media/freelancer and consulting service.png": "/static/media/freelancer and consulting service.cebe62a57cb94f08390e.png",
     "static/media/Legal knowledge hub.png": "/static/media/Legal knowledge hub.9db183177e6a1533ba16.png",
@@ -146,11 +145,11 @@
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
     "main.a6511b23.css.map": "/static/css/main.a6511b23.css.map",
-    "main.1f9db68d.js.map": "/static/js/main.1f9db68d.js.map",
+    "main.dd196371.js.map": "/static/js/main.dd196371.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.a6511b23.css",
-    "static/js/main.1f9db68d.js"
+    "static/js/main.dd196371.js"
   ]
 }

@@ -394,10 +394,10 @@ useEffect(() => {
   };
 
   const handleSaveProfile = async () => {
-    // if (!validateProfileForm()) {
-    //   setIsValidationPopupOpen(true);
-    //   return;
-    // }
+    if (!validateProfileForm()) {
+      setIsValidationPopupOpen(true);
+      return;
+    }
 
     try {
       setIsLoading(true);

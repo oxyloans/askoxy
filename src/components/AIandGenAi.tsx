@@ -57,7 +57,7 @@ const VideoGallery: React.FC = () => {
     // Series 1
     {
       id: 1,
-      title: "AI & GEN AI English - Part 1",
+      title: "AI & GEN AI - Part 1",
       telugudescription:
         "25 ఏళ్ల బ్యాంకింగ్ సాఫ్ట్‌వేర్ అనుభవంతో AI & GenAI, Verification & Validationపై వీడియో సిరీస్.\n" +
         "✓ 52 బ్యాంకింగ్ ఉపయోగ సందర్భాలు\n" +
@@ -81,20 +81,20 @@ const VideoGallery: React.FC = () => {
           id: "tel-1",
           lang: "తెలుగు",
           url: "https://www.youtube.com/embed/pB8Ny9Nlw3w",
-          title: "AI & GEN AI English - Part 1",
+          title: "AI & GEN AI - Part 1",
         },
         {
           id: "eng-1",
           lang: "English",
           url: "https://www.youtube.com/embed/Ja0xLoXB9wQ",
-          title: "AI & GEN AI English - Part 1",
+          title: "AI & GEN AI - Part 1",
         },
       ],
     },
     // Series 2
     {
       id: 2,
-      title: "AI & GEN AI English - Part 2",
+      title: "AI & GEN AI - Part 2",
       telugudescription:
         "బ్యాంకింగ్ ఉపయోగ సందర్భం లోతైన విశ్లేషణ.\n" +
         "✓ యూజర్ చర్యలు & సిస్టమ్ ప్రతిస్పందనలు\n" +
@@ -114,20 +114,20 @@ const VideoGallery: React.FC = () => {
           id: "tel-2",
           lang: "తెలుగు",
           url: "https://www.youtube.com/embed/V7bgksFxk10",
-          title: "AI & GEN AI English - Part 2",
+          title: "AI & GEN AI - Part 2",
         },
         {
           id: "eng-2",
           lang: "English",
           url: "https://www.youtube.com/embed/razHRDyGvVs",
-          title: "AI & GEN AI English - Part 2",
+          title: "AI & GEN AI - Part 2",
         },
       ],
     },
     // Series 3 (Fixed title)
     {
       id: 3,
-      title: "AI & GEN AI English - Part 3",
+      title: "AI & GEN AI - Part 3",
       telugudescription:
         "1,00,000+ బ్యాంకులు & NBFCs లోన్ మేనేజ్‌మెంట్ సాఫ్ట్‌వేర్‌పై ఆధారపడతాయి.\n" +
         "✓ బ్యాంకింగ్ ITకి ప్రాంప్ట్ ఇంజనీర్స్ & కోడర్లు అవసరం\n" +
@@ -145,13 +145,13 @@ const VideoGallery: React.FC = () => {
           id: "tel-3",
           lang: "తెలుగు",
           url: "https://www.youtube.com/embed/Am2yg9Ala7w",
-          title: "AI & GEN AI English - Part 3",
+          title: "AI & GEN AI - Part 3",
         },
         {
           id: "eng-3",
           lang: "English",
           url: "https://www.youtube.com/embed/YcutEdAwZ5k",
-          title: "AI & GEN AI English - Part 3",
+          title: "AI & GEN AI - Part 3",
         },
       ],
     },

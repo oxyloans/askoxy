@@ -908,6 +908,13 @@ const Ricebags: React.FC = () => {
               </ul>
             </div>
 
+            <div className="flex flex-col gap-4">
+  <p><strong>Study Abroad:</strong> Get a 10-minute sample offer letter and enjoy up to 5% fee cashback!</p>
+  <p>Welcome! ASKOXY.AI fuels your study abroad journey with data-driven insights. Answer questions on country, university, course, budget, UG/PG & academics to get personalized recommendations, a ROI scorecard, a 10-min sample offer letter & up to 5% fee cashback.</p>
+</div>
+
+
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <motion.button
