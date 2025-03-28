@@ -79,6 +79,7 @@ import OxyGroup from "./components/OxygroupPdf";
 import BarcodeScanner from "./Dashboard/BarcodeScanner";
 import FREEAIANDGENAI from "./components/AIandGenAi";
 import OxyLoans from "./components/Services/OxyLoans";
+import UniversityOffers from "./Dashboard/Offerletter"
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -200,6 +201,7 @@ const App: React.FC = () => {
                 path="/main/dashboard/universities-gpt"
                 element={<University />}
               />
+              <Route path ="/main/dashboard/offer-letter-samples" element={<UniversityOffers/>} />
               <Route
                 path="/main/dashboard/scholarships-gpt"
                 element={<ScholarshipGpt />}
@@ -224,6 +226,7 @@ const App: React.FC = () => {
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
+         
               <Route
                 path="services/campaign/:type"
                 element={<CampaignDetails />}

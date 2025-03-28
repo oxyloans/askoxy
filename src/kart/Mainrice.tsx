@@ -10,14 +10,20 @@ import rice3 from "../assets/img/ricecard3.png";
 import rice4 from "../assets/img/ricecard4.png";
 import CARD from "../assets/img/oxycard1.png";
 import { CartContext } from "../until/CartContext";
+import VideoImage from "../assets/img/Videothumb.png"
 import {
-  FaSearch,
+  FaSearch,FaUniversity, FaMoneyBillWave ,
   FaTimes,
   FaQuestionCircle,
-  FaExternalLinkAlt,
+  FaExternalLinkAlt
 } from "react-icons/fa";
+import { 
+  GraduationCap, XIcon,
+  Award, PlayCircle,
+  FileText, Globe,
+  ArrowRight 
+} from 'lucide-react';
 import BASE_URL from "../Config";
-
 interface Item {
   itemName: string;
   itemId: string;
@@ -149,6 +155,16 @@ const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     </motion.div>
   );
 };
+
+
+
+const handleStudyAbroadClick = () => {
+  // Placeholder for study abroad information
+  window.open('https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback');
+};
+
+
+
 
 const SkeletonLoader: React.FC = () => (
   <>
@@ -499,7 +515,12 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
 const Ricebags: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("All Items");
+  const [isHovered, setIsHovered] = useState(false);
+  const [activeTab, setActiveTab] = useState('video');
+  const [showScholarshipModal, setShowScholarshipModal] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [customerId, setCustomerId] = useState<string>("");
@@ -772,6 +793,37 @@ const Ricebags: React.FC = () => {
     setTouchEnd(e.touches[0].clientX);
   };
 
+
+  
+  const VideoModal = () => (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      onClick={() => setIsVideoModalOpen(false)}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-4xl relative aspect-video"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          onClick={() => setIsVideoModalOpen(false)}
+          className="absolute top-2 right-2 z-10 bg-white/20 rounded-full p-2 hover:bg-white/40 transition-colors"
+        >
+          <XIcon className="w-6 h-6 text-white" />
+        </button>
+        <iframe
+          src="https://youtube.com/embed/LLRFyQ5y3HY?autoplay=1&mute=1"
+          title="Scholarship Opportunity Video"
+          className="w-full h-full rounded-2xl"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </motion.div>
+    </div>
+  );
+
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
 
@@ -810,9 +862,121 @@ const Ricebags: React.FC = () => {
     }
     // On desktop, the modal will show both options
   };
+  const handleOfferLetterClick = () => {
+    navigate('/main/dashboard/offer-letter-samples');
+  };
 
   return (
     <div className="min-h-screen">
+      
+      <div className="bg-white flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl bg-gray-50 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
+        {/* Header */}
+        <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
+          <div className="flex items-center justify-center">
+            <GraduationCap className="w-8 h-8 text-purple-600 mr-3" />
+            <h1 className="text-2xl font-bold text-purple-600">
+              Study Abroad -Admissions
+            </h1>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
+          {/* Scholarship Details */}
+          <div className="space-y-6 flex flex-col justify-center">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+              <div className="flex items-center mb-4">
+                <Award className="w-6 h-6 text-purple-600 mr-3" />
+                <h2 className="text-xl font-semibold text-purple-600">
+                  Fullfill Your Dreams
+                </h2>
+              </div>
+              <ul className="space-y-3 text-gray-700">
+              <li className="flex items-center">
+                  <Award className="w-4 h-4 mr-3 text-purple-600" />
+                  Up to 5% Cashback on University Fees
+                </li>
+                <li className="flex items-center">
+                  <Award className="w-4 h-4 mr-3 text-purple-600" />
+                  100% Scholarship for Selected Students
+                </li>
+                <li className="flex items-center">
+                  <Award className="w-4 h-4 mr-3 text-purple-600" />
+                  Get Offer Letter in 10 Minutes - Share preferences on ASKOXY.AI & get a sample offer letter.
+                </li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleOfferLetterClick}
+                className="w-full bg-purple-600 text-white py-3 rounded-lg 
+                  flex items-center justify-center space-x-2 
+                  hover:bg-purple-700 transition-colors 
+                  font-medium shadow-lg"
+              >
+                <FileText className="w-5 h-5" />
+                <span>View Offer Samples</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleStudyAbroadClick}
+                className="w-full bg-purple-600 text-white py-3 rounded-lg 
+                  flex items-center justify-center space-x-2 
+                  hover:bg-purple-700 transition-colors 
+                  font-medium shadow-lg"
+              >
+                <Globe className="w-5 h-5" />
+                <span>Study Abroad GPT</span>
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Video Section */}
+          <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative">
+            {!isVideoPlaying ? (
+              <div 
+                className="absolute inset-0 bg-cover bg-center cursor-pointer"
+                style={{ backgroundImage: `url(${VideoImage})` }}
+                onClick={() => setIsVideoPlaying(true)}
+              >
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <div className="bg-purple-600 w-16 h-16 rounded-full flex items-center justify-center">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 24 24" 
+                      fill="white" 
+                      className="w-8 h-8"
+                    >
+                      <path 
+                        fillRule="evenodd" 
+                        d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" 
+                        clipRule="evenodd" 
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <iframe
+                src="https://youtube.com/embed/LLRFyQ5y3HY?autoplay=1&mute=1"
+                title="Scholarship Opportunity Video"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+      
       {/* Image Slider */}
       <div
         className="relative w-full overflow-hidden cursor-pointer"
