@@ -34,14 +34,12 @@ const DublinBusinessSchool: React.FC = () => {
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
               Dublin Business School (DBS).pdf
             </h3>
-            {/* Uncomment and adjust the embed tag below to use an actual PDF */}
-            <embed
+            <iframe
               src={DBS}
               width="100%"
-              height="600"
-              type="application/pdf"
+              height="600px"
               className="mt-4"
-            />
+            ></iframe>
           </div>
         )}
       </div>
