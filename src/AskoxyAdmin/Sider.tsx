@@ -26,12 +26,12 @@ const sidebarItems: SidebarItem[] = [
     link: "/admndashboard",
   },
   {
-    title: "Add Campaigns",
+    title: "Add Service",
     icon: <FaPlusCircle className="text-green-400" />,
     link: "/campaignsadd",
   },
   {
-    title: "All Campaign Details",
+    title: "All Service Details",
     icon: <RiListUnordered className="text-purple-400" />,
     link: "/allcampaignsdetails",
   },
@@ -48,7 +48,7 @@ const sidebarItems: SidebarItem[] = [
   {
     title: "Logout",
     icon: <FaSignOutAlt className="text-red-400" />,
-    link: "/admndashboard",
+    link: "/admin",
   },
 ];
 

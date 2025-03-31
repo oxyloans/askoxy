@@ -335,7 +335,7 @@ const StudyAbroad: React.FC = () => {
                 className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
                 onClick={handleSubmit}
                 aria-label="Visit our site"
-                disabled={isButtonDisabled || interested}
+                // disabled={isButtonDisabled || interested}
               >
                 I'm Interested
               </button>

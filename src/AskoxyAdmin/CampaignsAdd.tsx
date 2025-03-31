@@ -177,7 +177,7 @@ const CampaignsAdd: React.FC = () => {
       );
 
       if (response.data) {
-        message.success("Campaign Added Successfully...!");
+        message.success("Service Added Successfully...!");
         setFormData({
           campaignType: "",
           campaignDescription: "",
@@ -185,12 +185,12 @@ const CampaignsAdd: React.FC = () => {
           campaignTypeAddBy: "RAMA",
         });
       } else {
-        setErrorMessage("Failed to add campaign. Please try again.");
-        message.error("Failed to add campaign. Please try again.");
+        setErrorMessage("Failed to add service. Please try again.");
+        message.error("Failed to add service. Please try again.");
       }
     } catch (error) {
-      setErrorMessage("Failed to add campaign. Please try again.");
-      message.error("Failed to add campaign. Please try again.");
+      setErrorMessage("Failed to add service. Please try again.");
+      message.error("Failed to add service. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +205,7 @@ const CampaignsAdd: React.FC = () => {
       <div className="flex flex-1 justify-center items-center p-6">
         <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            Add New Campaign
+            Add New Service
           </h1>
           <form>
             {/* Campaign Name */}
@@ -214,7 +214,7 @@ const CampaignsAdd: React.FC = () => {
                 htmlFor="campaignType"
                 className="block text-sm font-medium text-gray-700"
               >
-                Campaign Name
+                Service Name
               </label>
               <input
                 type="text"
@@ -357,7 +357,7 @@ const CampaignsAdd: React.FC = () => {
                 htmlFor="campaignTypeAddBy"
                 className="block text-sm font-medium text-gray-700"
               >
-                Campaign Added By
+                Service Added By
               </label>
               <select
                 id="campaignTypeAddBy"
@@ -390,7 +390,7 @@ const CampaignsAdd: React.FC = () => {
                 onClick={handleSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Add Campaign"}
+                {isSubmitting ? "Submitting..." : "Add Service"}
               </button>
             </div>
           </form>

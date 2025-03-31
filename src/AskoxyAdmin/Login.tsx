@@ -66,7 +66,7 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-purple-900">
-            AskOxy.AI Admin
+            ASKOXY.AI Admin
           </h1>
         </div>
 

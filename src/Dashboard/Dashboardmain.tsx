@@ -19,7 +19,10 @@ import {
   ShoppingBag,
   Search,
   Copy,
-  Check,
+  Check, GraduationCap, XIcon,
+  Award, PlayCircle,
+  FileText,
+  ArrowRight
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../kart/Header3";
@@ -27,6 +30,7 @@ import Ricebags from "../kart/Mainrice";
 // import FreeChatGPTmain from './FreechatGPTmain';
 import axios from "axios";
 import Content1 from "./Content";
+import { motion, AnimatePresence } from "framer-motion";
 import Footer from "../components/Footer";
 import OxyLoansImage from "../assets/img/oxyloasntemp (1).png";
 // Import your images here
@@ -39,6 +43,7 @@ import Rotary from "../assets/img/MY ROTARY.png";
 import MMServices from "../assets/img/Machines manufacturing services.png";
 import hiring from "../assets/img/Career guidance.png";
 import FreeChatGPTmain from "./FreechatGPTmain";
+import VideoImage from "../assets/img/Videothumb.png"
 import BMVCOINmain from "./BMVcoinmain";
 
 import BASE_URL from "../Config";
@@ -60,6 +65,7 @@ interface Campaign {
   campaignTypeAddBy: string;
   campaignDescription: string;
   campaignStatus: boolean;
+  campaignId: string;
 }
 
 interface Image {
@@ -72,6 +78,7 @@ const DashboardMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("products");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+    const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [cartCount, setCartCount] = useState<number>(0);
@@ -90,12 +97,19 @@ const DashboardMain: React.FC = () => {
         const response = await axios.get<Campaign[]>(
           BASE_URL + "/marketing-service/campgin/getAllCampaignDetails"
         );
-        setCampaigns(response.data);
+
+        const campaignsWithIds = response.data.map((campaign) => {
+          const id = campaign.campaignId;
+
+          return { ...campaign, id };
+        });
+
+        setCampaigns(campaignsWithIds);
       } catch (err) {
         console.error(err);
-      } finally {
       }
     };
+
     fetchCampaigns();
   }, []);
 
@@ -270,10 +284,9 @@ const DashboardMain: React.FC = () => {
     );
   };
 
-  const handleCampaignClick = (campaignType: string) => {
-    // console.log(`/services/campaign/${campaignType}`);
-    navigate(`/main/services/campaign/${campaignType}`);
-  };
+  const handleCampaignClick = (campaignId: string) => {
+    navigate(`/main/services/campaign/${campaignId.slice(-4)}`);
+  };
 
   const renderItems = (items: DashboardItem[]): JSX.Element => (
     <div className="space-y-6">
@@ -283,6 +296,120 @@ const DashboardMain: React.FC = () => {
         </>
       ) : activeTab === "services" ? (
         <>
+          {/* Study Abroad Section */}
+          <div className="bg-white flex items-center justify-center p-4">
+            <div className="w-full max-w-6xl bg-gray-50 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
+              {/* Header */}
+              <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
+                <div className="flex items-center justify-center">
+                  <GraduationCap className="w-8 h-8 text-purple-600 mr-3" />
+                  <h1 className="text-2xl font-bold text-purple-600">
+                    Study Abroad -Admissions
+                  </h1>
+                </div>
+              </div>
+  
+              {/* Content */}
+              <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
+                {/* Scholarship Details */}
+                <div className="space-y-6 flex flex-col justify-center">
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center mb-4">
+                      <Award className="w-6 h-6 text-purple-600 mr-3" />
+                      <h2 className="text-xl font-semibold text-purple-600">
+                        Fullfill Your Dreams
+                      </h2>
+                    </div>
+                    <ul className="space-y-3 text-gray-700">
+                      <li className="flex items-center">
+                        <Award className="w-4 h-4 mr-3 text-purple-600" />
+                        Upto 5% Cashback on University Fees
+                      </li>
+                      <li className="flex items-center">
+                        <Award className="w-4 h-4 mr-3 text-purple-600" />
+                        100% Scholarship for Selected Students
+                      </li>
+                      <li className="flex items-center">
+                        <Award className="w-4 h-4 mr-3 text-purple-600" />
+                        Get Offer Letter in 10 Minutes - Share preferences on ASKOXY.AI & get a sample offer letter.
+                      </li>
+                    </ul>
+                  </div>
+  
+                  <div className="flex flex-col gap-4">
+                    <p><strong>Study Abroad:</strong> Get a 10-minute sample offer letter and enjoy up to 5% fee cashback!</p>
+                    <p>Welcome! ASKOXY.AI fuels your study abroad journey with data-driven insights. Answer questions on country, university, course, budget, UG/PG & academics to get personalized recommendations, a ROI scorecard, a 10-min sample offer letter & up to 5% fee cashback.</p>
+                  </div>
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleOfferLetterClick}
+                      className="w-full bg-purple-600 text-white py-3 rounded-lg 
+                        flex items-center justify-center space-x-2 
+                        hover:bg-purple-700 transition-colors 
+                        font-medium shadow-lg"
+                    >
+                      <FileText className="w-5 h-5" />
+                      <span>View Offer Samples</span>
+                    </motion.button>
+  
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleStudyAbroadClick}
+                      className="w-full bg-purple-600 text-white py-3 rounded-lg 
+                        flex items-center justify-center space-x-2 
+                        hover:bg-purple-700 transition-colors 
+                        font-medium shadow-lg"
+                    >
+                      <Globe className="w-5 h-5" />
+                      <span>Study Abroad GPT</span>
+                    </motion.button>
+                  </div>
+                </div>
+  
+                {/* Video Section */}
+                <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative">
+                  {!isVideoPlaying ? (
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center cursor-pointer"
+                      style={{ backgroundImage: `url(${VideoImage})` }}
+                      onClick={() => setIsVideoPlaying(true)}
+                    >
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div className="bg-purple-600 w-16 h-16 rounded-full flex items-center justify-center">
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 24 24" 
+                            fill="white" 
+                            className="w-8 h-8"
+                          >
+                            <path 
+                              fillRule="evenodd" 
+                              d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" 
+                              clipRule="evenodd" 
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <iframe
+                      src="https://youtube.com/embed/LLRFyQ5y3HY?autoplay=1&mute=1"
+                      title="Scholarship Opportunity Video"
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          {/* Search Bar */}
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -296,6 +423,8 @@ const DashboardMain: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
+  
+          {/* Services Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {/* Regular Items */}
             {filteredItems(items).map((item, index) => (
@@ -342,16 +471,16 @@ const DashboardMain: React.FC = () => {
                 </div>
               </div>
             ))}
-
+  
             {/* Campaign Items */}
             {campaigns
               .filter((campaign) => campaign.campaignStatus !== false)
-              .map((campaign, index) => (
+              .map((campaign) => (
                 <div
-                  key={index}
+                  key={campaign.campaignId}
                   className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
             transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                  onClick={() => handleCampaignClick(campaign.campaignType)}
+                  onClick={() => handleCampaignClick(campaign.campaignId as string)}
                 >
                   <div className="relative aspect-video overflow-hidden bg-gray-50">
                     {campaign.imageUrls && campaign.imageUrls.length > 0 && (
@@ -364,7 +493,7 @@ const DashboardMain: React.FC = () => {
                     {campaign.campaignType && (
                       <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
                         <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
-                          {campaign.campaignType}
+                          {campaign.campaignType.slice(0, 10)}
                         </span>
                       </div>
                     )}
@@ -390,9 +519,20 @@ const DashboardMain: React.FC = () => {
     </div>
   );
 
+  const handleStudyAbroadClick = () => {
+    // Placeholder for study abroad information
+    window.open('https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback');
+  };
+
+  const handleOfferLetterClick = () => {
+    navigate('/main/dashboard/offer-letter-samples');
+  };
+
+
   return (
     <div className="min-h-screen">
       <div className="bg-white rounded-xl shadow-sm">
+        
         <div className="p-2 lg:p-4">
           {activeTab === "services" && renderItems(services)}
           {activeTab === "products" && renderItems(products)}

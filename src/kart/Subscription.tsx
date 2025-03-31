@@ -12,7 +12,7 @@ import {
   CheckCircle,
   Zap,
   Calendar,
-  Clock,
+  Clock,Lock,
   CreditCard,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -115,19 +115,36 @@ const SubscriptionCard: React.FC<{
   const bonusAmount = plan.getAmount - plan.amount;
   const isPremiumPlan = plan.amount === 99000;
   
+  // Get plan name based on amount
+  const getPlanName = (amount: number) => {
+    switch(amount) {
+      case 10000: return "Starter Plan";
+      case 20000: return "Basic Plan";
+      case 30000: return "Silver Plan";
+      case 40000: return "Gold Plan";
+      case 50000: return "Platinum Plan";
+      case 60000: return "Diamond Plan";
+      case 70000: return "Elite Plan";
+      case 90000: return "Ultra Plan";
+      case 99000: return "Premium Plan";
+      default: return isPremiumPlan ? "Premium Plan" : "Standard Plan";
+    }
+  };
+  
   // Premium plan FAQ data
   const premiumFaqs = [
+    
+    {
+      question: "Can I use both my advance and wallet balance for purchases?",
+      answer: "Yes, you can use both your advance and wallet balance for purchases."
+    },
     {
       question: "What if I withdraw on the 40th day?",
       answer: "You will receive the wallet amount in proportion to the days completed. For example, if you withdraw after 40 days, you will receive ₹2,667 (₹2,000 for the first 30 days + ₹667 for the extra 10 days)."
     },
     {
-      question: "Can I use both my advance and wallet balance for purchases?",
-      answer: "Your advance can only be withdrawn and cannot be used for purchases. You can purchase only with your wallet balance."
-    },
-    {
       question: "What happens if I withdraw my advance before 30 days?",
-      answer: "If you withdraw before completing 30 days, you will receive a proportionate wallet amount. For example, if you withdraw after 10 days, you will receive ₹667 (since ₹2,000 is for 30 days, the daily rate is ₹67, so ₹67 × 10 = ₹667)."
+      answer: "No, you cannot withdraw within the first 30 days as the lock period is not completed.",
     },
     {
       question: "Is there a limit on how many times I can withdraw my advance?",
@@ -179,8 +196,8 @@ const SubscriptionCard: React.FC<{
         <div className="p-4 sm:p-5 flex-grow">
           {/* Plan Title */}
           <div className="text-center mb-4">
-            <h3 className={`text-lg font-semibold ${isPremiumPlan ? "text-purple-800" : "text-gray-800"}`}>
-              {isPremiumPlan ? "Premium Plan" : "Standard Plan"}
+            <h3 className={`text-lg font-bold ${isPremiumPlan ? "text-purple-800" : "text-purple-600"}`}>
+              {getPlanName(plan.amount)}
             </h3>
             <div className={`h-px w-16 ${isPremiumPlan ? "bg-purple-400" : "bg-purple-300"} mx-auto mt-2`}></div>
           </div>
@@ -202,27 +219,39 @@ const SubscriptionCard: React.FC<{
               : "bg-gray-50 border-gray-200"
           }`}>
             <div className="flex items-center justify-between">
-              <span className={`text-sm font-medium ${isPremiumPlan ? "text-purple-700" : "text-purple-600"}`}>Get</span>
+              <span className={`text-sm font-medium ${isPremiumPlan ? "text-purple-700" : "text-purple-600"}`}>Get in your wallet</span>
               <span className={`text-xl font-bold ${isPremiumPlan ? "text-purple-700" : "text-purple-600"}`}>
                 ₹{plan.getAmount.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center mt-1">
-              <span className="text-xs text-gray-500">in your wallet</span>
-              {bonusAmount > 0 && (
-                <span className={`text-xs font-medium ${isPremiumPlan ? "text-green-700" : "text-green-600"}`}>
-                  +₹{bonusAmount.toLocaleString()} bonus
-                </span>
-              )}
-            </div>
+  {bonusAmount > 0 && (
+    <span className={`
+      text-sm font-bold
+      ${isPremiumPlan ? "text-green-700" : "text-green-600"}
+      bg-gradient-to-r from-green-50 to-green-100
+      px-3 py-1
+      rounded-full
+      shadow-sm
+      hover:shadow-md transition-shadow duration-300
+      border border-green-200
+      flex items-center
+      transform hover:scale-105 transition-transform duration-300
+    `}>
+      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L10 9.586l3.293-3.293A1 1 0 0112 7z" clipRule="evenodd" />
+      </svg>
+      +₹{bonusAmount.toLocaleString()} bonus
+    </span>
+  )}
+</div>
           </div>
           
-          {/* Features list */}
           <div className="mb-4">
             <h4 className={`text-sm font-bold ${isPremiumPlan ? "text-purple-800" : "text-gray-700"} mb-2`}>Benefits</h4>
             <ul className="space-y-2">
               {/* Monthly Usage Limit - Only for non-premium plans */}
-              {!isPremiumPlan && (
+              {/* {!isPremiumPlan && (
                 <li className="flex items-start">
                   <div className="flex-shrink-0 h-5 w-5 text-purple-500 mt-0.5">
                     <CheckCircle size={16} />
@@ -231,18 +260,28 @@ const SubscriptionCard: React.FC<{
                     ₹{plan.limitAmount.toLocaleString()} Monthly usage limit
                   </span>
                 </li>
-              )}
-              
+              )} */}
+                          
               {/* Plan-specific features */}
               {isPremiumPlan ? (
                 <>
-                  <li className="flex items-start">
+                  {/* <li className="flex items-start">
                     <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
                       <RefreshCw size={16} />
                     </div>
                     <div className="ml-2">
                       <span className="text-sm font-bold text-purple-700">
-                        ₹2,000 added monthly after 30 days
+                        ₹2,000 added after 30 days
+                      </span>
+                    </div>
+                  </li> */}
+                  <li className="flex items-start">
+                    <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
+                      <Lock size={16} />
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-sm font-bold text-purple-700">
+                     Minimum Lock Period: 30 days for first withdrawal; then withdraw ₹99,000 anytime
                       </span>
                     </div>
                   </li>
@@ -252,12 +291,22 @@ const SubscriptionCard: React.FC<{
                     </div>
                     <div className="ml-2">
                       <span className="text-sm font-bold text-purple-700">
-                        Withdraw your ₹99,000 anytime
+                      Monthly Added: ₹2,000 to your wallet
                       </span>
                     </div>
                   </li>
+
                   <li className="flex items-start">
+                    <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
+                      <Zap size={16} />
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-sm font-bold text-purple-700">
+                      Instant wallet credit
+                      </span>
+                    </div>
                   </li>
+                  
                 </>
               ) : (
                 <>
@@ -269,6 +318,15 @@ const SubscriptionCard: React.FC<{
                       Instant wallet credit
                     </span>
                   </li>
+                  {/* New Tenure Feature for non-premium plans */}
+                  {/* <li className="flex items-start">
+                    <div className="flex-shrink-0 h-5 w-5 text-purple-500 mt-0.5">
+                      <Calendar size={16} />
+                    </div>
+                    <span className="ml-2 text-sm font-bold text-gray-600">
+                      {Math.ceil((plan.getAmount - plan.limitAmount) / plan.limitAmount)} months tenure with unused balance carry forward
+                    </span>
+                  </li> */}
                 </>
               )}
             </ul>
@@ -851,7 +909,7 @@ const Subscription: React.FC = () => {
               Choose Your Perfect Plan
               </h1>
               <p className="text-lg text-gray-600">
-              Subscribe & Save Up to Minimum ₹900 – Maximum ₹8,910 – Hassle-Free Fresh Rice Delivery!
+              Subscribe & Save Up to Minimum ₹900 – Maximum ₹8,100 – Hassle-Free Fresh Rice Delivery!
               </p>
             </div>
 

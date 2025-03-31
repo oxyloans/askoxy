@@ -14,6 +14,7 @@ interface Image {
 }
 
 interface Campaign {
+  campaignId: string;
   campaignType: string;
   campaignDescription: string;
   imageUrls: Image[];
@@ -24,8 +25,11 @@ interface Campaign {
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const pathParts = location.pathname.split("/"); // Split path into parts
-  const campaignType = decodeURIComponent(pathParts[pathParts.length - 1]);
+  const pathParts = location.pathname.split("/");
+
+  // Get campaign ID from URL
+  const campaignId = pathParts[pathParts.indexOf("campaign") + 1];
+
   const userId = localStorage.getItem("userId");
   const [isLoading, setIsLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -36,15 +40,22 @@ const CampaignDetails: React.FC = () => {
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState("");
-  const campaign = campaigns.find((c) => c.campaignType === campaignType);
   const mobileNumber = localStorage.getItem("whatsappNumber");
-  const [formData, setFormData] = useState({
-    askOxyOfers: campaignType,
-    userId: userId,
-    projectType: "ASKOXY",
-  });
+  const [campaign, setCampaign] = useState<Campaign>();
 
-  // Fetch campaigns from the API
+  const generateCampaignId = (campaignType: string, index: number): string => {
+    return `campaign-${index + 1}`;
+  };
+
+  const createSimpleHash = (text: string): string => {
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = (hash << 5) - hash + text.charCodeAt(i);
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16).substring(0, 8);
+  };
+
   useEffect(() => {
     const fetchCampaigns = async () => {
       setIsLoading(true);
@@ -52,16 +63,54 @@ const CampaignDetails: React.FC = () => {
         const response = await axios.get<Campaign[]>(
           `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
         );
-        setCampaigns(response.data);
+
+        // Assign the last 4 characters of campaignId
+        const campaignsWithIds = response.data.map((campaign) => ({
+          ...campaign,
+          campaignId: campaign.campaignId.slice(-4), // Use last 4 digits
+        }));
+
+        setCampaigns(campaignsWithIds);
+
+        // Find the campaign by ID
+        const foundCampaign = campaignsWithIds.find(
+          (c) => c.campaignId === campaignId
+        );
+
+        // If not found by ID, try fallback search
+        if (!foundCampaign && campaignId) {
+          try {
+            const decodedName = decodeURIComponent(campaignId);
+            const fallbackCampaign = campaignsWithIds.find(
+              (c) =>
+                c.campaignType.trim().slice(0, 10) ===
+                decodedName.trim().slice(0, 10)
+            );
+
+            if (fallbackCampaign) {
+              // Update URL with correct campaignId
+              const newUrl = location.pathname.replace(
+                campaignId,
+                fallbackCampaign.campaignId as string
+              );
+              window.history.replaceState(null, "", newUrl);
+              setCampaign(fallbackCampaign);
+            }
+          } catch (e) {
+            console.error("Error with URL decoding:", e);
+          }
+        } else {
+          setCampaign(foundCampaign);
+        }
       } catch (err) {
-        console.error("Error fetching campaigns:", err);
+        console.error("Error fetching services:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchCampaigns();
-  }, []);
+  }, [campaignId, location.pathname]);
 
   const handleWriteToUs = () => {
     if (
@@ -79,15 +128,17 @@ const CampaignDetails: React.FC = () => {
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
-      return; // Exit the function if the query is invalid
+      return;
     }
-    // Payload with the data to send to the API
+
+    const campaignType = campaign?.campaignType || "Unknown Service";
+
     const payload = {
       email: email,
       mobileNumber: mobileNumber,
       queryStatus: "PENDING",
       projectType: "ASKOXY",
-      askOxyOfers: "FREEAI",
+      askOxyOfers: campaignType,
       adminDocumentId: "",
       comments: "",
       id: "",
@@ -99,8 +150,6 @@ const CampaignDetails: React.FC = () => {
       userId: userId,
     };
 
-    // Log the query to check the input before sending
-    console.log("Query:", query);
     const accessToken = localStorage.getItem("accessToken");
 
     const apiUrl = `${BASE_URL}/writetous-service/saveData`;
@@ -109,27 +158,23 @@ const CampaignDetails: React.FC = () => {
     };
 
     try {
-      // Sending the POST request to the API
       const response = await axios.post(apiUrl, payload, { headers: headers });
-
-      // Check if the response was successful
       if (response.data) {
-        console.log("Response:", response.data);
         setSuccessOpen(true);
         setIsOpen(false);
       }
     } catch (error) {
-      // Handle error if the request fails
       console.error("Error sending the query:", error);
       message.error("Failed to send query. Please try again.");
     }
   };
 
   const handleSubmit = async () => {
-    console.log(campaignType);
-
     try {
       setIsButtonDisabled(true);
+
+      const campaignType = campaign?.campaignType || "";
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         {
@@ -209,10 +254,10 @@ const CampaignDetails: React.FC = () => {
           </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-4">404</h1>
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            Campaign Not Found
+            Service Not Found
           </h2>
           <p className="text-lg text-gray-600 mb-6">
-            The campaign "{campaignType}" is currently inactive or unavailable.
+            The service is currently inactive or unavailable.
           </p>
           <button
             onClick={() => navigate("/main")}
@@ -234,7 +279,7 @@ const CampaignDetails: React.FC = () => {
               indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />}
               size="large"
             />
-            <p className="mt-4 text-gray-600">Loading campaign details...</p>
+            <p className="mt-4 text-gray-600">Loading service details...</p>
           </div>
         </div>
       ) : !campaign ? (

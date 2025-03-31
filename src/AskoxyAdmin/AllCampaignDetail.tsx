@@ -19,6 +19,7 @@ interface Campaign {
   campaignDescription: string;
   campaignTypeAddBy: string;
   campaignStatus: string;
+  campaignId: string;
 }
 
 const AllCampaignsDetails: React.FC = () => {
@@ -36,6 +37,7 @@ const AllCampaignsDetails: React.FC = () => {
     imageUrls: [],
     campaignTypeAddBy: "",
     campaignStatus: "",
+    campaignId:"",
   });
 
   const TestUrl = window.location.href.includes("sandbox")
@@ -66,8 +68,8 @@ const AllCampaignsDetails: React.FC = () => {
       );
       setCampaigns(filteredCampaigns);
     } catch (error) {
-      console.error("Error fetching campaigns:", error);
-      message.error("Failed to load campaign details. Please try again.");
+      console.error("Error fetching services:", error);
+      message.error("Failed to load service details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -103,12 +105,12 @@ const AllCampaignsDetails: React.FC = () => {
             // setCampaigns((prev) =>
             //   prev.filter((campaign) => campaign.campaignType !== campaign.campaignType)
             // );
-            message.success("Campaign deactivated successfully.");
+            message.success("Service deactivated successfully.");
           } else {
-            message.error("Failed to deactivate the campaign.");
+            message.error("Failed to deactivate the service.");
           }
         } catch (error) {
-          message.error("Error while deactivating campaign.");
+          message.error("Error while deactivating service.");
           console.error(error);
         }
         fetchCampaigns();
@@ -125,6 +127,7 @@ const AllCampaignsDetails: React.FC = () => {
       imageUrls: campaign.imageUrls,
       campaignTypeAddBy: campaign.campaignTypeAddBy,
       campaignStatus: campaign.campaignStatus,
+      campaignId: campaign.campaignId
     });
     setIsUpdateModalVisible(true);
     // console.log(formData);
@@ -273,6 +276,7 @@ const AllCampaignsDetails: React.FC = () => {
           imageUrls: [],
           campaignTypeAddBy: "",
           campaignStatus: "",
+          campaignId:"",
         });
         setIsUpdateModalVisible(false);
       } else {
@@ -310,7 +314,7 @@ const AllCampaignsDetails: React.FC = () => {
       ),
     },
     {
-      title: <div className="text-center">Campaign Type</div>,
+      title: <div className="text-center">Service Type</div>,
       dataIndex: "campaignType",
       key: "campaignType",
       titleAlign: "center",
@@ -326,10 +330,10 @@ const AllCampaignsDetails: React.FC = () => {
       key: "campaignTypeAddBy",
     },
     {
-      title: <div className="text-center">Campaign Url</div>,
+      title: <div className="text-center">Service Url</div>,
       key: "campaignUrl",
       render: (_: any, record: Campaign) => {
-        const encodedCampaignType = encodeURIComponent(record.campaignType);
+        const encodedCampaignType = encodeURIComponent(record.campaignId.slice(-4));
         const campaignUrl = `${TestUrl}${encodedCampaignType}`;
 
         return (
@@ -386,10 +390,10 @@ const AllCampaignsDetails: React.FC = () => {
       {/* Main Content */}
       <div className="flex-3 p-4 sm:p-6 lg:p-8 mx-auto w-full max-w-full md:max-w-7xl">
         <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
-          All Campaign Details
+          All Service Details
         </h1>
         {loading ? (
-          <p className="text-gray-600">Loading campaigns...</p>
+          <p className="text-gray-600">Loading Services...</p>
         ) : (
           <div className="overflow-x-auto">
             <Table
@@ -406,7 +410,7 @@ const AllCampaignsDetails: React.FC = () => {
 
       {/* Update Campaign Modal */}
       <Modal
-        title="Update Campaign"
+        title="Update Service"
         visible={isUpdateModalVisible}
         onCancel={handleModalCancel}
         footer={[
@@ -414,7 +418,7 @@ const AllCampaignsDetails: React.FC = () => {
             Cancel
           </Button>,
           <Button key="submit" type="primary" onClick={handleUpdateSubmit}>
-            {isSubmitting ? "Submitting..." : "Add Campaign"}
+            {isSubmitting ? "Submitting..." : "Update Service"}
           </Button>,
         ]}
       >
@@ -430,7 +434,7 @@ const AllCampaignsDetails: React.FC = () => {
                   campaignDescription: e.target.value,
                 })
               }
-              placeholder="Update campaign description"
+              placeholder="Update service description"
               className="mb-4"
             />
 

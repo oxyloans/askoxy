@@ -68,6 +68,7 @@ const CategorySkeletonItem: React.FC = () => (
   <div className="px-2 py-1 rounded-full bg-gray-200 animate-pulse w-24 h-8 mx-1"></div>
 );
 
+
 // New OxyLoans Modal Component
 const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
@@ -155,15 +156,6 @@ const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     </motion.div>
   );
 };
-
-
-
-const handleStudyAbroadClick = () => {
-  // Placeholder for study abroad information
-  window.open('https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback');
-};
-
-
 
 
 const SkeletonLoader: React.FC = () => (
@@ -862,127 +854,10 @@ const Ricebags: React.FC = () => {
     }
     // On desktop, the modal will show both options
   };
-  const handleOfferLetterClick = () => {
-    navigate('/main/dashboard/offer-letter-samples');
-  };
+ 
 
   return (
     <div className="min-h-screen">
-      
-      <div className="bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl bg-gray-50 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
-        {/* Header */}
-        <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
-          <div className="flex items-center justify-center">
-            <GraduationCap className="w-8 h-8 text-purple-600 mr-3" />
-            <h1 className="text-2xl font-bold text-purple-600">
-              Study Abroad -Admissions
-            </h1>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
-          {/* Scholarship Details */}
-          <div className="space-y-6 flex flex-col justify-center">
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center mb-4">
-                <Award className="w-6 h-6 text-purple-600 mr-3" />
-                <h2 className="text-xl font-semibold text-purple-600">
-                  Fullfill Your Dreams
-                </h2>
-              </div>
-              <ul className="space-y-3 text-gray-700">
-              <li className="flex items-center">
-                  <Award className="w-4 h-4 mr-3 text-purple-600" />
-                  Up to 5% Cashback on University Fees
-                </li>
-                <li className="flex items-center">
-                  <Award className="w-4 h-4 mr-3 text-purple-600" />
-                  100% Scholarship for Selected Students
-                </li>
-                <li className="flex items-center">
-                  <Award className="w-4 h-4 mr-3 text-purple-600" />
-                  Get Offer Letter in 10 Minutes - Share preferences on ASKOXY.AI & get a sample offer letter.
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex flex-col gap-4">
-  <p><strong>Study Abroad:</strong> Get a 10-minute sample offer letter and enjoy up to 5% fee cashback!</p>
-  <p>Welcome! ASKOXY.AI fuels your study abroad journey with data-driven insights. Answer questions on country, university, course, budget, UG/PG & academics to get personalized recommendations, a ROI scorecard, a 10-min sample offer letter & up to 5% fee cashback.</p>
-</div>
-
-
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleOfferLetterClick}
-                className="w-full bg-purple-600 text-white py-3 rounded-lg 
-                  flex items-center justify-center space-x-2 
-                  hover:bg-purple-700 transition-colors 
-                  font-medium shadow-lg"
-              >
-                <FileText className="w-5 h-5" />
-                <span>View Offer Samples</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleStudyAbroadClick}
-                className="w-full bg-purple-600 text-white py-3 rounded-lg 
-                  flex items-center justify-center space-x-2 
-                  hover:bg-purple-700 transition-colors 
-                  font-medium shadow-lg"
-              >
-                <Globe className="w-5 h-5" />
-                <span>Study Abroad GPT</span>
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Video Section */}
-          <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative">
-            {!isVideoPlaying ? (
-              <div 
-                className="absolute inset-0 bg-cover bg-center cursor-pointer"
-                style={{ backgroundImage: `url(${VideoImage})` }}
-                onClick={() => setIsVideoPlaying(true)}
-              >
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="bg-purple-600 w-16 h-16 rounded-full flex items-center justify-center">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 24 24" 
-                      fill="white" 
-                      className="w-8 h-8"
-                    >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" 
-                        clipRule="evenodd" 
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <iframe
-                src="https://youtube.com/embed/LLRFyQ5y3HY?autoplay=1&mute=1"
-                title="Scholarship Opportunity Video"
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
       
       {/* Image Slider */}
       <div
