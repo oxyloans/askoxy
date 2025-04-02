@@ -36,13 +36,15 @@ const CampaignDetails: React.FC = () => {
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const email = localStorage.getItem("email");
+  const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+  const email = profileData.customerEmail || null;
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState("");
-  const mobileNumber = localStorage.getItem("whatsappNumber");
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
+  const mobileNumber = localStorage.getItem("mobileNumber");
   const [campaign, setCampaign] = useState<Campaign>();
-
+  const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const generateCampaignId = (campaignType: string, index: number): string => {
     return `campaign-${index + 1}`;
   };
@@ -113,11 +115,14 @@ const CampaignDetails: React.FC = () => {
   }, [campaignId, location.pathname]);
 
   const handleWriteToUs = () => {
+    console.log(email);
+    console.log(finalMobileNumber);
+
     if (
       !email ||
       email === "null" ||
-      !mobileNumber ||
-      mobileNumber === "null"
+      !finalMobileNumber ||
+      finalMobileNumber === "null"
     ) {
       setIsprofileOpen(true);
     } else {
@@ -135,7 +140,7 @@ const CampaignDetails: React.FC = () => {
 
     const payload = {
       email: email,
-      mobileNumber: mobileNumber,
+      mobileNumber: finalMobileNumber,
       queryStatus: "PENDING",
       projectType: "ASKOXY",
       askOxyOfers: campaignType,
@@ -517,7 +522,7 @@ const CampaignDetails: React.FC = () => {
                 type="tel"
                 id="phone"
                 disabled={true}
-                value={mobileNumber || ""}
+                value={finalMobileNumber || ""}
                 className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                 placeholder="Enter your mobile number"
                 style={{ fontSize: "0.8rem" }}

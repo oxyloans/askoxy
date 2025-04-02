@@ -266,7 +266,7 @@ const Admin: React.FC = () => {
       align: "center",
     },
     {
-      title: "Offer",
+      title: "Interested In",
       dataIndex: "askOxyOfers",
       key: "askOxyOfers",
       align: "center",
@@ -282,17 +282,18 @@ const Admin: React.FC = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
   const convertToCSV = (data: any[]) => {
     if (data.length === 0) return "";
-    const headers = ["S.No", "Project Type", "Mobile Number", "Offer"];
+    const headers = ["S.No", "Mobile Number", "Interested In", "Date"];
     const csvRows = [headers.join(",")];
 
     data.forEach((item, index) => {
       const row = [
         index + 1,
-        item.projectType || "",
         item.mobileNumber || "",
         item.askOxyOfers || "",
+        item.createdAt || "",
       ];
 
       const formattedRow = row.map((cell) => {

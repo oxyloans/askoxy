@@ -2,10 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Coins,
   Bot,
-  Settings,
-  Menu,
-  X,
-  ChevronRight,
   Gem,
   Cpu,
   Package,
@@ -15,14 +11,11 @@ import {
   Factory,
   Briefcase,
   Users,
-  BarChart2,
   ShoppingBag,
   Search,
-  Copy,
-  Check, GraduationCap, XIcon,
-  Award, PlayCircle,
-  FileText,
-  ArrowRight
+  GraduationCap,
+  Award, 
+  FileText
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../kart/Header3";

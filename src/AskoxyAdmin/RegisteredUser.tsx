@@ -23,6 +23,10 @@ import {
   FileTextOutlined,
   SwapOutlined,
   BarChartOutlined,
+  DeleteOutlined,
+  LoadingOutlined,
+  PhoneOutlined,
+  WhatsAppOutlined,
 } from "@ant-design/icons";
 import { Column } from "@ant-design/plots";
 import BASE_URL from "../Config";
@@ -31,17 +35,18 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface UserData {
-  orderId: string;
-  userid: string;
-  username: string;
-  mobilenumber: string;
+  id: string;
   email: string;
-  orderDate: string;
-  registeredDate: string | null;
-  grandTotal: number;
-  orderStatus: string | null;
-  address?: string;
-  testUser?: boolean;
+  fullName: string;
+  mobileNumber: string;
+  whatsappNumber: string;
+  created_at: string | null;
+  testuser: boolean;
+  flatNo: string | null;
+  landMark: string | null;
+  pinCode: string | null;
+  address: string | null;
+  addressType: string | null;
 }
 
 interface ApiResponse {
@@ -50,12 +55,6 @@ interface ApiResponse {
   totalPages: number;
   number: number;
   size: number;
-}
-
-interface ChartDataItem {
-  period: string;
-  value: number;
-  color: string;
 }
 
 interface OrderData {
@@ -68,6 +67,9 @@ interface OrderData {
   deliveryFee: number;
   paymentType: number;
   orderDate: string;
+  timeSlot: string;
+  dayOfWeek: string;
+  expectedDeliveryDate: string;
   orderItems: any[] | null;
 }
 
@@ -92,6 +94,12 @@ const RegisteredUser: React.FC = () => {
   const [endDate1, setEndDate1] = useState<string>("");
   const [isCustomDate, setIsCustomDate] = useState<boolean>(false);
   const [filteredUserData, setFilteredUserData] = useState<UserData[]>([]);
+  const [removeLoading, setRemoveLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [primaryType, setPrimaryType] = useState("");
+  const [userId, setUserId] = useState("");
 
   const [selectedTimeFrame, setSelectedTimeFrame] =
     useState<string>("thisWeek");
@@ -126,6 +134,7 @@ const RegisteredUser: React.FC = () => {
         break;
       case "yesterday":
         startDate.setDate(today.getDate() - 1);
+        today.setDate(today.getDate() - 1);
         break;
       case "thisWeek":
         const dayOfWeek = today.getDay();
@@ -148,14 +157,14 @@ const RegisteredUser: React.FC = () => {
 
   const fetchUserData = async () => {
     setLoading(true);
-    console.log("Selected Time Frame:", selectedTimeFrame);
-    console.log(startDate1, endDate1);
+    // console.log("Selected Time Frame:", selectedTimeFrame);
+    // console.log(startDate1, endDate1);
 
     const { startDate, endDate } = getDateRange(selectedTimeFrame);
 
     try {
       const response = await axios.get<ApiResponse>(
-        `${BASE_URL}/order-service/date-rangeuserdetails?endDate=${endDate}&page=${
+        `${BASE_URL}/user-service/date-rangeuserdetails?endDate=${endDate}&page=${
           pagination.current - 1
         }&size=${1000}&startDate=${startDate}`
       );
@@ -190,8 +199,9 @@ const RegisteredUser: React.FC = () => {
 
     const filteredData = userData.filter(
       (user) =>
-        user.username?.toLowerCase().includes(value) ||
-        user.mobilenumber?.includes(value)
+        user.fullName?.toLowerCase().includes(value) ||
+        user.mobileNumber?.includes(value) ||
+        user.whatsappNumber?.includes(value)
     );
 
     setFilteredUserData(filteredData);
@@ -247,7 +257,7 @@ const RegisteredUser: React.FC = () => {
         return "Rejected";
       case "6":
         return "cancelled";
-      case "picked up":
+      case "PickedUp":
         return "picked up";
       default:
         return "Unknown";
@@ -294,7 +304,7 @@ const RegisteredUser: React.FC = () => {
   const viewOrderDetails = (record: UserData) => {
     setSelectedUser(record);
     setOrderDetailsVisible(true);
-    fetchOrderDetails(record.userid);
+    fetchOrderDetails(record.id);
   };
 
   useEffect(() => {
@@ -337,7 +347,7 @@ const RegisteredUser: React.FC = () => {
 
   const columns = [
     {
-      title: "SL No.",
+      title: "S No.",
       key: "index",
       width: 50,
       align: "center" as const,
@@ -346,12 +356,12 @@ const RegisteredUser: React.FC = () => {
     },
     {
       title: "User ID",
-      key: "userid",
-      width: 100,
+      key: "id",
+      width: 150,
       align: "center" as const,
       render: (record: UserData) => (
-        <Text strong style={{ color: "#1890ff" }}>
-          {record.userid}
+        <Text strong style={{ color: "#67297c" }}>
+          {record.id}
         </Text>
       ),
     },
@@ -362,16 +372,34 @@ const RegisteredUser: React.FC = () => {
       // align: "center" as const,
       render: (record: UserData) => (
         <Space direction="vertical" size="small">
-          <Text>Name : {record.username || "N/A"}</Text>
-          <Text type="secondary">email : {record.email}</Text>
-          <Text strong style={{ color: "#67297c" }}>
-            {" "}
-            Mobile : {record.mobilenumber}
-          </Text>
-          <Text strong style={{ color: "#0d9488" }}>
-            Registered Date : {record.registeredDate}
-          </Text>
+          <Text>Name: {record.fullName || "N/A"}</Text>
+          <Text type="secondary">Email: {record.email || "N/A"}</Text>
+          <Tag
+            icon={<WhatsAppOutlined style={{ color: "#25D366" }} />}
+            color="#E6F4EA"
+            style={{ padding: "2px 4px", borderRadius: 12 }}
+          >
+            <Text strong>{record.whatsappNumber || "N/A"}</Text>
+          </Tag>
+          <Tag
+            icon={<PhoneOutlined style={{ color: "#722ED1" }} />}
+            color="#F9F0FF"
+            style={{ padding: "2px 4px", borderRadius: 12 }}
+          >
+            <Text strong>{record.mobileNumber || "N/A"}</Text>
+          </Tag>
         </Space>
+      ),
+    },
+    {
+      title: "Registration Date",
+      key: "createdAt",
+      width: 90,
+      align: "center" as const,
+      render: (record: UserData) => (
+        <Text strong style={{ color: "#0d9488" }}>
+          {record.created_at}
+        </Text>
       ),
     },
     {
@@ -380,27 +408,34 @@ const RegisteredUser: React.FC = () => {
       key: "address",
       width: 150,
       align: "center" as const,
-      render: (address: string, record: UserData) => (
-        <div
-          style={{
-            maxWidth: "150px",
-            padding: "4px",
-            textAlign: "center",
-          }}
-        >
-          <Text
+      render: (text: string, record: UserData) => {
+        if (!record) return "N/A";
+
+        const fullAddress = `${record.flatNo || ""} ${record.landMark || ""} ${
+          record.address || ""
+        } ${record.pinCode || ""}`.trim();
+
+        return (
+          <div
             style={{
-              wordWrap: "break-word",
-              whiteSpace: "normal",
-              display: "block",
-              lineHeight: "1.4",
+              maxWidth: "150px",
+              padding: "4px",
+              textAlign: "center",
             }}
-            title={record.address}
           >
-            {record.address || "N/A"}
-          </Text>
-        </div>
-      ),
+            <Text
+              style={{
+                wordWrap: "break-word",
+                whiteSpace: "normal",
+                display: "block",
+                lineHeight: "1.4",
+              }}
+            >
+              {fullAddress.length > 0 ? fullAddress : "N/A"}
+            </Text>
+          </div>
+        );
+      },
     },
     {
       title: "Actions",
@@ -419,16 +454,16 @@ const RegisteredUser: React.FC = () => {
             Order Details
           </Button>
           <Button
-            type="primary"
             size="small"
             icon={<SwapOutlined />}
             onClick={() => handleToggleTestUser(record)}
             loading={loading}
+            type={record.testuser ? "primary" : undefined} // Only primary when test user
             style={{
               width: "100%",
-              backgroundColor: record.testUser ? "#22c55e" : "#ef4444",
-              borderColor: record.testUser ? "#16a34a" : "#d1d5db",
-              color: record.testUser ? "#ffffff" : "#ffffff",
+              backgroundColor: record.testuser ? "#22c55e" : "#ffffff",
+              borderColor: record.testuser ? "#16a34a" : "#ef4444",
+              color: record.testuser ? "#ffffff" : "#ef4444",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -437,7 +472,7 @@ const RegisteredUser: React.FC = () => {
             }}
             className="hover:opacity-90 transition-all duration-300"
           >
-            {record.testUser ? "Convert to Live User" : "Convert to Test User"}
+            {record.testuser ? "Convert Live" : "Convert Test"}
           </Button>
         </Space>
       ),
@@ -481,6 +516,19 @@ const RegisteredUser: React.FC = () => {
       render: (text: number) => `₹${text.toFixed(2)}`,
     },
     {
+      title: "Expected Delivery",
+      dataIndex: "expectedDeliveryDate",
+      key: "expectedDeliveryDate",
+      render: (expectedDeliveryDate: string, record: OrderData) => (
+        <div>
+          <p>{expectedDeliveryDate}</p>
+          <p>{record.timeSlot}</p>
+          <p>{record.dayOfWeek}</p>
+        </div>
+      ),
+    },
+
+    {
       title: "Status",
       dataIndex: "orderStatus",
       key: "orderStatus",
@@ -493,8 +541,8 @@ const RegisteredUser: React.FC = () => {
   const handleToggleTestUser = async (record: UserData) => {
     setLoading(true);
     const payload = {
-      userId: record.userid,
-      testUser: !record.testUser,
+      id: record.id,
+      testUser: !record.testuser,
     };
     // console.log(payload);
     try {
@@ -515,11 +563,71 @@ const RegisteredUser: React.FC = () => {
     }
   };
 
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setMobileNumber("");
+    setWhatsappNumber("");
+    setUserId("");
+    setPrimaryType("");
+  };
+
+  const handleRemoveUser = async () => {
+    setRemoveLoading(true);
+    if (mobileNumber === "") {
+      message.error("Please enter mobile number.");
+      setRemoveLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/user-service/updateMobileNumber`,
+        {
+          mobileNumber: mobileNumber,
+          whatsappNumber: whatsappNumber,
+          primaryType: primaryType,
+          id: userId,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            accept: "*/*",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success("User updated successfully!");
+        handleCancel();
+      }
+    } catch (error) {
+      message.error("Failed to update user. Please try again.");
+      handleCancel();
+    } finally {
+      setRemoveLoading(false);
+      setIsModalOpen(false);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar />
       <div className="flex-1 p-6 overflow-auto bg-gray-50">
-        <Title level={2}>Registered Users</Title>
+        <div className="flex justify-between items-center p-4">
+          <Title level={2}>Registered Users</Title>
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={showModal}
+          >
+            Remove User
+          </Button>
+        </div>
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={24} md={24} lg={24} xl={24}>
             <Row gutter={[16, 16]}>
@@ -790,7 +898,7 @@ const RegisteredUser: React.FC = () => {
           <Table
             columns={columns}
             dataSource={filteredUserData}
-            rowKey="orderId"
+            rowKey="id"
             pagination={pagination}
             onChange={handleTableChange}
             loading={loading}
@@ -800,7 +908,11 @@ const RegisteredUser: React.FC = () => {
       </div>
 
       <Modal
-        title="Order Details"
+        title={
+          <span style={{ color: "#1890ff", fontSize: "20px" }}>
+            Order Details
+          </span>
+        }
         open={orderDetailsVisible}
         onCancel={() => {
           setOrderDetailsVisible(false);
@@ -809,49 +921,93 @@ const RegisteredUser: React.FC = () => {
           setSelectedOrderId(null);
         }}
         footer={[
-          <Button key="close" onClick={() => setOrderDetailsVisible(false)}>
+          <Button
+            key="close"
+            onClick={() => setOrderDetailsVisible(false)}
+            style={{
+              backgroundColor: "#ff4d4f",
+              color: "white",
+              border: "none",
+            }}
+          >
             Close
           </Button>,
         ]}
         width={800}
+        style={{ borderRadius: "8px", overflow: "hidden" }}
       >
         {loader ? (
-          <div style={{ textAlign: "center", padding: "30px" }}>
-            <Spin size="large" />
-            <p>Loading order details...</p>
+          <div
+            style={{
+              textAlign: "center",
+              padding: "30px",
+              background: "#f0f2f5",
+              borderRadius: "8px",
+            }}
+          >
+            <Spin size="large" style={{ color: "#1890ff" }} />
+            <p style={{ color: "#595959", marginTop: "10px" }}>
+              Loading order details...
+            </p>
           </div>
         ) : (
           <>
             {selectedUser && (
               <Row gutter={[16, 16]}>
                 <Col span={24}>
-                  <Card title="Customer Information">
-                    <p>
-                      <strong>Name:</strong> {selectedUser.username}
+                  <Card
+                    title={
+                      <span style={{ color: "#2f54eb" }}>
+                        Customer Information
+                      </span>
+                    }
+                    style={{
+                      borderRadius: "8px",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+                      background: "linear-gradient(to right, #fff, #f9faff)",
+                    }}
+                  >
+                    <p style={{ color: "#595959" }}>
+                      <strong style={{ color: "#1d39c4" }}>Name:</strong>
+                      {""}
+                      {selectedUser.fullName || "N/A"}
                     </p>
-                    <p>
-                      <strong>Email:</strong> {selectedUser.email}
+                    <p style={{ color: "#595959" }}>
+                      <strong style={{ color: "#1d39c4" }}>Email: </strong>{" "}
+                      {selectedUser.email || "N/A"}
                     </p>
-                    <p>
-                      <strong>Phone:</strong> {selectedUser.mobilenumber}
+                    <p style={{ color: "#595959" }}>
+                      <strong style={{ color: "#1d39c4" }}>Phone: </strong>{" "}
+                      {selectedUser.whatsappNumber ||
+                        selectedUser.mobileNumber ||
+                        "N/A"}
                     </p>
-                    <p>
-                      <strong>User ID:</strong> {selectedUser.userid}
+                    <p style={{ color: "#595959" }}>
+                      <strong style={{ color: "#1d39c4" }}>User ID: </strong>{" "}
+                      {selectedUser.id || "N/A"}
                     </p>
-                    <p>
-                      <strong>Address:</strong> {selectedUser.address || "N/A"}
+                    <p style={{ color: "#595959" }}>
+                      <strong style={{ color: "#1d39c4" }}>Address: </strong>{" "}
+                      {selectedUser.address || "N/A"}
                     </p>
                   </Card>
                 </Col>
 
                 <Col span={24}>
                   <Card
-                    title="Orders History"
+                    title={
+                      <span style={{ color: "#2f54eb" }}>Orders History</span>
+                    }
                     extra={
-                      <Text type="secondary">
+                      <Text type="secondary" style={{ color: "#722ed1" }}>
                         {userOrders.length} orders found
                       </Text>
                     }
+                    style={{
+                      borderRadius: "8px",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+                      background: "linear-gradient(to right, #fff, #f9faff)",
+                    }}
                   >
                     {userOrders.length > 0 ? (
                       <Table
@@ -860,9 +1016,12 @@ const RegisteredUser: React.FC = () => {
                         rowKey="orderId"
                         pagination={false}
                         size="small"
+                        rowClassName={(record, index) =>
+                          index % 2 === 0 ? "table-row-light" : "table-row-dark"
+                        }
                       />
                     ) : (
-                      <Text type="secondary">
+                      <Text type="secondary" style={{ color: "#ff4d4f" }}>
                         No orders found for this user.
                       </Text>
                     )}
@@ -871,39 +1030,65 @@ const RegisteredUser: React.FC = () => {
 
                 {selectedOrderId && (
                   <Col span={24}>
-                    <Card title="Order Details">
+                    <Card
+                      title={
+                        <span style={{ color: "#2f54eb" }}>Order Details</span>
+                      }
+                      style={{
+                        borderRadius: "8px",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+                        background: "linear-gradient(to right, #fff, #f9faff)",
+                      }}
+                    >
                       {userOrders
                         .filter((order) => order.orderId === selectedOrderId)
                         .map((order) => (
                           <div key={order.orderId}>
-                            <p>
-                              <strong>Order ID:</strong> {order.newOrderId}
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Order ID:
+                              </strong>{" "}
+                              {order.newOrderId}
                             </p>
-                            <p>
-                              <strong>Order Date:</strong>{" "}
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Order Date:
+                              </strong>{" "}
                               {formatDate(order.orderDate)}
                             </p>
-                            <p>
-                              <strong>Status:</strong>{" "}
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Status:
+                              </strong>{" "}
                               <Tag color={getStatusColor(order.orderStatus)}>
                                 {getStatusText(order.orderStatus)}
                               </Tag>
                             </p>
-                            <p>
-                              <strong>Payment Method:</strong>{" "}
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Payment Method:
+                              </strong>{" "}
                               {getPaymentTypeText(order.paymentType)}
                             </p>
-                            <p>
-                              <strong>Subtotal:</strong> ₹
-                              {order.subTotal.toFixed(2)}
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Subtotal:
+                              </strong>{" "}
+                              ₹{order.subTotal.toFixed(2)}
                             </p>
-                            <p>
-                              <strong>Delivery Fee:</strong> ₹
-                              {order.deliveryFee.toFixed(2)}
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Delivery Fee:
+                              </strong>{" "}
+                              ₹{order.deliveryFee.toFixed(2)}
                             </p>
-                            <p>
-                              <strong>Total Amount:</strong>{" "}
-                              <span style={{ fontWeight: "bold" }}>
+                            <p style={{ color: "#595959" }}>
+                              <strong style={{ color: "#1d39c4" }}>
+                                Total Amount:
+                              </strong>{" "}
+                              <span
+                                style={{ fontWeight: "bold", color: "#52c41a" }}
+                              >
                                 ₹{order.grandTotal.toFixed(2)}
                               </span>
                             </p>
@@ -916,6 +1101,47 @@ const RegisteredUser: React.FC = () => {
             )}
           </>
         )}
+      </Modal>
+
+      <Modal
+        title="Remove User"
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        <div className="flex flex-col gap-4">
+          <Input
+            placeholder="Enter User Id"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+          />
+          <Input
+            placeholder="Enter Mobile Number"
+            value={mobileNumber}
+            onChange={(e) => setMobileNumber(e.target.value)}
+          />
+          <Input
+            placeholder="Enter WhatsApp Number"
+            value={whatsappNumber}
+            onChange={(e) => setWhatsappNumber(e.target.value)}
+          />
+          <Select
+            placeholder="Select User Type"
+            onChange={(value) => setPrimaryType(value)}
+            options={[
+              { value: "CUSTOMER", label: "Customer" },
+              { value: "PARTNER", label: "Partner" },
+            ]}
+          />
+          <Button
+            type="primary"
+            danger
+            onClick={handleRemoveUser}
+            disabled={removeLoading}
+          >
+            {removeLoading ? <LoadingOutlined spin /> : "Remove"}
+          </Button>
+        </div>
       </Modal>
     </div>
   );

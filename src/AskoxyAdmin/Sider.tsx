@@ -26,6 +26,11 @@ const sidebarItems: SidebarItem[] = [
     link: "/admndashboard",
   },
   {
+    title: "Registered Users",
+    icon: <FaUser className="text-purple-400" />,
+    link: "/registeredUsers",
+  },
+  {
     title: "Add Service",
     icon: <FaPlusCircle className="text-green-400" />,
     link: "/campaignsadd",
@@ -40,11 +45,7 @@ const sidebarItems: SidebarItem[] = [
     icon: <FaDatabase className="text-yellow-400" />,
     link: "/allqueries",
   },
-  {
-    title: "Registered Users",
-    icon: <FaUser className="text-purple-400" />,
-    link: "/registeredUsers",
-  },
+
   {
     title: "Logout",
     icon: <FaSignOutAlt className="text-red-400" />,
