@@ -23,6 +23,7 @@ import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
 
 import ScrollToTop from "./components/ScrollToTop";
 import TicketHistory from "./components/TicketHistory";
+import Greenproject from "./components/Greenproject";
 
 import AccomidationGpt from "./components/GPT's/Accomadation";
 import ApplicationSupport from "./components/GPT's/ApplicationSupport";
@@ -42,9 +43,10 @@ import UniversityAgents from "./components/GPT's/UniversityAgents";
 import University from "./components/GPT's/UniversityGpt";
 import RiceSalePage from "./components/Communities";
 import Admin from "./AskoxyAdmin/Admin";
+import Climatecrisis from "./components/Climatecrisis";
 import QR from "./components/qr";
 import ThankYouPage from "./components/ThankYouPage";
-
+import Ravensbourns from "./components/Ravensbourns";
 import WhatsappLogin from "./Pages/Auth/WhatsappLogin";
 import WhatsappRegister from "./Pages/Auth/WhatsappRegister";
 import AllQueries from "./AskoxyAdmin/AllQueries";
@@ -96,6 +98,7 @@ const App: React.FC = () => {
             />
             <Route path="/qrcode" element={<QR />} />
             <Route path="/oxygroup" element={<OxyGroup />} />
+            <Route path="/climatecrisis" element={<Climatecrisis />} />
             <Route path="/thank-you" element={<ThankYouPage />} />
             <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
             <Route
@@ -201,7 +204,10 @@ const App: React.FC = () => {
                 path="/main/dashboard/universities-gpt"
                 element={<University />}
               />
-              <Route path ="/main/dashboard/offer-letter-samples" element={<UniversityOffers/>} />
+              <Route
+                path="/main/dashboard/offer-letter-samples"
+                element={<UniversityOffers />}
+              />
               <Route
                 path="/main/dashboard/scholarships-gpt"
                 element={<ScholarshipGpt />}
@@ -226,7 +232,6 @@ const App: React.FC = () => {
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
-         
               <Route
                 path="services/campaign/:type"
                 element={<CampaignDetails />}
@@ -246,7 +251,7 @@ const App: React.FC = () => {
                 path="services/machines-manufacturing"
                 element={<MachinesManufacturingServices />}
               />
-              <Route path="service/oxyloans-service" element={<OxyLoans/>}/>
+              <Route path="service/oxyloans-service" element={<OxyLoans />} />
               <Route path="services/legalservice" element={<LegalService />} />
               <Route
                 path="services/we-are-hiring"

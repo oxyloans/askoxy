@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.1627cca8.css",
-    "main.js": "/static/js/main.db550bbf.js",
+    "main.css": "/static/css/main.4a02dbd9.css",
+    "main.js": "/static/js/main.34f74118.js",
     "static/js/453.dbef4809.chunk.js": "/static/js/453.dbef4809.chunk.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -20,6 +20,7 @@
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
     "static/media/bmvcoin.png": "/static/media/bmvcoin.d4b8d7a173edac896cdc.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
+    "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
@@ -144,12 +145,12 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.1627cca8.css.map": "/static/css/main.1627cca8.css.map",
-    "main.db550bbf.js.map": "/static/js/main.db550bbf.js.map",
+    "main.4a02dbd9.css.map": "/static/css/main.4a02dbd9.css.map",
+    "main.34f74118.js.map": "/static/js/main.34f74118.js.map",
     "453.dbef4809.chunk.js.map": "/static/js/453.dbef4809.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.1627cca8.css",
-    "static/js/main.db550bbf.js"
+    "static/css/main.4a02dbd9.css",
+    "static/js/main.34f74118.js"
   ]
 }
