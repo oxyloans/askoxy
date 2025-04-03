@@ -82,6 +82,7 @@ import BarcodeScanner from "./Dashboard/BarcodeScanner";
 import FREEAIANDGENAI from "./components/AIandGenAi";
 import OxyLoans from "./components/Services/OxyLoans";
 import UniversityOffers from "./Dashboard/Offerletter"
+import PinkFunding from "./components/PinkFunding";
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -98,6 +99,7 @@ const App: React.FC = () => {
             />
             <Route path="/qrcode" element={<QR />} />
             <Route path="/oxygroup" element={<OxyGroup />} />
+            <Route path="/pinkfunding" element={<PinkFunding />} />
             <Route path="/climatecrisis" element={<Climatecrisis />} />
             <Route path="/thank-you" element={<ThankYouPage />} />
             <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />

@@ -503,11 +503,18 @@ const RegisteredUser: React.FC = () => {
         <a onClick={() => viewSpecificOrder(record.orderId)}>{text}</a>
       ),
     },
+
     {
       title: "Date",
       dataIndex: "orderDate",
       key: "orderDate",
-      render: (text: string) => formatDate(text),
+      render: (text: string) => {
+        return new Date(text).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "2-digit",
+        });
+      },
     },
     {
       title: "Amount",
@@ -521,7 +528,7 @@ const RegisteredUser: React.FC = () => {
       key: "expectedDeliveryDate",
       render: (expectedDeliveryDate: string, record: OrderData) => (
         <div>
-          <p>{expectedDeliveryDate}</p>
+          <p>{new Date(expectedDeliveryDate).toLocaleDateString()}</p>
           <p>{record.timeSlot}</p>
           <p>{record.dayOfWeek}</p>
         </div>
@@ -619,13 +626,8 @@ const RegisteredUser: React.FC = () => {
       <div className="flex-1 p-6 overflow-auto bg-gray-50">
         <div className="flex justify-between items-center p-4">
           <Title level={2}>Registered Users</Title>
-          <Button
-            type="primary"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={showModal}
-          >
-            Remove User
+          <Button type="primary" icon={<DeleteOutlined />} onClick={showModal}>
+            Update User
           </Button>
         </div>
         <Row gutter={[16, 16]}>
@@ -1019,6 +1021,7 @@ const RegisteredUser: React.FC = () => {
                         rowClassName={(record, index) =>
                           index % 2 === 0 ? "table-row-light" : "table-row-dark"
                         }
+                        scroll={{ x: "max-content" }}
                       />
                     ) : (
                       <Text type="secondary" style={{ color: "#ff4d4f" }}>
@@ -1104,7 +1107,7 @@ const RegisteredUser: React.FC = () => {
       </Modal>
 
       <Modal
-        title="Remove User"
+        title="Update User"
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
@@ -1135,11 +1138,11 @@ const RegisteredUser: React.FC = () => {
           />
           <Button
             type="primary"
-            danger
+            // danger
             onClick={handleRemoveUser}
             disabled={removeLoading}
           >
-            {removeLoading ? <LoadingOutlined spin /> : "Remove"}
+            {removeLoading ? <LoadingOutlined spin /> : "Update"}
           </Button>
         </div>
       </Modal>

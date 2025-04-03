@@ -30,9 +30,10 @@ const Climatecrisis = () => {
 
   const handleDownloadPdf = () => {
     window.open(
-      "https://drive.google.com/uc?export=download&id=1RzdwMcW-9LX2aQJ-BmCFblrcNy1mAHLP",
+      "https://drive.google.com/uc?export=download&id=1-4VyNMGsxAkCLlZ3eYNNlmfbVP01Fwo5",
       "_blank"
     );
+  
   };
 
   return (
@@ -103,7 +104,7 @@ const Climatecrisis = () => {
               onClick={handleViewPdf}
               className="bg-green-500 text-white py-3 px-8 rounded-lg shadow-md hover:bg-green-600 hover:shadow-lg transition-all font-medium text-lg"
             >
-              View PDF
+              Read Book
             </button>
             <button
               onClick={handleDownloadPdf}
@@ -163,7 +164,7 @@ const Climatecrisis = () => {
 
             <div className="rounded-md overflow-hidden shadow-lg border border-gray-200">
               <iframe
-                src="https://drive.google.com/file/d/1RzdwMcW-9LX2aQJ-BmCFblrcNy1mAHLP/preview"
+                src="https://drive.google.com/file/d/1-4VyNMGsxAkCLlZ3eYNNlmfbVP01Fwo5/preview"
                 frameBorder="0"
                 height="800"
                 width="100%"
