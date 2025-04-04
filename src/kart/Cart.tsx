@@ -280,7 +280,7 @@ const CartPage: React.FC = () => {
           </p>
           <p className="mt-2 text-sm text-black-600">
             <b>
-              * No purchase in 45 days or gap of 45 days between purchases =
+              * No purchase in 90 days or gap of 90 days between purchases =
               Container will be taken back
             </b>
           </p>

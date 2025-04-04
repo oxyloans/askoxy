@@ -49,15 +49,13 @@ const AllQueries: React.FC = () => {
     setLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        console.error("Access token is missing");
-        return;
-      }
+      // if (!accessToken) {
+      //   console.error("Access token is missing");
+      //   return;
+      // }
 
       const requestPayload = {
-        askOxyOfers:
-          askOxyOffersFilter ||
-          "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
+        askOxyOfers: "FREESAMPLE",
         projectType: "ASKOXY",
         queryStatus,
         // userId,
@@ -84,7 +82,7 @@ const AllQueries: React.FC = () => {
 
   useEffect(() => {
     fetchQueries();
-  }, [queryStatus, askOxyOffersFilter]);
+  }, []);
 
   const handlePendingClick = (query: Query) => {
     setSelectedQuery(query);
@@ -288,24 +286,26 @@ const AllQueries: React.FC = () => {
       <Sider />
       <div className="flex-1">
         <Content className="p-12">
-          <h1 className="text-2xl font-bold mb-4 text-center">
-            Query Management
-          </h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">Queries Rised by Users</h1>
 
-          <div className="flex flex-wrap justify-center gap-4 mb-4">
             <Select
               placeholder="Select Query Status"
               value={queryStatus}
-              onChange={(value) => setQueryStatus(value)}
+              onChange={(value) => {
+                setQueryStatus(value);
+                fetchQueries();
+              }}
               className="w-72"
             >
               <Option value="PENDING">PENDING</Option>
               <Option value="COMPLETED">COMPLETED</Option>
               <Option value="CANCELLED">CANCELLED</Option>
             </Select>
+          </div>
 
-            {/* ASK OXY Offers Filter */}
-            <Select
+          {/* ASK OXY Offers Filter */}
+          {/* <Select
               placeholder="Filter by ASK OXY Offers"
               value={askOxyOffersFilter}
               onChange={(value) => setAskOxyOffersFilter(value)}
@@ -319,8 +319,7 @@ const AllQueries: React.FC = () => {
               <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
               <Option value="STUDYABROAD">STUDY ABROAD</Option>
               <Option value="FREESAMPLE">FREE SAMPLE</Option>
-            </Select>
-          </div>
+            </Select> */}
 
           {loading ? (
             <div className="text-center">

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import Footer from "./Footer";
+
 import BackgroundImg from "../assets/img/climatecrisis.png";
 
 const Climatecrisis = () => {
@@ -30,7 +30,7 @@ const Climatecrisis = () => {
 
   const handleDownloadPdf = () => {
     window.open(
-      "https://drive.google.com/uc?export=download&id=1-4VyNMGsxAkCLlZ3eYNNlmfbVP01Fwo5",
+      "https://drive.google.com/uc?export=download&id=1BV1KGBILTTqXeJdAmbJjydQ71BrABty3",
       "_blank"
     );
   
@@ -164,7 +164,7 @@ const Climatecrisis = () => {
 
             <div className="rounded-md overflow-hidden shadow-lg border border-gray-200">
               <iframe
-                src="https://drive.google.com/file/d/1-4VyNMGsxAkCLlZ3eYNNlmfbVP01Fwo5/preview"
+                src="https://drive.google.com/file/d/1BV1KGBILTTqXeJdAmbJjydQ71BrABty3/preview"
                 frameBorder="0"
                 height="800"
                 width="100%"
