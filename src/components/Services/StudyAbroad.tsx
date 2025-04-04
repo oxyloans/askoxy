@@ -543,9 +543,9 @@ const StudyAbroad: React.FC = () => {
           {/* Text Section */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-black mb-4">
-              Students Studying Abroad
+          Study Abroad Global Education
             </h2>
-            <p className="text-sm md:text-base text-gray-700">
+            {/* <p className="text-sm md:text-base text-gray-700">
               Join thousands of students making their study abroad dreams a
               reality. Discover top universities with
               <strong className="text-purple-600">
@@ -559,21 +559,22 @@ const StudyAbroad: React.FC = () => {
               </strong>
               , connecting students with leading Banks and NBFCs to finance
               their global education journey.
-            </p>
+            </p> */}
           </div>
 
           {/* Button Section */}
           <div className="flex justify-center gap-6 mt-6">
             {/* Button 1 */}
-            <a
+            {/* <a
               href="https://bmv.money/StudentX.world/index.html"
               className="px-6 py-3 bg-[#008CBA] text-white rounded-md hover:bg-[#005F75] shadow-md text-sm md:text-base transition-all"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit University Platform"
+              aria-disabled
             >
               StudentX.world
-            </a>
+            </a> */}
 
             {/* Button 2 */}
             <a
@@ -589,7 +590,7 @@ const StudyAbroad: React.FC = () => {
         </div>
 
         {/* Details Section */}
-        <div className="details px-6 py-8">
+        <div className="details px-6 py-2">
           <strong className="text-purple-600 text-lg sm:text-xl md:text-2xl">
             Our Mission & Vision
           </strong>
