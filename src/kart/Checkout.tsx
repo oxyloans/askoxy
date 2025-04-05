@@ -35,6 +35,8 @@ interface Address {
   address: string;
   pincode: string;
   addressType: "Home" | "Work" | "Others";
+  latitude?: number;
+  longitude?: number;
 }
 
 interface ProfileData {
@@ -499,6 +501,8 @@ const CheckoutPage: React.FC = () => {
           dayOfWeek: selectedDay,
           expectedDeliveryDate: selectedDate,
           timeSlot: selectedTimeSlot,
+          latitude: selectedAddress.latitude,
+          longitude: selectedAddress.longitude,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -173,7 +173,7 @@ const Tabview = () => {
     >
       <div className="flex justify-center">
         <div className="w-full max-w-2xl overflow-x-auto items-center">
-          <div className="grid grid-cols-2 pt-4 md:grid-cols-4 gap-2 md:gap-4 justify-center ">
+          {/* <div className="grid grid-cols-2 pt-4 md:grid-cols-4 gap-2 md:gap-4 justify-center ">
             <TabButton
               tab="products"
               icon={<ShoppingBag size={20} />}
@@ -194,7 +194,7 @@ const Tabview = () => {
               icon={<Coins size={20} />}
               label="Cryptocurrency"
             />
-          </div>
+          </div> */}
         </div>
       </div>
 

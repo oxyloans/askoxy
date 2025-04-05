@@ -62,7 +62,7 @@ const WhatsappLogin = () => {
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
     if (userId && accessToken) {
-      navigate(location.state?.from || "/main/dashboard/products", {
+      navigate(location.state?.from || "/main/dashboard/home", {
         replace: true,
       });
     }
@@ -382,7 +382,7 @@ const WhatsappLogin = () => {
         localStorage.removeItem("expiryTime");
         setMessage("Login Successful");
         setTimeout(
-          () => navigate(location.state?.from || "/main/dashboard/products"),
+          () => navigate(location.state?.from || "/main/dashboard/home"),
           500
         );
         setTimeout(() => window.location.reload(), 1000);

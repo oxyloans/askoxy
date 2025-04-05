@@ -18,6 +18,7 @@ import MyRotaryServices from "./components/Services/MyRotary";
 import HiringService from "./components/Services/HiringService";
 
 import Sidebar from "./AskoxyAdmin/Sider";
+import Home from "./Dashboard/Home"
 import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
 import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
 
@@ -218,6 +219,10 @@ const App: React.FC = () => {
                 path="/main/dashboard/reviews-gpt"
                 element={<ReviewsGpt />}
               />
+               <Route
+                path="/main/dashboard/home"
+                element={<Home />}
+              />
               <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
               <Route
                 path="/main/dashboard/universitiesagents-gpt"
@@ -253,6 +258,7 @@ const App: React.FC = () => {
                 path="services/machines-manufacturing"
                 element={<MachinesManufacturingServices />}
               />
+              
               <Route path="service/oxyloans-service" element={<OxyLoans />} />
               <Route path="services/legalservice" element={<LegalService />} />
               <Route

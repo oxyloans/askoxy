@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
 
   const menuItems = [
     {
-      to: "/main",
+      to: "/main/dashboard/home",
       icon: <LayoutDashboard size={20} />,
       label: "Dashboard",
     },

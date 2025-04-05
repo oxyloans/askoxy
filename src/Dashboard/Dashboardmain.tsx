@@ -295,9 +295,9 @@ const DashboardMain: React.FC = () => {
               {/* Header */}
               <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
                 <div className="flex items-center justify-center">
-                  <GraduationCap className="w-8 h-8 text-purple-600 mr-3" />
+                  <GraduationCap className="w-8 h-8 mb-2 text-purple-600 mr-3" />
                   <h1 className="text-2xl font-bold text-purple-600">
-                    Study Abroad -Admissions
+                    Study Abroad - Admissions
                   </h1>
                 </div>
               </div>
