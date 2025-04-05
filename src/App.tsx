@@ -84,6 +84,7 @@ import FREEAIANDGENAI from "./components/AIandGenAi";
 import OxyLoans from "./components/Services/OxyLoans";
 import UniversityOffers from "./Dashboard/Offerletter"
 import PinkFunding from "./components/PinkFunding";
+import CurrentLandingPage from "./components/CurrentLandinPage";
 const App: React.FC = () => {
   return (
     <CartProvider>
@@ -114,8 +115,8 @@ const App: React.FC = () => {
               element={<FREEAIANDGENAI />}
             />
             {/* Landing Page (First Page) */}
-            <Route path="/" element={<Landingpage />} />
-
+            <Route path="/future" element={<Landingpage />} />
+   <Route path="/" element={<CurrentLandingPage />} />
             <Route path="/allqueries" element={<AllQueries />} />
             <Route path="/admin" element={<Login />} />
             <Route path="/admndashboard" element={<Admin />} />

@@ -547,6 +547,9 @@ const WhatsappLogin = () => {
             </div>
           </div>
         </div>
+        <h2 className="mx-6 mt-4 text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500 mb-2">
+          Welcome, Study Abroad Aspirants!
+        </h2>
         {/* Erice Customer Alert - Now conditionally rendered */}
         {showEriceAlert && (
           <div className="mx-6 mt-4">
