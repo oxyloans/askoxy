@@ -17,6 +17,9 @@ import MachinesManufacturingServices from "./components/Services/Machines&Manufa
 import LegalService from "./components/Services/LegalService";
 import MyRotaryServices from "./components/Services/MyRotary";
 import HiringService from "./components/Services/HiringService";
+import DesignTemplatesPage from "./Templates/Templatehome";
+import UniversityPromoCard from "./Templates/UniversityPromoCard";
+import PromoCard from "./Templates/PromoCard";
 
 import Sidebar from "./AskoxyAdmin/Sider";
 import Home from "./Dashboard/Home"
@@ -120,6 +123,19 @@ const App: React.FC = () => {
               path="/proud-lender/testimonials"
               element={<TestimonialsPage />}
             />
+            <Route
+              path="/templates"
+              element={<DesignTemplatesPage />}
+            />
+            <Route
+              path="/template1"
+              element={<UniversityPromoCard />}
+            />
+            <Route
+              path="/template2"
+              element={<PromoCard />}
+            />
+
             <Route path="/steamricevsrawrice" element={<RiceComparison />} />
             <Route
               path="/aiandgenaivsverficationandvalidation"
