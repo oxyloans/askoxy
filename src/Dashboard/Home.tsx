@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback ,useContext} from "react";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import BASE_URL from "../Config";
 import checkProfileCompletion from "../until/ProfileCheck";
-
+import { CartContext } from "../until/CartContext";
 import ProductImg1 from "../assets/img/ricecard1.png";
 import ProductImg2 from "../assets/img/ricecard2.png";
 import ServiceImg1 from "../assets/img/oxyloasntemp (1).png";
@@ -622,7 +622,7 @@ const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
             >
               {item.title}
             </h3>
-            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{item.units ?? ""}</p>
+            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{item.weight=="1"?"Kg":"Kgs"}</p>
 
             <div className="flex items-baseline space-x-2">
               <span className="text-lg font-semibold text-gray-900">₹{item.itemPrice ?? 0}</span>
@@ -858,6 +858,8 @@ const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
       },
     },
   };
+
+   const context = useContext(CartContext);
 
   const renderDigitalServiceCard = (item: DashboardItem, index: number, type: 'gpt' | 'crypto') => {
     const bgGradient = type === 'gpt'

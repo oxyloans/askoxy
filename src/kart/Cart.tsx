@@ -218,25 +218,38 @@ const CartPage: React.FC = () => {
     try {
       // Determine which container to add based on cart items
       let containerItemId: string;
-      const hasHeavyBag = cartData.some(
-        (item) => parseWeight(item.weight) > 10
-      );
-
+  
+      // Check if any item is > 10kg
+      const hasHeavyBag = cartData.some((item) => {
+        const weight = parseWeight(item.weight);
+        return weight > 10;
+      });
+  
+      // Ignore 1kg and 5kg items when considering the light bag case
+      const hasValidLightBag = cartData.some((item) => {
+        const weight = parseWeight(item.weight);
+        return weight <= 10 && weight !== 1 && weight !== 5;
+      });
+  
       if (hasHeavyBag) {
         // Add container for > 10kg bags
         containerItemId = "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61";
-      } else {
-        // Add container for ≤ 10kg bags
+      } else if (hasValidLightBag) {
+        // Add container for valid light bags (not 1kg or 5kg)
         containerItemId = "53d7f68c-f770-4a70-ad67-ee2726a1f8f3";
+      } else {
+        // Don't add any container if only 1kg or 5kg items are in the cart
+        localStorage.setItem("isInterested", "true");
+        return;
       }
-
+  
       const containerItemData = {
         itemId: containerItemId,
         customerId: customerId,
-        cartQuantity: 1, // Add one container
-        itemPrice: 0, // Set container price to ₹0
+        cartQuantity: 1,
+        itemPrice: 0,
       };
-
+  
       await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         containerItemData,
@@ -247,34 +260,48 @@ const CartPage: React.FC = () => {
           },
         }
       );
-
-      localStorage.setItem("isInterested", "true"); // Prevents modal from showing again
+  
+      localStorage.setItem("isInterested", "true");
       message.success("Free container added to your cart at ₹0.");
-      await fetchCartData(); // Refresh cart to reflect new item
+      await fetchCartData();
     } catch (error) {
       console.error("Error adding container to cart:", error);
       message.error("Failed to add free container. Please try again.");
     }
   };
+  
 
   const showContainerModal = () => {
     if (localStorage.getItem("isInterested") === "true") {
       return; // Prevents modal from appearing again
     }
-
-    modalDisplayedRef.current = true;
-
+  
+    // Check if cart has any item > 10kg
     const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
+  
+    // Check for valid light bags (excluding 1kg and 5kg)
+    const hasValidLightBag = cartData.some((item) => {
+      const weight = parseWeight(item.weight);
+      return weight <= 10 && weight !== 1 && weight !== 5;
+    });
+  
+    // If neither condition matches, skip showing modal
+    if (!hasHeavyBag && !hasValidLightBag) {
+      return;
+    }
+  
+    modalDisplayedRef.current = true;
+  
     const containerType = hasHeavyBag
       ? "Large (for >10kg bags)"
       : "Standard (for ≤10kg bags)";
-
+  
     Modal.confirm({
       title: "Special Offer!",
       content: (
         <div className="text-center">
           <p className="mt-2">
-            Get a free steel container! Buy 9 bags of 26 kg’s / 10 kg’s in 3
+            Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3
             years or refer 9 friends and when they buy their first bag, the
             container is yours forever.
           </p>
@@ -296,7 +323,7 @@ const CartPage: React.FC = () => {
       },
     });
   };
-
+  
   const getCoordinates = async (address: string) => {
     try {
       const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";

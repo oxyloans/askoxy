@@ -175,7 +175,7 @@ const CheckoutPage: React.FC = () => {
   
         const formattedTimeSlots = [];
   
-        for (let index = 0; index < 7; index++) {
+        for (let index = 0; index < 3; index++) {
           const dayOffset = startDayOffset + index;
           const slotDate = new Date(currentDate);
           slotDate.setDate(currentDate.getDate() + dayOffset);

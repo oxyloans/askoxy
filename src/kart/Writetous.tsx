@@ -12,13 +12,6 @@ import {
 import { Menu, X } from "lucide-react";
 import BASE_URL from "../Config";
 
-interface ProfileData {
-  userFirstName: string;
-  userLastName: string;
-  customerEmail: string;
-  whatsappNumber: string;
-}
-
 interface FormErrors {
   query: string;
   documentId: string;
@@ -43,8 +36,7 @@ const CustomAlert: React.FC<{
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         <h3 className="text-lg font-semibold mb-2">Complete Your Profile</h3>
         <p className="text-gray-600 mb-6">
-          Please complete your profile before proceeding. This helps us serve
-          you better.
+          Please complete your profile before proceeding. Ensure your first name is entered.
         </p>
         <div className="flex justify-end gap-3">
           <button
@@ -81,6 +73,8 @@ const WriteToUs: React.FC = () => {
   const [showProfileAlert, setShowProfileAlert] = useState(false);
   const [showOrderInfo, setShowOrderInfo] = useState(false);
   const [orderInfo, setOrderInfo] = useState({ orderId: "", orderNewId: "" });
+  const [isLoading, setIsLoading] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(true);
 
   const [formData, setFormData] = useState({
     query: "",
@@ -88,33 +82,59 @@ const WriteToUs: React.FC = () => {
     documentId: "",
     userEmail: "",
     userFirstName: "",
-  });
-
-  const [profileData, setProfileData] = useState<ProfileData>({
-    userFirstName: "",
-    userLastName: "",
-    customerEmail: "",
     whatsappNumber: "",
   });
 
   useEffect(() => {
-    const storedProfileData = localStorage.getItem("profileData");
-    if (storedProfileData) {
-      try {
-        const parsedProfileData = JSON.parse(storedProfileData);
-        setProfileData(parsedProfileData);
-
-        // Pre-fill first name and email if available
-        setFormData((prev) => ({
-          ...prev,
-          userFirstName: parsedProfileData.userFirstName || "",
-          userEmail: parsedProfileData.customerEmail || "",
-        }));
-      } catch (e) {
-        console.error("Error parsing profile data:", e);
-      }
+    fetchProfileData();
+    handleLocationState();
+    fetchCartCount();
+    
+    if (id) {
+      fetchExistingQuery();
     }
+  }, [id, location]);
 
+  const fetchProfileData = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      const customerId = localStorage.getItem('userId');
+      
+      const response = await axios.get(
+        `${BASE_URL}/user-service/customerProfileDetails`,
+        {
+          params: { customerId },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      const data = response.data;
+      
+      // Update form data with profile information
+      setFormData(prevData => ({
+        ...prevData,
+        userFirstName: data.firstName || "",
+        userEmail: data.email || "",
+        whatsappNumber: data.whatsappNumber || "",
+      }));
+      
+      // Check if profile is complete
+      const isComplete = Boolean(data.firstName && data.firstName.trim());
+      setProfileComplete(isComplete);
+      
+      // If profile is incomplete, show the alert immediately
+      if (!isComplete) {
+        setShowProfileAlert(true);
+      }
+    } catch (error) {
+      console.error("Error fetching profile data", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLocationState = () => {
     const locationState = (location.state as LocationState) || {};
     const fromOrdersPage = locationState.fromOrdersPage === true;
 
@@ -161,14 +181,12 @@ const WriteToUs: React.FC = () => {
         });
       }
     }
+  };
 
-    if (id) {
-      fetchExistingQuery();
-    }
-
+  const fetchCartCount = () => {
     const storedCartCount = localStorage.getItem("cartCount");
     setCartCount(storedCartCount ? parseInt(storedCartCount) : 0);
-  }, [id, location]);
+  };
 
   const fetchExistingQuery = async () => {
     if (!id) return;
@@ -188,23 +206,13 @@ const WriteToUs: React.FC = () => {
     }
   };
 
-  const checkProfileCompletion = (): boolean => {
-    const { userFirstName } = formData;
-    const { userEmail } = formData;
-
-    // Relaxed validation - at least first name and email
-    if (!userFirstName || !userEmail) {
-      setShowProfileAlert(true);
-      return false;
-    }
-    return true;
-  };
-
   const validateForm = (): boolean => {
     const newErrors: FormErrors = { query: "", documentId: "" };
     let isValid = true;
 
-    if (!checkProfileCompletion()) {
+    // Check if profile is complete first
+    if (!profileComplete) {
+      setShowProfileAlert(true);
       return false;
     }
 
@@ -226,7 +234,14 @@ const WriteToUs: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
+    
+    // Prevent changing userFirstName if profile is complete
+    if (name === "userFirstName" && profileComplete) {
+      return;
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -294,8 +309,6 @@ const WriteToUs: React.FC = () => {
     }
 
     const storedUserId = localStorage.getItem("userId") || "";
-    const whatsappNumber =
-      localStorage.getItem("whatsappNumber") || profileData.whatsappNumber;
 
     const data = {
       adminDocumentId: "",
@@ -303,7 +316,7 @@ const WriteToUs: React.FC = () => {
       comments: finalQuery,
       email: formData.userEmail,
       id: id || "",
-      mobileNumber: whatsappNumber,
+      mobileNumber: formData.whatsappNumber,
       projectType: "ASKOXY",
       query: finalQuery,
       queryStatus: "PENDING",
@@ -324,6 +337,7 @@ const WriteToUs: React.FC = () => {
         documentId: "",
         userEmail: formData.userEmail,
         userFirstName: formData.userFirstName,
+        whatsappNumber: formData.whatsappNumber,
       });
       showNotification("Query submitted successfully!", "success");
 
@@ -351,12 +365,17 @@ const WriteToUs: React.FC = () => {
     }, 3000);
   };
 
+  const handleProfileAlertConfirm = () => {
+    setShowProfileAlert(false);
+    navigate("/main/profile");
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <CustomAlert
         isOpen={showProfileAlert}
         onClose={() => setShowProfileAlert(false)}
-        onConfirm={() => navigate("/main/profile")}
+        onConfirm={handleProfileAlertConfirm}
       />
 
       <div className="bg-white rounded-xl shadow-sm flex flex-col lg:flex-row gap-6">
@@ -415,15 +434,27 @@ const WriteToUs: React.FC = () => {
                       !formData.userFirstName
                         ? "border-red-500"
                         : "border-gray-200"
-                    } bg-gray-50`}
+                    } ${profileComplete ? "bg-gray-100" : "bg-gray-50"}`}
+                    readOnly={profileComplete}
                   />
                   {!formData.userFirstName && (
                     <p className="text-sm text-red-500">
                       First name is required
                     </p>
                   )}
+                  {!profileComplete && (
+                    <p className="text-sm text-blue-600">
+                      <button 
+                        type="button"
+                        onClick={handleProfileAlertConfirm}
+                        className="underline hover:text-blue-800"
+                      >
+                        Complete your profile
+                      </button>
+                    </p>
+                  )}
                 </div>
-
+                
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Email Address *
@@ -449,13 +480,10 @@ const WriteToUs: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={
-                      localStorage.getItem("whatsappNumber") ||
-                      profileData.whatsappNumber
-                    }
+                    value={formData.whatsappNumber}
                     placeholder="Enter your phone number"
                     readOnly
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-100"
                   />
                 </div>
 
@@ -525,7 +553,7 @@ const WriteToUs: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !profileComplete}
                 className={`
                     mx-auto
                     block
@@ -539,7 +567,7 @@ const WriteToUs: React.FC = () => {
                     transition-all duration-300
                     shadow-md hover:shadow-lg
                     transform hover:-translate-y-1
-                    ${isSubmitting ? "opacity-75 cursor-not-allowed" : ""}
+                    ${(isSubmitting || !profileComplete) ? "opacity-75 cursor-not-allowed" : ""}
                   `}
               >
                 {isSubmitting ? (

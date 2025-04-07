@@ -21,6 +21,7 @@ interface User {
   scriptId: string | null;
   familyCount: number;
   createdAt: string;
+  userId: string;
 }
 
 interface OfferDetails {
@@ -32,13 +33,6 @@ interface OfferDetails {
   createdAt: string;
 }
 
-interface UserCount {
-  userId: string;
-  phoneNumber: string;
-  projectType: string;
-  askOxyOfers: string;
-  createdAt: string;
-}
 const DashboardCard: React.FC<DashboardCardProps> = ({
   title,
   count,
@@ -130,7 +124,7 @@ const Admin: React.FC = () => {
         }));
 
         const combinedOffers = [...offersData, ...offersData1];
-        console.log(combinedOffers);
+        // console.log(combinedOffers);
         setOffers(combinedOffers);
         setAllOffers(combinedOffers);
       } else {
@@ -191,7 +185,7 @@ const Admin: React.FC = () => {
     const allData = [
       ...allOffers,
       ...filteredUsers.map((user, index) => ({
-        userId: `${index}`,
+        userId: user.userId || `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
         askOxyOfers: "FREERUDHRAKSHA",
@@ -210,12 +204,27 @@ const Admin: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const knownOfferTypes = [
+    "WEAREHIRING",
+    "ROTARIAN",
+    "LEGALSERVICES",
+    "LEGAL SERVICE",
+    "STUDYABROAD",
+    "FREEAI",
+    "FREESAMPLE",
+    "FREERUDHRAKSHA",
+  ];
+
+  const isKnownType = (offerName: string) => {
+    return knownOfferTypes.some((type) => offerName === type);
+  };
+
   const handleFilter = (offerType: string) => {
     setCurrentPage(1);
     setSelectedFilter(offerType);
     if (offerType === "FREERUDRAKSHA") {
       const freeRudrakshaData = filteredUsers.map((user, index) => ({
-        userId: `${index}`,
+        userId: user.userId || `${index}`,
         projectType: "ASKOXY",
         mobileNumber: user.whatsappNumber || "N/A",
         askOxyOfers: "FREE RUDHRAKSHA",
@@ -228,7 +237,7 @@ const Admin: React.FC = () => {
       const allData = [
         ...allOffers,
         ...filteredUsers.map((user, index) => ({
-          userId: `${index}`,
+          userId: user.userId || `${index}`,
           projectType: "ASKOXY",
           mobileNumber: user.whatsappNumber || "N/A",
           askOxyOfers: "FREE RUDHRAKSHA",
@@ -237,7 +246,20 @@ const Admin: React.FC = () => {
         })),
       ];
       setOffers(allData);
+    } else if (offerType === "Other") {
+      const filteredData = allOffers.filter(
+        (offer) => !isKnownType(offer.askOxyOfers)
+      );
+
+      const formattedOffers = filteredData.map((offer) => ({
+        ...offer,
+        createdAt: formatDate(offer.createdAt),
+      }));
+
+      setOffers(formattedOffers);
     } else {
+      setOffers([]);
+
       const filteredData = allOffers.filter(
         (offer) => offer.askOxyOfers === offerType
       );
@@ -246,6 +268,8 @@ const Admin: React.FC = () => {
         ...offer,
         createdAt: formatDate(offer.createdAt),
       }));
+      console.log({ formattedOffers });
+      setOffers([]);
       setOffers(formattedOffers);
     }
   };
@@ -419,6 +443,14 @@ const Admin: React.FC = () => {
             }
             color="orange"
           />
+          <DashboardCard
+            title="Others"
+            count={
+              combinedData.filter((offer) => !isKnownType(offer.askOxyOfers))
+                .length
+            }
+            color="pink"
+          />
         </div>
 
         <div className="flex flex-wrap gap-4 mb-6">
@@ -465,6 +497,12 @@ const Admin: React.FC = () => {
             We Are Hiring
           </button>
           <button
+            onClick={() => handleFilter("Other")}
+            className="bg-pink-200 hover:bg-purple-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
+          >
+            Others
+          </button>
+          <button
             onClick={() => handleFilter("ALL")}
             className="bg-gray-500 hover:bg-gray-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
           >
@@ -504,7 +542,7 @@ const Admin: React.FC = () => {
             <Table
               dataSource={offers.map((offer, index) => ({
                 ...offer,
-                key: offer.userId || index,
+                key: `${offer.mobileNumber}-${offer.askOxyOfers}-${index}`,
               }))}
               columns={columns}
               pagination={{

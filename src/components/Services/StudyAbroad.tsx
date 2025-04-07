@@ -13,10 +13,9 @@ import {
   FaPoundSign,
   FaCalendarAlt,
   FaCheckCircle,
-} from "react-icons/fa"; // Import additional icons
+} from "react-icons/fa";
 
 import { useNavigate } from "react-router-dom";
-// Updated image imports for universities
 import Univ1 from "../../assets/img/Univ1.png";
 import Univ2 from "../../assets/img/univ2.png";
 import Univ3 from "../../assets/img/univ3.png";

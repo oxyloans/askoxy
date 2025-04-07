@@ -487,10 +487,9 @@ const Categories: React.FC<CategoriesProps> = ({
                     {item.itemName}
                   </h3>
                   <p className="text-sm text-gray-500">
-                  Weight : {item.weight}{item.units}
+                    Weight: {item.weight} {item.weight=="1"?"Kg":"Kgs"}
                   </p>
-
-                  {/* Price Section - Updated layout */}
+                  { }
                   <div className="flex items-baseline space-x-2">
                     <span className="text-lg font-semibold text-gray-900">
                       ₹{item.itemPrice}

@@ -9,7 +9,7 @@ interface Transaction {
   id: string;
   walletTxType: 1 | 2 ;
   amount: number;
-  refereedTo:number;
+  referredTo:number;
   date: string;
   method: string;
   description: string;
@@ -163,7 +163,7 @@ const MyWalletPage: React.FC = () => {
                               }
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-600 mb-1 w-1/1"> {transaction.walletTxType === 1 ? transaction.walletTxPurpose === 2 ? `Order ID : #${transaction.orderId}` : transaction.walletTxPurpose === 3? "Subscription" :`Refereed To : #${transaction.refereedTo}`:"Debit"}</p>
+                              <p className="font-semibold text-gray-600 mb-1 w-1/1"> {transaction.walletTxType === 1 ? transaction.walletTxPurpose === 2 ? `Order ID : #${transaction.orderId}` : transaction.walletTxPurpose === 3? "Subscription" :`Referred To : #${transaction.referredTo}`:"Debit"}</p>
                               <p className="text-sm text-gray-600">
                                 {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.walletTxDesc}
                               </p>

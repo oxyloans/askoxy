@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Layout, Select, Table, Modal, Spin } from "antd";
 import Sider from "./Sider";
-import { setEmitFlags } from "typescript";
+// import { setEmitFlags } from "typescript";
 import BASE_URL from "../Config";
 
 const { Content } = Layout;
@@ -49,13 +49,15 @@ const AllQueries: React.FC = () => {
     setLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
-      // if (!accessToken) {
-      //   console.error("Access token is missing");
-      //   return;
-      // }
+      if (!accessToken) {
+        console.error("Access token is missing");
+        return;
+      }
 
       const requestPayload = {
-        askOxyOfers: "FREESAMPLE",
+        askOxyOfers:
+          askOxyOffersFilter ||
+          "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
         projectType: "ASKOXY",
         queryStatus,
         // userId,
@@ -82,7 +84,7 @@ const AllQueries: React.FC = () => {
 
   useEffect(() => {
     fetchQueries();
-  }, []);
+  }, [queryStatus, askOxyOffersFilter]);
 
   const handlePendingClick = (query: Query) => {
     setSelectedQuery(query);
@@ -198,11 +200,13 @@ const AllQueries: React.FC = () => {
     {
       title: "SL.NO",
       dataIndex: "id",
+      width: 20,
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: "User Info",
       dataIndex: "userInfo",
+      width: 220,
       render: (_: any, record: Query) => (
         <div>
           <div>
@@ -212,16 +216,17 @@ const AllQueries: React.FC = () => {
             <strong>Email:</strong> {record.email}
           </div>
           <div>
-            <strong>Mobile Number:</strong> {record.mobileNumber}
+            <strong>Mobile :</strong> {record.mobileNumber}
           </div>
           <div>
             <strong>Ticket Id:</strong> {record.randomTicketId}
           </div>
           <div>
-            <strong>Created At:</strong> {record.createdAt}
+            <strong>Date:</strong>{" "}
+            {new Date(record.createdAt).toLocaleDateString("en-GB")}
           </div>
           <div>
-            <strong>Askoxy Offer:</strong> {record.askOxyOfers}
+            <strong>AskOxy Offer:</strong> {record.askOxyOfers}
           </div>
         </div>
       ),
@@ -229,16 +234,18 @@ const AllQueries: React.FC = () => {
     {
       title: "User Query",
       dataIndex: "query",
+      width: 220,
     },
     {
       title: "Admin & User Replies",
       dataIndex: "replies",
+      width: 200,
       render: (_: any, record: Query) => (
         <div className="space-y-0">
           {record.userPendingQueries?.map((reply, index) => (
-            <div key={index} className="flex items-center">
+            <div key={index} className="mb-4">
               <span
-                className={`text-sm font-medium ${
+                className={`block text-sm font-medium mb-1 ${
                   reply.resolvedBy === "admin"
                     ? "text-blue-600"
                     : "text-green-600"
@@ -246,7 +253,7 @@ const AllQueries: React.FC = () => {
               >
                 {reply.resolvedBy === "admin" ? "Admin" : "User"}:
               </span>
-              <span className="text-sm text-gray-700 ml-2">
+              <span className="block text-sm text-gray-700">
                 {reply.pendingComments}
               </span>
             </div>
@@ -262,8 +269,9 @@ const AllQueries: React.FC = () => {
     ...(queryStatus === "PENDING"
       ? [
           {
-            title: "Uploaded File",
+            title: "Action",
             dataIndex: "uploadedFile",
+            width: 30,
             render: (_: any, record: Query) => (
               <button
                 className="bg-blue-500 text-white py-1 px-4 rounded focus:outline-blue-500"
@@ -282,112 +290,240 @@ const AllQueries: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row min-h-screen">
       <Sider />
-      <div className="flex-1">
-        <Content className="p-12">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">Queries Rised by Users</h1>
+      <div className="flex-1 p-6">
+        {/* <div className="bg-white rounded-lg shadow-md p-6 mb-6"> */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h1 className="text-2xl font-bold text-indigo-800 mb-4 md:mb-0">
+            Queries Raised by Users
+          </h1>
 
+          <div className="flex flex-col sm:flex-row gap-3">
             <Select
               placeholder="Select Query Status"
               value={queryStatus}
-              onChange={(value) => {
-                setQueryStatus(value);
-                fetchQueries();
-              }}
-              className="w-72"
+              onChange={(value) => setQueryStatus(value)}
+              className="w-60"
+              dropdownStyle={{ borderRadius: "8px" }}
+              style={{ borderRadius: "8px" }}
             >
               <Option value="PENDING">PENDING</Option>
               <Option value="COMPLETED">COMPLETED</Option>
               <Option value="CANCELLED">CANCELLED</Option>
             </Select>
-          </div>
 
-          {/* ASK OXY Offers Filter */}
-          {/* <Select
+            <Select
               placeholder="Filter by ASK OXY Offers"
               value={askOxyOffersFilter}
               onChange={(value) => setAskOxyOffersFilter(value)}
-              className="w-72"
+              className="w-60"
               allowClear
+              dropdownStyle={{ borderRadius: "8px" }}
+              style={{ borderRadius: "8px" }}
             >
-              <Option value="FREERUDRAKSHA">FREERUDRAKSHA</Option>
-              <Option value="FREEAI">FREEAI</Option>
+              <Option value="FREERUDRAKSHA">FREE RUDRAKSHA</Option>
+              <Option value="FREEAI">FREE AI</Option>
               <Option value="ROTARIAN">ROTARIAN</Option>
               <Option value="WEAREHIRING">WE ARE HIRING</Option>
               <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
               <Option value="STUDYABROAD">STUDY ABROAD</Option>
               <Option value="FREESAMPLE">FREE SAMPLE</Option>
-            </Select> */}
+            </Select>
+          </div>
+        </div>
 
-          {loading ? (
-            <div className="text-center">
-              <Spin size="large" />
-            </div>
-          ) : queries.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center ">
+            <Spin size="large" />
+          </div>
+        ) : queries.length > 0 ? (
+          <div className="overflow-hidden rounded-lg border border-gray-200">
             <Table
               dataSource={queries}
-              columns={columns}
+              columns={columns.map((col) => ({
+                ...col,
+                className: "py-4",
+                render:
+                  col.render ||
+                  ((text) => <span className="text-gray-700">{text}</span>),
+              }))}
               rowKey={(record) => record.id}
               bordered
-              pagination={{ pageSize: 10 }}
-              className="w-full max-w-7xl mx-auto"
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: false,
+                position: ["bottomCenter"],
+                className: "my-6",
+              }}
+              className="w-full"
               scroll={{ x: true }}
             />
-          ) : (
-            <div className="text-center text-gray-500">No queries found.</div>
-          )}
-        </Content>
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-64 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-center text-gray-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 mx-auto text-gray-400 mb-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <p className="text-lg font-medium">No queries found.</p>
+              <p className="text-sm">
+                Try adjusting your filters to see more results.
+              </p>
+            </div>
+          </div>
+        )}
+        {/* </div> */}
       </div>
 
       <Modal
         visible={modalVisible}
         onCancel={handleModalClose}
         footer={null}
-        width={500}
+        width={600}
+        centered
+        bodyStyle={{ padding: "24px" }}
+        className="rounded-lg"
       >
         {selectedQuery && (
           <div>
-            <h3 className="text-lg font-bold mb-4">Review the Document</h3>
-            <div className="mb-4">
+            <h3 className="text-xl font-bold mb-6 text-indigo-800">
+              Review the Document
+            </h3>
+
+            <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-indigo-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                  />
+                </svg>
+                <label className="text-gray-700 font-medium">Upload File</label>
+              </div>
+
               <input
                 type="file"
                 onChange={handleFileUpload}
-                className="border p-2"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-300"
               />
             </div>
 
             {selectedFile && isImage(selectedFile) && (
-              <div className="mb-4">
+              <div className="mb-6 bg-gray-50 p-2 rounded-lg border border-gray-200">
                 <img
                   src={URL.createObjectURL(selectedFile)}
                   alt="Selected"
-                  className="w-full h-auto"
+                  className="w-full h-auto max-h-64 object-contain mx-auto"
                 />
               </div>
             )}
-            <div className="mb-4">
+
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-indigo-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                  />
+                </svg>
+                <label className="text-gray-700 font-medium">Comments</label>
+              </div>
+
               <textarea
-                className="w-full border p-2"
-                placeholder="Enter comments..."
+                className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                placeholder="Enter your comments here..."
                 value={comments}
                 onChange={handleOnChange}
                 rows={4}
               />
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              {error && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  {error}
+                </p>
+              )}
             </div>
-            <div className="flex justify-end gap-4">
+
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => handleActionButtonClick("PENDING")}
-                className=" text-black border-2 border-gray-500 py-1 px-3 rounded"
+                className="flex items-center gap-1 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 py-2 px-4 rounded-md transition-colors"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 Mark as Pending
               </button>
               <button
                 onClick={() => handleActionButtonClick("COMPLETED")}
-                className="bg-blue-500 text-white py-1 px-3 rounded"
+                className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
                 Approve
               </button>
               <button
@@ -396,18 +532,49 @@ const AllQueries: React.FC = () => {
                   setError("");
                   setComments("");
                 }}
-                className="text-black border-2 border-gray-500 py-1 px-3 rounded"
+                className="flex items-center gap-1 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 py-2 px-4 rounded-md transition-colors"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
                 Cancel
               </button>
             </div>
           </div>
         )}
       </Modal>
+
       {successMessage && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-green-500 p-4 text-white text-center rounded-md">
-            Query saved successfully!
+          <div className="bg-green-500 p-6 text-white text-center rounded-lg shadow-lg flex items-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <span className="text-lg font-medium">
+              Query saved successfully!
+            </span>
           </div>
         </div>
       )}

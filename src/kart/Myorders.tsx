@@ -214,30 +214,27 @@ const MyOrders: React.FC = () => {
     Items:
     -----------------------------
     ${order.orderItems
-      .map(
-        (item) =>
-          `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
-            item.quantity
-          } = ₹${(item.quantity * item.singleItemPrice).toFixed(2)}`
-      )
-      .join("\n")}
+          .map(
+            (item) =>
+              `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${item.quantity
+              } = ₹${(item.quantity * item.singleItemPrice).toFixed(2)}`
+          )
+          .join("\n")}
     
     -----------------------------
     Sub Total: ₹${order.subTotal || order.grandTotal}
     Delivery Fee: ₹${order.deliveryFee}
     ${order.walletAmount > 0 ? `Wallet Amount: -₹${order.walletAmount}\n` : ""}
-    ${
-      order.discountAmount > 0
-        ? `Coupon Discount: -₹${order.discountAmount}\n`
-        : ""
-    }
+    ${order.discountAmount > 0
+          ? `Coupon Discount: -₹${order.discountAmount}\n`
+          : ""
+        }
     ${order.gstAmount > 0 ? `GST Charges: ₹${order.gstAmount}\n` : ""}
     
     TOTAL: ₹${order.grandTotal}
     =============================
-    Payment Method: ${
-      order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"
-    }
+    Payment Method: ${order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"
+        }
     `;
 
       const blob = new Blob([invoiceContent], { type: "text/plain" });
@@ -401,12 +398,12 @@ const MyOrders: React.FC = () => {
           setSelectedOrder((prev: OrderDetailsResponse | null) =>
             prev
               ? {
-                  ...prev,
-                  feedback: {
-                    feedbackStatus: selectedLabel,
-                    comments: comments,
-                  },
-                }
+                ...prev,
+                feedback: {
+                  feedbackStatus: selectedLabel,
+                  comments: comments,
+                },
+              }
               : prev
           );
         }
@@ -415,12 +412,12 @@ const MyOrders: React.FC = () => {
           prevOrders.map((order) =>
             order.orderId === orderToRate.orderId
               ? {
-                  ...order,
-                  feedback: {
-                    feedbackStatus: selectedLabel,
-                    comments: comments,
-                  },
-                }
+                ...order,
+                feedback: {
+                  feedbackStatus: selectedLabel,
+                  comments: comments,
+                },
+              }
               : order
           )
         );
@@ -725,8 +722,7 @@ const MyOrders: React.FC = () => {
             message.error("Your session has expired. Please log in again.");
           } else {
             alert(
-              `Failed to update delivery time: ${
-                error.response.data?.message || "Server error"
+              `Failed to update delivery time: ${error.response.data?.message || "Server error"
               }`
             );
           }
@@ -749,12 +745,15 @@ const MyOrders: React.FC = () => {
 
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
+    return new Date(dateString).toLocaleString("en-IN", {
+      day: "2-digit",
       month: "short",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
-  };
+  };  
 
   const handleWriteToUs = () => {
     if (selectedOrder) {
@@ -823,7 +822,7 @@ const MyOrders: React.FC = () => {
       const matchesStatus =
         statusFilter === "all" ||
         getStatusText(order.orderStatus).toLowerCase() ===
-          statusFilter.toLowerCase();
+        statusFilter.toLowerCase();
 
       return matchesSearch && matchesStatus;
     })
@@ -990,8 +989,8 @@ const MyOrders: React.FC = () => {
                         </div>
 
                         {order.expectedDeliveryDate ||
-                        order.dayOfWeek ||
-                        order.timeSlot ? (
+                          order.dayOfWeek ||
+                          order.timeSlot ? (
                           <div className="mt-1 bg-purple-50 rounded-md p-1.5 text-xs sm:text-sm">
                             <div className="flex items-center">
                               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-purple-700 mr-1.5" />
@@ -1040,11 +1039,10 @@ const MyOrders: React.FC = () => {
 
                   {order.orderStatus === "4" && (
                     <div
-                      className={`${
-                        order.feedback
+                      className={`${order.feedback
                           ? "bg-purple-100 cursor-default"
                           : "bg-white hover:bg-purple-50 cursor-pointer"
-                      } transition-all duration-300`}
+                        } transition-all duration-300`}
                       onClick={
                         order.feedback
                           ? undefined
@@ -1125,12 +1123,19 @@ const MyOrders: React.FC = () => {
                       <Calendar className="h-3.5 w-3.5 text-purple-700" />
                       <span>
                         <span className="font-medium">Order Date:</span>{" "}
-                        {formatDate(selectedOrder.orderDate)}
+                        {new Date(selectedOrder.orderDate).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                       </span>
                     </div>
                     {selectedOrder.expectedDeliveryDate ||
-                    selectedOrder.dayOfWeek ||
-                    selectedOrder.timeSlot ? (
+                      selectedOrder.dayOfWeek ||
+                      selectedOrder.timeSlot ? (
                       <div className="mt-2 bg-purple-50 rounded-md gap-1.5 text-xs">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5 text-purple-700" />
@@ -1312,11 +1317,10 @@ const MyOrders: React.FC = () => {
                         Payment Method
                       </span>
                       <span
-                        className={`flex items-center px-3 py-1.5 rounded-full ${
-                          selectedOrder.paymentType === 2
+                        className={`flex items-center px-3 py-1.5 rounded-full ${selectedOrder.paymentType === 2
                             ? "bg-blue-100 text-blue-700"
                             : "bg-green-100 text-green-700"
-                        }`}
+                          }`}
                       >
                         {selectedOrder.paymentType === 2 ? (
                           <>
@@ -1624,15 +1628,14 @@ const MyOrders: React.FC = () => {
                                               (slot) => slot.id === activeTab
                                             );
                                           return selectedDay
-                                            ? `${
-                                                selectedDay.isToday
-                                                  ? "Today"
-                                                  : formatDayOfWeek(
-                                                      selectedDay.dayOfWeek
-                                                    )
-                                              } - ${formatDeliveryDate(
-                                                selectedDay.date || ""
-                                              )}`
+                                            ? `${selectedDay.isToday
+                                              ? "Today"
+                                              : formatDayOfWeek(
+                                                selectedDay.dayOfWeek
+                                              )
+                                            } - ${formatDeliveryDate(
+                                              selectedDay.date || ""
+                                            )}`
                                             : "";
                                         })()}
                                       </span>
@@ -1656,13 +1659,12 @@ const MyOrders: React.FC = () => {
                                           .map((timeSlot, index) => (
                                             <div
                                               key={`timeSlot-${index}`}
-                                              className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${
-                                                selectedTimeSlot === timeSlot &&
-                                                selectedDate ===
+                                              className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${selectedTimeSlot === timeSlot &&
+                                                  selectedDate ===
                                                   selectedSlot.date
                                                   ? "border-green-500 bg-green-50 shadow-sm"
                                                   : "border-gray-200 bg-white"
-                                              }`}
+                                                }`}
                                               onClick={() =>
                                                 handleSelectTimeSlot(
                                                   selectedSlot.date || "",
@@ -1777,11 +1779,10 @@ const MyOrders: React.FC = () => {
                   {feedbackOptions.map((option) => (
                     <div
                       key={option.label}
-                      className={`text-center cursor-pointer p-2 rounded-lg transition-all ${
-                        selectedLabel === option.label
+                      className={`text-center cursor-pointer p-2 rounded-lg transition-all ${selectedLabel === option.label
                           ? "bg-purple-100 border-2 border-purple-500"
                           : "hover:bg-purple-50 border-2 border-transparent"
-                      }`}
+                        }`}
                       onClick={() => setSelectedLabel(option.label)}
                     >
                       <div className="text-3xl mb-1">{option.emoji}</div>
