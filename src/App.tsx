@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
+  useLocation,
   Routes,
   Navigate,
 } from "react-router-dom";
@@ -86,9 +87,19 @@ import UniversityOffers from "./Dashboard/Offerletter"
 import PinkFunding from "./components/PinkFunding";
 import CurrentLandingPage from "./components/CurrentLandinPage";
 const App: React.FC = () => {
+
+ const location = useLocation();
+
+ useEffect(() => {
+   const validEntryPoints = ["/", "/future"];
+   if (validEntryPoints.includes(location.pathname)) {
+     console.log("Setting entryPoint:", location.pathname); // Debug log
+     localStorage.setItem("entryPoint", location.pathname);
+   }
+ }, [location.pathname]);
   return (
     <CartProvider>
-      <Router>
+      
         <ScrollToTop />
         <div className="App">
           <Routes>
@@ -354,7 +365,7 @@ const App: React.FC = () => {
             </Route>
           </Routes>
         </div>
-      </Router>
+    
     </CartProvider>
   );
 };

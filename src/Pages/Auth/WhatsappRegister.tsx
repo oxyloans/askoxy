@@ -105,12 +105,14 @@ const WhatsappRegister = () => {
     }
   }, [phoneNumber]);
 
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      navigate("/");
-    }, 300);
-  };
+    const handleClose = () => {
+      setIsClosing(true);
+      const entryPoint = localStorage.getItem("entryPoint") || "/";
+      console.log("Closing - Redirecting to:", entryPoint); // Debug log
+      setTimeout(() => {
+        navigate(entryPoint);
+      }, 300);
+    };
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");

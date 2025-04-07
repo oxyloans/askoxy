@@ -23,15 +23,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSignout = () => {
-    if (onItemClick) {
-      onItemClick();
-    }
-    localStorage.removeItem("userId");
-    localStorage.removeItem("email");
-    localStorage.clear();
-    navigate("/");
-  };
+ const handleSignout = () => {
+   const entryPoint = localStorage.getItem("entryPoint") || "/";
+   console.log("Signing out - Redirecting to:", entryPoint); // Debug log
+
+   localStorage.removeItem("userId");
+   localStorage.removeItem("email");
+   localStorage.removeItem("accessToken");
+   localStorage.removeItem("mobileNumber");
+   localStorage.removeItem("whatsappNumber");
+   localStorage.clear();
+   localStorage.setItem("entryPoint", entryPoint); // Preserve entry point
+
+   navigate(entryPoint);
+ };
 
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
