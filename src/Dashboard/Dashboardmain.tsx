@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Coins,
   Bot,
@@ -26,6 +26,8 @@ import Content1 from "./Content";
 import { motion, AnimatePresence } from "framer-motion";
 import Footer from "../components/Footer";
 import OxyLoansImage from "../assets/img/oxyloasntemp (1).png";
+
+import Header1 from "../components/Header";
 // Import your images here
 import RudrakshaImage from "../assets/img/freerudraksha.png";
 import FG from "../assets/img/Free AI and Gen ai training.png";
@@ -40,7 +42,7 @@ import VideoImage from "../assets/img/Videothumb.png"
 import BMVCOINmain from "./BMVcoinmain";
 
 import BASE_URL from "../Config";
-import { Image } from "antd";
+import { Image, message } from "antd";
 interface DashboardItem {
   title: string;
   image: string;
@@ -83,6 +85,7 @@ const DashboardMain: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
+  const accessToken = localStorage.getItem("accessToken");
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -106,35 +109,6 @@ const DashboardMain: React.FC = () => {
     fetchCampaigns();
   }, []);
 
-  useEffect(() => {
-    handleGetOffers();
-    const refreshListener = () => {
-      handleGetOffers();
-    };
-    window.addEventListener("refreshOffers", refreshListener);
-
-    return () => {
-      window.removeEventListener("refreshOffers", refreshListener);
-    };
-  }, []);
-
-  const handleGetOffers = async () => {
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-        {
-          userId: userId,
-        }
-      );
-
-      if (response.status === 200 && Array.isArray(response.data)) {
-        setUserInterest(response.data); // Update state
-        localStorage.setItem("userInterest", JSON.stringify(response.data)); // Store in localStorage
-      }
-    } catch (error) {
-      console.error("Error while fetching offers:", error);
-    }
-  };
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -148,90 +122,94 @@ const DashboardMain: React.FC = () => {
     }
   }, [location.pathname]);
 
-  const services: DashboardItem[] = [
-    // Modify the first item in your services array:
-    {
-      title: "OxyLoans - RBI Approved P2P NBFC",
-      image: OxyLoansImage,
-      description:
-        "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
-      path: "/main/service/oxyloans-service",
-      icon: <HandCoins className="text-purple-600" size={24} />,
-      category: "Finance",
-    },
-    {
-      title: "Free Rudraksha",
-      image: RudrakshaImage,
-      description:
-        "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
-      path: "/main/services/freerudraksha",
-      icon: <Gem className="text-purple-600" size={24} />,
-      category: "Spiritual",
-    },
-    {
-      title: "Free AI & Gen AI Training",
-      image: FG,
-      description:
-        "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
-      path: "/main/services/freeai-genai",
-      icon: <Cpu className="text-purple-600" size={24} />,
-      category: "Jobs",
-    },
-    {
-      title: "Free Rice Samples",
-      image: FR,
-      description:
-        "Request free rice samples along with a high-quality steel container for storage.",
-      path: "/main/services/freesample-steelcontainer",
-      icon: <Package className="text-purple-600" size={24} />,
-      category: "Food",
-    },
-    {
-      title: "Study Abroad",
-      image: StudyImage,
-      description:
-        "Explore opportunities to study abroad with expert guidance and support.",
-      path: "/main/services/studyabroad",
-      icon: <Globe className="text-purple-600" size={24} />,
-      category: "Education",
-    },
-    {
-      title: "Legal Knowledge Hub",
-      image: Legalimage,
-      description:
-        "Access expert legal advice and educational resources to navigate legal matters.",
-      path: "/main/services/legalservice",
-      icon: <Scale className="text-purple-600" size={24} />,
-      category: "Legal",
-    },
-    {
-      title: "My Rotary",
-      image: Rotary,
-      description:
-        "Join a network of leaders making a difference through Rotary initiatives and programs.",
-      path: "/main/services/myrotary",
-      icon: <Users className="text-purple-600" size={24} />,
-      category: "Community",
-    },
-    {
-      title: "Manufacturing Services",
-      image: MMServices,
-      description:
-        "Explore advanced machinery and manufacturing services for industrial growth.",
-      path: "/main/services/machines-manufacturing",
-      icon: <Factory className="text-purple-600" size={24} />,
-      category: "Industrial",
-    },
-    {
-      title: "We Are Hiring",
-      image: hiring,
-      description:
-        "Explore exciting job opportunities and be a part of our growing team.",
-      path: "/main/services/we-are-hiring",
-      icon: <Briefcase className="text-purple-600" size={24} />,
-      category: "Careers",
-    },
-  ];
+  const services: DashboardItem[] = useMemo(
+    () => [
+      {
+        title: "OxyLoans - RBI Approved P2P NBFC",
+        image: OxyLoansImage,
+        description:
+          "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
+        path: `${accessToken ? "/main" : ""}/service/oxyloans-service`,
+        icon: <HandCoins className="text-purple-600" size={24} />,
+        category: "Finance",
+      },
+      {
+        title: "Free Rudraksha",
+        image: RudrakshaImage,
+        description:
+          "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
+        path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
+        icon: <Gem className="text-purple-600" size={24} />,
+        category: "Spiritual",
+      },
+      {
+        title: "Free AI & Gen AI Training",
+        image: FG,
+        description:
+          "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
+        path: `${accessToken ? "/main" : ""}/services/freeai-genai`,
+        icon: <Cpu className="text-purple-600" size={24} />,
+        category: "Jobs",
+      },
+      {
+        title: "Free Rice Samples",
+        image: FR,
+        description:
+          "Request free rice samples along with a high-quality steel container for storage.",
+        path: `${
+          accessToken ? "/main" : ""
+        }/services/freesample-steelcontainer`,
+        icon: <Package className="text-purple-600" size={24} />,
+        category: "Food",
+      },
+      {
+        title: "Study Abroad",
+        image: StudyImage,
+        description:
+          "Explore opportunities to study abroad with expert guidance and support.",
+        path: `${accessToken ? "/main" : ""}/services/studyabroad`,
+        icon: <Globe className="text-purple-600" size={24} />,
+        category: "Education",
+      },
+      {
+        title: "Legal Knowledge Hub",
+        image: Legalimage,
+        description:
+          "Access expert legal advice and educational resources to navigate legal matters.",
+        path: `${accessToken ? "/main" : ""}/services/legalservice`,
+        icon: <Scale className="text-purple-600" size={24} />,
+        category: "Legal",
+      },
+      {
+        title: "My Rotary",
+        image: Rotary,
+        description:
+          "Join a network of leaders making a difference through Rotary initiatives and programs.",
+        path: `${accessToken ? "/main" : ""}/services/myrotary`,
+        icon: <Users className="text-purple-600" size={24} />,
+        category: "Community",
+      },
+      {
+        title: "Manufacturing Services",
+        image: MMServices,
+        description:
+          "Explore advanced machinery and manufacturing services for industrial growth.",
+        path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
+        icon: <Factory className="text-purple-600" size={24} />,
+        category: "Industrial",
+      },
+      {
+        title: "We Are Hiring",
+        image: hiring,
+        description:
+          "Explore exciting job opportunities and be a part of our growing team.",
+        path: `${accessToken ? "/main" : ""}/services/we-are-hiring`,
+        icon: <Briefcase className="text-purple-600" size={24} />,
+        category: "Careers",
+      },
+    ],
+    [accessToken]
+  );
 
 
   const products: DashboardItem[] = [
@@ -517,13 +495,30 @@ const DashboardMain: React.FC = () => {
     window.open('https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback');
   };
 
-  const handleOfferLetterClick = () => {
-    navigate('/main/dashboard/offer-letter-samples');
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Handle the click event for the offer letter button by navigating to the offer letter samples page
+ * @returns {void}
+ */
+/*******  369dfec7-41c3-4c49-8aac-3221a3169cb7  *******/  const handleOfferLetterClick = () => {
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        "/main/dashboard/offer-letter-samples"
+      );
+      message.warning("Please login to submit your interest.");
+      return;
+    }
+    navigate("/main/dashboard/offer-letter-samples");
   };
 
-
   return (
+
     <div className="min-h-screen">
+      <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       <div className="bg-white rounded-xl shadow-sm">
         
         <div className="p-2 lg:p-4">

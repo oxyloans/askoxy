@@ -3,14 +3,11 @@ import "../StudyAbroad.css";
 import "../DiwaliPage.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Header1 from "../Header"
 
 import Footer from "../Footer";
-import { message } from "antd";
-import {
-  ArrowLeft,
-  PlayCircleIcon,
-  UsersIcon
-} from "lucide-react";
+import { message, Modal } from "antd";
+import { ArrowLeft, PlayCircleIcon, UsersIcon } from "lucide-react";
 import { notification } from "antd";
 import BASE_URL from "../../Config";
 
@@ -30,11 +27,11 @@ const FreeAiandGenAi: React.FC = () => {
   const [query, setQuery] = useState("");
   const [interested, setInterested] = useState<boolean>(false);
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
-
+  const submitclicks = sessionStorage.getItem("submitclicks");
   const email = profileData.customerEmail || null;
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
-
+  const navigate = useNavigate();
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [formData, setFormData] = useState({
     askOxyOfers: "FREEAI",
@@ -54,41 +51,75 @@ const FreeAiandGenAi: React.FC = () => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   // Whatsapp and Video Links (replace with actual links)
-  const WHATSAPP_JOIN_GROUP = "https://chat.whatsapp.com/IbsWaPLHADfC0pF5lgGiMe";
+  const WHATSAPP_JOIN_GROUP =
+    "https://chat.whatsapp.com/IbsWaPLHADfC0pF5lgGiMe";
   const WHATSAPP_COMMUNITY = "https://chat.whatsapp.com/GJntC36RVHsLTuu20zPLR9";
   const INTRO_VIDEO = "https://www.youtube.com/watch?v=dummy-intro-video";
-  const COURSE_OVERVIEW_VIDEO = "https://www.askoxy.ai/aiandgenaivsverficationandvalidation";
+  const COURSE_OVERVIEW_VIDEO =
+    "https://www.askoxy.ai/aiandgenaivsverficationandvalidation";
 
-  const handleSubmit = async () => {
-    if (interested) {
-      message.warning("You have already participated. Thank you!");
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/services/freeai-genai");
+      message.warning("Please login to submit your interest.");
+
       return;
     }
+
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
+
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content:
+        "Are you sure you want to participate in the Free AI & Gen AI Training offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
       setIsButtonDisabled(true);
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
+
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
       message.success(
         "Thank you for showing interest in our *Free AI & Gen Ai Training* offer!"
       );
       setInterested(true);
-      setTimeout(() => {
-        window.dispatchEvent(new Event("refreshOffers"));
-      }, 200);
     } catch (error: any) {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
-      setIsButtonDisabled(false);
+      setInterested(false);
+    } finally {
+      sessionStorage.removeItem("submitclicks");
     }
-    window.dispatchEvent(new Event("refreshOffers"));
   };
-
-  const navigate = useNavigate();
 
   const handlePopUOk = () => {
     setIsOpen(false);
@@ -109,23 +140,36 @@ const FreeAiandGenAi: React.FC = () => {
   };
 
   useEffect(() => {
-    handleGetOffer();
+    handleLoadOffersAndCheckInterest();
   }, []);
 
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data);
-      const hasFreeRudrakshaOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "FREEAI"
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
       );
 
-      if (hasFreeRudrakshaOffer) {
-        setInterested(true);
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === "FREEAI"
+        );
+
+        console.log(hasFreeRudrakshaOffer);
+
+        setInterested(hasFreeRudrakshaOffer);
+        if (submitclicks) {
+          handleSubmit(hasFreeRudrakshaOffer);
+        }
       } else {
         setInterested(false);
       }
-    } else {
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
       setInterested(false);
     }
   };
@@ -175,23 +219,27 @@ const FreeAiandGenAi: React.FC = () => {
   };
 
   const handleWhatsAppGroupJoin = () => {
-    window.open(WHATSAPP_JOIN_GROUP, '_blank');
+    window.open(WHATSAPP_JOIN_GROUP, "_blank");
   };
 
   const handleCommunityLink = () => {
-    window.open(WHATSAPP_COMMUNITY, '_blank');
+    window.open(WHATSAPP_COMMUNITY, "_blank");
   };
 
   const handleIntroVideo = () => {
-    window.open(INTRO_VIDEO, '_blank');
+    window.open(INTRO_VIDEO, "_blank");
   };
 
   const handleCourseOverviewVideo = () => {
-    window.open(COURSE_OVERVIEW_VIDEO, '_blank');
+    window.open(COURSE_OVERVIEW_VIDEO, "_blank");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    
+    <div className="min-h-screen">
+        <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       <div className="p-4 lg:p-8">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="max-w-7xl mx-auto">
@@ -213,10 +261,13 @@ const FreeAiandGenAi: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   <button
                     className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg shadow-md hover:shadow-lg text-sm md:text-base font-medium transition duration-300 transform hover:-translate-y-0.5"
-                    onClick={handleSubmit}
+                    onClick={() => {
+                      handleSubmit(interested);
+                    }}
                     aria-label="I'm Interested"
+                    disabled={interested}
                   >
-                    I'm Interested
+                    {!interested ? "I'm Interested" : "Alredy Participated"}
                   </button>
 
                   <button

@@ -6,30 +6,20 @@ import { BiLogoPlayStore } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { HiOutlineDocument } from "react-icons/hi";
+import Header1 from "../Header"
 import BASE_URL from "../../Config";
-import {
-  ArrowLeft,
-
-  Scan,
-} from "lucide-react";
+import { ArrowLeft, Scan } from "lucide-react";
 import Container from "../ContainerPolicy";
 // import FR from "../assets/img/123.png";
 
 import Footer from "../Footer";
 import { message, Modal } from "antd";
 
-import Freesample from "../../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png"
+import Freesample from "../../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png";
 import ricesample1kgGif from "../assets/img/ricesample1kg (1).gif";
 import ricebag26kgsGif from "../assets/img/ricebag26kgsGif (1).gif";
 
-
-
 const FreeSample: React.FC = () => {
- 
-
-
-
-
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const userId = localStorage.getItem("userId");
@@ -42,10 +32,12 @@ const FreeSample: React.FC = () => {
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
-
+  const navigate = useNavigate();
   const email = profileData.customerEmail || null;
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [interested, setInterested] = useState<boolean>(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const submitclicks = sessionStorage.getItem("submitclicks");
   const [formData, setFormData] = useState({
     askOxyOfers: "FREESAMPLE",
     userId: userId,
@@ -62,40 +54,68 @@ const FreeSample: React.FC = () => {
     }));
   };
 
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const handleSubmit = async () => {
-    if (interested) {
-      message.warning("You have already participated. Thank you!");
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        "/main/services/freesample-steelcontainer"
+      );
+      message.warning("Please login to submit your interest.");
       return;
     }
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 5);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content:
+        "Are you sure you want to participate in the Free samples Training offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
       setIsButtonDisabled(true);
-      // API request to submit the form data
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
+
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-      // Redirect to the thank-you page
-      navigate("/thank-you");
+      message.success(
+        "Thank you for showing interest in our *Free Samples* offer!"
+      );
+      setInterested(true);
     } catch (error: any) {
-      if (error.response.status === 500 || error.response.status === 400) {
-        // Handle duplicate participation error
-        message.warning("You have already participated. Thank you!");
-      } else {
-        console.error("API Error:", error);
-        message.error("Failed to submit your interest. Please try again.");
-      }
-      setIsButtonDisabled(false);
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+      setInterested(false);
+    } finally {
+      sessionStorage.removeItem("submitclicks");
     }
   };
-
-  // const email = localStorage.getItem("email");
-
-  const navigate = useNavigate();
-
   const handlePopUOk = () => {
     setIsOpen(false);
     navigate("/main/profile");
@@ -113,28 +133,39 @@ const FreeSample: React.FC = () => {
       setIsOpen(true);
     }
   };
-  
+
   const handleScanBarcode = () => {
     navigate("/main/dashboard/barcodescanner");
   };
 
   useEffect(() => {
-    handleGetOffer();
+    handleLoadOffersAndCheckInterest();
   }, []);
 
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data); // Convert the string back to an array
-      const hasFreeRudrakshaOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "FREESAMPLE"
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
       );
-      if (hasFreeRudrakshaOffer) {
-        setInterested(true);
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === "FREESAMPLE"
+        );
+        setInterested(hasFreeRudrakshaOffer);
+        if (submitclicks) {
+          handleSubmit(hasFreeRudrakshaOffer);
+        }
       } else {
         setInterested(false);
       }
-    } else {
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
       setInterested(false);
     }
   };
@@ -206,6 +237,9 @@ const FreeSample: React.FC = () => {
 
   return (
     <div>
+       <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       <div className="bg-gray-50">
         <header>
           {/* Buttons on the right */}
@@ -435,11 +469,13 @@ const FreeSample: React.FC = () => {
             <div className="space-x-2">
               <button
                 className="px-4 py-2 font-bold bg-[#04AA6D] text-white rounded-lg shadow-md transition-all text-sm sm:text-base"
-                onClick={handleSubmit}
-                disabled={isButtonDisabled}
+                onClick={() => {
+                  handleSubmit(interested);
+                }}
+                disabled={interested}
                 aria-label="I'm Interested"
               >
-                I'm Interested
+                {interested ? "Already Participated" : "I'm Interested"}
               </button>
             </div>
           </div>

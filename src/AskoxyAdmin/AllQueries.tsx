@@ -48,11 +48,7 @@ const AllQueries: React.FC = () => {
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        console.error("Access token is missing");
-        return;
-      }
+     
 
       const requestPayload = {
         askOxyOfers:
@@ -66,11 +62,7 @@ const AllQueries: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
         requestPayload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+       
       );
 
       setQueries(response.data);

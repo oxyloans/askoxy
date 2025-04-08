@@ -27,7 +27,7 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="header">
-        <div className="logo">
+        <div className="logo"  onClick={() => navigate("/")}>
           <img src={Logo} alt="ASK OXY AI" />
         </div>
         <div className="header-actions">

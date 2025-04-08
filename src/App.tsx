@@ -106,6 +106,32 @@ const App: React.FC = () => {
         <ScrollToTop />
         <div className="App">
           <Routes>
+        {/* ----------------------------- */}
+          <Route path="dashboard/:tab" element={<DashboardMain />} />
+            <Route path="services/freerudraksha" element={<Freerudraksha />} />
+            <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
+            <Route
+              path="services/campaign/:type"
+              element={<CampaignDetails />}
+            />
+            <Route path="services/studyabroad" element={<StudyAbroad />} />
+            <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
+            <Route path="services/myrotary" element={<MyRotaryServices />} />
+            <Route path="services/bmvcoin" element={<BMVCOINmain />} />
+            <Route
+              path="services/freesample-steelcontainer"
+              element={<FreeSample />}
+            />
+            <Route
+              path="services/machines-manufacturing"
+              element={<MachinesManufacturingServices />}
+            />
+            <Route path="service/oxyloans-service" element={<OxyLoans />} />
+            <Route path="services/legalservice" element={<LegalService />} />
+            <Route path="services/we-are-hiring" element={<HiringService />} />
+
+
+        {/* ----------------------- */}
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />

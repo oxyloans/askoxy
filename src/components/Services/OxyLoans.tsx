@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Coins , X
 } from 'lucide-react';
+import Header1 from "../Header"
 
 // Import all testimonial images
 import I1 from "../../assets/img/testimonial1.png";
@@ -40,6 +41,7 @@ const OxyLoans: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'lend' | 'borrow' | 'lendAndEarn'>('lend');
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const [showRBILicense, setShowRBILicense] = useState(false);
+  const userId = localStorage.getItem('userId');
 
   // Comprehensive testimonials data
   const testimonials = [
@@ -268,6 +270,9 @@ const OxyLoans: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-sans bg-gradient-to-b from-blue-50 to-white min-h-screen">
+       <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       {/* RBI License Modal */}
       {showRBILicense && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

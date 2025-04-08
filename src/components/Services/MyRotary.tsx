@@ -3,27 +3,19 @@ import MyRotary from "../../assets/img/myrotray (1).png";
 import "../StudyAbroad.css";
 import "../DiwaliPage.css";
 import axios from "axios";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import Footer from "../Footer";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-
-} from "lucide-react";
-
-
+import { ArrowLeft } from "lucide-react";
+import Header1 from "../Header"
 
 import BASE_URL from "../../Config";
-
-
 
 const MyRotaryServices = () => {
   // Add any logic or state you need here, if necessary.
 
-
-
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
+  const submitclicks = sessionStorage.getItem("submitclicks");
   const userId = localStorage.getItem("userId");
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -31,7 +23,7 @@ const MyRotaryServices = () => {
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
-
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const email = profileData.customerEmail || null;
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
@@ -52,39 +44,63 @@ const MyRotaryServices = () => {
     }));
   };
 
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const handleSubmit = async () => {
-    if (interested) {
-      message.warning("You have already participated. Thank you!");
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/services/myrotary");
+      message.warning("Please login to submit your interest.");
       return;
     }
+
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content: "Are you sure you want to participate in the Rotarian offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
       setIsButtonDisabled(true);
-      // API request to submit the form data
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
+
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-      // Display success message in the UI (you can implement this based on your UI library)
       message.success(
         "Thank you for showing interest in our *Rotarian* offer!"
       );
       setInterested(true);
-      setTimeout(() => {
-        window.dispatchEvent(new Event("refreshOffers"));
-      }, 200);
     } catch (error: any) {
-      // if (error.response.status === 500 || error.response.status === 400) {
-      //   // Handle duplicate participation error
-      //   message.warning("You have already participated. Thank you!");
-      // } else {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
-      // }
-      setIsButtonDisabled(false);
+      setInterested(false);
+    } finally {
+      sessionStorage.removeItem("submitclicks");
     }
   };
 
@@ -111,22 +127,33 @@ const MyRotaryServices = () => {
   };
 
   useEffect(() => {
-    handleGetOffer();
+    handleLoadOffersAndCheckInterest();
   }, []);
 
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data); // Convert the string back to an array
-      const hasFreeRudrakshaOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "ROTARIAN"
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
       );
-      if (hasFreeRudrakshaOffer) {
-        setInterested(true);
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === "ROTARIAN"
+        );
+        setInterested(hasFreeRudrakshaOffer);
+        if (submitclicks) {
+          handleSubmit(hasFreeRudrakshaOffer);
+        }
       } else {
         setInterested(false);
       }
-    } else {
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
       setInterested(false);
     }
   };
@@ -191,6 +218,9 @@ const MyRotaryServices = () => {
   return (
     <div>
       <div>
+      <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
         <header>
           {/* Layout container */}
           <div className="flex flex-col items-center justify-center md:flex-row pt-4  px-4 md:px-6 lg:px-8">
@@ -212,11 +242,13 @@ const MyRotaryServices = () => {
             {/* Button: I'm Interested */}
             <button
               className="bg-[#04AA6D] w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
-              onClick={handleSubmit}
-              // disabled={isButtonDisabled}
+              onClick={() => {
+                handleSubmit(interested);
+              }}
+              disabled={interested}
               aria-label="Visit our site"
             >
-              I'm Interested
+              {interested ? "Already Participated" : "I'm Interested"}
             </button>
 
             {/* Button: Write To Us */}

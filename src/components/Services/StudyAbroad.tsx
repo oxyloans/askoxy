@@ -14,6 +14,7 @@ import {
   FaCalendarAlt,
   FaCheckCircle,
 } from "react-icons/fa";
+import Header1 from "../Header"
 
 import { useNavigate } from "react-router-dom";
 import Univ1 from "../../assets/img/Univ1.png";
@@ -31,7 +32,7 @@ import img5 from "../../assets/img/1.5.png";
 import img6 from "../../assets/img/1.6.png";
 
 import Footer from "../Footer";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import BASE_URL from "../../Config";
 
 // Define TypeScript interfaces for fee structures
@@ -69,6 +70,7 @@ interface University {
 const StudyAbroad: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const submitclicks = sessionStorage.getItem("submitclicks");
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -216,51 +218,96 @@ const StudyAbroad: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (interested) {
-      message.warning("You have already participated. Thank you!");
+    useEffect(() => {
+      handleLoadOffersAndCheckInterest();
+    }, []);
+  
+    const handleLoadOffersAndCheckInterest = async () => {
+      if (!userId) return;
+  
+      try {
+        const response = await axios.post(
+          `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+          { userId }
+        );
+  
+        if (response.status === 200 && Array.isArray(response.data)) {
+          const offers = response.data;
+  
+          const hasFreeRudrakshaOffer = offers.some(
+            (offer: any) => offer.askOxyOfers === "ROTARIAN"
+          );
+          setInterested(hasFreeRudrakshaOffer);
+          if (submitclicks) {
+            handleSubmit(hasFreeRudrakshaOffer);
+          }
+        } else {
+          setInterested(false);
+        }
+      } catch (error) {
+        console.error("Error while fetching offers:", error);
+        setInterested(false);
+      }
+    };
+  
+
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/services/myrotary");
+      message.warning("Please login to submit your interest.");
       return;
     }
+
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content: "Are you sure you want to participate in the Rotarian offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
       setIsButtonDisabled(true);
-      // API request to submit the form data
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
+
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-      // Display success message in the UI (you can implement this based on your UI library)
       message.success(
-        "Thank you for showing interest in our *Study Abroad* offer!"
+        "Thank you for showing interest in our *Rotarian* offer!"
       );
       setInterested(true);
-      setTimeout(() => {
-        window.dispatchEvent(new Event("refreshOffers"));
-      }, 200);
     } catch (error: any) {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
-      setIsButtonDisabled(false);
-    }
-  };
-
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data); // Convert the string back to an array
-      const hasFreeRudrakshaOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "STUDYABROAD"
-      );
-
-      if (hasFreeRudrakshaOffer) {
-        setInterested(true);
-      } else {
-        setInterested(false);
-      }
-    } else {
       setInterested(false);
+    } finally {
+      sessionStorage.removeItem("submitclicks");
     }
   };
 
@@ -345,7 +392,7 @@ const StudyAbroad: React.FC = () => {
 
   // Handle click outside to close the dropdown - Fixed implementation
   useEffect(() => {
-    handleGetOffer();
+   
 
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -368,6 +415,9 @@ const StudyAbroad: React.FC = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+       <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       <div>
         <header className="bg-white shadow-md p-4">
           {/* Container for layout */}
@@ -483,11 +533,11 @@ const StudyAbroad: React.FC = () => {
               </div>
               <button
                 className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-green-600 text-sm md:text-base lg:text-lg transition duration-300"
-                onClick={handleSubmit}
-                aria-label="Visit our site"
+                onClick={()=>{handleSubmit(interested)}}
+                aria-label="Visit our site" 
                 disabled={isButtonDisabled || interested}
               >
-                I'm Interested
+             {interested ? "Already Participated" : "I'm Interested"}
               </button>
               <a
                 href="https://bmv.money/bankd/index.html"

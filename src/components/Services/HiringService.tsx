@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../Config";
 import { ArrowLeft, Mail, X } from "lucide-react";
 import Footer from "../Footer";
+import Header1 from "../Header"
+import { message, Modal } from "antd";
 
 const HiringService: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -13,7 +15,7 @@ const HiringService: React.FC = () => {
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const submitclicks = sessionStorage.getItem("submitclicks");
   const userId = localStorage.getItem("userId");
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
@@ -32,52 +34,97 @@ const HiringService: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    handleGetOffer();
+    handleLoadOffersAndCheckInterest();
   }, []);
 
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data);
-      const hasHiringOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "WEAREHIRING"
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
       );
-      setInterested(hasHiringOffer);
-    } else {
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === "WEAREHIRING"
+        );
+        setInterested(hasFreeRudrakshaOffer);
+        if (submitclicks) {
+          handleSubmit(hasFreeRudrakshaOffer);
+        }
+      } else {
+        setInterested(false);
+      }
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
       setInterested(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (interested) {
-      showMessage("You have already participated. Thank you!");
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/services/we-are-hiring");
+      message.warning("Please login to submit your interest.");
       return;
     }
 
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content:
+        "Are you sure you want to participate in the *We Are Hiring* Training offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
-      setIsLoading(true);
+      // setIsButtonDisabled(true);
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
+      console.log("API Response:", response.data);
 
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-      showMessage(
+
+      message.success(
         "Thank you for showing interest in our *We Are Hiring* offer!"
       );
       setInterested(true);
-
-      setTimeout(() => {
-        window.dispatchEvent(new Event("refreshOffers"));
-      }, 200);
-    } catch (error) {
+    } catch (error: any) {
       console.error("API Error:", error);
-      showMessage("Failed to submit your interest. Please try again.", "error");
+      message.error("Failed to submit your interest. Please try again.");
+      setInterested(false);
     } finally {
-      setIsLoading(false);
+      sessionStorage.removeItem("submitclicks");
     }
   };
-
   const showMessage = (
     content: string,
     type: "success" | "error" | "warning" = "success"
@@ -158,6 +205,9 @@ const HiringService: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+       <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       {/* Header */}
       <header className="bg-white shadow-sm py-4 px-4 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -172,8 +222,10 @@ const HiringService: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <button
               className="bg-[#04AA6D] hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              onClick={handleSubmit}
-              disabled={isLoading || interested}
+              onClick={() => {
+                handleSubmit(interested);
+              }}
+              disabled={interested}
             >
               {interested
                 ? "Already Applied"

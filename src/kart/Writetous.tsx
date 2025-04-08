@@ -387,7 +387,7 @@ const WriteToUs: React.FC = () => {
                   Write to us
                 </h2>
                 <div className="flex items-center text-gray-600 text-sm gap-1">
-                  <FiClock className="w-4 h-4" />
+                  <FiClock className="w-5 h-5 mb-4" />
                   <p>We'll respond within 24 hours</p>
                 </div>
               </div>

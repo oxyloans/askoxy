@@ -420,8 +420,20 @@ const WhatsappRegister = () => {
           () => navigate(location.state?.from || "/main/dashboard/home"),
           500
         );
+
+        setTimeout(() => {
+          const redirectPath = sessionStorage.getItem("redirectPath");
+
+          if (redirectPath) {
+            navigate(redirectPath);
+            sessionStorage.removeItem("redirectPath");
+          } else {
+            navigate(location.state?.from || "/main/dashboard/home");
+          }
+        }, 500);
         setTimeout(() => window.location.reload(), 1000);
-      }
+      }
+
     } catch (err: any) {
       // Handle axios error response
       if (err.response && err.response.data && err.response.data.message) {

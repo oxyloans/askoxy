@@ -3,21 +3,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../Footer";
 import Legal from "../../assets/img/legal.png";
-import {
-  ArrowLeft,
-  
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Header1 from "../Header"
 
 import axios from "axios";
 
 import BASE_URL from "../../Config";
 
-import { message } from "antd";
-
+import { message, Modal } from "antd";
 
 const LegalService: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  
 
   const userId = localStorage.getItem("userId");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -28,9 +24,11 @@ const LegalService: React.FC = () => {
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+  const submitclicks = sessionStorage.getItem("submitclicks");
 
   const email = profileData.customerEmail || null;
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
@@ -55,39 +53,64 @@ const LegalService: React.FC = () => {
     }));
   };
 
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const handleSubmit = async () => {
-    if (interested) {
-      message.warning("You have already participated. Thank you!");
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/services/legalservice");
+      message.warning("Please login to submit your interest.");
       return;
     }
+
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content:
+        "Are you sure you want to participate in the Legal Service offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
-      setIsButtonDisabled(true);
-      // API request to submit the form data
+      // setIsButtonDisabled(true);
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
       console.log("API Response:", response.data);
+
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
-      // Display success message in the UI (you can implement this based on your UI library)
       message.success(
         "Thank you for showing interest in our *Legal Service* offer!"
       );
       setInterested(true);
-      setTimeout(() => {
-        window.dispatchEvent(new Event("refreshOffers"));
-      }, 200);
     } catch (error: any) {
-      // if (error.response.status === 500 || error.response.status === 400) {
-      //   // Handle duplicate participation error
-      //   message.warning("You have already participated. Thank you!");
-      // } else {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
-      // }
-      setIsButtonDisabled(false);
+      setInterested(false);
+    } finally {
+      sessionStorage.removeItem("submitclicks");
     }
   };
 
@@ -113,34 +136,37 @@ const LegalService: React.FC = () => {
     }
   };
   useEffect(() => {
-    handleGetOffer();
+    handleLoadOffersAndCheckInterest();
   }, []);
 
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data); // Convert the string back to an array
-      const hasFreeRudrakshaOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "LEGALSERVICES"
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
       );
-      if (hasFreeRudrakshaOffer) {
-        setInterested(true);
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === "LEGALSERVICES"
+        );
+        setInterested(hasFreeRudrakshaOffer);
+        if (submitclicks) {
+          handleSubmit(hasFreeRudrakshaOffer);
+        }
       } else {
         setInterested(false);
       }
-    } else {
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
       setInterested(false);
     }
   };
 
-  // useEffect(() => {
-  //   if (issuccessOpen) {
-  //     const timer = setTimeout(() => {
-  //       setSuccessOpen(false);
-  //     }, 5000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [issuccessOpen]);
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
@@ -193,6 +219,9 @@ const LegalService: React.FC = () => {
   return (
     <div>
       <div>
+      <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
         <header>
           {/* Layout container */}
           <div className="relative flex flex-col items-center pt-5">
@@ -215,11 +244,13 @@ const LegalService: React.FC = () => {
             {/* Button: I'm Interested */}
             <button
               className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
-              onClick={handleSubmit}
+              onClick={() => {
+                handleSubmit(interested);
+              }}
               aria-label="Visit our site"
-              // disabled={isButtonDisabled}
+              disabled={interested}
             >
-              I'm Interested
+              {interested ? "Already Participated" : "I'm Interested"}
             </button>
 
             {/* Button: Write To Us */}

@@ -2,14 +2,12 @@ import React, { useState, useEffect } from "react";
 import "../Freerudraksha.css";
 import "../DiwaliPage.css";
 import axios from "axios";
+import Header1 from "../Header"
 
 import ScrollToTop from "../ScrollToTop";
 
 import Image1 from "../../assets/img/WEBSITE (1).png";
-import {
-  ArrowLeft,
-
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Image2 from "../../assets/img/R2.png";
 
@@ -20,24 +18,16 @@ import { useNavigate } from "react-router-dom";
 
 import BASE_URL from "../../Config";
 
-
 const Freerudraksha: React.FC = () => {
-
   const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [address, setAddress] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
   const [modalType, setModalType] = useState<string>("");
   const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  // const storedPhoneNumber = localStorage.getItem("whatsappNumber");
-
-  const [storedPhoneNumber, setStoredPhoneNumber] = useState<string>(""); // Fetch phone number from storage if needed
-  // Fetch user ID from storage if needed.
+  const [storedPhoneNumber, setStoredPhoneNumber] = useState<string>("");
   const [hasSubmitted, setHasSubmitted] = useState(false); // Track submission status
   const [firstRequestDate, setFirstRequestDate] = useState("");
   const [isOfficeConfirmationVisible, setIsOfficeConfirmationVisible] =
@@ -48,18 +38,22 @@ const Freerudraksha: React.FC = () => {
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string>("");
-  const [isModalOpen1, setIsModalOpen1] = useState<boolean>(false);
+
   const userId = localStorage.getItem("userId");
   const userName = localStorage.getItem("profileData");
   const [interested, setInterested] = useState<boolean>(false);
-  console.log(userId);
-  const handleWhatsappClick = () => {
+  console.log("interested " + interested);
+
+  const handleWhatsappClick = (storedPhoneNumber: string) => {
     if (storedPhoneNumber) {
       setPhoneNumber(storedPhoneNumber);
       setModalType("confirmation");
       setIsModalOpen(true);
     } else {
-      message.error("Phone number is not available in local storage.");
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/services/freerudraksha");
+      message.error("Please login to submit your interest.");
+      sessionStorage.setItem("submitclicks", "true");
     }
   };
 
@@ -138,7 +132,8 @@ const Freerudraksha: React.FC = () => {
 
   // Handle WhatsApp confirmation
   const handleConfirmPhone = () => {
-    setModalType("addressEntry"); // Move to address entry modal
+    setModalType("addressEntry");
+    sessionStorage.removeItem("submitclicks");
   };
   // Handle address confirmation
   const handleConfirmAddress = () => {
@@ -146,31 +141,55 @@ const Freerudraksha: React.FC = () => {
     message.success("Address confirmed successfully!");
   };
 
-  const handleGetOffer = () => {
-    const data = localStorage.getItem("userInterest");
-    if (data) {
-      const parsedData = JSON.parse(data); // Convert the string back to an array
-      const hasFreeRudrakshaOffer = parsedData.some(
-        (offer: any) => offer.askOxyOfers === "FREERUDRAKSHA"
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
       );
 
-      if (hasFreeRudrakshaOffer) {
-        setInterested(true);
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === "FREERUDRAKSHA"
+        );
+        console.log(hasFreeRudrakshaOffer + "-----------------");
+
+        setInterested(hasFreeRudrakshaOffer);
+        const storedPhoneNumber =
+          localStorage.getItem("whatsappNumber") ||
+          localStorage.getItem("mobileNumber") ||
+          "";
+        const submitclicks = sessionStorage.getItem("submitclicks");
+        setStoredPhoneNumber(storedPhoneNumber);
+        if (submitclicks) {
+          if (hasFreeRudrakshaOffer) {
+            message.info("You have already submitted your interest.");
+            sessionStorage.removeItem("submitclicks");
+            return;
+          }
+          handleWhatsappClick(storedPhoneNumber);
+        }
       } else {
         setInterested(false);
       }
-    } else {
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
       setInterested(false);
     }
   };
 
   useEffect(() => {
-    handleGetOffer();
-    setStoredPhoneNumber(
+    handleLoadOffersAndCheckInterest();
+
+    const storedPhoneNumber =
       localStorage.getItem("whatsappNumber") ||
-        localStorage.getItem("mobileNumber") ||
-        ""
-    );
+      localStorage.getItem("mobileNumber") ||
+      "";
+    setStoredPhoneNumber(storedPhoneNumber);
     const savedHasSubmitted = localStorage.getItem(`${userId}_hasSubmitted`);
     const savedDate = localStorage.getItem(`${userId}_firstRequestDate`);
     if (savedHasSubmitted && savedDate) {
@@ -317,6 +336,9 @@ const Freerudraksha: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
+       <div className="mb-4 p-2">
+              {!userId ?   <Header1 />: null}
+            </div>
       <header>
         {/* Title and Buttons Container */}
         <div className="relative flex items-center justify-center pt-5 w-full">
@@ -339,7 +361,9 @@ const Freerudraksha: React.FC = () => {
           {!interested ? (
             <button
               className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg transition duration-300"
-              onClick={handleWhatsappClick}
+              onClick={() => {
+                handleWhatsappClick(storedPhoneNumber);
+              }}
               aria-label="Request Free Rudraksha"
             >
               I Want Free Rudraksha
@@ -348,8 +372,9 @@ const Freerudraksha: React.FC = () => {
             <button
               className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-[#04AA6D] text-sm md:text-base lg:text-lg duration-300 cursor-default"
               aria-label="Request Free Rudraksha"
+              disabled={interested}
             >
-              Request Submitted
+              Already Submitted
             </button>
           )}
 
@@ -572,7 +597,10 @@ const Freerudraksha: React.FC = () => {
       <Modal
         title=""
         visible={isModalOpen}
-        onCancel={() => setIsModalOpen(false)} // Close the modal
+        onCancel={() => {
+          setIsModalOpen(false);
+          sessionStorage.removeItem("submitclicks");
+        }}
         footer={null} // Custom footer
         className="modal-responsive"
       >
@@ -593,7 +621,10 @@ const Freerudraksha: React.FC = () => {
               </Button>
               <Button
                 danger
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  sessionStorage.removeItem("submitclicks");
+                }}
                 className="w-full sm:w-auto"
               >
                 No

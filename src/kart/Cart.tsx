@@ -839,7 +839,7 @@ const CartPage: React.FC = () => {
                           {item.itemName}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Weight: {item.weight} {item.units}
+                          Weight: {item.weight} {item.units == "pcs" ? "Pc" : (item.weight == "1" ? "Kg" : "Kgs")}
                         </p>
                         <div className="flex items-center mt-1">
                           <p className="text-sm line-through text-gray-400 mr-2">

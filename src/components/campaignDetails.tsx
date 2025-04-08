@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import axios from "axios";
-import { message, notification } from "antd";
+import { message, Modal, notification } from "antd";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import Header1 from "./Header"
 
 interface Image {
   imageId: string;
@@ -45,9 +46,8 @@ const CampaignDetails: React.FC = () => {
   const mobileNumber = localStorage.getItem("mobileNumber");
   const [campaign, setCampaign] = useState<Campaign>();
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
-  const generateCampaignId = (campaignType: string, index: number): string => {
-    return `campaign-${index + 1}`;
-  };
+  const [interested, setInterested] = useState<boolean>(false);
+  const submitclicks = sessionStorage.getItem("submitclicks");
 
   const createSimpleHash = (text: string): string => {
     let hash = 0;
@@ -174,12 +174,83 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    handleLoadOffersAndCheckInterest();
+  }, []);
+
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
+      );
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const offers = response.data;
+
+        const hasFreeRudrakshaOffer = offers.some(
+          (offer: any) => offer.askOxyOfers === campaign?.campaignType
+        );
+
+        console.log(hasFreeRudrakshaOffer);
+
+        setInterested(hasFreeRudrakshaOffer);
+        if (submitclicks) {
+          handleSubmit(hasFreeRudrakshaOffer);
+        }
+      } else {
+        setInterested(false);
+      }
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
+      setInterested(false);
+    }
+  };
+
+  const handleSubmit = (isAlreadyInterested: boolean) => {
+    sessionStorage.setItem("submitclicks", "true");
+
+    if (!userId) {
+      message.warning("Please login to submit your interest.");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/services/campaign/${campaignId}`
+      );
+      return;
+    }
+
+    showConfirmationModal(isAlreadyInterested);
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+    Modal.confirm({
+      title: "Confirm Participation",
+      content: "Are you sure you want to participate in our offer?",
+      okText: "Yes, I’m sure",
+      cancelText: "Cancel",
+      onOk: submitInterest,
+      onCancel: () => {
+        sessionStorage.removeItem("submitclicks");
+      },
+    });
+  };
+
+  const submitInterest = async () => {
+    // if (isButtonDisabled) return;
+
     try {
       setIsButtonDisabled(true);
-
       const campaignType = campaign?.campaignType || "";
-
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         {
@@ -188,45 +259,20 @@ const CampaignDetails: React.FC = () => {
           projectType: "ASKOXY",
         }
       );
-      notification.success({
-        message: "Success!",
-        description: `Your interest has been submitted successfully!`,
-        placement: "top",
-        duration: 2,
-        style: {
-          width: 300,
-          fontSize: "14px",
-          padding: "10px",
-        },
-      });
+      console.log("API Response:", response.data);
+
+      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+
+      message.success(
+        `Thank you for showing interest in our *${campaign?.campaignType}* offer!`
+      );
+      setInterested(true);
     } catch (error: any) {
-      if (error.response?.status === 500 || error.response?.status === 400) {
-        notification.warning({
-          message: "Warning!",
-          description: `You have already participated. Thank you!`,
-          placement: "top",
-          duration: 2,
-          style: {
-            width: 300,
-            fontSize: "14px",
-            padding: "10px",
-          },
-        });
-      } else {
-        console.error("API Error:", error);
-        notification.error({
-          message: "Error!",
-          description: "Failed to submit your interest. Please try again.",
-          duration: 2,
-          placement: "top",
-          style: {
-            width: 300,
-            fontSize: "14px",
-            padding: "10px",
-          },
-        });
-      }
-      setIsButtonDisabled(false);
+      console.error("API Error:", error);
+      message.error("Failed to submit your interest. Please try again.");
+      setInterested(false);
+    } finally {
+      sessionStorage.removeItem("submitclicks");
     }
   };
 
@@ -277,6 +323,9 @@ const CampaignDetails: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
+       <div className="mb-4 p-2">
+        {!userId ?   <Header1 />: null}
+      </div>
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -301,11 +350,13 @@ const CampaignDetails: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
               <button
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleSubmit}
+                onClick={() => {
+                  handleSubmit(interested);
+                }}
                 aria-label="Visit our site"
-                disabled={isButtonDisabled}
+                disabled={isButtonDisabled || interested}
               >
-                I'm Interested
+                {!interested ? "I'm Interested" : "Alredy Participated"}
               </button>
               <button
                 className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f9b91a] transition-all"

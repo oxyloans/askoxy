@@ -377,7 +377,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
                 src={AskOxyLogo}
                 className="h-8 w-auto sm:h-12 object-contain cursor-pointer"
                 alt="AskOxyLogo"
-                onClick={() => handleNavigation("/main")}
+                onClick={() => handleNavigation("/main/dashboard/home")}
               />
             </div>
 
