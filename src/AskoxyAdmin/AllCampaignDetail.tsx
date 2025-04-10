@@ -37,12 +37,15 @@ const AllCampaignsDetails: React.FC = () => {
     imageUrls: [],
     campaignTypeAddBy: "",
     campaignStatus: "",
-    campaignId:"",
+    campaignId: "",
   });
 
-  const TestUrl = window.location.href.includes("sandbox")
-    ? "https://www.sandbox.askoxy.ai/main/services/campaign/"
-    : "https://www.askoxy.ai/main/services/campaign/";
+  const baseUrl = window.location.href.includes("sandbox")
+    ? "https://www.sandbox.askoxy.ai"
+    : "https://www.askoxy.ai";
+
+  const authUrl = `${baseUrl}/main/services/campaign/`;
+  const noAuthUrl = `${baseUrl}/services/campaign/`;
 
   useEffect(() => {
     fetchCampaigns();
@@ -56,7 +59,7 @@ const AllCampaignsDetails: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        BASE_URL+"/marketing-service/campgin/getAllCampaignDetails",
+        BASE_URL + "/marketing-service/campgin/getAllCampaignDetails",
         {
           headers: {
             accept: "application/json",
@@ -85,7 +88,8 @@ const AllCampaignsDetails: React.FC = () => {
       onOk: async () => {
         try {
           const response = await axios.patch(
-            BASE_URL+"/marketing-service/campgin/activate-deactivate-campaign",
+            BASE_URL +
+              "/marketing-service/campgin/activate-deactivate-campaign",
             {
               askOxyCampaignDto: [
                 {
@@ -127,7 +131,7 @@ const AllCampaignsDetails: React.FC = () => {
       imageUrls: campaign.imageUrls,
       campaignTypeAddBy: campaign.campaignTypeAddBy,
       campaignStatus: campaign.campaignStatus,
-      campaignId: campaign.campaignId
+      campaignId: campaign.campaignId,
     });
     setIsUpdateModalVisible(true);
     // console.log(formData);
@@ -257,7 +261,7 @@ const AllCampaignsDetails: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        BASE_URL+"/marketing-service/campgin/addCampaignTypes",
+        BASE_URL + "/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
           headers: {
@@ -276,7 +280,7 @@ const AllCampaignsDetails: React.FC = () => {
           imageUrls: [],
           campaignTypeAddBy: "",
           campaignStatus: "",
-          campaignId:"",
+          campaignId: "",
         });
         setIsUpdateModalVisible(false);
       } else {
@@ -323,18 +327,28 @@ const AllCampaignsDetails: React.FC = () => {
       title: <div className="text-center">Description</div>,
       dataIndex: "campaignDescription",
       key: "campaignDescription",
+      render: (text: any) => (
+        <div className="w-[200px] h-[100px] overflow-y-auto overflow-x-hidden scrollbar-hide">
+          {text}
+        </div>
+      ),
     },
+
+    // {
+    //   title: <div className="text-center">Added By</div>,
+    //   dataIndex: "campaignTypeAddBy",
+    //   key: "campaignTypeAddBy",
+    // },
     {
-      title: <div className="text-center">Added By</div>,
-      dataIndex: "campaignTypeAddBy",
-      key: "campaignTypeAddBy",
-    },
-    {
-      title: <div className="text-center">Service Url</div>,
-      key: "campaignUrl",
+      title: (
+        <div className="text-center">Service Url (Without Authorization)</div>
+      ),
+      key: "noAuthCampaignUrl",
       render: (_: any, record: Campaign) => {
-        const encodedCampaignType = encodeURIComponent(record.campaignId.slice(-4));
-        const campaignUrl = `${TestUrl}${encodedCampaignType}`;
+        const encodedCampaignType = encodeURIComponent(
+          record.campaignId.slice(-4)
+        );
+        const campaignUrl = `${noAuthUrl}${encodedCampaignType}`;
 
         return (
           <div className="flex flex-wrap items-center gap-2">
@@ -343,7 +357,6 @@ const AllCampaignsDetails: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 underline break-all"
-              style={{ wordBreak: "break-word" }} // Ensures wrapping
             >
               {campaignUrl}
             </a>
@@ -358,10 +371,42 @@ const AllCampaignsDetails: React.FC = () => {
       },
     },
     {
+      title: (
+        <div className="text-center">Service Url (With Authorization)</div>
+      ),
+      key: "authCampaignUrl",
+      render: (_: any, record: Campaign) => {
+        const encodedCampaignType = encodeURIComponent(
+          record.campaignId.slice(-4)
+        );
+        const campaignUrl = `${authUrl}${encodedCampaignType}`;
+
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={campaignUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 underline break-all"
+            >
+              {campaignUrl}
+            </a>
+            <button
+              onClick={() => handleCopy(campaignUrl)}
+              className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-300"
+            >
+              Copy
+            </button>
+          </div>
+        );
+      },
+    },
+
+    {
       title: <div className="text-center">Actions</div>,
       key: "actions",
       render: (_: any, campaign: Campaign) => (
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-col items-center gap-2">
           <Button
             className={
               campaign.campaignStatus

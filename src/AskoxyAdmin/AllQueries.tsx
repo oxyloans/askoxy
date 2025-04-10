@@ -43,12 +43,12 @@ const AllQueries: React.FC = () => {
   const [comments, setComments] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
-  const userId = localStorage.getItem("userId");
+  // const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
     setLoading(true);
     try {
-     
+      const accessToken = localStorage.getItem("accessToken");
 
       const requestPayload = {
         askOxyOfers:
@@ -61,8 +61,7 @@ const AllQueries: React.FC = () => {
 
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
-        requestPayload,
-       
+        requestPayload
       );
 
       setQueries(response.data);
@@ -119,13 +118,13 @@ const AllQueries: React.FC = () => {
         id: selectedQuery?.id,
         mobileNumber: selectedQuery?.mobileNumber,
         projectType: "ASKOXY",
-        query: "",
+        query: selectedQuery?.query,
         queryStatus: action,
         resolvedBy: "admin",
         resolvedOn: "",
         status: "",
         userDocumentId: "",
-        userId: userId,
+        userId: selectedQuery?.userId,
       };
     }
     if (action === "COMPLETED") {
@@ -137,18 +136,18 @@ const AllQueries: React.FC = () => {
         id: selectedQuery?.id,
         mobileNumber: selectedQuery?.mobileNumber,
         projectType: "ASKOXY",
-        query: "",
+        query: selectedQuery?.query,
         queryStatus: "COMPLETED",
         resolvedBy: "admin",
         resolvedOn: "",
         status: "",
         userDocumentId: "",
-        userId: userId,
+        userId: selectedQuery?.userId,
       };
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/writetous-service/saveData`, {
+      const response = await fetch(`${BASE_URL}/user-service/write/saveData`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -228,32 +227,61 @@ const AllQueries: React.FC = () => {
       dataIndex: "query",
       width: 220,
     },
+
     {
       title: "Admin & User Replies",
       dataIndex: "replies",
-      width: 200,
+      width: 300,
       render: (_: any, record: Query) => (
-        <div className="space-y-0">
-          {record.userPendingQueries?.map((reply, index) => (
-            <div key={index} className="mb-4">
-              <span
-                className={`block text-sm font-medium mb-1 ${
-                  reply.resolvedBy === "admin"
-                    ? "text-blue-600"
-                    : "text-green-600"
-                }`}
-              >
-                {reply.resolvedBy === "admin" ? "Admin" : "User"}:
+        <div className="space-y-2">
+          {/* Replies from userPendingQueries */}
+          {record.userPendingQueries && record.userPendingQueries.length > 0
+            ? record.userPendingQueries.map((reply, index) => (
+                <div key={index} className="mb-2 border-b pb-1">
+                  <span
+                    className={`block text-sm font-semibold ${
+                      reply.resolvedBy === "admin"
+                        ? "text-blue-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {reply.resolvedBy === "admin" ? "Admin" : "User"}:
+                  </span>
+                  <span className="block text-sm text-gray-700">
+                    {reply.pendingComments || "No comment provided"}
+                  </span>
+                  {reply.resolvedOn && (
+                    <span className="block text-xs text-gray-400">
+                      {new Date(reply.resolvedOn).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              ))
+            : null}
+
+          {/* Top-level admin comment (final reply) */}
+          {record.comments && (
+            <div className="mb-2 border-b pb-1">
+              <span className="block text-sm font-semibold text-blue-600">
+                Admin
               </span>
               <span className="block text-sm text-gray-700">
-                {reply.pendingComments}
+                {record.comments}
               </span>
+              {record.resolvedOn && (
+                <span className="block text-xs text-gray-400">
+                  {new Date(record.resolvedOn).toLocaleString()}
+                </span>
+              )}
             </div>
-          ))}
-          {(!record.userPendingQueries ||
-            record.userPendingQueries.length === 0) && (
-            <div className="text-sm text-gray-500 italic">No replies yet</div>
           )}
+
+          {/* If no replies at all */}
+          {!record.comments &&
+            (!record.userPendingQueries ||
+              record.userPendingQueries.length === 0) && (
+              <div className="text-sm text-gray-500 italic">No replies yet</div>
+            )}
         </div>
       ),
     },
@@ -263,10 +291,10 @@ const AllQueries: React.FC = () => {
           {
             title: "Action",
             dataIndex: "uploadedFile",
-            width: 30,
+            width: 100,
             render: (_: any, record: Query) => (
               <button
-                className="bg-blue-500 text-white py-1 px-4 rounded focus:outline-blue-500"
+                className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
                 onClick={() => handlePendingClick(record)}
               >
                 Pending
@@ -565,7 +593,7 @@ const AllQueries: React.FC = () => {
               />
             </svg>
             <span className="text-lg font-medium">
-              Query saved successfully!
+              Query Resolved successfully!
             </span>
           </div>
         </div>

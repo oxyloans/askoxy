@@ -256,7 +256,7 @@ const StudyAbroad: React.FC = () => {
 
     if (!userId) {
       navigate("/whatsappregister");
-      sessionStorage.setItem("redirectPath", "/main/services/myrotary");
+      sessionStorage.setItem("redirectPath", "/main/services/studyabroad");
       message.warning("Please login to submit your interest.");
       return;
     }
@@ -274,7 +274,7 @@ const StudyAbroad: React.FC = () => {
     }
     Modal.confirm({
       title: "Confirm Participation",
-      content: "Are you sure you want to participate in the Rotarian offer?",
+      content: "Are you sure you want to participate in the Study Abroad offer?",
       okText: "Yes, I’m sure",
       cancelText: "Cancel",
       onOk: submitInterest,
@@ -299,7 +299,7 @@ const StudyAbroad: React.FC = () => {
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
       message.success(
-        "Thank you for showing interest in our *Rotarian* offer!"
+        "Thank you for showing interest in our *Study Abroad* offer!"
       );
       setInterested(true);
     } catch (error: any) {

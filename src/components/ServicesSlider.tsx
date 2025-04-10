@@ -508,7 +508,7 @@ const ServicesSlider: React.FC = () => {
               className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
               onClick={() => setShowAll(true)}
             >
-              View all {services.length} services
+              View all services
               <span className="ml-2">→</span>
             </motion.button>
           </div>

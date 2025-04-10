@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
-import { message, Upload, Button } from "antd";
+import { message, Upload, Button, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 
@@ -117,40 +117,102 @@ const CampaignsAdd: React.FC = () => {
 
     // setFileList((prev) => prev.filter((_, index) => index !== indexToDelete));
   };
-  const handleSubmit = async (e: React.FormEvent) => {
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   setNameErrorMessage("");
+  //   setDescErrorMessage("");
+  //   setTypeErrorMessage("");
+  //   setSuccessMessage("");
+
+  //   let isValid = true;
+
+  //   if (formData.campaignType.trim() === "") {
+  //     setNameErrorMessage("Campaign Name is required");
+  //     isValid = false;
+  //   }
+
+  //   if (formData.campaignDescription.trim() === "") {
+  //     setDescErrorMessage("Campaign description is required");
+  //     isValid = false;
+  //   }
+  //   if (!isValid) {
+  //     setIsSubmitting(false);
+  //     return;
+  //   }
+  //   setIsSubmitting(true);
+  //   const requestPayload = {
+  //     askOxyCampaignDto: [
+  //       {
+  //         campaignDescription: formData.campaignDescription,
+  //         campaignType: formData.campaignType,
+  //         campaignTypeAddBy: formData.campaignTypeAddBy,
+  //         images: formData.imageUrl,
+  //       },
+  //     ],
+  //   };
+
+  //   console.log("requestPayload", requestPayload.askOxyCampaignDto[0].images);
+
+  //   try {
+  //     const response = await axios.patch(
+  //       BASE_URL + "/marketing-service/campgin/addCampaignTypes",
+  //       requestPayload,
+  //       {
+  //         headers: {
+  //           accept: "*/*",
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     if (response.data) {
+  //       message.success("Service Added Successfully...!");
+  //       setFormData({
+  //         campaignType: "",
+  //         campaignDescription: "",
+  //         imageUrl: [],
+  //         campaignTypeAddBy: "RAMA",
+  //       });
+  //     } else {
+  //       setErrorMessage("Failed to add service. Please try again.");
+  //       message.error("Failed to add service. Please try again.");
+  //     }
+  //   } catch (error) {
+  //     setErrorMessage("Failed to add service. Please try again.");
+  //     message.error("Failed to add service. Please try again.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Clear previous error messages
     setNameErrorMessage("");
     setDescErrorMessage("");
     setTypeErrorMessage("");
     setSuccessMessage("");
 
-    // Validation flag to track if all conditions pass
-    let isValid = true;
-
-    // Validate campaign name
-    if (formData.campaignType.trim() === "") {
-      setNameErrorMessage("Campaign Name is required");
-      isValid = false;
-    }
-
-    // Validate image URLs
-    // if (formData.imageUrl.length === 0) {
-    //   setTypeErrorMessage("At least one image is required");
-    //   isValid = false;
-    // }
-
-    // Validate campaign description
-    if (formData.campaignDescription.trim() === "") {
-      setDescErrorMessage("Campaign description is required");
-      isValid = false;
-    }
-    if (!isValid) {
+    if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
-    setIsSubmitting(true);
+
+    Modal.confirm({
+      title: "Are you sure you want to add the service?",
+      content: "Please confirm that all details are correct before submitting.",
+      onOk: () => {
+        setIsSubmitting(true);
+        submitCampaign();
+      },
+      onCancel: () => {
+        setIsSubmitting(false);
+      },
+    });
+  };
+
+  const submitCampaign = async () => {
     const requestPayload = {
       askOxyCampaignDto: [
         {
@@ -166,7 +228,7 @@ const CampaignsAdd: React.FC = () => {
 
     try {
       const response = await axios.patch(
-      BASE_URL+"/marketing-service/campgin/addCampaignTypes",
+        BASE_URL + "/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
           headers: {
@@ -194,6 +256,21 @@ const CampaignsAdd: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  const validateForm = () => {
+    let isValid = true;
+
+    if (formData.campaignType.trim() === "") {
+      setNameErrorMessage("Campaign Name is required");
+      isValid = false;
+    }
+
+    if (formData.campaignDescription.trim() === "") {
+      setDescErrorMessage("Campaign description is required");
+      isValid = false;
+    }
+
+    return isValid;
   };
 
   return (
@@ -288,6 +365,10 @@ const CampaignsAdd: React.FC = () => {
                   className="hidden"
                 />
               </label>
+              <p className="text-sm text-gray-600">
+                upload multiple images at once, provided each image is
+                below 1MB and in jpg/png format.
+              </p>
               {isUploading && (
                 <div className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 mr-2 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa6";
 import axios from "axios";
 import PhoneInput, {
   isValidPhoneNumber,
@@ -51,6 +52,7 @@ const WhatsappLogin = () => {
   const [isMethodDisabled, setIsMethodDisabled] = useState(false);
   const [changeNumberClicked, setChangeNumberClicked] = useState(false);
   const [isGetOtpButtonDisabled, setIsGetOtpButtonDisabled] = useState(true);
+  const [showUserMessage, setShowUserMessage] = useState(true);
   // Add state for showing Erice alert
   const [showEriceAlert, setShowEriceAlert] = useState(true);
 
@@ -134,7 +136,6 @@ const WhatsappLogin = () => {
       navigate(entryPoint);
     }, 300);
   };
-
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");
@@ -388,7 +389,7 @@ const WhatsappLogin = () => {
         //   () => navigate(location.state?.from || "/main/dashboard/home"),
         //   500
         // );
-        
+
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem("redirectPath");
 
@@ -400,7 +401,7 @@ const WhatsappLogin = () => {
           }
         }, 500);
         setTimeout(() => window.location.reload(), 1000);
-      }
+      }
     } catch (err: any) {
       if (err.response && err.response.data) {
         setOtpError(
@@ -534,7 +535,7 @@ const WhatsappLogin = () => {
         }`}
       >
         {/* Header */}
-        <div className="bg-purple-600 p-6 relative">
+        <div className="bg-purple-600 p-4 relative">
           <button
             onClick={handleClose}
             className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
@@ -543,9 +544,9 @@ const WhatsappLogin = () => {
           </button>
           <div className="flex flex-col items-center gap-3">
             <h2 className="text-2xl font-bold text-white text-center">
-              Login to ASKOXY.AI
+              Welcome to ASKOXY.AI
             </h2>
-            <div className="flex gap-4 mt-4">
+            <div className="flex gap-4">
               <button
                 onClick={() => (window.location.href = "/whatsapplogin")}
                 className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
@@ -566,7 +567,7 @@ const WhatsappLogin = () => {
         </h2>
         {/* Erice Customer Alert - Now conditionally rendered */}
         {showEriceAlert && (
-          <div className="mx-6 mt-4">
+          <div className="mx-4">
             <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2 relative">
               <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>
@@ -606,7 +607,7 @@ const WhatsappLogin = () => {
 
         {/* Success Message */}
         {showSuccessPopup && (
-          <div className="mx-6 mt-4 animate-fadeIn">
+          <div className="mx-6 mt-2 animate-fadeIn">
             <div className="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               {message}
@@ -621,11 +622,11 @@ const WhatsappLogin = () => {
             className="space-y-6"
           >
             {/* OTP Method Selection UI */}
-            <div className="flex flex-col items-center gap-4 p-4 border-b border-gray-100 pb-6">
+            <div className="flex flex-col items-center gap-4 p-2   border-b border-gray-100 pb-4">
               <div className="flex gap-4">
                 <button
                   type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`flex items-center gap-2 px-4  rounded-lg transition-all ${
                     otpMethod === "mobile"
                       ? "bg-purple-600 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -654,7 +655,7 @@ const WhatsappLogin = () => {
                   onClick={() => switchOtpMethod("whatsapp")}
                   disabled={isPhoneDisabled || isMethodDisabled}
                 >
-                  <MessageCircle className="w-5 h-5" />
+                  <FaWhatsapp className="w-5 h-5" />
                   WhatsApp
                 </button>
               </div>
@@ -683,7 +684,11 @@ const WhatsappLogin = () => {
                     } as any
                   }
                 />
-                <PhoneCall className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                {otpMethod === "whatsapp" ? (
+                  <FaWhatsapp className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                ) : (
+                  <PhoneCall className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                )}
               </div>
 
               {error && (

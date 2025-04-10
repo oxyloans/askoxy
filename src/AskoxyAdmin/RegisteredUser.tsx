@@ -16,6 +16,10 @@ import {
   Spin,
   Modal,
   message,
+  List,
+  Divider,
+  Tabs,
+  Tooltip,
 } from "antd";
 import {
   UserOutlined,
@@ -27,12 +31,15 @@ import {
   LoadingOutlined,
   PhoneOutlined,
   WhatsAppOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import { Column } from "@ant-design/plots";
 import BASE_URL from "../Config";
+import { Pencil, Trash } from "lucide-react";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { TextArea } = Input;
 
 interface UserData {
   id: string;
@@ -72,7 +79,12 @@ interface OrderData {
   expectedDeliveryDate: string;
   orderItems: any[] | null;
 }
-
+interface Comment {
+  adminComments: string;
+  commentsUpdateBy: string;
+  commentsCreatedDate?: string;
+  userId?: string;
+}
 const timeOptions = [
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
@@ -100,6 +112,18 @@ const RegisteredUser: React.FC = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [primaryType, setPrimaryType] = useState("");
   const [userId, setUserId] = useState("");
+  const [commentsModalVisible, setCommentsModalVisible] =
+    useState<boolean>(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState<string>("");
+  const [updatedBy, setUpdatedBy] = useState<string>("admin");
+  const [loadingComments, setLoadingComments] = useState<boolean>(false);
+  const [submittingComment, setSubmittingComment] = useState<boolean>(false);
+  const [record, setRecord] = useState<UserData | null>(null);
+
+  const [mobileNumber1, setMobileNumber1] = useState("");
+  const [whatsappNumber1, setWhatsappNumber1] = useState("");
+  const [userId1, setUserId1] = useState("");
 
   const [selectedTimeFrame, setSelectedTimeFrame] =
     useState<string>("thisWeek");
@@ -138,9 +162,10 @@ const RegisteredUser: React.FC = () => {
         break;
       case "thisWeek":
         const dayOfWeek = today.getDay();
-        const daysSinceSunday = dayOfWeek === 0 ? 0 : dayOfWeek;
-        startDate.setDate(today.getDate() - daysSinceSunday);
+        const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        startDate.setDate(today.getDate() - daysSinceMonday);
         break;
+
       case "thisMonth":
         startDate = new Date(today.getFullYear(), today.getMonth(), 2);
         break;
@@ -169,8 +194,8 @@ const RegisteredUser: React.FC = () => {
         }&size=${1000}&startDate=${startDate}`
       );
 
-      setUserData(response.data.content); // Store all data
-      setFilteredUserData(response.data.content); // Initially show all data
+      setUserData(response.data.content);
+      setFilteredUserData(response.data.content);
       setPagination({
         ...pagination,
         total: response.data.content.length,
@@ -192,7 +217,6 @@ const RegisteredUser: React.FC = () => {
     });
   };
 
-  // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setSearchText(value);
@@ -258,7 +282,7 @@ const RegisteredUser: React.FC = () => {
       case "6":
         return "cancelled";
       case "PickedUp":
-        return "picked up";
+        return "pickedUp";
       default:
         return "Unknown";
     }
@@ -278,7 +302,7 @@ const RegisteredUser: React.FC = () => {
         return "error";
       case "6":
         return "error";
-      case "picked up":
+      case "PickedUp":
         return "orange";
       default:
         return "default";
@@ -294,11 +318,6 @@ const RegisteredUser: React.FC = () => {
         return "Unknown";
     }
   };
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
 
   // Function called when the "Order Details" button is clicked
   const viewOrderDetails = (record: UserData) => {
@@ -308,14 +327,18 @@ const RegisteredUser: React.FC = () => {
   };
 
   useEffect(() => {
-    if (selectedTimeFrame !== "custom") {
-      fetchUserData();
-    }
+    fetchCounts();
+  }, []);
+
+  useEffect(() => {
+    fetchUserData();
   }, [selectedTimeFrame]);
 
   useEffect(() => {
-    fetchCounts();
-  }, []);
+    if (record) {
+      fetchComments();
+    }
+  }, [record]);
 
   const fetchCounts = async () => {
     try {
@@ -357,16 +380,16 @@ const RegisteredUser: React.FC = () => {
     {
       title: "User ID",
       key: "id",
-      width: 150,
+      width: 60,
       align: "center" as const,
       render: (record: UserData) => (
         <Text strong style={{ color: "#67297c" }}>
-          {record.id}
+          #{record.id.slice(-4)}
         </Text>
       ),
     },
     {
-      title: "User Details",
+      title: <div className="text-center">User Details</div>,
       key: "userDetails",
       width: 200,
       // align: "center" as const,
@@ -374,20 +397,24 @@ const RegisteredUser: React.FC = () => {
         <Space direction="vertical" size="small">
           <Text>Name: {record.fullName || "N/A"}</Text>
           <Text type="secondary">Email: {record.email || "N/A"}</Text>
-          <Tag
-            icon={<WhatsAppOutlined style={{ color: "#25D366" }} />}
-            color="#E6F4EA"
-            style={{ padding: "2px 4px", borderRadius: 12 }}
-          >
-            <Text strong>{record.whatsappNumber || "N/A"}</Text>
-          </Tag>
-          <Tag
-            icon={<PhoneOutlined style={{ color: "#722ED1" }} />}
-            color="#F9F0FF"
-            style={{ padding: "2px 4px", borderRadius: 12 }}
-          >
-            <Text strong>{record.mobileNumber || "N/A"}</Text>
-          </Tag>
+          {record.whatsappNumber && (
+  <div className="inline-flex items-center text-[13px] bg-green-50 text-green-700 rounded px-2 py-1 mr-2">
+    <WhatsAppOutlined style={{ fontSize: "13px", color: "#25D366" }} />
+    <strong className="ml-2 font-semibold">
+      {record.whatsappNumber}
+    </strong>
+  </div>
+)}
+
+{record.mobileNumber && (
+  <div className="inline-flex items-center text-[13px] bg-purple-50 text-purple-700 rounded px-2 py-1">
+    <PhoneOutlined style={{ fontSize: "13px", color: "#722ED1" }} />
+    <strong className="ml-2 font-semibold">
+      {record.mobileNumber}
+    </strong>
+  </div>
+)}
+
         </Space>
       ),
     },
@@ -397,8 +424,9 @@ const RegisteredUser: React.FC = () => {
       width: 90,
       align: "center" as const,
       render: (record: UserData) => (
-        <Text strong style={{ color: "#0d9488" }}>
-          {record.created_at}
+        <Text strong>
+          {/* {record.created_at} */}
+          {formatDate(record.created_at)}
         </Text>
       ),
     },
@@ -447,32 +475,35 @@ const RegisteredUser: React.FC = () => {
           <Button
             type="primary"
             size="small"
-            icon={<FileTextOutlined />}
             onClick={() => viewOrderDetails(record)}
-            style={{ width: "100%" }}
+            className="w-full rounded-md bg-blue-400 hover:bg-blue-500 border-blue-300"
           >
             Order Details
           </Button>
+
           <Button
             size="small"
-            icon={<SwapOutlined />}
             onClick={() => handleToggleTestUser(record)}
             loading={loading}
-            type={record.testuser ? "primary" : undefined} // Only primary when test user
-            style={{
-              width: "100%",
-              backgroundColor: record.testuser ? "#22c55e" : "#ffffff",
-              borderColor: record.testuser ? "#16a34a" : "#ef4444",
-              color: record.testuser ? "#ffffff" : "#ef4444",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
-            }}
-            className="hover:opacity-90 transition-all duration-300"
+            className={`w-full rounded-md ${
+              record.testuser
+                ? "bg-green-400 hover:bg-green-500 border-green-300 text-white"
+                : "bg-white hover:bg-red-50 border-red-300 text-red-400 hover:text-red-500"
+            }`}
           >
             {record.testuser ? "Convert Live" : "Convert Test"}
+          </Button>
+
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              setRecord(record);
+              showCommentsModal();
+            }}
+            className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
+          >
+            Comments
           </Button>
         </Space>
       ),
@@ -620,16 +651,255 @@ const RegisteredUser: React.FC = () => {
     }
   };
 
+  const showCommentsModal = async (): Promise<void> => {
+    setCommentsModalVisible(true);
+    // await fetchComments();
+  };
+
+  const fetchComments = async (): Promise<void> => {
+    if (!record || !record.id) return;
+
+    setLoadingComments(true);
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/user-service/fetchComments`,
+        { userId: record.id },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      if (response.data && typeof response.data === "object") {
+        setComments([response.data]);
+      } else {
+        setComments([]);
+      }
+    } catch (error: any) {
+      if (error.response && error.response.status === 500) {
+        message.info("No comments found");
+      } else {
+        message.error("Failed to load comments");
+      }
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Submit new comment
+  const handleSubmitComment = async (): Promise<void> => {
+    if (!newComment.trim()) {
+      message.warning("Please enter a comment");
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      await axios.patch(
+        `${BASE_URL}/user-service/adminComments`,
+        {
+          adminComments: newComment,
+          commentsUpdateBy: updatedBy,
+          userId: record?.id,
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      message.success("Comment added successfully");
+      setNewComment(""); // Clear comment input
+      await fetchComments(); // Refresh comments
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      message.error("Failed to add comment");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  const handleUserSearch = async () => {
+    if (!mobileNumber1 && !whatsappNumber1 && !userId1) {
+      message.warning("Please enter at least one search field.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
+        {
+          mobileNumber: mobileNumber1 || null,
+          whatsappNumber: whatsappNumber1 || null,
+          userId: userId1 || null,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = response.data?.activeUsersResponse || [];
+
+      const transformed: UserData[] = data.map((user: any) => ({
+        id: user.userId,
+        email: user.email,
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        mobileNumber: user.mobileNumber || "",
+        whatsappNumber: user.whastappNumber || "",
+        created_at: user.userRegisterCreatedDate || null,
+        testuser: false,
+        flatNo: user.flatNo || null,
+        landMark: user.landMark || null,
+        pinCode: user.pincode || null,
+        address: user.address || null,
+        addressType: user.addressType || null,
+      }));
+
+      setFilteredUserData(transformed);
+    } catch (error) {
+      console.error("API call failed:", error);
+      message.error("Failed to fetch user data");
+    } finally {
+      setLoading(false);
+      setMobileNumber1("");
+      setWhatsappNumber1("");
+      setUserId1("");
+    }
+  };
+
+  const items = [
+    {
+      key: "date",
+      label: "Search by Date",
+      children: (
+        <div className="mt-4">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={8}>
+              <Input
+                type="date"
+                value={startDate1}
+                onChange={(e) => setStartDate1(e.target.value)}
+                placeholder="Start Date"
+                className="w-full"
+              />
+            </Col>
+            <Col xs={24} md={8}>
+              <Input
+                type="date"
+                value={endDate1}
+                onChange={(e) => setEndDate1(e.target.value)}
+                placeholder="End Date"
+                className="w-full"
+              />
+            </Col>
+            <Col xs={24} md={8}>
+              <Button
+                type="primary"
+                className="bg-blue-500 w-full"
+                onClick={() => handleTimeFrameChange("custom")}
+                loading={loading}
+              >
+                Get Data
+              </Button>
+            </Col>
+          </Row>
+        </div>
+      ),
+    },
+    {
+      key: "user",
+      label: "Search by Mobile Number",
+      children: (
+        <div className="mt-4">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={24} md={6} lg={6}>
+              <Input
+                placeholder="Mobile Number"
+                value={mobileNumber1}
+                onChange={(e) => setMobileNumber1(e.target.value)}
+                prefix={<PhoneOutlined />}
+                allowClear
+                className="w-full"
+              />
+            </Col>
+            <Col xs={24} sm={24} md={6} lg={6}>
+              <Input
+                placeholder="WhatsApp Number"
+                value={whatsappNumber1}
+                onChange={(e) => setWhatsappNumber1(e.target.value)}
+                prefix={<WhatsAppOutlined style={{ color: "#25D366" }} />}
+                allowClear
+                className="w-full"
+              />
+            </Col>
+
+            <Col xs={24} sm={24} md={6} lg={6}>
+              <Input
+                placeholder="User ID"
+                value={userId1}
+                onChange={(e) => setUserId1(e.target.value)}
+                prefix={<UserOutlined />}
+                allowClear
+                className="w-full"
+              />
+            </Col>
+            <Col xs={24} sm={24} md={6} lg={6}>
+              <Button
+                type="primary"
+                className="bg-blue-500 w-full"
+                onClick={handleUserSearch}
+                loading={loading}
+                disabled={!mobileNumber1 && !whatsappNumber1 && !userId1}
+                icon={<SearchOutlined />}
+              >
+                Search
+              </Button>
+            </Col>
+          </Row>
+        </div>
+      ),
+    },
+  ];
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      "bg-red-200 text-red-800",
+      "bg-green-200 text-green-800",
+      "bg-blue-200 text-blue-800",
+      "bg-yellow-200 text-yellow-800",
+      "bg-purple-200 text-purple-800",
+      "bg-pink-200 text-pink-800",
+    ];
+
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar />
       <div className="flex-1 p-6 overflow-auto bg-gray-50">
-        <div className="flex justify-between items-center p-4">
-          <Title level={2}>Registered Users</Title>
-          <Button type="primary" icon={<DeleteOutlined />} onClick={showModal}>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4">
+          <Title level={2} className="m-0">
+            Registered Users
+          </Title>
+
+          <Button
+            type="primary"
+            icon={<Pencil size={16} className="mr-1" />}
+            onClick={showModal}
+          >
             Update User
           </Button>
         </div>
+
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={24} md={24} lg={24} xl={24}>
             <Row gutter={[16, 16]}>
@@ -685,6 +955,8 @@ const RegisteredUser: React.FC = () => {
         <Row gutter={[16, 16]} className="mt-4">
           <Col xs={12} sm={12} md={6}>
             <Card
+              onClick={() => handleTimeFrameChange("today")}
+              className="cursor-pointer"
               bodyStyle={{
                 background: "linear-gradient(135deg, #c4b5fd 0%, #93c5fd 100%)",
                 borderLeft: "4px solid #93c5fd",
@@ -712,6 +984,8 @@ const RegisteredUser: React.FC = () => {
 
           <Col xs={12} sm={12} md={6}>
             <Card
+              onClick={() => handleTimeFrameChange("yesterday")}
+              className="cursor-pointer"
               bodyStyle={{
                 background: "linear-gradient(135deg, #a5d6a7 0%, #81c784 100%)", // Light Green to Soft Green
                 borderLeft: "4px solid #81c784",
@@ -739,6 +1013,8 @@ const RegisteredUser: React.FC = () => {
 
           <Col xs={12} sm={12} md={6}>
             <Card
+              onClick={() => handleTimeFrameChange("thisWeek")}
+              className="cursor-pointer"
               bodyStyle={{
                 background: "linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%)", // Light Orange to Soft Orange
                 borderLeft: "4px solid #ffb74d",
@@ -766,6 +1042,8 @@ const RegisteredUser: React.FC = () => {
 
           <Col xs={12} sm={12} md={6}>
             <Card
+              onClick={() => handleTimeFrameChange("thisMonth")}
+              className="cursor-pointer"
               bodyStyle={{
                 background: "linear-gradient(135deg, #b2ebf2 0%, #80deea 100%)", // Light Cyan to Soft Cyan
                 borderLeft: "4px solid #80deea",
@@ -792,112 +1070,18 @@ const RegisteredUser: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Filters */}
-        <Card className="mt-4 p-4">
-          <Row gutter={[16, 16]} align="middle">
-            {/* Time Period Section */}
-            <Col
-              xs={isCustomDate ? 24 : 12}
-              sm={isCustomDate ? 8 : 8}
-              md={isCustomDate ? 6 : 6}
-            >
-              <Text strong>Time Period:</Text>
-              <Select
-                className="w-full mt-2"
-                value={selectedTimeFrame}
-                onChange={handleTimeFrameChange}
-              >
-                {timeOptions.map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Col>
-
-            {/* Custom Date Controls - Only shown when isCustomDate is true */}
-            {isCustomDate && (
-              <>
-                <Col xs={12} sm={8} md={6}>
-                  <Text strong>Start Date:</Text>
-                  <Input
-                    type="date"
-                    value={startDate1}
-                    onChange={(e) => setStartDate1(e.target.value)}
-                    className="w-full mt-2"
-                  />
-                </Col>
-
-                <Col xs={12} sm={8} md={6}>
-                  <Text strong>End Date:</Text>
-                  <Input
-                    type="date"
-                    value={endDate1}
-                    onChange={(e) => setEndDate1(e.target.value)}
-                    className="w-full mt-2"
-                  />
-                </Col>
-
-                <Col xs={24} sm={8} md={6}>
-                  <Button
-                    type="primary"
-                    className="w-full mt-6"
-                    onClick={fetchUserData}
-                    loading={loading}
-                  >
-                    Get Data
-                  </Button>
-                </Col>
-              </>
-            )}
-
-            {/* Search Controls */}
-            <Col
-              xs={isCustomDate ? 12 : 12}
-              sm={isCustomDate ? 12 : 8}
-              md={isCustomDate ? 6 : 6}
-              className={isCustomDate ? "mt-4 sm:mt-0" : ""}
-            >
-              <Text strong>Search By:</Text>
-              <Select
-                className="w-full mt-2"
-                placeholder="Select Search Type"
-                onChange={(value) => setSearchType(value)}
-                options={[
-                  { label: "Name", value: "name" },
-                  { label: "Mobile", value: "mobile" },
-                ]}
-                allowClear
-              />
-            </Col>
-
-            {searchType && (
-              <Col
-                xs={isCustomDate ? 12 : 12}
-                sm={isCustomDate ? 12 : 8}
-                md={isCustomDate ? 6 : 6}
-                className={isCustomDate ? "mt-4 sm:mt-0" : ""}
-              >
-                <Text strong>Enter {searchType}:</Text>
-                <Input
-                  placeholder={
-                    searchType === "name"
-                      ? "Search by Name..."
-                      : "Search by Mobile..."
-                  }
-                  value={searchText}
-                  onChange={handleSearch}
-                  className="w-full mt-2"
-                  prefix={<SearchOutlined />}
-                  allowClear
-                />
-              </Col>
-            )}
-          </Row>
-        </Card>
+        <div className="p-4 my-6 border rounded-lg bg-white">
+          <Tabs
+            defaultActiveKey="date"
+            items={items}
+            onChange={setSearchType}
+            className="search-tabs"
+          />
+        </div>
 
         <div style={{ overflowX: "auto", maxWidth: "100%" }}>
           <Table
+            key={filteredUserData.length}
             columns={columns}
             dataSource={filteredUserData}
             rowKey="id"
@@ -1144,6 +1328,168 @@ const RegisteredUser: React.FC = () => {
           >
             {removeLoading ? <LoadingOutlined spin /> : "Update"}
           </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        title="User Comments"
+        open={commentsModalVisible}
+        onCancel={() => {
+          setCommentsModalVisible(false);
+          setComments([]);
+        }}
+        footer={null}
+        width={600}
+      >
+        <div className="bg-slate-100 rounded-xl shadow-lg p-5 mb-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 m-0">Comments</h2>
+            </div>
+          </div>
+
+          {/* Comments Section */}
+          <div className="bg-white rounded-lg shadow-sm p-1">
+            {loadingComments ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Spin size="large" />
+                <span className="mt-4 text-slate-500">Loading comments...</span>
+              </div>
+            ) : comments.length > 0 ? (
+              <div className="max-h-96 overflow-auto">
+                {comments.map((comment, index) => {
+                  const avatarColorClass = getAvatarColor(
+                    comment.commentsUpdateBy
+                  );
+                  const initials = comment.commentsUpdateBy
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .toUpperCase();
+
+                  return (
+                    <div
+                      key={index}
+                      className={`p-4 ${
+                        index !== comments.length - 1
+                          ? "border-b border-slate-200"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div
+                          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${avatarColorClass}`}
+                        >
+                          {initials}
+                        </div>
+
+                        <div className="flex-grow">
+                          <div className="flex justify-between items-center mb-1">
+                            <h3 className="font-medium text-slate-800 m-0">
+                              {comment.commentsUpdateBy || "Unknown"}
+                            </h3>
+                            <Tooltip
+                              title={formatDate(comment.commentsCreatedDate)}
+                            >
+                              <span className="text-xs text-slate-500">
+                                {
+                                  formatDate(comment.commentsCreatedDate).split(
+                                    ","
+                                  )[0]
+                                }
+                              </span>
+                            </Tooltip>
+                          </div>
+
+                          <div className="mt-2 text-slate-600 bg-slate-50 p-3 rounded-lg relative">
+                            {comment.adminComments}
+                            <div className="absolute -top-2 -left-2 w-4 h-4 bg-slate-100 rounded-full border-2 border-white"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 px-3 text-center">
+                <div className="bg-slate-100 p-3 rounded-full mb-3">
+                  <svg
+                    className="w-8 h-8 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-slate-700">
+                  No Comments Yet
+                </h3>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Add New Comment */}
+        <div>
+          <Text strong>Add Comment</Text>
+          <TextArea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Enter your comment here..."
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            className="mt-2 mb-4 rounded-md"
+          />
+
+          <div className="mb-4">
+            <Text>Updated By:</Text>
+            <Select
+              value={updatedBy}
+              onChange={(value: string) => setUpdatedBy(value)}
+              className="w-full mt-1 rounded-md"
+              dropdownStyle={{ borderRadius: "8px" }}
+            >
+              <Option value="Admin">Admin</Option>
+              <Option value="Shanthi">Shanthi</Option>
+              <Option value="Ramya">Ramya</Option>
+              <Option value="Swathi">Swathi</Option>
+              <Option value="Aruna">Aruna</Option>
+              <Option value="Divya">Divya</Option>
+              <Option value="Suchitra">Suchitra</Option>
+              <Option value="Thulasi">Thulasi</Option>
+              <Option value="Nagarani">Nagarani</Option>
+              <Option value="Sandhya">Sandhya</Option>
+              <Option value="Srilekha">Srilekha</Option>
+            </Select>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => {
+                setCommentsModalVisible(false);
+                setComments([]);
+              }}
+              className="rounded-md border-gray-200 hover:bg-gray-50"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              onClick={handleSubmitComment}
+              loading={submittingComment}
+              className="rounded-md bg-blue-400 hover:bg-blue-500 border-blue-300"
+            >
+              Submit
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

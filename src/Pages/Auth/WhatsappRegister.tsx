@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa6";
 import axios from "axios";
 import PhoneInput, {
   isValidPhoneNumber,
@@ -546,7 +547,7 @@ const WhatsappRegister = () => {
         }`}
       >
         {/* Header */}
-        <div className="bg-purple-600 p-6 relative">
+        <div className="bg-purple-600 p-4 relative">
           <h2 className="text-2xl font-bold text-white text-center">
             Register to ASKOXY.AI
           </h2>
@@ -621,7 +622,7 @@ const WhatsappRegister = () => {
                     onClick={() => handleMethodChange("whatsapp")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    <FaWhatsapp className="w-5 h-5" />
                     WhatsApp
                   </button>
                   <button
@@ -670,7 +671,7 @@ const WhatsappRegister = () => {
                       }
                     />
                     {otpMethod === "whatsapp" ? (
-                      <MessageCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <FaWhatsapp className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     ) : (
                       <PhoneCall className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     )}
