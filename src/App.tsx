@@ -89,6 +89,22 @@ import OxyLoans from "./components/Services/OxyLoans";
 import UniversityOffers from "./Dashboard/Offerletter"
 import PinkFunding from "./components/PinkFunding";
 import CurrentLandingPage from "./components/CurrentLandinPage";
+
+// *************************PARTNER START****************************//
+
+import PartnerLogin from "./PartnerWeb/PartnerLogin";
+import PartnerHome from "./PartnerWeb/PartnerHome";
+import MainPage from "./PartnerWeb/MainPage";
+import NewOrders from "./PartnerWeb/NewOrders";
+import AcceptedOrders from "./PartnerWeb/AcceptedOrders";
+import AssignedOrders from "./PartnerWeb/AssignedOrders";
+import OrderDetailsPage from "./PartnerWeb/OrderDetials";
+import AllOrders from "./PartnerWeb/AllOrders";
+import DeliveryBoyList from "./PartnerWeb/DeliveryBoyList";
+import PartnerItemsList from "./PartnerWeb/PartnerItemsList";
+import DbOrderDetails from "./PartnerWeb/DbOrderList";
+import PartnerAllQueries from "./PartnerWeb/PartnerAllQueries";
+
 const App: React.FC = () => {
 
  const location = useLocation();
@@ -405,6 +421,26 @@ const App: React.FC = () => {
                 }
               />
             </Route>
+
+            {/* Partner start */}
+
+            <Route path="/partnerLogin" element={<PartnerLogin />} />
+            <Route path="/home" element={<PartnerHome />}>
+              <Route index element={<MainPage />} />{" "}
+              <Route path="newOrders" element={<NewOrders />} />
+              <Route path="acceptedOrders" element={<AcceptedOrders />} />
+              <Route path="assignedOrders" element={<AssignedOrders />} />
+              <Route path="orderDetails" element={<OrderDetailsPage />} />
+              <Route path="allOrders" element={<AllOrders />} />
+              <Route path="dbList" element={<DeliveryBoyList />} />
+              <Route path="queryManagement" element={<PartnerAllQueries />} />
+              <Route path="scan-qr" element={<BarcodeScanner />} />
+              <Route path="itemsList" element={<PartnerItemsList />} />
+              <Route path="dbOrderList" element={<DbOrderDetails />} />
+            </Route>
+
+      {/* Partner end */}
+
           </Routes>
         </div>
     
