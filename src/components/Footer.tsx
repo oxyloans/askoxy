@@ -16,17 +16,17 @@ const Footer = () => {
   const socialLinks = [
     {
       icon: <Facebook className="h-4 w-4" />,
-      href: "https://www.facebook.com/profile.php?id=61572388385568",
+      href: "https://www.facebook.com/ASKOXYAI",
       label: "Facebook",
     },
     {
       icon: <Instagram className="h-4 w-4" />,
-      href: "https://www.instagram.com/askoxy.ai/",
+      href: "https://www.instagram.com/askoxy.ai_oxyrice/",
       label: "Instagram",
     },
     {
       icon: <Linkedin className="h-4 w-4" />,
-      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
+      href: "https://www.linkedin.com/company/82577404/admin/dashboard/",
       label: "LinkedIn",
     },
   ];

@@ -22,11 +22,17 @@
   padding-top: 50px; /* Matches header height */
 }
 
-/* Logo Styles */
 .logo img {
-  width: 130px;
+  max-width: 100%;
   height: auto;
-  display: block; /* Ensures proper alignment */
+  max-height: 60px; /* Ensures it's never too tall */
+  object-fit: contain;
+}
+/* Logo Container */
+.logo {
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
 /* Header Actions */
