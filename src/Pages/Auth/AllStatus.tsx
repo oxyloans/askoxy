@@ -17,6 +17,7 @@ import {
   Tag,
   Avatar,
   Collapse,
+  Timeline,
 } from "antd";
 import {
   CalendarOutlined,
@@ -29,10 +30,12 @@ import {
   MessageOutlined,
   FileTextOutlined,
   DownOutlined,
+  HistoryOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
 const { Panel } = Collapse;
@@ -75,7 +78,7 @@ interface TaskData {
   planStatus: string;
   updatedBy: string;
   taskStatus: string;
-  taskAssignTo: string;
+  taskAssignedBy: string;
   adminDocumentId: string | null;
   userDocumentCreatedAt: string | null;
   userDocumentId: string | null;
@@ -107,7 +110,6 @@ const AllStatusPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("general");
   const taskId = localStorage.getItem("taskId");
 
-
   useEffect(() => {
     // Get userId from localStorage
     const storedUserId = localStorage.getItem("userId");
@@ -120,7 +122,7 @@ const AllStatusPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-       `${BASE_URL}/user-service/write/getAllTaskUpdates`,
+        `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: status,
           userId: userId,
@@ -254,11 +256,12 @@ const AllStatusPage: React.FC = () => {
   const renderPendingResponses = (responses: PendingUserTaskResponse[]) => {
     if (!responses || responses.length === 0) return null;
 
-    const validResponses = responses.filter(
-      (response) => response.pendingEod !== null
-    );
-
-    if (validResponses.length === 0) return null;
+    // Sort responses by createdAt date in descending order (newest first)
+    const sortedResponses = [...responses].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
     return (
       <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -268,74 +271,122 @@ const AllStatusPage: React.FC = () => {
             <DownOutlined rotate={isActive ? 180 : 0} />
           )}
           className="bg-transparent"
+          defaultActiveKey={["1"]}
         >
           <Panel
             header={
               <div className="flex items-center text-blue-600">
-                <MessageOutlined className="mr-2" />
-                <Text strong>Pending Responses ({validResponses.length})</Text>
+                <HistoryOutlined className="mr-2" />
+                <Text strong>History & Updates ({sortedResponses.length})</Text>
               </div>
             }
             key="1"
             className="bg-white rounded-md mb-2 shadow-sm"
           >
-            {validResponses.map((response) => (
-              <Card
-                key={response.id}
-                className="mb-3 border-l-4 border-l-blue-400"
-                size="small"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Text className="text-gray-600 block mb-1">
-                      Response Update:
-                    </Text>
-                    <Text className="text-gray-800">
-                      {response.pendingEod || "No update provided"}
-                    </Text>
-                  </div>
-                  <div>
-                    <div className="flex justify-between">
+            <Timeline>
+              {sortedResponses.map((response, index) => (
+                <Timeline.Item
+                  key={response.id}
+                  color={response.pendingEod ? "blue" : "gray"}
+                >
+                  <Card
+                    className={`mb-3 border-l-4 ${
+                      response.pendingEod
+                        ? "border-l-blue-400"
+                        : "border-l-gray-300"
+                    }`}
+                    size="small"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Text className="text-gray-600 block mb-1">
-                          Updated By:
-                        </Text>
-                        <Tag color="blue">{response.updateBy}</Tag>
-                      </div>
-                      <div>
-                        <Text className="text-gray-600 block mb-1">
-                          Created At:
-                        </Text>
-                        <Text className="text-gray-800">
-                          {formatDate(response.createdAt)}
-                        </Text>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                        {response.pendingEod && (
+                          <>
+                            <Text className="text-gray-600 block mb-1">
+                              Response Update:
+                            </Text>
+                            <Text className="text-gray-800">
+                              {response.pendingEod || "No update provided"}
+                            </Text>
+                          </>
+                        )}
 
-                {response.adminFilePath && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <div className="flex items-center">
-                      <FileTextOutlined className="text-blue-500 mr-2" />
-                      <a
-                        href={response.adminFilePath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        {response.adminFileName || "View Attachment"}
-                      </a>
-                      <Text className="text-xs text-gray-500 ml-3">
-                        {response.adminFileCreatedDate
-                          ? formatDate(response.adminFileCreatedDate)
-                          : ""}
-                      </Text>
+                        {response.adminDescription && (
+                          <div
+                            className={
+                              response.pendingEod
+                                ? "mt-3 pt-3 border-t border-gray-100"
+                                : ""
+                            }
+                          >
+                            <Text className="text-gray-600 block mb-1">
+                              <InfoCircleOutlined className="mr-1" /> Admin
+                              Description:
+                            </Text>
+                            <Paragraph
+                              className="text-gray-800 bg-gray-50 p-2 rounded-md border border-gray-100"
+                              ellipsis={{
+                                rows: 3,
+                                expandable: true,
+                                symbol: "more",
+                              }}
+                            >
+                              {response.adminDescription}
+                            </Paragraph>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex flex-col justify-between h-full">
+                          <div>
+                            <Text className="text-gray-600 block mb-1">
+                              Updated By:
+                            </Text>
+                            <Tag
+                              color={
+                                response.updateBy === "ADMIN"
+                                  ? "purple"
+                                  : "blue"
+                              }
+                            >
+                              {response.updateBy || "N/A"}
+                            </Tag>
+                          </div>
+                          <div className="mt-2">
+                            <Text className="text-gray-600 block mb-1">
+                              Created At:
+                            </Text>
+                            <Text className="text-gray-800">
+                              {formatDate(response.createdAt)}
+                            </Text>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Card>
-            ))}
+
+                    {response.adminFilePath && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="flex items-center">
+                          <FileTextOutlined className="text-blue-500 mr-2" />
+                          <a
+                            href={response.adminFilePath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700"
+                          >
+                            {response.adminFileName || "View Attachment"}
+                          </a>
+                          <Text className="text-xs text-gray-500 ml-3">
+                            {response.adminFileCreatedDate
+                              ? formatDate(response.adminFileCreatedDate)
+                              : ""}
+                          </Text>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                </Timeline.Item>
+              ))}
+            </Timeline>
           </Panel>
         </Collapse>
       </div>
@@ -357,8 +408,8 @@ const AllStatusPage: React.FC = () => {
       }}
       bodyStyle={{ padding: "16px 20px" }}
       title={
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="flex items-center gap-2 mb-2 sm:mb-0">
             <Avatar
               icon={<UserOutlined />}
               style={{
@@ -369,9 +420,9 @@ const AllStatusPage: React.FC = () => {
             />
             <div>
               <Text strong className="text-gray-800 text-lg">
-                {task.taskAssignTo}
+                {task.taskAssignedBy}
               </Text>
-              <Text className="text-gray-500 text-sm ml-2">
+              <Text className="text-gray-500 text-sm block sm:inline sm:ml-2">
                 Updated by: {task.updatedBy}
               </Text>
             </div>
@@ -420,12 +471,13 @@ const AllStatusPage: React.FC = () => {
         </div>
       </div>
 
-      {task.taskStatus === "PENDING" &&
+      {task.pendingUserTaskResponse &&
+        task.pendingUserTaskResponse.length > 0 &&
         renderPendingResponses(task.pendingUserTaskResponse)}
 
       <Divider className="my-3" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div className="flex items-center gap-2 text-gray-500">
           <CalendarOutlined />
           <Text>Created: {formatDate(task.planCreatedAt)}</Text>
@@ -443,25 +495,19 @@ const AllStatusPage: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+      <div className="p-2 sm:p-4 md:p-6 bg-gray-50 min-h-screen">
         <Card
           className="shadow-md rounded-lg overflow-hidden border-0"
           bodyStyle={{ padding: 0 }}
         >
-          <div className="bg-gradient-to-r p-2 text-black">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 text-black">
             <Title level={2} className="text-black mb-1">
               Task Status
             </Title>
-       
           </div>
 
-          <div className="p-2">
-            <Tabs
-              activeKey={activeTab}
-              onChange={handleTabChange}
-            
-              type="card"
-            >
+          <div className="p-2 sm:p-4">
+            <Tabs activeKey={activeTab} onChange={handleTabChange} type="card">
               <TabPane
                 tab={
                   <span>
@@ -483,8 +529,8 @@ const AllStatusPage: React.FC = () => {
             </Tabs>
 
             <Card className="bg-gray-50 mb-6 border border-gray-200">
-              <div className="flex flex-col md:flex-row md:items-end gap-4">
-                <div className="flex-1 md:max-w-xs">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="flex-1 sm:max-w-xs">
                   <Text className="text-gray-600 block mb-1 font-medium">
                     <FilterOutlined className="mr-1" /> Status Filter
                   </Text>
@@ -511,7 +557,7 @@ const AllStatusPage: React.FC = () => {
                 </div>
 
                 {activeTab === "byDate" && (
-                  <div className="flex-1 md:max-w-xs">
+                  <div className="flex-1 sm:max-w-xs">
                     <Text className="text-gray-600 block mb-1 font-medium">
                       <CalendarOutlined className="mr-1" /> Select Date
                     </Text>
@@ -524,14 +570,15 @@ const AllStatusPage: React.FC = () => {
                   </div>
                 )}
 
-                <div>
+                <div className="mt-2 sm:mt-0">
                   <Button
                     type="primary"
                     onClick={
                       activeTab === "general" ? fetchAllTasks : fetchTasksByDate
                     }
-                    className="bg-[#008CBA] shadow-sm"
-                    style={buttonStyle}
+                    className="bg-[#008CBA] shadow-sm w-full sm:w-auto"
+                    style={{ ...buttonStyle, width: "100%" }}
+                    icon={<SearchOutlined />}
                   >
                     Search
                   </Button>
@@ -540,8 +587,8 @@ const AllStatusPage: React.FC = () => {
             </Card>
 
             {loading ? (
-              <div className="flex flex-col items-center justify-center p-16">
-                <Spin size="small" />
+              <div className="flex flex-col items-center justify-center p-8 sm:p-16">
+                <Spin size="large" />
                 <Text className="mt-4 text-gray-500">Loading tasks...</Text>
               </div>
             ) : tasks.length > 0 ? (
@@ -559,7 +606,7 @@ const AllStatusPage: React.FC = () => {
                     </Text>
                   </div>
                 }
-                className="py-16"
+                className="py-8 sm:py-16"
               />
             )}
           </div>

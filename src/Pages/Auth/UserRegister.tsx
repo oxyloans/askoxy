@@ -17,6 +17,7 @@ import {
   LockOutlined,
   SafetyOutlined,
   UserAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -31,6 +32,7 @@ const UserRegister: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [emailOtp, setEmailOtp] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [emailOtpSession, setEmailOtpSession] = useState<string>("");
   const [salt, setSalt] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -73,6 +75,10 @@ const UserRegister: React.FC = () => {
       setError("Please enter the OTP");
       return false;
     }
+    if (!name) {
+      setError("Please enter your name");
+      return false;
+    }
     if (!password) {
       setError("Please enter the password");
       return false;
@@ -87,6 +93,9 @@ const UserRegister: React.FC = () => {
     setError(null);
 
     try {
+      // Store name in local storage before API call
+      localStorage.setItem("userName", name);
+
       const response = await axios.post<RegisterResponse>(
         `${BASE_URL}/user-service/userEmailPassword`,
         {
@@ -96,6 +105,7 @@ const UserRegister: React.FC = () => {
           password,
           primaryType: "EMPLOYEE",
           salt,
+          name: name,
         }
       );
 
@@ -107,12 +117,13 @@ const UserRegister: React.FC = () => {
 
       if (response.data.userId !== null) {
         setTimeout(() => {
-          navigate("/login");
+          navigate("/userlogin");
         }, 2000);
       }
 
       setIsEmailSubmitted(false);
       setEmail("");
+      setName("");
       setEmailOtp("");
       setPassword("");
       setEmailOtpSession("");
@@ -142,36 +153,57 @@ const UserRegister: React.FC = () => {
         </div>
 
         <Form layout="vertical" size="large">
-          <Form.Item
-            label={
-              <span className="text-gray-700 font-medium">Email Address</span>
-            }
-            required
-            className="mb-4"
-          >
-            <Input
-              prefix={<MailOutlined className="text-gray-400 mr-2" />}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              disabled={isEmailSubmitted}
-              className="rounded-md"
-            />
-          </Form.Item>
-
           {!isEmailSubmitted ? (
-            <Button
-              type="primary"
-              block
-              onClick={handleEmailSubmit}
-              loading={loading}
-              className="h-10 rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-            >
-              Send OTP
-            </Button>
+            <>
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">
+                    Email Address
+                  </span>
+                }
+                required
+                className="mb-4"
+              >
+                <Input
+                  prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="rounded-md"
+                />
+              </Form.Item>
+
+              <Button
+                type="primary"
+                block
+                onClick={handleEmailSubmit}
+                loading={loading}
+                className="h-10 rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
+              >
+                Send OTP
+              </Button>
+            </>
           ) : (
             <>
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">
+                    Email Address
+                  </span>
+                }
+                required
+                className="mb-4"
+              >
+                <Input
+                  prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                  type="email"
+                  value={email}
+                  disabled
+                  className="rounded-md bg-gray-50"
+                />
+              </Form.Item>
+
               <Form.Item
                 label={
                   <span className="text-gray-700 font-medium">
@@ -186,6 +218,22 @@ const UserRegister: React.FC = () => {
                   value={emailOtp}
                   onChange={(e) => setEmailOtp(e.target.value)}
                   placeholder="Enter OTP sent to email"
+                  className="rounded-md"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">Full Name</span>
+                }
+                required
+                className="mb-4"
+              >
+                <Input
+                  prefix={<UserOutlined className="text-gray-400 mr-2" />}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your full name"
                   className="rounded-md"
                 />
               </Form.Item>
@@ -258,5 +306,4 @@ const UserRegister: React.FC = () => {
   );
 };
 
-export default UserRegister
-;
+export default UserRegister;

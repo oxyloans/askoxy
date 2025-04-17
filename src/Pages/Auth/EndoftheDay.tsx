@@ -18,6 +18,7 @@ import {
   Avatar,
   Badge,
   Divider,
+  Tooltip,
 } from "antd";
 
 import {
@@ -33,6 +34,7 @@ import {
   CloudUploadOutlined,
   PaperClipOutlined,
   DeleteOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import UserPanelLayout from "./UserPanelLayout";
 import axios from "axios";
@@ -44,8 +46,6 @@ dayjs.extend(relativeTime);
 const { TextArea } = Input;
 const { Text, Title, Paragraph } = Typography;
 const { Option } = Select;
-
-
 
 interface UserDocumentStatus {
   userDocumentId: string | null;
@@ -86,7 +86,7 @@ interface Task {
   planStatus: string;
   updatedBy: string;
   taskStatus: "COMPLETED" | "PENDING";
-  taskAssignTo: string;
+  taskAssignedBy: string;
   adminDocumentId: string | null;
   userDocumentCreatedAt: string | null;
   userDocumentId: string | null;
@@ -134,19 +134,18 @@ const TaskUpdate: React.FC = () => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId);
-      fetchTasksByDate(storedUserId);
+      fetchAllPendingTasks(storedUserId);
     }
   }, []);
 
-  const fetchTasksByDate = async (userIdValue: string) => {
+  // Modified to fetch all pending tasks without date filter
+  const fetchAllPendingTasks = async (userIdValue: string) => {
     setFetchingTasks(true);
     try {
-      const formattedDate = currentDate.format("YYYY-MM-DD");
       const response = await axios.post(
-        `${BASE_URL}/user-service/write/get-task-by-date`,
+        `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: "PENDING",
-          specificDate: formattedDate,
           userId: userIdValue,
         },
         {
@@ -243,7 +242,7 @@ const TaskUpdate: React.FC = () => {
         resetUploadState();
 
         // Refresh tasks
-        fetchTasksByDate(userId);
+        fetchAllPendingTasks(userId);
       } else {
         notification.warning({
           message: "Warning",
@@ -432,12 +431,10 @@ const TaskUpdate: React.FC = () => {
       );
     }
 
-    // Filter only valid responses with pendingEod
-    const validResponses = selectedTask.pendingUserTaskResponse.filter(
-      (response) => response.pendingEod
-    );
+    // Get all responses, not just those with pendingEod
+    const allResponses = selectedTask.pendingUserTaskResponse;
 
-    if (validResponses.length === 0) {
+    if (allResponses.length === 0) {
       return (
         <Empty
           description={
@@ -449,7 +446,7 @@ const TaskUpdate: React.FC = () => {
     }
 
     // Sort by createdAt date (newest first)
-    const sortedResponses = [...validResponses].sort((a, b) => {
+    const sortedResponses = [...allResponses].sort((a, b) => {
       if (!a.createdAt) return 1;
       if (!b.createdAt) return -1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -459,9 +456,17 @@ const TaskUpdate: React.FC = () => {
       <Timeline
         items={sortedResponses.map((response, index) => {
           const dateInfo = formatDate(response.createdAt);
+          const displayName =
+            response.updateBy === "null" ? "You" : response.updateBy;
+          const isAdmin = response.updateBy === "ADMIN";
+
           return {
-            color: index === 0 ? "green" : "blue",
-            dot: index === 0 ? <HistoryOutlined /> : undefined,
+            color: isAdmin ? "purple" : index === 0 ? "green" : "blue",
+            dot: isAdmin ? (
+              <UserOutlined />
+            ) : index === 0 ? (
+              <HistoryOutlined />
+            ) : undefined,
             children: (
               <div className="mb-4">
                 <div className="flex justify-between items-start">
@@ -469,9 +474,17 @@ const TaskUpdate: React.FC = () => {
                     <Avatar
                       size="small"
                       icon={<UserOutlined />}
+                      style={{
+                        backgroundColor: isAdmin ? "#722ed1" : "#1890ff",
+                      }}
                       className="mr-2"
                     />
-                    <Text strong>{response.updateBy}</Text>
+                    <Text strong>{displayName}</Text>
+                    {isAdmin && (
+                      <Tag color="purple" className="ml-2">
+                        Admin
+                      </Tag>
+                    )}
                   </div>
                   <div className="text-right">
                     <Text type="secondary">
@@ -491,11 +504,40 @@ const TaskUpdate: React.FC = () => {
                   size="small"
                   className="mt-2"
                   style={{
-                    backgroundColor: index === 0 ? "#f6ffed" : "#f0f5ff",
-                    borderColor: index === 0 ? "#b7eb8f" : "#bae0ff",
+                    backgroundColor: isAdmin
+                      ? "#f9f0ff"
+                      : index === 0
+                      ? "#f6ffed"
+                      : "#f0f5ff",
+                    borderColor: isAdmin
+                      ? "#d3adf7"
+                      : index === 0
+                      ? "#b7eb8f"
+                      : "#bae0ff",
                   }}
                 >
-                  <Paragraph className="mb-0">{response.pendingEod}</Paragraph>
+                  {/* Show either pendingEod or adminDescription based on what's available */}
+                  {response.pendingEod ? (
+                    <Paragraph className="mb-0">
+                      {response.pendingEod}
+                    </Paragraph>
+                  ) : response.adminDescription ? (
+                    <div>
+                      <div className="flex items-center mb-1">
+                        <InfoCircleOutlined className="mr-1 text-purple-600" />
+                        <Text strong className="text-purple-800">
+                          Admin Description:
+                        </Text>
+                      </div>
+                      <Paragraph className="mb-0">
+                        {response.adminDescription}
+                      </Paragraph>
+                    </div>
+                  ) : (
+                    <Paragraph className="mb-0 text-gray-500">
+                      No description provided
+                    </Paragraph>
+                  )}
                 </Card>
               </div>
             ),
@@ -517,17 +559,23 @@ const TaskUpdate: React.FC = () => {
     }
   };
 
+  // Function to get task creation date
+  const getTaskDate = (task: Task) => {
+    if (task.planCreatedAt) {
+      return dayjs(task.planCreatedAt).format("MMMM DD, YYYY");
+    }
+    return "Unknown Date";
+  };
+
   return (
     <UserPanelLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <Card
           title={
             <div className="flex justify-between items-center">
               <div className="flex items-center">
                 <CalendarOutlined className="mr-2 text-blue-500" />
-                <span className="font-semibold text-lg">
-                  Today's Tasks - {currentDate.format("MMMM DD, YYYY")}
-                </span>
+                <span className="font-semibold text-lg">All Pending Tasks</span>
               </div>
               {fetchingTasks ? <Spin size="small" /> : null}
             </div>
@@ -540,7 +588,7 @@ const TaskUpdate: React.FC = () => {
         >
           {fetchingTasks ? (
             <div className="flex justify-center items-center py-12">
-              <Spin size="small" tip="Loading your tasks..." />
+              <Spin size="large" tip="Loading your tasks..." />
             </div>
           ) : tasks.length > 0 ? (
             <List
@@ -548,8 +596,9 @@ const TaskUpdate: React.FC = () => {
               dataSource={tasks}
               renderItem={(task) => {
                 const pendingUpdatesCount =
-                  task.pendingUserTaskResponse?.filter((r) => r.pendingEod)
-                    .length || 0;
+                  task.pendingUserTaskResponse?.length || 0;
+
+                const taskDate = getTaskDate(task);
 
                 return (
                   <List.Item
@@ -561,29 +610,42 @@ const TaskUpdate: React.FC = () => {
                       }`}
                     onClick={() => selectTask(task)}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <Title level={5} className="mb-0 ml-4 font-bold">
+                    <div className="flex flex-col md:flex-row justify-between items-start mb-2">
+                      <div className="flex-1 w-full md:w-auto">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center mb-2 sm:mb-0">
+                            <Title level={5} className="ml-4 mb-0 font-bold">
                               Plan of the day
                             </Title>
+                            <Tag color="blue" className="mt-1 sm:mt-0 sm:ml-3">
+                              {taskDate}
+                            </Tag>
                           </div>
-                          <Tag
-                            icon={
-                              task.taskStatus === "COMPLETED" ? (
-                                <CheckCircleOutlined />
-                              ) : (
-                                <ClockCircleOutlined />
-                              )
-                            }
-                            color={getTaskStatusColor(task.taskStatus)}
-                            className="ml-auto text-sm"
-                          >
-                            {task.taskStatus}
-                          </Tag>
+                          <div className="flex items-center mt-2 sm:mt-0">
+                            {task.taskAssignedBy && (
+                              <Tooltip title="Assigned by">
+                                <Tag color="cyan" className="mr-2">
+                                  <UserOutlined className="mr-1" />
+                                  {task.taskAssignedBy}
+                                </Tag>
+                              </Tooltip>
+                            )}
+                            <Tag
+                              icon={
+                                task.taskStatus === "COMPLETED" ? (
+                                  <CheckCircleOutlined />
+                                ) : (
+                                  <ClockCircleOutlined />
+                                )
+                              }
+                              color={getTaskStatusColor(task.taskStatus)}
+                              className="text-sm"
+                            >
+                              {task.taskStatus}
+                            </Tag>
+                          </div>
                         </div>
-                        <Paragraph className="pl-4 text-gray-700">
+                        <Paragraph className="ml-4 text-gray-700">
                           {task.planOftheDay}
                         </Paragraph>
 
@@ -616,10 +678,10 @@ const TaskUpdate: React.FC = () => {
                 description={
                   <div>
                     <Title level={4} type="secondary">
-                      No tasks for today
+                      No pending tasks
                     </Title>
                     <Paragraph type="secondary">
-                      There are no pending tasks assigned to you for today.
+                      There are no pending tasks assigned to you at this time.
                     </Paragraph>
                   </div>
                 }
@@ -630,161 +692,181 @@ const TaskUpdate: React.FC = () => {
 
         {selectedTask && (
           <>
-            <Card
-              title={
-                <div className="flex items-center">
-                  <CloudUploadOutlined className="mr-2 text-blue-500" />
-                  <span className="font-semibold text-lg">
-                    Update Task Status
-                  </span>
-                </div>
-              }
-              className="shadow-md mb-6 rounded-lg"
-              headStyle={{
-                backgroundColor: "#f9f9f9",
-                borderBottom: "1px solid #f0f0f0",
-              }}
-            >
-              <Form<TaskFormValues>
-                form={form}
-                layout="vertical"
-                onFinish={updateTask}
-                initialValues={{
-                  id: selectedTask.id,
-                  userId: selectedTask.userId,
-                  taskStatus: selectedTask.taskStatus,
-                  endOftheDay: selectedTask.endOftheDay || "",
-                }}
-                className="px-1"
-              >
-                <Form.Item name="id" hidden>
-                  <Input />
-                </Form.Item>
-
-                <Form.Item name="userId" hidden>
-                  <Input />
-                </Form.Item>
-
-                <Form.Item name="userDocumentId" hidden>
-                  <Input />
-                </Form.Item>
-
-                <Form.Item
-                  label={<span className="font-medium">Task Status</span>}
-                  name="taskStatus"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please select the task status",
-                    },
-                  ]}
-                >
-                  <Select
-                    size="small"
-                    onChange={(value) =>
-                      value === "COMPLETED" &&
-                      form.setFieldsValue({
-                        endOftheDay: form.getFieldValue("endOftheDay") || "",
-                      })
-                    }
-                  >
-                    <Option value="COMPLETED">
-                      <div className="flex items-center">
-                        <CheckCircleOutlined className="mr-2 text-green-500" />
-                        COMPLETED
-                      </div>
-                    </Option>
-                    <Option value="PENDING">
-                      <div className="flex items-center">
-                        <ClockCircleOutlined className="mr-2 text-yellow-500" />
-                        PENDING
-                      </div>
-                    </Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  label={<span className="font-medium">End of Day Note</span>}
-                  name="endOftheDay"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please enter an end of day note",
-                    },
-                  ]}
-                >
-                  <TextArea
-                    placeholder="Summarize what you accomplished today or your progress on this task..."
-                    rows={6}
-                    className="border-gray-300 hover:border-blue-400 focus:border-blue-500"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  label={
-                    <span className="font-medium">
-                      Upload Screenshot (Optional)
-                    </span>
-                  }
-                >
-                  <Card
-                    className="mb-4 bg-gray-50 border border-dashed hover:border-blue-400 transition-colors"
-                    size="small"
-                  >
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          disabled={uploadStatus === "uploading"}
-                          accept="image/*,.pdf,.doc,.docx"
-                          key={fileInputKey} // Add key to force re-rendering
-                        />
-                       
-                      </label>
-
-                      <div className="flex-grow">{renderUploadStatus()}</div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card
+                  title={
+                    <div className="flex items-center">
+                      <CloudUploadOutlined className="mr-2 text-blue-500" />
+                      <span className="font-semibold text-lg">
+                        Update Task Status
+                      </span>
                     </div>
-                  </Card>
-                </Form.Item>
-
-                <Divider />
-
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={loading}
-                    size="small"
-                    block
-                    className="h-12 font-medium bg-[#008CBA]"
-                    icon={<CloudUploadOutlined />}
+                  }
+                  className="shadow-md mb-6 rounded-lg"
+                  headStyle={{
+                    backgroundColor: "#f9f9f9",
+                    borderBottom: "1px solid #f0f0f0",
+                  }}
+                >
+                  <Form<TaskFormValues>
+                    form={form}
+                    layout="vertical"
+                    onFinish={updateTask}
+                    initialValues={{
+                      id: selectedTask.id,
+                      userId: selectedTask.userId,
+                      taskStatus: selectedTask.taskStatus,
+                      endOftheDay: selectedTask.endOftheDay || "",
+                    }}
+                    className="px-1"
                   >
-                    {loading ? "Updating..." : "Update Task"}
-                  </Button>
-                </Form.Item>
-              </Form>
-            </Card>
+                    <Form.Item name="id" hidden>
+                      <Input />
+                    </Form.Item>
 
-            {/* Previous Updates Section */}
-            <Card
-              title={
-                <div className="flex items-center">
-                  <HistoryOutlined className="mr-2 text-blue-500" />
-                  <span className="font-semibold text-lg">
-                    Previous Updates
-                  </span>
-                </div>
-              }
-              className="shadow-md rounded-lg mb-6"
-              headStyle={{
-                backgroundColor: "#f9f9f9",
-                borderBottom: "1px solid #f0f0f0",
-              }}
-            >
-              <div className="py-2">{renderPendingResponses()}</div>
-            </Card>
+                    <Form.Item name="userId" hidden>
+                      <Input />
+                    </Form.Item>
+
+                    <Form.Item name="userDocumentId" hidden>
+                      <Input />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={<span className="font-medium">Task Status</span>}
+                      name="taskStatus"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select the task status",
+                        },
+                      ]}
+                    >
+                      <Select
+                        onChange={(value) =>
+                          value === "COMPLETED" &&
+                          form.setFieldsValue({
+                            endOftheDay:
+                              form.getFieldValue("endOftheDay") || "",
+                          })
+                        }
+                      >
+                        <Option value="COMPLETED">
+                          <div className="flex items-center">
+                            <CheckCircleOutlined className="mr-2 text-green-500" />
+                            COMPLETED
+                          </div>
+                        </Option>
+                        <Option value="PENDING">
+                          <div className="flex items-center">
+                            <ClockCircleOutlined className="mr-2 text-yellow-500" />
+                            PENDING
+                          </div>
+                        </Option>
+                      </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                      label={
+                        <span className="font-medium">End of Day Note</span>
+                      }
+                      name="endOftheDay"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter an end of day note",
+                        },
+                      ]}
+                    >
+                      <TextArea
+                        placeholder="Summarize what you accomplished today or your progress on this task..."
+                        rows={6}
+                        className="border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={
+                        <span className="font-medium">
+                          Upload Screenshot (Optional)
+                        </span>
+                      }
+                    >
+                      <Card
+                        className="mb-4 bg-gray-50 border border-dashed hover:border-blue-400 transition-colors"
+                        size="small"
+                      >
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              disabled={uploadStatus === "uploading"}
+                              accept="image/*,.pdf,.doc,.docx"
+                              key={fileInputKey} // Add key to force re-rendering
+                            />
+                            <Button
+                              icon={<UploadOutlined />}
+                              disabled={uploadStatus === "uploading"}
+                              loading={uploadStatus === "uploading"}
+                            >
+                              {uploadStatus === "uploading"
+                                ? "Uploading..."
+                                : "Choose File"}
+                            </Button>
+                          </label>
+
+                          <div className="flex-grow">
+                            {renderUploadStatus()}
+                          </div>
+                        </div>
+                      </Card>
+                    </Form.Item>
+
+                    <Divider />
+
+                    <Form.Item>
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={loading}
+                        block
+                        className="h-12 font-medium bg-[#008CBA]"
+                        icon={<CloudUploadOutlined />}
+                      >
+                        {loading ? "Updating..." : "Update Task"}
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                </Card>
+              </div>
+
+              <div className="lg:col-span-1">
+                {/* Previous Updates Section */}
+                <Card
+                  title={
+                    <div className="flex items-center">
+                      <HistoryOutlined className="mr-2 text-blue-500" />
+                      <span className="font-semibold text-lg">
+                        Updates & Comments
+                      </span>
+                    </div>
+                  }
+                  className="shadow-md rounded-lg mb-6"
+                  headStyle={{
+                    backgroundColor: "#f9f9f9",
+                    borderBottom: "1px solid #f0f0f0",
+                  }}
+                  style={{ height: "100%" }}
+                >
+                  <div className="py-2 max-h-[500px] overflow-y-auto">
+                    {renderPendingResponses()}
+                  </div>
+                </Card>
+              </div>
+            </div>
           </>
         )}
       </div>

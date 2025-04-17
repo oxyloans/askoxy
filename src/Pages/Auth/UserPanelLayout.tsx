@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from "react";
 import { Layout, Menu, Row, Grid } from "antd";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { MdLogout, MdSubscriptions, MdInventory } from "react-icons/md";
 import { FaClipboardCheck, FaExchangeAlt } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
@@ -27,6 +27,7 @@ interface SidebarItem {
   label: string;
   icon: React.ReactNode;
   link: string;
+  color?: string; // Optional color property
 }
 
 interface UserPanelLayoutProps {
@@ -37,6 +38,8 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const screens = useBreakpoint();
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string>("");
+  const location = useLocation();
 
   useEffect(() => {
     const handleResize = (): void => {
@@ -44,6 +47,11 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     };
     handleResize();
     window.addEventListener("resize", handleResize);
+
+    // Get userName from local storage
+    const storedUserName = localStorage.getItem("userName") || "User";
+    setUserName(storedUserName);
+
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -59,35 +67,34 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     {
       key: "plan-of-the-day",
       label: "Plan of the Day",
-      icon: <FaTachometerAlt />,
+      icon: <FaTachometerAlt className="text-blue-500" />,
       link: "/planoftheday",
     },
     {
       key: "end-of-the-day",
       label: "End of the Day Summary",
-      icon: <FaClipboardCheck />,
+      icon: <FaClipboardCheck className="text-green-500" />,
       link: "/taskupdated",
     },
     {
       key: "task-overview",
       label: "Task Overview",
-      icon: <FaSlideshare />,
+      icon: <FaSlideshare className="text-purple-500" />,
       link: "/all-statuses",
     },
     {
       key: "task-assignments",
       label: "Assigned Tasks List",
-      icon: <FaExchangeAlt />,
+      icon: <FaExchangeAlt className="text-orange-500" />,
       link: "/assigned-task",
     },
     {
       key: "user-assigned-tasks",
       label: "Tasks Assigned by User",
-      icon: <FaUsers />,
+      icon: <FaUsers className="text-red-500" />,
       link: "/taskassigneduser",
     },
   ];
-  
 
   const toggleCollapse = (): void => {
     setCollapsed((prev) => !prev);
@@ -107,7 +114,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         breakpoint="md"
         width={screens.xs ? 200 : 240}
         collapsedWidth={screens.xs ? 0 : 80}
-        className="bg-gray-800 fixed h-screen z-10"
+        className="bg-gray-800 fixed h-screen z-10 shadow-md"
         style={{
           left: collapsed ? (isMobile ? "-200px" : "-80px") : 0,
           transition: "left 0.3s ease-in-out",
@@ -120,14 +127,10 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         <div className="py-2 border-b border-gray-700">
           <Row justify="center" align="middle">
             <div className="text-center font-bold my-0 text-2xl">
-           
-                <span className="text-green-500">
-                  {collapsed ? "T" : "TASK"}
-                </span>{" "}
-                <span className="text-yellow-500">
-                  {collapsed ? "" : "MANAGEMENT"}
-                </span>
-              
+              <span className="text-green-500">{collapsed ? "T" : "TASK"}</span>{" "}
+              <span className="text-yellow-500">
+                {collapsed ? "" : "MANAGEMENT"}
+              </span>
             </div>
           </Row>
         </div>
@@ -136,8 +139,9 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
           theme="dark"
           mode="inline"
           className="bg-gray-800 mt-4"
+          selectedKeys={[location.pathname]}
           items={sidebarItems.map((item) => ({
-            key: item.key,
+            key: item.link, // Use link as key for accurate selection
             icon: item.icon,
             label: (
               <Link
@@ -161,49 +165,67 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
               ? "100%"
               : `calc(100% - ${collapsed ? "0px" : "240px"})`,
             marginLeft: screens.xs ? "0px" : collapsed ? "0px" : "240px",
-            position: "relative",
+            position: "fixed", // Make header fixed
+            zIndex: 9, // Lower than sidebar but still above content
+            height: "64px", // Explicit height
+            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
           }}
         >
-          <button
-            onClick={toggleCollapse}
-            className="bg-transparent border-none cursor-pointer text-lg text-teal-500 hover:text-teal-700"
-          >
-            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={toggleCollapse}
+              className="bg-transparent border-none cursor-pointer text-lg text-blue-500 hover:text-blue-700 mr-2"
+            >
+              {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            </button>
+            {/* <span className="text-gray-700 font-medium hidden sm:inline">
+             Dashboard
+            </span> */}
+          </div>
 
           <div
             onClick={handleSignOut}
             className="flex items-center cursor-pointer hover:text-red-500 transition-colors duration-200"
           >
-            <MdLogout className="mr-2 text-gray-500 text-sm" />
+            <MdLogout className="mr-2 text-gray-500 text-lg hover:text-red-500" />
             <span className="text-gray-500 text-sm">Log out</span>
           </div>
         </Header>
+
         <Content
-          className="m-4 p-6 bg-white"
+          className="bg-gray-50"
           style={{
-            padding: screens.xs ? 12 : 24,
+            padding: screens.xs ? "12px" : "24px",
             width: screens.xs
               ? "100%"
               : `calc(100% - ${collapsed ? "0px" : "240px"})`,
             marginLeft: screens.xs ? "0px" : collapsed ? "0px" : "240px",
-            position: "relative",
+            marginTop: "64px", // Match header height
+            minHeight: "calc(100vh - 64px - 64px)", // viewport - header - footer
+            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
           }}
         >
-          {children}
+          <div className="bg-white p-4 rounded-lg shadow-sm">{children}</div>
         </Content>
+
         <Footer
-          className="text-center bg-white"
+          className="text-center bg-white shadow-inner text-gray-500 text-sm"
           style={{
             width: screens.xs
               ? "100%"
               : `calc(100% - ${collapsed ? "0px" : "240px"})`,
             marginLeft: screens.xs ? "0px" : collapsed ? "0px" : "240px",
-            position: "relative",
-            bottom: 0,
+            height: "64px", // Fixed footer height
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
           }}
         >
-          Task Management Admin ©2025 Created by ASKOXY.AI Company
+          <span className="font-medium mr-1">
+            Task Management
+          </span>
+          ©2025 Created by ASKOXY.AI Company
         </Footer>
       </Layout>
     </Layout>
