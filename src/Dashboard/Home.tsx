@@ -106,9 +106,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
- // Update your state type to match the possible values
-const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
-// Then the rest of your code should work as is
+  const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [loadingItems, setLoadingItems] = useState<{ items: { [key: string]: boolean }, status: { [key: string]: string } }>({
@@ -124,7 +122,9 @@ const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
   const categoriesFetched = useRef(false);
   const initialDataFetched = useRef(false);
 
-  const updateCartCount = (count: number) => setCartCount(count);
+  const updateCartCount = useCallback((count: number) => {
+    setCartCount(count);
+  }, []);
 
   // Variants for header image hover effect
   const headerImageVariants = {
@@ -178,56 +178,46 @@ const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
 
   const fetchCartData = useCallback(async (itemId: string = "") => {
     const userId = localStorage.getItem("userId");
-
     if (!userId) return;
-
+  
     if (itemId !== "") {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
       }));
     }
-
+  
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
       );
-
-      if (response.data.customerCartResponseList) {
-        const cartItemsMap = response.data?.customerCartResponseList.reduce(
-          (acc: Record<string, number>, item: CartItem) => {
-            acc[item.itemId] = item.cartQuantity || 0;
-            return acc;
-          },
-          {}
-        );
-
-        localStorage.setItem(
-          "cartCount",
-          response.data?.customerCartResponseList.length.toString()
-        );
-
-        const totalQuantity = Object.values(
-          cartItemsMap as Record<string, number>
-        ).reduce((sum, qty) => sum + qty, 0);
-
+  
+      const cartList = response.data?.customerCartResponseList || [];
+  
+      if (cartList.length > 0) {
+        const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
+          acc[item.itemId] = Number(item.cartQuantity) || 0;
+          return acc;
+        }, {});
+  
+        // Use type assertion and additional type guard
+        const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
+          return sum + (typeof qty === 'number' ? qty : 0);
+        }, 0);
+  
         setCartItems(cartItemsMap);
-        updateCartCount(totalQuantity);
-        setCartData(response.data.customerCartResponseList);
+        setCartData(cartList);
+        localStorage.setItem("cartCount", cartList.length.toString());
+        updateCartCount(Math.round(totalQuantity));
       } else {
         setCartItems({});
+        setCartData([]);
         localStorage.setItem("cartCount", "0");
         updateCartCount(0);
       }
-
-      if (itemId !== "") {
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [itemId]: false },
-        }));
-      }
     } catch (error) {
       console.error("Error fetching cart items:", error);
+    } finally {
       if (itemId !== "") {
         setLoadingItems((prev) => ({
           ...prev,
@@ -235,7 +225,7 @@ const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
         }));
       }
     }
-  }, []);
+  }, [updateCartCount]);
 
   const fetchCategories = useCallback(async () => {
     if (categoriesFetched.current) return;
@@ -860,6 +850,10 @@ const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
   };
 
    const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("CartDisplay must be used within a CartProvider");
+  }
+  const { count, setCount } = context;
 
   const renderDigitalServiceCard = (item: DashboardItem, index: number, type: 'gpt' | 'crypto') => {
     const bgGradient = type === 'gpt'

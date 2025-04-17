@@ -611,11 +611,9 @@ const Ricebags: React.FC = () => {
   };
 
   const context = useContext(CartContext);
-
   if (!context) {
     throw new Error("CartDisplay must be used within a CartProvider");
   }
-
   const { count, setCount } = context;
 
   useEffect(() => {

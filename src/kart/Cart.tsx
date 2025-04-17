@@ -71,6 +71,7 @@ const CartPage: React.FC = () => {
     pincode: "",
     addressType: "Home",
   });
+  
 
   const modalDisplayedRef = useRef<boolean>(false);
   const [addressFormErrors, setAddressFormErrors] = useState({

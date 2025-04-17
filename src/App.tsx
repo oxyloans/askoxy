@@ -89,7 +89,16 @@ import OxyLoans from "./components/Services/OxyLoans";
 import UniversityOffers from "./Dashboard/Offerletter"
 import PinkFunding from "./components/PinkFunding";
 import CurrentLandingPage from "./components/CurrentLandinPage";
-
+import PlanOfTheDay from "./Pages/Auth/PlanOfTheDay";
+import UserPanelLayout
+  from "./Pages/Auth/UserPanelLayout";
+import AllStatusPage from "./Pages/Auth/AllStatus";
+import AssignedTasksPage from "./Pages/Auth/AssignedTasks";
+import UserDetails from "./Pages/Auth/UserDetails";
+import TaskAssignedUser from "./Pages/Auth/TaskAssignedUser";
+import TaskUpdate from "./Pages/Auth/EndoftheDay";
+import UserRegister from "./Pages/Auth/UserRegister";
+import UserLogin from "./Pages/Auth/UserLogin";
 // *************************PARTNER START****************************//
 
 import PartnerLogin from "./PartnerWeb/PartnerLogin";
@@ -105,6 +114,7 @@ import PartnerItemsList from "./PartnerWeb/PartnerItemsList";
 import DbOrderDetails from "./PartnerWeb/DbOrderList";
 import PartnerAllQueries from "./PartnerWeb/PartnerAllQueries";
 import Register from "./AskoxyAdmin/Register";
+
 
 const App: React.FC = () => {
 
@@ -151,6 +161,13 @@ const App: React.FC = () => {
         {/* ----------------------- */}
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
+              <Route path="/userregister" element={<UserRegister />} />
+          <Route path="/userlogin" element={<UserLogin />} />   <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
+          <Route path="/planoftheday" element={<PlanOfTheDay />} />
+          <Route path="/taskupdated" element={<TaskUpdate />} />
+          <Route path="/all-statuses" element={<AllStatusPage />} />
+          <Route path="/assigned-task" element={<AssignedTasksPage />} />
+          <Route path="/taskassigneduser" element={<TaskAssignedUser />} /> 
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route
               path="/communities/maruthielite"
