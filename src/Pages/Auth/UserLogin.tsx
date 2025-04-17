@@ -97,10 +97,15 @@ const UserLogin: React.FC = () => {
     }
   };
 
+  // Custom styles for input fields
+  const inputStyle = {
+    height: "48px", // Increased height for input fields
+    width: "100%", // Full width within the container
+    fontSize: "16px", // Slightly larger font for better readability
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100 p-4">
-     
-
       <Card
         className="w-full max-w-md shadow-xl rounded-lg overflow-hidden border-0"
         bodyStyle={{ padding: "2rem" }}
@@ -109,10 +114,9 @@ const UserLogin: React.FC = () => {
           <Title level={3} className="font-medium text-gray-700 m-0">
             Login to Task Management
           </Title>
-         
         </div>
 
-        <Form layout="vertical" size="small" onFinish={handleLogin}>
+        <Form layout="vertical" size="large" onFinish={handleLogin}>
           <Form.Item
             label={
               <span className="text-gray-700 font-medium">Email Address</span>
@@ -128,12 +132,13 @@ const UserLogin: React.FC = () => {
             className="mb-4"
           >
             <Input
-              prefix={<MailOutlined className="text-gray-400 mr-2 " />}
+              prefix={<MailOutlined className="text-gray-400 mr-2" />}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="rounded-md "
+              className="rounded-md"
+              style={inputStyle}
             />
           </Form.Item>
 
@@ -157,6 +162,7 @@ const UserLogin: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="rounded-md"
+              style={inputStyle}
             />
           </Form.Item>
 
@@ -166,13 +172,12 @@ const UserLogin: React.FC = () => {
               htmlType="submit"
               loading={loading}
               icon={<LoginOutlined />}
-              className="w-full h-10 rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
+              className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
+              style={{ height: "48px" }} // Increased button height to match inputs
             >
               Login
             </Button>
           </Form.Item>
-
-          
 
           {error && (
             <Alert
@@ -189,7 +194,7 @@ const UserLogin: React.FC = () => {
 
           <div className="text-center">
             <Text className="text-gray-600">Don't have an account?</Text>
-            <Link to="/register">
+            <Link to="/userregister">
               <Button
                 type="link"
                 className="font-medium text-blue-600 hover:text-blue-500"

@@ -118,7 +118,7 @@ const UserRegister: React.FC = () => {
       if (response.data.userId !== null) {
         setTimeout(() => {
           navigate("/userlogin");
-        }, 2000);
+        }, 1000);
       }
 
       setIsEmailSubmitted(false);
@@ -291,7 +291,7 @@ const UserRegister: React.FC = () => {
 
           <div className="text-center">
             <Text className="text-gray-600">Already registered?</Text>
-            <Link to="/login">
+            <Link to="/userlogin">
               <Button
                 type="link"
                 className="font-medium text-blue-600 hover:text-blue-500"
