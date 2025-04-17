@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "./Sider";
 import axios from "axios";
 import {
@@ -116,15 +116,16 @@ const RegisteredUser: React.FC = () => {
     useState<boolean>(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>("");
-  const [updatedBy, setUpdatedBy] = useState<string>("admin");
+  const updatedBy = localStorage.getItem("userName")?.toUpperCase();
+  // const [updatedBy, setUpdatedBy] = useState<string>("admin");
   const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [submittingComment, setSubmittingComment] = useState<boolean>(false);
   const [record, setRecord] = useState<UserData | null>(null);
-
+  const [orderId, setOrderId] = useState<string | null>("");
   const [mobileNumber1, setMobileNumber1] = useState("");
   const [whatsappNumber1, setWhatsappNumber1] = useState("");
   const [userId1, setUserId1] = useState("");
-
+  const userType = localStorage.getItem("primaryType");
   const [selectedTimeFrame, setSelectedTimeFrame] =
     useState<string>("thisWeek");
   const [pagination, setPagination] = useState({
@@ -334,11 +335,11 @@ const RegisteredUser: React.FC = () => {
     fetchUserData();
   }, [selectedTimeFrame]);
 
-  useEffect(() => {
-    if (record) {
-      fetchComments();
-    }
-  }, [record]);
+  // useEffect(() => {
+  //   if (record) {
+  //     fetchComments();
+  //   }
+  // }, [record]);
 
   const fetchCounts = async () => {
     try {
@@ -395,26 +396,27 @@ const RegisteredUser: React.FC = () => {
       // align: "center" as const,
       render: (record: UserData) => (
         <Space direction="vertical" size="small">
-          <Text>Name: {record.fullName || "N/A"}</Text>
-          <Text type="secondary">Email: {record.email || "N/A"}</Text>
+          <Text> {record.fullName || "No name provided"}</Text>
+          <Text type="secondary">{record.email || "No email provided"}</Text>
           {record.whatsappNumber && (
-  <div className="inline-flex items-center text-[13px] bg-green-50 text-green-700 rounded px-2 py-1 mr-2">
-    <WhatsAppOutlined style={{ fontSize: "13px", color: "#25D366" }} />
-    <strong className="ml-2 font-semibold">
-      {record.whatsappNumber}
-    </strong>
-  </div>
-)}
+            <div className="inline-flex items-center text-[13px] bg-green-50 text-green-700 rounded px-2 py-1 mr-2">
+              <WhatsAppOutlined
+                style={{ fontSize: "13px", color: "#25D366" }}
+              />
+              <strong className="ml-2 font-semibold">
+                {record.whatsappNumber}
+              </strong>
+            </div>
+          )}
 
-{record.mobileNumber && (
-  <div className="inline-flex items-center text-[13px] bg-purple-50 text-purple-700 rounded px-2 py-1">
-    <PhoneOutlined style={{ fontSize: "13px", color: "#722ED1" }} />
-    <strong className="ml-2 font-semibold">
-      {record.mobileNumber}
-    </strong>
-  </div>
-)}
-
+          {record.mobileNumber && (
+            <div className="inline-flex items-center text-[13px] bg-purple-50 text-purple-700 rounded px-2 py-1">
+              <PhoneOutlined style={{ fontSize: "13px", color: "#722ED1" }} />
+              <strong className="ml-2 font-semibold">
+                {record.mobileNumber}
+              </strong>
+            </div>
+          )}
         </Space>
       ),
     },
@@ -459,7 +461,7 @@ const RegisteredUser: React.FC = () => {
                 lineHeight: "1.4",
               }}
             >
-              {fullAddress.length > 0 ? fullAddress : "N/A"}
+              {fullAddress.length > 0 ? fullAddress : "No Address provided"}
             </Text>
           </div>
         );
@@ -476,7 +478,7 @@ const RegisteredUser: React.FC = () => {
             type="primary"
             size="small"
             onClick={() => viewOrderDetails(record)}
-            className="w-full rounded-md bg-blue-400 hover:bg-blue-500 border-blue-300"
+            className="w-full rounded-md bg-purple-400 hover:bg-purple-500 border-purple-500"
           >
             Order Details
           </Button>
@@ -499,9 +501,9 @@ const RegisteredUser: React.FC = () => {
             size="small"
             onClick={() => {
               setRecord(record);
-              showCommentsModal();
+              showCommentsModal(record);
             }}
-            className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
+            className="w-full rounded-md text-white bg-blue-600 hover:bg-blue-200 border-blue-600 text-blue-700"
           >
             Comments
           </Button>
@@ -534,7 +536,6 @@ const RegisteredUser: React.FC = () => {
         <a onClick={() => viewSpecificOrder(record.orderId)}>{text}</a>
       ),
     },
-
     {
       title: "Date",
       dataIndex: "orderDate",
@@ -565,13 +566,34 @@ const RegisteredUser: React.FC = () => {
         </div>
       ),
     },
-
     {
       title: "Status",
       dataIndex: "orderStatus",
       key: "orderStatus",
       render: (text: string) => (
         <Tag color={getStatusColor(text)}>{getStatusText(text)}</Tag>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 120,
+      align: "center" as const,
+      render: (record: OrderData) => (
+        <Space direction="vertical" size="small">
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              setRecord(selectedUser);
+              showCommentsModal(selectedUser);
+              setOrderId(record.orderId);
+            }}
+            className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
+          >
+            Comments
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -651,24 +673,24 @@ const RegisteredUser: React.FC = () => {
     }
   };
 
-  const showCommentsModal = async (): Promise<void> => {
+  const showCommentsModal = async (record: UserData | null): Promise<void> => {
     setCommentsModalVisible(true);
-    // await fetchComments();
+    await fetchComments(record);
   };
 
-  const fetchComments = async (): Promise<void> => {
+  const fetchComments = async (record: UserData | null): Promise<void> => {
     if (!record || !record.id) return;
 
     setLoadingComments(true);
     try {
       const response = await axios.post(
-        `${BASE_URL}/user-service/fetchComments`,
+        `${BASE_URL}/user-service/fetchAdminComments`,
         { userId: record.id },
         { headers: { "Content-Type": "application/json" } }
       );
 
       if (response.data && typeof response.data === "object") {
-        setComments([response.data]);
+        setComments(response.data);
       } else {
         setComments([]);
       }
@@ -676,7 +698,9 @@ const RegisteredUser: React.FC = () => {
       if (error.response && error.response.status === 500) {
         message.info("No comments found");
       } else {
-        message.error("Failed to load comments");
+        message.error(
+          "Failed to load comments...please try again after some time."
+        );
       }
       setComments([]);
     } finally {
@@ -690,22 +714,34 @@ const RegisteredUser: React.FC = () => {
       message.warning("Please enter a comment");
       return;
     }
+    setOrderId("");
 
+    let update = updatedBy;
+    const type = localStorage.getItem("primaryType");
+    if (type === "SELLER") {
+      update = "ADMIN";
+    }
+
+    let comment = newComment;
+
+    if (orderId) {
+      comment = `Regarding order Id ${orderId} ${newComment}`;
+    }
     setSubmittingComment(true);
     try {
       await axios.patch(
-        `${BASE_URL}/user-service/adminComments`,
+        `${BASE_URL}/user-service/adminUpdateComments`,
         {
-          adminComments: newComment,
-          commentsUpdateBy: updatedBy,
+          adminComments: comment,
+          commentsUpdateBy: update,
           userId: record?.id,
         },
         { headers: { "Content-Type": "application/json" } }
       );
 
       message.success("Comment added successfully");
-      setNewComment(""); // Clear comment input
-      await fetchComments(); // Refresh comments
+      setNewComment("");
+      await fetchComments(record);
     } catch (error) {
       console.error("Error submitting comment:", error);
       message.error("Failed to add comment");
@@ -780,36 +816,30 @@ const RegisteredUser: React.FC = () => {
       label: "Search by Date",
       children: (
         <div className="mt-4">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={8}>
-              <Input
-                type="date"
-                value={startDate1}
-                onChange={(e) => setStartDate1(e.target.value)}
-                placeholder="Start Date"
-                className="w-full"
-              />
-            </Col>
-            <Col xs={24} md={8}>
-              <Input
-                type="date"
-                value={endDate1}
-                onChange={(e) => setEndDate1(e.target.value)}
-                placeholder="End Date"
-                className="w-full"
-              />
-            </Col>
-            <Col xs={24} md={8}>
-              <Button
-                type="primary"
-                className="bg-blue-500 w-full"
-                onClick={() => handleTimeFrameChange("custom")}
-                loading={loading}
-              >
-                Get Data
-              </Button>
-            </Col>
-          </Row>
+          <div className="flex flex-wrap gap-2">
+            <Input
+              type="date"
+              value={startDate1}
+              onChange={(e) => setStartDate1(e.target.value)}
+              placeholder="Start Date"
+              className="w-[150px]"
+            />
+            <Input
+              type="date"
+              value={endDate1}
+              onChange={(e) => setEndDate1(e.target.value)}
+              placeholder="End Date"
+              className="w-[150px]"
+            />
+            <Button
+              type="primary"
+              className="bg-[rgb(0,_140,_186)] w-[90px] text-white"
+              onClick={() => handleTimeFrameChange("custom")}
+              loading={loading}
+            >
+              Get Data
+            </Button>
+          </div>
         </div>
       ),
     },
@@ -818,51 +848,42 @@ const RegisteredUser: React.FC = () => {
       label: "Search by Mobile Number",
       children: (
         <div className="mt-4">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={24} md={6} lg={6}>
-              <Input
-                placeholder="Mobile Number"
-                value={mobileNumber1}
-                onChange={(e) => setMobileNumber1(e.target.value)}
-                prefix={<PhoneOutlined />}
-                allowClear
-                className="w-full"
-              />
-            </Col>
-            <Col xs={24} sm={24} md={6} lg={6}>
-              <Input
-                placeholder="WhatsApp Number"
-                value={whatsappNumber1}
-                onChange={(e) => setWhatsappNumber1(e.target.value)}
-                prefix={<WhatsAppOutlined style={{ color: "#25D366" }} />}
-                allowClear
-                className="w-full"
-              />
-            </Col>
-
-            <Col xs={24} sm={24} md={6} lg={6}>
-              <Input
-                placeholder="User ID"
-                value={userId1}
-                onChange={(e) => setUserId1(e.target.value)}
-                prefix={<UserOutlined />}
-                allowClear
-                className="w-full"
-              />
-            </Col>
-            <Col xs={24} sm={24} md={6} lg={6}>
-              <Button
-                type="primary"
-                className="bg-blue-500 w-full"
-                onClick={handleUserSearch}
-                loading={loading}
-                disabled={!mobileNumber1 && !whatsappNumber1 && !userId1}
-                icon={<SearchOutlined />}
-              >
-                Search
-              </Button>
-            </Col>
-          </Row>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Mobile Number"
+              value={mobileNumber1}
+              onChange={(e) => setMobileNumber1(e.target.value)}
+              prefix={<PhoneOutlined />}
+              allowClear
+              className="w-[160px] m-0" // Added m-0 to remove margin
+            />
+            <Input
+              placeholder="WhatsApp Number"
+              value={whatsappNumber1}
+              onChange={(e) => setWhatsappNumber1(e.target.value)}
+              prefix={<WhatsAppOutlined style={{ color: "#25D366" }} />}
+              allowClear
+              className="w-[180px] m-0" // Added m-0 to remove margin
+            />
+            <Input
+              placeholder="User ID"
+              value={userId1}
+              onChange={(e) => setUserId1(e.target.value)}
+              prefix={<UserOutlined />}
+              allowClear
+              className="w-[150px] m-0" // Added m-0 to remove margin
+            />
+            <Button
+              type="primary"
+              className="bg-[rgb(0,_140,_186)] w-[90px] text-white m-0" // Added m-0 to remove margin
+              onClick={handleUserSearch}
+              loading={loading}
+              disabled={!mobileNumber1 && !whatsappNumber1 && !userId1}
+              icon={<SearchOutlined />}
+            >
+              Search
+            </Button>
+          </div>
         </div>
       ),
     },
@@ -878,19 +899,20 @@ const RegisteredUser: React.FC = () => {
       "bg-pink-200 text-pink-800",
     ];
 
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
+    const hash = name
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
-      <div className="flex-1 p-6 overflow-auto bg-gray-50">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4">
-          <Title level={2} className="m-0">
-            Registered Users
-          </Title>
+    <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4">
+        <Title level={2} className="m-0">
+          Registered Users
+        </Title>
 
+        {userType === "SELLER" && (
           <Button
             type="primary"
             icon={<Pencil size={16} className="mr-1" />}
@@ -898,202 +920,201 @@ const RegisteredUser: React.FC = () => {
           >
             Update User
           </Button>
-        </div>
+        )}
+      </div>
 
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={24} md={24} lg={24} xl={24}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={24} md={24} lg={8} xl={8}>
-                <Card
-                  className="bg-gray-100/90 backdrop-blur-lg rounded-2xl border border-gray-200/30 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[100px] p-2"
-                  hoverable
-                >
-                  <div className="flex flex-col">
-                    <div className="flex items-center mb-0.5">
-                      <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-2 shadow-purple-400/30 shadow-lg">
-                        <UserOutlined className="text-xl text-white" />
-                      </div>
-                      <Text
-                        strong
-                        className="text-xl ml-2 bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent font-extrabold"
-                      >
-                        Total Users
-                      </Text>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={24} md={24} lg={8} xl={8}>
+              <Card
+                className="bg-gray-100/90 backdrop-blur-lg rounded-2xl border border-gray-200/30 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[100px] p-2"
+                hoverable
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center mb-0.5">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-2 shadow-purple-400/30 shadow-lg">
+                      <UserOutlined className="text-xl text-white" />
                     </div>
-                    <Statistic
-                      value={staticMetrics.totalUsers}
-                      className="mt-0"
-                      valueStyle={{
-                        fontSize: 32,
-                        fontWeight: "bold",
-                        color: "#7e22ce",
-                        textAlign: "center",
-                      }}
-                    />
+                    <Text
+                      strong
+                      className="text-xl ml-2 bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent font-extrabold"
+                    >
+                      Total Users
+                    </Text>
                   </div>
-                </Card>
-              </Col>
+                  <Statistic
+                    value={staticMetrics.totalUsers}
+                    className="mt-0"
+                    valueStyle={{
+                      fontSize: 32,
+                      fontWeight: "bold",
+                      color: "#7e22ce",
+                      textAlign: "center",
+                    }}
+                  />
+                </div>
+              </Card>
+            </Col>
 
-              {/* Graph Card - Full width on small screens, takes remaining space on tablet and larger screens */}
-              <Col xs={24} sm={24} md={24} lg={16} xl={16}>
-                <Card
-                  title="User Registration by Period"
-                  extra={<BarChartOutlined />}
-                  className="w-full"
+            {/* Graph Card - Full width on small screens, takes remaining space on tablet and larger screens */}
+            <Col xs={24} sm={24} md={24} lg={16} xl={16}>
+              <Card
+                title="User Registration by Period"
+                extra={<BarChartOutlined />}
+                className="w-full"
+              >
+                <div style={{ height: 200, width: "100%", overflow: "hidden" }}>
+                  <Column {...barConfig} />
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="mt-4">
+        <Col xs={12} sm={12} md={6}>
+          <Card
+            onClick={() => handleTimeFrameChange("today")}
+            className="cursor-pointer"
+            bodyStyle={{
+              background: "linear-gradient(135deg, #c4b5fd 0%, #93c5fd 100%)",
+              borderLeft: "4px solid #93c5fd",
+              color: "#333",
+            }}
+          >
+            <Statistic
+              title={
+                <Text
+                  strong
+                  className="text-lg font-extrabold tracking-wide"
+                  style={{
+                    color: "#1e1b4b",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  }}
                 >
-                  <div
-                    style={{ height: 200, width: "100%", overflow: "hidden" }}
-                  >
-                    <Column {...barConfig} />
-                  </div>
-                </Card>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
+                  Today
+                </Text>
+              }
+              value={staticMetrics.today}
+              valueStyle={{ color: "#333" }}
+            />
+          </Card>
+        </Col>
 
-        <Row gutter={[16, 16]} className="mt-4">
-          <Col xs={12} sm={12} md={6}>
-            <Card
-              onClick={() => handleTimeFrameChange("today")}
-              className="cursor-pointer"
-              bodyStyle={{
-                background: "linear-gradient(135deg, #c4b5fd 0%, #93c5fd 100%)",
-                borderLeft: "4px solid #93c5fd",
-                color: "#333",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    strong
-                    className="text-lg font-extrabold tracking-wide"
-                    style={{
-                      color: "#1e1b4b",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    Today
-                  </Text>
-                }
-                value={staticMetrics.today}
-                valueStyle={{ color: "#333" }}
-              />
-            </Card>
-          </Col>
+        <Col xs={12} sm={12} md={6}>
+          <Card
+            onClick={() => handleTimeFrameChange("yesterday")}
+            className="cursor-pointer"
+            bodyStyle={{
+              background: "linear-gradient(135deg, #a5d6a7 0%, #81c784 100%)", // Light Green to Soft Green
+              borderLeft: "4px solid #81c784",
+              color: "#333",
+            }}
+          >
+            <Statistic
+              title={
+                <Text
+                  strong
+                  className="text-lg font-extrabold tracking-wide"
+                  style={{
+                    color: "#1e1b4b",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  Yesterday
+                </Text>
+              }
+              value={staticMetrics.yesterday}
+              valueStyle={{ color: "#333" }}
+            />
+          </Card>
+        </Col>
 
-          <Col xs={12} sm={12} md={6}>
-            <Card
-              onClick={() => handleTimeFrameChange("yesterday")}
-              className="cursor-pointer"
-              bodyStyle={{
-                background: "linear-gradient(135deg, #a5d6a7 0%, #81c784 100%)", // Light Green to Soft Green
-                borderLeft: "4px solid #81c784",
-                color: "#333",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    strong
-                    className="text-lg font-extrabold tracking-wide"
-                    style={{
-                      color: "#1e1b4b",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    Yesterday
-                  </Text>
-                }
-                value={staticMetrics.yesterday}
-                valueStyle={{ color: "#333" }}
-              />
-            </Card>
-          </Col>
+        <Col xs={12} sm={12} md={6}>
+          <Card
+            onClick={() => handleTimeFrameChange("thisWeek")}
+            className="cursor-pointer"
+            bodyStyle={{
+              background: "linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%)", // Light Orange to Soft Orange
+              borderLeft: "4px solid #ffb74d",
+              color: "#333",
+            }}
+          >
+            <Statistic
+              title={
+                <Text
+                  strong
+                  className="text-lg font-extrabold tracking-wide"
+                  style={{
+                    color: "#1e1b4b",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  This Week
+                </Text>
+              }
+              value={staticMetrics.thisWeek}
+              valueStyle={{ color: "#333" }}
+            />
+          </Card>
+        </Col>
 
-          <Col xs={12} sm={12} md={6}>
-            <Card
-              onClick={() => handleTimeFrameChange("thisWeek")}
-              className="cursor-pointer"
-              bodyStyle={{
-                background: "linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%)", // Light Orange to Soft Orange
-                borderLeft: "4px solid #ffb74d",
-                color: "#333",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    strong
-                    className="text-lg font-extrabold tracking-wide"
-                    style={{
-                      color: "#1e1b4b",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    This Week
-                  </Text>
-                }
-                value={staticMetrics.thisWeek}
-                valueStyle={{ color: "#333" }}
-              />
-            </Card>
-          </Col>
+        <Col xs={12} sm={12} md={6}>
+          <Card
+            onClick={() => handleTimeFrameChange("thisMonth")}
+            className="cursor-pointer"
+            bodyStyle={{
+              background: "linear-gradient(135deg, #b2ebf2 0%, #80deea 100%)", // Light Cyan to Soft Cyan
+              borderLeft: "4px solid #80deea",
+              color: "#333",
+            }}
+          >
+            <Statistic
+              title={
+                <Text
+                  strong
+                  className="text-lg font-extrabold tracking-wide"
+                  style={{
+                    color: "#1e1b4b",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  This Month
+                </Text>
+              }
+              value={staticMetrics.thisMonth}
+              valueStyle={{ color: "#333" }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-          <Col xs={12} sm={12} md={6}>
-            <Card
-              onClick={() => handleTimeFrameChange("thisMonth")}
-              className="cursor-pointer"
-              bodyStyle={{
-                background: "linear-gradient(135deg, #b2ebf2 0%, #80deea 100%)", // Light Cyan to Soft Cyan
-                borderLeft: "4px solid #80deea",
-                color: "#333",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    strong
-                    className="text-lg font-extrabold tracking-wide"
-                    style={{
-                      color: "#1e1b4b",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    This Month
-                  </Text>
-                }
-                value={staticMetrics.thisMonth}
-                valueStyle={{ color: "#333" }}
-              />
-            </Card>
-          </Col>
-        </Row>
+      <div className="p-4 my-6 border rounded-lg bg-white">
+        <Tabs
+          defaultActiveKey="date"
+          items={items}
+          onChange={setSearchType}
+          className="search-tabs"
+        />
+      </div>
 
-        <div className="p-4 my-6 border rounded-lg bg-white">
-          <Tabs
-            defaultActiveKey="date"
-            items={items}
-            onChange={setSearchType}
-            className="search-tabs"
-          />
-        </div>
-
-        <div style={{ overflowX: "auto", maxWidth: "100%" }}>
-          <Table
-            key={filteredUserData.length}
-            columns={columns}
-            dataSource={filteredUserData}
-            rowKey="id"
-            pagination={pagination}
-            onChange={handleTableChange}
-            loading={loading}
-            scroll={{ x: "max-content" }}
-          />
-        </div>
+      <div style={{ overflowX: "auto", maxWidth: "100%" }}>
+        <Table
+          key={filteredUserData.length}
+          columns={columns}
+          dataSource={filteredUserData}
+          rowKey="id"
+          pagination={pagination}
+          onChange={handleTableChange}
+          loading={loading}
+          scroll={{ x: "max-content" }}
+        />
       </div>
 
       <Modal
+        zIndex={100}
         title={
           <span style={{ color: "#1890ff", fontSize: "20px" }}>
             Order Details
@@ -1109,7 +1130,10 @@ const RegisteredUser: React.FC = () => {
         footer={[
           <Button
             key="close"
-            onClick={() => setOrderDetailsVisible(false)}
+            onClick={() => {
+              setOrderDetailsVisible(false);
+              setSelectedUser(null);
+            }}
             style={{
               backgroundColor: "#ff4d4f",
               color: "white",
@@ -1332,163 +1356,161 @@ const RegisteredUser: React.FC = () => {
       </Modal>
 
       <Modal
+        zIndex={150}
         title="User Comments"
         open={commentsModalVisible}
         onCancel={() => {
           setCommentsModalVisible(false);
           setComments([]);
+          setOrderId("");
         }}
         footer={null}
-        width={600}
+        width={550}
       >
-        <div className="bg-slate-100 rounded-xl shadow-lg p-5 mb-6">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 m-0">Comments</h2>
-            </div>
-          </div>
-
+        <div className="flex flex-col">
           {/* Comments Section */}
-          <div className="bg-white rounded-lg shadow-sm p-1">
+          <div className="mb-5">
+            <h3 className="text-base font-semibold text-gray-800 mb-3">
+              Recent Comments
+            </h3>
+
             {loadingComments ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Spin size="large" />
-                <span className="mt-4 text-slate-500">Loading comments...</span>
+              <div className="flex items-center justify-center py-6">
+                <Spin size="default" />
+                <span className="ml-3 text-gray-500">Loading comments...</span>
               </div>
-            ) : comments.length > 0 ? (
-              <div className="max-h-96 overflow-auto">
+            ) : comments && comments.length > 0 ? (
+              <div className="w-full max-w-xl max-h-80 overflow-y-auto border border-gray-200 rounded-lg shadow-sm bg-white">
                 {comments.map((comment, index) => {
-                  const avatarColorClass = getAvatarColor(
-                    comment.commentsUpdateBy
-                  );
-                  const initials = comment.commentsUpdateBy
+                  const initials = (comment.commentsUpdateBy || "Unknown")
                     .split(" ")
                     .map((word) => word[0])
                     .join("")
                     .toUpperCase();
 
+                  const colorOptions = [
+                    "bg-green-100 text-green-700",
+                    "bg-purple-100 text-purple-700",
+                    "bg-amber-100 text-amber-700",
+                    "bg-teal-100 text-teal-700",
+                    "bg-rose-100 text-rose-700",
+                    "bg-indigo-100 text-indigo-700",
+                  ];
+
+                  const colorIndex =
+                    comment.commentsUpdateBy?.length % colorOptions.length || 0;
+                  const avatarColor = colorOptions[colorIndex];
+
                   return (
                     <div
                       key={index}
-                      className={`p-4 ${
-                        index !== comments.length - 1
-                          ? "border-b border-slate-200"
-                          : ""
-                      }`}
+                      className="border-b border-gray-100 last:border-b-0"
                     >
-                      <div className="flex items-start space-x-3">
-                        <div
-                          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${avatarColorClass}`}
-                        >
-                          {initials}
-                        </div>
-
-                        <div className="flex-grow">
-                          <div className="flex justify-between items-center mb-1">
-                            <h3 className="font-medium text-slate-800 m-0">
-                              {comment.commentsUpdateBy || "Unknown"}
-                            </h3>
-                            <Tooltip
-                              title={formatDate(comment.commentsCreatedDate)}
-                            >
-                              <span className="text-xs text-slate-500">
-                                {
-                                  formatDate(comment.commentsCreatedDate).split(
-                                    ","
-                                  )[0]
-                                }
-                              </span>
-                            </Tooltip>
+                      <div className="px-3 py-1.5 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center mb-0.5">
+                          <div
+                            className={`w-6 h-6 rounded-full ${avatarColor} flex items-center justify-center text-[10px] font-semibold mr-2`}
+                          >
+                            {initials}
                           </div>
-
-                          <div className="mt-2 text-slate-600 bg-slate-50 p-3 rounded-lg relative">
-                            {comment.adminComments}
-                            <div className="absolute -top-2 -left-2 w-4 h-4 bg-slate-100 rounded-full border-2 border-white"></div>
-                          </div>
+                          <span className="font-medium text-sm text-gray-800">
+                            {comment.commentsUpdateBy || "Unknown"}
+                          </span>
+                          <span className="text-[10px] text-gray-400 ml-auto">
+                            {
+                              formatDate(comment.commentsCreatedDate).split(
+                                ","
+                              )[0]
+                            }
+                          </span>
                         </div>
+                        <p className="text-sm text-gray-600 pl-8 mt-0.5 leading-snug">
+                          {comment.adminComments}
+                        </p>
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 px-3 text-center">
-                <div className="bg-slate-100 p-3 rounded-full mb-3">
-                  <svg
-                    className="w-8 h-8 text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-base font-semibold text-slate-700">
-                  No Comments Yet
-                </h3>
+              <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
+                <svg
+                  className="w-6 h-6 text-gray-400 mx-auto mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                <p className="text-sm text-gray-500">No comments available</p>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Add New Comment */}
-        <div>
-          <Text strong>Add Comment</Text>
-          <TextArea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Enter your comment here..."
-            autoSize={{ minRows: 3, maxRows: 6 }}
-            className="mt-2 mb-4 rounded-md"
-          />
+          {/* Add Comment Section */}
+          <div className="border-t border-gray-200 pt-4">
+            <div className="flex flex-col space-y-3">
+              {/* <div className="flex items-center justify-between">
+                <Text strong className="text-sm text-gray-800">
+                  Add Comment
+                </Text>
+                <Select
+                  value={updatedBy}
+                  onChange={(value) => setUpdatedBy(value)}
+                  className="w-44"
+                  size="middle"
+                  placeholder="Select user"
+                  style={{ borderRadius: "6px" }}
+                >
+                  <Option value="Admin">Admin</Option>
+                  <Option value="Shanthi">Shanthi</Option>
+                  <Option value="Ramya">Ramya</Option>
+                  <Option value="Swathi">Swathi</Option>
+                  <Option value="Aruna">Aruna</Option>
+                  <Option value="Divya">Divya</Option>
+                  <Option value="Suchitra">Suchitra</Option>
+                  <Option value="Thulasi">Thulasi</Option>
+                  <Option value="Nagarani">Nagarani</Option>
+                  <Option value="Sandhya">Sandhya</Option>
+                  <Option value="Srilekha">Srilekha</Option>
+                </Select>
+              </div> */}
 
-          <div className="mb-4">
-            <Text>Updated By:</Text>
-            <Select
-              value={updatedBy}
-              onChange={(value: string) => setUpdatedBy(value)}
-              className="w-full mt-1 rounded-md"
-              dropdownStyle={{ borderRadius: "8px" }}
-            >
-              <Option value="Admin">Admin</Option>
-              <Option value="Shanthi">Shanthi</Option>
-              <Option value="Ramya">Ramya</Option>
-              <Option value="Swathi">Swathi</Option>
-              <Option value="Aruna">Aruna</Option>
-              <Option value="Divya">Divya</Option>
-              <Option value="Suchitra">Suchitra</Option>
-              <Option value="Thulasi">Thulasi</Option>
-              <Option value="Nagarani">Nagarani</Option>
-              <Option value="Sandhya">Sandhya</Option>
-              <Option value="Srilekha">Srilekha</Option>
-            </Select>
-          </div>
+              <TextArea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Type your comment here..."
+                autoSize={{ minRows: 3, maxRows: 5 }}
+                className="text-sm rounded-lg border-gray-300"
+              />
 
-          <div className="flex justify-end gap-2">
-            <Button
-              onClick={() => {
-                setCommentsModalVisible(false);
-                setComments([]);
-              }}
-              className="rounded-md border-gray-200 hover:bg-gray-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              onClick={handleSubmitComment}
-              loading={submittingComment}
-              className="rounded-md bg-blue-400 hover:bg-blue-500 border-blue-300"
-            >
-              Submit
-            </Button>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  size="middle"
+                  onClick={() => {
+                    setCommentsModalVisible(false);
+                    setComments([]);
+                  }}
+                  className="hover:bg-gray-100"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  size="middle"
+                  onClick={handleSubmitComment}
+                  loading={submittingComment}
+                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </Modal>

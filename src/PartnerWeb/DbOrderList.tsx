@@ -256,7 +256,7 @@ const DeliveryBoyOrders: React.FC = () => {
                       <EnvironmentOutlined className="mr-2 text-red-500" />
                       <Typography.Text strong>Delivery Address</Typography.Text>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded-md h-[90px] overflow-y-auto break-words">
+                    <div className="bg-gray-50 p-3 rounded-md h-[90px] overflow-y-auto break-words scrollbar-hide">
                       <Typography.Text className="block leading-tight">
                         {order.orderAddress.flatNo
                           ? `${order.orderAddress.flatNo}, `
@@ -282,7 +282,7 @@ const DeliveryBoyOrders: React.FC = () => {
                       ({order.orderItems?.length || 0})
                     </Typography.Text>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-md max-h-[80px] overflow-y-auto">
+                  <div className="bg-gray-50 p-3 rounded-md max-h-[80px] overflow-y-auto scrollbar-hide">
                     {order.orderItems && order.orderItems.length > 0 ? (
                       <div className="space-y-2">
                         {order.orderItems.slice(0, 2).map((item, index) => (

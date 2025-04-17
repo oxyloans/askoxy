@@ -132,16 +132,14 @@ const MainPage: React.FC = () => {
       const response = await axios.get<OrderData[]>(
         `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=${status}`
       );
-      return (
-        response.data
-          // .filter((order) => !order.testUser)
-          .map((order) => ({
-            ...order,
-            address: order.orderAddress
-              ? `${order.orderAddress.flatNo}, ${order.orderAddress.address}, ${order.orderAddress.landMark}, ${order.orderAddress.pincode}`
-              : "No Address Available",
-          }))
-      );
+      return response.data
+        .filter((order) => !order.testUser)
+        .map((order) => ({
+          ...order,
+          address: order.orderAddress
+            ? `${order.orderAddress.flatNo}, ${order.orderAddress.address}, ${order.orderAddress.landMark}, ${order.orderAddress.pincode}`
+            : "No Address Available",
+        }));
     } catch (error) {
       console.error(`Error fetching orders with status ${status}:`, error);
       return [];
@@ -543,26 +541,26 @@ const MainPage: React.FC = () => {
         new Date(a.expectedDeliveryDate || "").getTime() -
         new Date(b.expectedDeliveryDate || "").getTime(),
     },
-    {
-      title: "clusterId distance",
-      key: "clusterId",
-      // width: 100,
-      sorter: (a, b) =>
-        (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
-      render: (record: OrderData) => (
-        <div className="flex items-center gap-2 mt-1">
-          {record.clusterId ? (
-            <>
-              <Typography.Text>{record.clusterId}</Typography.Text>
-              {/* <br /> */}
-              <Typography.Text>{record.distance}</Typography.Text>
-            </>
-          ) : (
-            <Typography.Text className="text-gray-500">N/A</Typography.Text>
-          )}
-        </div>
-      ),
-    },
+    // {
+    //   title: "clusterId distance",
+    //   key: "clusterId",
+    //   // width: 100,
+    //   sorter: (a, b) =>
+    //     (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
+    //   render: (record: OrderData) => (
+    //     <div className="flex items-center gap-2 mt-1">
+    //       {record.clusterId ? (
+    //         <>
+    //           <Typography.Text>{record.clusterId}</Typography.Text>
+    //           {/* <br /> */}
+    //           <Typography.Text>{record.distance}</Typography.Text>
+    //         </>
+    //       ) : (
+    //         <Typography.Text className="text-gray-500">N/A</Typography.Text>
+    //       )}
+    //     </div>
+    //   ),
+    // },
     {
       title: "Actions",
       dataIndex: "orderStatus",
@@ -619,7 +617,7 @@ const MainPage: React.FC = () => {
                     className="text-lg tracking-wide"
                     style={{ color: "rgba(255,255,255,0.8)" }}
                   >
-                    Total Orders
+                    Total Orders(Pending)
                   </Text>
                   <div
                     className="text-3xl font-bold"

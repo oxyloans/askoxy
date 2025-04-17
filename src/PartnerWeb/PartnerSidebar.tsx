@@ -12,6 +12,8 @@ import {
   QrcodeOutlined,
   LogoutOutlined,
   DashboardOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from "@ant-design/icons";
 
 interface SidebarProps {
@@ -88,32 +90,124 @@ const Sidebar: React.FC<SidebarProps> = ({
     localStorage.clear();
     navigate("/partnerLogin");
   };
-
   return (
-    <div className="flex flex-col h-full">
-      <Menu
-        theme="light"
-        mode="inline"
-        selectedKeys={[location.pathname]}
-        onClick={handleMenuClick}
-        inlineCollapsed={isCollapsed}
-        className="flex-1 p-1 pt-1 bg"
-      >
-        {sidebarItems.map((item) => (
-          <Menu.Item key={item.key} icon={item.icon} className="mb-2">
-            {item.label}
-          </Menu.Item>
-        ))}
-      </Menu>
+    <div className="relative h-full flex flex-col bg-white overflow-x-hidden">
+      {/* Top right toggle button */}
+      <div className="flex justify-end items-center p-2 py-2">
+        <button
+          onClick={onCollapse}
+          className={`p-2 rounded-lg bg-gray-50 hover:bg-purple-50 
+            transition-all duration-300 hidden md:flex items-center justify-center
+            ${isCollapsed ? "mx-auto" : ""}`}
+        >
+          {isCollapsed ? (
+            <MenuUnfoldOutlined className="text-purple-600" />
+          ) : (
+            <MenuFoldOutlined className="text-purple-600" />
+          )}
+        </button>
+      </div>
 
-      {/* Logout Section */}
-      <div className="p-4 border-t">
+      {/* Menu area with proper scrolling - increased spacing */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-1 space-y-0.5">
+        {sidebarItems.map((item, index) => {
+          const isActive = location.pathname === item.key;
+          return (
+            <div
+              key={index}
+              onClick={() => {
+                if (onItemClick) onItemClick();
+                navigate(item.key);
+              }}
+              className={`relative flex items-center rounded-xl transition-all duration-200 cursor-pointer
+                ${
+                  isCollapsed
+                    ? "w-10 min-h-10 h-auto sm:h-10 md:h-10 justify-center"
+                    : "min-h-10 h-auto sm:h-10 md:h-10 px-4"
+                }
+                ${
+                  isActive
+                    ? "bg-purple-50 before:absolute before:w-1 before:h-4 before:bg-purple-600 before:rounded-full before:left-0 before:top-2"
+                    : "hover:bg-gray-50"
+                }
+                group`}
+            >
+              <div
+                className={`flex items-center ${isCollapsed ? "" : "gap-3"}`}
+              >
+                <span
+                  className={`transition-colors duration-200 flex items-center justify-center
+                    ${
+                      isActive
+                        ? "text-purple-600"
+                        : "text-gray-500 group-hover:text-purple-600"
+                    }`}
+                >
+                  {item.icon}
+                </span>
+                {!isCollapsed && (
+                  <span
+                    className={`font-medium whitespace-nowrap text-sm
+                      ${
+                        isActive
+                          ? "text-purple-600"
+                          : "text-gray-600 group-hover:text-purple-600"
+                      }`}
+                  >
+                    {item.label}
+                  </span>
+                )}
+              </div>
+
+              {isCollapsed && (
+                <div
+                  className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-5 py-2 
+      bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 invisible
+      group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+                >
+                  {item.label}
+                  <div
+                    className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
+                    border-4 border-transparent border-r-gray-900"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Fixed bottom section */}
+      <div className="mt-auto px-3 py-3 border-t">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center text-red-500 hover:bg-red-50 p-1 rounded"
+          className={`flex items-center rounded-xl transition-all duration-200
+            hover:bg-red-50 min-h-10 h-auto sm:h-10 md:h-10
+            ${isCollapsed ? "w-10 justify-center" : "px-4"}`}
         >
-          <LogoutOutlined className="mr-2" />
-          {!isCollapsed && "Sign Out"}
+          <div className={`flex items-center ${isCollapsed ? "" : "gap-3"}`}>
+            <span className="text-red-500 flex items-center justify-center">
+              <LogoutOutlined />
+            </span>
+
+            {!isCollapsed && (
+              <span className="text-red-500 font-medium text-sm">Sign Out</span>
+            )}
+          </div>
+
+          {isCollapsed && (
+            <div
+              className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 
+              bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 
+              group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+            >
+              Sign Out
+              <div
+                className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
+                border-4 border-transparent border-r-gray-900"
+              />
+            </div>
+          )}
         </button>
       </div>
     </div>

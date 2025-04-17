@@ -21,7 +21,7 @@ import DesignTemplatesPage from "./Templates/Templatehome";
 import UniversityPromoCard from "./Templates/UniversityPromoCard";
 import PromoCard from "./Templates/PromoCard";
 
-import Sidebar from "./AskoxyAdmin/Sider";
+import AdminSidebar from "./AskoxyAdmin/Sider";
 import Home from "./Dashboard/Home"
 import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
 import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
@@ -104,6 +104,7 @@ import DeliveryBoyList from "./PartnerWeb/DeliveryBoyList";
 import PartnerItemsList from "./PartnerWeb/PartnerItemsList";
 import DbOrderDetails from "./PartnerWeb/DbOrderList";
 import PartnerAllQueries from "./PartnerWeb/PartnerAllQueries";
+import Register from "./AskoxyAdmin/Register";
 
 const App: React.FC = () => {
 
@@ -185,18 +186,10 @@ const App: React.FC = () => {
             />
             {/* Landing Page (First Page) */}
             <Route path="/future" element={<Landingpage />} />
-   <Route path="/" element={<CurrentLandingPage />} />
-            <Route path="/allqueries" element={<AllQueries />} />
-            <Route path="/admin" element={<Login />} />
-            <Route path="/admndashboard" element={<Admin />} />
-            <Route path="/registeredUsers" element={<RegisteredUser />} />
-            <Route
-              path="/allcampaignsdetails"
-              element={<AllCampaignsDetails />}
-            />
-            <Route path="/campaignsadd" element={<CampaignsAdd />} />
-            {/* <Route path="/example" element={<Example />} /> */}
-            <Route path="/sider" element={<Sidebar />} />
+            <Route path="/" element={<CurrentLandingPage />} />
+           
+   
+           
             {/* WhatsApp Login (Before Clicking Sign-in) */}
             <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
             <Route path="/womensday" element={<WomensDay />} />
@@ -437,9 +430,26 @@ const App: React.FC = () => {
               <Route path="scan-qr" element={<BarcodeScanner />} />
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
-            </Route>
+            </Route>
 
       {/* Partner end */}
+
+
+      {/* ----------Admin Routes Start---------- */}
+          <Route path="/admin" element={<Login />} />
+          <Route path="/adminRegister" element={<Register />} />
+          <Route path="/admn" element={<AdminSidebar />}>
+            <Route path="dashboard" element={<Admin />} />
+            <Route path="registeredUsers" element={<RegisteredUser />} />
+            <Route path="allqueries" element={<AllQueries />} />
+            <Route
+              path="allcampaignsdetails"
+              element={<AllCampaignsDetails />}
+            />
+            <Route path="campaignsadd" element={<CampaignsAdd />} />
+            {/* <Route path="assignedData" element={<AssignedData />} /> */}
+          </Route>
+          {/* ----------Admin Routes end---------- */}
 
           </Routes>
         </div>

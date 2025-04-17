@@ -85,8 +85,6 @@ const AllOrders: React.FC = () => {
   const [isDataFetched, setIsDataFetched] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  useEffect(() => {}, [filteredOrders, searchTerm]);
-
   const fetchOrders = async () => {
     if (!startDate || !endDate) {
       message.warning("Please select both start and end dates");
@@ -133,10 +131,9 @@ const AllOrders: React.FC = () => {
     setSearchTerm(value);
     if (!isDataFetched) return;
 
-    const filtered = orders.filter((order) => {
-      const id = order.orderId.slice(-4).toLowerCase();
-      return id.includes(value.toLowerCase());
-    });
+    const filtered = orders.filter((order) =>
+      order.orderId.slice(-4).includes(value)
+    );
 
     setFilteredOrders(filtered);
 
@@ -204,7 +201,7 @@ const AllOrders: React.FC = () => {
             <Select.Option value="4">Delivered</Select.Option>
             <Select.Option value="5">Rejected</Select.Option>
             <Select.Option value="6">Cancelled</Select.Option>
-            <Select.Option value="picked up">Picked Up</Select.Option>
+            <Select.Option value="PickedUp">Picked Up</Select.Option>
           </Select>
         </div>
 
@@ -259,9 +256,9 @@ const AllOrders: React.FC = () => {
         <>
           {filteredOrders.length !== 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredOrders.map((order) => (
+              {filteredOrders.map((order, index) => (
                 <Card
-                  key={order.orderId}
+                  key={`${order.orderId}-${index}`}
                   className="border-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-2"
                   bordered={false}
                 >

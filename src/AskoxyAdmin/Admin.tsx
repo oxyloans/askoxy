@@ -74,15 +74,12 @@ const Admin: React.FC = () => {
 
       const formatDate = (dateString: string | number | null) => {
         if (!dateString) return "N/A";
-
         if (typeof dateString === "number") {
           return new Date(dateString).toLocaleDateString();
         }
-
         if (typeof dateString === "string" && !isNaN(Date.parse(dateString))) {
           return new Date(dateString).toLocaleDateString();
         }
-
         return "N/A";
       };
 
@@ -95,80 +92,81 @@ const Admin: React.FC = () => {
         axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
       ]);
 
-      if (
-        responses[0].status === "fulfilled" &&
-        responses[2].status === "fulfilled"
-      ) {
+      const offersList: OfferDetails[] = [];
+
+      if (responses[0].status === "fulfilled") {
         const validOffers1 = responses[0].value.data.filter(
-          (offerDetails: OfferDetails) =>
-            offerDetails.mobileNumber !== null &&
-            offerDetails.mobileNumber !== ""
+          (offer: OfferDetails) =>
+            offer.mobileNumber !== null && offer.mobileNumber !== ""
         );
 
-        const offersData = validOffers1.map((offer: OfferDetails) => ({
+        const formattedOffers1 = validOffers1.map((offer: OfferDetails) => ({
           ...offer,
           createdAt: formatDate(offer.createdAt),
         }));
 
+        offersList.push(...formattedOffers1);
+      } else {
+        console.warn("Offers API [0] failed.");
+      }
+
+      if (responses[2].status === "fulfilled") {
         const validOffers2 = responses[2].value.data.filter(
-          (offerDetails: OfferDetails) =>
-            offerDetails.userId !== null &&
-            offerDetails.userId !== "" &&
-            offerDetails.mobileNumber !== null &&
-            offerDetails.mobileNumber !== ""
+          (offer: OfferDetails) =>
+            offer.userId &&
+            offer.mobileNumber &&
+            offer.mobileNumber !== "" &&
+            offer.userId !== ""
         );
 
-        const offersData1 = validOffers2.map((offer: OfferDetails) => ({
+        const formattedOffers2 = validOffers2.map((offer: OfferDetails) => ({
           ...offer,
           createdAt: formatDate(offer.createdAt),
         }));
 
-        const combinedOffers = [...offersData, ...offersData1];
-        // console.log(combinedOffers);
-        setOffers(combinedOffers);
-        setAllOffers(combinedOffers);
+        offersList.push(...formattedOffers2);
       } else {
-        console.error("Failed to fetch offers.");
-        setError("Failed to load offers.");
+        console.warn("Offers API [2] failed.");
       }
 
-      if (
-        responses[1].status === "fulfilled" &&
-        responses[3].status === "fulfilled"
-      ) {
+      setOffers(offersList);
+      setAllOffers(offersList);
+
+      // === USERS (from API 1 and 3) ===
+      const usersList: User[] = [];
+
+      if (responses[1].status === "fulfilled") {
         const validUsers1 = responses[1].value.data.filter(
-          (user: User) =>
-            user.deliveryType !== null &&
-            user.deliveryType !== "" &&
-            user.whatsappNumber !== null &&
-            user.whatsappNumber !== ""
+          (user: User) => user.deliveryType && user.whatsappNumber
         );
 
-        const offersData = validUsers1.map((offer: OfferDetails) => ({
-          ...offer,
-          createdAt: formatDate(offer.createdAt),
+        const formattedUsers1 = validUsers1.map((user: User) => ({
+          ...user,
+          createdAt: formatDate(user.createdAt),
         }));
 
-        const validUsers2 = responses[3].value.data.filter(
-          (user: User) =>
-            user.deliveryType !== null &&
-            user.deliveryType !== "" &&
-            user.whatsappNumber !== null &&
-            user.whatsappNumber !== ""
-        );
-
-        const offersData1 = validUsers2.map((offer: OfferDetails) => ({
-          ...offer,
-          createdAt: formatDate(offer.createdAt),
-        }));
-
-        const combinedUsers = [...offersData, ...offersData1];
-        setUsers(combinedUsers);
-        setFilteredUsers(combinedUsers);
+        usersList.push(...formattedUsers1);
       } else {
-        console.error("Failed to fetch user addresses.");
-        setError("Failed to load user addresses.");
+        console.warn("Users API [1] failed.");
       }
+
+      if (responses[3].status === "fulfilled") {
+        const validUsers2 = responses[3].value.data.filter(
+          (user: User) => user.deliveryType && user.whatsappNumber
+        );
+
+        const formattedUsers2 = validUsers2.map((user: User) => ({
+          ...user,
+          createdAt: formatDate(user.createdAt),
+        }));
+
+        usersList.push(...formattedUsers2);
+      } else {
+        console.warn("Users API [3] failed.");
+      }
+
+      setUsers(usersList);
+      setFilteredUsers(usersList);
     } catch (err: any) {
       console.error("An unexpected error occurred:", err);
       setError("An unexpected error occurred.");
@@ -368,10 +366,8 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
-
-      <div className="flex-1 bg-gray-50 p-4 md:p-6 md:ml-55 overflow-hidden">
+    <div className="flex md:flex">
+      <div className="flex-1 bg-gray-50 md:p-6 md:ml-55 overflow-hidden">
         <h1 className="text-2xl font-semibold mb-4">Admin Dashboard</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 mb-4">

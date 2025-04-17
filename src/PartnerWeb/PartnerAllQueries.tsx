@@ -345,7 +345,7 @@ const AllQueries: React.FC = () => {
               <Option value="WEAREHIRING">WE ARE HIRING</Option>
               <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
               <Option value="STUDYABROAD">STUDY ABROAD</Option>
-              <Option value="FREESAMPLE">FREE SAMPLE</Option>
+              <Option value="FREESAMPLE">FREE RICE SAMPLE</Option>
             </Select>
           </div>
         </div>

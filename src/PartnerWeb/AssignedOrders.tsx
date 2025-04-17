@@ -177,7 +177,7 @@ const AssignedOrders: React.FC = () => {
                   {/* Delivery Address */}
                   <div className="flex flex-col space-y-2">
                     <Typography.Text strong>Delivery Address</Typography.Text>
-                    <div className="bg-gray-50 p-3 rounded-md h-[90px] overflow-y-auto break-words scrollbar-none">
+                    <div className="bg-gray-50 p-3 rounded-md h-[90px] overflow-y-auto break-words scrollbar-hide">
                       <Typography.Text className="block leading-tight">
                         {`${order.orderAddress?.flatNo || "N/A"}, `}
                         {order.orderAddress?.address || "N/A"}

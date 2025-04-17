@@ -193,7 +193,7 @@ const OrderDetailsPage: React.FC = () => {
         return "Rejected";
       case "6":
         return "Cancelled";
-      case "pickedUp":
+      case "PickedUp":
         return "Picked Up";
       default:
         return "Unknown";
@@ -214,6 +214,8 @@ const OrderDetailsPage: React.FC = () => {
         return "bg-red-100 text-red-800";
       case "6":
         return "bg-red-100 text-red-800";
+      case "PickedUp":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -669,7 +671,7 @@ const OrderDetailsPage: React.FC = () => {
                       </span>
                     </div>
                     <span className="text-sm font-semibold text-gray-800">
-                      {orderDetails.mobileNumber || "N/A"}
+                      {orderDetails.mobileNumber || ""}
                     </span>
                   </div>
 
@@ -698,7 +700,7 @@ const OrderDetailsPage: React.FC = () => {
                       </span>
                     </div>
                     <span className="text-sm font-semibold text-gray-800">
-                      {formatDate(orderDetails.orderDate) || "N/A"}
+                      {formatDate(orderDetails.orderDate) || ""}
                     </span>
                   </div>
                 </div>
@@ -742,7 +744,7 @@ const OrderDetailsPage: React.FC = () => {
                       Flat No
                     </div>
                     <span className="text-gray-800 font-semibold">
-                      {orderDetails.orderAddress?.flatNo || "N/A"}
+                      {orderDetails.orderAddress?.flatNo || ""}
                     </span>
                   </div>
                   <div className="flex justify-between items-center border-b pb-2">
@@ -763,7 +765,7 @@ const OrderDetailsPage: React.FC = () => {
                       Address
                     </div>
                     <span className="text-gray-800 font-semibold max-w-[200px] text-right">
-                      {orderDetails.orderAddress?.address || "N/A"}
+                      {orderDetails.orderAddress?.address || ""}
                     </span>
                   </div>
                   <div className="flex justify-between items-center border-b pb-2">
@@ -784,7 +786,7 @@ const OrderDetailsPage: React.FC = () => {
                       Landmark
                     </div>
                     <span className="text-gray-800 font-semibold">
-                      {orderDetails.orderAddress?.landMark || "N/A"}
+                      {orderDetails.orderAddress?.landMark || ""}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -805,7 +807,7 @@ const OrderDetailsPage: React.FC = () => {
                       Pincode
                     </div>
                     <span className="text-gray-800 font-semibold">
-                      {orderDetails.orderAddress?.pincode || "N/A"}
+                      {orderDetails.orderAddress?.pincode || ""}
                     </span>
                   </div>
                 </div>
@@ -826,7 +828,7 @@ const OrderDetailsPage: React.FC = () => {
                 >
                   <div className="flex-grow">
                     <h3 className="text-base font-semibold text-gray-800 mb-1">
-                      {item.itemName || "N/A"}
+                      {item.itemName || ""}
                     </h3>
                     <p className="text-gray-600 text-sm">
                       Quantity: {item.quantity || 0} | Price: ₹
@@ -834,7 +836,7 @@ const OrderDetailsPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-xs font-medium ml-4">
-                    {item.itemBarCode || "N/A"}
+                    {item.itemBarCode || ""}
                   </div>
                 </div>
               ))}
@@ -850,13 +852,13 @@ const OrderDetailsPage: React.FC = () => {
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Expected Delivery Date</span>
                 <span className="font-medium">
-                  {orderDetails.expectedDeliveryDate || "N/A"}
+                  {orderDetails.expectedDeliveryDate || ""}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Time Slot</span>
                 <span className="font-medium">
-                  {orderDetails.timeSlot || "N/A"}
+                  {orderDetails.timeSlot || ""}
                 </span>
               </div>
             </div>
@@ -875,23 +877,23 @@ const OrderDetailsPage: React.FC = () => {
                   <>
                     <div className="flex justify-between text-sm text-gray-700">
                       <span className="font-medium">Order Date</span>
-                      <span>{trackingDates?.orderDate || "N/A"}</span>
+                      <span>{trackingDates?.orderDate || ""}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-700">
                       <span className="font-medium">Accepted Date</span>
-                      <span>{trackingDates.acceptedDate || "N/A"}</span>
+                      <span>{trackingDates.acceptedDate || ""}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-700">
                       <span className="font-medium">Assigned Date</span>
-                      <span>{trackingDates.assignedDate || "N/A"}</span>
+                      <span>{trackingDates.assignedDate || ""}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-700">
                       <span className="font-medium">PickUp Date</span>
-                      <span>{trackingDates.pickUpDate || "N/A"}</span>
+                      <span>{trackingDates.pickUpDate || ""}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-700">
                       <span className="font-medium">delivered Date</span>
-                      <span>{trackingDates.deliveredDate || "N/A"}</span>
+                      <span>{trackingDates.deliveredDate || ""}</span>
                     </div>
                   </>
                 );
@@ -899,31 +901,33 @@ const OrderDetailsPage: React.FC = () => {
             </div>
           </div>
 
-          {orderStatus === "3" && (
-            <>
-              <div className="p-6 bg-gray-50 border-t">
-                <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center space-x-2">
-                  <CarOutlined className="mr-3 text-blue-600" />
-                  Order Assigned To
-                </h2>
+          {orderStatus === "3" ||
+            orderStatus === "4" ||
+            (orderStatus === "PickedUp" && (
+              <>
+                <div className="p-6 bg-gray-50 border-t">
+                  <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center space-x-2">
+                    <CarOutlined className="mr-3 text-blue-600" />
+                    Order Assigned To
+                  </h2>
 
-                <div className="bg-white rounded-lg p-5 border space-y-3">
-                  <div className="flex justify-between text-sm text-gray-700">
-                    <span>DeliveryBoy name</span>
-                    <span className="font-medium">
-                      {dbDetails?.deliveryBoyName || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-700">
-                    <span>DeliveryBoy Mobile</span>
-                    <span className="font-medium">
-                      {dbDetails?.deliveryBoyMobile || "N/A"}
-                    </span>
+                  <div className="bg-white rounded-lg p-5 border space-y-3">
+                    <div className="flex justify-between text-sm text-gray-700">
+                      <span>DeliveryBoy name</span>
+                      <span className="font-medium">
+                        {dbDetails?.deliveryBoyName || ""}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-700">
+                      <span>DeliveryBoy Mobile</span>
+                      <span className="font-medium">
+                        {dbDetails?.deliveryBoyMobile || ""}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            ))}
 
           <div className="p-6">
             <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center space-x-2">

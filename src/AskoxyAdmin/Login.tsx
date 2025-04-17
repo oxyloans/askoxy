@@ -1,191 +1,204 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  Form,
+  Input,
+  Button,
+  Alert,
+  message,
+  Card,
+  Typography,
+  Divider,
+} from "antd";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { MailOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
+import BASE_URL from "../Config";
 
-const LoginPage: React.FC = () => {
+const { Title, Text } = Typography;
+
+interface LoginResponse {
+  status: string;
+  token: string;
+  refreshToken: string;
+  id: string;
+  errorMessage?: string;
+  primaryType: string;
+}
+
+const Login: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [emailError, setEmailError] = useState<string>("");
-  const [passwordError, setPasswordError] = useState<string>("");
-  const [loginError, setLoginError] = useState<string>("");
-  const [loginSuccess, setLoginSuccess] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const handleLogin = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
+    // Validation
     if (!email) {
-      setEmailError("Email is required");
-      return false;
-    } else if (!emailRegex.test(email)) {
-      setEmailError("Please enter a valid email address");
-      return false;
+      setError("Please enter your email");
+      setLoading(false);
+      return;
     }
-    setEmailError("");
-    return true;
-  };
-
-  const validatePassword = (password: string): boolean => {
     if (!password) {
-      setPasswordError("Password is required");
-      return false;
-    }
-    setPasswordError("");
-    return true;
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Reset error messages and success state
-    setLoginError("");
-    setLoginSuccess(false);
-
-    // Validate inputs
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-
-    if (!isEmailValid || !isPasswordValid) {
+      setError("Please enter your password");
+      setLoading(false);
       return;
     }
 
-    // Check credentials
-    if (email === "admin@askoxy.ai.com" && password === "admin$123") {
-      // Set success message
-      setLoginSuccess(true);
+    const payload = {
+      email,
+      password,
+    };
 
-      setTimeout(() => {
-        navigate("/admndashboard");
-      }, 3000);
-    } else {
-      setLoginError("Invalid email or password");
+    try {
+      const response = await axios.post<LoginResponse>(
+        `${BASE_URL}/user-service/userEmailPassword`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.status === "Login Successful") {
+        const { token, id, primaryType } = response.data;
+
+        localStorage.setItem("acToken", token);
+        localStorage.setItem("uniquId", id);
+        localStorage.setItem("primaryType", primaryType);
+        const userName = (
+          payload.email.split("@")[0].match(/[a-zA-Z]+/g) || []
+        ).join("");
+
+        localStorage.setItem("userName", userName);
+
+        // Notify the user and navigate to the dashboard
+        message.success({
+          content: "Login successful! Redirecting to dashboard...",
+          icon: <LoginOutlined />,
+          className: "custom-message-success",
+        });
+
+        navigate("/admn/dashboard");
+      } else {
+        // Handle server error messages
+        setError(response.data.errorMessage || "Invalid email or password");
+      }
+    } catch (error: any) {
+      // Handle network or server errors
+      setError(
+        error.response?.data?.message ||
+          "Failed to login. Please check your connection and try again."
+      );
+    } finally {
+      setLoading(false); // Stop the loading indicator
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-purple-900">
-            ASKOXY.AI Admin
-          </h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100 p-4">
+      <Card
+        className="w-full max-w-md shadow-xl rounded-lg overflow-hidden border-0"
+        bodyStyle={{ padding: "2rem" }}
+      >
+        <div className="text-center mb-6">
+          <Title level={3} className="font-medium text-gray-700 m-0">
+            LOGIN
+          </Title>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {loginError && (
-            <div className="p-3 text-sm text-white bg-red-500 rounded">
-              {loginError}
-            </div>
-          )}
+        <Form layout="vertical" size="large" onFinish={handleLogin}>
+          <Form.Item
+            label={
+              <span className="text-gray-700 font-medium">Email Address</span>
+            }
+            name="email"
+            rules={[
+              { required: true, message: "Please enter your email" },
+              {
+                type: "email",
+                message: "Please enter a valid email address",
+              },
+            ]}
+            className="mb-4"
+          >
+            <Input
+              prefix={<MailOutlined className="text-gray-400 mr-2" />}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="rounded-md"
+            />
+          </Form.Item>
 
-          {loginSuccess && (
-            <div className="p-3 text-sm text-white bg-green-500 rounded">
-              Successfully logged in!
-            </div>
-          )}
+          <Form.Item
+            label={<span className="text-gray-700 font-medium">Password</span>}
+            name="password"
+            rules={[
+              { required: true, message: "Please enter your password" },
+              // {
+              //   pattern:
+              //     /^(?=.[a-z])(?=.[A-Z])(?=.\d)(?=.[@$!%?&])[A-Za-z\d@$!%?&]{6,}$/,
+              //   message:
+              //     "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character",
+              // },
+            ]}
+            className="mb-6"
+          >
+            <Input.Password
+              prefix={<LockOutlined className="text-gray-400 mr-2" />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="rounded-md"
+            />
+          </Form.Item>
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <div className="mt-1">
-              <input
-                id="email"
-                name="email"
-                type="text"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => validateEmail(email)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  emailError
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-              />
-              {emailError && (
-                <p className="mt-1 text-xs text-red-500">{emailError}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <div className="relative mt-1">
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => validatePassword(password)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  passwordError
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-5 h-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-5 h-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                      clipRule="evenodd"
-                    />
-                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                  </svg>
-                )}
-              </button>
-              {passwordError && (
-                <p className="mt-1 text-xs text-red-500">{passwordError}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          <Form.Item className="mb-2">
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              icon={<LoginOutlined />}
+              className="w-full h-10 rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
             >
               Login
-            </button>
+            </Button>
+          </Form.Item>
+
+          {error && (
+            <Alert
+              message={error}
+              type="error"
+              showIcon
+              className="mt-4 rounded-md"
+            />
+          )}
+
+          <Divider className="my-6">
+            <Text className="text-gray-400">OR</Text>
+          </Divider>
+
+          <div className="text-center">
+            <Text className="text-gray-600">Don't have an account?</Text>
+            <Link to="/adminRegister">
+              <Button
+                type="link"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Create Account
+              </Button>
+            </Link>
           </div>
-        </form>
-      </div>
+        </Form>
+      </Card>
     </div>
   );
 };
 
-export default LoginPage;
+export default Login;

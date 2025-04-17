@@ -238,23 +238,27 @@ const AllQueries: React.FC = () => {
           {record.userPendingQueries && record.userPendingQueries.length > 0
             ? record.userPendingQueries.map((reply, index) => (
                 <div key={index} className="mb-2 border-b pb-1">
-                  <span
-                    className={`block text-sm font-semibold ${
-                      reply.resolvedBy === "admin"
-                        ? "text-blue-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {reply.resolvedBy === "admin" ? "Admin" : "User"}:
-                  </span>
+                  <div className="flex justify-between items-start">
+                    <span
+                      className={`block text-sm font-semibold ${
+                        reply.resolvedBy === "admin"
+                          ? "text-blue-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {reply.resolvedBy === "admin" ? "Admin" : "User"}:
+                    </span>
+
+                    {reply.resolvedOn && (
+                      <span className="text-xs text-gray-400">
+                        {new Date(reply.resolvedOn).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
                   <span className="block text-sm text-gray-700">
                     {reply.pendingComments || "No comment provided"}
                   </span>
-                  {reply.resolvedOn && (
-                    <span className="block text-xs text-gray-400">
-                      {new Date(reply.resolvedOn).toLocaleString()}
-                    </span>
-                  )}
                 </div>
               ))
             : null}
@@ -311,9 +315,7 @@ const AllQueries: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <Sider />
-      <div className="flex-1 p-6">
-        {/* <div className="bg-white rounded-lg shadow-md p-6 mb-6"> */}
+      <div className="flex-1 ">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-800 mb-4 md:mb-0">
             Queries Raised by Users
@@ -348,7 +350,7 @@ const AllQueries: React.FC = () => {
               <Option value="WEAREHIRING">WE ARE HIRING</Option>
               <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
               <Option value="STUDYABROAD">STUDY ABROAD</Option>
-              <Option value="FREESAMPLE">FREE SAMPLE</Option>
+              <Option value="FREESAMPLE">FREE RICE SAMPLE</Option>
             </Select>
           </div>
         </div>

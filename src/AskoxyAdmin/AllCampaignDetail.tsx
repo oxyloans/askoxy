@@ -426,17 +426,12 @@ const AllCampaignsDetails: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar */}
-      {/* <div className="w-full md:w-64 lg:w-1/5 text-white p-2"> */}
-      <Sidebar />
-      {/* </div> */}
-
-      {/* Main Content */}
-      <div className="flex-3 p-4 sm:p-6 lg:p-8 mx-auto w-full max-w-full md:max-w-7xl">
-        <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
+    <div className="flex flex-col md:flex-row">
+      <div className="flex-3 pt-0 px-4 sm:px-6 lg:px-8 mx-auto w-full max-w-full">
+        <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4">
           All Service Details
         </h1>
+
         {loading ? (
           <p className="text-gray-600">Loading Services...</p>
         ) : (
