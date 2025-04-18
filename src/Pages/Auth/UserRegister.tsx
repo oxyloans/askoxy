@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -38,7 +38,29 @@ const UserRegister: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isEmailSubmitted, setIsEmailSubmitted] = useState<boolean>(false);
+  const [registrationSuccess, setRegistrationSuccess] =
+    useState<boolean>(false);
   const navigate = useNavigate();
+
+  // Enhanced effect to handle navigation after successful registration
+  useEffect(() => {
+    if (registrationSuccess) {
+      // Show success message before redirecting
+      message.success({
+        content: "Registration successful! Redirecting to login...",
+        icon: <UserAddOutlined />,
+        className: "custom-message-success",
+        duration: 1.5,
+      });
+
+      // Set a shorter timeout for redirection
+      const redirectTimer = setTimeout(() => {
+        navigate("/userlogin", { replace: true });
+      }, 1000);
+
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [registrationSuccess, navigate]);
 
   const handleEmailSubmit = async (): Promise<void> => {
     if (!email) {
@@ -109,25 +131,21 @@ const UserRegister: React.FC = () => {
         }
       );
 
-      message.success({
-        content: "Registration successful!",
-        icon: <UserAddOutlined />,
-        className: "custom-message-success",
-      });
-
       if (response.data.userId !== null) {
-        setTimeout(() => {
-          navigate("/userlogin");
-        }, 1000);
-      }
+        // Directly navigate on success
+        setRegistrationSuccess(true);
 
-      setIsEmailSubmitted(false);
-      setEmail("");
-      setName("");
-      setEmailOtp("");
-      setPassword("");
-      setEmailOtpSession("");
-      setSalt("");
+        // Reset form fields
+        setIsEmailSubmitted(false);
+        setEmail("");
+        setName("");
+        setEmailOtp("");
+        setPassword("");
+        setEmailOtpSession("");
+        setSalt("");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } catch (err) {
       setError(
         "OTP verification failed. Please check your code and try again."
@@ -135,6 +153,11 @@ const UserRegister: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Immediate redirect function (as a backup method)
+  const redirectToLogin = () => {
+    navigate("/userlogin", { replace: true });
   };
 
   return (
