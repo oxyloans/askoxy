@@ -490,13 +490,13 @@ const TaskUpdate: React.FC = () => {
                     <Text type="secondary">
                       {typeof dateInfo === "object"
                         ? dateInfo.formatted
-                        : dateInfo}
+                        : ""}
                     </Text>
                     <br />
                     <Text type="secondary" className="text-xs">
                       {typeof dateInfo === "object"
                         ? dateInfo.relative
-                        : dateInfo}
+                        : ""}
                     </Text>
                   </div>
                 </div>

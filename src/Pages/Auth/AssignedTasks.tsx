@@ -10,12 +10,15 @@ import {
   Empty,
   Divider,
   Badge,
-  message,
   notification,
   Tag,
   Avatar,
   Progress,
   Timeline,
+  Tooltip,
+  Select,
+  Space,
+  Input,
 } from "antd";
 import {
   ReloadOutlined,
@@ -24,9 +27,16 @@ import {
   FileTextOutlined,
   UserOutlined,
   CalendarOutlined,
+  FlagOutlined,
+  SearchOutlined,
+  ExclamationCircleOutlined,
+  BarsOutlined,
+  FilterOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
+const { Option } = Select;
+const { Search } = Input;
 
 interface AssignedTask {
   taskcontent: string;
@@ -35,26 +45,73 @@ interface AssignedTask {
   admindocumentid: string | null;
   id: string;
   message: string;
-  // Added for UI enhancement
   priority?: "high" | "medium" | "low";
   dueDate?: string;
+  status?: "pending" | "completed";
+  createdAt?: string;
 }
+
+// Consistent button style with fixed dimensions
+const buttonStyle = {
+  height: "38px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "0 16px",
+};
 
 const AssignedTasksPage: React.FC = () => {
   const [tasks, setTasks] = useState<AssignedTask[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<AssignedTask[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // Fetch tasks when component mounts
   useEffect(() => {
     fetchAssignedTasks();
   }, []);
 
+  // Filter tasks based on search and filters
+  useEffect(() => {
+    let filtered = [...tasks];
+
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (task) =>
+          task.taskcontent.toLowerCase().includes(term) ||
+          task.taskassingnedby.toLowerCase().includes(term) ||
+          task.createdby.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply priority filter
+    if (filterPriority !== "all") {
+      filtered = filtered.filter((task) => task.priority === filterPriority);
+    }
+
+    // Apply status filter
+    if (filterStatus !== "all") {
+      const isCompleted = filterStatus === "completed";
+      filtered = filtered.filter((task) =>
+        isCompleted
+          ? completedTasks.includes(task.id)
+          : !completedTasks.includes(task.id)
+      );
+    }
+
+    setFilteredTasks(filtered);
+  }, [tasks, searchTerm, filterPriority, filterStatus, completedTasks]);
+
   const fetchAssignedTasks = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-       `${BASE_URL}/user-service/write/getTaskData`,
+        `${BASE_URL}/user-service/write/getTaskData`,
         {
           headers: {
             accept: "*/*",
@@ -62,21 +119,34 @@ const AssignedTasksPage: React.FC = () => {
         }
       );
 
-      // Adding mock data for UI enhancement
-      const enhancedTasks = response.data.map((task: AssignedTask) => ({
-        ...task,
-        priority: ["high", "medium", "low"][Math.floor(Math.random() * 3)] as
-          | "high"
-          | "medium"
-          | "low",
-        dueDate: new Date(
-          Date.now() + Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)
-        )
-          .toISOString()
-          .split("T")[0],
-      }));
+      // Enhance tasks with additional UI data
+      const enhancedTasks = response.data.map(
+        (task: AssignedTask, index: number) => {
+          // Create deterministic priorities based on index for demo
+          const priorities = ["high", "medium", "low"];
+          const priority = priorities[index % 3] as "high" | "medium" | "low";
+
+          // Create realistic due dates (1-7 days from now)
+          const daysToAdd = (index % 7) + 1;
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + daysToAdd);
+
+          // Create a creation date (1-30 days ago)
+          const creationDate = new Date();
+          creationDate.setDate(creationDate.getDate() - (index % 30) - 1);
+
+          return {
+            ...task,
+            priority,
+            dueDate: dueDate.toISOString().split("T")[0],
+            createdAt: creationDate.toISOString().split("T")[0],
+            status: "pending",
+          };
+        }
+      );
 
       setTasks(enhancedTasks);
+      setFilteredTasks(enhancedTasks);
 
       if (enhancedTasks.length === 0) {
         notification.info({
@@ -118,6 +188,18 @@ const AssignedTasksPage: React.FC = () => {
     });
   };
 
+  const handleUnmarkComplete = (taskId: string) => {
+    setCompletedTasks(completedTasks.filter((id) => id !== taskId));
+
+    notification.info({
+      message: "Task Reopened",
+      description: "The task has been marked as pending.",
+      placement: "topRight",
+      duration: 3,
+      icon: <ClockCircleOutlined style={{ color: "#1890ff" }} />,
+    });
+  };
+
   const getPriorityColor = (priority?: "high" | "medium" | "low") => {
     switch (priority) {
       case "high":
@@ -131,9 +213,53 @@ const AssignedTasksPage: React.FC = () => {
     }
   };
 
+  const getPriorityIcon = (priority?: "high" | "medium" | "low") => {
+    return priority === "high" ? (
+      <ExclamationCircleOutlined style={{ color: "#f5222d" }} />
+    ) : (
+      <FlagOutlined
+        style={{ color: priority === "medium" ? "#fa8c16" : "#52c41a" }}
+      />
+    );
+  };
+
+  const getDaysRemaining = (dueDate?: string) => {
+    if (!dueDate) return 0;
+
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    };
+
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   const renderTaskCard = (task: AssignedTask) => {
     const isCompleted = completedTasks.includes(task.id);
     const priorityColor = getPriorityColor(task.priority);
+    const daysRemaining = getDaysRemaining(task.dueDate);
+
+    // Calculate urgency for progress bar
+    let urgencyColor = "green";
+    if (daysRemaining <= 1) urgencyColor = "red";
+    else if (daysRemaining <= 3) urgencyColor = "orange";
+
+    // Calculate progress percentage (inverse of days remaining)
+    const urgencyPercent = isCompleted
+      ? 100
+      : Math.max(0, Math.min(100, (7 - daysRemaining) * 14));
 
     return (
       <Card
@@ -161,21 +287,29 @@ const AssignedTasksPage: React.FC = () => {
                 <Text strong className="text-lg text-gray-800 block">
                   Task from {task.taskassingnedby}
                 </Text>
-                <div className="flex gap-2 mt-1">
+                <div className="flex flex-wrap gap-2 mt-1">
                   <Tag color="blue" icon={<UserOutlined />}>
                     {task.createdby}
                   </Tag>
-                  {/* <Tag color={priorityColor} className="capitalize">
+                  <Tag
+                    color={priorityColor}
+                    icon={getPriorityIcon(task.priority)}
+                  >
                     {task.priority} Priority
-                  </Tag> */}
+                  </Tag>
+                  <Tag color={isCompleted ? "success" : "processing"}>
+                    {isCompleted ? "COMPLETED" : "PENDING"}
+                  </Tag>
                 </div>
               </div>
             </div>
-            <Badge
-              status={isCompleted ? "success" : "processing"}
-              text={isCompleted ? "COMPLETED" : "PENDING"}
-              className={isCompleted ? "text-green-600" : "text-blue-600"}
-            />
+            <div className="hidden sm:block">
+              <Badge
+                status={isCompleted ? "success" : "processing"}
+                text={isCompleted ? "COMPLETED" : "PENDING"}
+                className={isCompleted ? "text-green-600" : "text-blue-600"}
+              />
+            </div>
           </div>
         }
       >
@@ -194,31 +328,70 @@ const AssignedTasksPage: React.FC = () => {
           </div>
         </div>
 
+        {/* <div className="mt-4">
+          <div className="flex justify-between items-center mb-2">
+            <Text className="text-gray-600 text-sm">
+              {isCompleted ? "Completed" : "Due in"}{" "}
+              {isCompleted ? "" : `${daysRemaining} days`}
+            </Text>
+            <Text className="text-right text-gray-600 text-sm">
+              {isCompleted ? "100%" : `${urgencyPercent}%`}
+            </Text>
+          </div>
+          <Progress
+            percent={urgencyPercent}
+            status={
+              isCompleted
+                ? "success"
+                : urgencyColor === "red"
+                ? "exception"
+                : "active"
+            }
+            showInfo={false}
+            strokeColor={
+              isCompleted
+                ? "#52c41a"
+                : urgencyColor === "orange"
+                ? "#fa8c16"
+                : undefined
+            }
+            size="small"
+          />
+        </div> */}
+
         <div className="mt-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-col gap-2 text-gray-500">
             <div className="flex items-center gap-2">
               <CalendarOutlined />
-              <Text className="text-sm">Due: {task.dueDate}</Text>
+              <Text className="text-sm">
+                Created At: {formatDate(task.createdAt)}
+              </Text>
             </div>
+            {/* <div className="flex items-center gap-2">
+              <CalendarOutlined />
+              <Text className="text-sm">Due: {formatDate(task.dueDate)}</Text>
+            </div> */}
             <Text className="text-xs text-gray-400">
-              Task ID: {task.id.substring(0, 8)}...
+              Task ID: #{task.id.substring(0, 4)}
             </Text>
           </div>
 
           {isCompleted ? (
             <Button
-              type="default"
-              className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
-              icon={<CheckCircleOutlined />}
-              disabled
+              style={buttonStyle}
+              onClick={() => handleUnmarkComplete(task.id)}
+              icon={<ClockCircleOutlined />}
+              className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
             >
-              Completed
+              Mark as Pending
             </Button>
           ) : (
             <Button
               type="primary"
+              style={buttonStyle}
               className="bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 shadow-sm"
               onClick={() => handleMarkComplete(task.id)}
+              icon={<CheckCircleOutlined />}
             >
               Mark as Complete
             </Button>
@@ -231,6 +404,7 @@ const AssignedTasksPage: React.FC = () => {
   // Calculate completion statistics
   const totalTasks = tasks.length;
   const completedTasksCount = completedTasks.length;
+  const pendingTasksCount = totalTasks - completedTasksCount;
   const completionPercentage =
     totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
 
@@ -245,9 +419,9 @@ const AssignedTasksPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
                 <Title level={2} className="text-white mb-1">
-                  Assigned Tasks
+                  List of Tasks Assigned by Admin
                 </Title>
-                <Text className="text-blue-800 opacity-90">
+                <Text className="text-blue-800">
                   View and manage your assigned tasks
                 </Text>
               </div>
@@ -255,6 +429,7 @@ const AssignedTasksPage: React.FC = () => {
               <Button
                 onClick={fetchAssignedTasks}
                 icon={<ReloadOutlined />}
+                style={buttonStyle}
                 className="mt-4 md:mt-0 bg-white/20 text-white border-white/30 hover:bg-white/30 hover:border-white/40 backdrop-blur-sm"
               >
                 Refresh Tasks
@@ -263,8 +438,8 @@ const AssignedTasksPage: React.FC = () => {
           </div>
 
           {tasks.length > 0 && (
-            <div className="flex flex-wrap gap-6 px-6 py-4 bg-white border-b border-gray-200">
-              <Card className="flex-1 min-w-[200px] border-blue-100">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white border-b border-gray-200">
+              <Card className="flex-1 border-blue-100">
                 <Statistic
                   title="Total Tasks"
                   value={totalTasks}
@@ -272,7 +447,7 @@ const AssignedTasksPage: React.FC = () => {
                   className="text-blue-600"
                 />
               </Card>
-              <Card className="flex-1 min-w-[200px] border-green-100">
+              <Card className="flex-1 border-green-100">
                 <Statistic
                   title="Completed"
                   value={completedTasksCount}
@@ -280,28 +455,71 @@ const AssignedTasksPage: React.FC = () => {
                   className="text-green-600"
                 />
               </Card>
-              <Card className="flex-1 min-w-[200px] border-orange-100">
+              <Card className="flex-1 border-orange-100">
                 <div>
-                  <Text className="text-gray-500 block mb-2">Completion</Text>
+                  <Text className="text-gray-500 block mb-2">
+                    Completion Progress
+                  </Text>
                   <Progress
                     percent={completionPercentage}
                     status={completionPercentage === 100 ? "success" : "active"}
+                    strokeColor={{
+                      from: "#108ee9",
+                      to: "#52c41a",
+                    }}
                   />
                 </div>
               </Card>
             </div>
           )}
 
+          {tasks.length > 0 && (
+            <div className="p-4 bg-gray-50 border-b border-gray-200">
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="flex-1">
+                  <Text className="text-gray-600 font-medium block mb-2">
+                    <SearchOutlined className="mr-1" /> Search Tasks
+                  </Text>
+                  <Search
+                    placeholder="Search by task content, creator or assignee"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    allowClear
+                    style={{ width: "100%" }}
+                  />
+                </div>
+               
+              </div>
+            </div>
+          )}
+
           <div className="p-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <Spin size="small" />
+                <Spin size="large" />
                 <Text className="mt-4 text-gray-500">
                   Loading your tasks...
                 </Text>
               </div>
+            ) : filteredTasks.length > 0 ? (
+              <div className="space-y-6">
+                {filteredTasks.map(renderTaskCard)}
+              </div>
             ) : tasks.length > 0 ? (
-              <div className="space-y-6">{tasks.map(renderTaskCard)}</div>
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <div className="text-center">
+                    <Text className="text-gray-500 block mb-2">
+                      No matching tasks found
+                    </Text>
+                    <Text className="text-gray-400 text-sm">
+                      Try adjusting your search criteria or filters
+                    </Text>
+                  </div>
+                }
+                className="py-16"
+              />
             ) : (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -325,7 +543,7 @@ const AssignedTasksPage: React.FC = () => {
   );
 };
 
-// Create a custom Statistic component since we're adding it
+// Custom Statistic component for the dashboard
 const Statistic: React.FC<{
   title: string;
   value: number | string;

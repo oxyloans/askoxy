@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Form,
   Input,
@@ -21,7 +21,7 @@ interface LoginResponse {
   token: string;
   refreshToken: string;
   id: string;
-  name: string; // Added the missing 'name' property
+  name: string;
   errorMessage?: string;
 }
 
@@ -32,30 +32,33 @@ const UserLogin: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      navigate("/userPanelLayout");
+    }
+  }, [navigate]);
+
   const handleLogin = async (): Promise<void> => {
     setLoading(true);
     setError(null);
 
-    // Validation
     if (!email) {
       setError("Please enter your email");
       setLoading(false);
       return;
     }
+
     if (!password) {
       setError("Please enter your password");
       setLoading(false);
       return;
     }
 
-    // Prepare the payload
-    const payload = {
-      email,
-      password,
-    };
+    const payload = { email, password };
 
     try {
-      // Make the API request
       const response = await axios.post<LoginResponse>(
         `${BASE_URL}/user-service/userEmailPassword`,
         payload,
@@ -66,18 +69,14 @@ const UserLogin: React.FC = () => {
         }
       );
 
-      // Handle successful login
       if (response.data.status === "Login Successful") {
-        const { token, refreshToken, id,name} = response.data;
+        const { token, refreshToken, id, name } = response.data;
 
-        // Store tokens and user details in local storage
         localStorage.setItem("accessToken", token);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("userId", id);
-         
         localStorage.setItem("userName", name);
 
-        // Notify the user and navigate to the dashboard
         message.success({
           content: "Login successful! Redirecting to dashboard...",
           icon: <LoginOutlined />,
@@ -86,25 +85,22 @@ const UserLogin: React.FC = () => {
 
         navigate("/userPanelLayout");
       } else {
-        // Handle server error messages
         setError(response.data.errorMessage || "Invalid email or password");
       }
     } catch (error: any) {
-      // Handle network or server errors
       setError(
         error.response?.data?.message ||
           "Failed to login. Please check your connection and try again."
       );
     } finally {
-      setLoading(false); // Stop the loading indicator
+      setLoading(false);
     }
   };
 
-  // Custom styles for input fields
   const inputStyle = {
-    height: "48px", // Increased height for input fields
-    width: "100%", // Full width within the container
-    fontSize: "16px", // Slightly larger font for better readability
+    height: "48px",
+    width: "100%",
+    fontSize: "16px",
   };
 
   return (
@@ -176,7 +172,7 @@ const UserLogin: React.FC = () => {
               loading={loading}
               icon={<LoginOutlined />}
               className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-              style={{ height: "48px" }} // Increased button height to match inputs
+              style={{ height: "48px" }}
             >
               Login
             </Button>

@@ -10,6 +10,9 @@ import {
   notification,
   Typography,
   Tag,
+  Tooltip,
+  Row,
+  Col,
 } from "antd";
 import type { TableProps } from "antd";
 
@@ -140,6 +143,7 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
       width: 250,
       ellipsis: true,
       align: "center",
+      sorter: (a, b) => a.id.localeCompare(b.id),
     },
     {
       title: "Task Content",
@@ -147,6 +151,7 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
       key: "taskcontent",
       width: 300,
       align: "center",
+      sorter: (a, b) => a.taskcontent.localeCompare(b.taskcontent),
     },
     {
       title: "Created By",
@@ -179,49 +184,44 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
   return (
     <UserPanelLayout>
       <div className="p-4">
-        <Title level={3}>Task Assignments by User</Title>
+        <Title level={3}>List of Tasks Assigned by Admin</Title>
 
-        <div className="mb-6 flex items-center gap-4">
-          <Select
-            placeholder="Select a user"
-            style={{ width: 200 }}
-            onChange={handleUserChange}
-            value={selectedUser || undefined}
-            showSearch
-            onDropdownVisibleChange={handleDropdownOpen}
-            filterOption={(input, option) =>
-              (option?.children as unknown as string)
-                .toLowerCase()
-                .includes(input.toLowerCase())
-            }
-          >
-            {displayUserList.map((user) => (
-              <Option key={user} value={user}>
-                {user}
-              </Option>
-            ))}
-          </Select>
-
-          <Button
-            type="primary"
-            onClick={() => fetchUserTasks(selectedUser)}
-            disabled={!selectedUser}
-          >
-            View Tasks
-          </Button>
-
-          {selectedUser && (
-            <Button
-              onClick={() => {
-                setSelectedUser("");
-                setDisplayUserList(userList);
-                setTasks([]);
-              }}
+        <Row gutter={16} className="mb-6">
+          <Col xs={24} sm={12} md={8}>
+            <Select
+              placeholder="Select a user"
+              style={{ width: "100%" }}
+              onChange={handleUserChange}
+              value={selectedUser || undefined}
+              showSearch
+              onDropdownVisibleChange={handleDropdownOpen}
+              filterOption={(input, option) =>
+                (option?.children as unknown as string)
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
             >
-              Clear Selection
+              {displayUserList.map((user) => (
+                <Option key={user} value={user}>
+                  {user}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={8}>
+            <Button
+              type="primary"
+              onClick={() => fetchUserTasks(selectedUser)}
+              disabled={!selectedUser}
+              block
+            >
+              View Tasks
             </Button>
-          )}
-        </div>
+          </Col>
+
+          
+        </Row>
 
         {loading ? (
           <div className="flex justify-center items-center h-64">

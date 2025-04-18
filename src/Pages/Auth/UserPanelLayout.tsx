@@ -63,38 +63,38 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     }
   }, [screens]);
 
-  const sidebarItems: SidebarItem[] = [
-    {
-      key: "plan-of-the-day",
-      label: "Plan of the Day",
-      icon: <FaTachometerAlt className="text-blue-500" />,
-      link: "/planoftheday",
-    },
-    {
-      key: "end-of-the-day",
-      label: "End of the Day Summary",
-      icon: <FaClipboardCheck className="text-green-500" />,
-      link: "/taskupdated",
-    },
-    {
-      key: "task-overview",
-      label: "Task Overview",
-      icon: <FaSlideshare className="text-purple-500" />,
-      link: "/all-statuses",
-    },
-    {
-      key: "task-assignments",
-      label: "Assigned Tasks List",
-      icon: <FaExchangeAlt className="text-orange-500" />,
-      link: "/assigned-task",
-    },
-    {
-      key: "user-assigned-tasks",
-      label: "Tasks Assigned by User",
-      icon: <FaUsers className="text-red-500" />,
-      link: "/taskassigneduser",
-    },
-  ];
+const sidebarItems: SidebarItem[] = [
+  {
+    key: "plan-of-the-day",
+    label: "Plan of the Day",
+    icon: <FaTachometerAlt className="text-blue-500" />,
+    link: "/planoftheday",
+  },
+  {
+    key: "end-of-the-day",
+    label: "End of the Day Summary",
+    icon: <FaClipboardCheck className="text-green-500" />,
+    link: "/taskupdated",
+  },
+  {
+    key: "task-overview",
+    label: "Daily Activity Status",
+    icon: <FaSlideshare className="text-purple-500" />,
+    link: "/all-statuses",
+  },
+  {
+    key: "task-assignments",
+    label: "Admin Assigned Task List",
+    icon: <FaExchangeAlt className="text-orange-500" />,
+    link: "/assigned-task",
+  },
+  {
+    key: "user-assigned-tasks",
+    label: "Tasks Received from Admin",
+    icon: <FaUsers className="text-red-500" />,
+    link: "/taskassigneduser",
+  },
+];
 
   const toggleCollapse = (): void => {
     setCollapsed((prev) => !prev);
@@ -141,12 +141,12 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
           className="bg-gray-800 mt-4"
           selectedKeys={[location.pathname]}
           items={sidebarItems.map((item) => ({
-            key: item.link, // Use link as key for accurate selection
+            key: item.link,
             icon: item.icon,
             label: (
               <Link
                 to={item.link}
-                className="text-gray-300 hover:text-white no-underline"
+                className="text-gray-300 hover:text-yellow-400 no-underline transition-colors duration-200"
               >
                 {item.label}
               </Link>
@@ -222,9 +222,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
             transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
           }}
         >
-          <span className="font-medium mr-1">
-            Task Management
-          </span>
+          <span className="font-medium mr-1">Task Management</span>
           ©2025 Created by ASKOXY.AI Company
         </Footer>
       </Layout>

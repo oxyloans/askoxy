@@ -28,7 +28,6 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-// Array of team options
 const TEAM_OPTIONS: string[] = [
   "TECHTEAM",
   "ADMINTEAM",
@@ -39,7 +38,6 @@ const TEAM_OPTIONS: string[] = [
   "MANAGEMENTTEAM",
 ];
 
-// Map teams to colors for visual representation
 const TEAM_COLORS: Record<string, string> = {
   TECHTEAM: "blue",
   ADMINTEAM: "purple",
@@ -62,14 +60,13 @@ interface TaskResponse {
 
 const PlanOfTheDay: React.FC = () => {
   const [form] = Form.useForm<TaskFormValues>();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [userId, setUserId] = useState<string>("");
-  const [userName, setUserName] = useState<string>("");
-  const [currentDate, setCurrentDate] = useState<string>("");
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [userName, setUserName] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
-    // Format today's date
     const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
       weekday: "long",
@@ -79,27 +76,22 @@ const PlanOfTheDay: React.FC = () => {
     };
     setCurrentDate(today.toLocaleDateString("en-US", options));
 
-    // Get userId from local storage
-    const storedUserId: string =
+    const storedUserId =
       localStorage.getItem("userId") || "b83ed56b-fd00-4a3c-8104-18a143a086af";
     setUserId(storedUserId);
 
-    // Get userName from local storage
-    const storedUserName: string = localStorage.getItem("userName") || "";
+    const storedUserName = localStorage.getItem("userName") || "";
     setUserName(storedUserName);
 
-    // Check if user has already submitted a plan today
     const lastSubmissionDate = localStorage.getItem("lastSubmissionDate");
     if (lastSubmissionDate === today.toDateString()) {
       setIsSubmitted(true);
     }
   }, []);
 
-  const onFinish = async (values: TaskFormValues): Promise<void> => {
+  const onFinish = async (values: TaskFormValues) => {
     setLoading(true);
-
     try {
-      // Add safety check for userName
       if (!userName) {
         message.warning("User name not found. Please login again.");
         setLoading(false);
@@ -119,7 +111,6 @@ const PlanOfTheDay: React.FC = () => {
       if (response.data.success) {
         localStorage.setItem("taskId", response.data.id);
         localStorage.setItem("lastSubmissionDate", new Date().toDateString());
-
         setIsSubmitted(true);
 
         notification.success({
@@ -142,10 +133,6 @@ const PlanOfTheDay: React.FC = () => {
     }
   };
 
-  const resetSubmission = () => {
-    setIsSubmitted(false);
-  };
-
   return (
     <UserPanelLayout>
       <div className="p-2 sm:p-4 md:p-6 lg:p-8 bg-gray-50 min-h-screen">
@@ -153,7 +140,6 @@ const PlanOfTheDay: React.FC = () => {
           className="max-w-xl mx-auto shadow-lg rounded-xl overflow-hidden border-0 transition-all duration-300 hover:shadow-xl"
           bodyStyle={{ padding: 0 }}
         >
-          {/* Header Section with improved gradient */}
           <div className="bg-gradient-to-r p-5 md:p-6 text-black">
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -187,7 +173,6 @@ const PlanOfTheDay: React.FC = () => {
             </div>
           </div>
 
-          {/* Form Section */}
           <div className="p-5 md:p-6 lg:p-8">
             {isSubmitted ? (
               <div className="text-center py-6">
@@ -196,16 +181,9 @@ const PlanOfTheDay: React.FC = () => {
                   Daily Plan Submitted!
                 </Title>
                 <Paragraph className="text-gray-600 mb-6">
-                  You've already submitted your plan for today. Have a
-                  productive day!
+                  You’ve already submitted your plan for today. Come back
+                  tomorrow to submit again.
                 </Paragraph>
-                <Button
-                  type="default"
-                  onClick={resetSubmission}
-                  className="rounded-lg"
-                >
-                  Submit another plan
-                </Button>
               </div>
             ) : (
               <>

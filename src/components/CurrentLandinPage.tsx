@@ -20,7 +20,7 @@ const CurrentLandingPage: React.FC = () => {
       <section className="mt-4">
         <HorizontalScrollGallery />
       </section>
-      <section className="mt-0">
+      <section>
         <ServicesSlider />
       </section>
       <section>
