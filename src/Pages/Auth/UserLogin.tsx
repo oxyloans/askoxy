@@ -21,6 +21,7 @@ interface LoginResponse {
   token: string;
   refreshToken: string;
   id: string;
+  name: string; // Added the missing 'name' property
   errorMessage?: string;
 }
 
@@ -67,12 +68,14 @@ const UserLogin: React.FC = () => {
 
       // Handle successful login
       if (response.data.status === "Login Successful") {
-        const { token, refreshToken, id } = response.data;
+        const { token, refreshToken, id,name} = response.data;
 
         // Store tokens and user details in local storage
         localStorage.setItem("accessToken", token);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("userId", id);
+         
+        localStorage.setItem("userName", name);
 
         // Notify the user and navigate to the dashboard
         message.success({
