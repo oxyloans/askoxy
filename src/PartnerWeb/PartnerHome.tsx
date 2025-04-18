@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"; // Added useRef
+import React, { useState, useEffect, useRef } from "react";
 import { Layout } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./PartnerSidebar";
@@ -13,7 +13,7 @@ const PartnerHome: React.FC = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const contentRef = useRef<HTMLDivElement>(null); // Ref for the scrollable container
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const onCollapse = () => {
     if (isMobile) {
@@ -65,7 +65,7 @@ const PartnerHome: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col">
-      <div className="fixed top-0 left-0 w-full bg-white shadow-md z-50">
+      <div className="fixed top-0 left-0 w-full bg-white shadow-md z-40">
         <Header
           onSidebarToggle={onCollapse}
           isMobile={isMobile}
@@ -75,17 +75,33 @@ const PartnerHome: React.FC = () => {
         />
       </div>
 
+      {/* Overlay - Lower z-index than sidebar */}
+      {isMobile && isSidebarVisible && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsSidebarVisible(false)}
+        />
+      )}
+
+      {/* Sidebar - Higher z-index than overlay */}
       <Sider
         collapsed={isMobile ? !isSidebarVisible : isCollapsed}
         trigger={null}
         width={250}
         style={{
-          overflow: "visible",
-          zIndex: 10,
+          overflow: "hidden",
+          zIndex: 35,
+          height: "calc(100vh - 64px)",
+          position: "fixed",
+          left: 0,
+          top: 64,
+          bottom: 0,
+          display: "flex",
+          flexDirection: "column",
         }}
         collapsedWidth={isMobile ? 0 : 80}
         className={`
-          fixed left-0 top-20 bottom-0 bg-white shadow-lg transition-all
+          bg-white shadow-lg transition-all p-2
           ${
             isMobile && !isSidebarVisible
               ? "-translate-x-full"
@@ -102,13 +118,13 @@ const PartnerHome: React.FC = () => {
       </Sider>
 
       <div
-        ref={contentRef} // Attach ref to the scrollable container
+        ref={contentRef}
         className={`flex-1 transition-all pt-16 overflow-auto ${
           isMobile ? "ml-0" : isCollapsed ? "ml-20" : "ml-64"
         }`}
       >
         {/* Scrollable Content */}
-        <Content className="p-4 min-h-[calc(100vh-4rem)]">
+        <Content className="p-4 min-h-[calc(100vh-4rem-64px)]">
           <Outlet />
         </Content>
 
@@ -117,13 +133,6 @@ const PartnerHome: React.FC = () => {
           <Footer />
         </AntFooter>
       </div>
-
-      {isMobile && isSidebarVisible && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsSidebarVisible(false)}
-        />
-      )}
     </div>
   );
 };

@@ -23,6 +23,7 @@ interface LoginResponse {
   id: string;
   errorMessage?: string;
   primaryType: string;
+  name: string;
 }
 
 const Login: React.FC = () => {
@@ -65,18 +66,13 @@ const Login: React.FC = () => {
       );
 
       if (response.data.status === "Login Successful") {
-        const { token, id, primaryType } = response.data;
+        const { token, id, primaryType, name } = response.data;
 
         localStorage.setItem("acToken", token);
         localStorage.setItem("uniquId", id);
         localStorage.setItem("primaryType", primaryType);
-        const userName = (
-          payload.email.split("@")[0].match(/[a-zA-Z]+/g) || []
-        ).join("");
+        localStorage.setItem("userName", name);
 
-        localStorage.setItem("userName", userName);
-
-        // Notify the user and navigate to the dashboard
         message.success({
           content: "Login successful! Redirecting to dashboard...",
           icon: <LoginOutlined />,
@@ -95,7 +91,7 @@ const Login: React.FC = () => {
           "Failed to login. Please check your connection and try again."
       );
     } finally {
-      setLoading(false); // Stop the loading indicator
+      setLoading(false);
     }
   };
 

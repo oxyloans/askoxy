@@ -10,6 +10,7 @@ import {
   FaTimes,
   FaUserCircle,
   FaClipboardList,
+  FaHeadset,
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
@@ -27,7 +28,6 @@ const Sidebar: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [pageName, setPageName] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -70,12 +70,24 @@ const Sidebar: React.FC = () => {
       link: "/admn/allqueries",
       roles: ["SELLER", "HELPDESKADMIN"],
     },
-    // {
-    //   title: "Assigned Data",
-    //   icon: <FaClipboardList className="text-yellow-400" />,
-    //   link: "/admn/assignedData",
-    //   roles: ["HELPDESKADMIN"],
-    // },
+    {
+      title: "Assigned Data",
+      icon: <FaClipboardList className="text-yellow-400" />,
+      link: "/admn/assignedData",
+      roles: ["HELPDESKADMIN"],
+    },
+    {
+      title: "Assigned Data",
+      icon: <FaClipboardList className="text-yellow-400" />,
+      link: "/admn/dataAssigned",
+      roles: ["SELLER"],
+    },
+    {
+      title: "HelpDesk Team",
+      icon: <FaHeadset className="text-green-400" />,
+      link: "/admn/helpdeskusers",
+      roles: ["SELLER"],
+    },
     {
       title: "Logout",
       icon: <FaSignOutAlt className="text-red-400" />,
@@ -96,21 +108,28 @@ const Sidebar: React.FC = () => {
     setUserRole(primaryType);
   }, [navigate]);
 
+  // Force reset collapsed state when screen size changes
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
+
+      // If transitioning from mobile to desktop, ensure sidebar is expanded
+      if (isMobile && !mobile) {
+        setCollapsed(false);
+      }
+
       setIsMobile(mobile);
 
-      // Only set collapsed state on first load or when transitioning between modes
-      if (mobile) {
-        setCollapsed(true); // Default to collapsed on mobile
+      // Set mobile menu closed when transitioning
+      if (mobile !== isMobile) {
+        setIsMobileOpen(false);
       }
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isMobile]);
 
   const toggleCollapse = () => {
     setCollapsed((prev) => !prev);
@@ -163,7 +182,13 @@ const Sidebar: React.FC = () => {
       >
         {/* Logo Area */}
         <div className="flex flex-col items-center justify-center h-16 border-b border-gray-700 bg-gray-900">
+          {/* ASKOXY.AI text that adapts to collapsed state */}
           <div className="text-center font-bold">
+            <span className="text-gray-50 text-xl">
+              {collapsed && !isMobileOpen ? "OXY" : "ASKOXY.AI"}
+            </span>
+          </div>
+          <div className="text-center font-bold mt-1">
             {userRole === "HELPDESKADMIN" ? (
               <>
                 <span className="text-green-400">
@@ -200,7 +225,6 @@ const Sidebar: React.FC = () => {
                         : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     }`}
                   onClick={(e) => {
-                    setPageName(item.title);
                     if (item.onClick) {
                       e.preventDefault();
                       item.onClick();
@@ -271,12 +295,6 @@ const Sidebar: React.FC = () => {
           </button>
         </div>
 
-        {/* <div>{pageName}</div> */}
-
-        {/* <h1 className="text-xl md:text-3xl font-bold text-gray-800">
-          {pageName}
-        </h1> */}
-
         <div className="flex items-center space-x-4">
           <div
             onClick={handleLogout}
@@ -296,6 +314,10 @@ const Sidebar: React.FC = () => {
         className={`transition-all duration-300 ease-in-out 
           ${isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"}
         `}
+        style={{
+          minHeight: "calc(100vh - 64px)",
+          paddingBottom: "2rem",
+        }}
       >
         <main className="p-4">
           <Outlet />

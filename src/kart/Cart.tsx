@@ -108,11 +108,31 @@ const CartPage: React.FC = () => {
     {}
   );
   const checkOnePlusOneStatus = async (): Promise<boolean> => {
-    // Simulated future backend flag
     const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
     onePlusOneConfirmedRef.current = claimed;
-    return claimed;
+  
+    let offeravail = 0;
+  
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      offeravail = response.data?.cartQuantity || 0;
+      console.log("1+1 Offer available quantity:", offeravail);
+    } catch (error) {
+      console.error("Failed to fetch 1+1 offer availability:", error);
+    }
+  
+    // ✅ Return true (already claimed or no offer left), else false
+    return claimed || offeravail > 2;
   };
+  
   const setOnePlusOneClaimed = async () => {
     // Simulated future backend call to persist offer usage
     localStorage.setItem("onePlusOneClaimed", "true");

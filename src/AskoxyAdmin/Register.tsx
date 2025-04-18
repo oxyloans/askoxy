@@ -33,6 +33,7 @@ const Register: React.FC = () => {
   const [emailOtp, setEmailOtp] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [emailOtpSession, setEmailOtpSession] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [salt, setSalt] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +97,7 @@ const Register: React.FC = () => {
           emailOtpSession,
           password,
           primaryType: "HELPDESKADMIN",
+          name,
           salt,
         }
       );
@@ -200,6 +202,22 @@ const Register: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
+                  className="rounded-md"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">Enter Name</span>
+                }
+                required
+                className="mb-6"
+              >
+                <Input
+                  prefix={<SafetyOutlined className="text-gray-400 mr-2" />}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
                   className="rounded-md"
                 />
               </Form.Item>

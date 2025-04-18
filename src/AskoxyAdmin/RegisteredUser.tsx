@@ -49,11 +49,19 @@ interface UserData {
   whatsappNumber: string;
   created_at: string | null;
   testuser: boolean;
+  alternativeNumber: string;
   flatNo: string | null;
   landMark: string | null;
   pinCode: string | null;
   address: string | null;
   addressType: string | null;
+  registerFrom: string;
+  userType: string;
+}
+interface ReportData {
+  totalCount: string;
+  dayCount: string;
+  response: [];
 }
 
 interface ApiResponse {
@@ -126,13 +134,16 @@ const RegisteredUser: React.FC = () => {
   const [whatsappNumber1, setWhatsappNumber1] = useState("");
   const [userId1, setUserId1] = useState("");
   const userType = localStorage.getItem("primaryType");
+  const [storedUniqueId, setStoredUniqueId] = useState<string | null>("");
   const [selectedTimeFrame, setSelectedTimeFrame] =
     useState<string>("thisWeek");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 50,
-    total: 0,
+    pageSize: 10,
+    total: 10,
+    showSizeChanger: false,
   });
+
   const [orderDetailsVisible, setOrderDetailsVisible] =
     useState<boolean>(false);
   const [staticMetrics, setStaticMetrics] = useState({
@@ -183,29 +194,26 @@ const RegisteredUser: React.FC = () => {
 
   const fetchUserData = async () => {
     setLoading(true);
-    // console.log("Selected Time Frame:", selectedTimeFrame);
-    // console.log(startDate1, endDate1);
-
     const { startDate, endDate } = getDateRange(selectedTimeFrame);
-
     try {
       const response = await axios.get<ApiResponse>(
         `${BASE_URL}/user-service/date-rangeuserdetails?endDate=${endDate}&page=${
           pagination.current - 1
-        }&size=${1000}&startDate=${startDate}`
+        }&size=${10}&startDate=${startDate}`
       );
 
       setUserData(response.data.content);
       setFilteredUserData(response.data.content);
       setPagination({
         ...pagination,
-        total: response.data.content.length,
+        total: response.data.totalElements,
       });
 
       setLoading(false);
     } catch (error) {
       console.error("Error fetching user data:", error);
       setLoading(false);
+      setFilteredUserData([]);
     }
   };
 
@@ -215,25 +223,6 @@ const RegisteredUser: React.FC = () => {
     setPagination({
       ...pagination,
       current: 1,
-    });
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase();
-    setSearchText(value);
-
-    const filteredData = userData.filter(
-      (user) =>
-        user.fullName?.toLowerCase().includes(value) ||
-        user.mobileNumber?.includes(value) ||
-        user.whatsappNumber?.includes(value)
-    );
-
-    setFilteredUserData(filteredData);
-    setPagination({
-      ...pagination,
-      current: 1,
-      total: filteredData.length,
     });
   };
 
@@ -328,18 +317,14 @@ const RegisteredUser: React.FC = () => {
   };
 
   useEffect(() => {
+    const storedUniqueId = localStorage.getItem("uniquId");
+    setStoredUniqueId(storedUniqueId);
     fetchCounts();
   }, []);
 
   useEffect(() => {
     fetchUserData();
-  }, [selectedTimeFrame]);
-
-  // useEffect(() => {
-  //   if (record) {
-  //     fetchComments();
-  //   }
-  // }, [record]);
+  }, [selectedTimeFrame, pagination.current]);
 
   const fetchCounts = async () => {
     try {
@@ -392,32 +377,86 @@ const RegisteredUser: React.FC = () => {
     {
       title: <div className="text-center">User Details</div>,
       key: "userDetails",
-      width: 200,
+      width: 150,
       // align: "center" as const,
-      render: (record: UserData) => (
-        <Space direction="vertical" size="small">
-          <Text> {record.fullName || "No name provided"}</Text>
-          <Text type="secondary">{record.email || "No email provided"}</Text>
-          {record.whatsappNumber && (
-            <div className="inline-flex items-center text-[13px] bg-green-50 text-green-700 rounded px-2 py-1 mr-2">
-              <WhatsAppOutlined
-                style={{ fontSize: "13px", color: "#25D366" }}
-              />
-              <strong className="ml-2 font-semibold">
-                {record.whatsappNumber}
-              </strong>
-            </div>
-          )}
+      render: (_: string, record: UserData) => {
+        const mobile = record.mobileNumber;
+        const whatsapp = record.whatsappNumber;
 
-          {record.mobileNumber && (
-            <div className="inline-flex items-center text-[13px] bg-purple-50 text-purple-700 rounded px-2 py-1">
-              <PhoneOutlined style={{ fontSize: "13px", color: "#722ED1" }} />
-              <strong className="ml-2 font-semibold">
-                {record.mobileNumber}
-              </strong>
-            </div>
-          )}
-        </Space>
+        const tagStyle = {
+          fontSize: "14px",
+          width: "120px",
+          justifyContent: "center",
+          display: "flex",
+          alignItems: "center",
+        };
+
+        return (
+          <Space direction="vertical" size="small">
+            <Text>{record.fullName || "No name provided"}</Text>
+            <Text type="secondary">{record.email || "No email provided"}</Text>
+
+            {/* Case 1: mobile === whatsapp */}
+            {whatsapp && mobile && whatsapp === mobile && (
+              <>
+                <Tag color="green" style={tagStyle}>
+                  <WhatsAppOutlined className="mr-1" />
+                  {mobile}{" "}
+                </Tag>
+                {record.alternativeNumber && (
+                  <Tag color="purple" style={tagStyle}>
+                    <PhoneOutlined className="mr-1" />
+                    {record.alternativeNumber}{" "}
+                  </Tag>
+                )}
+              </>
+            )}
+
+            {/* Case 2: mobile !== whatsapp and both exist */}
+            {whatsapp && mobile && whatsapp !== mobile && (
+              <>
+                <Tag color="green" style={tagStyle}>
+                  <WhatsAppOutlined className="mr-1" />
+                  {whatsapp}
+                </Tag>
+                <Tag color="purple" style={tagStyle}>
+                  <PhoneOutlined className="mr-1" />
+                  {mobile}
+                </Tag>
+              </>
+            )}
+
+            {/* Case 3: Only mobile */}
+            {!whatsapp && mobile && (
+              <Tag color="purple" style={tagStyle}>
+                <PhoneOutlined className="mr-1" />
+                {mobile}
+              </Tag>
+            )}
+
+            {/* Case 4: Only WhatsApp */}
+            {whatsapp && !mobile && (
+              <Tag color="green" style={tagStyle}>
+                <WhatsAppOutlined className="mr-1" />
+                {whatsapp}
+              </Tag>
+            )}
+          </Space>
+        );
+      },
+    },
+    {
+      title: "Registered From",
+      dataIndex: "userType",
+      key: "userType",
+      width: 80,
+      render: (_: string, record: UserData) => (
+        <>
+          <Tag className="mb-1" color="green">
+            {record.userType === "NEW USER" ? "ASKOXY" : "ERICE"}
+          </Tag>
+          <Tag color="geekblue">{record.registerFrom}</Tag>
+        </>
       ),
     },
     {
@@ -733,6 +772,7 @@ const RegisteredUser: React.FC = () => {
         `${BASE_URL}/user-service/adminUpdateComments`,
         {
           adminComments: comment,
+          adminUserId: storedUniqueId,
           commentsUpdateBy: update,
           userId: record?.id,
         },
@@ -1219,23 +1259,24 @@ const RegisteredUser: React.FC = () => {
                       background: "linear-gradient(to right, #fff, #f9faff)",
                     }}
                   >
-                    {userOrders.length > 0 ? (
-                      <Table
-                        dataSource={userOrders}
-                        columns={orderColumns}
-                        rowKey="orderId"
-                        pagination={false}
-                        size="small"
-                        rowClassName={(record, index) =>
-                          index % 2 === 0 ? "table-row-light" : "table-row-dark"
-                        }
-                        scroll={{ x: "max-content" }}
-                      />
-                    ) : (
-                      <Text type="secondary" style={{ color: "#ff4d4f" }}>
-                        No orders found for this user.
-                      </Text>
-                    )}
+                    <Table
+                      dataSource={userOrders}
+                      columns={orderColumns}
+                      rowKey="orderId"
+                      pagination={false}
+                      size="small"
+                      scroll={{ x: "max-content" }}
+                      rowClassName={(_, index) =>
+                        index % 2 === 0 ? "table-row-light" : "table-row-dark"
+                      }
+                      locale={{
+                        emptyText: (
+                          <span className="text-gray-500">
+                            No orders found for this user.
+                          </span>
+                        ),
+                      }}
+                    />
                   </Card>
                 </Col>
 
@@ -1357,7 +1398,7 @@ const RegisteredUser: React.FC = () => {
 
       <Modal
         zIndex={150}
-        title="User Comments"
+        title="HelpDesk Comments"
         open={commentsModalVisible}
         onCancel={() => {
           setCommentsModalVisible(false);

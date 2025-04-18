@@ -80,23 +80,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const handleMenuClick = (e: { key: string }) => {
-    if (onItemClick) onItemClick();
-    navigate(e.key);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.clear();
     navigate("/partnerLogin");
   };
+
   return (
     <div className="relative h-full flex flex-col bg-white overflow-x-hidden">
-      {/* Top right toggle button */}
       <div className="flex justify-end items-center p-2 py-2">
         <button
           onClick={onCollapse}
-          className={`p-2 rounded-lg bg-gray-50 hover:bg-purple-50 
+          className={`pt-4 rounded-lg bg-gray-50 hover:bg-purple-50
             transition-all duration-300 hidden md:flex items-center justify-center
             ${isCollapsed ? "mx-auto" : ""}`}
         >
@@ -108,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* Menu area with proper scrolling - increased spacing */}
+      {/* Menu area with proper scrolling */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-1 space-y-0.5">
         {sidebarItems.map((item, index) => {
           const isActive = location.pathname === item.key;
@@ -147,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </span>
                 {!isCollapsed && (
                   <span
-                    className={`font-medium whitespace-nowrap text-sm
+                    className={`font-medium whitespace-nowrap text-sm z-10
                       ${
                         isActive
                           ? "text-purple-600"
@@ -162,8 +157,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               {isCollapsed && (
                 <div
                   className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-5 py-2 
-      bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 invisible
-      group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+                  bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 invisible
+                  group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
                 >
                   {item.label}
                   <div
@@ -179,11 +174,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Fixed bottom section */}
       <div className="mt-auto px-3 py-3 border-t">
-        <button
+        <div
           onClick={handleLogout}
-          className={`flex items-center rounded-xl transition-all duration-200
-            hover:bg-red-50 min-h-10 h-auto sm:h-10 md:h-10
-            ${isCollapsed ? "w-10 justify-center" : "px-4"}`}
+          className={`relative flex items-center rounded-xl transition-all duration-200
+            hover:bg-red-50 min-h-10 h-auto sm:h-10 md:h-10 cursor-pointer
+            ${isCollapsed ? "w-10 justify-center" : "px-4"}
+            group`}
         >
           <div className={`flex items-center ${isCollapsed ? "" : "gap-3"}`}>
             <span className="text-red-500 flex items-center justify-center">
@@ -197,8 +193,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {isCollapsed && (
             <div
-              className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 
-              bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 
+              className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-5 py-2 
+              bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 invisible
               group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
             >
               Sign Out
@@ -208,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
           )}
-        </button>
+        </div>
       </div>
     </div>
   );

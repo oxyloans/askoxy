@@ -179,6 +179,130 @@ const OrderDetailsPage: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const navigate = useNavigate();
 
+  const [buttonLabel, setButtonLabel] = useState<string>("");
+  const [showButton, setShowButton] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  const fetchContainerStatus = (ordersData: Order) => {
+    axios
+      .get(
+        `${BASE_URL}/cart-service/cart/ContainerInterested/${ordersData?.customerId}`
+      )
+      .then((response) => {
+        const status = response.data?.freeContainerStatus;
+
+        if (status !== null) {
+          const steelContainerItem = ordersData.orderItems?.find((item) =>
+            item.itemName?.toLowerCase().includes("steel")
+          );
+
+          if (steelContainerItem) {
+            setButtonLabel("Remove");
+            setShowButton(true);
+            setSelectedItem(steelContainerItem);
+          } else {
+            setShowButton(false);
+          }
+        } else {
+          const eligibleItem = ordersData.orderItems?.find(
+            (item) => item.weight === 10 || item.weight === 26
+          );
+
+          if (eligibleItem) {
+            setButtonLabel("Add");
+            setShowButton(true);
+            setSelectedItem(eligibleItem);
+          } else {
+            setShowButton(false);
+          }
+        }
+      })
+      .catch((error) => {
+        console.log("Error fetching container status:", error);
+        setShowButton(false);
+      });
+  };
+
+  const handleAddorRemoveContainer = () => {
+    if (!selectedItem) {
+      message.error("No item selected");
+      return;
+    }
+
+    const isAdd = buttonLabel === "Add";
+
+    if (isAdd) {
+      let itemName = "";
+
+      if (selectedItem.weight === 10) {
+        itemName = "Stainless Steel Rice Vault - 20Kg+";
+      } else if (selectedItem.weight === 26) {
+        itemName = "Premium Steel Rice Storage - 35kg+";
+      } else {
+        message.error("Invalid item weight for adding a container");
+        return;
+      }
+
+      Modal.confirm({
+        title: `Are you sure you want to add the ${itemName}?`,
+        onOk: () => proceedWithContainerAction(true),
+      });
+    } else {
+      Modal.confirm({
+        title: "Are you sure you want to remove the container?",
+        onOk: () => proceedWithContainerAction(false),
+      });
+    }
+  };
+
+  const proceedWithContainerAction = (isAdd: boolean) => {
+    let payload;
+
+    if (isAdd) {
+      let itemId = "";
+      let itemName = "";
+
+      if (selectedItem.weight === 10) {
+        itemId = "53d7f68c-f770-4a70-ad67-ee2726a1f8f3";
+        itemName = "Stainless Steel Rice Vault - 20Kg+";
+      } else if (selectedItem.weight === 26) {
+        itemId = "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61";
+        itemName = "Premium Steel Rice Storage - 35kg+";
+      } else {
+        message.error("Invalid item weight for adding a container");
+        return;
+      }
+
+      payload = {
+        itemId,
+        itemName,
+        orderId: orderId,
+        status: "ADD",
+      };
+    } else {
+      payload = {
+        itemId: selectedItem.itemId,
+        orderId: orderId,
+        status: "REMOVE",
+      };
+    }
+
+    axios
+      .post(`${BASE_URL}/order-service/containerAddForSt`, payload)
+      .then(() => {
+        message.success(
+          isAdd
+            ? "Container added successfully"
+            : "Container removed successfully"
+        );
+        fetchOrderDetails(orderStatus);
+      })
+      .catch((error) => {
+        console.log("Error in containerAddForStore:", error);
+        message.error("Something went wrong, please try again");
+      });
+  };
+
   const getStatusText = (status: string) => {
     switch (status) {
       case "1":
@@ -316,11 +440,12 @@ const OrderDetailsPage: React.FC = () => {
     }
   };
 
-  const fetchOrderDetails = async (status: string) => {
+  const fetchOrderDetails = async (status: string | undefined) => {
     try {
       if (orderId && status) {
         const details = await orderService.getOrderDetails(orderId, status);
         setOrderDetails(details[0]);
+        fetchContainerStatus(details[0]);
       }
     } catch (err) {
       setError("Failed to fetch order details");
@@ -567,7 +692,7 @@ const OrderDetailsPage: React.FC = () => {
   return (
     <div>
       {orderDetails ? (
-        <div className="max-w-full mx-auto bg-white shadow-sm rounded-xl border border-gray-200">
+        <div className="max-w-full mx-auto bg-white shadow-sm rounded-xl border border-gray-200 z-10">
           <div className="px-6 py-4 rounded-t-xl flex flex-col">
             <div className="flex flex-col sm:flex-row justify-between items-center">
               <div className="flex items-center space-x-3 mb-2 sm:mb-0">
@@ -596,39 +721,56 @@ const OrderDetailsPage: React.FC = () => {
           {(orderStatus === "1" ||
             orderStatus === "2" ||
             orderStatus === "3") && (
-            <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3 border-b">
-              {(orderStatus === "1" || orderStatus === "2") && (
-                <>
-                  <button
-                    onClick={fetchDeliveryBoys}
-                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition flex items-center text-sm font-medium"
-                  >
-                    <CheckCircleOutlined className="mr-2" />
-                    Assign
-                  </button>
-                </>
+            <div className="px-4 py-4 bg-gray-50 flex flex-row flex-wrap space-x-2 sm:justify-end sm:space-x-3 border-b items-end">
+              {showButton && (
+                <Button
+                  type="default"
+                  style={{
+                    backgroundColor:
+                      buttonLabel === "Add" ? "rgb(0, 140, 186)" : "#fff",
+                    color: buttonLabel === "Remove" ? "red" : "#fff",
+                    border: buttonLabel === "Remove" ? "1px solid red" : "none",
+                    height: "32px",
+                    fontSize: "0.75rem",
+                    padding: "0 12px",
+                  }}
+                  className="w-auto"
+                  onClick={handleAddorRemoveContainer}
+                >
+                  {buttonLabel}
+                </Button>
               )}
+
+              {(orderStatus === "1" || orderStatus === "2") && (
+                <button
+                  onClick={fetchDeliveryBoys}
+                  className="px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition flex items-center text-xs font-medium w-auto h-8"
+                >
+                  <CheckCircleOutlined className="mr-1 text-sm" />
+                  Assign
+                </button>
+              )}
+
               {orderStatus === "3" && (
                 <button
                   onClick={fetchDeliveryBoys}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition flex items-center text-sm font-medium"
+                  className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition flex items-center text-xs font-medium w-auto h-8"
                 >
-                  <ReloadOutlined className="mr-2" />
+                  <ReloadOutlined className="mr-1 text-sm" />
                   Re-Assign
                 </button>
               )}
+
               {(orderStatus === "1" ||
                 orderStatus === "2" ||
                 orderStatus === "3") && (
-                <>
-                  <button
-                    onClick={() => showRejectConfirmation()}
-                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition flex items-center text-sm font-medium"
-                  >
-                    <CloseCircleOutlined className="mr-2" />
-                    Reject
-                  </button>
-                </>
+                <button
+                  onClick={() => showRejectConfirmation()}
+                  className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition flex items-center text-xs font-medium w-auto h-8"
+                >
+                  <CloseCircleOutlined className="mr-1 text-sm" />
+                  Reject
+                </button>
               )}
             </div>
           )}

@@ -114,6 +114,9 @@ import PartnerItemsList from "./PartnerWeb/PartnerItemsList";
 import DbOrderDetails from "./PartnerWeb/DbOrderList";
 import PartnerAllQueries from "./PartnerWeb/PartnerAllQueries";
 import Register from "./AskoxyAdmin/Register";
+import AssignedDataPage from "./AskoxyAdmin/AssignedData";
+import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
+import DataAssigned from "./AskoxyAdmin/DataAssigned";
 
 
 const App: React.FC = () => {
@@ -453,7 +456,7 @@ const App: React.FC = () => {
 
 
       {/* ----------Admin Routes Start---------- */}
-          <Route path="/admin" element={<Login />} />
+      <Route path="/admin" element={<Login />} />
           <Route path="/adminRegister" element={<Register />} />
           <Route path="/admn" element={<AdminSidebar />}>
             <Route path="dashboard" element={<Admin />} />
@@ -464,7 +467,9 @@ const App: React.FC = () => {
               element={<AllCampaignsDetails />}
             />
             <Route path="campaignsadd" element={<CampaignsAdd />} />
-            {/* <Route path="assignedData" element={<AssignedData />} /> */}
+            <Route path="assignedData" element={<AssignedDataPage />} />
+            <Route path="helpDeskUsers" element={<HelpDeskUsersDashboard />} />
+            <Route path="dataAssigned" element={<DataAssigned />} />
           </Route>
           {/* ----------Admin Routes end---------- */}
 
