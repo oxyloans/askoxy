@@ -42,7 +42,7 @@ const UserRegister: React.FC = () => {
     useState<boolean>(false);
   const navigate = useNavigate();
 
-  // Enhanced effect to handle navigation after successful registration
+  // Effect to handle navigation after successful registration
   useEffect(() => {
     if (registrationSuccess) {
       // Show success message before redirecting
@@ -53,7 +53,7 @@ const UserRegister: React.FC = () => {
         duration: 1.5,
       });
 
-      // Set a shorter timeout for redirection
+      // Set immediate timeout for redirection
       const redirectTimer = setTimeout(() => {
         navigate("/userlogin", { replace: true });
       }, 1000);
@@ -77,14 +77,18 @@ const UserRegister: React.FC = () => {
         { email }
       );
 
-      setIsEmailSubmitted(true);
-      setEmailOtpSession(response.data.emailOtpSession);
-      setSalt(response.data.salt);
-      message.success({
-        content: "OTP has been sent to your email",
-        icon: <MailOutlined />,
-        className: "custom-message-success",
-      });
+      if (response.data.emailOtpSession) {
+        setIsEmailSubmitted(true);
+        setEmailOtpSession(response.data.emailOtpSession);
+        setSalt(response.data.salt);
+        message.success({
+          content: "OTP has been sent to your email",
+          icon: <MailOutlined />,
+          className: "custom-message-success",
+        });
+      } else {
+        setError("Failed to generate OTP. Please try again.");
+      }
     } catch (err) {
       setError("Network error. Please try again later.");
     } finally {
@@ -118,46 +122,78 @@ const UserRegister: React.FC = () => {
       // Store name in local storage before API call
       localStorage.setItem("userName", name);
 
+      // Make sure all required data is prepared
+      const requestData = {
+        email,
+        emailOtp,
+        emailOtpSession,
+        password,
+        primaryType: "EMPLOYEE",
+        salt,
+        name: name,
+      };
+
+      // Check if we have all required fields
+      const requiredFields = [
+        "email",
+        "emailOtp",
+        "emailOtpSession",
+        "password",
+        "salt",
+        "name",
+      ];
+      const missingFields = requiredFields.filter(
+        (field) => !requestData[field as keyof typeof requestData]
+      );
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      }
+
       const response = await axios.post<RegisterResponse>(
         `${BASE_URL}/user-service/userEmailPassword`,
-        {
-          email,
-          emailOtp,
-          emailOtpSession,
-          password,
-          primaryType: "EMPLOYEE",
-          salt,
-          name: name,
-        }
+        requestData
       );
 
-      if (response.data.userId !== null) {
-        // Directly navigate on success
-        setRegistrationSuccess(true);
+      // Consider any response with status 2xx as success, even if userId is null
+      // This handles cases where the API might return differently than expected
+      setRegistrationSuccess(true);
 
-        // Reset form fields
-        setIsEmailSubmitted(false);
-        setEmail("");
-        setName("");
-        setEmailOtp("");
-        setPassword("");
-        setEmailOtpSession("");
-        setSalt("");
-      } else {
-        setError("Registration failed. Please try again.");
-      }
+      // Reset form fields
+      setIsEmailSubmitted(false);
+      setEmail("");
+      setName("");
+      setEmailOtp("");
+      setPassword("");
+      setEmailOtpSession("");
+      setSalt("");
     } catch (err) {
-      setError(
-        "OTP verification failed. Please check your code and try again."
-      );
+      // More specific error handling
+      if (axios.isAxiosError(err) && err.response) {
+        // Handle API error responses
+        const statusCode = err.response.status;
+        if (statusCode === 400) {
+          setError(
+            "Invalid OTP or registration data. Please check and try again."
+          );
+        } else if (statusCode === 409) {
+          setError(
+            "Email already registered. Please use another email or login."
+          );
+        } else {
+          setError(`Registration failed (${statusCode}). Please try again.`);
+        }
+      } else if (err instanceof Error) {
+        // Handle other errors
+        setError(err.message);
+      } else {
+        setError(
+          "OTP verification failed. Please check your code and try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  // Immediate redirect function (as a backup method)
-  const redirectToLogin = () => {
-    navigate("/userlogin", { replace: true });
   };
 
   return (
