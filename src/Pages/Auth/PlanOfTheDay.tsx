@@ -113,13 +113,7 @@ const PlanOfTheDay: React.FC = () => {
         localStorage.setItem("lastSubmissionDate", new Date().toDateString());
         setIsSubmitted(true);
 
-        notification.success({
-          message: "Success",
-          description: "Your plan for the day has been submitted successfully!",
-          icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
-          placement: "topRight",
-          duration: 4,
-        });
+        message.success("Your daily plan has been submitted successfully.");
 
         form.resetFields();
       } else {
@@ -135,7 +129,7 @@ const PlanOfTheDay: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="p-2 sm:p-4 md:p-6 lg:p-8 bg-gray-50 min-h-screen">
+      <div className="p-2 sm:p-4 md:p-6 lg:p-8 min-h-screen">
         <Card
           className="max-w-xl mx-auto shadow-lg rounded-xl overflow-hidden border-0 transition-all duration-300 hover:shadow-xl"
           bodyStyle={{ padding: 0 }}
@@ -187,7 +181,7 @@ const PlanOfTheDay: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-blue-400">
+                {/* <div className="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-blue-400">
                   <div className="flex">
                     <BulbOutlined className="text-blue-500 text-xl mr-3 mt-1" />
                     <div>
@@ -200,7 +194,7 @@ const PlanOfTheDay: React.FC = () => {
                       </Paragraph>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 <Form
                   form={form}

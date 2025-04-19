@@ -225,7 +225,7 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <Spin size="large" tip="Loading tasks..." />
+            <Spin size="small" tip="Loading tasks..." />
           </div>
         ) : (
           <>

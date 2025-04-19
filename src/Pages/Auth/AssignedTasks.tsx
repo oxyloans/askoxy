@@ -496,7 +496,7 @@ const AssignedTasksPage: React.FC = () => {
           <div className="p-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <Spin size="large" />
+                <Spin size="small" />
                 <Text className="mt-4 text-gray-500">
                   Loading your tasks...
                 </Text>

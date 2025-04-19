@@ -641,7 +641,7 @@ const AllStatusPage: React.FC = () => {
 
             {loading ? (
               <div className="flex flex-col items-center justify-center p-8 sm:p-16">
-                <Spin size="large" />
+                <Spin size="small" />
                 <Text className="mt-4 text-gray-500">Loading tasks...</Text>
               </div>
             ) : filteredTasks.length > 0 ? (

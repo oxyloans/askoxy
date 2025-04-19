@@ -163,7 +163,10 @@ const TaskUpdate: React.FC = () => {
       } else {
         setSelectedTask(null);
         form.resetFields();
-        form.setFieldsValue({ userId: userIdValue });
+        form.setFieldsValue({
+          userId: userIdValue,
+          taskStatus: "COMPLETED", // Default to COMPLETED when resetting form
+        });
       }
     } catch (error: any) {
       notification.error({
@@ -180,10 +183,12 @@ const TaskUpdate: React.FC = () => {
   const selectTask = (task: Task) => {
     setSelectedTask(task);
     resetUploadState();
+
+    // Set form values with default taskStatus as COMPLETED regardless of task's current status
     form.setFieldsValue({
       id: task.id,
       userId: task.userId,
-      taskStatus: task.taskStatus,
+      taskStatus: "COMPLETED", // Always default to COMPLETED
       endOftheDay: task.endOftheDay || "",
       userDocumentId: task.userDocumentId,
     });
@@ -488,15 +493,11 @@ const TaskUpdate: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <Text type="secondary">
-                      {typeof dateInfo === "object"
-                        ? dateInfo.formatted
-                        : ""}
+                      {typeof dateInfo === "object" ? dateInfo.formatted : ""}
                     </Text>
                     <br />
                     <Text type="secondary" className="text-xs">
-                      {typeof dateInfo === "object"
-                        ? dateInfo.relative
-                        : ""}
+                      {typeof dateInfo === "object" ? dateInfo.relative : ""}
                     </Text>
                   </div>
                 </div>
@@ -569,7 +570,7 @@ const TaskUpdate: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
         <Card
           title={
             <div className="flex justify-between items-center">
@@ -580,15 +581,15 @@ const TaskUpdate: React.FC = () => {
               {fetchingTasks ? <Spin size="small" /> : null}
             </div>
           }
-          className="mb-6 shadow-md rounded-lg"
+          className="mb-4 sm:mb-6 shadow-md rounded-lg"
           headStyle={{
             backgroundColor: "#f9f9f9",
             borderBottom: "1px solid #f0f0f0",
           }}
         >
           {fetchingTasks ? (
-            <div className="flex justify-center items-center py-12">
-              <Spin size="large" tip="Loading your tasks..." />
+            <div className="flex justify-center items-center py-8 sm:py-12">
+              <Spin size="small" tip="Loading your tasks..." />
             </div>
           ) : tasks.length > 0 ? (
             <List
@@ -602,7 +603,7 @@ const TaskUpdate: React.FC = () => {
 
                 return (
                   <List.Item
-                    className={`border rounded-lg p-4 mb-4 cursor-pointer transition-all duration-300 hover:shadow-md
+                    className={`border rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 cursor-pointer transition-all duration-300 hover:shadow-md
                       ${
                         task.id === selectedTask?.id
                           ? "bg-blue-50 border-blue-300 shadow-md"
@@ -613,8 +614,8 @@ const TaskUpdate: React.FC = () => {
                     <div className="flex flex-col md:flex-row justify-between items-start mb-2">
                       <div className="flex-1 w-full md:w-auto">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center mb-2 sm:mb-0">
-                            <Title level={5} className="ml-4 mb-0 font-bold">
+                          <div className="flex flex-col sm:flex-row sm:items-center  mb-2 sm:mb-0">
+                            <Title level={5} className="mb-0 font-bold ml-4">
                               Plan of the day
                             </Title>
                             <Tag color="blue" className="mt-1 sm:mt-0 sm:ml-3">
@@ -645,13 +646,13 @@ const TaskUpdate: React.FC = () => {
                             </Tag>
                           </div>
                         </div>
-                        <Paragraph className="ml-4 text-gray-700">
+                        <Paragraph className="text-gray-700 ml-4">
                           {task.planOftheDay}
                         </Paragraph>
 
                         {/* Show pending update count badge if there are any */}
                         {pendingUpdatesCount > 0 && (
-                          <div className="mt-3 ml-4">
+                          <div className="mt-3">
                             <Badge
                               count={pendingUpdatesCount}
                               overflowCount={99}
@@ -673,7 +674,7 @@ const TaskUpdate: React.FC = () => {
               }}
             />
           ) : (
-            <div className="text-center py-12">
+            <div className="text-center py-8 sm:py-12">
               <Empty
                 description={
                   <div>
@@ -692,7 +693,7 @@ const TaskUpdate: React.FC = () => {
 
         {selectedTask && (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="lg:col-span-2">
                 <Card
                   title={
@@ -703,7 +704,7 @@ const TaskUpdate: React.FC = () => {
                       </span>
                     </div>
                   }
-                  className="shadow-md mb-6 rounded-lg"
+                  className="shadow-md mb-4 sm:mb-6 rounded-lg"
                   headStyle={{
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
@@ -716,7 +717,7 @@ const TaskUpdate: React.FC = () => {
                     initialValues={{
                       id: selectedTask.id,
                       userId: selectedTask.userId,
-                      taskStatus: selectedTask.taskStatus,
+                      taskStatus: "COMPLETED", // Default to COMPLETED
                       endOftheDay: selectedTask.endOftheDay || "",
                     }}
                     className="px-1"
@@ -751,6 +752,7 @@ const TaskUpdate: React.FC = () => {
                               form.getFieldValue("endOftheDay") || "",
                           })
                         }
+                        dropdownStyle={{ zIndex: 1051 }} // Higher z-index for mobile
                       >
                         <Option value="COMPLETED">
                           <div className="flex items-center">
@@ -833,7 +835,7 @@ const TaskUpdate: React.FC = () => {
                         htmlType="submit"
                         loading={loading}
                         block
-                        className="h-12 font-medium bg-[#008CBA]"
+                        className="h-10 sm:h-12 font-medium bg-[#008CBA]"
                         icon={<CloudUploadOutlined />}
                       >
                         {loading ? "Updating..." : "Update Task"}
@@ -854,14 +856,14 @@ const TaskUpdate: React.FC = () => {
                       </span>
                     </div>
                   }
-                  className="shadow-md rounded-lg mb-6"
+                  className="shadow-md rounded-lg mb-4 sm:mb-6"
                   headStyle={{
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
                   }}
                   style={{ height: "100%" }}
                 >
-                  <div className="py-2 max-h-[500px] overflow-y-auto">
+                  <div className="py-2 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
                     {renderPendingResponses()}
                   </div>
                 </Card>
