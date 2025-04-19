@@ -303,7 +303,16 @@ const UserRegister: React.FC = () => {
                     Create Password
                   </span>
                 }
-                required
+                name="password"
+                rules={[
+                  { required: true, message: "Please enter your password" },
+                  {
+                    pattern:
+                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                    message:
+                      "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character",
+                  },
+                ]}
                 className="mb-6"
               >
                 <Input.Password

@@ -150,7 +150,7 @@ const UserLogin: React.FC = () => {
                 pattern:
                   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
                 message:
-                  "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character",
+                  "Password must contain at least 8 characters",
               },
             ]}
             className="mb-6"
