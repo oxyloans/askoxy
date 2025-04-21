@@ -37,27 +37,52 @@ interface TaskAssignedUserProps {
 const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
   // List of users from your input
   const userList = [
-    "VINOD",
-    "NAVEEN",
-    "SAIGADI",
-    "VIJAY",
-    "SRIDHAR",
-    "GUNNA",
-    "MANEIAH",
-    "HARIPRIYA",
-    "NIHARIKA",
-    "SUDHEESH",
-    "DIVYA",
-    "ANUSHA",
-    "SAIKRISHNA",
+    "GRISHMA",
+    "GUNA",
+    "GUNASHEKAR",
+    "SAIKUMAR",
     "SREEJA",
-    "GUNNASANKAR",
-    "HARIBABU",
-    "UDYA",
-    "GOPAL",
-    "KARTHIK",
-    "GHRISHMA",
+    "GADISAI",
+    "GUTTISAI",
+    "NARENDRA",
+    "MANEIAH",
     "VARALAKSHMI",
+    "VIJAY",
+    "NIHARIKA",
+    "HARIPRIYA",
+    "VINODH",
+    "NAVEEN",
+    "SRIDHAR",
+    "SUBBU",
+    "UDAY",
+    "HARIBABU",
+    "SUDHEESH",
+    "ANUSHA",
+    "DIVYA",
+    "KARTHIK",
+    "RAMADEVI",
+    "BHARGAV",
+    "PRATHIBHA",
+    "JYOTHI",
+    "HEMA",
+    "RAMYAHR",
+    "SURESH",
+    "SUCHITHRA",
+    "ARUNA",
+    "VENKATESH",
+    "RAKESH",
+    "JHON",
+    "MOUNIKA",
+    "VANDANA",
+    "GOPAL",
+    "ANUSHAACCOUNT",
+    "RADHAKRISHNA",
+    "MADHU",
+    "RAVI",
+    "SAMPATH",
+    "CHANDU",
+    "SWATHI",
+    "SHANTHI",
   ];
 
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -134,15 +159,60 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
     }
   };
 
+  // Get status text and color based on status number
+  const getStatusInfo = (status: number) => {
+    switch (status) {
+      case 1:
+        return { text: "CREATED", color: "blue" };
+      case 2:
+        return { text: "ACCEPTED", color: "green" };
+      case 3:
+        return { text: "PENDING", color: "orange" };
+      case 4:
+        return { text: "COMPLETED", color: "purple" };
+      default:
+        return { text: "UNKNOWN", color: "gray" };
+    }
+  };
+
+  // Function to get the last 4 digits of task ID
+  const getLastFourDigits = (id: string) => {
+    if (!id) return "N/A";
+
+    // If id is less than 4 characters, return the whole string
+    if (id.length <= 4) return id;
+
+    // Otherwise return the last 4 characters
+    return id.slice(-4);
+  };
+
   // Task table columns based on the actual response structure
   const columns: TableProps<Task>["columns"] = [
+    {
+      title: "S.No",
+      key: "serialNumber",
+      width: 80,
+      align: "center",
+      render: (_, __, index) => index + 1,
+    },
     {
       title: "Task ID",
       dataIndex: "id",
       key: "id",
-      width: 250,
+      width: 120,
       ellipsis: true,
       align: "center",
+      render: (id) => {
+        // Show only last 4 digits of the task ID
+        const shortId = getLastFourDigits(id);
+
+        // Add tooltip showing full ID on hover
+        return (
+          <Tooltip title={`Full ID: ${id}`}>
+            <span>#{shortId}</span>
+          </Tooltip>
+        );
+      },
       sorter: (a, b) => a.id.localeCompare(b.id),
     },
     {
@@ -172,12 +242,11 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
       dataIndex: "status",
       key: "status",
       align: "center",
-      width: 100,
-      render: (status) => (
-        <Tag color={status === 1 ? "green" : status === 0 ? "orange" : "blue"}>
-          {status === 1 ? "Active" : status === 0 ? "Pending" : "Unknown"}
-        </Tag>
-      ),
+      width: 120,
+      render: (status) => {
+        const statusInfo = getStatusInfo(status);
+        return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>;
+      },
     },
   ];
 
@@ -219,8 +288,6 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
               View Tasks
             </Button>
           </Col>
-
-          
         </Row>
 
         {loading ? (

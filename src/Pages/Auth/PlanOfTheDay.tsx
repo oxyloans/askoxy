@@ -224,7 +224,7 @@ const PlanOfTheDay: React.FC = () => {
                     <TextArea
                       rows={4}
                       placeholder="Describe your tasks and goals for today..."
-                      maxLength={500}
+                      maxLength={8000}
                       showCount
                       className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400"
                     />
