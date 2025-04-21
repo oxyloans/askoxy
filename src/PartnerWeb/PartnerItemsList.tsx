@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Input, Modal, Form, message, Button, Tag, Spin } from "antd";
+import { Input, Modal, Form, message, Button, Tag, Spin, Select } from "antd";
 import { ExclamationCircleOutlined, SearchOutlined } from "@ant-design/icons";
 import axios from "axios";
 import BASE_URL from "../Config";
@@ -16,6 +16,7 @@ interface Item {
   itemPrice?: number;
   active: boolean;
 }
+const { Option } = Select;
 
 const PartnerItemsList: React.FC = () => {
   const [form] = Form.useForm();
@@ -24,6 +25,8 @@ const PartnerItemsList: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const accessToken = JSON.parse(localStorage.getItem("Token") || "{}");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const [priceUpdateModal, setPriceUpdateModal] = useState<{
     visible: boolean;
     item: Item | null;
@@ -61,9 +64,6 @@ const PartnerItemsList: React.FC = () => {
 
       const transformedItems = response.data.map((item: Item) => ({
         ...item,
-        // active: item.isActive === "true",
-        // itemMrp: 1000,
-        // itemPrice: 900,
       }));
 
       setItems(transformedItems);
@@ -83,11 +83,20 @@ const PartnerItemsList: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = items.filter((item) =>
-      item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = items.filter((item) => {
+      const matchesSearch = item.itemName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+      const itemStatus = item.active === true ? "active" : "inactive";
+      const matchesStatus =
+        statusFilter === "all" || itemStatus === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+
     setFilteredItems(filtered);
-  }, [searchTerm, items]);
+  }, [searchTerm, statusFilter, items]);
 
   const handlePriceUpdate = async (values: any) => {
     if (!priceUpdateModal.item) return;
@@ -175,13 +184,27 @@ const PartnerItemsList: React.FC = () => {
         <h3 className="text-2xl font-semibold text-gray-800">
           Items Management
         </h3>
-        <Input
-          prefix={<SearchOutlined />}
-          placeholder="Search items..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full md:w-64"
-        />
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 w-full md:w-auto">
+          <Select
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value)}
+            className="w-full sm:w-40"
+            size="middle"
+          >
+            <Option value="all">All</Option>
+            <Option value="active">Active</Option>
+            <Option value="inactive">Inactive</Option>
+          </Select>
+
+          <Input
+            prefix={<SearchOutlined />}
+            placeholder="Search items..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-64"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 z-50">

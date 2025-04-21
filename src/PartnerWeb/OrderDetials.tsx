@@ -381,13 +381,13 @@ const OrderDetailsPage: React.FC = () => {
   };
 
   const getDeliveryDetials = async (status: string) => {
-    if (status === "3") {
+    if (status === "3" || status === "4" || status === "PickedUp") {
       try {
         const response = await axios.post(
           `${BASE_URL}/order-service/deliveryBoyAssigneData`,
           {
             orderId: orderId,
-            orderStatus: "3",
+            orderStatus: status || "3",
           }
         );
         if (response.status === 200) {
@@ -1043,33 +1043,33 @@ const OrderDetailsPage: React.FC = () => {
             </div>
           </div>
 
-          {orderStatus === "3" ||
+          {(orderStatus === "3" ||
             orderStatus === "4" ||
-            (orderStatus === "PickedUp" && (
-              <>
-                <div className="p-6 bg-gray-50 border-t">
-                  <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center space-x-2">
-                    <CarOutlined className="mr-3 text-blue-600" />
-                    Order Assigned To
-                  </h2>
+            orderStatus === "PickedUp") && (
+            <>
+              <div className="p-6 bg-gray-50 border-t">
+                <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center space-x-2">
+                  <CarOutlined className="mr-3 text-blue-600" />
+                  Order Assigned To
+                </h2>
 
-                  <div className="bg-white rounded-lg p-5 border space-y-3">
-                    <div className="flex justify-between text-sm text-gray-700">
-                      <span>DeliveryBoy name</span>
-                      <span className="font-medium">
-                        {dbDetails?.deliveryBoyName || ""}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-700">
-                      <span>DeliveryBoy Mobile</span>
-                      <span className="font-medium">
-                        {dbDetails?.deliveryBoyMobile || ""}
-                      </span>
-                    </div>
+                <div className="bg-white rounded-lg p-5 border space-y-3">
+                  <div className="flex justify-between text-sm text-gray-700">
+                    <span>DeliveryBoy name</span>
+                    <span className="font-medium">
+                      {dbDetails?.deliveryBoyName || ""}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-700">
+                    <span>DeliveryBoy Mobile</span>
+                    <span className="font-medium">
+                      {dbDetails?.deliveryBoyMobile || ""}
+                    </span>
                   </div>
                 </div>
-              </>
-            ))}
+              </div>
+            </>
+          )}
 
           <div className="p-6">
             <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center space-x-2">

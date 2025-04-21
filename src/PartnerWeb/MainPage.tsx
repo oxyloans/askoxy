@@ -34,7 +34,7 @@ import {
   SearchOutlined,
   SyncOutlined,
 } from "@ant-design/icons";
-import { CircleAlert, CheckCircle2, Truck } from "lucide-react";
+import { Truck, ShoppingBag, ShoppingCart, Store } from "lucide-react";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -51,6 +51,9 @@ type OrderData = {
   address?: string;
   clusterId: string;
   distance: string;
+  distancefromMiyapur: string;
+  distancefromMythriNager: string;
+  choosedLocations: string;
 };
 
 type DeliveryBoy = {
@@ -95,6 +98,7 @@ const MainPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<OrderData | null>(null);
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
   const [dbModalVisible, setdbModalVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
     useState<DeliveryBoy | null>();
   const [dbLoading, setdbLoading] = useState<boolean>(false);
@@ -105,25 +109,32 @@ const MainPage: React.FC = () => {
 
   const STATUS_COLORS = {
     "1": {
-      gradient: "from-blue-400 to-blue-500",
-      background: "linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)",
-      borderColor: "#3b82f6",
-      icon: <CircleAlert className="text-xl text-white" />,
+      gradient: "from-sky-300 to-sky-400",
+      background: "linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)",
+      borderColor: "#38bdf8",
+      icon: <ShoppingBag className="text-xl text-white" />,
       label: "New Orders",
     },
     "2": {
-      gradient: "from-green-400 to-green-500",
-      background: "linear-gradient(135deg, #6ee7b7 0%, #60a5fa 100%)",
-      borderColor: "#10b981",
-      icon: <CheckCircle2 className="text-xl text-white" />,
+      gradient: "from-green-300 to-green-400",
+      background: "linear-gradient(135deg, #86efac 0%, #34d399 100%)",
+      borderColor: "#34d399",
+      icon: <ShoppingCart className="text-xl text-white" />,
       label: "Accepted Orders",
     },
     "3": {
-      gradient: "from-orange-400 to-orange-500",
-      background: "linear-gradient(135deg, #a855f7    0%, #d946ef        80%)",
-      borderColor: "#a855f7",
+      gradient: "from-rose-200 to-rose-300",
+      background: "linear-gradient(135deg, #fecdd3 0%, #fda4b8 100%)",
+      borderColor: "#fda4b8",
       icon: <Truck className="text-xl text-white" />,
       label: "Assigned Orders",
+    },
+    PickedUp: {
+      gradient: "from-indigo-300 to-indigo-400",
+      background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)",
+      borderColor: "#6366f1",
+      icon: <Store className="text-xl text-white" />,
+      label: "PickedUp Orders",
     },
   };
 
@@ -150,16 +161,31 @@ const MainPage: React.FC = () => {
     const newOrders = await fetchOrders("1");
     const acceptedOrders = await fetchOrders("2");
     const assignedOrders = await fetchOrders("3");
-
+    const pickedUpOrders = await fetchOrders("PickedUp");
     const summaryData = [
       { name: "New Orders", count: newOrders.length, status: "1" },
       { name: "Accepted Orders", count: acceptedOrders.length, status: "2" },
       { name: "Assigned Orders", count: assignedOrders.length, status: "3" },
+      {
+        name: "PickedUp Orders",
+        count: pickedUpOrders.length,
+        status: "PickedUp",
+      },
     ];
 
     setSummaryData(summaryData);
-    setOrderDetails([...newOrders, ...acceptedOrders, ...assignedOrders]);
-    setFilteredOrders([...newOrders, ...acceptedOrders, ...assignedOrders]);
+    setOrderDetails([
+      ...newOrders,
+      ...acceptedOrders,
+      ...assignedOrders,
+      ...pickedUpOrders,
+    ]);
+    setFilteredOrders([
+      ...newOrders,
+      ...acceptedOrders,
+      ...assignedOrders,
+      ...pickedUpOrders,
+    ]);
     setLoading(false);
   };
   // Data Fetching Effect
@@ -194,6 +220,8 @@ const MainPage: React.FC = () => {
         return "green";
       case "3":
         return "purple";
+      case "PickedUp":
+        return "orange";
       default:
         return "default";
     }
@@ -207,6 +235,8 @@ const MainPage: React.FC = () => {
         return "Accepted";
       case "3":
         return "assigned";
+      case "PickedUp":
+        return "Picked Up";
       default:
         return "Unknown";
     }
@@ -375,9 +405,6 @@ const MainPage: React.FC = () => {
     }
   };
 
-  const getButtonClasses = () =>
-    "relative overflow-hidden transition-all duration-300 ease-in-out w-10 md:w-auto px-2 flex justify-center items-center";
-
   const getActionButtons = (status: string, record: OrderData) => {
     const buttonClasses =
       "relative overflow-hidden transition-all duration-300 ease-in-out w-10 md:w-auto px-2 flex justify-center items-center";
@@ -386,7 +413,7 @@ const MainPage: React.FC = () => {
       case "1":
       case "2":
         return (
-          <>
+          <div className="flex flex-col md:flex-row gap-2">
             <div className="group relative">
               <Button
                 type="primary"
@@ -412,12 +439,12 @@ const MainPage: React.FC = () => {
                 </div>
               </Button>
             </div>
-          </>
+          </div>
         );
 
       case "3":
         return (
-          <>
+          <div className="flex flex-col md:flex-row gap-2">
             <div className="group relative">
               <Button
                 type="primary"
@@ -443,7 +470,7 @@ const MainPage: React.FC = () => {
                 </div>
               </Button>
             </div>
-          </>
+          </div>
         );
 
       default:
@@ -456,8 +483,8 @@ const MainPage: React.FC = () => {
       title: "S.No",
       dataIndex: "index",
       key: "index",
-      // width: 50,
-      sorter: (a, b) => a.orderId.localeCompare(b.orderId), // Sorting based on orderId
+      width: 60,
+      sorter: (a, b) => a.orderId.localeCompare(b.orderId),
       render: (_text, _record, index) =>
         (pagination.current - 1) * pagination.pageSize + index + 1,
     },
@@ -465,8 +492,8 @@ const MainPage: React.FC = () => {
       title: "Order ID",
       dataIndex: "uniqueId",
       key: "uniqueId",
-      // width: 100,
-      sorter: (a, b) => a.uniqueId.localeCompare(b.uniqueId), // Sorting by Order ID
+      width: 120,
+      sorter: (a, b) => a.uniqueId.localeCompare(b.uniqueId),
       render: (text: string, record: OrderData) => (
         <div>
           <Typography.Text className="text-lg font-semibold">
@@ -484,21 +511,21 @@ const MainPage: React.FC = () => {
       title: "Order Address",
       dataIndex: "orderAddress",
       key: "orderAddress",
-      // width: 180,
+      width: 180,
       sorter: (a, b) =>
         (a.orderAddress?.address || "").localeCompare(
           b.orderAddress?.address || ""
         ),
       render: (_text, record: OrderData) => (
-        <Typography.Text>
-          {record.orderAddress?.address || "N/A"}
-        </Typography.Text>
+        <div className="w-[160px] h-[100px] overflow-y-auto overflow-x-hidden scrollbar-hide">
+          {record.orderAddress?.address || "Not provided"}
+        </div>
       ),
     },
     {
       title: "Order Pincode",
       key: "orderPincode",
-      // width: 100,
+      width: 120,
       sorter: (a, b) =>
         (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
       render: (record: OrderData) => (
@@ -506,7 +533,9 @@ const MainPage: React.FC = () => {
           {record.orderAddress?.pincode ? (
             <Typography.Text>{record.orderAddress.pincode}</Typography.Text>
           ) : (
-            <Typography.Text className="text-gray-500">N/A</Typography.Text>
+            <Typography.Text className="text-gray-500">
+              Not provided
+            </Typography.Text>
           )}
         </div>
       ),
@@ -514,7 +543,7 @@ const MainPage: React.FC = () => {
     {
       title: "Order Date",
       key: "datetime",
-      // width: 90,
+      width: 110,
       sorter: (a: OrderData, b: OrderData) =>
         new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime(),
       render: (record: OrderData) => (
@@ -522,7 +551,7 @@ const MainPage: React.FC = () => {
           <Typography.Text>
             {record.orderDate
               ? new Date(record.orderDate).toLocaleDateString()
-              : "N/A"}
+              : "Not provided"}
           </Typography.Text>
         </div>
       ),
@@ -531,6 +560,7 @@ const MainPage: React.FC = () => {
       title: "Expected Delivery",
       dataIndex: "expectedDeliveryDate",
       key: "expectedDeliveryDate",
+      width: 160,
       render: (_: string, record: OrderData) => {
         if (!record.expectedDeliveryDate || !record.timeSlot) {
           return "N/A";
@@ -541,26 +571,44 @@ const MainPage: React.FC = () => {
         new Date(a.expectedDeliveryDate || "").getTime() -
         new Date(b.expectedDeliveryDate || "").getTime(),
     },
-    // {
-    //   title: "clusterId distance",
-    //   key: "clusterId",
-    //   // width: 100,
-    //   sorter: (a, b) =>
-    //     (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
-    //   render: (record: OrderData) => (
-    //     <div className="flex items-center gap-2 mt-1">
-    //       {record.clusterId ? (
-    //         <>
-    //           <Typography.Text>{record.clusterId}</Typography.Text>
-    //           {/* <br /> */}
-    //           <Typography.Text>{record.distance}</Typography.Text>
-    //         </>
-    //       ) : (
-    //         <Typography.Text className="text-gray-500">N/A</Typography.Text>
-    //       )}
-    //     </div>
-    //   ),
-    // },
+    {
+      title: "Distance",
+      key: "distance",
+      width: 180,
+      render: (record: OrderData) => (
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center">
+            <span className="mr-2 w-20">Miyapur:</span>
+            <span className="text-gray-500">
+              {record.distancefromMiyapur || "Not given"}
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="mr-2 w-25">MythriNagar:</span>
+            <span className="text-gray-500 ">
+              {record.distancefromMythriNager || "Not given"}
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="mr-2 w-20">Selected:</span>
+            <span className="text-green-600">
+              {record.choosedLocations || "Not given"}
+            </span>
+          </div>
+        </div>
+      ),
+      sorter: (a: OrderData, b: OrderData) => {
+        const getNumericDistance = (distance: string) => {
+          if (!distance) return 0;
+          const numVal = parseFloat(distance.replace(/[^\d.]/g, ""));
+          return isNaN(numVal) ? 0 : numVal;
+        };
+
+        const distA = getNumericDistance(a.distancefromMiyapur);
+        const distB = getNumericDistance(b.distancefromMiyapur);
+        return distA - distB;
+      },
+    },
     {
       title: "Actions",
       dataIndex: "orderStatus",
@@ -569,13 +617,13 @@ const MainPage: React.FC = () => {
       sorter: (a, b) => a.orderStatus.localeCompare(b.orderStatus),
       render: (text: string, record: OrderData) => {
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-2">
             {getActionButtons(text, record)}
 
             <div className="group relative">
               <Button
                 type="primary"
-                className="w-16 md:w-auto px-2 bg-purple-500 hover:bg-gray-700 transition-all duration-300 flex items-center"
+                className="w-full md:w-auto px-2 bg-purple-500 hover:bg-gray-700 transition-all duration-300 flex items-center justify-center"
                 onClick={() => handleViewDetails(record)}
               >
                 <div className="flex items-center">
@@ -702,7 +750,7 @@ const MainPage: React.FC = () => {
                       <Text
                         strong
                         className="text-md tracking-wide"
-                        style={{ color: "rgba(255,255,255,0.8)" }}
+                        style={{ color: "black" }}
                       >
                         {statusConfig.label}
                       </Text>
@@ -786,7 +834,8 @@ const MainPage: React.FC = () => {
               }}
               loading={loading}
               onChange={handleTableChange}
-              scroll={{ x: true }}
+              scroll={{ x: 1100 }}
+              size={isMobile ? "small" : "middle"}
             />
           </Card>
         </Col>

@@ -34,7 +34,7 @@ interface Query {
 const AllQueries: React.FC = () => {
   const [queryStatus, setQueryStatus] = useState<string>("PENDING");
   const [askOxyOffersFilter, setAskOxyOffersFilter] =
-    useState<string>("FREERUDRAKSHA");
+    useState<string>("FREESAMPLE");
   const [queries, setQueries] = useState<Query[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -317,7 +317,7 @@ const AllQueries: React.FC = () => {
     <div className="flex flex-col md:flex-row min-h-screen">
       <div className="flex-1 ">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h1 className="text-2xl font-bold text-indigo-800 mb-4 md:mb-0">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
             Queries Raised by Users
           </h1>
 
@@ -344,13 +344,13 @@ const AllQueries: React.FC = () => {
               dropdownStyle={{ borderRadius: "8px" }}
               style={{ borderRadius: "8px" }}
             >
+              <Option value="FREESAMPLE">FREE RICE SAMPLE</Option>
+              <Option value="STUDYABROAD">STUDY ABROAD</Option>
               <Option value="FREERUDRAKSHA">FREE RUDRAKSHA</Option>
               <Option value="FREEAI">FREE AI</Option>
               <Option value="ROTARIAN">ROTARIAN</Option>
               <Option value="WEAREHIRING">WE ARE HIRING</Option>
               <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
-              <Option value="STUDYABROAD">STUDY ABROAD</Option>
-              <Option value="FREESAMPLE">FREE RICE SAMPLE</Option>
             </Select>
           </div>
         </div>

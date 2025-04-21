@@ -77,10 +77,8 @@ const AllOrders: React.FC = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [startDate, setStartDate] = useState<Dayjs | null>(
-    dayjs().subtract(1, "day")
-  );
-  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isDataFetched, setIsDataFetched] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -164,11 +162,11 @@ const AllOrders: React.FC = () => {
         )}
       </div>
 
-      <div className="flex flex-wrap items-end gap-4 mb-4">
-        <div className="flex-grow min-w-[200px]">
+      <div className="flex flex-wrap gap-4 mb-4 sm:flex-row flex-col">
+        <div className="flex flex-col">
           <Typography.Text>Start Date</Typography.Text>
           <DatePicker
-            className="w-full"
+            className="w-[150px]"
             value={startDate}
             onChange={(date) => setStartDate(date)}
             placeholder="Select Start Date"
@@ -176,20 +174,20 @@ const AllOrders: React.FC = () => {
           />
         </div>
 
-        <div className="flex-grow min-w-[200px]">
+        <div className="flex flex-col">
           <Typography.Text>End Date</Typography.Text>
           <DatePicker
-            className="w-full"
+            className="w-[150px]"
             value={endDate}
             onChange={(date) => setEndDate(date)}
             placeholder="Select End Date"
           />
         </div>
 
-        <div className="flex-grow min-w-[200px]">
+        <div className="flex flex-col">
           <Typography.Text>Status</Typography.Text>
           <Select
-            className="w-full"
+            className="w-[150px]"
             placeholder="Select Status"
             value={selectedStatus || "All"}
             onChange={handleStatusChange}
@@ -205,14 +203,16 @@ const AllOrders: React.FC = () => {
           </Select>
         </div>
 
-        <Button
-          type="primary"
-          onClick={fetchOrders}
-          disabled={!startDate || !endDate}
-          className="self-end"
-        >
-          Get Orders
-        </Button>
+        <div className="flex flex-col justify-end">
+          <Button
+            type="primary"
+            onClick={fetchOrders}
+            disabled={!startDate || !endDate}
+            className="bg-[rgb(0,_140,_186)] w-[90px] text-white"
+          >
+            Get Orders
+          </Button>
+        </div>
       </div>
 
       {orders.length > 0 && (

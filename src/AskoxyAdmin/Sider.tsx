@@ -11,6 +11,7 @@ import {
   FaUserCircle,
   FaClipboardList,
   FaHeadset,
+  FaUsers,
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
@@ -77,10 +78,16 @@ const Sidebar: React.FC = () => {
       roles: ["HELPDESKADMIN"],
     },
     {
-      title: "Assigned Data",
+      title: "Assigned Users",
       icon: <FaClipboardList className="text-yellow-400" />,
       link: "/admn/dataAssigned",
       roles: ["SELLER"],
+    },
+    {
+      title: "Referred Data",
+      icon: <FaUsers className="text-blue-500" />,
+      link: "/admn/referredData",
+      roles: ["HELPDESKADMIN"],
     },
     {
       title: "HelpDesk Team",
@@ -251,10 +258,11 @@ const Sidebar: React.FC = () => {
 
         {/* Footer */}
         {(!collapsed || isMobileOpen) && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
-            <div className="flex items-center px-2 py-2 text-sm text-gray-400">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white">
+            <div className="flex items-center px-2 py-2 text-sm text-white">
               <FaUserCircle className="mr-2" />
-              <span>{userRole === "SELLER" ? "Admin" : "Helpdesk"} User</span>
+              {/* <span>{userRole === "SELLER" ? "Admin" : "Helpdesk"} User</span> */}
+              <span>{localStorage.getItem("userName")?.toUpperCase()}</span>
             </div>
           </div>
         )}

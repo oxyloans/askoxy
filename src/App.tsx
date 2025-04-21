@@ -117,6 +117,7 @@ import Register from "./AskoxyAdmin/Register";
 import AssignedDataPage from "./AskoxyAdmin/AssignedData";
 import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
 import DataAssigned from "./AskoxyAdmin/DataAssigned";
+import ReferredData from "./AskoxyAdmin/RefferedData";
 
 
 const App: React.FC = () => {
@@ -470,6 +471,7 @@ const App: React.FC = () => {
             <Route path="assignedData" element={<AssignedDataPage />} />
             <Route path="helpDeskUsers" element={<HelpDeskUsersDashboard />} />
             <Route path="dataAssigned" element={<DataAssigned />} />
+            <Route path="referredData" element={<ReferredData />} />
           </Route>
           {/* ----------Admin Routes end---------- */}
 

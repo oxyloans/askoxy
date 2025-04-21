@@ -34,7 +34,7 @@ const { Option } = Select;
 
 interface UserData {
   userId: string;
-  id: string; // Added for comment functionality
+  id: string;
   userType: string;
   userName: string;
   mobileNumber: string;
@@ -254,12 +254,12 @@ const DataAssigned: React.FC = () => {
     setSearchTerm(value);
   };
 
-  // Filter data if search term exists
   const filteredData = searchTerm
     ? userData.filter(
         (user) =>
           user.mobileNumber?.includes(searchTerm) ||
           user.lastFourDigitsUserId?.includes(searchTerm) ||
+          user.assignedTo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (user.firstName &&
             user.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
           String(user.ericeCustomerId).includes(searchTerm)
@@ -278,7 +278,6 @@ const DataAssigned: React.FC = () => {
     });
   };
 
-  // Helper function to get helpdesk user name from userId
   const getHelpDeskName = (assignedToId: string): string => {
     const helpDeskUser = helpDeskUsers.find(
       (user) => user.userId === assignedToId
@@ -292,7 +291,11 @@ const DataAssigned: React.FC = () => {
       dataIndex: "lastFourDigitsUserId",
       key: "lastFourDigitsUserId",
       width: 50,
-      render: (text: string) => <Tag color="blue">{text}</Tag>,
+      render: (text: string) => (
+        <Tag color="blue" className="font-normal text-sm">
+          #{text}
+        </Tag>
+      ),
     },
     {
       title: "Mobile",

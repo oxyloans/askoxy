@@ -30,6 +30,7 @@ import {
 import axios from "axios";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
+import moment from "moment";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -37,7 +38,7 @@ const { Option } = Select;
 
 interface UserData {
   userId: string;
-  id: string; // Added for comment functionality
+  id: string;
   userType: string;
   userName: string;
   mobileNumber: string;
@@ -125,6 +126,31 @@ const AssignedDataPage: React.FC = () => {
   const updatedBy = localStorage.getItem("userName")?.toUpperCase();
   const [orderId, setOrderId] = useState<string>("");
   const storedUniqueId = localStorage.getItem("uniquId");
+  const deliveredOrdersCount = userOrders.filter(
+    (order) => order.orderStatus === "4"
+  ).length;
+  const hasOrders = userOrders.length > 0;
+  const userStatus = hasOrders
+    ? "Logged in, placed order"
+    : "Not logged in, not placed order";
+  const currentDate = moment();
+  const sixMonthsAgo = moment().subtract(6, "months");
+  const latestOrder =
+    userOrders.length > 0
+      ? userOrders.reduce((latest, order) =>
+          moment(order.orderDate).isAfter(moment(latest.orderDate))
+            ? order
+            : latest
+        )
+      : null;
+  const isActiveUser =
+    latestOrder && moment(latestOrder.orderDate).isAfter(sixMonthsAgo);
+  const activityStatus = isActiveUser ? "Active" : "Inactive";
+  const activityMessage = latestOrder
+    ? isActiveUser
+      ? "User placed order within last six months"
+      : "User has not placed order in last six months"
+    : "User not placed any order";
 
   useEffect(() => {
     const storedUniqueId = localStorage.getItem("uniquId");
@@ -366,7 +392,8 @@ const AssignedDataPage: React.FC = () => {
       key: "expectedDeliveryDate",
       render: (expectedDeliveryDate: string, record: OrderData) => (
         <div>
-          <p>{new Date(expectedDeliveryDate).toLocaleDateString()}</p>
+          {/* <p>{new Date(expectedDeliveryDate).toLocaleDateString()}</p> */}
+          <p>{expectedDeliveryDate}</p>
           <p>{record.timeSlot}</p>
           <p>{record.dayOfWeek}</p>
         </div>
@@ -440,13 +467,17 @@ const AssignedDataPage: React.FC = () => {
       dataIndex: "lastFourDigitsUserId",
       key: "lastFourDigitsUserId",
       width: 50,
-      render: (text: string) => <Tag color="blue">{text}</Tag>,
+      render: (text: string) => (
+        <Tag color="blue" className="font-normal text-sm">
+          {text}
+        </Tag>
+      ),
     },
     {
       title: "Mobile",
       dataIndex: "mobileNumber",
       key: "mobileNumber",
-      width: 160,
+      width: 100,
       render: (_: string, record: UserData) => {
         const mobile = record.mobileNumber;
         const whatsapp = record.whastappNumber;
@@ -508,7 +539,7 @@ const AssignedDataPage: React.FC = () => {
           record.lastName || ""
         }`.trim();
         return (
-          <Tooltip title={fullName || "No Name Provided"}>
+          <Tooltip title={fullName || "No Name"}>
             <span className="flex items-center">
               {/* <UserOutlined className="mr-2 text-gray-500" /> */}
               {fullName ? (
@@ -585,8 +616,8 @@ const AssignedDataPage: React.FC = () => {
           <span className="flex items-center">
             {/* <HomeOutlined className="mr-2 text-gray-500" /> */}
             {text ? (
-              text.length > 15 ? (
-                `${text.substring(0, 15)}...`
+              text.length > 25 ? (
+                `${text.substring(0, 25)}...`
               ) : (
                 text
               )
@@ -600,7 +631,7 @@ const AssignedDataPage: React.FC = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 140, // increased to accommodate both buttons with space
+      width: 120,
       render: (_text, record) => (
         <div className="flex gap-2">
           <Button
@@ -826,7 +857,7 @@ const AssignedDataPage: React.FC = () => {
       <Modal
         zIndex={100}
         title={
-          <span style={{ color: "#1890ff", fontSize: "20px" }}>
+          <span className="text-blue-500 text-xl font-semibold">
             Order Details
           </span>
         }
@@ -844,31 +875,18 @@ const AssignedDataPage: React.FC = () => {
               setOrderDetailsVisible(false);
               setSelectedUser(null);
             }}
-            style={{
-              backgroundColor: "#ff4d4f",
-              color: "white",
-              border: "none",
-            }}
+            className="bg-red-500 text-white border-none hover:bg-red-600"
           >
             Close
           </Button>,
         ]}
         width={800}
-        style={{ borderRadius: "8px", overflow: "hidden" }}
+        className="rounded-lg overflow-hidden"
       >
         {loader ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "30px",
-              background: "#f0f2f5",
-              borderRadius: "8px",
-            }}
-          >
-            <Spin size="large" style={{ color: "#1890ff" }} />
-            <p style={{ color: "#595959", marginTop: "10px" }}>
-              Loading order details...
-            </p>
+          <div className="text-center p-8 bg-gray-100 rounded-lg">
+            <Spin size="large" className="text-blue-500" />
+            <p className="text-gray-600 mt-2">Loading order details...</p>
           </div>
         ) : (
           <>
@@ -877,57 +895,116 @@ const AssignedDataPage: React.FC = () => {
                 <Col span={24}>
                   <Card
                     title={
-                      <span style={{ color: "#2f54eb" }}>
+                      <span className="text-coldblue font-semibold">
                         Customer Information
                       </span>
                     }
-                    style={{
-                      borderRadius: "8px",
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-                      background: "linear-gradient(to right, #fff, #f9faff)",
-                    }}
+                    className="rounded-lg shadow-md bg-gradient-to-r from-white to-blue-50"
                   >
-                    <p style={{ color: "#595959" }}>
-                      <strong style={{ color: "#1d39c4" }}>Name:</strong>
-                      {""}
-                      {selectedUser.userName || "N/A"}
-                    </p>
-                    <p style={{ color: "#595959" }}>
-                      <strong style={{ color: "#1d39c4" }}>Email: </strong>{" "}
-                      {selectedUser.email || "N/A"}
-                    </p>
-                    <p style={{ color: "#595959" }}>
-                      <strong style={{ color: "#1d39c4" }}>Phone: </strong>{" "}
-                      {selectedUser.whastappNumber ||
-                        selectedUser.mobileNumber ||
-                        "N/A"}
-                    </p>
-                    <p style={{ color: "#595959" }}>
-                      <strong style={{ color: "#1d39c4" }}>User ID: </strong>{" "}
-                      {selectedUser.id || "N/A"}
-                    </p>
-                    <p style={{ color: "#595959" }}>
-                      <strong style={{ color: "#1d39c4" }}>Address: </strong>{" "}
-                      {selectedUser.address || "N/A"}
-                    </p>
+                    <Row gutter={[16, 16]}>
+                      <Col span={12}>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Name:</strong>{" "}
+                          {selectedUser.userName || "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Email:</strong>{" "}
+                          {selectedUser.email || "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Phone:</strong>{" "}
+                          {selectedUser.whastappNumber ||
+                            selectedUser.mobileNumber ||
+                            "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">User ID:</strong>{" "}
+                          {selectedUser.id || "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Address:</strong>{" "}
+                          {selectedUser.address || "N/A"}
+                        </p>
+                      </Col>
+                      <Col span={12}>
+                        <div className="bg-blue-50 p-4 rounded-lg h-full flex flex-col justify-center">
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              User Status:
+                            </strong>{" "}
+                            <span
+                              className={`font-bold ${
+                                hasOrders ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {userStatus}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              Total Orders:
+                            </strong>{" "}
+                            <span className="font-bold text-blue-600">
+                              {userOrders.length}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              Delivered Orders:
+                            </strong>{" "}
+                            <span className="font-bold text-blue-600">
+                              {deliveredOrdersCount}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              User Type:
+                            </strong>{" "}
+                            <span className="font-bold text-blue-600">
+                              {selectedUser.userType || "N/A"}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-2">
+                            <strong className="text-indigo-700">
+                              Activity Status:
+                            </strong>{" "}
+                            <span
+                              className={`font-bold ${
+                                isActiveUser ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {activityStatus}
+                            </span>
+                          </p>
+                          <p
+                            className={`text-xs ${
+                              activityMessage ===
+                              "User placed order within last six months"
+                                ? "text-gray-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {activityMessage}
+                          </p>
+                        </div>
+                      </Col>
+                    </Row>
                   </Card>
                 </Col>
 
                 <Col span={24}>
                   <Card
                     title={
-                      <span style={{ color: "#2f54eb" }}>Orders History</span>
+                      <span className="text-blue-600 font-semibold">
+                        Orders History
+                      </span>
                     }
                     extra={
-                      <Text type="secondary" style={{ color: "#722ed1" }}>
+                      <Text type="secondary" className="text-purple-500">
                         {userOrders.length} orders found
                       </Text>
                     }
-                    style={{
-                      borderRadius: "8px",
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-                      background: "linear-gradient(to right, #fff, #f9faff)",
-                    }}
+                    className="rounded-lg shadow-md bg-gradient-to-r from-white to-blue-50"
                   >
                     <Table
                       dataSource={userOrders}
@@ -937,7 +1014,7 @@ const AssignedDataPage: React.FC = () => {
                       size="small"
                       scroll={{ x: "max-content" }}
                       rowClassName={(_, index) =>
-                        index % 2 === 0 ? "table-row-light" : "table-row-dark"
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
                       }
                       locale={{
                         emptyText: (
