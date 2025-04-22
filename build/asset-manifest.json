@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.b51da8fb.css",
-    "main.js": "/static/js/main.b62b6e74.js",
+    "main.css": "/static/css/main.137bb2bd.css",
+    "main.js": "/static/js/main.31fa3da3.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
     "static/media/1.3.png": "/static/media/1.3.d032daef6790d89819bd.png",
@@ -102,6 +102,7 @@
     "static/media/testimonial17.png": "/static/media/testimonial17.fb648ac71a729958a005.png",
     "static/media/Management service gpt (1).png": "/static/media/Management service gpt (1).30c191740325608d8659.png",
     "static/media/testimonial9.png": "/static/media/testimonial9.f386453652d69c54a59d.png",
+    "static/media/BUY 1 GET 1 2.png": "/static/media/BUY 1 GET 1 2.cb3cf37d9caf1f3f2a8a.png",
     "static/media/Automotive.png": "/static/media/Automotive.04d3a447511d1b50e4d9.png",
     "static/media/Shopping.png": "/static/media/Shopping.0a66eee4bfa3c59e34df.png",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.1815e00441357e01619e.ttf",
@@ -120,16 +121,15 @@
     "static/media/freelancer and consulting service.png": "/static/media/freelancer and consulting service.cebe62a57cb94f08390e.png",
     "static/media/Legal knowledge hub.png": "/static/media/Legal knowledge hub.9db183177e6a1533ba16.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
-    "static/media/1 image.png": "/static/media/1 image.14c7fcd3d4ec8b8c0aa5.png",
     "static/media/Pets.png": "/static/media/Pets.ca3ab0d5bb314a9dc270.png",
     "static/media/IMAGE 16.png": "/static/media/IMAGE 16.e2c205dbc69cbfa0b18a.png",
     "static/media/loan services.png": "/static/media/loan services.d1ec8a6c9d10588e8412.png",
     "static/media/o2.png": "/static/media/o2.5993d0be5c2d681d469f.png",
+    "static/media/BUY 1 GET 1.png": "/static/media/BUY 1 GET 1.350a5a19662ae252efbb.png",
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
     "static/media/IMAGE 3.png": "/static/media/IMAGE 3.5588a13795e17eb3e259.png",
     "static/media/IMAGE 6.png": "/static/media/IMAGE 6.fd30f645e550254b1941.png",
     "static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.png": "/static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.3b40f8ed166a3fd17253.png",
-    "static/media/IMAGE 2.png": "/static/media/IMAGE 2.0e23e48d29c68559401a.png",
     "static/media/image 13.png": "/static/media/image 13.cc8aa13738305ef13342.png",
     "static/media/rama mam.png": "/static/media/rama mam.e093d87cf380e97bca53.png",
     "static/media/IMAGE 17.png": "/static/media/IMAGE 17.4aa5aed636318304d260.png",
@@ -177,11 +177,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.b51da8fb.css.map": "/static/css/main.b51da8fb.css.map",
-    "main.b62b6e74.js.map": "/static/js/main.b62b6e74.js.map"
+    "main.137bb2bd.css.map": "/static/css/main.137bb2bd.css.map",
+    "main.31fa3da3.js.map": "/static/js/main.31fa3da3.js.map"
   },
   "entrypoints": [
-    "static/css/main.b51da8fb.css",
-    "static/js/main.b62b6e74.js"
+    "static/css/main.137bb2bd.css",
+    "static/js/main.31fa3da3.js"
   ]
 }

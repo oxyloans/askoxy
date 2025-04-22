@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import HM1 from "../assets/img/1 image.png";
-import HM2 from "../assets/img/IMAGE 2.png";
+import HM1 from "../assets/img/BUY 1 GET 1.png";
+import HM2 from "../assets/img/BUY 1 GET 1 2.png";
 import HM3 from "../assets/img/IMAGE 3.png";
 import HM4 from "../assets/img/image 4.png";
 import HM5 from "../assets/img/IMAGE 5.png";
@@ -34,16 +34,17 @@ const ResponsiveGallery = () => {
     {
       id: 1,
       src: HM1,
-      alt: "RavensBourne univerity",
-      category: "RAVENSBOURNE UNIVERSITY",
-      link: "/main/services/studyabroad",
+      alt: "Buy 1 Kg Rice Get 1 Kg Free",
+      category: "BUY 1 KG RICE GET 1 KG RICE FREE",
+
+      link: "/main/dashboard/products",
     },
     {
       id: 2,
       src: HM2,
-      alt: "University of Roehampton",
-      category: "UNIVERSITY OF ROEHAMPTON",
-      link: "/main/services/studyabroad",
+      alt: "Buy 1 Kg Rice Get 1 Kg Free",
+      category: "BUY 1 KG RICE GET 1 KG RICE FREE",
+      link: "/main/dashboard/products",
     },
     {
       id: 3,
@@ -52,6 +53,14 @@ const ResponsiveGallery = () => {
       category: "MIDDLESSEX UNIVERSITY",
       link: "/main/services/studyabroad",
     },
+    {
+      id: 6,
+      src: HM7,
+      alt: "BPP University",
+      category: "BPP UNIVERSITY",
+      link: "/main/services/studyabroad",
+    },
+
     {
       id: 4,
       src: HM4,
@@ -67,13 +76,7 @@ const ResponsiveGallery = () => {
 
       link: "/main/services/studyabroad",
     },
-    {
-      id: 6,
-      src: HM7,
-      alt: "BPP University",
-      category: "BPP UNIVERSITY",
-      link: "/main/services/studyabroad",
-    },
+
     {
       id: 7,
       src: HM6,

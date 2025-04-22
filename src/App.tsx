@@ -119,7 +119,7 @@ import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
 import DataAssigned from "./AskoxyAdmin/DataAssigned";
 import ReferredData from "./AskoxyAdmin/RefferedData";
 
-
+import FreeRiceBlog from "./components/FreeRice";
 const App: React.FC = () => {
 
  const location = useLocation();
@@ -165,7 +165,9 @@ const App: React.FC = () => {
         {/* ----------------------- */}
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
-              <Route path="/userregister" element={<UserRegister />} />
+            <Route path="/freerice" element={<FreeRiceBlog />} />
+          <Route path="/userregister" element={<UserRegister />} />
+          
           <Route path="/userlogin" element={<UserLogin />} />   <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
           <Route path="/planoftheday" element={<PlanOfTheDay />} />
           <Route path="/taskupdated" element={<TaskUpdate />} />
