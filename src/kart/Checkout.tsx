@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Clock,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { Loader2, X } from "lucide-react";
@@ -166,15 +167,15 @@ const CheckoutPage: React.FC = () => {
         `${BASE_URL}/order-service/fetchTimeSlotlist`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       if (response.data && Array.isArray(response.data)) {
         const currentDate = new Date();
         const currentDay = currentDate.getDay();
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const startDayOffset = 1;
-  
+
         const formattedTimeSlots = [];
-  
+
         for (let index = 0; index < 3; index++) {
           const dayOffset = startDayOffset + index;
           const slotDate = new Date(currentDate);
@@ -182,32 +183,26 @@ const CheckoutPage: React.FC = () => {
           const dayIndex = (currentDay + dayOffset) % 7;
           const dayOfWeek = dayNames[dayIndex].toUpperCase();
           const formattedDate = `${String(slotDate.getDate()).padStart(2, "0")}-${String(slotDate.getMonth() + 1).padStart(2, "0")}-${slotDate.getFullYear()}`;
-  
+
           const slotData = response.data[index];
-          console.log({slotData});
-          
-  
-          // Only show time slots where isAvailable is **false**
+
           if (slotData) {
-                 console.log("formatted date",slotData);
-                 if(!slotData.isAvailable){
-                 
-            formattedTimeSlots.push({
-              ...slotData,
-              dayOfWeek,
-              expectedDeliveryDate: formattedDate,
-              timeSlot1: slotData.timeSlot1 || null,
-              timeSlot2: slotData.timeSlot2 || null,
-              timeSlot3: slotData.timeSlot3 || null,
-              timeSlot4: slotData.timeSlot4 || null,
-              isAvailable:slotData.isAvailable,
-              date: formattedDate,
-            });
-            console.log({formattedTimeSlots});
+            if (!slotData.isAvailable) {
+              formattedTimeSlots.push({
+                ...slotData,
+                dayOfWeek,
+                expectedDeliveryDate: formattedDate,
+                timeSlot1: slotData.timeSlot1 || null,
+                timeSlot2: slotData.timeSlot2 || null,
+                timeSlot3: slotData.timeSlot3 || null,
+                timeSlot4: slotData.timeSlot4 || null,
+                isAvailable: slotData.isAvailable,
+                date: formattedDate,
+              });
+            }
           }
         }
-        }
-  
+
         setTimeSlots(formattedTimeSlots);
       }
     } catch (error) {
@@ -215,8 +210,6 @@ const CheckoutPage: React.FC = () => {
       message.error("Failed to fetch delivery time slots");
     }
   };
-  
-
 
   const submitOrder = async (
     selectedSlot: TimeSlot,
@@ -329,8 +322,6 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-
-
   const handleApplyCoupon = () => {
     const data = {
       couponCode: couponCode,
@@ -348,7 +339,6 @@ const CheckoutPage: React.FC = () => {
         setCoupenDetails(discount);
         setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
-        // grandTotalfunc();
       })
       .catch((error) => {
         console.error("Error in applying coupon:", error);
@@ -362,7 +352,6 @@ const CheckoutPage: React.FC = () => {
     setCoupenApplied(false);
     setCoupenDetails(null);
     message.info("Coupon removed successfully");
-    // grandTotalfunc();
   };
 
   const getWalletAmount = async () => {
@@ -378,7 +367,6 @@ const CheckoutPage: React.FC = () => {
       setAfterWallet(usableAmount);
       setWalletMessage(response.data.message || '');
       setUsedWalletAmount(0);
-      // grandTotalfunc();
     } catch (error: unknown) {
       console.error("Error fetching wallet amount:", error);
       message.error("Failed to fetch wallet balance");
@@ -389,39 +377,36 @@ const CheckoutPage: React.FC = () => {
   };
 
   function grandTotalfunc() {
-    let total = totalAmount + deliveryBoyFee; // Start with total including delivery fee
-    let usedWallet = 0; // Track how much wallet is actually used
+    let total = totalAmount + deliveryBoyFee;
+    let usedWallet = 0;
 
     if (coupenApplied) {
-        total -= coupenDetails;
+      total -= coupenDetails;
     }
 
-    if (useWallet && walletAmount > 0) {  // Process only if user has wallet balance
-        if (walletAmount >= total) {
-            usedWallet = total;  // Use only what's needed
-            total = 0;  
-        } else {
-            usedWallet = walletAmount; // Use full wallet balance
-            total -= walletAmount;
-        }
+    if (useWallet && walletAmount > 0) {
+      if (walletAmount >= total) {
+        usedWallet = total;
+        total = 0;
+      } else {
+        usedWallet = walletAmount;
+        total -= walletAmount;
+      }
     }
 
-    // Ensure total is never negative
     total = Math.max(0, total);
 
-    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
-    setUsedWalletAmount(usedWallet);  // Store how much wallet is used
+    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0);
+    setUsedWalletAmount(usedWallet);
     setGrandTotalAmount(total);
 
-    if(total === 0){
-      console.log("Get all Values",{total});
-      
+    if (total === 0) {
       setSelectedPayment('COD');
     }
 
     console.log("Used Wallet:", usedWallet);
-    console.log("Final Grand Total:", total);
-}
+    console.log("Final Grand Total:", total);
+  }
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
@@ -438,7 +423,6 @@ const CheckoutPage: React.FC = () => {
         setUseWallet(newValue);
         setUsedWalletAmount(potentialUsedAmount);
         setAfterWallet(walletAmount - potentialUsedAmount);
-        // grandTotalfunc();
         message.success(newValue ? "Wallet applied" : "Wallet removed");
       },
       onCancel: () => {
@@ -510,6 +494,25 @@ const CheckoutPage: React.FC = () => {
       if (response.status === 200 && response.data) {
         await fetchCartData();
 
+        // GA4 Purchase Event Tracking
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "purchase", {
+            transaction_id: response.data.paymentId || `COD_${new Date().getTime()}`,
+            value: grandTotalAmount,
+            currency: "INR",
+            tax: subGst,
+            shipping: deliveryBoyFee,
+            coupon: coupenApplied ? couponCode.toUpperCase() : "",
+            items: cartData.map((item) => ({
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: parseFloat(item.itemPrice),
+              quantity: parseInt(item.cartQuantity),
+              item_category: "Rice", // Assuming Rice as default category
+            })),
+          });
+        }
+
         if (selectedPayment === "COD" && !response.data.paymentId) {
           Modal.success({
             content: "Order placed Successfully",
@@ -551,6 +554,7 @@ const CheckoutPage: React.FC = () => {
       setLoading(false);
     }
   };
+
   const getepayPortal = async (data: any) => {
     const JsonData = JSON.stringify(data);
     const mer = data.merchantTransactionId;
@@ -591,7 +595,6 @@ const CheckoutPage: React.FC = () => {
             window.location.href = paymentUrl;
           },
           onCancel() {
-            // Set default to COD and update the payment method
             setSelectedPayment("COD");
             message.info("Payment method changed to Cash on Delivery");
           }
@@ -612,7 +615,7 @@ const CheckoutPage: React.FC = () => {
         "Getepay Key": "kNnyys8WnsuOXgBlB9/onBZQ0jiYNhh4Wmj2HsrV/wY=",
         "Getepay IV": "L8Q+DeKb+IL65ghKXP1spg==",
       };
-  
+
       const JsonData = {
         mid: Config["Getepay Mid"],
         paymentId: parseInt(paymentId),
@@ -621,24 +624,24 @@ const CheckoutPage: React.FC = () => {
         terminalId: Config["Getepay Terminal Id"],
         vpa: "",
       };
-  
+
       var ciphertext = encryptEas(
         JSON.stringify(JsonData),
         Config["Getepay Key"],
         Config["Getepay IV"]
       );
       var newCipher = ciphertext.toUpperCase();
-  
+
       var myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append("Cookie", "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove");
-  
+
       var raw = JSON.stringify({
         mid: Config["Getepay Mid"],
         terminalId: Config["Getepay Terminal Id"],
         req: newCipher,
       });
-  
+
       fetch("https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus", {
         method: "POST",
         headers: myHeaders,
@@ -660,7 +663,7 @@ const CheckoutPage: React.FC = () => {
                   setSelectedAddress(JSON.parse(add) as Address);
                 }
               }
-  
+
               if (data.paymentStatus === "SUCCESS") {
                 axios({
                   method: "get",
@@ -677,7 +680,7 @@ const CheckoutPage: React.FC = () => {
                     console.error("Error in payment confirmation:", error);
                   });
               }
-  
+
               axios({
                 method: "POST",
                 url: BASE_URL + "/order-service/orderPlacedPaymet",
@@ -713,11 +716,8 @@ const CheckoutPage: React.FC = () => {
         .catch((error) => console.log("Payment Status", error));
     }
   }
-  
 
   const renderTimeSlotModal = () => {
-    console.log("solution return",timeSlots);
-    
     return (
       <Modal
         title="Select Delivery Time Slot"
@@ -767,7 +767,6 @@ const CheckoutPage: React.FC = () => {
       </Modal>
     );
   };
-  
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -925,14 +924,18 @@ const CheckoutPage: React.FC = () => {
                           disabled={coupenApplied}
                         />
                         {coupenApplied ? (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={deleteCoupen}
                             className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-md sm:rounded-l-none hover:bg-red-600 transition-colors"
                           >
                             Remove
-                          </button>
+                          </motion.button>
                         ) : (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={handleApplyCoupon}
                             disabled={!couponCode || coupenLoading}
                             className="w-full sm:w-auto px-4 py-2 bg-purple-500 text-white rounded-md sm:rounded-l-none hover:bg-purple-600 disabled:bg-purple-300 transition-colors"
@@ -942,7 +945,7 @@ const CheckoutPage: React.FC = () => {
                             ) : (
                               "Apply"
                             )}
-                          </button>
+                          </motion.button>
                         )}
                       </div>
                     </div>
@@ -972,7 +975,9 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     )}
 
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={handlePayment}
                       disabled={loading || !selectedAddress || !selectedTimeSlot}
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
@@ -985,7 +990,7 @@ const CheckoutPage: React.FC = () => {
                           <span className="ml-2">₹{grandTotalAmount.toFixed(2)}</span>
                         </>
                       )}
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               </div>

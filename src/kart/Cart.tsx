@@ -52,19 +52,10 @@ interface ApiError {
 const CartPage: React.FC = () => {
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<{ [key: string]: number }>({});
-  const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>(
-    {}
-  );
-
-  const [selectedPlan, setSelectedPlan] = useState<"planA" | "planB" | null>(
-    null
-  );
-  const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] =
-    useState<boolean>(false);
-  const [currentPlanDetails, setCurrentPlanDetails] = useState<
-    "planA" | "planB" | null
-  >(null);
-
+  const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>({});
+  const [selectedPlan, setSelectedPlan] = useState<"planA" | "planB" | null>(null);
+  const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] = useState<boolean>(false);
+  const [currentPlanDetails, setCurrentPlanDetails] = useState<"planA" | "planB" | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -97,16 +88,13 @@ const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
-  const [containerPreference, setContainerPreference] = useState<string | null>(
-    null
-  );
+  const [containerPreference, setContainerPreference] = useState<string | null>(null);
   const [hasShownOnePlusOne, setHasShownOnePlusOne] = useState(false);
   const onePlusOneConfirmedRef = useRef<boolean>(false);
   const containerModalCompletedRef = useRef<boolean>(false);
   const onePlusOneModalShownRef = useRef(false);
-  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
-    {}
-  );
+  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>({});
+
   const checkOnePlusOneStatus = async (): Promise<boolean> => {
     const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
     onePlusOneConfirmedRef.current = claimed;
@@ -129,18 +117,16 @@ const CartPage: React.FC = () => {
       console.error("Failed to fetch 1+1 offer availability:", error);
     }
   
-    // ✅ Return true (already claimed or no offer left), else false
     return claimed || offeravail > 2;
   };
   
   const setOnePlusOneClaimed = async () => {
-    // Simulated future backend call to persist offer usage
     localStorage.setItem("onePlusOneClaimed", "true");
     onePlusOneConfirmedRef.current = true;
   };
 
   const maybeShowOnePlusOneModal = async () => {
-    if (onePlusOneModalShownRef.current) return; // 🚫 Already shown
+    if (onePlusOneModalShownRef.current) return;
 
     const hasClaimed = await checkOnePlusOneStatus();
     if (hasClaimed || hasShownOnePlusOne) return;
@@ -148,7 +134,7 @@ const CartPage: React.FC = () => {
     const eligibleBag = findOneKgBag();
     if (!eligibleBag) return;
 
-    onePlusOneModalShownRef.current = true; // ✅ Mark as shown
+    onePlusOneModalShownRef.current = true;
     setHasShownOnePlusOne(true);
 
     setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
@@ -161,7 +147,6 @@ const CartPage: React.FC = () => {
     });
 
     if (oneKgBags.length === 0) return null;
-    // Sort by itemPrice and return the cheapest
     return oneKgBags.reduce((minItem, currentItem) =>
       parseFloat(currentItem.itemPrice) < parseFloat(minItem.itemPrice)
         ? currentItem
@@ -216,7 +201,7 @@ const CartPage: React.FC = () => {
           fetchCartData(),
           fetchContainerPreference(),
         ]);
-        console.log("Initialization complete - preference:", preference); // Debug log
+        console.log("Initialization complete - preference:", preference);
         setContainerPreference(preference);
       } catch (error) {
         console.error("Error initializing cart page:", error);
@@ -284,9 +269,6 @@ const CartPage: React.FC = () => {
           <div className="space-y-4 text-left">
             {currentPlanDetails === "planA" ? (
               <>
-                {/* <h3 className="text-lg font-semibold">
-                  Plan A: Free Steel Container
-                </h3> */}
                 <ul className="list-disc pl-5 text-gray-700 space-y-1">
                   <li>
                     Buy 9 bags of rice in 3 years to keep the container forever
@@ -299,9 +281,6 @@ const CartPage: React.FC = () => {
               </>
             ) : (
               <>
-                {/* <h3 className="text-lg font-semibold">
-                  Plan B: Referral Program
-                </h3> */}
                 <ul className="list-disc pl-5 text-gray-700 space-y-1">
                   <li>Refer friends using your unique link</li>
                   <li>They must sign up and buy rice</li>
@@ -379,7 +358,7 @@ const CartPage: React.FC = () => {
       const status = response.data.freeContainerStatus
         ? response.data.freeContainerStatus.toLowerCase()
         : null;
-      console.log("Fetched container preference:", status); // Debug log
+      console.log("Fetched container preference:", status);
       return status;
     } catch (error) {
       console.error("Error fetching container preference:", error);
@@ -575,12 +554,12 @@ const CartPage: React.FC = () => {
         }
         setSelectedPlan(selected);
         await handleInterested();
-        containerModalCompletedRef.current = true; // mark container modal done
+        containerModalCompletedRef.current = true;
         await maybeShowOnePlusOneModal();
       },
       onCancel: async () => {
         setSelectedPlan(null);
-        containerModalCompletedRef.current = true; // mark container modal done
+        containerModalCompletedRef.current = true;
         await maybeShowOnePlusOneModal();
       },
     });
@@ -601,7 +580,6 @@ const CartPage: React.FC = () => {
         try {
           const currentQuantity = cartItems[item.itemId] || 0;
 
-          // Increase the item quantity
           await axios.patch(
             `${BASE_URL}/cart-service/cart/incrementCartData`,
             {
@@ -617,7 +595,6 @@ const CartPage: React.FC = () => {
             }
           );
 
-          // Save free item count in state
           setFreeItemsMap((prev) => ({
             ...prev,
             [item.itemId]: 1,
@@ -806,6 +783,23 @@ const CartPage: React.FC = () => {
         }
       );
 
+      // GA4 Add to Cart Event Tracking
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "add_to_cart", {
+          currency: "INR",
+          value: parseFloat(item.itemPrice),
+          items: [
+            {
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: parseFloat(item.itemPrice),
+              quantity: 1,
+              item_category: "Rice",
+            },
+          ],
+        });
+      }
+
       await fetchCartData();
     } catch (error) {
       console.error("Failed to increase cart item:", error);
@@ -837,6 +831,23 @@ const CartPage: React.FC = () => {
           }
         );
 
+        // GA4 Remove from Cart Event Tracking
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "remove_from_cart", {
+            currency: "INR",
+            value: parseFloat(item.itemPrice),
+            items: [
+              {
+                item_id: item.itemId,
+                item_name: item.itemName,
+                price: parseFloat(item.itemPrice),
+                quantity: 1,
+                item_category: "Rice",
+              },
+            ],
+          });
+        }
+
         setCartItems((prev) => ({
           ...prev,
           [item.itemId]: newQuantity,
@@ -865,6 +876,23 @@ const CartPage: React.FC = () => {
           "Content-Type": "application/json",
         },
       });
+
+      // GA4 Remove from Cart Event Tracking for full removal
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "remove_from_cart", {
+          currency: "INR",
+          value: parseFloat(item.itemPrice) * (cartItems[item.itemId] || 0),
+          items: [
+            {
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: parseFloat(item.itemPrice),
+              quantity: cartItems[item.itemId] || 0,
+              item_category: "Rice",
+            },
+          ],
+        });
+      }
 
       setCartData((prev) =>
         prev.filter((cartItem) => cartItem.cartId !== item.cartId)
@@ -930,6 +958,25 @@ const CartPage: React.FC = () => {
 
     const isAddressValid = await handleAddressChange(selectedAddress);
     if (isAddressValid?.isWithin) {
+      // GA4 Begin Checkout Event Tracking
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "begin_checkout", {
+          currency: "INR",
+          value: cartData.reduce(
+            (acc, item) =>
+              acc + parseFloat(item.itemPrice) * item.cartQuantity,
+            0
+          ),
+          items: cartData.map((item) => ({
+            item_id: item.itemId,
+            item_name: item.itemName,
+            price: parseFloat(item.itemPrice),
+            quantity: item.cartQuantity,
+            item_category: "Rice",
+          })),
+        });
+      }
+
       navigate("/main/checkout", { state: { selectedAddress } });
     }
   };
@@ -1160,7 +1207,8 @@ const CartPage: React.FC = () => {
                         <div className="flex items-center justify-between md:justify-end w-full">
                           <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
                             <motion.button
-                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                               className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
                               onClick={() => handleDecrease(item)}
                               disabled={loadingItems[item.itemId]}
@@ -1180,7 +1228,8 @@ const CartPage: React.FC = () => {
                             </div>
 
                             <motion.button
-                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                               className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
                                 cartItems[item.itemId] >= item.quantity
                                   ? "opacity-50 cursor-not-allowed"
@@ -1202,7 +1251,8 @@ const CartPage: React.FC = () => {
                           </div>
 
                           <motion.button
-                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
                             onClick={async () => {
                               await removeCartItem(item);
@@ -1229,7 +1279,8 @@ const CartPage: React.FC = () => {
                           Out of Stock
                         </p>
                         <motion.button
-                          whileTap={{ scale: 0.95 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
                           onClick={async () => {
                             await removeCartItem(item);
@@ -1373,11 +1424,13 @@ const CartPage: React.FC = () => {
                     </div>
                   )}
 
-                  <button
-                    className={`w-full py-3 px-6 rounded-lg transition ${
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${
                       isCheckoutDisabled()
                         ? "bg-gray-400 cursor-not-allowed"
-                        : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
+                        : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
                     }`}
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled()}
@@ -1385,7 +1438,7 @@ const CartPage: React.FC = () => {
                     {isCheckoutDisabled()
                       ? "Cannot Checkout - Stock Issues"
                       : "Proceed to Checkout"}
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </div>

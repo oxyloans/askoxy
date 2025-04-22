@@ -17,11 +17,12 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import ValidationPopup from "./ValidationPopup";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 
-import  BASE_URL  from "../Config";
+import BASE_URL from "../Config";
 
 interface Item {
   itemId: string;
@@ -109,26 +110,22 @@ const ItemDisplayPage = () => {
     navigate(path);
   };
 
-  // Updated useEffect to handle both initial load and navigation
   useEffect(() => {
     console.log(state.item);
 
     if (itemId) {
       if (!state?.item) {
-        // If no state is passed, fetch item details
         fetchItemDetails(itemId);
       } else {
-        // If state is passed, use it directly
         setItemDetails(state.item);
       }
       fetchCartData("");
       fetchRelatedItems();
     }
-  }, [itemId, state]); // Added state to dependencies
+  }, [itemId, state]);
 
-  // Updated navigation handler for related items
   const handleRelatedItemClick = (item: Item) => {
-    setItemDetails(item); // Update item details immediately
+    setItemDetails(item);
     navigate(`/main/itemsdisplay/${item.itemId}`, {
       state: { item },
       replace: true,
@@ -155,7 +152,6 @@ const ItemDisplayPage = () => {
           },
           {}
         );
-        // Fix: Use cartItemsMap and correct syntax
         const totalQuantity = Object.values(
           cartItemsMap as Record<string, number>
         ).reduce((sum, qty) => sum + qty, 0);
@@ -196,11 +192,10 @@ const ItemDisplayPage = () => {
 
       console.log("Fetched Categories:", response.data);
 
-      // Find the category that contains the selected item
       const matchingCategory = response.data.find(
         (category: any) =>
           category.itemsResponseDtoList &&
-          Array.isArray(category.itemsResponseDtoList) && // Ensure it's an array
+          Array.isArray(category.itemsResponseDtoList) &&
           category.itemsResponseDtoList.some(
             (item: any) =>
               item.itemId === itemDetails?.itemId ||
@@ -212,14 +207,13 @@ const ItemDisplayPage = () => {
         matchingCategory &&
         Array.isArray(matchingCategory.itemsResponseDtoList)
       ) {
-        // Extract related items, excluding the selected one
         const categoryItems = matchingCategory.itemsResponseDtoList
           .filter(
             (item: any) =>
               item.itemId !== itemDetails?.itemId &&
-              item.itemId !== itemDetails?.itemId // Corrected logical condition
+              item.itemId !== itemDetails?.itemId
           )
-          .slice(0, 4); // Limit to 4 items
+          .slice(0, 4);
 
         console.log("Related Items:", categoryItems);
         setRelatedItems(categoryItems);
@@ -241,7 +235,7 @@ const ItemDisplayPage = () => {
       console.log("parsedData", parsedData);
       return !!(
         parsedData.userFirstName &&
-        parsedData.userFirstName != "" 
+        parsedData.userFirstName != ""
       );
     }
     return false;
@@ -269,6 +263,24 @@ const ItemDisplayPage = () => {
         { customerId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // GA4 Add to Cart Event Tracking
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "add_to_cart", {
+          currency: "INR",
+          value: item.itemPrice,
+          items: [
+            {
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: item.itemPrice,
+              quantity: 1,
+              item_category: item.category || "Rice",
+            },
+          ],
+        });
+      }
+
       fetchCartData("");
       message.success("Item added to cart successfully.");
       setTimeout(() => {
@@ -315,6 +327,24 @@ const ItemDisplayPage = () => {
           data: { id: targetCartId },
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // GA4 Remove from Cart Event Tracking (Full Removal)
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "remove_from_cart", {
+            currency: "INR",
+            value: item.itemPrice * (cartItems[item.itemId] || 0),
+            items: [
+              {
+                item_id: item.itemId,
+                item_name: item.itemName,
+                price: item.itemPrice,
+                quantity: cartItems[item.itemId] || 0,
+                item_category: item.category || "Rice",
+              },
+            ],
+          });
+        }
+
         message.success("Item removed from cart successfully.");
         setLoadingItems((prev) => ({
           ...prev,
@@ -326,6 +356,24 @@ const ItemDisplayPage = () => {
           { customerId, itemId: item.itemId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        // GA4 Event Tracking for Quantity Change
+        if (typeof window !== "undefined" && window.gtag) {
+          const eventName = increment ? "add_to_cart" : "remove_from_cart";
+          window.gtag("event", eventName, {
+            currency: "INR",
+            value: item.itemPrice,
+            items: [
+              {
+                item_id: item.itemId,
+                item_name: item.itemName,
+                price: item.itemPrice,
+                quantity: 1,
+                item_category: item.category || "Rice",
+              },
+            ],
+          });
+        }
       }
       setLoadingItems((prev) => ({
         ...prev,
@@ -364,26 +412,17 @@ const ItemDisplayPage = () => {
       content: msg.text,
     }));
 
-    // Add new user message to the conversation
     previousMessages.push({
       role: "user",
       content: newMessage.text,
     });
 
-    // // Function to get the last assistant's response
-    // const getLastAssistantMessage = (messages:any) => {
-    //   // Find the last message with the type 'received' (which means it's from the assistant)
-    //   return messages.reverse().find(msg => msg.type === 'received')?.text || '';
-    // };
-
-    // Function to get the last assistant's response safely
     const getLastAssistantMessage = (msgs: Message[]) => {
       return (
         [...msgs].reverse().find((msg) => msg.type === "received")?.text || ""
       );
     };
 
-    // Include last assistant response
     const lastAssistantMessage = getLastAssistantMessage(messages);
     if (lastAssistantMessage) {
       previousMessages.push({
@@ -401,7 +440,7 @@ const ItemDisplayPage = () => {
         },
         {
           headers: {
-            Authorization: `Bearer  ${apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
         }
@@ -441,6 +480,7 @@ const ItemDisplayPage = () => {
       ]);
     }
   };
+
   const calculateDiscount = (mrp: number, price: number) => {
     return Math.round(((mrp - price) / mrp) * 100);
   };
@@ -463,7 +503,6 @@ const ItemDisplayPage = () => {
   return (
     <div className="min-h-screen">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        {/* Enhanced Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm mb-6">
           <button
             onClick={() => navigate("/main/dashboard/products")}
@@ -481,11 +520,9 @@ const ItemDisplayPage = () => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column - Product Details */}
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                {/* Product Image Section */}
                 <div className="relative">
                   <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                     <img
@@ -494,27 +531,24 @@ const ItemDisplayPage = () => {
                       className="w-full h-full object-contain transform transition-transform hover:scale-105"
                     />
                   </div>
-
-                  {/* Enhanced Discount Badge */}
                   {itemDetails && (
                     <div className="absolute top-4 right-4 flex items-center">
                       <span className="bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
                         {calculateDiscount(
                           Number(itemDetails.itemMrp) ||
-                          Number(itemDetails.priceMrp),
+                            Number(itemDetails.priceMrp),
                           Number(itemDetails.itemPrice)
                         )}
                         % OFF
                       </span>
                     </div>
                   )}
-
-                  {/* Stock Status Badge */}
                   {itemDetails && (
                     <div className="absolute top-4 left-4">
                       <div
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 ${getStockStatus(itemDetails.quantity).color
-                          }`}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 ${
+                          getStockStatus(itemDetails.quantity).color
+                        }`}
                       >
                         {itemDetails.quantity <= 5 && (
                           <AlertCircle className="w-4 h-4" />
@@ -524,8 +558,6 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Product Info Section */}
                 <div className="space-y-6">
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
@@ -541,8 +573,6 @@ const ItemDisplayPage = () => {
                       <span className="text-sm text-gray-600">(4.8/5)</span>
                     </div>
                   </div>
-
-                  {/* Price Section */}
                   <div className="flex items-baseline gap-4">
                     <span className="text-3xl font-bold text-purple-600">
                       ₹{itemDetails?.itemPrice}
@@ -551,18 +581,19 @@ const ItemDisplayPage = () => {
                       ₹{itemDetails?.itemMrp || itemDetails?.priceMrp}
                     </span>
                   </div>
-
-                  {/* Enhanced Add to Cart Section */}
                   <div className="space-y-4">
                     {itemDetails?.quantity !== 0 ? (
                       itemDetails && cartItems[itemDetails.itemId] ? (
                         <div className="flex flex-col gap-3">
                           <div className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
-                            <button
-                              className={`p-2 rounded-lg transition-all ${cartItems[itemDetails.itemId] <= 1
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className={`p-2 rounded-lg transition-all ${
+                                cartItems[itemDetails.itemId] <= 1
                                   ? "bg-red-100 text-red-600 hover:bg-red-200"
                                   : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                }`}
+                              }`}
                               onClick={() =>
                                 itemDetails &&
                                 handleQuantityChange(itemDetails, false)
@@ -570,7 +601,7 @@ const ItemDisplayPage = () => {
                               disabled={loadingItems.items[itemDetails.itemId]}
                             >
                               <Minus className="w-5 h-5" />
-                            </button>
+                            </motion.button>
                             {loadingItems.items[itemDetails.itemId] ? (
                               <Loader2 className="animate-spin text-purple-600" />
                             ) : (
@@ -578,25 +609,28 @@ const ItemDisplayPage = () => {
                                 {cartItems[itemDetails.itemId]}
                               </span>
                             )}
-                            <button
-                              className={`p-2 rounded-lg transition-all ${isMaxStockReached(itemDetails)
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className={`p-2 rounded-lg transition-all ${
+                                isMaxStockReached(itemDetails)
                                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                   : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                }`}
+                              }`}
                               onClick={() =>
                                 !isMaxStockReached(itemDetails) &&
                                 handleQuantityChange(itemDetails, true)
                               }
-                              // disabled={isMaxStockReached(itemDetails)}
                               disabled={
                                 cartItems[itemDetails.itemId] >=
-                                itemDetails.quantity ||
+                                  itemDetails.quantity ||
                                 loadingItems.items[itemDetails.itemId] ||
-                                (itemDetails.itemPrice === 1 && cartItems[itemDetails.itemId] >= 1)
+                                (itemDetails.itemPrice === 1 &&
+                                  cartItems[itemDetails.itemId] >= 1)
                               }
                             >
                               <Plus className="w-5 h-5" />
-                            </button>
+                            </motion.button>
                           </div>
                           {isMaxStockReached(itemDetails) && (
                             <p className="text-yellow-600 text-sm flex items-center gap-1.5">
@@ -606,17 +640,18 @@ const ItemDisplayPage = () => {
                           )}
                         </div>
                       ) : (
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() =>
                             itemDetails &&
                             !loadingItems.items[itemDetails.itemId] &&
                             handleAddToCart(itemDetails)
                           }
-                          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 
-                            transform transition-all hover:scale-105 flex items-center justify-center gap-2"
+                          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transform transition-all flex items-center justify-center gap-2"
                         >
                           {itemDetails &&
-                            loadingItems.items[itemDetails.itemId] ? (
+                          loadingItems.items[itemDetails.itemId] ? (
                             <Loader2 className="mr-2 animate-spin inline-block" />
                           ) : (
                             <>
@@ -624,13 +659,12 @@ const ItemDisplayPage = () => {
                               Add to Cart
                             </>
                           )}
-                        </button>
+                        </motion.button>
                       )
                     ) : (
                       <button
                         disabled
-                        className="w-full py-3 bg-gray-200 text-gray-600 rounded-lg 
-                          flex items-center justify-center gap-2 cursor-not-allowed"
+                        className="w-full py-3 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
                       >
                         <ShoppingCart className="w-5 h-5" />
                         Out of Stock
@@ -640,8 +674,6 @@ const ItemDisplayPage = () => {
                 </div>
               </div>
             </div>
-
-            {/* Product Details Section - Enhanced */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-4">Product Details</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -653,18 +685,15 @@ const ItemDisplayPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-3 bg-purple-50 p-3 rounded-lg">
-
-
-                  <span className="font-medium"> {itemDetails?.itemDescription}</span>
+                  <span className="font-medium">
+                    {itemDetails?.itemDescription}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Right Column - Chat/Related Items */}
           <div className="lg:col-span-4">
             <div className="sticky top-8 space-y-8">
-              {/* Chat Section Toggle */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">
@@ -681,23 +710,24 @@ const ItemDisplayPage = () => {
                     )}
                   </button>
                 </div>
-
                 {showChatSection && (
                   <div className="h-[400px] flex flex-col">
                     <div className="flex-1 overflow-y-auto space-y-4 mb-4">
                       {messages.map((msg, idx) => (
                         <div
                           key={idx}
-                          className={`flex ${msg.type === "sent"
+                          className={`flex ${
+                            msg.type === "sent"
                               ? "justify-end"
                               : "justify-start"
-                            }`}
+                          }`}
                         >
                           <div
-                            className={`max-w-[75%] p-3 rounded-lg ${msg.type === "sent"
+                            className={`max-w-[75%] p-3 rounded-lg ${
+                              msg.type === "sent"
                                 ? "bg-purple-600 text-white"
                                 : "bg-purple-50 border border-purple-100"
-                              }`}
+                            }`}
                           >
                             {msg.type === "system" && (
                               <Bot className="w-4 h-4 text-purple-600 mb-1" />
@@ -728,7 +758,6 @@ const ItemDisplayPage = () => {
                   </div>
                 )}
               </div>
-              {/* Related Items */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold mb-4">Related Items</h2>
                 <div className="grid grid-cols-2 gap-4">
@@ -738,12 +767,9 @@ const ItemDisplayPage = () => {
                       className="relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all"
                       onClick={() => handleRelatedItemClick(item)}
                     >
-                      {/* Discount badge */}
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                         {calculateDiscount(item.itemMrp, item.itemPrice)}% OFF
                       </div>
-
-                      {/* Item image and details */}
                       <div className="p-3">
                         <div className="h-32 bg-gray-100 rounded-md mb-3"></div>
                         <h3 className="font-medium text-gray-800 line-clamp-2 mb-1">
@@ -751,19 +777,22 @@ const ItemDisplayPage = () => {
                         </h3>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">₹{item.itemPrice}</span>
-                          <span className="text-gray-500 text-sm line-through">₹{item.itemMrp}</span>
+                          <span className="text-gray-500 text-sm line-through">
+                            ₹{item.itemMrp}
+                          </span>
                         </div>
-
-                        {/* Add to cart functionality with stock check */}
                         <div className="mt-3">
                           {item.quantity !== 0 ? (
                             cartItems[item.itemId] ? (
                               <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
-                                <button
-                                  className={`p-1.5 rounded-lg transition-all ${cartItems[item.itemId] <= 1
+                                <motion.button
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className={`p-1.5 rounded-lg transition-all ${
+                                    cartItems[item.itemId] <= 1
                                       ? "bg-red-100 text-red-600 hover:bg-red-200"
                                       : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                    }`}
+                                  }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleQuantityChange(item, false);
@@ -771,8 +800,7 @@ const ItemDisplayPage = () => {
                                   disabled={loadingItems.items[item.itemId]}
                                 >
                                   <Minus className="w-4 h-4" />
-                                </button>
-
+                                </motion.button>
                                 {loadingItems.items[item.itemId] ? (
                                   <Loader2 className="animate-spin text-purple-600 w-4 h-4" />
                                 ) : (
@@ -780,12 +808,14 @@ const ItemDisplayPage = () => {
                                     {cartItems[item.itemId]}
                                   </span>
                                 )}
-
-                                <button
-                                  className={`p-1.5 rounded-lg transition-all ${cartItems[item.itemId] >= item.quantity
+                                <motion.button
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className={`p-1.5 rounded-lg transition-all ${
+                                    cartItems[item.itemId] >= item.quantity
                                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                       : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                    }`}
+                                  }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (cartItems[item.itemId] < item.quantity) {
@@ -798,18 +828,19 @@ const ItemDisplayPage = () => {
                                   }
                                 >
                                   <Plus className="w-4 h-4" />
-                                </button>
+                                </motion.button>
                               </div>
                             ) : (
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (!loadingItems.items[item.itemId]) {
                                     handleAddToCart(item);
                                   }
                                 }}
-                                className="w-full py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 
-                transform transition-all flex items-center justify-center gap-1.5"
+                                className="w-full py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transform transition-all flex items-center justify-center gap-1.5"
                               >
                                 {loadingItems.items[item.itemId] ? (
                                   <Loader2 className="animate-spin w-4 h-4" />
@@ -819,13 +850,12 @@ const ItemDisplayPage = () => {
                                     Add to Cart
                                   </>
                                 )}
-                              </button>
+                              </motion.button>
                             )
                           ) : (
                             <button
                               disabled
-                              className="w-full py-2 bg-gray-200 text-gray-600 text-sm rounded-lg 
-              flex items-center justify-center gap-1.5 cursor-not-allowed"
+                              className="w-full py-2 bg-gray-200 text-gray-600 text-sm rounded-lg flex items-center justify-center gap-1.5 cursor-not-allowed"
                             >
                               <ShoppingCart className="w-4 h-4" />
                               Out of Stock

@@ -4,8 +4,8 @@ import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Package, AlertCircle, Loader2 } from "lucide-react";
-import  checkProfileCompletion  from "../until/ProfileCheck";
-import  BASE_URL  from "../Config";
+import checkProfileCompletion from "../until/ProfileCheck";
+import BASE_URL from "../Config";
 
 interface Item {
   itemName: string;
@@ -15,7 +15,7 @@ interface Item {
   itemPrice: number;
   quantity: number;
   itemMrp: number;
-  units:string;
+  units: string;
 }
 
 interface SubCategory {
@@ -155,14 +155,14 @@ const Categories: React.FC<CategoriesProps> = ({
       }, 2000);
       return;
     }
-    
-    if(!checkProfileCompletion()){
+
+    if (!checkProfileCompletion()) {
       console.log(checkProfileCompletion());
       Modal.error({
         title: "Profile Incomplete",
         content: "Please complete your profile to add items to the cart.",
         onOk: () => navigate("/main/profile"),
-      }); 
+      });
       // message.warning("Please complete your profile to add items to the cart.");
       setTimeout(() => {
         navigate("/main/profile");
@@ -207,24 +207,24 @@ const Categories: React.FC<CategoriesProps> = ({
     increment: boolean,
     status: string
   ) => {
-      if (cartItems[item.itemId] === item.quantity && increment) {
-        message.warning("Sorry, Maximum quantity reached.");
-        return;
-      }
+    if (cartItems[item.itemId] === item.quantity && increment) {
+      message.warning("Sorry, Maximum quantity reached.");
+      return;
+    }
 
-      if(!checkProfileCompletion()){
-        console.log(checkProfileCompletion());
-        Modal.error({
-          title: "Profile Incomplete",
-          content: "Please complete your profile to add items to the cart.",
-          onOk: () => navigate("/main/profile"),
-        }); 
-        // message.warning("Please complete your profile to add items to the cart.");
-        setTimeout(() => {
-          navigate("/main/profile");
-        }, 4000);
-        return;
-      }
+    if (!checkProfileCompletion()) {
+      console.log(checkProfileCompletion());
+      Modal.error({
+        title: "Profile Incomplete",
+        content: "Please complete your profile to add items to the cart.",
+        onOk: () => navigate("/main/profile"),
+      });
+      // message.warning("Please complete your profile to add items to the cart.");
+      setTimeout(() => {
+        navigate("/main/profile");
+      }, 4000);
+      return;
+    }
     try {
       const endpoint = increment
         ? `${BASE_URL}/cart-service/cart/incrementCartData`
@@ -252,6 +252,23 @@ const Categories: React.FC<CategoriesProps> = ({
             status: { ...prev.status, [item.itemId]: "" },
           }));
           message.success("Item removed from cart successfully.");
+          
+          // GA4 Remove from Cart Event Tracking
+          if (typeof window !== "undefined" && window.gtag) {
+            window.gtag("event", "remove_from_cart", {
+              currency: "INR",
+              value: item.itemPrice,
+              items: [
+                {
+                  item_id: item.itemId,
+                  item_name: item.itemName,
+                  price: item.itemPrice,
+                  quantity: 1,
+                  item_category: activeCategory || "General",
+                },
+              ],
+            });
+          }
         } else {
           setLoadingItems((prev) => ({
             ...prev,
@@ -276,6 +293,24 @@ const Categories: React.FC<CategoriesProps> = ({
             items: { ...prev.items, [item.itemId]: false },
             status: { ...prev.status, [item.itemId]: "" },
           }));
+          
+          // GA4 Event Tracking for increment/decrement
+          if (typeof window !== "undefined" && window.gtag) {
+            window.gtag("event", increment ? "add_to_cart" : "remove_from_cart", {
+              currency: "INR",
+              value: item.itemPrice,
+              items: [
+                {
+                  item_id: item.itemId,
+                  item_name: item.itemName,
+                  price: item.itemPrice,
+                  quantity: 1,
+                  item_category: activeCategory || "General",
+                  action: increment ? "increment" : "decrement"
+                },
+              ],
+            });
+          }
         } else {
           setLoadingItems((prev) => ({
             ...prev,
@@ -328,12 +363,21 @@ const Categories: React.FC<CategoriesProps> = ({
               key={index}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
-                activeCategory === category.categoryName
-                  ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                  : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
-              }`}
-              onClick={() => onCategoryClick(category.categoryName)}
+              className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${activeCategory === category.categoryName
+                ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
+                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
+                }`}
+              onClick={() => {
+                onCategoryClick(category.categoryName);
+                
+                // GA4 Event Tracking for category selection
+                if (typeof window !== "undefined" && window.gtag) {
+                  window.gtag("event", "select_content", {
+                    content_type: "category",
+                    content_id: category.categoryName,
+                  });
+                }
+              }}
             >
               <div className="flex items-center space-x-2">
                 {category.categoryImage && (
@@ -352,47 +396,68 @@ const Categories: React.FC<CategoriesProps> = ({
 
       {/* Subcategories */}
       {getCurrentSubCategories().length > 0 && (
-  <div className="mb-6 overflow-x-auto scrollbar whitespace-nowrap">
-    <div className="flex space-x-3 pb-2 w-max">
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-          !activeSubCategory
-            ? "bg-purple-100 text-purple-700"
-            : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-        }`}
-        onClick={() => setActiveSubCategory(null)}
-      >
-        All
-      </motion.button>
-      {getCurrentSubCategories().map((subCategory) => (
-        <motion.button
-          key={subCategory.id}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-            activeSubCategory === subCategory.id
-              ? "bg-purple-100 text-purple-700"
-              : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-          }`}
-          onClick={() => setActiveSubCategory(subCategory.id)}
-        >
-          <div className="flex items-center space-x-2">
-            {subCategory.image && (
-              <img
-                src={subCategory.image}
-                alt=""
-                className="w-4 h-4 rounded-full"
-              />
-            )}
-            <span>{subCategory.name}</span>
+        <div className="mb-6 overflow-x-auto scrollbar whitespace-nowrap">
+          <div className="flex space-x-3 pb-2 w-max">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!activeSubCategory
+                ? "bg-purple-100 text-purple-700"
+                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                }`}
+              onClick={() => {
+                setActiveSubCategory(null);
+                
+                // GA4 Event Tracking for "All" subcategory selection
+                if (typeof window !== "undefined" && window.gtag) {
+                  window.gtag("event", "select_content", {
+                    content_type: "subcategory",
+                    content_id: "all",
+                    parent_category: activeCategory
+                  });
+                }
+              }}
+            >
+              All
+            </motion.button>
+            {getCurrentSubCategories().map((subCategory) => (
+              <motion.button
+                key={subCategory.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${activeSubCategory === subCategory.id
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  }`}
+                onClick={() => {
+                  setActiveSubCategory(subCategory.id);
+                  
+                  // GA4 Event Tracking for subcategory selection
+                  if (typeof window !== "undefined" && window.gtag) {
+                    window.gtag("event", "select_content", {
+                      content_type: "subcategory",
+                      content_id: subCategory.id,
+                      content_name: subCategory.name,
+                      parent_category: activeCategory
+                    });
+                  }
+                }}
+              >
+                <div className="flex items-center space-x-2">
+                  {subCategory.image && (
+                    <img
+                      src={subCategory.image}
+                      alt=""
+                      className="w-4 h-4 rounded-full"
+                    />
+                  )}
+                  <span>{subCategory.name}</span>
+                </div>
+              </motion.button>
+            ))}
           </div>
-        </motion.button>
-      ))}
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -463,7 +528,26 @@ const Categories: React.FC<CategoriesProps> = ({
 
               <div
                 className="p-4 cursor-pointer"
-                onClick={() => onItemClick(item)}
+                onClick={() => {
+                  onItemClick(item);
+                  
+                  // GA4 Product Click Event Tracking
+                  if (typeof window !== "undefined" && window.gtag) {
+                    window.gtag("event", "select_item", {
+                      currency: "INR",
+                      value: item.itemPrice,
+                      items: [
+                        {
+                          item_id: item.itemId,
+                          item_name: item.itemName,
+                          price: item.itemPrice,
+                          item_category: activeCategory || "General",
+                          item_variant: activeSubCategory || "default"
+                        },
+                      ],
+                    });
+                  }
+                }}
               >
                 {/* Image Container */}
                 <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
@@ -487,7 +571,7 @@ const Categories: React.FC<CategoriesProps> = ({
                     {item.itemName}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Weight: {item.weight} {item.weight=="1"?"Kg":"Kgs"}
+                    Weight: {item.weight} {item.weight == "1" ? "Kg" : "Kgs"}
                   </p>
                   { }
                   <div className="flex items-baseline space-x-2">
@@ -514,12 +598,6 @@ const Categories: React.FC<CategoriesProps> = ({
                           }}
                           disabled={loadingItems.items[item.itemId]}
                         >
-                          {/* {loadingItems.items[item.itemId] &&
-                          loadingItems.status[item.itemId] == "sub" ? (
-                            <Loader2 className="mr-1 animate-spin inline-block" />
-                          ) : (
-                            "-"
-                          )} */}
                           -
                         </motion.button>
                         {loadingItems.items[item.itemId] ? (
@@ -531,11 +609,10 @@ const Categories: React.FC<CategoriesProps> = ({
                         )}
                         <motion.button
                           whileTap={{ scale: 0.9 }}
-                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                            cartItems[item.itemId] >= item.quantity
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
+                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${cartItems[item.itemId] >= item.quantity
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                            }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (cartItems[item.itemId] < item.quantity) {
@@ -547,12 +624,6 @@ const Categories: React.FC<CategoriesProps> = ({
                             loadingItems.items[item.itemId] || (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
                           }
                         >
-                          {/* {loadingItems.items[item.itemId] &&
-                          loadingItems.status[item.itemId] == "Add" ? (
-                            <Loader2 className="mr-1 animate-spin inline-block" />
-                          ) : (
-                            "+"
-                          )} */}
                           +
                         </motion.button>
                       </div>
@@ -565,6 +636,23 @@ const Categories: React.FC<CategoriesProps> = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             handleAddToCart(item);
+
+                            // GA4 Add to Cart Event Tracking using gtag()
+                            if (typeof window !== "undefined" && window.gtag) {
+                              window.gtag("event", "add_to_cart", {
+                                currency: "INR",
+                                value: item.itemPrice,
+                                items: [
+                                  {
+                                    item_id: item.itemId,
+                                    item_name: item.itemName,
+                                    price: item.itemPrice,
+                                    quantity: 1,
+                                    item_category: activeCategory || "General",
+                                  },
+                                ],
+                              });
+                            }
                           }}
                           disabled={loadingItems.items[item.itemId]}
                         >
@@ -580,6 +668,18 @@ const Categories: React.FC<CategoriesProps> = ({
                     <button
                       className="w-full py-2 mt-2 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed"
                       disabled
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        
+                        // GA4 View Item Unavailable Event Tracking
+                        if (typeof window !== "undefined" && window.gtag) {
+                          window.gtag("event", "view_item_unavailable", {
+                            item_id: item.itemId,
+                            item_name: item.itemName,
+                            item_category: activeCategory || "General",
+                          });
+                        }
+                      }}
                     >
                       Out of Stock
                     </button>
