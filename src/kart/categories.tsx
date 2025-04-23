@@ -74,6 +74,23 @@ const Categories: React.FC<CategoriesProps> = ({
     items: {}, // Stores boolean values for each item
     status: {}, // Stores status strings for each item
   });
+  const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
+  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
+    "0"
+  );
+
+  // Weight filter state
+  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
+        null
+      );
+
+  // Weight filter options
+  const weightFilters = [
+    { label: "1 KG", value: "1.0" },
+    { label: "5 KG", value: "5.0" },
+    { label: "10 KG", value: "10.0" },
+    { label: "26 KG", value: "26.0" },
+  ];
 
   const fetchCartData = async (itemId: string) => {
     const Id = localStorage.getItem("userId");
@@ -338,12 +355,19 @@ const Categories: React.FC<CategoriesProps> = ({
       categories[0];
     if (!currentCategory) return [];
 
-    // If no subcategory is selected, show all items
-    if (!activeSubCategory) {
-      return currentCategory.itemsResponseDtoList;
+    let items = currentCategory.itemsResponseDtoList;
+
+    // Apply weight filter
+    if (activeWeightFilter) {
+      items = items.filter((item) => {
+        // Convert item weight to match filter format
+        const itemWeight = parseFloat(item.weight).toFixed(1);
+        return itemWeight === activeWeightFilter;
+      });
     }
-    return currentCategory.itemsResponseDtoList;
-  };
+
+    return items;
+  };
 
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
@@ -352,6 +376,14 @@ const Categories: React.FC<CategoriesProps> = ({
     );
     return category?.subCategories || [];
   };
+
+  // Handle weight filter click
+  const handleWeightFilterClick = (weight: string | null) => {
+    setActiveWeightFilter(weight);
+    // Reset the dropdown filter when weight filter changes
+    setSelectedFilterKey("0");
+    setSelectedFilter("ALL");
+  };
 
   return (
     <div className="bg-white shadow-lg px-3 sm:px-6 lg:px-6 py-3">
@@ -393,6 +425,28 @@ const Categories: React.FC<CategoriesProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Weight Filter Section - New Addition */}
+      <div className="mb-4 overflow-x-auto scrollbar-hide">
+        <div className="flex space-x-3 pb-2">
+          {weightFilters.map((filter, index) => (
+            <motion.button
+              key={index}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                filter.value === activeWeightFilter ||
+                (filter.value === null && activeWeightFilter === null)
+                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
+              }`}
+              onClick={() => handleWeightFilterClick(filter.value)}
+            >
+              {filter.label}
+            </motion.button>
+          ))}
+        </div>
+      </div>
 
       {/* Subcategories */}
       {getCurrentSubCategories().length > 0 && (
@@ -567,11 +621,16 @@ const Categories: React.FC<CategoriesProps> = ({
 
                 {/* Product Details */}
                 <div className="space-y-2">
-                  <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm">
+                  <h3 className="font-medium text-gray-800 line-clamp-3 min-h-[2.5rem] text-sm">
                     {item.itemName}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Weight: {item.weight} {item.weight == "1" ? "Kg" : "Kgs"}
+                  Weight: {item.weight}{" "}
+                          {item.units == "pcs"
+                            ? "Pc"
+                            : item.weight == "1"
+                            ? "Kg"
+                            : "Kgs"}
                   </p>
                   { }
                   <div className="flex items-baseline space-x-2">
