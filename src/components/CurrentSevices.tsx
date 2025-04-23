@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import HM1 from "../assets/img/BUY 1 GET 1.png";
 import HM2 from "../assets/img/BUY 1 GET 1 2.png";
 import HM3 from "../assets/img/IMAGE 3.png";
-import HM4 from "../assets/img/image 4.png";
-import HM5 from "../assets/img/IMAGE 5.png";
+import HM4 from "../assets/img/Manchester.png";
+import HM5 from "../assets/img/orderriceonline.png";
 import HM6 from "../assets/img/IMAGE 6.png";
 import HM7 from "../assets/img/IMAGE 7.png";
 import HM8 from "../assets/img/IMAGE 8.png";
@@ -14,10 +14,10 @@ import HM10 from "../assets/img/IMAGE 10.png";
 import HM11 from "../assets/img/IMAGE 11.png";
 import HM12 from "../assets/img/IMAGE 12.png";
 import HM13 from "../assets/img/image 13.png";
-import HM14 from "../assets/img/IMAGE 14.png";
-import HM15 from "../assets/img/IMAGE 15.png";
+import HM14 from "../assets/img/RICEU3.png";
+import HM15 from "../assets/img/RICEU1.png";
 import HM16 from "../assets/img/IMAGE 16.png";
-import HM17 from "../assets/img/IMAGE 17.png";
+import HM17 from "../assets/img/RICEU2.png";
 import HM18 from "../assets/img/IMAGE 18.png";
 import HM19 from "../assets/img/image 19.png";
 import HM20 from "../assets/img/image 20.png";
@@ -47,6 +47,43 @@ const ResponsiveGallery = () => {
       link: "/main/dashboard/products",
     },
     {
+      id: 5,
+      src: HM5,
+      alt: "Buy 1 Kg Rice Get 1 Kg Free",
+      category: "BUY 1 KG RICE GET 1 KG RICE FREE",
+
+      link: "/main/dashboard/products",
+    },
+    {
+      id: 20,
+      src: HM15,
+      alt: "Gajaraj Evergreen",
+      category: " GAJARAJ EVERGREEN",
+      link: "/main/dashboard/products",
+    },
+    {
+      id: 15,
+      src: HM17,
+      alt: "Sri Lalitha",
+      category: "SRI LALITHA",
+      link: "/main/dashboard/products",
+    },
+    {
+      id: 17,
+      src: HM14,
+      alt: "Cow Brand",
+      category: "COW BRAND",
+      link: "/main/dashboard/products",
+    },
+    {
+      id: 4,
+      src: HM4,
+      alt: "University of Chester",
+      category: "UNIVERSITY OF CHESTER",
+
+      link: "/main/services/studyabroad",
+    },
+    {
       id: 3,
       src: HM3,
       alt: "Middlesex University",
@@ -58,22 +95,6 @@ const ResponsiveGallery = () => {
       src: HM7,
       alt: "BPP University",
       category: "BPP UNIVERSITY",
-      link: "/main/services/studyabroad",
-    },
-
-    {
-      id: 4,
-      src: HM4,
-      alt: "The University of Law",
-      category: "THE UNIVERSITY OF LAW",
-      link: "/main/services/studyabroad",
-    },
-    {
-      id: 5,
-      src: HM5,
-      alt: "Coventry University",
-      category: "COVENTRY UNIVERSITY",
-
       link: "/main/services/studyabroad",
     },
 
@@ -131,13 +152,7 @@ const ResponsiveGallery = () => {
       category: "FREE RUDRAKSHA",
       link: "/main/services/freerudraksha",
     },
-    {
-      id: 15,
-      src: HM15,
-      alt: "Sri Lalitha",
-      category: "SRI LALITHA",
-      link: "/main/dashboard/products",
-    },
+
     {
       id: 16,
       src: HM16,
@@ -145,13 +160,7 @@ const ResponsiveGallery = () => {
       category: "BAWARCHI BROWN RICE",
       link: "/main/dashboard/products",
     },
-    {
-      id: 17,
-      src: HM17,
-      alt: "Cow Brand",
-      category: "COW BRAND",
-      link: "/main/dashboard/products",
-    },
+
     {
       id: 18,
       src: HM18,
@@ -166,13 +175,7 @@ const ResponsiveGallery = () => {
       category: "KISAN RICE",
       link: "/main/dashboard/products",
     },
-    {
-      id: 20,
-      src: HM14,
-      alt: "Gajaraj Evergreen",
-      category: " GAJARAJ EVERGREEN",
-      link: "/main/dashboard/products",
-    },
+
     {
       id: 21,
       src: HM19,

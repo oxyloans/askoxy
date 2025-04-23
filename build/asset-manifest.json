@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.06fb2f2c.css",
-    "main.js": "/static/js/main.73cefbd0.js",
+    "main.css": "/static/css/main.abea6424.css",
+    "main.js": "/static/js/main.02a16c1e.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
     "static/media/1.3.png": "/static/media/1.3.d032daef6790d89819bd.png",
@@ -21,6 +21,7 @@
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
     "static/media/bmvcoin.png": "/static/media/bmvcoin.d4b8d7a173edac896cdc.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
+    "static/media/RICEU1.png": "/static/media/RICEU1.edf64b4f457e2173b6eb.png",
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
@@ -94,6 +95,8 @@
     "static/media/testimonial16.png": "/static/media/testimonial16.c0b4f2d3618261aae6b0.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
     "static/media/o4.png": "/static/media/o4.c975abe297e7244034cb.png",
+    "static/media/RICEU2.png": "/static/media/RICEU2.b48fda011239e4a3c653.png",
+    "static/media/RICEU3.png": "/static/media/RICEU3.01c968b059d979bcf431.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/realestate gpt (1).png": "/static/media/realestate gpt (1).5655cc684ac7d693d031.png",
     "static/media/Influencers gpt (1).png": "/static/media/Influencers gpt (1).566a5a80041f778c5e8c.png",
@@ -113,14 +116,15 @@
     "static/media/creative services.png": "/static/media/creative services.c260bef761f8d096e98f.png",
     "static/media/Groceries.png": "/static/media/Groceries.78fc831ca7b78f98fbef.png",
     "static/media/Tickets.png": "/static/media/Tickets.834454ce31d620a76d90.png",
-    "static/media/image 4.png": "/static/media/image 4.232306fabb20211f2eab.png",
     "static/media/Food & Beverage.png": "/static/media/Food & Beverage.f6f559081d73ac0954f1.png",
     "static/media/study abroad.png": "/static/media/study abroad.b44df112b4ab2a4c2bc9.png",
     "static/media/financial advisory (1).png": "/static/media/financial advisory (1).3c31cf1516a9c0f025e1.png",
+    "static/media/Manchester.png": "/static/media/Manchester.900743cba77014bda51b.png",
     "static/media/Career guidance.png": "/static/media/Career guidance.fe6ea3668fa6a02f6294.png",
     "static/media/freelancer and consulting service.png": "/static/media/freelancer and consulting service.cebe62a57cb94f08390e.png",
     "static/media/Legal knowledge hub.png": "/static/media/Legal knowledge hub.9db183177e6a1533ba16.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
+    "static/media/orderriceonline.png": "/static/media/orderriceonline.5bcd241c869669da5c8c.png",
     "static/media/Pets.png": "/static/media/Pets.ca3ab0d5bb314a9dc270.png",
     "static/media/IMAGE 16.png": "/static/media/IMAGE 16.e2c205dbc69cbfa0b18a.png",
     "static/media/loan services.png": "/static/media/loan services.d1ec8a6c9d10588e8412.png",
@@ -132,12 +136,9 @@
     "static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.png": "/static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.3b40f8ed166a3fd17253.png",
     "static/media/image 13.png": "/static/media/image 13.cc8aa13738305ef13342.png",
     "static/media/rama mam.png": "/static/media/rama mam.e093d87cf380e97bca53.png",
-    "static/media/IMAGE 17.png": "/static/media/IMAGE 17.4aa5aed636318304d260.png",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.c210719e60948b211a12.woff2",
-    "static/media/IMAGE 14.png": "/static/media/IMAGE 14.be9fe8789b5f767b4192.png",
     "static/media/IMAGE 7.png": "/static/media/IMAGE 7.cd2c24a14807fc732996.png",
     "static/media/Health & Wellness.png": "/static/media/Health & Wellness.385fc6099205725af8d1.png",
-    "static/media/IMAGE 15.png": "/static/media/IMAGE 15.0bde7a028a5e6615b27c.png",
     "static/media/image 20.png": "/static/media/image 20.918fc989cbf902a34387.png",
     "static/media/srinivas.png": "/static/media/srinivas.2e47d9a4b9f5add2c541.png",
     "static/media/narendra.png": "/static/media/narendra.9682dafd2be5db791a67.png",
@@ -147,7 +148,6 @@
     "static/media/IMAGE 10.png": "/static/media/IMAGE 10.8bce3645fb21b80466f3.png",
     "static/media/legal services.png": "/static/media/legal services.5638bd2fe81fef1e3ac4.png",
     "static/media/IMAGE 18.png": "/static/media/IMAGE 18.aeecf3aad87125a865ae.png",
-    "static/media/IMAGE 5.png": "/static/media/IMAGE 5.844034cb3ea17f9f68dc.png",
     "static/media/Home Services.png": "/static/media/Home Services.71fb5a92ececa7b01b94.png",
     "static/media/ramesh.png": "/static/media/ramesh.d7cc563b4a7ba0b91a1c.png",
     "static/media/subbu.png": "/static/media/subbu.7362245d4e9c85b2ca98.png",
@@ -177,11 +177,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.06fb2f2c.css.map": "/static/css/main.06fb2f2c.css.map",
-    "main.73cefbd0.js.map": "/static/js/main.73cefbd0.js.map"
+    "main.abea6424.css.map": "/static/css/main.abea6424.css.map",
+    "main.02a16c1e.js.map": "/static/js/main.02a16c1e.js.map"
   },
   "entrypoints": [
-    "static/css/main.06fb2f2c.css",
-    "static/js/main.73cefbd0.js"
+    "static/css/main.abea6424.css",
+    "static/js/main.02a16c1e.js"
   ]
 }

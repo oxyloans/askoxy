@@ -4,42 +4,26 @@ import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
 import Rice1 from "../assets/img/BUY 1 GET 1.png";
 import Rice2 from "../assets/img/BUY 1 GET 1 2.png";
+import Rice3 from "../assets/img/orderriceonline.png";
+import Rice4 from "../assets/img/RICEU1.png";
+import Rice5 from "../assets/img/RICEU2.png";
+import Rice6 from "../assets/img/RICEU3.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
 const FreeRiceBlog: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Sample GIF data - in a real application, this might come from an API or database
-  const riceGifs = [
-    {
-      id: 1,
-      title: "Rice Farming",
-      description: "Traditional methods of rice cultivation across Asia",
-      imageUrl: Rice1,
-    },
-    {
-      id: 2,
-      title: "Rice Varieties",
-      description: "Explore different types of rice from around the world",
-      imageUrl: Rice2,
-    },
-    {
-      id: 3,
-      title: "Rice Harvesting",
-      description: "Modern and traditional harvesting techniques",
-      // For missing image, using a placeholder
-      imageUrl: null,
-    },
-  ];
-
   const navigate = useNavigate();
 
-  const handleSignIn = () => {
-    window.location.href = "/whatsappregister";
-  };
+  const riceGifs = [
+    { id: 1, imageUrl: Rice1 },
+    { id: 2, imageUrl: Rice2 },
+    { id: 3, imageUrl: Rice3 },
+    { id: 4, imageUrl: Rice4 },
+    { id: 5, imageUrl: Rice5 },
+    { id: 6, imageUrl: Rice6 },
+  ];
 
-  // Function to handle click on GIF
-  const handleGifClick = () => {
+  const handleSignIn = () => {
     window.location.href = "/whatsappregister";
   };
 
@@ -48,84 +32,92 @@ const FreeRiceBlog: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Navigation Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src={AskOxyLogo}
-              className="h-8 w-auto sm:h-12 object-contain cursor-pointer"
-              alt="AskOxyLogo"
-            />
+    <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
+      {/* Header */}
+      <header className="bg-white shadow-sm px-4 py-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <img
+            src={AskOxyLogo}
+            alt="AskOxy Logo"
+            className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105"
+            
+          />
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleSignIn}
+              className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 shadow transition duration-300"
+            >
+              <User className="w-5 h-5" />
+              Sign In
+            </button>
+            <button
+              onClick={toggleMobileMenu}
+              className="sm:hidden focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden mt-2 bg-white shadow-md rounded-lg px-4 py-2 animate-fade-in-down">
+            <button
+              onClick={handleSignIn}
+              className="block w-full text-left text-purple-600 hover:text-purple-800 py-2 font-medium"
+            >
+              Sign In
+            </button>
+          </div>
+        )}
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-2xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
+              Order Rice Online
+            </h1>
+            <p className="text-md sm:text-lg text-gray-600 mt-4 max-w-2xl mx-auto">
+              Choose from premium rice offers and help feed those in need with
+              every order.
+            </p>
           </div>
 
-          {/* Sign In Button */}
-          <button
-            onClick={handleSignIn}
-            className="flex items-center gap-2 px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors"
-          >
-            <User className="w-5 h-5" />
-            <span className="hidden sm:inline">Sign In</span>
-          </button>
-        </div>
-      </div>
-      <main className="flex-grow">
-        <div className="max-w-6xl mx-auto p-4 sm:p-6">
-          <header className="mb-6 sm:mb-8 text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-4">
-              Free Rice
-            </h1>
-            <p className="text-base sm:text-lg text-gray-600">
-              Exploring the world of rice and helping fight hunger one click at
-              a time
-            </p>
-          </header>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {riceGifs.map((gif) => (
               <div
                 key={gif.id}
-                className="border rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer"
-                onClick={handleGifClick}
-                aria-label={`Click to read more about ${gif.title}`}
-                role="button"
+                className="bg-white rounded-xl shadow hover:shadow-xl overflow-hidden transform hover:-translate-y-1 transition duration-300 cursor-pointer group"
+                onClick={handleSignIn}
               >
-                <div className="relative">
-                  {gif.imageUrl ? (
-                    <img
-                      src={gif.imageUrl}
-                      alt={gif.title}
-                      className="w-full h-auto object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400">Image not available</span>
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2 bg-white p-1 rounded-full">
-                    <ArrowUpRight size={16} />
-                  </div>
-                </div>
-                <div className="p-3 sm:p-4">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">
-                    {gif.title}
-                  </h2>
-                  <p className="text-sm sm:text-base text-gray-600">
-                    {gif.description}
-                  </p>
+                <div className="aspect-w-16 aspect-h-10">
+                  <img
+                    src={gif.imageUrl}
+                    alt={`Rice Promo ${gif.id}`}
+                    className="w-full h-full object-cover  transition-transform"
+                  />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-500 text-sm sm:text-base">
-              Click on any image to support our cause and fight world hunger
+          {/* CTA Section */}
+          <div className="mt-16 text-center">
+            <button
+              onClick={handleSignIn}
+              className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white text-lg font-semibold rounded-full hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-xl"
+            >
+              Order Now
+              <ArrowUpRight className="ml-2" size={20} />
+            </button>
+            <p className="mt-4 text-sm text-gray-500">
+              Every purchase helps a family in need. Join the movement today!
             </p>
           </div>
-        </div>
+        </section>
       </main>
 
       <Footer />

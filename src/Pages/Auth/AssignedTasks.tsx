@@ -12,7 +12,6 @@ import {
   message,
   Tag,
   Avatar,
-  Progress,
   Input,
   Drawer,
   Select,
@@ -20,6 +19,8 @@ import {
   Row,
   Col,
   Tooltip,
+  Modal,
+  Form,
 } from "antd";
 import {
   ReloadOutlined,
@@ -33,7 +34,7 @@ import {
   ExclamationCircleOutlined,
   FilterOutlined,
   SortAscendingOutlined,
-  InfoCircleOutlined,
+  LinkOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
@@ -53,7 +54,7 @@ interface AssignedTask {
   createdAt?: string;
 }
 
-// Consistent button style with fixed dimensions
+// Consistent button style
 const buttonStyle = {
   height: "38px",
   display: "flex",
@@ -75,32 +76,41 @@ const AssignedTasksPage: React.FC = () => {
   );
   const [filterDrawerVisible, setFilterDrawerVisible] =
     useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [screenSize, setScreenSize] = useState<string>("desktop");
+  const [commentModalVisible, setCommentModalVisible] =
+    useState<boolean>(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [commentForm] = Form.useForm();
 
-  // Media query for responsive design
+  // Responsive design media query
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      if (width < 576) setScreenSize("xs");
+      else if (width < 768) setScreenSize("sm");
+      else if (width < 992) setScreenSize("md");
+      else if (width < 1200) setScreenSize("lg");
+      else setScreenSize("xl");
     };
 
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
-
-    return () => {
-      window.removeEventListener("resize", checkScreenSize);
-    };
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Fetch tasks when component mounts
+  const isMobile = screenSize === "xs";
+  const isTablet = screenSize === "sm" || screenSize === "md";
+  const isDesktop = screenSize === "lg" || screenSize === "xl";
+
+  // Fetch tasks on mount
   useEffect(() => {
     fetchAssignedTasks();
   }, []);
 
-  // Filter and sort tasks based on search and filters
+  // Filter and sort tasks
   useEffect(() => {
     let filtered = [...tasks];
 
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -111,19 +121,16 @@ const AssignedTasksPage: React.FC = () => {
       );
     }
 
-    // Apply priority filter
     if (filterPriority !== "all") {
       filtered = filtered.filter((task) => task.priority === filterPriority);
     }
 
-    // Apply status filter
     if (filterStatus !== "all") {
       filtered = filtered.filter(
         (task) => task.status === parseInt(filterStatus)
       );
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "dueDate":
@@ -152,34 +159,27 @@ const AssignedTasksPage: React.FC = () => {
     setFilteredTasks(filtered);
   }, [tasks, searchTerm, filterPriority, filterStatus, sortBy]);
 
+  // Fetch tasks from API
   const fetchAssignedTasks = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
         `${BASE_URL}/user-service/write/getTaskData`,
-        {
-          headers: {
-            accept: "*/*",
-          },
-        }
+        { headers: { accept: "*/*" } }
       );
 
-      // Enhance tasks with additional UI data, but keep the original priority
       const enhancedTasks = response.data.map(
         (task: AssignedTask, index: number) => {
-          // Create realistic due dates (1-7 days from now)
           const daysToAdd = (index % 7) + 1;
           const dueDate = new Date();
           dueDate.setDate(dueDate.getDate() + daysToAdd);
 
-          // Create a creation date (1-30 days ago)
           const creationDate = new Date();
           creationDate.setDate(creationDate.getDate() - (index % 30) - 1);
 
           return {
             ...task,
-            // Use the priority from the API response, with a fallback if undefined
-            priority: task.priority || "low", // Fallback to "low" if priority is missing
+            priority: task.priority || "low",
             dueDate: dueDate.toISOString().split("T")[0],
             createdAt: creationDate.toISOString().split("T")[0],
           };
@@ -189,23 +189,18 @@ const AssignedTasksPage: React.FC = () => {
       setTasks(enhancedTasks);
       setFilteredTasks(enhancedTasks);
 
-      if (enhancedTasks.length === 0) {
-        message.info({
-          content: "You don't have any assigned tasks at the moment.",
-          key: "noTasks",
-          duration: 4,
-        });
-      } else {
-        message.success({
-          content: `${enhancedTasks.length} tasks retrieved successfully.`,
-          key: "tasksLoaded",
-          duration: 3,
-        });
-      }
+      message.info({
+        content:
+          enhancedTasks.length === 0
+            ? "No assigned tasks at the moment."
+            : `${enhancedTasks.length} tasks retrieved.`,
+        key: "tasksLoaded",
+        duration: 3,
+      });
     } catch (error) {
-      console.error("Error fetching assigned tasks:", error);
+      console.error("Error fetching tasks:", error);
       message.error({
-        content: "Failed to fetch assigned tasks. Please try again.",
+        content: "Failed to fetch tasks. Please try again.",
         key: "fetchError",
         duration: 4,
       });
@@ -214,174 +209,157 @@ const AssignedTasksPage: React.FC = () => {
     }
   };
 
-  const updateTaskStatus = async (taskId: string, newStatus: number) => {
-    // Show loading message
+  // Update task status
+  const updateTaskStatus = async (
+    taskId: string,
+    newStatus: number,
+    commentData?: { comment: string; link?: string }
+  ) => {
+    if (newStatus === 4 && !commentData) {
+      // Show comment modal for completed tasks
+      setSelectedTaskId(taskId);
+      setCommentModalVisible(true);
+      return;
+    }
+
     message.loading({
       content: "Updating task status...",
       key: taskId,
       duration: 0,
     });
-
-    // Set the specific task to loading state
     setActionLoading((prev) => ({ ...prev, [taskId]: true }));
 
-    // Convert number status to string action
-    let action: string;
-    switch (newStatus) {
-      case 1:
-        action = "create";
-        break;
-      case 2:
-        action = "accept";
-        break;
-      case 3:
-        action = "pending";
-        break;
-      case 4:
-        action = "complete";
-        break;
-      default:
-        action = "accept";
-    }
+    const action =
+      { 1: "create", 2: "accept", 3: "pending", 4: "complete" }[newStatus] ||
+      "accept";
 
     try {
-      // Make the status update API call
+      // Update task status
       const response = await axios.post(
         `${BASE_URL}/user-service/write/tasks/${taskId}/status`,
-        {}, // Empty body
+        {},
         {
-          headers: {
-            "Content-Type": "application/json",
-            accept: "*/*",
-          },
-          params: {
-            action: action, // Send action as a URL parameter
-          },
+          headers: { "Content-Type": "application/json", accept: "*/*" },
+          params: { action },
         }
       );
 
-      // Handle success response
-      if (response.data && response.data.message) {
+      // Submit comment and link if task is completed
+      if (newStatus === 4 && commentData) {
+        await axios.post(
+          `${BASE_URL}/user-service/write/comments/${taskId}`,
+          {
+            comment: commentData.comment,
+            link: commentData.link || "",
+          },
+          {
+            headers: { "Content-Type": "application/json", accept: "*/*" },
+          }
+        );
         message.success({
-          content: response.data.message || "Task status updated successfully!",
+          content: "Task completed and comment submitted!",
           key: taskId,
           duration: 3,
         });
-
-        // Temporarily update the local state for immediate feedback
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === taskId ? { ...task, status: newStatus } : task
-          )
-        );
-
-        // Then fetch the updated data from server
-        setTimeout(() => {
-          fetchAssignedTasks();
-        }, 300); // Small delay to ensure server has processed the update
+      } else {
+        message.success({
+          content: response.data.message || "Task status updated!",
+          key: taskId,
+          duration: 3,
+        });
       }
+
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      );
+
+      setTimeout(fetchAssignedTasks, 300);
     } catch (error) {
-      console.error("Error updating task status:", error);
+      console.error("Error updating task status or submitting comment:", error);
       message.error({
-        content: "Failed to update task status. Please try again.",
+        content: "Failed to update task status or submit comment.",
         key: taskId,
         duration: 4,
       });
     } finally {
-      // Remove loading state for this task
       setActionLoading((prev) => ({ ...prev, [taskId]: false }));
+      if (newStatus === 4) {
+        setCommentModalVisible(false);
+        setSelectedTaskId(null);
+        commentForm.resetFields();
+      }
     }
   };
 
-  const getNextStatus = (currentStatus: number) => {
-    switch (currentStatus) {
-      case 1: // Created
-        return 2; // Next: Accepted
-      case 2: // Accepted
-        return 3; // Next: Pending
-      case 3: // Pending
-        return 4; // Next: Completed
-      case 4: // Completed
-        return 3; // Back to: Pending (if user wants to reopen)
-      default:
-        return 2;
+  // Handle comment form submission
+  const handleCommentSubmit = async () => {
+    if (!selectedTaskId) return;
+
+    try {
+      const values = await commentForm.validateFields();
+      await updateTaskStatus(selectedTaskId, 4, values);
+    } catch (error) {
+      message.error({
+        content: "Please provide a valid comment.",
+        key: "commentError",
+        duration: 4,
+      });
     }
+  };
+
+  // Modified to remove the ability to reopen completed tasks
+  const getNextStatus = (currentStatus: number) => {
+    return { 1: 2, 2: 3, 3: 4 }[currentStatus] || currentStatus;
   };
 
   const getStatusText = (status: number) => {
-    switch (status) {
-      case 1:
-        return "Created";
-      case 2:
-        return "Accepted";
-      case 3:
-        return "Pending";
-      case 4:
-        return "Completed";
-      default:
-        return "Unknown";
-    }
+    return (
+      { 1: "Created", 2: "Accepted", 3: "Pending", 4: "Completed" }[status] ||
+      "Unknown"
+    );
   };
 
+  // Modified to remove "Reopen Task" text for completed tasks
   const getActionButtonText = (status: number) => {
-    switch (status) {
-      case 1:
-        return "Accept Task";
-      case 2:
-        return "Mark as Pending";
-      case 3:
-        return "Mark as Completed";
-      case 4:
-        return "Reopen Task";
-      default:
-        return "Update Status";
-    }
+    return (
+      {
+        1: "Accept Task",
+        2: "Mark as Pending",
+        3: "Mark as Completed",
+      }[status] || "Completed"
+    );
   };
 
   const getActionButtonIcon = (status: number) => {
-    switch (status) {
-      case 1:
-        return <CheckCircleOutlined />;
-      case 2:
-        return <ClockCircleOutlined />;
-      case 3:
-        return <CheckCircleOutlined />;
-      case 4:
-        return <ClockCircleOutlined />;
-      default:
-        return <CheckCircleOutlined />;
-    }
+    return status === 1 || status === 3 ? (
+      <CheckCircleOutlined />
+    ) : (
+      <ClockCircleOutlined />
+    );
   };
 
+  // Modified button style for completed tasks to be disabled
   const getActionButtonStyle = (status: number) => {
-    switch (status) {
-      case 1:
-        return "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200";
-      case 2:
-        return "bg-blue-600 hover:bg-blue-700 border-blue-600 text-white";
-      case 3:
-        return "bg-green-600 hover:bg-green-700 border-green-600 text-white";
-      case 4:
-        return "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100";
-      default:
-        return "bg-blue-600 hover:bg-blue-700 border-blue-600";
-    }
+    return (
+      {
+        1: "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200",
+        2: "bg-blue-600 hover:bg-blue-700 border-blue-600 text-white",
+        3: "bg-green-600 hover:bg-green-700 border-green-600 text-white",
+        4: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed",
+      }[status] || "bg-blue-600 hover:bg-blue-700 border-blue-600"
+    );
   };
 
-  const getPriorityColor = (priority?: "high" | "medium" | "low") => {
-    switch (priority) {
-      case "high":
-        return "red";
-      case "medium":
-        return "orange";
-      case "low":
-        return "green";
-      default:
-        return "blue";
-    }
+  const getPriorityColor = (priority?: string) => {
+    return (
+      { high: "red", medium: "orange", low: "green" }[priority || "low"] ||
+      "blue"
+    );
   };
 
-  const getPriorityIcon = (priority?: "high" | "medium" | "low") => {
+  const getPriorityIcon = (priority?: string) => {
     return priority === "high" ? (
       <ExclamationCircleOutlined style={{ color: "#f5222d" }} />
     ) : (
@@ -392,88 +370,49 @@ const AssignedTasksPage: React.FC = () => {
   };
 
   const getStatusColor = (status: number) => {
-    switch (status) {
-      case 1:
-        return "blue";
-      case 2:
-        return "purple";
-      case 3:
-        return "orange";
-      case 4:
-        return "green";
-      default:
-        return "default";
-    }
+    return (
+      { 1: "blue", 2: "purple", 3: "orange", 4: "green" }[status] || "default"
+    );
   };
 
   const getStatusBadge = (status: number) => {
     const statusName = getStatusText(status);
-
     return (
       <Badge
         status={
           status === 4
             ? "success"
-            : status === 1
-            ? "processing"
-            : status === 2
+            : status === 1 || status === 2
             ? "processing"
             : "warning"
         }
         text={statusName}
         className={
-          status === 4
-            ? "text-green-600"
-            : status === 3
-            ? "text-orange-600"
-            : status === 2
-            ? "text-purple-600"
-            : "text-blue-600"
+          {
+            4: "text-green-600",
+            3: "text-orange-600",
+            2: "text-purple-600",
+            1: "text-blue-600",
+          }[status] || "text-blue-600"
         }
       />
     );
   };
 
-  const getDaysRemaining = (dueDate?: string) => {
-    if (!dueDate) return 0;
-
-    const today = new Date();
-    const due = new Date(dueDate);
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
-
-    const options: Intl.DateTimeFormatOptions = {
+    return new Date(dateString).toLocaleDateString(undefined, {
       year: "numeric",
       month: "short",
       day: "numeric",
-    };
-
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    });
   };
 
+  // Render task card
   const renderTaskCard = (task: AssignedTask) => {
-    const priorityColor = getPriorityColor(
-      task.priority as "high" | "medium" | "low" | undefined
-    );
-    const daysRemaining = getDaysRemaining(task.dueDate);
+    const priorityColor = getPriorityColor(task.priority);
     const isCompleted = task.status === 4;
     const nextStatus = getNextStatus(task.status);
-
-    // Calculate urgency for progress bar
-    let urgencyColor = "green";
-    if (daysRemaining <= 1) urgencyColor = "red";
-    else if (daysRemaining <= 3) urgencyColor = "orange";
-
-    // Calculate progress percentage
-    const urgencyPercent = isCompleted
-      ? 100
-      : Math.max(0, Math.min(100, (7 - daysRemaining) * 14));
 
     return (
       <Card
@@ -497,55 +436,53 @@ const AssignedTasksPage: React.FC = () => {
               : "#bae0ff"
           }`,
           borderRadius: "8px 8px 0 0",
-          padding: isMobile ? "12px 16px" : "16px 24px",
+          padding: isMobile
+            ? "12px 16px"
+            : isTablet
+            ? "14px 20px"
+            : "16px 24px",
         }}
-        bodyStyle={{
-          padding: isMobile ? "16px" : "20px",
-        }}
+        bodyStyle={{ padding: isMobile ? "16px" : isTablet ? "18px" : "20px" }}
         title={
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div className="flex items-center gap-3 flex-wrap">
-              <Avatar
-                style={{
-                  backgroundColor:
-                    task.status === 4
-                      ? "#52c41a"
-                      : task.status === 3
-                      ? "#fa8c16"
-                      : task.status === 2
-                      ? "#722ed1"
-                      : "#1890ff",
-                }}
-                icon={
-                  task.status === 4 ? (
-                    <CheckCircleOutlined />
-                  ) : (
-                    <FileTextOutlined />
-                  )
-                }
-              />
-              <div>
+              <div className="w-full">
                 <Text
                   strong
                   className={`${
-                    isMobile ? "text-base" : "text-lg"
+                    isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
                   } text-gray-800 block`}
                 >
                   Task from {task.taskassingnedby}
                 </Text>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <Tag color="blue" icon={<UserOutlined />}>
+                <div
+                  className={`mt-2 ${
+                    isMobile
+                      ? "overflow-x-auto whitespace-nowrap"
+                      : "flex flex-wrap"
+                  } gap-2`}
+                  style={{ WebkitOverflowScrolling: "touch" }}
+                >
+                  <Tag
+                    color="blue"
+                    icon={<UserOutlined />}
+                    className={isMobile ? "text-xs inline-block" : "text-sm"}
+                  >
                     {task.createdby}
                   </Tag>
                   <Tag
                     color={priorityColor}
-                    icon={getPriorityIcon(
-                      task.priority as "high" | "medium" | "low" | undefined
-                    )}
+                    icon={getPriorityIcon(task.priority)}
+                    className={isMobile ? "text-xs inline-block" : "text-sm"}
                   >
-                    {task.priority} Priority
+                    {task.priority.charAt(0).toUpperCase() +
+                      task.priority.slice(1)}{" "}
+                    Priority
                   </Tag>
-                  <Tag color={getStatusColor(task.status)}>
+                  <Tag
+                    color={getStatusColor(task.status)}
+                    className={isMobile ? "text-xs inline-block" : "text-sm"}
+                  >
                     {getStatusText(task.status)}
                   </Tag>
                 </div>
@@ -555,16 +492,22 @@ const AssignedTasksPage: React.FC = () => {
           </div>
         }
       >
-        <div className="bg-gray-50 p-3 sm:p-5 rounded-lg border border-gray-100">
-          <Text className="text-gray-700 font-medium block mb-3">
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+          <Text
+            className={`text-gray-700 font-medium block mb-3 ${
+              isMobile ? "text-sm" : "text-base"
+            }`}
+          >
             <FileTextOutlined className="mr-2" />
             Task Details:
           </Text>
-          <div className="bg-white p-3 sm:p-4 rounded-md border border-gray-100 shadow-inner">
+          <div className="bg-white p-4 rounded-md border border-gray-100 shadow-inner">
             <Paragraph
-              className="whitespace-pre-wrap text-gray-700 mb-0"
+              className={`whitespace-pre-wrap text-gray-700 mb-0 ${
+                isMobile ? "text-sm" : "text-base"
+              }`}
               ellipsis={{
-                rows: isMobile ? 2 : 3,
+                rows: isMobile ? 2 : isTablet ? 3 : 4,
                 expandable: true,
                 symbol: "Read more",
               }}
@@ -574,91 +517,118 @@ const AssignedTasksPage: React.FC = () => {
           </div>
         </div>
 
-        {task.dueDate && (
-          <div className="mt-4">
-            <div className="flex justify-between items-center mb-1">
-              <Text className="text-sm text-gray-600">
-                Due in {daysRemaining} days ({formatDate(task.dueDate)})
-              </Text>
-              <Text
-                className={`text-xs ${
-                  daysRemaining <= 1
-                    ? "text-red-600"
-                    : daysRemaining <= 3
-                    ? "text-orange-500"
-                    : "text-green-600"
-                }`}
-              >
-                {daysRemaining <= 1
-                  ? "Urgent!"
-                  : daysRemaining <= 3
-                  ? "Coming Soon"
-                  : "On Track"}
-              </Text>
-            </div>
-            <Progress
-              percent={urgencyPercent}
-              showInfo={false}
-              strokeColor={
-                daysRemaining <= 1
-                  ? "#f5222d"
-                  : daysRemaining <= 3
-                  ? "#fa8c16"
-                  : "#52c41a"
-              }
-              size="small"
-              className="mb-4"
-            />
-          </div>
-        )}
-
-        <div className="mt-4 sm:mt-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="mt-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-col gap-2 text-gray-500">
             <div className="flex items-center gap-2">
               <CalendarOutlined />
-              <Text className={isMobile ? "text-xs" : "text-sm"}>
+              <Text
+                className={
+                  isMobile ? "text-xs" : isTablet ? "text-sm" : "text-base"
+                }
+              >
                 Created: {formatDate(task.createdAt)}
               </Text>
             </div>
             <Text
-              className={`${isMobile ? "text-xs" : "text-sm"} text-gray-400`}
+              className={`${
+                isMobile ? "text-xs" : isTablet ? "text-sm" : "text-base"
+              } text-gray-400`}
             >
-              Task ID: #{task.id.substring(0, 8)}
+              Task ID: #{task.id.substring(0, 4)}
             </Text>
           </div>
-
-          <Tooltip
-            title={`Status will change to: ${getStatusText(nextStatus)}`}
-          >
+          {/* Modified action button for completed tasks */}
+          {isCompleted ? (
             <Button
-              type={task.status === 4 ? "default" : "primary"}
+              type="default"
               style={buttonStyle}
-              className={`${getActionButtonStyle(task.status)} shadow-sm ${
+              className={`${getActionButtonStyle(
+                task.status
+              )} shadow-sm transition-colors duration-200 ${
                 isMobile ? "w-full mt-2" : ""
               }`}
-              onClick={() => updateTaskStatus(task.id, nextStatus)}
-              icon={getActionButtonIcon(task.status)}
-              loading={actionLoading[task.id]}
+              icon={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
+              disabled={true}
               block={isMobile}
+              size={isMobile ? "small" : "middle"}
             >
-              {getActionButtonText(task.status)}
+              Completed
             </Button>
-          </Tooltip>
+          ) : (
+            <Tooltip
+              title={`Status will change to: ${getStatusText(nextStatus)}`}
+            >
+              <Button
+                type={task.status === 4 ? "default" : "primary"}
+                style={buttonStyle}
+                className={`${getActionButtonStyle(
+                  task.status
+                )} shadow-sm transition-colors duration-200 ${
+                  isMobile ? "w-full mt-2" : ""
+                }`}
+                onClick={() => updateTaskStatus(task.id, nextStatus)}
+                icon={getActionButtonIcon(task.status)}
+                loading={actionLoading[task.id]}
+                block={isMobile}
+                size={isMobile ? "small" : "middle"}
+              >
+                {getActionButtonText(task.status)}
+              </Button>
+            </Tooltip>
+          )}
         </div>
       </Card>
     );
   };
 
-  // Calculate completion statistics
+  // Calculate stats
   const totalTasks = tasks.length;
   const completedTasksCount = tasks.filter((task) => task.status === 4).length;
   const pendingTasksCount = tasks.filter((task) => task.status === 3).length;
-  const acceptedTasksCount = tasks.filter((task) => task.status === 2).length;
   const createdTasksCount = tasks.filter((task) => task.status === 1).length;
-  const completionPercentage =
-    totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
 
-  // Filter drawer for mobile
+  // Render comment modal
+  const renderCommentModal = () => (
+    <Modal
+      title="Complete Task"
+      open={commentModalVisible}
+      onOk={handleCommentSubmit}
+      onCancel={() => {
+        setCommentModalVisible(false);
+        setSelectedTaskId(null);
+        commentForm.resetFields();
+      }}
+      okText="Submit"
+      cancelText="Cancel"
+      width={isMobile ? "90%" : isTablet ? "70%" : 520}
+      okButtonProps={{ loading: actionLoading[selectedTaskId || ""] }}
+    >
+      <Form form={commentForm} layout="vertical">
+        <Form.Item
+          name="comment"
+          label="Comment"
+          rules={[{ required: true, message: "Please enter a comment" }]}
+        >
+          <Input.TextArea rows={4} placeholder="Enter your comment here..." />
+        </Form.Item>
+        <Form.Item
+          name="link"
+          label="Link (Optional)"
+          rules={[
+            {
+              type: "url",
+              message: "Please enter a valid URL",
+              warningOnly: true,
+            },
+          ]}
+        >
+          <Input prefix={<LinkOutlined />} placeholder="https://example.com" />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+
+  // Render filter drawer
   const renderFilterDrawer = () => (
     <Drawer
       title={
@@ -670,8 +640,7 @@ const AssignedTasksPage: React.FC = () => {
       placement="right"
       onClose={() => setFilterDrawerVisible(false)}
       open={filterDrawerVisible}
-      width={isMobile ? "85%" : 320}
-      className="filter-drawer"
+      width={isMobile ? "85%" : isTablet ? "60%" : "30%"}
       footer={
         <Button
           type="primary"
@@ -690,13 +659,14 @@ const AssignedTasksPage: React.FC = () => {
     >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <div>
-          <Text strong className="block mb-2 flex items-center">
+          <Text strong className="block mb-2 flex items-center text-base">
             <SortAscendingOutlined className="mr-2" /> Sort By
           </Text>
           <Select
             value={sortBy}
             onChange={(value) => setSortBy(value)}
             style={{ width: "100%" }}
+            size={isMobile ? "middle" : "large"}
           >
             <Option value="dueDate">Due Date (Closest First)</Option>
             <Option value="priority">Priority (High to Low)</Option>
@@ -704,77 +674,59 @@ const AssignedTasksPage: React.FC = () => {
             <Option value="createdAt">Created Date (Newest First)</Option>
           </Select>
         </div>
-
         <div>
-          <Text strong className="block mb-2 flex items-center">
+          <Text strong className="block mb-2 flex items-center text-base">
             <FlagOutlined className="mr-2" /> Priority
           </Text>
           <Select
             value={filterPriority}
             onChange={(value) => setFilterPriority(value)}
             style={{ width: "100%" }}
+            size={isMobile ? "middle" : "large"}
           >
             <Option value="all">All Priorities</Option>
             <Option value="high">
               <Tag color="red" className="mr-2">
                 High
-              </Tag>{" "}
+              </Tag>
               High Priority
             </Option>
             <Option value="medium">
               <Tag color="orange" className="mr-2">
                 Medium
-              </Tag>{" "}
+              </Tag>
               Medium Priority
             </Option>
             <Option value="low">
               <Tag color="green" className="mr-2">
                 Low
-              </Tag>{" "}
+              </Tag>
               Low Priority
             </Option>
           </Select>
         </div>
-
         <div>
-          <Text strong className="block mb-2 flex items-center">
+          <Text strong className="block mb-2 flex items-center text-base">
             <ClockCircleOutlined className="mr-2" /> Status
           </Text>
           <Select
             value={filterStatus}
             onChange={(value) => setFilterStatus(value)}
             style={{ width: "100%" }}
+            size={isMobile ? "middle" : "large"}
           >
             <Option value="all">All Statuses</Option>
             <Option value="1">
-              <Badge
-                status="processing"
-                color="blue"
-                text="Created"
-                className="text-blue-600"
-              />
+              <Badge status="processing" color="blue" text="Created" />
             </Option>
             <Option value="2">
-              <Badge
-                status="processing"
-                color="purple"
-                text="Accepted"
-                className="text-purple-600"
-              />
+              <Badge status="processing" color="purple" text="Accepted" />
             </Option>
             <Option value="3">
-              <Badge
-                status="warning"
-                text="Pending"
-                className="text-orange-600"
-              />
+              <Badge status="warning" text="Pending" />
             </Option>
             <Option value="4">
-              <Badge
-                status="success"
-                text="Completed"
-                className="text-green-600"
-              />
+              <Badge status="success" text="Completed" />
             </Option>
           </Select>
         </div>
@@ -784,27 +736,34 @@ const AssignedTasksPage: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="p-3 md:p-6 bg-gray-50 min-h-screen">
+      <div className="p-2 sm:p-4 md:p-6 min-h-screen bg-gray-50">
         <Card
-          className="mb-6 shadow-md border-0 rounded-lg overflow-hidden"
+          className="mb-6 shadow-lg border-0 rounded-xl overflow-hidden"
           bodyStyle={{ padding: "0" }}
         >
-          <div className="bg-gradient-to-r from-blue-500 to-blue-700 p-4 md:p-6 text-white">
+          <div className="bg-gradient-to-r p-4 sm:p-6 md:p-8 text-white">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
-                <Title level={isMobile ? 3 : 2} className="text-white mb-1">
+                <Title
+                  level={isMobile ? 4 : isTablet ? 3 : 2}
+                  className="text-white mb-1"
+                >
                   Assigned Tasks Dashboard
                 </Title>
-                <Text className="text-blue-100">
-                  View and manage all tasks assigned to you
+                <Text className="text-blue-800 text-sm sm:text-base">
+                  Manage and track all your assigned tasks
                 </Text>
               </div>
-
               <Button
                 onClick={fetchAssignedTasks}
                 icon={<ReloadOutlined />}
-                style={buttonStyle}
-                className="mt-4 md:mt-0 bg-white/20 text-white border-white/30 hover:bg-white/30 hover:border-white/40 backdrop-blur-sm"
+                style={{
+                  ...buttonStyle,
+                  height: isMobile ? "32px" : "38px",
+                  padding: isMobile ? "0 12px" : "0 16px",
+                }}
+                size={isMobile ? "small" : "middle"}
+                className="mt-4 md:mt-0 bg-white/20 text-white border-white/30 hover:bg-white/30 hover:border-white/40 backdrop-blur-sm transition-colors duration-200"
               >
                 Refresh Tasks
               </Button>
@@ -814,89 +773,72 @@ const AssignedTasksPage: React.FC = () => {
           {tasks.length > 0 && (
             <div
               className={`${
-                isMobile ? "py-3 px-4" : "p-4"
+                isMobile ? "py-3 px-4" : "p-6"
               } bg-white border-b border-gray-200`}
             >
-              <Row gutter={[16, 16]}>
+              <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
                 <Col xs={12} sm={12} md={6}>
-                  <Card className="h-full border-blue-100 hover:shadow-md transition-shadow">
-                    <Statistic
-                      title="Total Tasks"
-                      value={totalTasks}
-                      prefix={<FileTextOutlined />}
-                      className="text-blue-600"
-                    />
-                  </Card>
-                </Col>
-                <Col xs={12} sm={12} md={6}>
-                  <Card className="h-full border-purple-100 hover:shadow-md transition-shadow">
-                    <Statistic
-                      title="Created"
-                      value={createdTasksCount}
-                      prefix={<FileTextOutlined style={{ color: "#1890ff" }} />}
-                      className="text-blue-600"
-                    />
-                  </Card>
-                </Col>
-                <Col xs={12} sm={12} md={6}>
-                  <Card className="h-full border-orange-100 hover:shadow-md transition-shadow">
-                    <Statistic
-                      title="Pending"
-                      value={pendingTasksCount}
-                      prefix={
-                        <ClockCircleOutlined style={{ color: "#fa8c16" }} />
-                      }
-                      className="text-orange-600"
-                    />
-                  </Card>
-                </Col>
-                <Col xs={12} sm={12} md={6}>
-                  <Card className="h-full border-green-100 hover:shadow-md transition-shadow">
-                    <Statistic
-                      title="Completed"
-                      value={completedTasksCount}
-                      prefix={
-                        <CheckCircleOutlined style={{ color: "#52c41a" }} />
-                      }
-                      className="text-green-600"
-                    />
-                  </Card>
-                </Col>
-                <Col span={24}>
-                  <Card
-                    className="border-blue-100"
-                    extra={
-                      <Tooltip title="Shows your overall task completion progress">
-                        <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                      </Tooltip>
-                    }
-                  >
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Text className="text-gray-700">
-                          Task Completion Progress
-                        </Text>
-                        <Text
-                          strong
-                          className={
-                            completionPercentage === 100
-                              ? "text-green-600"
-                              : "text-blue-600"
-                          }
-                        >
-                          {completionPercentage}%
-                        </Text>
+                  <Card className="h-full border-blue-100 hover:shadow-md transition-shadow rounded-lg">
+                    <div className="text-blue-600">
+                      <div className="text-gray-500 text-sm mb-2">
+                        Total Tasks
                       </div>
-                      <Progress
-                        percent={completionPercentage}
-                        status={
-                          completionPercentage === 100 ? "success" : "active"
-                        }
-                        strokeColor={{
-                          from: "#108ee9",
-                          to: "#52c41a",
-                        }}
-                      />
+                      <div className="flex items-center gap-2">
+                        <FileTextOutlined className="text-xl" />
+                        <span className="text-2xl font-semibold">
+                          {totalTasks}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+                <Col xs={12} sm={12} md={6}>
+                  <Card className="h-full border-blue-100 hover:shadow-md transition-shadow rounded-lg">
+                    <div className="text-blue-600">
+                      <div className="text-gray-500 text-sm mb-2">Created</div>
+                      <div className="flex items-center gap-2">
+                        <FileTextOutlined
+                          style={{ color: "#1890ff" }}
+                          className="text-xl"
+                        />
+                        <span className="text-2xl font-semibold">
+                          {createdTasksCount}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+                <Col xs={12} sm={12} md={6}>
+                  <Card className="h-full border-orange-100 hover:shadow-md transition-shadow rounded-lg">
+                    <div className="text-orange-600">
+                      <div className="text-gray-500 text-sm mb-2">Pending</div>
+                      <div className="flex items-center gap-2">
+                        <ClockCircleOutlined
+                          style={{ color: "#fa8c16" }}
+                          className="text-xl"
+                        />
+                        <span className="text-2xl font-semibold">
+                          {pendingTasksCount}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+                <Col xs={12} sm={12} md={6}>
+                  <Card className="h-full border-green-100 hover:shadow-md transition-shadow rounded-lg">
+                    <div className="text-green-600">
+                      <div className="text-gray-500 text-sm mb-2">
+                        Completed
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircleOutlined
+                          style={{ color: "#52c41a" }}
+                          className="text-xl"
+                        />
+                        <span className="text-2xl font-semibold">
+                          {completedTasksCount}
+                        </span>
+                      </div>
                     </div>
                   </Card>
                 </Col>
@@ -905,62 +847,73 @@ const AssignedTasksPage: React.FC = () => {
           )}
 
           {tasks.length > 0 && (
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
+            <div className="p-4 sm:p-6 bg-gray-50 border-b border-gray-200">
               <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="flex-1">
-                  <Text className="text-gray-600 font-medium block mb-2">
-                    <SearchOutlined className="mr-1" /> Search Tasks
+                  <Text
+                    className={`text-gray-600 font-medium block mb-2 ${
+                      isMobile ? "text-sm" : "text-base"
+                    }`}
+                  >
+                    <SearchOutlined className="mr-2" /> Search Tasks
                   </Text>
                   <div className="flex gap-2">
                     <Search
-                      placeholder="Search by task content, creator or assignee"
+                      placeholder="Search by content, creator, or assignee..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       allowClear
                       style={{ width: "100%" }}
+                      size={isMobile ? "middle" : "large"}
+                      className="rounded-md"
                     />
-                    {isMobile && (
+                    {(isMobile || isTablet) && (
                       <Button
                         icon={<FilterOutlined />}
                         onClick={() => setFilterDrawerVisible(true)}
-                        className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
-                      />
+                        className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 transition-colors duration-200"
+                        size={isMobile ? "middle" : "large"}
+                      >
+                        Filter
+                      </Button>
                     )}
                   </div>
                 </div>
-
-                {!isMobile && (
-                  <Space>
+                {isDesktop && (
+                  <Space
+                    wrap={isMobile || isTablet}
+                    size={isMobile ? "small" : "middle"}
+                  >
                     <Select
-                      placeholder="Sort By"
                       value={sortBy}
                       onChange={(value) => setSortBy(value)}
                       style={{ width: 160 }}
-                      prefix={<SortAscendingOutlined />}
+                      size={isMobile ? "middle" : "large"}
+                      className="rounded-md"
                     >
                       <Option value="dueDate">Due Date</Option>
                       <Option value="priority">Priority</Option>
                       <Option value="status">Status</Option>
                       <Option value="createdAt">Created Date</Option>
                     </Select>
-
                     <Select
-                      placeholder="Priority"
                       value={filterPriority}
                       onChange={(value) => setFilterPriority(value)}
                       style={{ width: 120 }}
+                      size={isMobile ? "middle" : "large"}
+                      className="rounded-md"
                     >
                       <Option value="all">All Priorities</Option>
                       <Option value="high">High</Option>
                       <Option value="medium">Medium</Option>
                       <Option value="low">Low</Option>
                     </Select>
-
                     <Select
-                      placeholder="Status"
                       value={filterStatus}
                       onChange={(value) => setFilterStatus(value)}
                       style={{ width: 120 }}
+                      size={isMobile ? "middle" : "large"}
+                      className="rounded-md"
                     >
                       <Option value="all">All Statuses</Option>
                       <Option value="1">Created</Option>
@@ -968,7 +921,6 @@ const AssignedTasksPage: React.FC = () => {
                       <Option value="3">Pending</Option>
                       <Option value="4">Completed</Option>
                     </Select>
-
                     <Button
                       onClick={() => {
                         setFilterPriority("all");
@@ -977,6 +929,8 @@ const AssignedTasksPage: React.FC = () => {
                         setSearchTerm("");
                       }}
                       icon={<ReloadOutlined />}
+                      size={isMobile ? "middle" : "large"}
+                      className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 transition-colors duration-200"
                     >
                       Reset
                     </Button>
@@ -986,11 +940,11 @@ const AssignedTasksPage: React.FC = () => {
             </div>
           )}
 
-          <div className="p-3 md:p-6">
+          <div className="p-4 md:p-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <Spin size="large" />
-                <Text className="mt-4 text-gray-500">
+                <Text className="mt-4 text-gray-500 text-lg">
                   Loading your tasks...
                 </Text>
               </div>
@@ -998,11 +952,11 @@ const AssignedTasksPage: React.FC = () => {
               <div className="space-y-6">
                 {filteredTasks.map(renderTaskCard)}
                 {filteredTasks.length < tasks.length && (
-                  <div className="text-center py-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <Text className="text-gray-500">
+                  <div className="text-center py-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <Text className="text-gray-500 text-base">
                       Showing {filteredTasks.length} of {tasks.length} tasks
                     </Text>
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <Button
                         type="link"
                         onClick={() => {
@@ -1010,6 +964,7 @@ const AssignedTasksPage: React.FC = () => {
                           setFilterStatus("all");
                           setSearchTerm("");
                         }}
+                        className="text-blue-600 hover:text-blue-800"
                       >
                         Clear filters to see all
                       </Button>
@@ -1022,11 +977,11 @@ const AssignedTasksPage: React.FC = () => {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={
                   <div className="text-center">
-                    <Text className="text-gray-500 block mb-2">
+                    <Text className="text-gray-500 block mb-2 text-lg">
                       No matching tasks found
                     </Text>
-                    <Text className="text-gray-400 text-sm">
-                      Try adjusting your search criteria or filters
+                    <Text className="text-gray-400 text-base">
+                      Try adjusting your search or filters
                     </Text>
                     <div className="mt-4">
                       <Button
@@ -1036,6 +991,7 @@ const AssignedTasksPage: React.FC = () => {
                           setFilterStatus("all");
                           setSearchTerm("");
                         }}
+                        className="bg-blue-600 hover:bg-blue-700"
                       >
                         Show All Tasks
                       </Button>
@@ -1049,17 +1005,18 @@ const AssignedTasksPage: React.FC = () => {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={
                   <div className="text-center">
-                    <Text className="text-gray-500 block mb-2">
+                    <Text className="text-gray-500 block mb-2 text-lg">
                       No assigned tasks found
                     </Text>
-                    <Text className="text-gray-400 text-sm">
-                      When tasks are assigned to you, they will appear here
+                    <Text className="text-gray-400 text-base">
+                      New tasks will appear here when assigned
                     </Text>
                     <div className="mt-4">
                       <Button
                         type="primary"
                         onClick={fetchAssignedTasks}
                         icon={<ReloadOutlined />}
+                        className="bg-blue-600 hover:bg-blue-700"
                       >
                         Refresh Tasks
                       </Button>
@@ -1071,80 +1028,10 @@ const AssignedTasksPage: React.FC = () => {
             )}
           </div>
         </Card>
-
-        {/* Quick Help Card */}
-        {tasks.length > 0 && (
-          <Card
-            className="mb-6 shadow-sm rounded-lg"
-            title={
-              <div className="flex items-center">
-                <InfoCircleOutlined className="mr-2 text-blue-500" />
-                <span>Task Status Guide</span>
-              </div>
-            }
-            size="small"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="border border-blue-100 rounded-md p-3 bg-blue-50">
-                <Badge status="processing" color="blue" text="" />
-                <Text strong className="text-blue-600 ml-2">
-                  Created
-                </Text>
-                <Text className="block mt-1 text-xs text-gray-500">
-                  New tasks assigned to you that need to be accepted
-                </Text>
-              </div>
-              <div className="border border-purple-100 rounded-md p-3 bg-purple-50">
-                <Badge status="processing" color="purple" text="" />
-                <Text strong className="text-purple-600 ml-2">
-                  Accepted
-                </Text>
-                <Text className="block mt-1 text-xs text-gray-500">
-                  Tasks you've accepted and are working on
-                </Text>
-              </div>
-              <div className="border border-orange-100 rounded-md p-3 bg-orange-50">
-                <Badge status="warning" text="" />
-                <Text strong className="text-orange-600 ml-2">
-                  Pending
-                </Text>
-                <Text className="block mt-1 text-xs text-gray-500">
-                  Tasks in progress that need additional action
-                </Text>
-              </div>
-              <div className="border border-green-100 rounded-md p-3 bg-green-50">
-                <Badge status="success" text="" />
-                <Text strong className="text-green-600 ml-2">
-                  Completed
-                </Text>
-                <Text className="block mt-1 text-xs text-gray-500">
-                  Tasks you've successfully completed
-                </Text>
-              </div>
-            </div>
-          </Card>
-        )}
       </div>
+      {renderCommentModal()}
       {renderFilterDrawer()}
     </UserPanelLayout>
-  );
-};
-
-// Custom Statistic component for the dashboard
-const Statistic: React.FC<{
-  title: string;
-  value: number | string;
-  prefix?: React.ReactNode;
-  className?: string;
-}> = ({ title, value, prefix, className }) => {
-  return (
-    <div className={`${className || ""}`}>
-      <div className="text-gray-500 text-sm mb-1">{title}</div>
-      <div className="flex items-center gap-2">
-        {prefix && <span className="text-xl">{prefix}</span>}
-        <span className="text-2xl font-semibold">{value}</span>
-      </div>
-    </div>
   );
 };
 

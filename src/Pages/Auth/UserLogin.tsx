@@ -9,7 +9,7 @@ import {
   Typography,
   Divider,
 } from "antd";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import BASE_URL from "../../Config";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
@@ -18,11 +18,16 @@ const { Title, Text } = Typography;
 
 interface LoginResponse {
   status: string;
-  token: string;
-  refreshToken: string;
-  id: string;
-  name: string;
+  token?: string;
+  refreshToken?: string;
+  id?: string;
+  name?: string;
   errorMessage?: string;
+}
+
+interface LoginErrorResponse {
+  message?: string;
+  error?: string;
 }
 
 const UserLogin: React.FC = () => {
@@ -32,7 +37,17 @@ const UserLogin: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // ✅ Redirect if already logged in
+  // Clear error message after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
@@ -44,14 +59,8 @@ const UserLogin: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    if (!email) {
-      setError("Please enter your email");
-      setLoading(false);
-      return;
-    }
-
-    if (!password) {
-      setError("Please enter your password");
+    if (!email || !password) {
+      setError("Please fill in both email and password fields");
       setLoading(false);
       return;
     }
@@ -66,16 +75,17 @@ const UserLogin: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          timeout: 10000, // 10 seconds timeout
         }
       );
 
-      if (response.data.status === "Login Successful") {
+      if (response.data.status === "Login Successful" && response.data.token) {
         const { token, refreshToken, id, name } = response.data;
 
         localStorage.setItem("accessToken", token);
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("userId", id);
-        localStorage.setItem("userName", name);
+        if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+        if (id) localStorage.setItem("userId", id);
+        if (name) localStorage.setItem("userName", name);
 
         message.success({
           content: "Login successful! Redirecting to dashboard...",
@@ -85,13 +95,42 @@ const UserLogin: React.FC = () => {
 
         navigate("/userPanelLayout");
       } else {
-        setError(response.data.errorMessage || "Invalid email or password");
+        setError(response.data.errorMessage || "Invalid credentials provided");
       }
     } catch (error: any) {
-      setError(
-        error.response?.data?.message ||
-          "Failed to login. Please check your connection and try again."
-      );
+      const axiosError = error as AxiosError<LoginErrorResponse>;
+      let errorMessage = "An unexpected error occurred. Please try again.";
+
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            errorMessage = "Invalid email or password format";
+            break;
+          case 401:
+            errorMessage = "Incorrect email or password";
+            break;
+          case 403:
+            errorMessage = "Account is locked or disabled";
+            break;
+          case 429:
+            errorMessage = "Too many login attempts. Please try again later";
+            break;
+          case 500:
+            errorMessage = "Server error. Please try again later";
+            break;
+          default:
+            errorMessage =
+              axiosError.response.data?.message ||
+              axiosError.response.data?.error ||
+              "Failed to login. Please try again.";
+        }
+      } else if (axiosError.code === "ECONNABORTED") {
+        errorMessage = "Request timed out. Please check your connection.";
+      } else if (!axiosError.response) {
+        errorMessage = "Unable to connect to the server. Please try again.";
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -150,7 +189,7 @@ const UserLogin: React.FC = () => {
                 pattern:
                   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
                 message:
-                  "Password must contain at least 8 characters",
+                  "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
               },
             ]}
             className="mb-6"
@@ -184,6 +223,8 @@ const UserLogin: React.FC = () => {
               type="error"
               showIcon
               className="mt-4 rounded-md"
+              closable
+              onClose={() => setError(null)}
             />
           )}
 
