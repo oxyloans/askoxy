@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,34 +63,36 @@ const Categories: React.FC<CategoriesProps> = ({
 }) => {
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
-  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
-    null
-  );
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+  const location = useLocation();
   const navigate = useNavigate();
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
     status: { [key: string]: string };
   }>({
-    items: {}, // Stores boolean values for each item
-    status: {}, // Stores status strings for each item
+    items: {},
+    status: {},
   });
   const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
-  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
-    "0"
-  );
+  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>("0");
+  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(null);
 
-  // Weight filter state
-  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
-        null
-      );
-
-  // Weight filter options
   const weightFilters = [
     { label: "1 KG", value: "1.0" },
     { label: "5 KG", value: "5.0" },
     { label: "10 KG", value: "10.0" },
-    { label: "26 KG", value: "26.0" },
-  ];
+    { label: "26 KG", value: "26.0" },
+  ];
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const weight = queryParams.get("weight");
+    if (weight && weightFilters.some((filter) => filter.value === weight)) {
+      setActiveWeightFilter(weight);
+    } else {
+      setActiveWeightFilter(null);
+    }
+  }, [location.search]);
 
   const fetchCartData = async (itemId: string) => {
     const Id = localStorage.getItem("userId");
@@ -120,9 +122,6 @@ const Categories: React.FC<CategoriesProps> = ({
           "cartCount",
           response.data?.customerCartResponseList.length.toString()
         );
-        console.log({ cartItemsMap });
-
-        // Fix: Use cartItemsMap and correct syntax
         const totalQuantity = Object.values(
           cartItemsMap as Record<string, number>
         ).reduce((sum, qty) => sum + qty, 0);
@@ -157,7 +156,6 @@ const Categories: React.FC<CategoriesProps> = ({
   }, []);
 
   useEffect(() => {
-    // Reset subcategory when category changes
     setActiveSubCategory(null);
   }, [activeCategory]);
 
@@ -174,13 +172,11 @@ const Categories: React.FC<CategoriesProps> = ({
     }
 
     if (!checkProfileCompletion()) {
-      console.log(checkProfileCompletion());
       Modal.error({
         title: "Profile Incomplete",
         content: "Please complete your profile to add items to the cart.",
         onOk: () => navigate("/main/profile"),
       });
-      // message.warning("Please complete your profile to add items to the cart.");
       setTimeout(() => {
         navigate("/main/profile");
       }, 4000);
@@ -230,13 +226,11 @@ const Categories: React.FC<CategoriesProps> = ({
     }
 
     if (!checkProfileCompletion()) {
-      console.log(checkProfileCompletion());
       Modal.error({
         title: "Profile Incomplete",
         content: "Please complete your profile to add items to the cart.",
         onOk: () => navigate("/main/profile"),
       });
-      // message.warning("Please complete your profile to add items to the cart.");
       setTimeout(() => {
         navigate("/main/profile");
       }, 4000);
@@ -270,7 +264,6 @@ const Categories: React.FC<CategoriesProps> = ({
           }));
           message.success("Item removed from cart successfully.");
           
-          // GA4 Remove from Cart Event Tracking
           if (typeof window !== "undefined" && window.gtag) {
             window.gtag("event", "remove_from_cart", {
               currency: "INR",
@@ -311,7 +304,6 @@ const Categories: React.FC<CategoriesProps> = ({
             status: { ...prev.status, [item.itemId]: "" },
           }));
           
-          // GA4 Event Tracking for increment/decrement
           if (typeof window !== "undefined" && window.gtag) {
             window.gtag("event", increment ? "add_to_cart" : "remove_from_cart", {
               currency: "INR",
@@ -357,17 +349,15 @@ const Categories: React.FC<CategoriesProps> = ({
 
     let items = currentCategory.itemsResponseDtoList;
 
-    // Apply weight filter
     if (activeWeightFilter) {
       items = items.filter((item) => {
-        // Convert item weight to match filter format
         const itemWeight = parseFloat(item.weight).toFixed(1);
         return itemWeight === activeWeightFilter;
       });
     }
 
-    return items;
-  };
+    return items;
+  };
 
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
@@ -377,32 +367,35 @@ const Categories: React.FC<CategoriesProps> = ({
     return category?.subCategories || [];
   };
 
-  // Handle weight filter click
   const handleWeightFilterClick = (weight: string | null) => {
     setActiveWeightFilter(weight);
-    // Reset the dropdown filter when weight filter changes
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
-  };
+  };
+
+  const handleResetFilters = () => {
+    setActiveWeightFilter(null);
+    setSelectedFilterKey("0");
+    setSelectedFilter("ALL");
+  };
 
   return (
-    <div className="bg-white shadow-lg px-3 sm:px-6 lg:px-6 py-3">
+    <div className="bg-white shadow-lg px-4 sm:px-6 lg:px-8 py-4">
       {/* Category Tabs */}
       <div className="mb-4 overflow-x-auto scrollbar-hide">
-        <div className="flex space-x-4 pb-4">
+        <div className="flex space-x-3 pb-4">
           {categories.map((category, index) => (
             <motion.button
               key={index}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${activeCategory === category.categoryName
-                ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
-                }`}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                activeCategory === category.categoryName
+                  ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
+                  : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
+              }`}
               onClick={() => {
                 onCategoryClick(category.categoryName);
-                
-                // GA4 Event Tracking for category selection
                 if (typeof window !== "undefined" && window.gtag) {
                   window.gtag("event", "select_content", {
                     content_type: "category",
@@ -426,17 +419,16 @@ const Categories: React.FC<CategoriesProps> = ({
         </div>
       </div>
 
-      {/* Weight Filter Section - New Addition */}
+      {/* Weight Filter Section */}
       <div className="mb-4 overflow-x-auto scrollbar-hide">
-        <div className="flex space-x-3 pb-2">
+        <div className="flex items-center space-x-3 pb-2">
           {weightFilters.map((filter, index) => (
             <motion.button
               key={index}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                filter.value === activeWeightFilter ||
-                (filter.value === null && activeWeightFilter === null)
+                filter.value === activeWeightFilter
                   ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
                   : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
               }`}
@@ -445,8 +437,16 @@ const Categories: React.FC<CategoriesProps> = ({
               {filter.label}
             </motion.button>
           ))}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100 transition-all duration-300"
+            onClick={handleResetFilters}
+          >
+            Reset
+          </motion.button>
         </div>
-      </div>
+      </div>
 
       {/* Subcategories */}
       {getCurrentSubCategories().length > 0 && (
@@ -455,14 +455,13 @@ const Categories: React.FC<CategoriesProps> = ({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!activeSubCategory
-                ? "bg-purple-100 text-purple-700"
-                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                }`}
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                !activeSubCategory
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+              }`}
               onClick={() => {
                 setActiveSubCategory(null);
-                
-                // GA4 Event Tracking for "All" subcategory selection
                 if (typeof window !== "undefined" && window.gtag) {
                   window.gtag("event", "select_content", {
                     content_type: "subcategory",
@@ -479,14 +478,13 @@ const Categories: React.FC<CategoriesProps> = ({
                 key={subCategory.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${activeSubCategory === subCategory.id
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  activeSubCategory === subCategory.id
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                }`}
                 onClick={() => {
                   setActiveSubCategory(subCategory.id);
-                  
-                  // GA4 Event Tracking for subcategory selection
                   if (typeof window !== "undefined" && window.gtag) {
                     window.gtag("event", "select_content", {
                       content_type: "subcategory",
@@ -527,53 +525,32 @@ const Categories: React.FC<CategoriesProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col"
             >
-              {/* Discount Label - Updated to match reference design */}
-              {item.itemMrp &&
-                item.itemPrice &&
-                item.itemMrp > item.itemPrice && (
-                  <div className="absolute left-0 top-0 z-10 w-auto">
-                    <div
-                      className="bg-purple-600 text-white text-[10px] xs:text-xs sm:text-sm font-bold 
-                      px-1.5 xs:px-2 sm:px-3 lg:px-4 
-                      py-0.5 xs:py-0.5 sm:py-1 
-                      flex items-center"
-                    >
-                      {calculateDiscount(item.itemMrp, item.itemPrice)}%
-                      <span className="ml-0.5 xs:ml-1 text-[8px] xs:text-[10px] sm:text-xs">
-                        Off
-                      </span>
-                    </div>
-                    {/* Custom shape for bottom edge */}
-                    <div
-                      className="absolute bottom-0 right-0 transform translate-y 
-                      border-t-4 border-r-4 
-                      xs:border-t-6 xs:border-r-6 
-                      sm:border-t-8 sm:border-r-8 
-                      border-t-purple-600 border-r-transparent"
-                    ></div>
+              {item.itemMrp && item.itemPrice && item.itemMrp > item.itemPrice && (
+                <div className="absolute left-0 top-0 z-10 w-auto">
+                  <div
+                    className="bg-purple-600 text-white text-[10px] sm:text-xs font-bold 
+                    px-2 sm:px-3 py-0.5 sm:py-1 flex items-center"
+                  >
+                    {calculateDiscount(item.itemMrp, item.itemPrice)}%
+                    <span className="ml-1 text-[8px] sm:text-[10px]">Off</span>
                   </div>
-                )}
+                  <div
+                    className="absolute bottom-0 right-0 transform translate-y 
+                    border-t-4 sm:border-t-6 border-r-4 sm:border-r-6 
+                    border-t-purple-600 border-r-transparent"
+                  ></div>
+                </div>
+              )}
 
-              {/* Stock Status Badge */}
               {item.quantity === 0 ? (
-                <div
-                  className="absolute top-0.5 xs:top-1 sm:top-2 
-                  right-0.5 xs:right-1 sm:right-2 z-10"
-                ></div>
+                <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10"></div>
               ) : item.quantity < 6 ? (
-                <div
-                  className="absolute top-0.5 xs:top-1 sm:top-2 
-                  right-0.5 xs:right-1 sm:right-2 z-10"
-                >
+                <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10">
                   <span
-                    className="bg-yellow-500 text-white 
-                    text-[8px] xs:text-[10px] sm:text-xs 
-                    font-medium 
-                    px-1.5 xs:px-2 sm:px-3 
-                    py-0.5 xs:py-0.5 sm:py-1 
-                    rounded-full whitespace-nowrap"
+                    className="bg-yellow-500 text-white text-[8px] sm:text-xs 
+                    font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
                   >
                     Only {item.quantity} left
                   </span>
@@ -581,11 +558,9 @@ const Categories: React.FC<CategoriesProps> = ({
               ) : null}
 
               <div
-                className="p-4 cursor-pointer"
+                className="p-4 cursor-pointer flex-grow"
                 onClick={() => {
                   onItemClick(item);
-                  
-                  // GA4 Product Click Event Tracking
                   if (typeof window !== "undefined" && window.gtag) {
                     window.gtag("event", "select_item", {
                       currency: "INR",
@@ -603,7 +578,6 @@ const Categories: React.FC<CategoriesProps> = ({
                   }
                 }}
               >
-                {/* Image Container */}
                 <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
                   <img
                     src={item.itemImage ?? "https://via.placeholder.com/150"}
@@ -619,20 +593,18 @@ const Categories: React.FC<CategoriesProps> = ({
                   )}
                 </div>
 
-                {/* Product Details */}
                 <div className="space-y-2">
                   <h3 className="font-medium text-gray-800 line-clamp-3 min-h-[2.5rem] text-sm">
                     {item.itemName}
                   </h3>
                   <p className="text-sm text-gray-500">
-                  Weight: {item.weight}{" "}
-                          {item.units == "pcs"
-                            ? "Pc"
-                            : item.weight == "1"
-                            ? "Kg"
-                            : "Kgs"}
+                    Weight: {item.weight}{" "}
+                    {item.units == "pcs"
+                      ? "Pc"
+                      : item.weight == "1"
+                      ? "Kg"
+                      : "Kgs"}
                   </p>
-                  { }
                   <div className="flex items-baseline space-x-2">
                     <span className="text-lg font-semibold text-gray-900">
                       ₹{item.itemPrice}
@@ -643,107 +615,105 @@ const Categories: React.FC<CategoriesProps> = ({
                       </span>
                     )}
                   </div>
+                </div>
+              </div>
 
-                  {/* Add to Cart Button Section */}
-                  {item.quantity !== 0 ? (
-                    cartItems[item.itemId] > 0 ? (
-                      <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2">
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleQuantityChange(item, false, "sub");
-                          }}
-                          disabled={loadingItems.items[item.itemId]}
-                        >
-                          -
-                        </motion.button>
-                        {loadingItems.items[item.itemId] ? (
-                          <Loader2 className="animate-spin text-purple-600" />
-                        ) : (
-                          <span className="font-medium text-purple-700">
-                            {cartItems[item.itemId]}
-                          </span>
-                        )}
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${cartItems[item.itemId] >= item.quantity
+              {/* Add to Cart Button Section */}
+              <div className="px-4 pb-4">
+                {item.quantity !== 0 ? (
+                  cartItems[item.itemId] > 0 ? (
+                    <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 h-10">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuantityChange(item, false, "sub");
+                        }}
+                        disabled={loadingItems.items[item.itemId]}
+                      >
+                        -
+                      </motion.button>
+                      {loadingItems.items[item.itemId] ? (
+                        <Loader2 className="animate-spin text-purple-600" />
+                      ) : (
+                        <span className="font-medium text-purple-700">
+                          {cartItems[item.itemId]}
+                        </span>
+                      )}
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
+                          cartItems[item.itemId] >= item.quantity
                             ? "opacity-50 cursor-not-allowed"
                             : ""
-                            }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (cartItems[item.itemId] < item.quantity) {
-                              handleQuantityChange(item, true, "Add");
-                            }
-                          }}
-                          disabled={
-                            cartItems[item.itemId] >= item.quantity ||
-                            loadingItems.items[item.itemId] || (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (cartItems[item.itemId] < item.quantity) {
+                            handleQuantityChange(item, true, "Add");
                           }
-                        >
-                          +
-                        </motion.button>
-                      </div>
-                    ) : (
-                      <>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="w-full py-2 mt-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg transition-all duration-300 hover:shadow-md"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(item);
-
-                            // GA4 Add to Cart Event Tracking using gtag()
-                            if (typeof window !== "undefined" && window.gtag) {
-                              window.gtag("event", "add_to_cart", {
-                                currency: "INR",
-                                value: item.itemPrice,
-                                items: [
-                                  {
-                                    item_id: item.itemId,
-                                    item_name: item.itemName,
-                                    price: item.itemPrice,
-                                    quantity: 1,
-                                    item_category: activeCategory || "General",
-                                  },
-                                ],
-                              });
-                            }
-                          }}
-                          disabled={loadingItems.items[item.itemId]}
-                        >
-                          {loadingItems.items[item.itemId] ? (
-                            <Loader2 className="mr-2 animate-spin inline-block" />
-                          ) : (
-                            "Add to Cart"
-                          )}
-                        </motion.button>
-                      </>
-                    )
+                        }}
+                        disabled={
+                          cartItems[item.itemId] >= item.quantity ||
+                          loadingItems.items[item.itemId] || 
+                          (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
+                        }
+                      >
+                        +
+                      </motion.button>
+                    </div>
                   ) : (
-                    <button
-                      className="w-full py-2 mt-2 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed"
-                      disabled
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full h-10 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg transition-all duration-300 hover:shadow-md flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
-                        
-                        // GA4 View Item Unavailable Event Tracking
+                        handleAddToCart(item);
                         if (typeof window !== "undefined" && window.gtag) {
-                          window.gtag("event", "view_item_unavailable", {
-                            item_id: item.itemId,
-                            item_name: item.itemName,
-                            item_category: activeCategory || "General",
+                          window.gtag("event", "add_to_cart", {
+                            currency: "INR",
+                            value: item.itemPrice,
+                            items: [
+                              {
+                                item_id: item.itemId,
+                                item_name: item.itemName,
+                                price: item.itemPrice,
+                                quantity: 1,
+                                item_category: activeCategory || "General",
+                              },
+                            ],
                           });
                         }
                       }}
+                      disabled={loadingItems.items[item.itemId]}
                     >
-                      Out of Stock
-                    </button>
-                  )}
-                </div>
+                      {loadingItems.items[item.itemId] ? (
+                        <Loader2 className="mr-2 animate-spin inline-block" />
+                      ) : (
+                        "Add to Cart"
+                      )}
+                    </motion.button>
+                  )
+                ) : (
+                  <button
+                    className="w-full h-10 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed flex items-center justify-center"
+                    disabled
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (typeof window !== "undefined" && window.gtag) {
+                        window.gtag("event", "view_item_unavailable", {
+                          item_id: item.itemId,
+                          item_name: item.itemName,
+                          item_category: activeCategory || "General",
+                        });
+                      }
+                    }}
+                  >
+                    Out of Stock
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback ,useContext} from "react";
+import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,11 +54,11 @@ interface CartItem {
 }
 
 interface HeaderImage {
-    id: string | number;
-    src: string;
-    alt?: string;
-    path: string;
-  }
+  id: string | number;
+  src: string;
+  alt?: string;
+  path: string;
+}
 
 interface DashboardItem {
   id?: string;
@@ -128,11 +128,11 @@ const Home: React.FC = () => {
 
   // Variants for header image hover effect
   const headerImageVariants = {
-    initial: { 
+    initial: {
       scale: 1,
       boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
     },
-    hover: { 
+    hover: {
       scale: 1.05,
       boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
       transition: {
@@ -145,6 +145,11 @@ const Home: React.FC = () => {
 
   const headerImages: HeaderImage[] = [
     {
+      id: "o3",
+      src: O3,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=1.0"
+    }, {
       id: "o1",
       src: O1,
       alt: "OxyLoans",
@@ -155,12 +160,6 @@ const Home: React.FC = () => {
       src: O2,
       alt: "Study Abroad",
       path: "/main/services/studyabroad"
-    },
-    {
-      id: "o3",
-      src: O3,
-      alt: "Products",
-      path: "/main/dashboard/products"
     },
     {
       id: "o4",
@@ -179,32 +178,32 @@ const Home: React.FC = () => {
   const fetchCartData = useCallback(async (itemId: string = "") => {
     const userId = localStorage.getItem("userId");
     if (!userId) return;
-  
+
     if (itemId !== "") {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
       }));
     }
-  
+
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
       );
-  
+
       const cartList = response.data?.customerCartResponseList || [];
-  
+
       if (cartList.length > 0) {
         const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
           acc[item.itemId] = Number(item.cartQuantity) || 0;
           return acc;
         }, {});
-  
+
         // Use type assertion and additional type guard
         const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
           return sum + (typeof qty === 'number' ? qty : 0);
         }, 0);
-  
+
         setCartItems(cartItemsMap);
         setCartData(cartList);
         localStorage.setItem("cartCount", cartList.length.toString());
@@ -229,7 +228,7 @@ const Home: React.FC = () => {
 
   const fetchCategories = useCallback(async () => {
     if (categoriesFetched.current) return;
-    
+
     setProductsLoading(true);
     try {
       const response = await axios.get(`${BASE_URL}/product-service/showItemsForCustomrs`);
@@ -279,7 +278,7 @@ const Home: React.FC = () => {
   // Initial data loading
   useEffect(() => {
     if (initialDataFetched.current) return;
-    
+
     const fetchInitialData = async () => {
       setLoading(true);
       try {
@@ -612,7 +611,7 @@ const Home: React.FC = () => {
             >
               {item.title}
             </h3>
-            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{item.weight=="1"?"Kg":"Kgs"}</p>
+            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{item.weight == "1" ? "Kg" : "Kgs"}</p>
 
             <div className="flex items-baseline space-x-2">
               <span className="text-lg font-semibold text-gray-900">₹{item.itemPrice ?? 0}</span>
@@ -657,9 +656,8 @@ const Home: React.FC = () => {
 
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                    item.itemId && item.quantity && cartItems[item.itemId] >= item.quantity ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${item.itemId && item.quantity && cartItems[item.itemId] >= item.quantity ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (item.itemId && item.quantity && cartItems[item.itemId] < item.quantity) {
@@ -758,7 +756,7 @@ const Home: React.FC = () => {
 
   const handleCategoryChange = (categoryName: string) => {
     if (activeCategory === categoryName) return;
-    
+
     setActiveCategory(categoryName);
     setProductsLoading(true);
 
@@ -849,7 +847,7 @@ const Home: React.FC = () => {
     },
   };
 
-   const context = useContext(CartContext);
+  const context = useContext(CartContext);
   if (!context) {
     throw new Error("CartDisplay must be used within a CartProvider");
   }
@@ -859,12 +857,12 @@ const Home: React.FC = () => {
     const bgGradient = type === 'gpt'
       ? 'from-blue-600 to-indigo-700'
       : 'from-yellow-500 to-amber-600';
-      const iconBg = type === 'gpt'
+    const iconBg = type === 'gpt'
       ? 'from-blue-600 to-indigo-700'
       : 'from-yellow-500 to-amber-600';
 
     const iconColor = type === 'gpt' ? 'text-blue-200' : 'text-amber-200';
-    
+
     return (
       <motion.div
         key={`${type}-${item.id}`}
@@ -881,12 +879,12 @@ const Home: React.FC = () => {
             <div className="flex-1">
               <h3 className="text-white font-semibold text-lg mb-1">{item.title}</h3>
               <p className="text-white text-opacity-80 text-sm">{item.description}</p>
-              
+
               <button className="mt-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg px-3 py-1.5 text-sm flex items-center">
                 Explore <ChevronRight size={16} className="ml-1" />
               </button>
             </div>
-            
+
             <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-b ${iconBg}`}>
               {React.cloneElement(item.icon as React.ReactElement, {
                 className: iconColor,
@@ -911,232 +909,241 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
 
       {/* Header Images Section */}
-<div className="w-full bg-white border-b border-gray-100 py-4">
-  <div className="px-4 sm:px-6">
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      {headerImages.map((image) => (
-        <motion.div
-          key={image.id}
-          variants={headerImageVariants}
-          initial="initial"
-          whileHover="hover"
-          className="cursor-pointer overflow-hidden rounded-lg"
-          onHoverStart={() => setHoveredImage(image.id)}
-          onHoverEnd={() => setHoveredImage(null)}
-          onClick={() => navigate(image.path)}
-        >
-          <motion.img
-            src={image.src}
-            alt={image.alt}
-            className="w-full h-auto object-cover rounded-lg"
-            style={{
-              transform: hoveredImage === image.id ? 'scale(1.05)' : 'scale(1)',
-              transition: 'transform 0.3s ease',
-            }}
-          />
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</div>
-
-     
- {/* Main Content */}
- <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
- {/* Products Section */}
- <section ref={productsRef} className="mb-12">
- <div className="flex items-center mb-4 gap-10">
-<h2 className="text-xl font-bold text-gray-800 flex items-center">
-<ShoppingBag className="text-purple-600 mr-2" size={20} />
-Our Products
-</h2>
-<motion.button
-whileHover={{ scale: 1.05 }}
-whileTap={{ scale: 0.95 }}
-className="px-4 py-2 mb-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
-onClick={viewAllProducts}
->
-View All
-<ArrowRight size={16} className="ml-1" />
-</motion.button>
-</div>
+      <div className="w-full bg-white border-b border-gray-100 py-4">
+        <div className="px-4 sm:px-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {headerImages.map((image) => (
+              <motion.div
+                key={image.id}
+                variants={headerImageVariants}
+                initial="initial"
+                whileHover="hover"
+                className="cursor-pointer overflow-hidden rounded-lg"
+                onHoverStart={() => setHoveredImage(image.id)}
+                onHoverEnd={() => setHoveredImage(null)}
+                onClick={() => navigate(image.path)}
+              >
+                <motion.img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full h-auto object-cover rounded-lg"
+                  style={{
+                    transform: hoveredImage === image.id ? 'scale(1.05)' : 'scale(1)',
+                    transition: 'transform 0.3s ease',
+                  }}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
 
 
-   {/* Category Pills */}
-   <div className="mb-6 overflow-x-auto no-scrollbar">
-     <div className="flex space-x-2 pb-2">
-       {categories.map((category, index) => (
-         <motion.button
-           key={category.categoryName}
-           animate={activeCategory === category.categoryName ? "active" : "inactive"}
-           variants={categoryVariants}
-           whileHover={activeCategory !== category.categoryName ? { scale: 1.05 } : {}}
-           whileTap={{ scale: 0.95 }}
-           onClick={() => handleCategoryChange(category.categoryName)}
-           className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap"
-         >
-           {category.categoryName}
-         </motion.button>
-       ))}
-     </div>
-   </div>
-
-   {/* Products Grid */}
-   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-     <AnimatePresence>
-       {productsLoading ? (
-         Array.from({ length: 5 }).map((_, index) => (
-           <ProductSkeleton key={`skeleton-${index}`} index={index} />
-         ))
-       ) : displayProducts.length > 0 ? (
-         displayProducts.map((product, index) => renderProductItem(product, index))
-       ) : (
-         <div className="col-span-full py-8 text-center">
-           <p className="text-gray-500">No products found. Try a different search or category.</p>
-         </div>
-       )}
-     </AnimatePresence>
-   </div>
-
-   {/* Load More Button */}
-   {!productsLoading && products.length > displayProducts.length && (
-     <div className="mt-8 text-center">
-       <motion.button
-         whileHover={{ scale: 1.05 }}
-         whileTap={{ scale: 0.95 }}
-         onClick={loadMoreProducts}
-         className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
-       >
-         Load More
-         <TrendingUp size={16} className="ml-2" />
-       </motion.button>
-     </div>
-   )}
- </section>
- 
- {/* Services Section */}
- <section className="mb-12">
- <div className="flex items-center mb-4 gap-10">
-<h2 className="text-xl font-bold text-gray-800 flex items-center">
-<Settings className="text-purple-600 mr-2" size={20} />
-Our Services
-</h2>
-<motion.button
-whileHover={{ scale: 1.05 }}
-whileTap={{ scale: 0.95 }}
-className="px-4 py-2 mb-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
-onClick={viewAllServices}
->
-View All
-<ArrowRight size={16} className="ml-1" />
-</motion.button>
-</div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Products Section */}
+        <section ref={productsRef} className="mb-12">
+          <div className="flex items-center mb-4 gap-10">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <ShoppingBag className="text-purple-600 mr-2" size={20} />
+              Our Products
+            </h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 mb-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+              onClick={viewAllProducts}
+            >
+              View All
+              <ArrowRight size={16} className="ml-1" />
+            </motion.button>
+          </div>
 
 
-   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-     {loading ? (
-       Array.from({ length: 3 }).map((_, index) => (
-         <div
-           key={`skeleton-service-${index}`}
-           className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
-         >
-           <div className="h-40 bg-gray-200"></div>
-           <div className="p-4">
-             <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-             <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-             <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-           </div>
-         </div>
-       ))
-     ) : (
-       services.map((service, index) => (
-         <motion.div
-           key={service.id}
-           custom={index}
-           initial="hidden"
-           animate="visible"
-           whileHover="hover"
-           variants={serviceCardVariants}
-           className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-           onClick={() => navigate(service.path)}
-         >
-           <div className="aspect-video relative overflow-hidden">
-             <img
-               src={service.image}
-               alt={service.title}
-               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-             />
-             <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-50"></div>
-             <div className="absolute bottom-3 left-3 right-3">
-               <h3 className="text-white font-bold text-lg drop-shadow-md">
-                 {service.title}
-               </h3>
-             </div>
-           </div>
-           <div className="p-4">
-             <p className="text-gray-700 text-sm">{service.description}</p>
-             <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
-               Learn More
-               <ChevronRight size={16} className="ml-1" />
-             </button>
-           </div>
-         </motion.div>
-       ))
-     )}
-   </div>
- </section>
+          {/* Category Pills */}
+          <div className="mb-6 overflow-x-auto no-scrollbar">
+            <div className="flex space-x-2 pb-2">
+              {categories.map((category, index) => (
+                <motion.button
+                  key={category.categoryName}
+                  animate={activeCategory === category.categoryName ? "active" : "inactive"}
+                  variants={categoryVariants}
+                  whileHover={activeCategory !== category.categoryName ? { scale: 1.05 } : {}}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleCategoryChange(category.categoryName)}
+                  className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap"
+                >
+                  {category.categoryName}
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
- {/* Digital Services Section */}
- <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-   {/* Free GPTs Section */}
-   <div>
-     <div className="flex items-center justify-between mb-4">
-       <h2 className="text-xl font-bold text-gray-800 flex items-center">
-         <Bot className="mr-2 text-purple-600" size={20} />
-         Free GPTs
-       </h2>
-       <button
-         onClick={() => navigate("/main/dashboard/freegpts")}
-         className="text-purple-600 hover:text-purple-800 font-medium flex items-center text-sm"
-       >
-         Explore <ArrowRight size={14} className="ml-1" />
-       </button>
-     </div>
-     
-     <div className="grid grid-cols-1 gap-4">
-       {loading ? (
-         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl animate-pulse h-40"></div>
-       ) : (
-         freeGPTs.map((item, index) => renderDigitalServiceCard(item, index, 'gpt'))
-       )}
-     </div>
-   </div>
-   
-   {/* Crypto Section */}
-   <div>
-     <div className="flex items-center justify-between mb-4">
-       <h2 className="text-xl font-bold text-gray-800 flex items-center">
-         <Coins className="mr-2 text-purple-600" size={20} />
-         Cryptocurrency
-       </h2>
-       <button
-         onClick={() => navigate("/main/dashboard/bmvcoin")}
-         className="text-purple-600 hover:text-purple-800 font-medium flex items-center text-sm"
-       >
-         Explore <ArrowRight size={14} className="ml-1" />
-       </button>
-     </div>
-     
-     <div className="grid grid-cols-1 gap-4">
-       {loading ? (
-         <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-xl animate-pulse h-40"></div>
-       ) : (
-         cryptocurrency.map((item, index) => renderDigitalServiceCard(item, index, 'crypto'))
-       )}
-     </div>
-   </div>
- </section>
-</div>
+          {/* Products Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <AnimatePresence>
+              {productsLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <ProductSkeleton key={`skeleton-${index}`} index={index} />
+                ))
+              ) : displayProducts.length > 0 ? (
+                displayProducts.map((product, index) => renderProductItem(product, index))
+              ) : (
+                <div className="col-span-full py-8 text-center">
+                  <p className="text-gray-500">No products found. Try a different search or category.</p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Load More Button */}
+          {!productsLoading && products.length > displayProducts.length && (
+           <div className="mt-8 text-center flex justify-center space-x-4">
+           <motion.button
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
+             onClick={loadMoreProducts}
+             className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
+           >
+             Load More
+             <TrendingUp size={16} className="ml-2" />
+           </motion.button>
+           <motion.button
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
+             className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+             onClick={viewAllProducts}
+           >
+             View All
+             <ArrowRight size={16} className="ml-1" />
+           </motion.button>
+         </div>         
+          )}
+        </section>
+
+        {/* Services Section */}
+        <section className="mb-12">
+          <div className="flex items-center mb-4 gap-10">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <Settings className="text-purple-600 mr-2" size={20} />
+              Our Services
+            </h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 mb-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+              onClick={viewAllServices}
+            >
+              View All
+              <ArrowRight size={16} className="ml-1" />
+            </motion.button>
+          </div>
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={`skeleton-service-${index}`}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
+                >
+                  <div className="h-40 bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              services.map((service, index) => (
+                <motion.div
+                  key={service.id}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  variants={serviceCardVariants}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                  onClick={() => navigate(service.path)}
+                >
+                  <div className="aspect-video relative overflow-hidden">
+                    <img
+                      src={service.image}
+                      alt={service.title}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-50"></div>
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="text-white font-bold text-lg drop-shadow-md">
+                        {service.title}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-gray-700 text-sm">{service.description}</p>
+                    <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
+                      Learn More
+                      <ChevronRight size={16} className="ml-1" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Digital Services Section */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {/* Free GPTs Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                <Bot className="mr-2 text-purple-600" size={20} />
+                Free GPTs
+              </h2>
+              <button
+                onClick={() => navigate("/main/dashboard/freegpts")}
+                className="text-purple-600 hover:text-purple-800 font-medium flex items-center text-sm"
+              >
+                Explore <ArrowRight size={14} className="ml-1" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {loading ? (
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl animate-pulse h-40"></div>
+              ) : (
+                freeGPTs.map((item, index) => renderDigitalServiceCard(item, index, 'gpt'))
+              )}
+            </div>
+          </div>
+
+          {/* Crypto Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                <Coins className="mr-2 text-purple-600" size={20} />
+                Cryptocurrency
+              </h2>
+              <button
+                onClick={() => navigate("/main/dashboard/bmvcoin")}
+                className="text-purple-600 hover:text-purple-800 font-medium flex items-center text-sm"
+              >
+                Explore <ArrowRight size={14} className="ml-1" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {loading ? (
+                <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-xl animate-pulse h-40"></div>
+              ) : (
+                cryptocurrency.map((item, index) => renderDigitalServiceCard(item, index, 'crypto'))
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
 
 
       {/* Footer */}

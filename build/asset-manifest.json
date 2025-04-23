@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.abea6424.css",
-    "main.js": "/static/js/main.02a16c1e.js",
+    "main.css": "/static/css/main.4c222d20.css",
+    "main.js": "/static/js/main.55f41637.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
     "static/media/1.3.png": "/static/media/1.3.d032daef6790d89819bd.png",
@@ -95,12 +95,12 @@
     "static/media/testimonial16.png": "/static/media/testimonial16.c0b4f2d3618261aae6b0.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
     "static/media/o4.png": "/static/media/o4.c975abe297e7244034cb.png",
+    "static/media/o3.png": "/static/media/o3.972404343a87c58de7a4.png",
     "static/media/RICEU2.png": "/static/media/RICEU2.b48fda011239e4a3c653.png",
     "static/media/RICEU3.png": "/static/media/RICEU3.01c968b059d979bcf431.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/realestate gpt (1).png": "/static/media/realestate gpt (1).5655cc684ac7d693d031.png",
     "static/media/Influencers gpt (1).png": "/static/media/Influencers gpt (1).566a5a80041f778c5e8c.png",
-    "static/media/o3.png": "/static/media/o3.ad714032c7ddc5226504.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
     "static/media/testimonial17.png": "/static/media/testimonial17.fb648ac71a729958a005.png",
     "static/media/Management service gpt (1).png": "/static/media/Management service gpt (1).30c191740325608d8659.png",
@@ -177,11 +177,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.abea6424.css.map": "/static/css/main.abea6424.css.map",
-    "main.02a16c1e.js.map": "/static/js/main.02a16c1e.js.map"
+    "main.4c222d20.css.map": "/static/css/main.4c222d20.css.map",
+    "main.55f41637.js.map": "/static/js/main.55f41637.js.map"
   },
   "entrypoints": [
-    "static/css/main.abea6424.css",
-    "static/js/main.02a16c1e.js"
+    "static/css/main.4c222d20.css",
+    "static/js/main.55f41637.js"
   ]
 }
