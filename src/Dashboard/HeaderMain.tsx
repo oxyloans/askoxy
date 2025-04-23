@@ -9,6 +9,7 @@ import axios from "axios";
 
 import  BASE_URL  from "../Config";
 import { message } from "antd";
+import SearchBar from "../kart/SearchBar";
 
 interface HeaderProps {
   cartCount: number;
@@ -383,7 +384,8 @@ const [firstName, setFirstName] = useState(""); // Only required field
 
             {/* Middle: Desktop search (hidden on mobile) */}
             <div className="hidden sm:block flex-grow max-w-xl mx-4">
-              {renderDesktopSearchBar()}
+              {/* {renderDesktopSearchBar()} */}
+              <SearchBar />
             </div>
 
             {/* Right: Action Icons */}

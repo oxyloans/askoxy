@@ -120,6 +120,8 @@ import DataAssigned from "./AskoxyAdmin/DataAssigned";
 import ReferredData from "./AskoxyAdmin/RefferedData";
 
 import FreeRiceBlog from "./components/FreeRice";
+import { SearchProvider } from "./until/SearchContext";
+import SearchMain from "./Dashboard/SearchMain";
 const App: React.FC = () => {
 
  const location = useLocation();
@@ -133,7 +135,7 @@ const App: React.FC = () => {
  }, [location.pathname]);
   return (
     <CartProvider>
-      
+      <SearchProvider>
         <ScrollToTop />
         <div className="App">
           <Routes>
@@ -420,6 +422,7 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
+              <Route path="search-main" element={<SearchMain />} />
               <Route
                 path="checkout"
                 element={
@@ -479,7 +482,7 @@ const App: React.FC = () => {
 
           </Routes>
         </div>
-    
+        </SearchProvider>
     </CartProvider>
   );
 };
