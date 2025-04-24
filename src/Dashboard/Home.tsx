@@ -97,6 +97,12 @@ interface Category {
 
 
 const Home: React.FC = () => {
+   // Move this to the top of the component
+   const context = useContext(CartContext);
+   if (!context) {
+     throw new Error("Home must be used within a CartProvider");
+   }
+   const { count, setCount } = context;
   const [products, setProducts] = useState<DashboardItem[]>([]);
   const [displayProducts, setDisplayProducts] = useState<DashboardItem[]>([]);
   const [displayCount, setDisplayCount] = useState(5);
@@ -123,8 +129,9 @@ const Home: React.FC = () => {
   const initialDataFetched = useRef(false);
 
   const updateCartCount = useCallback((count: number) => {
-    setCartCount(count);
-  }, []);
+    setCartCount(count);  // Update local state
+    setCount(count);      // Update context state
+  }, [setCount]);
 
   // Variants for header image hover effect
   const headerImageVariants = {
@@ -178,41 +185,45 @@ const Home: React.FC = () => {
   const fetchCartData = useCallback(async (itemId: string = "") => {
     const userId = localStorage.getItem("userId");
     if (!userId) return;
-
+  
     if (itemId !== "") {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
       }));
     }
-
+  
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
       );
-
+  
       const cartList = response.data?.customerCartResponseList || [];
-
+  
       if (cartList.length > 0) {
         const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
           acc[item.itemId] = Number(item.cartQuantity) || 0;
           return acc;
         }, {});
-
+  
         // Use type assertion and additional type guard
         const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
           return sum + (typeof qty === 'number' ? qty : 0);
         }, 0);
-
+  
+        // Update both local state and context
+        const roundedTotal = Math.round(totalQuantity);
         setCartItems(cartItemsMap);
         setCartData(cartList);
         localStorage.setItem("cartCount", cartList.length.toString());
-        updateCartCount(Math.round(totalQuantity));
+        setCartCount(roundedTotal);  // Local state
+        setCount(roundedTotal);      // Context state - Add this line
       } else {
         setCartItems({});
         setCartData([]);
         localStorage.setItem("cartCount", "0");
-        updateCartCount(0);
+        setCartCount(0);  // Local state
+        setCount(0);      // Context state - Add this line
       }
     } catch (error) {
       console.error("Error fetching cart items:", error);
@@ -224,7 +235,7 @@ const Home: React.FC = () => {
         }));
       }
     }
-  }, [updateCartCount]);
+  }, [updateCartCount, setCount]); // Add setCount to the dependency array
 
   const fetchCategories = useCallback(async () => {
     if (categoriesFetched.current) return;
@@ -847,11 +858,6 @@ const Home: React.FC = () => {
     },
   };
 
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("CartDisplay must be used within a CartProvider");
-  }
-  const { count, setCount } = context;
 
   const renderDigitalServiceCard = (item: DashboardItem, index: number, type: 'gpt' | 'crypto') => {
     const bgGradient = type === 'gpt'

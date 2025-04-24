@@ -98,9 +98,9 @@ const CartPage: React.FC = () => {
   const checkOnePlusOneStatus = async (): Promise<boolean> => {
     const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
     onePlusOneConfirmedRef.current = claimed;
-  
+
     let offeravail = 0;
-  
+
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
@@ -110,16 +110,16 @@ const CartPage: React.FC = () => {
           },
         }
       );
-  
+
       offeravail = response.data?.cartQuantity || 0;
       console.log("1+1 Offer available quantity:", offeravail);
     } catch (error) {
       console.error("Failed to fetch 1+1 offer availability:", error);
     }
-  
+
     return claimed || offeravail > 2;
   };
-  
+
   const setOnePlusOneClaimed = async () => {
     localStorage.setItem("onePlusOneClaimed", "true");
     onePlusOneConfirmedRef.current = true;
@@ -525,11 +525,10 @@ const CartPage: React.FC = () => {
                     setCurrentPlanDetails(planKey as "planA" | "planB");
                     setIsPlanDetailsModalOpen(true);
                   }}
-                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${
-                    tempPlan === planKey
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                  }`}
+                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${tempPlan === planKey
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                    }`}
                 >
                   {planKey === "planA"
                     ? "Plan A: Free Steel Container Policy"
@@ -755,7 +754,17 @@ const CartPage: React.FC = () => {
     }
   };
 
+  const isContainer = (itemId: string): boolean => {
+    return [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(itemId);
+  };
+
   const handleIncrease = async (item: CartItem) => {
+    // Check if the item is a container and prevent increment
+    if (isContainer(item.itemId)) {
+      message.info("This is a free promotional container. Quantity cannot be changed.");
+      return;
+    }
+
     setLoadingItems((prev) => ({ ...prev, [item.itemId]: true }));
     try {
       const currentQuantity = cartItems[item.itemId] || 0;
@@ -809,7 +818,14 @@ const CartPage: React.FC = () => {
     }
   };
 
+
   const handleDecrease = async (item: CartItem) => {
+    // Check if the item is a container and prevent decrement
+    if (isContainer(item.itemId)) {
+      message.info("This is a free promotional container. Quantity cannot be changed.");
+      return;
+    }
+
     setLoadingItems((prev) => ({ ...prev, [item.itemId]: true }));
     try {
       const currentQuantity = cartItems[item.itemId];
@@ -1062,7 +1078,7 @@ const CartPage: React.FC = () => {
     return withinRadius;
   };
 
-  const handleCartData = async () => {};
+  const handleCartData = async () => { };
 
   const isCheckoutDisabled = (): boolean => {
     if (!cartData || cartData.length === 0) {
@@ -1179,8 +1195,8 @@ const CartPage: React.FC = () => {
                           {item.units == "pcs"
                             ? "Pc"
                             : item.weight == "1"
-                            ? "Kg"
-                            : "Kgs"}
+                              ? "Kg"
+                              : "Kgs"}
                         </p>
                         <div className="flex items-center mt-1">
                           <p className="text-sm line-through text-gray-400 mr-2">
@@ -1207,11 +1223,12 @@ const CartPage: React.FC = () => {
                         <div className="flex items-center justify-between md:justify-end w-full">
                           <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
                             <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
+                              whileHover={{ scale: isContainer(item.itemId) ? 1 : 1.02 }}
+                              whileTap={{ scale: isContainer(item.itemId) ? 1 : 0.98 }}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${isContainer(item.itemId) ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                               onClick={() => handleDecrease(item)}
-                              disabled={loadingItems[item.itemId]}
+                              disabled={loadingItems[item.itemId] || isContainer(item.itemId)}
                               aria-label="Decrease quantity"
                             >
                               <span className="font-medium">-</span>
@@ -1228,27 +1245,33 @@ const CartPage: React.FC = () => {
                             </div>
 
                             <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                                cartItems[item.itemId] >= item.quantity
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
+                              whileHover={{ scale: isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity ? 1 : 1.02 }}
+                              whileTap={{ scale: isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity ? 1 : 0.98 }}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${cartItems[item.itemId] >= item.quantity || isContainer(item.itemId)
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                               onClick={() => {
-                                if (cartItems[item.itemId] < item.quantity) {
+                                if (cartItems[item.itemId] < item.quantity && !isContainer(item.itemId)) {
                                   handleIncrease(item);
                                 }
                               }}
                               disabled={
                                 cartItems[item.itemId] >= item.quantity ||
-                                loadingItems[item.itemId]
+                                loadingItems[item.itemId] ||
+                                isContainer(item.itemId)
                               }
                               aria-label="Increase quantity"
                             >
                               <span className="font-medium">+</span>
                             </motion.button>
                           </div>
+
+                          {isContainer(item.itemId) && (
+                            <div className="ml-2 bg-purple-100 text-purple-800 text-xs rounded-full px-2 py-1 flex items-center">
+                              <span>Promo</span>
+                            </div>
+                          )}
 
                           <motion.button
                             whileHover={{ scale: 1.02 }}
@@ -1262,7 +1285,6 @@ const CartPage: React.FC = () => {
                             <Trash2 size={16} />
                           </motion.button>
                         </div>
-
                         <div className="w-full flex justify-end">
                           <p className="text-purple-700 font-bold text-base">
                             Total: ₹
@@ -1403,35 +1425,34 @@ const CartPage: React.FC = () => {
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0
                   ) && (
-                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                      <p className="font-semibold">
-                        Quantity adjustments needed:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter(
-                            (item) =>
-                              item.cartQuantity > item.quantity &&
-                              item.quantity > 0
-                          )
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} - Only {item.quantity} in stock
-                              (you have {item.cartQuantity})
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
+                      <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                        <p className="font-semibold">
+                          Quantity adjustments needed:
+                        </p>
+                        <ul className="ml-4 mt-1 list-disc">
+                          {cartData
+                            .filter(
+                              (item) =>
+                                item.cartQuantity > item.quantity &&
+                                item.quantity > 0
+                            )
+                            .map((item) => (
+                              <li key={item.itemId}>
+                                {item.itemName} - Only {item.quantity} in stock
+                                (you have {item.cartQuantity})
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
 
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${
-                      isCheckoutDisabled()
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
-                    }`}
+                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${isCheckoutDisabled()
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
+                      }`}
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled()}
                   >

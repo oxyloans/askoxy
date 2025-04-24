@@ -1,8 +1,9 @@
 {
   "files": {
-    "main.css": "/static/css/main.4c222d20.css",
-    "main.js": "/static/js/main.4a8419b1.js",
+    "main.css": "/static/css/main.1149ff90.css",
+    "main.js": "/static/js/main.8314f19a.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
+    "static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.png": "/static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.f22986a86ab61897cfab.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
     "static/media/1.3.png": "/static/media/1.3.d032daef6790d89819bd.png",
     "static/media/1.4.png": "/static/media/1.4.34602109872041d55547.png",
@@ -161,6 +162,7 @@
     "static/media/BG.png": "/static/media/BG.395c170a916d83eeed21.png",
     "static/media/image5.png": "/static/media/image5.6ab4148cfa99473353b7.png",
     "static/media/q11.jpg": "/static/media/q11.78db661dfddd9221ecfd.jpg",
+    "static/media/image6.png": "/static/media/image6.db53a679b95dada9ceaa.png",
     "static/media/ORDER RICE ONLINE.png": "/static/media/ORDER RICE ONLINE.d5175c6cfee6e9db8fc4.png",
     "static/media/image4.png": "/static/media/image4.8734801ecd660024a317.png",
     "static/media/image2.png": "/static/media/image2.a465e4cf5f56f1a2acd6.png",
@@ -178,11 +180,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.4c222d20.css.map": "/static/css/main.4c222d20.css.map",
-    "main.4a8419b1.js.map": "/static/js/main.4a8419b1.js.map"
+    "main.1149ff90.css.map": "/static/css/main.1149ff90.css.map",
+    "main.8314f19a.js.map": "/static/js/main.8314f19a.js.map"
   },
   "entrypoints": [
-    "static/css/main.4c222d20.css",
-    "static/js/main.4a8419b1.js"
+    "static/css/main.1149ff90.css",
+    "static/js/main.8314f19a.js"
   ]
 }

@@ -29,7 +29,7 @@ import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
 import ScrollToTop from "./components/ScrollToTop";
 import TicketHistory from "./components/TicketHistory";
 import Greenproject from "./components/Greenproject";
-
+import Pushpa2GPT from "./components/Pushpa2GPT";
 import AccomidationGpt from "./components/GPT's/Accomadation";
 import ApplicationSupport from "./components/GPT's/ApplicationSupport";
 import AccreditationsRecognization from "./components/GPT's/AccreditationsRecognization";
@@ -168,6 +168,7 @@ const App: React.FC = () => {
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
+            <Route path="/movietickets" element={<Pushpa2GPT />} />
           <Route path="/userregister" element={<UserRegister />} />
           
           <Route path="/userlogin" element={<UserLogin />} />   <Route path="/userPanelLayout" element={<PlanOfTheDay />} />

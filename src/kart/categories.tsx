@@ -63,7 +63,9 @@ const Categories: React.FC<CategoriesProps> = ({
 }) => {
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
-  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
+    null
+  );
   const location = useLocation();
   const navigate = useNavigate();
   const [loadingItems, setLoadingItems] = useState<{
@@ -74,8 +76,15 @@ const Categories: React.FC<CategoriesProps> = ({
     status: {},
   });
   const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
-  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>("0");
-  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(null);
+  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
+    "0"
+  );
+  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
+    null
+  );
+  const [disabledFilters, setDisabledFilters] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const weightFilters = [
     { label: "1 KG", value: "1.0" },
@@ -263,7 +272,7 @@ const Categories: React.FC<CategoriesProps> = ({
             status: { ...prev.status, [item.itemId]: "" },
           }));
           message.success("Item removed from cart successfully.");
-          
+
           if (typeof window !== "undefined" && window.gtag) {
             window.gtag("event", "remove_from_cart", {
               currency: "INR",
@@ -303,22 +312,26 @@ const Categories: React.FC<CategoriesProps> = ({
             items: { ...prev.items, [item.itemId]: false },
             status: { ...prev.status, [item.itemId]: "" },
           }));
-          
+
           if (typeof window !== "undefined" && window.gtag) {
-            window.gtag("event", increment ? "add_to_cart" : "remove_from_cart", {
-              currency: "INR",
-              value: item.itemPrice,
-              items: [
-                {
-                  item_id: item.itemId,
-                  item_name: item.itemName,
-                  price: item.itemPrice,
-                  quantity: 1,
-                  item_category: activeCategory || "General",
-                  action: increment ? "increment" : "decrement"
-                },
-              ],
-            });
+            window.gtag(
+              "event",
+              increment ? "add_to_cart" : "remove_from_cart",
+              {
+                currency: "INR",
+                value: item.itemPrice,
+                items: [
+                  {
+                    item_id: item.itemId,
+                    item_name: item.itemName,
+                    price: item.itemPrice,
+                    quantity: 1,
+                    item_category: activeCategory || "General",
+                    action: increment ? "increment" : "decrement",
+                  },
+                ],
+              }
+            );
           }
         } else {
           setLoadingItems((prev) => ({
@@ -367,16 +380,66 @@ const Categories: React.FC<CategoriesProps> = ({
     return category?.subCategories || [];
   };
 
-  const handleWeightFilterClick = (weight: string | null) => {
-    setActiveWeightFilter(weight);
+  const handleWeightFilterClick = (value: string) => {
+    // If currently active, deactivate it
+    if (activeWeightFilter === value) {
+      setActiveWeightFilter(null);
+    } else {
+      // Otherwise set as active
+      setActiveWeightFilter(value);
+    }
+
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "toggle_weight_filter", {
+        filter_value: value,
+        new_state: activeWeightFilter === value ? "off" : "on",
+      });
+    }
+
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
   };
+
+  // Weight Filter UI Section
+  const renderWeightFilters = () => (
+    <div className="mb-4 overflow-x-auto scrollbar-hide">
+      <div className="flex items-center space-x-3 pb-2">
+        {weightFilters.map((filter, index) => {
+          const isActive = filter.value === activeWeightFilter;
+          const isDisabled = activeWeightFilter !== null && !isActive;
+
+          return (
+            <motion.button
+              key={index}
+              whileHover={{ scale: isDisabled ? 1 : 1.02 }}
+              whileTap={{ scale: isDisabled ? 1 : 0.98 }}
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                isDisabled
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                  : isActive
+                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
+              }`}
+              onClick={() => handleWeightFilterClick(filter.value)}
+              disabled={isDisabled}
+            >
+              {filter.label}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   const handleResetFilters = () => {
     setActiveWeightFilter(null);
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
+    setDisabledFilters({});
+
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "reset_filters");
+    }
   };
 
   return (
@@ -425,26 +488,41 @@ const Categories: React.FC<CategoriesProps> = ({
           {weightFilters.map((filter, index) => (
             <motion.button
               key={index}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{
+                scale:
+                  filter.value === "1.0" && disabledFilters[filter.value]
+                    ? 1
+                    : 1.02,
+              }}
+              whileTap={{
+                scale:
+                  filter.value === "1.0" && disabledFilters[filter.value]
+                    ? 1
+                    : 0.98,
+              }}
               className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                filter.value === activeWeightFilter
+                filter.value === "1.0" && disabledFilters[filter.value]
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                  : filter.value === activeWeightFilter
                   ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
                   : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
               }`}
               onClick={() => handleWeightFilterClick(filter.value)}
+              disabled={filter.value === "1.0" && disabledFilters[filter.value]}
+              title={
+                filter.value === "1.0" && disabledFilters[filter.value]
+                  ? "Disabled. Click Reset to enable."
+                  : ""
+              }
             >
               {filter.label}
+              {filter.value === "1.0" && (
+                <span className="ml-1 text-xs">
+                  {disabledFilters[filter.value] ? "(Disabled)" : ""}
+                </span>
+              )}
             </motion.button>
           ))}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100 transition-all duration-300"
-            onClick={handleResetFilters}
-          >
-            Reset
-          </motion.button>
         </div>
       </div>
 
@@ -466,7 +544,7 @@ const Categories: React.FC<CategoriesProps> = ({
                   window.gtag("event", "select_content", {
                     content_type: "subcategory",
                     content_id: "all",
-                    parent_category: activeCategory
+                    parent_category: activeCategory,
                   });
                 }
               }}
@@ -490,7 +568,7 @@ const Categories: React.FC<CategoriesProps> = ({
                       content_type: "subcategory",
                       content_id: subCategory.id,
                       content_name: subCategory.name,
-                      parent_category: activeCategory
+                      parent_category: activeCategory,
                     });
                   }
                 }}
@@ -527,22 +605,26 @@ const Categories: React.FC<CategoriesProps> = ({
               transition={{ delay: index * 0.05 }}
               className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col"
             >
-              {item.itemMrp && item.itemPrice && item.itemMrp > item.itemPrice && (
-                <div className="absolute left-0 top-0 z-10 w-auto">
-                  <div
-                    className="bg-purple-600 text-white text-[10px] sm:text-xs font-bold 
+              {item.itemMrp &&
+                item.itemPrice &&
+                item.itemMrp > item.itemPrice && (
+                  <div className="absolute left-0 top-0 z-10 w-auto">
+                    <div
+                      className="bg-purple-600 text-white text-[10px] sm:text-xs font-bold 
                     px-2 sm:px-3 py-0.5 sm:py-1 flex items-center"
-                  >
-                    {calculateDiscount(item.itemMrp, item.itemPrice)}%
-                    <span className="ml-1 text-[8px] sm:text-[10px]">Off</span>
-                  </div>
-                  <div
-                    className="absolute bottom-0 right-0 transform translate-y 
+                    >
+                      {calculateDiscount(item.itemMrp, item.itemPrice)}%
+                      <span className="ml-1 text-[8px] sm:text-[10px]">
+                        Off
+                      </span>
+                    </div>
+                    <div
+                      className="absolute bottom-0 right-0 transform translate-y 
                     border-t-4 sm:border-t-6 border-r-4 sm:border-r-6 
                     border-t-purple-600 border-r-transparent"
-                  ></div>
-                </div>
-              )}
+                    ></div>
+                  </div>
+                )}
 
               {item.quantity === 0 ? (
                 <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10"></div>
@@ -571,7 +653,7 @@ const Categories: React.FC<CategoriesProps> = ({
                           item_name: item.itemName,
                           price: item.itemPrice,
                           item_category: activeCategory || "General",
-                          item_variant: activeSubCategory || "default"
+                          item_variant: activeSubCategory || "default",
                         },
                       ],
                     });
@@ -656,7 +738,7 @@ const Categories: React.FC<CategoriesProps> = ({
                         }}
                         disabled={
                           cartItems[item.itemId] >= item.quantity ||
-                          loadingItems.items[item.itemId] || 
+                          loadingItems.items[item.itemId] ||
                           (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
                         }
                       >
