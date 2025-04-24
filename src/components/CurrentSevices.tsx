@@ -6,7 +6,7 @@ import HM2 from "../assets/img/BUY 1 GET 1 2.png";
 import HM3 from "../assets/img/IMAGE 3.png";
 import HM4 from "../assets/img/Manchester.png";
 import HM5 from "../assets/img/orderriceonline.png";
-import HM6 from "../assets/img/IMAGE 6.png";
+import HM6 from "../assets/img/RICEU4.png";
 import HM7 from "../assets/img/IMAGE 7.png";
 import HM8 from "../assets/img/IMAGE 8.png";
 import HM9 from "../assets/img/image 9.png";
@@ -36,8 +36,8 @@ const ResponsiveGallery = () => {
       src: HM1,
       alt: "Buy 1 Kg Rice Get 1 Kg Free",
       category: "BUY 1 KG RICE GET 1 KG RICE FREE",
-
       link: "/main/dashboard/products",
+      weight: 1.0, // Adding weight parameter
     },
     {
       id: 2,
@@ -45,14 +45,15 @@ const ResponsiveGallery = () => {
       alt: "Buy 1 Kg Rice Get 1 Kg Free",
       category: "BUY 1 KG RICE GET 1 KG RICE FREE",
       link: "/main/dashboard/products",
+      weight: 1.0, // Adding weight parameter
     },
     {
       id: 5,
       src: HM5,
       alt: "Buy 1 Kg Rice Get 1 Kg Free",
       category: "BUY 1 KG RICE GET 1 KG RICE FREE",
-
       link: "/main/dashboard/products",
+      weight: 1.0, // Adding weight parameter
     },
     {
       id: 20,
@@ -60,6 +61,7 @@ const ResponsiveGallery = () => {
       alt: "Gajaraj Evergreen",
       category: " GAJARAJ EVERGREEN",
       link: "/main/dashboard/products",
+      weight: 26.0, // Adding weight parameter
     },
     {
       id: 15,
@@ -67,6 +69,7 @@ const ResponsiveGallery = () => {
       alt: "Sri Lalitha",
       category: "SRI LALITHA",
       link: "/main/dashboard/products",
+      weight: 26.0, // Adding weight parameter
     },
     {
       id: 17,
@@ -74,13 +77,21 @@ const ResponsiveGallery = () => {
       alt: "Cow Brand",
       category: "COW BRAND",
       link: "/main/dashboard/products",
+      weight: 26.0, // Adding weight parameter
+    },
+    {
+      id: 7,
+      src: HM6,
+      alt: "Maateja",
+      category: "MAATEJA",
+      link: "/main/dashboard/products",
+      weigtht: 26.0, // Adding weight parameter
     },
     {
       id: 4,
       src: HM4,
       alt: "University of Chester",
       category: "UNIVERSITY OF CHESTER",
-
       link: "/main/services/studyabroad",
     },
     {
@@ -98,13 +109,6 @@ const ResponsiveGallery = () => {
       link: "/main/services/studyabroad",
     },
 
-    {
-      id: 7,
-      src: HM6,
-      alt: "Edinburgh Napier University",
-      category: "EDINBURGH NAPIER UNIVERSITY",
-      link: "/main/services/studyabroad",
-    },
     {
       id: 8,
       src: HM8,
@@ -139,7 +143,6 @@ const ResponsiveGallery = () => {
     },
     {
       id: 13,
-
       src: HM21,
       alt: "Free ai and Gen ai",
       category: " FREE AI AND GEN AI",
@@ -152,21 +155,21 @@ const ResponsiveGallery = () => {
       category: "FREE RUDRAKSHA",
       link: "/main/services/freerudraksha",
     },
-
     {
       id: 16,
       src: HM16,
       alt: "Bawarchi brown rice",
       category: "BAWARCHI BROWN RICE",
       link: "/main/dashboard/products",
+      weight: 5.0, // Adding weight parameter
     },
-
     {
       id: 18,
       src: HM18,
       alt: "Surya Teja's Joker Brand",
       category: "SURYA TEJA'S JOKER BRAND",
       link: "/main/dashboard/products",
+      weight: 10.0, // Adding weight parameter
     },
     {
       id: 19,
@@ -174,8 +177,8 @@ const ResponsiveGallery = () => {
       alt: "Kisan Rice",
       category: "KISAN RICE",
       link: "/main/dashboard/products",
+      weight: 25.0, // Adding weight parameter
     },
-
     {
       id: 21,
       src: HM19,
@@ -185,50 +188,66 @@ const ResponsiveGallery = () => {
     },
   ];
 
-  // Divide images into 3 rows (7 images each)
-  const row1 = images.slice(0, 7);
-  const row2 = images.slice(7, 14);
-  const row3 = images.slice(14, 21);
-
-  // const handleImageClick = (image: any) => {
-
-  // };
-
   // Handle image click and set dynamic modal content
   const handleImageClick = (image: any) => {
     const userId = localStorage.getItem("userId");
 
+    // Construct the target URL with weight parameter if applicable
+    let targetUrl = image.link;
+     if (image.weight && image.link.includes("products")) {
+       // Force the weight to be formatted with decimal point even for whole numbers
+       const formattedWeight = image.weight.toFixed(1); // This ensures 1.0 stays as "1.0" not "1"
+       targetUrl = `${image.link}?weight=${formattedWeight}`;
+     } else if (image.link.includes("/main/services/studyabroad")) {
+       // Keep the original link without modifications
+       targetUrl = image.link;
+     } else if (image.link.includes("/main/service/oxyloans-service")) {
+       // Keep the original link without modifications
+       targetUrl = image.link;
+     } else if (image.link.includes("/main/services/freeai-genai")) {
+       // Keep the original link without modifications
+       targetUrl = image.link;
+     } else if (image.link.includes("/main/services/freerudraksha")) {
+       // Keep the original link without modifications
+       targetUrl = image.link;
+     }
+    
+    // Store the target URL in sessionStorage to use after login/registration
+    sessionStorage.setItem("redirectPath", targetUrl);
+
     if (!userId) {
       // Set modal content based on the image link
       let dynamicMessage = "";
-      switch (image.link) {
-        case "/main/services/studyabroad":
-          dynamicMessage = `Ready to explore study abroad opportunities? Sign in to get personalized assistance for your journey!`;
-          break;
-        case "/main/service/oxyloans-service":
-          dynamicMessage = `Interested in peer-to-peer lending with OxyLoans? Sign in to start lending or borrowing today!`;
-          break;
-        case "/main/dashboard/products":
-          dynamicMessage = `Order rice online with ease! Sign in to explore our range of products and place your order.`;
-          break;
-        case "/main/services/campaign/37b3":
-          dynamicMessage = `Discover real estate opportunities with OXY GROUP! Urban Springs is one of our premium projects. Sign in to learn more and get involved!`;
-          break;
-        case "/main/services/freerudraksha":
-          dynamicMessage = `Get your free Rudraksha today! Sign in to claim this spiritual gift and explore more offerings.`;
-          break;
-        case "/main/services/freeai-genai":
-          dynamicMessage = `Unlock the power of AI with FreeAI & GenAI! Sign in to explore cutting-edge tools and services.`;
-          break;
-        default:
-          dynamicMessage = `Welcome! Sign in to access our amazing services tailored just for you!`;
+
+      if (image.link.includes("/main/dashboard/products")) {
+        dynamicMessage = `Order ${image.weight}kg rice online with ease! Sign in to explore our range of products and place your order.`;
+      } else {
+        switch (image.link) {
+          case "/main/services/studyabroad":
+            dynamicMessage = `Ready to explore study abroad opportunities? Sign in to get personalized assistance for your journey!`;
+            break;
+          case "/main/service/oxyloans-service":
+            dynamicMessage = `Interested in peer-to-peer lending with OxyLoans? Sign in to start lending or borrowing today!`;
+            break;
+          case "/main/services/campaign/37b3":
+            dynamicMessage = `Discover real estate opportunities with OXY GROUP! Urban Springs is one of our premium projects. Sign in to learn more and get involved!`;
+            break;
+          case "/main/services/freerudraksha":
+            dynamicMessage = `Get your free Rudraksha today! Sign in to claim this spiritual gift and explore more offerings.`;
+            break;
+          case "/main/services/freeai-genai":
+            dynamicMessage = `Unlock the power of AI with FreeAI & GenAI! Sign in to explore cutting-edge tools and services.`;
+            break;
+          default:
+            dynamicMessage = `Welcome! Sign in to access our amazing services tailored just for you!`;
+        }
       }
 
       setModalContent(dynamicMessage);
       setShowModal(true);
     } else {
       // Redirect directly if user is logged in
-      window.location.href = image.link;
+      window.location.href = targetUrl;
     }
   };
 
@@ -266,6 +285,7 @@ const ResponsiveGallery = () => {
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black/50">
                   <span className="text-white px-1 py-1 text-xs md:text-sm font-medium text-center w-full">
                     {image.category}
+                    {image.weight ? ` (${image.weight}kg)` : ""}
                   </span>
                 </div>
               </div>

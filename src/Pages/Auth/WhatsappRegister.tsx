@@ -417,25 +417,19 @@ const WhatsappRegister = () => {
           localStorage.setItem("mobileNumber", requestBody.mobileNumber);
         }
         localStorage.removeItem("refferrerId");
-        setTimeout(
-          () => navigate(location.state?.from || "/main/dashboard/home"),
-          500
-        );
-
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem("redirectPath");
-
+          
           if (redirectPath) {
-            navigate(redirectPath);
+            window.location.href = redirectPath;
             sessionStorage.removeItem("redirectPath");
           } else {
             navigate(location.state?.from || "/main/dashboard/home");
           }
-        }, 500);
-        setTimeout(() => window.location.reload(), 1000);
-      }
+        }, 1000);
+      }
 
-    } catch (err: any) {
+      } catch (err: any) {
       // Handle axios error response
       if (err.response && err.response.data && err.response.data.message) {
         setOtpError(err.response.data.message);

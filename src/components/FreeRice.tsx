@@ -8,20 +8,44 @@ import Rice3 from "../assets/img/orderriceonline.png";
 import Rice4 from "../assets/img/RICEU1.png";
 import Rice5 from "../assets/img/RICEU2.png";
 import Rice6 from "../assets/img/RICEU3.png";
+import Rice7 from "../assets/img/RICEU4.png";
+import Rice8 from "../assets/img/RICEU5.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
 const FreeRiceBlog: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Updated to include weight parameters
   const riceGifs = [
-    { id: 1, imageUrl: Rice1 },
-    { id: 2, imageUrl: Rice2 },
-    { id: 3, imageUrl: Rice3 },
-    { id: 4, imageUrl: Rice4 },
-    { id: 5, imageUrl: Rice5 },
-    { id: 6, imageUrl: Rice6 },
+    { id: 1, imageUrl: Rice1, weight: 1.0 },
+    { id: 2, imageUrl: Rice2, weight: 1.0 },
+    { id: 3, imageUrl: Rice3, weight: 1.0 },
+    { id: 4, imageUrl: Rice4, weight: 26.0 },
+    { id: 5, imageUrl: Rice5, weight: 26.0 },
+    { id: 6, imageUrl: Rice6, weight: 26.0 },
+    { id: 7, imageUrl: Rice7, weight: 26.0 },
+    { id: 8, imageUrl: Rice8, weight: 26.0 },
   ];
+
+  const handleImageClick = (weight:any) => {
+    const userId = localStorage.getItem("userId");
+
+    // Format weight with decimal point preserved
+    const formattedWeight = weight.toFixed(1);
+    const targetUrl = `/main/dashboard/products?weight=${formattedWeight}`;
+
+    // Store the target URL in sessionStorage to use after login/registration
+    sessionStorage.setItem("redirectPath", targetUrl);
+
+    if (!userId) {
+      // Redirect to login/registration
+      window.location.href = "/whatsappregister";
+    } else {
+      // Direct to products with weight parameter
+      window.location.href = targetUrl;
+    }
+  };
 
   const handleSignIn = () => {
     window.location.href = "/whatsappregister";
@@ -40,7 +64,6 @@ const FreeRiceBlog: React.FC = () => {
             src={AskOxyLogo}
             alt="AskOxy Logo"
             className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105"
-            
           />
           <div className="flex items-center gap-4">
             <button
@@ -91,13 +114,13 @@ const FreeRiceBlog: React.FC = () => {
               <div
                 key={gif.id}
                 className="bg-white rounded-xl shadow hover:shadow-xl overflow-hidden transform hover:-translate-y-1 transition duration-300 cursor-pointer group"
-                onClick={handleSignIn}
+                onClick={() => handleImageClick(gif.weight)}
               >
                 <div className="aspect-w-16 aspect-h-10">
                   <img
                     src={gif.imageUrl}
-                    alt={`Rice Promo ${gif.id}`}
-                    className="w-full h-full object-cover  transition-transform"
+                    alt={`Rice Promo ${gif.id} - ${gif.weight}kg`}
+                    className="w-full h-full object-cover transition-transform"
                   />
                 </div>
               </div>
