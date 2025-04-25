@@ -1022,7 +1022,7 @@ const Categories: React.FC<CategoriesProps> = ({
                       }
                     }}
                   >
-                    Out of Stock
+                    Out Of Stock
                   </button>
                 )}
               </div>
