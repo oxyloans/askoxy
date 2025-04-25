@@ -11,8 +11,8 @@ import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
 import Rice1 from "../assets/img/BUY 1 GET 1.png";
 import Rice2 from "../assets/img/RICEU7.png";
-import Rice3 from "../assets/img/RICEU6.png";
-import Rice4 from "../assets/img/RICEU8.png";
+import Rice3 from "../assets/img/RICEU10.png";
+import Rice4 from "../assets/img/RICEU9.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
 // Type definitions
