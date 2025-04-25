@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Package, AlertCircle, Loader2 } from "lucide-react";
+import {
+  ShoppingCart,
+  Package,
+  AlertCircle,
+  Loader2,
+  Italic,
+} from "lucide-react";
 import checkProfileCompletion from "../until/ProfileCheck";
 import BASE_URL from "../Config";
 
@@ -82,7 +88,18 @@ const Categories: React.FC<CategoriesProps> = ({
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
     null
   );
-  const [disabledFilters, setDisabledFilters] = useState<{
+  //1+1 free rice bag
+  const [hasShownOnePlusOne, setHasShownOnePlusOne] = useState(false);
+  const onePlusOneModalShownRef = useRef(false);
+  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
+    {}
+  );
+  //Free Movie tickets for 5 kg rice bag
+  const movieOfferModalShownRef = useRef(false);
+  const [hasShownMovieOffer, setHasShownMovieOffer] = useState(
+    localStorage.getItem("movieOfferClaimed") === "true"
+  );
+  const [movieOfferMap, setMovieOfferMap] = useState<{
     [key: string]: boolean;
   }>({});
 
@@ -197,14 +214,38 @@ const Categories: React.FC<CategoriesProps> = ({
         ...prev,
         items: { ...prev.items, [item.itemId]: true },
       }));
-      const response = await axios.post(
+      await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         { customerId: userId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      fetchCartData("");
 
-      message.success(response.data.errorMessage);
+      // GA4 Add to Cart Event Tracking
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "add_to_cart", {
+          currency: "INR",
+          value: item.itemPrice,
+          items: [
+            {
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: item.itemPrice,
+              quantity: 1,
+              item_category: activeCategory || "General",
+            },
+          ],
+        });
+      }
+
+      // Check for movie ticket offer (5kg bags) first
+      await maybeShowMovieOfferModal(item);
+      // Check for 1+1 offer (1kg bags) if no 5kg offer was shown
+      if (!movieOfferModalShownRef.current) {
+        await maybeShowOnePlusOneModal(item);
+      }
+
+      await fetchCartData(item.itemId);
+      message.success("Item added to cart successfully.");
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -380,66 +421,256 @@ const Categories: React.FC<CategoriesProps> = ({
     return category?.subCategories || [];
   };
 
-  const handleWeightFilterClick = (value: string) => {
-    // If currently active, deactivate it
-    if (activeWeightFilter === value) {
-      setActiveWeightFilter(null);
-    } else {
-      // Otherwise set as active
-      setActiveWeightFilter(value);
-    }
-
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "toggle_weight_filter", {
-        filter_value: value,
-        new_state: activeWeightFilter === value ? "off" : "on",
-      });
-    }
-
+  const handleWeightFilterClick = (weight: string | null) => {
+    setActiveWeightFilter(weight);
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
   };
-
-  // Weight Filter UI Section
-  const renderWeightFilters = () => (
-    <div className="mb-4 overflow-x-auto scrollbar-hide">
-      <div className="flex items-center space-x-3 pb-2">
-        {weightFilters.map((filter, index) => {
-          const isActive = filter.value === activeWeightFilter;
-          const isDisabled = activeWeightFilter !== null && !isActive;
-
-          return (
-            <motion.button
-              key={index}
-              whileHover={{ scale: isDisabled ? 1 : 1.02 }}
-              whileTap={{ scale: isDisabled ? 1 : 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                isDisabled
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                  : isActive
-                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
-                  : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
-              }`}
-              onClick={() => handleWeightFilterClick(filter.value)}
-              disabled={isDisabled}
-            >
-              {filter.label}
-            </motion.button>
-          );
-        })}
-      </div>
-    </div>
-  );
 
   const handleResetFilters = () => {
     setActiveWeightFilter(null);
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
-    setDisabledFilters({});
+  };
 
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "reset_filters");
+  // 1+1 free rice bag modal starts here
+
+  const checkOnePlusOneStatus = async (): Promise<boolean> => {
+    const accessToken = localStorage.getItem("accessToken");
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const offeravail = response.data?.cartQuantity || 0;
+      console.log("1+1 Offer available quantity:", offeravail);
+      return offeravail >= 2;
+    } catch (error) {
+      console.error("Failed to fetch 1+1 offer availability:", error);
+      return true; // Default to true to avoid showing modal on error
     }
+  };
+
+  const findOneKgBag = (item: Item): Item | null => {
+    const weight = parseFloat(item.weight?.toString() || "0");
+    if (weight === 1 && item.units?.toLowerCase().includes("kg")) {
+      return item;
+    }
+    return null;
+  };
+
+  const showOnePlusOneModal = (item: Item) => {
+    const accessToken = localStorage.getItem("accessToken");
+    Modal.confirm({
+      title: "🎁 1 + 1 Offer on 1kg Rice Bag!",
+      content: (
+        <p>
+          You're eligible for our exclusive <strong>1Kg + 1Kg offer</strong>!
+          Get another <strong>{item.itemName}</strong> absolutely free.
+          <br />
+          <br />
+          <strong>Please Note:</strong> The 1kg + 1kg Free Offer is valid only
+          once per user and applies exclusively to 1kg rice bags. This offer can
+          only be redeemed once per address and is applicable on the first
+          successful delivery only. Once claimed, it cannot be reused. Grab it
+          while it lasts!
+        </p>
+      ),
+      okText: "Add Free Bag",
+      cancelText: "No Thanks",
+      onOk: async () => {
+        try {
+          const currentQuantity = cartItems[item.itemId] || 1; // Use 1 as fallback since item is already added
+
+          await axios.patch(
+            `${BASE_URL}/cart-service/cart/incrementCartData`,
+            {
+              cartQuantity: currentQuantity + 1,
+              customerId,
+              itemId: item.itemId,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          setFreeItemsMap((prev) => ({
+            ...prev,
+            [item.itemId]: 1,
+          }));
+
+          message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
+          await fetchCartData(item.itemId);
+        } catch (err) {
+          console.error("1+1 offer failed:", err);
+          message.error("Unable to apply the 1+1 offer. Please try again.");
+        }
+      },
+      onCancel: async () => {
+        // No action needed; item is already added
+      },
+    });
+  };
+
+  const maybeShowOnePlusOneModal = async (item: Item) => {
+    if (onePlusOneModalShownRef.current) return;
+
+    const eligibleBag = findOneKgBag(item);
+    if (!eligibleBag) return;
+
+    const isOfferClaimed = await checkOnePlusOneStatus();
+    if (isOfferClaimed || hasShownOnePlusOne) return;
+
+    onePlusOneModalShownRef.current = true;
+    setHasShownOnePlusOne(true);
+
+    showOnePlusOneModal(eligibleBag);
+  };
+
+  //Free Movie Ticket upon buying 5 kg rice bag modal
+
+  // const checkMovieOfferStatus = async (): Promise<boolean> => {
+  //   const accessToken = localStorage.getItem("accessToken");
+  //   try {
+  //     const response = await axios.get(
+  //       `${BASE_URL}/cart-service/cart/freeTicketsforCustomer?customerId=${customerId}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //       }
+  //     );
+  //     const freeTickets = response.data?.freeTickets || null;
+  //     console.log("Movie ticket offer freeTickets:", freeTickets);
+  //     return freeTickets !== null; // Return true if offer is claimed (not null), false if available (null)
+  //   } catch (error) {
+  //     console.error("Failed to fetch movie ticket offer status:", error);
+  //     return true; // Default to true to avoid showing modal on error
+  //   }
+  // };
+
+  const checkMovieOfferStatus = async (): Promise<boolean> => {
+    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
+    console.log("Movie ticket offer claimed (localStorage):", offerClaimed);
+    return offerClaimed;
+  };
+
+  const findFiveKgBag = (item: Item): Item | null => {
+    const weight = parseFloat(item.weight?.toString() || "0");
+    if (weight === 5 && item.units?.toLowerCase().includes("kg")) {
+      return item;
+    }
+    return null;
+  };
+
+  // const showMovieOfferModal = (item: Item) => {
+  //   Modal.confirm({
+  //     title: "🎬 Free Movie Ticket Offer!",
+  //     content: (
+  //       <p>
+  //         Congratulations! You're eligible for a{" "}
+  //         <strong>Free Movie Ticket</strong> to the latest{" "}
+  //         <strong>HIT: The Third Case</strong> movie with your purchase of a{" "}
+  //         <strong>5kg {item.itemName}</strong>!
+  //         <br />
+  //         <br />
+  //         <strong>Please Note:</strong> The Free Movie Ticket Offer is valid
+  //         only once per user and applies exclusively to 5kg rice bags only. This
+  //         offer can only be redeemed once per address and is applicable on the
+  //         first successful delivery only. Once claimed, it cannot be reused.
+  //         Grab it while it lasts!
+  //       </p>
+  //     ),
+  //     okText: "Claim Movie Ticket",
+  //     cancelText: "No Thanks",
+  //     onOk: async () => {
+  //       try {
+  //         setMovieOfferMap((prev) => ({
+  //           ...prev,
+  //           [item.itemId]: true,
+  //         }));
+  //         message.success(
+  //           "Movie ticket offer claimed! Details will be shared upon delivery."
+  //         );
+  //         await fetchCartData(item.itemId);
+  //       } catch (err) {
+  //         console.error("Movie ticket offer claim failed:", err);
+  //         message.error(
+  //           "Unable to claim the movie ticket offer. Please try again."
+  //         );
+  //       }
+  //     },
+  //     onCancel: async () => {
+  //       // No action needed; item is already added
+  //     },
+  //   });
+  // };
+
+  const showMovieOfferModal = (item: Item) => {
+    Modal.confirm({
+      title: "🎬 Free Movie Ticket Offer!",
+      content: (
+        <p>
+          Congratulations! You're eligible for a{" "}
+          <strong>Free Movie Ticket</strong> to the latest movie{" "}
+          <strong>HIT: The Third Case</strong> with your purchase of a{" "}
+          <strong>5kg {item.itemName}</strong>!<br />
+          <br />
+          <strong>Please Note:</strong> The Free Movie Ticket Offer is valid
+          only once per user and applies exclusively to 5kg rice bags only. This
+          offer can only be redeemed once per address and is applicable on the
+          first successful delivery only. Once claimed, it cannot be reused.
+          Grab it while it lasts!
+        </p>
+      ),
+      okText: "Claim Movie Ticket",
+      cancelText: "No Thanks",
+      onOk: async () => {
+        try {
+          // Simulate offer claim by updating localStorage
+          localStorage.setItem("movieOfferClaimed", "true");
+          setHasShownMovieOffer(true);
+
+          setMovieOfferMap((prev) => ({
+            ...prev,
+            [item.itemId]: true,
+          }));
+
+          message.success(
+            "Movie ticket offer claimed! Details will be shared upon delivery."
+          );
+          await fetchCartData(item.itemId);
+        } catch (err) {
+          console.error("Movie ticket offer claim failed:", err);
+          message.error(
+            "Unable to claim the movie ticket offer. Please try again."
+          );
+        }
+      },
+      onCancel: async () => {
+        // No action needed; item is already added
+      },
+    });
+  };
+
+  const maybeShowMovieOfferModal = async (item: Item) => {
+    if (movieOfferModalShownRef.current) return;
+
+    const eligibleBag = findFiveKgBag(item);
+    if (!eligibleBag) return;
+
+    const isOfferClaimed = await checkMovieOfferStatus();
+    if (isOfferClaimed) return;
+
+    movieOfferModalShownRef.current = true;
+    showMovieOfferModal(eligibleBag);
   };
 
   return (
@@ -488,41 +719,26 @@ const Categories: React.FC<CategoriesProps> = ({
           {weightFilters.map((filter, index) => (
             <motion.button
               key={index}
-              whileHover={{
-                scale:
-                  filter.value === "1.0" && disabledFilters[filter.value]
-                    ? 1
-                    : 1.02,
-              }}
-              whileTap={{
-                scale:
-                  filter.value === "1.0" && disabledFilters[filter.value]
-                    ? 1
-                    : 0.98,
-              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                filter.value === "1.0" && disabledFilters[filter.value]
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                  : filter.value === activeWeightFilter
+                filter.value === activeWeightFilter
                   ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
                   : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
               }`}
               onClick={() => handleWeightFilterClick(filter.value)}
-              disabled={filter.value === "1.0" && disabledFilters[filter.value]}
-              title={
-                filter.value === "1.0" && disabledFilters[filter.value]
-                  ? "Disabled. Click Reset to enable."
-                  : ""
-              }
             >
               {filter.label}
-              {filter.value === "1.0" && (
-                <span className="ml-1 text-xs">
-                  {disabledFilters[filter.value] ? "(Disabled)" : ""}
-                </span>
-              )}
             </motion.button>
           ))}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100 transition-all duration-300"
+            onClick={handleResetFilters}
+          >
+            Reset
+          </motion.button>
         </div>
       </div>
 
@@ -704,46 +920,59 @@ const Categories: React.FC<CategoriesProps> = ({
               <div className="px-4 pb-4">
                 {item.quantity !== 0 ? (
                   cartItems[item.itemId] > 0 ? (
-                    <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 h-10">
-                      <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuantityChange(item, false, "sub");
-                        }}
-                        disabled={loadingItems.items[item.itemId]}
-                      >
-                        -
-                      </motion.button>
-                      {loadingItems.items[item.itemId] ? (
-                        <Loader2 className="animate-spin text-purple-600" />
-                      ) : (
-                        <span className="font-medium text-purple-700">
-                          {cartItems[item.itemId]}
-                        </span>
-                      )}
-                      <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                          cartItems[item.itemId] >= item.quantity
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (cartItems[item.itemId] < item.quantity) {
-                            handleQuantityChange(item, true, "Add");
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 h-10">
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuantityChange(item, false, "sub");
+                          }}
+                          disabled={loadingItems.items[item.itemId]}
+                        >
+                          -
+                        </motion.button>
+                        {loadingItems.items[item.itemId] ? (
+                          <Loader2 className="animate-spin text-purple-600" />
+                        ) : (
+                          <span className="font-medium text-purple-700">
+                            {cartItems[item.itemId]}
+                          </span>
+                        )}
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
+                            cartItems[item.itemId] >= item.quantity
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (cartItems[item.itemId] < item.quantity) {
+                              handleQuantityChange(item, true, "Add");
+                            }
+                          }}
+                          disabled={
+                            cartItems[item.itemId] >= item.quantity ||
+                            loadingItems.items[item.itemId] ||
+                            (item.itemPrice === 1 &&
+                              cartItems[item.itemId] >= 1)
                           }
-                        }}
-                        disabled={
-                          cartItems[item.itemId] >= item.quantity ||
-                          loadingItems.items[item.itemId] ||
-                          (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
-                        }
-                      >
-                        +
-                      </motion.button>
+                        >
+                          +
+                        </motion.button>
+                      </div>
+                      {freeItemsMap[item.itemId] && (
+                        <p className="text-sm text-green-600 font-medium">
+                          🎁 1 Free bag (1+1 Offer Applied)
+                        </p>
+                      )}
+                      {movieOfferMap[item.itemId] && (
+                        <p className="text-sm text-blue-600 font-medium">
+                          🎬 Free Movie Ticket Claimed
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <motion.button
