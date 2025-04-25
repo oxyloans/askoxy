@@ -398,14 +398,16 @@ const Categories: React.FC<CategoriesProps> = ({
   const getCurrentCategoryItems = () => {
     const currentCategory =
       categories.find((cat) => cat.categoryName === activeCategory) ||
-      categories[0];
+      console.log("====================================");
+
+    console.log("====================================");
     if (!currentCategory) return [];
 
     let items = currentCategory.itemsResponseDtoList;
 
     if (activeWeightFilter) {
       items = items.filter((item) => {
-        const itemWeight = parseFloat(item.weight).toFixed(1);
+        const itemWeight = parseInt(item.weight).toFixed(1);
         return itemWeight === activeWeightFilter;
       });
     }
@@ -615,19 +617,20 @@ const Categories: React.FC<CategoriesProps> = ({
 
   const showMovieOfferModal = (item: Item) => {
     Modal.confirm({
-      title: "🎬 Free Movie Ticket Offer!",
+      title: "🎁 Special Offer!",
       content: (
         <p>
-          Congratulations! You're eligible for a{" "}
-          <strong>Free Movie Ticket</strong> to the latest movie{" "}
-          <strong>HIT: The Third Case</strong> with your purchase of a{" "}
-          <strong>5kg {item.itemName}</strong>!<br />
+          🎉 Congratulations! You're eligible for a Free PVR Movie Ticket to
+          watch <strong>HIT: The Third Case</strong> with your purchase of a 5KG
+          rice bag! <br />
           <br />
-          <strong>Please Note:</strong> The Free Movie Ticket Offer is valid
-          only once per user and applies exclusively to 5kg rice bags only. This
-          offer can only be redeemed once per address and is applicable on the
-          first successful delivery only. Once claimed, it cannot be reused.
-          Grab it while it lasts!
+          ✅ Offer valid only once per user
+          <br /> 🎟 Applicable exclusively on 5KG rice bags
+          <br /> 🚚 Redeemable on your first successful delivery only
+          <br />❗ Once claimed, the offer cannot be reused
+          <br />
+          <br />
+          🔥 Grab yours while it lasts — enjoy the movie on us
         </p>
       ),
       okText: "Claim Movie Ticket",
@@ -1022,7 +1025,7 @@ const Categories: React.FC<CategoriesProps> = ({
                       }
                     }}
                   >
-                    Out Of Stock
+                    Out of Stock
                   </button>
                 )}
               </div>

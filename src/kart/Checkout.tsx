@@ -71,13 +71,17 @@ const CheckoutPage: React.FC = () => {
   const [walletAmount, setWalletAmount] = useState<number>(0);
   const [walletTotal, setWalletTotal] = useState<number>(0);
   const [coupenApplied, setCoupenApplied] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">("ONLINE");
-  const [selectedAddress, setSelectedAddress] = useState<Address>(state?.selectedAddress || null);
+  const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
+    "ONLINE"
+  );
+  const [selectedAddress, setSelectedAddress] = useState<Address>(
+    state?.selectedAddress || null
+  );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
   const [deliveryBoyFee, setDeliveryBoyFee] = useState<number>(0);
   const [subGst, setSubGst] = useState(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [walletMessage, setWalletMessage] = useState<string>('');
+  const [walletMessage, setWalletMessage] = useState<string>("");
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [afterWallet, setAfterWallet] = useState<number>(0);
   const [usedWalletAmount, setUsedWalletAmount] = useState<number>(0);
@@ -101,6 +105,7 @@ const CheckoutPage: React.FC = () => {
   const userData = localStorage.getItem("profileData");
   const [isButtonDisabled, setisButtonDisabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [freeTicketAvailable, setFreeTicketAvailable] = useState();
 
   const context = useContext(CartContext);
   if (!context) {
@@ -132,8 +137,18 @@ const CheckoutPage: React.FC = () => {
 
   const formatDate = (date: Date, isToday: boolean = false): string => {
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     const today = new Date();
     const day = String(date.getDate()).padStart(2, "0");
@@ -171,7 +186,15 @@ const CheckoutPage: React.FC = () => {
       if (response.data && Array.isArray(response.data)) {
         const currentDate = new Date();
         const currentDay = currentDate.getDay();
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const dayNames = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
         const startDayOffset = 1;
 
         const formattedTimeSlots = [];
@@ -182,7 +205,13 @@ const CheckoutPage: React.FC = () => {
           slotDate.setDate(currentDate.getDate() + dayOffset);
           const dayIndex = (currentDay + dayOffset) % 7;
           const dayOfWeek = dayNames[dayIndex].toUpperCase();
-          const formattedDate = `${String(slotDate.getDate()).padStart(2, "0")}-${String(slotDate.getMonth() + 1).padStart(2, "0")}-${slotDate.getFullYear()}`;
+          const formattedDate = `${String(slotDate.getDate()).padStart(
+            2,
+            "0"
+          )}-${String(slotDate.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}-${slotDate.getFullYear()}`;
 
           const slotData = response.data[index];
 
@@ -265,7 +294,11 @@ const CheckoutPage: React.FC = () => {
     setShowTimeSlotModal(true);
   };
 
-  const handleSelectTimeSlot = (date: string, timeSlot: string, day: string) => {
+  const handleSelectTimeSlot = (
+    date: string,
+    timeSlot: string,
+    day: string
+  ) => {
     setSelectedDate(date);
     setSelectedTimeSlot(timeSlot);
     setSelectedDay(day);
@@ -287,7 +320,9 @@ const CheckoutPage: React.FC = () => {
           },
           {}
         );
-        const totalQuantity = Object.values(cartItemsMap as Record<string, number>).reduce((sum, qty) => sum + qty, 0);
+        const totalQuantity = Object.values(
+          cartItemsMap as Record<string, number>
+        ).reduce((sum, qty) => sum + qty, 0);
         setCartData(response.data?.customerCartResponseList || []);
         setCount(totalQuantity);
       } else {
@@ -316,6 +351,7 @@ const CheckoutPage: React.FC = () => {
       setDeliveryBoyFee(totalDeliveryFee);
       setTotalAmount(parseFloat(response.data.totalSumWithGstSum));
       setGrandTotal(parseFloat(response.data.totalSum));
+      setFreeTicketAvailable(response.data.offerElgible);
     } catch (error) {
       console.error("Error fetching cart items:", error);
       message.error("Failed to fetch cart items");
@@ -330,9 +366,10 @@ const CheckoutPage: React.FC = () => {
     };
     setCoupenLoading(true);
 
-    axios.post(BASE_URL + "/order-service/applycoupontocustomer", data, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    axios
+      .post(BASE_URL + "/order-service/applycoupontocustomer", data, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((response) => {
         const { discount, grandTotal } = response.data;
         message.info(response.data.message);
@@ -365,7 +402,7 @@ const CheckoutPage: React.FC = () => {
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
       setWalletAmount(usableAmount);
       setAfterWallet(usableAmount);
-      setWalletMessage(response.data.message || '');
+      setWalletMessage(response.data.message || "");
       setUsedWalletAmount(0);
     } catch (error: unknown) {
       console.error("Error fetching wallet amount:", error);
@@ -401,7 +438,7 @@ const CheckoutPage: React.FC = () => {
     setGrandTotalAmount(total);
 
     if (total === 0) {
-      setSelectedPayment('COD');
+      setSelectedPayment("COD");
     }
 
     console.log("Used Wallet:", usedWallet);
@@ -410,14 +447,16 @@ const CheckoutPage: React.FC = () => {
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-    const potentialUsedAmount = newValue 
-      ? Math.min(walletAmount, grandTotalAmount || grandTotal) 
+    const potentialUsedAmount = newValue
+      ? Math.min(walletAmount, grandTotalAmount || grandTotal)
       : 0;
 
     Modal.confirm({
       title: newValue ? "Confirm Wallet Usage" : "Remove Wallet Usage",
-      content: newValue 
-        ? `Use ₹${potentialUsedAmount.toFixed(2)} from your wallet balance of ₹${walletAmount.toFixed(2)}?`
+      content: newValue
+        ? `Use ₹${potentialUsedAmount.toFixed(
+            2
+          )} from your wallet balance of ₹${walletAmount.toFixed(2)}?`
         : `Stop using ₹${usedWalletAmount.toFixed(2)} from your wallet?`,
       onOk: () => {
         setUseWallet(newValue);
@@ -433,18 +472,29 @@ const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     grandTotalfunc();
-  }, [grandTotal, subGst, deliveryBoyFee, coupenApplied, coupenDetails, useWallet, walletAmount, totalAmount]);
+  }, [
+    grandTotal,
+    subGst,
+    deliveryBoyFee,
+    coupenApplied,
+    coupenDetails,
+    useWallet,
+    walletAmount,
+    totalAmount,
+  ]);
 
   const handlePayment = async () => {
     try {
       const hasStockIssues = cartData.some(
-        (item) => parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
+        (item) =>
+          parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
       );
 
       if (hasStockIssues) {
         Modal.error({
           title: "Stock Issues",
-          content: "Some items in your cart are out of stock or exceed available stock. Please adjust before proceeding.",
+          content:
+            "Some items in your cart are out of stock or exceed available stock. Please adjust before proceeding.",
           okText: "OK",
           onOk: () => navigate("/main/mycart"),
         });
@@ -465,6 +515,8 @@ const CheckoutPage: React.FC = () => {
       }
 
       setLoading(true);
+
+      const avail = freeTicketAvailable === "YES" ? "YES" : null;
 
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
@@ -487,6 +539,7 @@ const CheckoutPage: React.FC = () => {
           timeSlot: selectedTimeSlot,
           latitude: selectedAddress.latitude,
           longitude: selectedAddress.longitude,
+          freeTicketAvailable: avail,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -497,7 +550,8 @@ const CheckoutPage: React.FC = () => {
         // GA4 Purchase Event Tracking
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "purchase", {
-            transaction_id: response.data.paymentId || `COD_${new Date().getTime()}`,
+            transaction_id:
+              response.data.paymentId || `COD_${new Date().getTime()}`,
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
@@ -570,12 +624,15 @@ const CheckoutPage: React.FC = () => {
       req: newCipher,
     });
 
-    await fetch("https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice", {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow",
-    })
+    await fetch(
+      "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
+      {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow",
+      }
+    )
       .then((response) => response.text())
       .then((result) => {
         var resultobj = JSON.parse(result);
@@ -588,7 +645,8 @@ const CheckoutPage: React.FC = () => {
 
         Modal.confirm({
           title: "Proceed to Payment?",
-          content: "You can choose to continue with online payment or switch to Cash on Delivery.",
+          content:
+            "You can choose to continue with online payment or switch to Cash on Delivery.",
           okText: "Continue Payment",
           cancelText: "Switch to COD",
           onOk() {
@@ -597,7 +655,7 @@ const CheckoutPage: React.FC = () => {
           onCancel() {
             setSelectedPayment("COD");
             message.info("Payment method changed to Cash on Delivery");
-          }
+          },
         });
       })
       .catch((error) => {
@@ -608,7 +666,11 @@ const CheckoutPage: React.FC = () => {
 
   function Requery(paymentId: any) {
     setLoading(false);
-    if (paymentStatus === "PENDING" || paymentStatus === "" || paymentStatus === null) {
+    if (
+      paymentStatus === "PENDING" ||
+      paymentStatus === "" ||
+      paymentStatus === null
+    ) {
       const Config = {
         "Getepay Mid": 1152305,
         "Getepay Terminal Id": "getepay.merchant128638@icici",
@@ -634,7 +696,10 @@ const CheckoutPage: React.FC = () => {
 
       var myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Cookie", "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove");
+      myHeaders.append(
+        "Cookie",
+        "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove"
+      );
 
       var raw = JSON.stringify({
         mid: Config["Getepay Mid"],
@@ -656,7 +721,10 @@ const CheckoutPage: React.FC = () => {
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
             setPaymentStatus(data.paymentStatus);
-            if (data.paymentStatus == "SUCCESS" || data.paymentStatus == "FAILED") {
+            if (
+              data.paymentStatus == "SUCCESS" ||
+              data.paymentStatus == "FAILED"
+            ) {
               if (data.paymentStatus === "FAILED") {
                 const add = sessionStorage.getItem("address");
                 if (add) {
@@ -667,7 +735,11 @@ const CheckoutPage: React.FC = () => {
               if (data.paymentStatus === "SUCCESS") {
                 axios({
                   method: "get",
-                  url: BASE_URL + `/order-service/api/download/invoice?paymentId=${localStorage.getItem("merchantTransactionId")}&&userId=${customerId}`,
+                  url:
+                    BASE_URL +
+                    `/order-service/api/download/invoice?paymentId=${localStorage.getItem(
+                      "merchantTransactionId"
+                    )}&&userId=${customerId}`,
                   headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
@@ -730,36 +802,56 @@ const CheckoutPage: React.FC = () => {
       >
         <div className="max-h-[70vh] overflow-y-auto">
           {timeSlots.length === 0 ? (
-            <div className="text-center text-gray-500 p-4">No available delivery slots</div>
+            <div className="text-center text-gray-500 p-4">
+              No available delivery slots
+            </div>
           ) : (
             timeSlots.map((slot, index) => (
               <div key={slot.id || index} className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="text-lg font-medium">{slot.dayOfWeek || `Day ${index + 1}`}</div>
+                  <div className="text-lg font-medium">
+                    {slot.dayOfWeek || `Day ${index + 1}`}
+                  </div>
                   <div className="text-right text-gray-700">{slot.date}</div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[slot.timeSlot1, slot.timeSlot2, slot.timeSlot3, slot.timeSlot4].map(
+                  {[
+                    slot.timeSlot1,
+                    slot.timeSlot2,
+                    slot.timeSlot3,
+                    slot.timeSlot4,
+                  ].map(
                     (timeSlot, i) =>
                       timeSlot && (
                         <div
                           key={i}
                           className={`py-3 px-4 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition ${
-                            selectedTimeSlot === timeSlot && selectedDate === slot.date
+                            selectedTimeSlot === timeSlot &&
+                            selectedDate === slot.date
                               ? "border-green-500 bg-green-50"
                               : "border-gray-200"
                           }`}
-                          onClick={() => handleSelectTimeSlot(slot.date || "", timeSlot || "", slot.dayOfWeek || "")}
+                          onClick={() =>
+                            handleSelectTimeSlot(
+                              slot.date || "",
+                              timeSlot || "",
+                              slot.dayOfWeek || ""
+                            )
+                          }
                         >
                           <div className="flex items-center justify-between">
                             <span>{timeSlot}</span>
-                            <span className="text-xs text-green-600">Available</span>
+                            <span className="text-xs text-green-600">
+                              Available
+                            </span>
                           </div>
                         </div>
                       )
                   )}
                 </div>
-                {index < timeSlots.length - 1 && <div className="border-b border-gray-100 mt-4"></div>}
+                {index < timeSlots.length - 1 && (
+                  <div className="border-b border-gray-100 mt-4"></div>
+                )}
               </div>
             ))
           )}
@@ -775,12 +867,17 @@ const CheckoutPage: React.FC = () => {
           <main className="flex-1">
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center mb-6">
-                <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 mr-3">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="text-gray-600 hover:text-gray-800 mr-3"
+                >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div className="flex items-center">
                   <ShoppingBag className="w-6 h-6 text-green-500 mr-2" />
-                  <h2 className="text-xl font-bold text-purple-600">Checkout Details</h2>
+                  <h2 className="text-xl font-bold text-purple-600">
+                    Checkout Details
+                  </h2>
                 </div>
               </div>
 
@@ -801,12 +898,16 @@ const CheckoutPage: React.FC = () => {
                     </div>
                     {selectedTimeSlot ? (
                       <div className="p-3 bg-green-50 rounded-md border border-green-200">
-                        <p className="text-green-800 font-medium">{selectedDate}</p>
+                        <p className="text-green-800 font-medium">
+                          {selectedDate}
+                        </p>
                         <p className="text-green-700">{selectedTimeSlot}</p>
                       </div>
                     ) : (
                       <div className="p-3 bg-yellow-50 rounded-md border border-yellow-200">
-                        <p className="text-yellow-700">Please select a delivery time slot</p>
+                        <p className="text-yellow-700">
+                          Please select a delivery time slot
+                        </p>
                       </div>
                     )}
                   </div>
@@ -814,14 +915,21 @@ const CheckoutPage: React.FC = () => {
                   <div className="bg-white border rounded-lg p-4">
                     <div className="flex items-center mb-3">
                       <ShoppingBag className="w-5 h-5 mr-2 text-purple-500" />
-                      <h3 className="font-medium">Order Items ({cartData.length})</h3>
+                      <h3 className="font-medium">
+                        Order Items ({cartData.length})
+                      </h3>
                     </div>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
                       {cartData.map((item) => (
-                        <div key={item.itemId} className="flex justify-between items-center p-2 border-b">
+                        <div
+                          key={item.itemId}
+                          className="flex justify-between items-center p-2 border-b"
+                        >
                           <div>
                             <p className="font-medium">{item.itemName}</p>
-                            <p className="text-gray-600 text-sm">Qty: {item.cartQuantity}</p>
+                            <p className="text-gray-600 text-sm">
+                              Qty: {item.cartQuantity}
+                            </p>
                           </div>
                           <p className="font-medium">₹{item.itemPrice}</p>
                         </div>
@@ -837,13 +945,17 @@ const CheckoutPage: React.FC = () => {
                     <div className="space-y-3">
                       <div
                         className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                          selectedPayment === "ONLINE" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                          selectedPayment === "ONLINE"
+                            ? "border-purple-500 bg-purple-50"
+                            : "border-gray-200"
                         }`}
                         onClick={() => setSelectedPayment("ONLINE")}
                       >
                         <div
                           className={`w-4 h-4 rounded-full border ${
-                            selectedPayment === "ONLINE" ? "border-purple-500 bg-white" : "border-gray-400"
+                            selectedPayment === "ONLINE"
+                              ? "border-purple-500 bg-white"
+                              : "border-gray-400"
                           }`}
                         >
                           {selectedPayment === "ONLINE" && (
@@ -854,13 +966,17 @@ const CheckoutPage: React.FC = () => {
                       </div>
                       <div
                         className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                          selectedPayment === "COD" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                          selectedPayment === "COD"
+                            ? "border-purple-500 bg-purple-50"
+                            : "border-gray-200"
                         }`}
                         onClick={() => setSelectedPayment("COD")}
                       >
                         <div
                           className={`w-4 h-4 rounded-full border ${
-                            selectedPayment === "COD" ? "border-purple-500 bg-white" : "border-gray-400"
+                            selectedPayment === "COD"
+                              ? "border-purple-500 bg-white"
+                              : "border-gray-400"
                           }`}
                         >
                           {selectedPayment === "COD" && (
@@ -961,7 +1077,10 @@ const CheckoutPage: React.FC = () => {
                             className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
                             disabled={walletAmount === 0 || loading}
                           />
-                          <label htmlFor="useWallet" className="ml-2 text-sm font-medium text-gray-700">
+                          <label
+                            htmlFor="useWallet"
+                            className="ml-2 text-sm font-medium text-gray-700"
+                          >
                             Use wallet balance (₹{walletAmount.toFixed(2)})
                           </label>
                         </div>
@@ -969,7 +1088,9 @@ const CheckoutPage: React.FC = () => {
                           <div className="mt-2 text-sm text-gray-600 space-y-1">
                             <p>Amount used: ₹{usedWalletAmount.toFixed(2)}</p>
                             <p>Remaining balance: ₹{afterWallet.toFixed(2)}</p>
-                            {walletMessage && <p className="text-xs">{walletMessage}</p>}
+                            {walletMessage && (
+                              <p className="text-xs">{walletMessage}</p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -979,15 +1100,21 @@ const CheckoutPage: React.FC = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handlePayment}
-                      disabled={loading || !selectedAddress || !selectedTimeSlot}
+                      disabled={
+                        loading || !selectedAddress || !selectedTimeSlot
+                      }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
                       ) : (
                         <>
-                          {selectedPayment === "ONLINE" ? "Proceed to Payment" : "Place Order"}
-                          <span className="ml-2">₹{grandTotalAmount.toFixed(2)}</span>
+                          {selectedPayment === "ONLINE"
+                            ? "Proceed to Payment"
+                            : "Place Order"}
+                          <span className="ml-2">
+                            ₹{grandTotalAmount.toFixed(2)}
+                          </span>
                         </>
                       )}
                     </motion.button>
