@@ -1,59 +1,184 @@
-import React, { useState } from "react";
-import { ArrowUpRight, User, Menu, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  ArrowUpRight,
+  User,
+  Menu,
+  X,
+  ShoppingCart,
+  AlertCircle,
+} from "lucide-react";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
 import Rice1 from "../assets/img/BUY 1 GET 1.png";
-import Rice2 from "../assets/img/BUY 1 GET 1 2.png";
-import Rice3 from "../assets/img/orderriceonline.png";
-import Rice4 from "../assets/img/RICEU1.png";
-import Rice5 from "../assets/img/RICEU2.png";
-import Rice6 from "../assets/img/RICEU3.png";
-import Rice7 from "../assets/img/RICEU4.png";
-import Rice8 from "../assets/img/RICEU5.png";
+import Rice2 from "../assets/img/RICEU7.png";
+import Rice3 from "../assets/img/RICEU6.png";
+import Rice4 from "../assets/img/RICEU8.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
+// Type definitions
+interface RiceProduct {
+  id: number;
+  imageUrl: string;
+  title: string;
+  description: string;
+  weight: number;
+}
+
 const FreeRiceBlog: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [imgLoadError, setImgLoadError] = useState<Record<number, boolean>>({});
   const navigate = useNavigate();
 
-  // Updated to include weight parameters
-  const riceGifs = [
-    { id: 1, imageUrl: Rice1, weight: 1.0 },
-    { id: 2, imageUrl: Rice2, weight: 1.0 },
-    { id: 3, imageUrl: Rice3, weight: 1.0 },
-    { id: 4, imageUrl: Rice4, weight: 26.0 },
-    { id: 5, imageUrl: Rice5, weight: 26.0 },
-    { id: 6, imageUrl: Rice6, weight: 26.0 },
-    { id: 7, imageUrl: Rice7, weight: 26.0 },
-    { id: 8, imageUrl: Rice8, weight: 26.0 },
+  // Rice product data with weights, titles and descriptions
+  const riceProducts: RiceProduct[] = [
+    {
+      id: 1,
+      imageUrl: Rice1,
+      title: "Buy 1KG Rice Get 1KG FREE",
+      description:
+        "Enjoy premium quality rice with our limited-time Buy 1 Get 1 Free offer — ideal for small families looking for great value and taste.",
+      weight: 1.0,
+    },
+    {
+      id: 2,
+      imageUrl: Rice2,
+      title: "5KG Premium Rice Bag",
+      description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
+      weight: 5.0,
+    },
+    {
+      id: 3,
+      imageUrl: Rice3,
+      title: "10KG Premium Rice Bag",
+      description:
+        "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
+      weight: 10.0,
+    },
+    {
+      id: 4,
+      imageUrl: Rice4,
+      title: "26KG Premium Rice Bag",
+      description:
+        "Buy a 26KG Rice Bag and Get an 35+ KG Steel Container Worth ₹2300 free!",
+      weight: 26.0,
+    },
   ];
 
-  const handleImageClick = (weight:any) => {
-    const userId = localStorage.getItem("userId");
+  useEffect(() => {
+    // Close mobile menu when resizing to desktop
+    const handleResize = () => {
+      if (window.innerWidth >= 640 && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
 
-    // Format weight with decimal point preserved
-    const formattedWeight = weight.toFixed(1);
-    const targetUrl = `/main/dashboard/products?weight=${formattedWeight}`;
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [mobileMenuOpen]);
 
-    // Store the target URL in sessionStorage to use after login/registration
-    sessionStorage.setItem("redirectPath", targetUrl);
+  const handleOrderNow = (weight: number) => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const formattedWeight = weight.toFixed(1);
+      const targetUrl = `/main/dashboard/products?weight=${formattedWeight}`;
 
-    if (!userId) {
-      // Redirect to login/registration
-      window.location.href = "/whatsappregister";
-    } else {
-      // Direct to products with weight parameter
-      window.location.href = targetUrl;
+      // Store redirect path for after authentication
+      sessionStorage.setItem("redirectPath", targetUrl);
+
+      // Check if user is already logged in
+      if (userId) {
+        window.location.href = targetUrl;
+      } else {
+        // Redirect to WhatsApp register/login page
+        window.location.href = "/whatsappregister";
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
+      // Handle error appropriately
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignIn = () => {
-    window.location.href = "/whatsappregister";
+    try {
+      setIsLoading(true);
+      // Set the default redirect path to the dashboard products page
+      sessionStorage.setItem("redirectPath", "/main/dashboard/products");
+      window.location.href = "/whatsappregister";
+    } catch (error) {
+      console.error("Sign in error:", error);
+      // Handle error appropriately
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+
+  const handleImageError = (productId: number) => {
+    setImgLoadError((prev) => ({
+      ...prev,
+      [productId]: true,
+    }));
+  };
+
+  // Product Card Component
+  const ProductCard = ({ product }: { product: RiceProduct }) => (
+    <div
+      className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition duration-300 flex flex-col h-full"
+      role="button"
+      tabIndex={0}
+      aria-label={`Order ${product.title}`}
+      onClick={() => handleOrderNow(product.weight)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleOrderNow(product.weight);
+        }
+      }}
+    >
+      {/* Image container with fixed width and height */}
+      <div
+        className="w-full relative overflow-hidden"
+        style={{ height: "220px", width: "288.01px", maxWidth: "100%" }}
+      >
+        {imgLoadError[product.id] ? (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <AlertCircle className="w-12 h-12 text-gray-400" />
+          </div>
+        ) : (
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="w-full h-full object-contain"
+            onError={() => handleImageError(product.id)}
+          />
+        )}
+      </div>
+      <div className="p-4 flex-grow flex flex-col">
+        <h3 className="font-bold text-lg text-gray-800 mb-1">
+          {product.title}
+        </h3>
+        <p className="text-sm text-gray-600 mb-4 flex-grow">
+          {product.description}
+        </p>
+
+        <button
+          className="w-full py-2 px-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-md hover:from-purple-600 hover:to-indigo-700 transition duration-300 flex items-center justify-center gap-2 mt-auto"
+          disabled={isLoading}
+          aria-busy={isLoading}
+        >
+          <ShoppingCart className="w-4 h-4" />
+          {isLoading ? "Loading..." : `Order ${product.weight}KG Now`}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
@@ -64,19 +189,26 @@ const FreeRiceBlog: React.FC = () => {
             src={AskOxyLogo}
             alt="AskOxy Logo"
             className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105"
+            
+            tabIndex={0}
+            role="banner"
           />
           <div className="flex items-center gap-4">
             <button
               onClick={handleSignIn}
               className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 shadow transition duration-300"
+              disabled={isLoading}
+              aria-busy={isLoading}
             >
               <User className="w-5 h-5" />
-              Sign In
+              {isLoading ? "Loading..." : "Sign In"}
             </button>
             <button
               onClick={toggleMobileMenu}
               className="sm:hidden focus:outline-none"
-              aria-label="Toggle Menu"
+              aria-label={mobileMenuOpen ? "Close Menu" : "Open Menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -85,12 +217,18 @@ const FreeRiceBlog: React.FC = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="sm:hidden mt-2 bg-white shadow-md rounded-lg px-4 py-2 animate-fade-in-down">
+          <div
+            id="mobile-menu"
+            className="sm:hidden mt-2 bg-white shadow-md rounded-lg px-4 py-2 animate-fade-in-down"
+            role="menu"
+          >
             <button
               onClick={handleSignIn}
               className="block w-full text-left text-purple-600 hover:text-purple-800 py-2 font-medium"
+              role="menuitem"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Loading..." : "Sign In"}
             </button>
           </div>
         )}
@@ -98,47 +236,34 @@ const FreeRiceBlog: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-grow">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-12">
-            <h1 className="text-2xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
               Order Rice Online
             </h1>
-            <p className="text-md sm:text-lg text-gray-600 mt-4 max-w-2xl mx-auto">
-              Choose from premium rice offers and help feed those in need with
-              every order.
+            <p className="text-sm sm:text-md md:text-lg text-gray-600 mt-3 max-w-2xl mx-auto">
+              Premium quality rice delivered to your doorstep
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {riceGifs.map((gif) => (
-              <div
-                key={gif.id}
-                className="bg-white rounded-xl shadow hover:shadow-xl overflow-hidden transform hover:-translate-y-1 transition duration-300 cursor-pointer group"
-                onClick={() => handleImageClick(gif.weight)}
-              >
-                <div className="aspect-w-16 aspect-h-10">
-                  <img
-                    src={gif.imageUrl}
-                    alt={`Rice Promo ${gif.id} - ${gif.weight}kg`}
-                    className="w-full h-full object-cover transition-transform"
-                  />
-                </div>
-              </div>
+          {/* Rice Product Grid with consistent card heights */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {riceProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
-          {/* CTA Section */}
-          <div className="mt-16 text-center">
-            <button
-              onClick={handleSignIn}
-              className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white text-lg font-semibold rounded-full hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-xl"
-            >
-              Order Now
-              <ArrowUpRight className="ml-2" size={20} />
-            </button>
-            <p className="mt-4 text-sm text-gray-500">
-              Every purchase helps a family in need. Join the movement today!
-            </p>
+          {/* Impact Message */}
+          <div className="mt-10 text-center">
+            <div className="p-4 sm:p-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl shadow-sm max-w-3xl mx-auto">
+              <h3 className="font-semibold text-lg text-purple-700 mb-2">
+                Make an Impact with Your Purchase
+              </h3>
+              <p className="text-sm sm:text-md text-gray-700">
+                Every order helps us donate rice to families in need. Join
+                thousands of customers making a difference with every purchase.
+              </p>
+            </div>
           </div>
         </section>
       </main>

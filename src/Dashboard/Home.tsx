@@ -912,38 +912,32 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
+    <div className="min-h-screen">
       {/* Header Images Section */}
-      <div className="w-full bg-white border-b border-gray-100 py-4">
-        <div className="px-4 sm:px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="w-full bg-white border-b border-gray-100 py-6">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {headerImages.map((image) => (
               <motion.div
                 key={image.id}
-                variants={headerImageVariants}
-                initial="initial"
-                whileHover="hover"
-                className="cursor-pointer overflow-hidden rounded-lg"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="cursor-pointer overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 bg-white"
                 onHoverStart={() => setHoveredImage(image.id)}
                 onHoverEnd={() => setHoveredImage(null)}
                 onClick={() => navigate(image.path)}
               >
                 <motion.img
                   src={image.src}
-                  alt={image.alt}
-                  className="w-full h-auto object-cover rounded-lg"
-                  style={{
-                    transform: hoveredImage === image.id ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'transform 0.3s ease',
-                  }}
+                  alt={image.alt || "Header image"}
+                  className="w-full h-40 object-cover rounded-xl"
+                  animate={{ scale: hoveredImage === image.id ? 1.05 : 1 }}
                 />
               </motion.div>
             ))}
           </div>
         </div>
       </div>
-
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -965,16 +959,23 @@ const Home: React.FC = () => {
             </motion.button>
           </div>
 
-
           {/* Category Pills */}
           <div className="mb-6 overflow-x-auto no-scrollbar">
             <div className="flex space-x-2 pb-2">
               {categories.map((category, index) => (
                 <motion.button
                   key={category.categoryName}
-                  animate={activeCategory === category.categoryName ? "active" : "inactive"}
+                  animate={
+                    activeCategory === category.categoryName
+                      ? "active"
+                      : "inactive"
+                  }
                   variants={categoryVariants}
-                  whileHover={activeCategory !== category.categoryName ? { scale: 1.05 } : {}}
+                  whileHover={
+                    activeCategory !== category.categoryName
+                      ? { scale: 1.05 }
+                      : {}
+                  }
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleCategoryChange(category.categoryName)}
                   className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap"
@@ -993,10 +994,14 @@ const Home: React.FC = () => {
                   <ProductSkeleton key={`skeleton-${index}`} index={index} />
                 ))
               ) : displayProducts.length > 0 ? (
-                displayProducts.map((product, index) => renderProductItem(product, index))
+                displayProducts.map((product, index) =>
+                  renderProductItem(product, index)
+                )
               ) : (
                 <div className="col-span-full py-8 text-center">
-                  <p className="text-gray-500">No products found. Try a different search or category.</p>
+                  <p className="text-gray-500">
+                    No products found. Try a different search or category.
+                  </p>
                 </div>
               )}
             </AnimatePresence>
@@ -1004,26 +1009,26 @@ const Home: React.FC = () => {
 
           {/* Load More Button */}
           {!productsLoading && products.length > displayProducts.length && (
-           <div className="mt-8 text-center flex justify-center space-x-4">
-           <motion.button
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             onClick={loadMoreProducts}
-             className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
-           >
-             Load More
-             <TrendingUp size={16} className="ml-2" />
-           </motion.button>
-           <motion.button
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
-             onClick={viewAllProducts}
-           >
-             View All
-             <ArrowRight size={16} className="ml-1" />
-           </motion.button>
-         </div>         
+            <div className="mt-8 text-center flex justify-center space-x-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={loadMoreProducts}
+                className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
+              >
+                Load More
+                <TrendingUp size={16} className="ml-2" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+                onClick={viewAllProducts}
+              >
+                View All
+                <ArrowRight size={16} className="ml-1" />
+              </motion.button>
+            </div>
           )}
         </section>
 
@@ -1045,112 +1050,152 @@ const Home: React.FC = () => {
             </motion.button>
           </div>
 
-
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {loading ? (
-              Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={`skeleton-service-${index}`}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
-                >
-                  <div className="h-40 bg-gray-200"></div>
-                  <div className="p-4">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              services.map((service, index) => (
-                <motion.div
-                  key={service.id}
-                  custom={index}
-                  initial="hidden"
-                  animate="visible"
-                  whileHover="hover"
-                  variants={serviceCardVariants}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                  onClick={() => navigate(service.path)}
-                >
-                  <div className="aspect-video relative overflow-hidden">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-50"></div>
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <h3 className="text-white font-bold text-lg drop-shadow-md">
-                        {service.title}
-                      </h3>
+            {loading
+              ? Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={`skeleton-service-${index}`}
+                    className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
+                  >
+                    <div className="h-40 bg-gray-200"></div>
+                    <div className="p-4">
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                     </div>
                   </div>
-                  <div className="p-4">
-                    <p className="text-gray-700 text-sm">{service.description}</p>
-                    <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
-                      Learn More
-                      <ChevronRight size={16} className="ml-1" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))
-            )}
+                ))
+              : services.map((service, index) => (
+                  <motion.div
+                    key={service.id}
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="hover"
+                    variants={serviceCardVariants}
+                    className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                    onClick={() => navigate(service.path)}
+                  >
+                    <div className="aspect-video relative overflow-hidden bg-gray-100">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-40"></div>
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <h3 className="text-white font-bold text-lg drop-shadow-md">
+                          {service.title}
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-gray-700 text-sm">
+                        {service.description}
+                      </p>
+                      <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
+                        Learn More
+                        <ChevronRight size={16} className="ml-1" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
           </div>
         </section>
 
         {/* Digital Services Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {/* Free GPTs Section */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                <Bot className="mr-2 text-purple-600" size={20} />
+                <Bot className="mr-2 text-purple-600" size={24} />
                 Free GPTs
               </h2>
               <button
                 onClick={() => navigate("/main/dashboard/freegpts")}
-                className="text-purple-600 hover:text-purple-800 font-medium flex items-center text-sm"
+                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg font-medium flex items-center text-sm transition-colors"
+                aria-label="Explore Free GPTs"
               >
-                Explore <ArrowRight size={14} className="ml-1" />
+                Explore <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              {loading ? (
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl animate-pulse h-40"></div>
-              ) : (
-                freeGPTs.map((item, index) => renderDigitalServiceCard(item, index, 'gpt'))
-              )}
+            <div className="grid grid-cols-1 gap-5">
+              {loading
+                ? Array(3)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg animate-pulse h-24 flex items-center px-4"
+                      >
+                        <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4"></div>
+                          <div className="h-3 bg-blue-200 rounded animate-pulse w-1/2"></div>
+                        </div>
+                      </div>
+                    ))
+                : freeGPTs.map((item, index) =>
+                    renderDigitalServiceCard(item, index, "gpt")
+                  )}
             </div>
+
+            {!loading && freeGPTs.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Bot className="mx-auto mb-3 text-gray-400" size={32} />
+                <p>No free GPTs available at the moment</p>
+              </div>
+            )}
           </div>
 
-          {/* Crypto Section */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
+          {/* Cryptocurrency Section */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                <Coins className="mr-2 text-purple-600" size={20} />
+                <Coins className="mr-2 text-purple-600" size={24} />
                 Cryptocurrency
               </h2>
               <button
                 onClick={() => navigate("/main/dashboard/bmvcoin")}
-                className="text-purple-600 hover:text-purple-800 font-medium flex items-center text-sm"
+                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg font-medium flex items-center text-sm transition-colors"
+                aria-label="Explore Cryptocurrency"
               >
-                Explore <ArrowRight size={14} className="ml-1" />
+                Explore <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              {loading ? (
-                <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-xl animate-pulse h-40"></div>
-              ) : (
-                cryptocurrency.map((item, index) => renderDigitalServiceCard(item, index, 'crypto'))
-              )}
+            <div className="grid grid-cols-1 gap-5">
+              {loading
+                ? Array(3)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-lg animate-pulse h-24 flex items-center px-4"
+                      >
+                        <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4"></div>
+                          <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
+                        </div>
+                      </div>
+                    ))
+                : cryptocurrency.map((item, index) =>
+                    renderDigitalServiceCard(item, index, "crypto")
+                  )}
             </div>
+
+            {!loading && cryptocurrency.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Coins className="mx-auto mb-3 text-gray-400" size={32} />
+                <p>No cryptocurrency data available at the moment</p>
+              </div>
+            )}
           </div>
         </section>
       </div>
-
 
       {/* Footer */}
       <Footer />

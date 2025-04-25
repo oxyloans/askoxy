@@ -14,8 +14,8 @@ import {
   ShoppingBag,
   Search,
   GraduationCap,
-  Award, 
-  FileText
+  Award,
+  FileText,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../kart/Header3";
@@ -38,7 +38,7 @@ import Rotary from "../assets/img/MY ROTARY.png";
 import MMServices from "../assets/img/Machines manufacturing services.png";
 import hiring from "../assets/img/Career guidance.png";
 import FreeChatGPTmain from "./FreechatGPTmain";
-import VideoImage from "../assets/img/Videothumb.png"
+import VideoImage from "../assets/img/Videothumb.png";
 import BMVCOINmain from "./BMVcoinmain";
 
 import BASE_URL from "../Config";
@@ -73,7 +73,7 @@ const DashboardMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("products");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-    const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [cartCount, setCartCount] = useState<number>(0);
@@ -108,7 +108,6 @@ const DashboardMain: React.FC = () => {
 
     fetchCampaigns();
   }, []);
-
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -151,6 +150,15 @@ const DashboardMain: React.FC = () => {
         icon: <Cpu className="text-purple-600" size={24} />,
         category: "Jobs",
       },
+      // {
+      //   title: "HIT3 MOVIE TICKETS",
+      //   image: FG,
+      //   description:
+      //     "Get free tickets to the latest HIT3 movie, a thrilling cinematic experience.",
+      //   path: `${accessToken ? "/main" : ""}/services/hitmovietickets`,
+      //   icon: <Package className="text-purple-600" size={24} />, // Add an appropriate icon
+      //   category: "Movie Tickets",
+      // },
       {
         title: "Free Rice Samples",
         image: FR,
@@ -211,7 +219,6 @@ const DashboardMain: React.FC = () => {
     [accessToken]
   );
 
-
   const products: DashboardItem[] = [
     {
       title: "Digital Products",
@@ -257,7 +264,7 @@ const DashboardMain: React.FC = () => {
 
   const handleCampaignClick = (campaignId: string) => {
     navigate(`/main/services/campaign/${campaignId.slice(-4)}`);
-  };
+  };
 
   const renderItems = (items: DashboardItem[]): JSX.Element => (
     <div className="space-y-6">
@@ -279,7 +286,7 @@ const DashboardMain: React.FC = () => {
                   </h1>
                 </div>
               </div>
-  
+
               {/* Content */}
               <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
                 {/* Scholarship Details */}
@@ -302,14 +309,24 @@ const DashboardMain: React.FC = () => {
                       </li>
                       <li className="flex items-center">
                         <Award className="w-4 h-4 mr-3 text-purple-600" />
-                        Get Offer Letter in 10 Minutes - Share preferences on ASKOXY.AI & get a sample offer letter.
+                        Get Offer Letter in 10 Minutes - Share preferences on
+                        ASKOXY.AI & get a sample offer letter.
                       </li>
                     </ul>
                   </div>
-  
+
                   <div className="flex flex-col gap-4">
-                    <p><strong>Study Abroad:</strong> Get a 10-minute sample offer letter and enjoy up to 5% fee cashback!</p>
-                    <p>Welcome! ASKOXY.AI fuels your study abroad journey with data-driven insights. Answer questions on country, university, course, budget, UG/PG & academics to get personalized recommendations, a ROI scorecard, a 10-min sample offer letter & up to 5% fee cashback.</p>
+                    <p>
+                      <strong>Study Abroad:</strong> Get a 10-minute sample
+                      offer letter and enjoy up to 5% fee cashback!
+                    </p>
+                    <p>
+                      Welcome! ASKOXY.AI fuels your study abroad journey with
+                      data-driven insights. Answer questions on country,
+                      university, course, budget, UG/PG & academics to get
+                      personalized recommendations, a ROI scorecard, a 10-min
+                      sample offer letter & up to 5% fee cashback.
+                    </p>
                   </div>
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -325,7 +342,7 @@ const DashboardMain: React.FC = () => {
                       <FileText className="w-5 h-5" />
                       <span>View Offer Samples</span>
                     </motion.button>
-  
+
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -340,27 +357,27 @@ const DashboardMain: React.FC = () => {
                     </motion.button>
                   </div>
                 </div>
-  
+
                 {/* Video Section */}
                 <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative">
                   {!isVideoPlaying ? (
-                    <div 
+                    <div
                       className="absolute inset-0 bg-cover bg-center cursor-pointer"
                       style={{ backgroundImage: `url(${VideoImage})` }}
                       onClick={() => setIsVideoPlaying(true)}
                     >
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <div className="bg-purple-600 w-16 h-16 rounded-full flex items-center justify-center">
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            viewBox="0 0 24 24" 
-                            fill="white" 
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="white"
                             className="w-8 h-8"
                           >
-                            <path 
-                              fillRule="evenodd" 
-                              d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" 
-                              clipRule="evenodd" 
+                            <path
+                              fillRule="evenodd"
+                              d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
+                              clipRule="evenodd"
                             />
                           </svg>
                         </div>
@@ -379,7 +396,7 @@ const DashboardMain: React.FC = () => {
               </div>
             </div>
           </div>
-  
+
           {/* Search Bar */}
           <div className="relative">
             <Search
@@ -394,7 +411,7 @@ const DashboardMain: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
-  
+
           {/* Services Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {/* Regular Items */}
@@ -442,7 +459,7 @@ const DashboardMain: React.FC = () => {
                 </div>
               </div>
             ))}
-  
+
             {/* Campaign Items */}
             {campaigns
               .filter((campaign) => campaign.campaignStatus !== false)
@@ -451,7 +468,9 @@ const DashboardMain: React.FC = () => {
                   key={campaign.campaignId}
                   className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
             transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                  onClick={() => handleCampaignClick(campaign.campaignId as string)}
+                  onClick={() =>
+                    handleCampaignClick(campaign.campaignId as string)
+                  }
                 >
                   <div className="relative aspect-video overflow-hidden bg-gray-50">
                     {campaign.imageUrls && campaign.imageUrls.length > 0 && (
@@ -492,35 +511,34 @@ const DashboardMain: React.FC = () => {
 
   const handleStudyAbroadClick = () => {
     // Placeholder for study abroad information
-    window.open('https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback');
+    window.open(
+      "https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback"
+    );
   };
 
-/*************  ✨ Windsurf Command ⭐  *************/
-/**
- * Handle the click event for the offer letter button by navigating to the offer letter samples page
- * @returns {void}
- */
-/*******  369dfec7-41c3-4c49-8aac-3221a3169cb7  *******/  const handleOfferLetterClick = () => {
-    if (!userId) {
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        "/main/dashboard/offer-letter-samples"
-      );
-      message.warning("Please login to submit your interest.");
-      return;
-    }
-    navigate("/main/dashboard/offer-letter-samples");
-  };
+  /*************  ✨ Windsurf Command ⭐  *************/
+  /**
+   * Handle the click event for the offer letter button by navigating to the offer letter samples page
+   * @returns {void}
+   */
+  /*******  369dfec7-41c3-4c49-8aac-3221a3169cb7  *******/ const handleOfferLetterClick =
+    () => {
+      if (!userId) {
+        navigate("/whatsappregister");
+        sessionStorage.setItem(
+          "redirectPath",
+          "/main/dashboard/offer-letter-samples"
+        );
+        message.warning("Please login to submit your interest.");
+        return;
+      }
+      navigate("/main/dashboard/offer-letter-samples");
+    };
 
   return (
-
     <div className="min-h-screen">
-      <div className="mb-4 p-2">
-        {!userId ?   <Header1 />: null}
-      </div>
+      <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
-        
         <div className="p-2 lg:p-4">
           {activeTab === "services" && renderItems(services)}
           {activeTab === "products" && renderItems(products)}
@@ -528,7 +546,6 @@ const DashboardMain: React.FC = () => {
           {activeTab === "bmvcoin" && renderItems(bmvCoinItems)}
         </div>
       </div>
-      
     </div>
   );
 };

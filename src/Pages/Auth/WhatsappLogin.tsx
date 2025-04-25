@@ -562,12 +562,12 @@ const WhatsappLogin = () => {
             </div>
           </div>
         </div>
-        <h2 className="mx-6 mt-4 text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500 mb-2">
+        {/* <h2 className="mx-6 mt-4 text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500 mb-2">
           Welcome, Study Abroad Aspirants!
-        </h2>
+        </h2> */}
         {/* Erice Customer Alert - Now conditionally rendered */}
         {showEriceAlert && (
-          <div className="mx-4">
+          <div className="mx-4 mt-2">
             <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2 relative">
               <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>
@@ -669,8 +669,10 @@ const WhatsappLogin = () => {
 
               <div className="relative">
                 <PhoneInput
-                  value={phoneNumber}
+                  value={phoneNumber || "+91"}
                   onChange={handlePhoneChange}
+                  initialValueFormat="national"
+                  addInternationalOption={false}
                   defaultCountry="IN"
                   disabled={isPhoneDisabled}
                   international={otpMethod === "whatsapp"}
@@ -711,7 +713,7 @@ const WhatsappLogin = () => {
                     : "6-digit SMS"}{" "}
                   OTP
                 </label>
-                <div className="flex justify-center gap-3">
+                <div className="flex justify-center gap-2 sm:gap-3 md:gap-4">
                   {(otpMethod === "whatsapp"
                     ? credentials.otp
                     : credentials.mobileOTP
@@ -720,13 +722,17 @@ const WhatsappLogin = () => {
                       key={index}
                       type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
                       maxLength={1}
                       value={digit}
                       ref={(el) => (otpRefs.current[index] = el!)}
                       onChange={(e) => handleOtpChange(e.target.value, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
                       onPaste={handlePaste}
-                      className="w-12 h-12 text-center text-lg font-semibold bg-white border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-800 shadow-sm"
+                      onFocus={(e) => e.target.select()}
+                      className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 text-center text-base sm:text-lg md:text-xl font-semibold bg-white border-2 border-gray-200 rounded-lg md:rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none transition-all text-gray-800 shadow-sm"
+                      aria-label={`OTP digit ${index + 1}`}
                     />
                   ))}
                 </div>

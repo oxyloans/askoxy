@@ -403,7 +403,7 @@ const WhatsappRegister = () => {
           setOtpError(
             "You are already registered with this number. Redirecting to login..."
           );
-          setTimeout(() => navigate("/whatsapplogin"), 1500);
+          setTimeout(() => navigate("/whatsapplogin"), 1000);
           return;
         }
 
@@ -474,7 +474,7 @@ const WhatsappRegister = () => {
             setError(
               "You are already registered with this number. Redirecting to login..."
             );
-            setTimeout(() => navigate("/whatsapplogin"), 1500);
+            setTimeout(() => navigate("/whatsapplogin"), 1000);
             return;
           }
 

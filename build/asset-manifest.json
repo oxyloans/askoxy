@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.1149ff90.css",
-    "main.js": "/static/js/main.8314f19a.js",
+    "main.css": "/static/css/main.90708f17.css",
+    "main.js": "/static/js/main.61d80ff9.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.png": "/static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.f22986a86ab61897cfab.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -24,6 +24,7 @@
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
     "static/media/RICEU1.png": "/static/media/RICEU1.edf64b4f457e2173b6eb.png",
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
+    "static/media/RICEU7.png": "/static/media/RICEU7.016b8b9d37b6c9a67ad9.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
@@ -37,6 +38,7 @@
     "static/media/cowbrand.png": "/static/media/cowbrand.99bc4772c7a7afcf761a.png",
     "static/media/univ3.png": "/static/media/univ3.b56f94bd1b75fdd7f064.png",
     "static/media/joker.png": "/static/media/joker.17564089925dbf6c8207.png",
+    "static/media/RICEU6.png": "/static/media/RICEU6.ed9455e855f560d26675.png",
     "static/media/template2.png": "/static/media/template2.118b82b53aafa42d728c.png",
     "static/media/bawarchi.png": "/static/media/bawarchi.1e35ba30d9e81f1a95e6.png",
     "static/media/univ2.png": "/static/media/univ2.636eda5c3de2c32cf818.png",
@@ -60,6 +62,7 @@
     "static/media/proudlender11.png": "/static/media/proudlender11.c6e137c2c197a5881239.png",
     "static/media/Street wear gpt.png": "/static/media/Street wear gpt.a7258f88c88d08ea1a52.png",
     "static/media/proudlender6.png": "/static/media/proudlender6.6bf2d27333289b4ca8c4.png",
+    "static/media/RICEU8.png": "/static/media/RICEU8.4dcd9bd99a023183970d.png",
     "static/media/proudlender10.png": "/static/media/proudlender10.05b1babc5b7b7b7a3991.png",
     "static/media/proudlender2.png": "/static/media/proudlender2.9b584e7b32ba47a9b198.png",
     "static/media/proudlender5.png": "/static/media/proudlender5.e27bef2fa80e3b9bf00a.png",
@@ -103,7 +106,6 @@
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/realestate gpt (1).png": "/static/media/realestate gpt (1).5655cc684ac7d693d031.png",
     "static/media/Influencers gpt (1).png": "/static/media/Influencers gpt (1).566a5a80041f778c5e8c.png",
-    "static/media/RICEU5.png": "/static/media/RICEU5.64ea0d0373b38a51ab1f.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
     "static/media/testimonial17.png": "/static/media/testimonial17.fb648ac71a729958a005.png",
     "static/media/Management service gpt (1).png": "/static/media/Management service gpt (1).30c191740325608d8659.png",
@@ -180,11 +182,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.1149ff90.css.map": "/static/css/main.1149ff90.css.map",
-    "main.8314f19a.js.map": "/static/js/main.8314f19a.js.map"
+    "main.90708f17.css.map": "/static/css/main.90708f17.css.map",
+    "main.61d80ff9.js.map": "/static/js/main.61d80ff9.js.map"
   },
   "entrypoints": [
-    "static/css/main.1149ff90.css",
-    "static/js/main.8314f19a.js"
+    "static/css/main.90708f17.css",
+    "static/js/main.61d80ff9.js"
   ]
 }

@@ -6,7 +6,7 @@ import { message, Modal, notification } from "antd";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
-import Header1 from "./Header"
+import Header1 from "./Header";
 
 interface Image {
   imageId: string;
@@ -323,9 +323,7 @@ const CampaignDetails: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-       <div className="mb-4 p-2">
-        {!userId ?   <Header1 />: null}
-      </div>
+      <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">

@@ -275,8 +275,12 @@ const CampaignsAdd: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <div className="flex flex-1 justify-center">
-        <div className="w-full max-w-2xl bg-gray-50 rounded-lg shadow-md p-6">
+      {/* Sidebar */}
+      {/* <div className="lg:w-1/4 w-full p-4"> */}
+      <Sidebar />
+      {/* </div> */}
+      <div className="flex flex-1 justify-center items-center p-6">
+        <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             Add New Service
           </h1>

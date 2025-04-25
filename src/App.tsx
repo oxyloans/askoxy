@@ -10,6 +10,7 @@ import CartProvider from "./until/CartProvider";
 
 import Landingpage from "./components/Landingpage";
 import Freerudraksha from "./components/Services/Freerudraksh";
+import HitMovie from "./components/Services/HitMovie";
 import FreeSample from "./components/Services/FreeSample";
 import FreeAiandGenAi from "./components/Services/FreeAi&GenAi";
 import StudyAbroad from "./components/Services/StudyAbroad";
@@ -22,7 +23,7 @@ import UniversityPromoCard from "./Templates/UniversityPromoCard";
 import PromoCard from "./Templates/PromoCard";
 
 import AdminSidebar from "./AskoxyAdmin/Sider";
-import Home from "./Dashboard/Home"
+import Home from "./Dashboard/Home";
 import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
 import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
 
@@ -86,12 +87,11 @@ import OxyGroup from "./components/OxygroupPdf";
 import BarcodeScanner from "./Dashboard/BarcodeScanner";
 import FREEAIANDGENAI from "./components/AIandGenAi";
 import OxyLoans from "./components/Services/OxyLoans";
-import UniversityOffers from "./Dashboard/Offerletter"
+import UniversityOffers from "./Dashboard/Offerletter";
 import PinkFunding from "./components/PinkFunding";
 import CurrentLandingPage from "./components/CurrentLandinPage";
 import PlanOfTheDay from "./Pages/Auth/PlanOfTheDay";
-import UserPanelLayout
-  from "./Pages/Auth/UserPanelLayout";
+import UserPanelLayout from "./Pages/Auth/UserPanelLayout";
 import AllStatusPage from "./Pages/Auth/AllStatus";
 import AssignedTasksPage from "./Pages/Auth/AssignedTasks";
 import UserDetails from "./Pages/Auth/UserDetails";
@@ -123,26 +123,26 @@ import FreeRiceBlog from "./components/FreeRice";
 import { SearchProvider } from "./until/SearchContext";
 import SearchMain from "./Dashboard/SearchMain";
 const App: React.FC = () => {
+  const location = useLocation();
 
- const location = useLocation();
-
- useEffect(() => {
-   const validEntryPoints = ["/", "/future"];
-   if (validEntryPoints.includes(location.pathname)) {
-     console.log("Setting entryPoint:", location.pathname); // Debug log
-     localStorage.setItem("entryPoint", location.pathname);
-   }
- }, [location.pathname]);
+  useEffect(() => {
+    const validEntryPoints = ["/", "/future", "/freerice"];
+    if (validEntryPoints.includes(location.pathname)) {
+      console.log("Setting entryPoint:", location.pathname); // Debug log
+      localStorage.setItem("entryPoint", location.pathname);
+    }
+  }, [location.pathname]);
   return (
     <CartProvider>
       <SearchProvider>
         <ScrollToTop />
         <div className="App">
           <Routes>
-        {/* ----------------------------- */}
-          <Route path="dashboard/:tab" element={<DashboardMain />} />
+            {/* ----------------------------- */}
+            <Route path="dashboard/:tab" element={<DashboardMain />} />
             <Route path="services/freerudraksha" element={<Freerudraksha />} />
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
+            <Route path="services/hitmovietickets" element={<HitMovie />} />
             <Route
               path="services/campaign/:type"
               element={<CampaignDetails />}
@@ -161,22 +161,20 @@ const App: React.FC = () => {
             />
             <Route path="service/oxyloans-service" element={<OxyLoans />} />
             <Route path="services/legalservice" element={<LegalService />} />
-            <Route path="services/we-are-hiring" element={<HiringService />} />
-
-
-        {/* ----------------------- */}
+            <Route path="services/we-are-hiring" element={<HiringService />} />
+            {/* ----------------------- */}
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
             <Route path="/movietickets" element={<Pushpa2GPT />} />
-          <Route path="/userregister" element={<UserRegister />} />
-          
-          <Route path="/userlogin" element={<UserLogin />} />   <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
-          <Route path="/planoftheday" element={<PlanOfTheDay />} />
-          <Route path="/taskupdated" element={<TaskUpdate />} />
-          <Route path="/all-statuses" element={<AllStatusPage />} />
-          <Route path="/assigned-task" element={<AssignedTasksPage />} />
-          <Route path="/taskassigneduser" element={<TaskAssignedUser />} /> 
+            <Route path="/userregister" element={<UserRegister />} />
+            <Route path="/userlogin" element={<UserLogin />} />{" "}
+            <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
+            <Route path="/planoftheday" element={<PlanOfTheDay />} />
+            <Route path="/taskupdated" element={<TaskUpdate />} />
+            <Route path="/all-statuses" element={<AllStatusPage />} />
+            <Route path="/assigned-task" element={<AssignedTasksPage />} />
+            <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route
               path="/communities/maruthielite"
@@ -192,19 +190,9 @@ const App: React.FC = () => {
               path="/proud-lender/testimonials"
               element={<TestimonialsPage />}
             />
-            <Route
-              path="/templates"
-              element={<DesignTemplatesPage />}
-            />
-            <Route
-              path="/template1"
-              element={<UniversityPromoCard />}
-            />
-            <Route
-              path="/template2"
-              element={<PromoCard />}
-            />
-
+            <Route path="/templates" element={<DesignTemplatesPage />} />
+            <Route path="/template1" element={<UniversityPromoCard />} />
+            <Route path="/template2" element={<PromoCard />} />
             <Route path="/steamricevsrawrice" element={<RiceComparison />} />
             <Route
               path="/aiandgenaivsverficationandvalidation"
@@ -213,23 +201,16 @@ const App: React.FC = () => {
             {/* Landing Page (First Page) */}
             <Route path="/future" element={<Landingpage />} />
             <Route path="/" element={<CurrentLandingPage />} />
-           
-   
-           
             {/* WhatsApp Login (Before Clicking Sign-in) */}
             <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
             <Route path="/womensday" element={<WomensDay />} />
             {/* Dashboard (After Login) */}
-
             {/* Redirect Unknown Routes to Landing Page */}
             <Route path="*" element={<Navigate to="/" replace />} />
-
             {/* {kartpage routes} */}
             {/* <Route path="/buyRice" element={<Ricebags />} /> */}
-
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/bmvpdf" element={<BMVPDF />} />
-
             {/* {Dashboard Main routes} */}
             <Route
               path="/main"
@@ -308,10 +289,7 @@ const App: React.FC = () => {
                 path="/main/dashboard/reviews-gpt"
                 element={<ReviewsGpt />}
               />
-               <Route
-                path="/main/dashboard/home"
-                element={<Home />}
-              />
+              <Route path="/main/dashboard/home" element={<Home />} />
               <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
               <Route
                 path="/main/dashboard/universitiesagents-gpt"
@@ -328,6 +306,7 @@ const App: React.FC = () => {
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
+              <Route path="services/hitmovietickets" element={<HitMovie />} />
               <Route
                 path="services/campaign/:type"
                 element={<CampaignDetails />}
@@ -347,7 +326,6 @@ const App: React.FC = () => {
                 path="services/machines-manufacturing"
                 element={<MachinesManufacturingServices />}
               />
-              
               <Route path="service/oxyloans-service" element={<OxyLoans />} />
               <Route path="services/legalservice" element={<LegalService />} />
               <Route
@@ -441,9 +419,7 @@ const App: React.FC = () => {
                 }
               />
             </Route>
-
             {/* Partner start */}
-
             <Route path="/partnerLogin" element={<PartnerLogin />} />
             <Route path="/home" element={<PartnerHome />}>
               <Route index element={<MainPage />} />{" "}
@@ -458,32 +434,31 @@ const App: React.FC = () => {
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
             </Route>
-
-      {/* Partner end */}
-
-
-      {/* ----------Admin Routes Start---------- */}
-      <Route path="/admin" element={<Login />} />
-          <Route path="/adminRegister" element={<Register />} />
-          <Route path="/admn" element={<AdminSidebar />}>
-            <Route path="dashboard" element={<Admin />} />
-            <Route path="registeredUsers" element={<RegisteredUser />} />
-            <Route path="allqueries" element={<AllQueries />} />
-            <Route
-              path="allcampaignsdetails"
-              element={<AllCampaignsDetails />}
-            />
-            <Route path="campaignsadd" element={<CampaignsAdd />} />
-            <Route path="assignedData" element={<AssignedDataPage />} />
-            <Route path="helpDeskUsers" element={<HelpDeskUsersDashboard />} />
-            <Route path="dataAssigned" element={<DataAssigned />} />
-            <Route path="referredData" element={<ReferredData />} />
-          </Route>
-          {/* ----------Admin Routes end---------- */}
-
+            {/* Partner end */}
+            {/* ----------Admin Routes Start---------- */}
+            <Route path="/admin" element={<Login />} />
+            <Route path="/adminRegister" element={<Register />} />
+            <Route path="/admn" element={<AdminSidebar />}>
+              <Route path="dashboard" element={<Admin />} />
+              <Route path="registeredUsers" element={<RegisteredUser />} />
+              <Route path="allqueries" element={<AllQueries />} />
+              <Route
+                path="allcampaignsdetails"
+                element={<AllCampaignsDetails />}
+              />
+              <Route path="campaignsadd" element={<CampaignsAdd />} />
+              <Route path="assignedData" element={<AssignedDataPage />} />
+              <Route
+                path="helpDeskUsers"
+                element={<HelpDeskUsersDashboard />}
+              />
+              <Route path="dataAssigned" element={<DataAssigned />} />
+              <Route path="referredData" element={<ReferredData />} />
+            </Route>
+            {/* ----------Admin Routes end---------- */}
           </Routes>
         </div>
-        </SearchProvider>
+      </SearchProvider>
     </CartProvider>
   );
 };
