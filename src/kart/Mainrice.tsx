@@ -653,27 +653,12 @@ const Ricebags: React.FC = () => {
         );
         const data: Category[] = response.data;
 
-        // Create a map to deduplicate items based on both itemId and itemName
         const uniqueItemsMap = new Map<string, Item>();
 
-        // Collect all items and ensure uniqueness by both itemId and itemName
+        // Collect all items and ensure uniqueness only by itemId
         data.forEach((category) => {
           category.itemsResponseDtoList.forEach((item) => {
-            // Create a combined key using both itemId and normalized itemName
-            const normalizedName = item.itemName.trim().toLowerCase();
-
-            // Check if we already have an item with this name
-            let isDuplicate = false;
-            uniqueItemsMap.forEach((existingItem) => {
-              if (
-                existingItem.itemName.trim().toLowerCase() === normalizedName
-              ) {
-                isDuplicate = true;
-              }
-            });
-
-            // Only add the item if it's not a duplicate by name
-            if (!isDuplicate) {
+            if (!uniqueItemsMap.has(item.itemId)) {
               uniqueItemsMap.set(item.itemId, item);
             }
           });
@@ -685,7 +670,7 @@ const Ricebags: React.FC = () => {
         // Sort all items by stock status
         const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
 
-        // Create new categories with sorted items
+        // Create new categories with sorted "All Items", others remain unchanged
         const allCategories: Category[] = [
           {
             categoryName: "All Items",
@@ -695,7 +680,6 @@ const Ricebags: React.FC = () => {
           },
           ...data.map((category) => ({
             ...category,
-            // Sort items within each category
             itemsResponseDtoList: sortItemsByStock(
               category.itemsResponseDtoList
             ),

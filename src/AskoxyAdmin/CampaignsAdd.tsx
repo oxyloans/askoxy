@@ -15,6 +15,7 @@ interface CampaignForm {
   campaignDescription: string;
   imageUrl: images[];
   campaignTypeAddBy: string;
+  campainInputType: string;
 }
 
 const CampaignsAdd: React.FC = () => {
@@ -23,6 +24,7 @@ const CampaignsAdd: React.FC = () => {
     campaignDescription: "",
     imageUrl: [],
     campaignTypeAddBy: "RAMA",
+    campainInputType: "SERVICE",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,82 +111,11 @@ const CampaignsAdd: React.FC = () => {
   };
 
   const handleDeleteImage = (indexToDelete: number) => {
-    // Update both formData and fileList
     setFormData((prev) => ({
       ...prev,
       imageUrl: prev.imageUrl.filter((_, index) => index !== indexToDelete),
     }));
-
-    // setFileList((prev) => prev.filter((_, index) => index !== indexToDelete));
   };
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-
-  //   setNameErrorMessage("");
-  //   setDescErrorMessage("");
-  //   setTypeErrorMessage("");
-  //   setSuccessMessage("");
-
-  //   let isValid = true;
-
-  //   if (formData.campaignType.trim() === "") {
-  //     setNameErrorMessage("Campaign Name is required");
-  //     isValid = false;
-  //   }
-
-  //   if (formData.campaignDescription.trim() === "") {
-  //     setDescErrorMessage("Campaign description is required");
-  //     isValid = false;
-  //   }
-  //   if (!isValid) {
-  //     setIsSubmitting(false);
-  //     return;
-  //   }
-  //   setIsSubmitting(true);
-  //   const requestPayload = {
-  //     askOxyCampaignDto: [
-  //       {
-  //         campaignDescription: formData.campaignDescription,
-  //         campaignType: formData.campaignType,
-  //         campaignTypeAddBy: formData.campaignTypeAddBy,
-  //         images: formData.imageUrl,
-  //       },
-  //     ],
-  //   };
-
-  //   console.log("requestPayload", requestPayload.askOxyCampaignDto[0].images);
-
-  //   try {
-  //     const response = await axios.patch(
-  //       BASE_URL + "/marketing-service/campgin/addCampaignTypes",
-  //       requestPayload,
-  //       {
-  //         headers: {
-  //           accept: "*/*",
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-
-  //     if (response.data) {
-  //       message.success("Service Added Successfully...!");
-  //       setFormData({
-  //         campaignType: "",
-  //         campaignDescription: "",
-  //         imageUrl: [],
-  //         campaignTypeAddBy: "RAMA",
-  //       });
-  //     } else {
-  //       setErrorMessage("Failed to add service. Please try again.");
-  //       message.error("Failed to add service. Please try again.");
-  //     }
-  //   } catch (error) {
-  //     setErrorMessage("Failed to add service. Please try again.");
-  //     message.error("Failed to add service. Please try again.");
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,11 +151,12 @@ const CampaignsAdd: React.FC = () => {
           campaignType: formData.campaignType,
           campaignTypeAddBy: formData.campaignTypeAddBy,
           images: formData.imageUrl,
+          campainInputType: formData.campainInputType,
         },
       ],
     };
 
-    console.log("requestPayload", requestPayload.askOxyCampaignDto[0].images);
+    // console.log("requestPayload", requestPayload.askOxyCampaignDto[0].images);
 
     try {
       const response = await axios.patch(
@@ -245,6 +177,7 @@ const CampaignsAdd: React.FC = () => {
           campaignDescription: "",
           imageUrl: [],
           campaignTypeAddBy: "RAMA",
+          campainInputType: "SERVICE",
         });
       } else {
         setErrorMessage("Failed to add service. Please try again.");
@@ -273,19 +206,97 @@ const CampaignsAdd: React.FC = () => {
     return isValid;
   };
 
+  const handleTypeChange = (type: string) => {
+    setFormData({
+      ...formData,
+      campainInputType: type,
+    });
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar */}
-      {/* <div className="lg:w-1/4 w-full p-4"> */}
-      <Sidebar />
-      {/* </div> */}
-      <div className="flex flex-1 justify-center items-center p-6">
-        <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+      <div className="flex flex-1 justify-center">
+        <div className="w-full max-w-2xl bg-gray-50 rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             Add New Service
           </h1>
           <form>
-            {/* Campaign Name */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type of Service
+              </label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    formData.campainInputType === "SERVICE"
+                      ? "border-blue-500 bg-blue-50 shadow-md"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onClick={() => handleTypeChange("SERVICE")}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-gray-800">Service</h3>
+                      <p className="text-gray-500 text-sm mt-1">
+                        For Service based offers
+                      </p>
+                    </div>
+                    {formData.campainInputType === "SERVICE" && (
+                      <div className="h-6 w-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-white"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    formData.campainInputType === "PRODUCT"
+                      ? "border-blue-500 bg-blue-50 shadow-md"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onClick={() => handleTypeChange("PRODUCT")}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-gray-800">Product</h3>
+                      <p className="text-gray-500 text-sm mt-1">
+                        For Product based offers
+                      </p>
+                    </div>
+                    {formData.campainInputType === "PRODUCT" && (
+                      <div className="h-6 w-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-white"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="mb-4">
               <label
                 htmlFor="campaignType"
@@ -366,8 +377,9 @@ const CampaignsAdd: React.FC = () => {
                 />
               </label>
               <p className="text-sm text-gray-600">
-                upload multiple images at once, provided each image is below 1MB
-                and in jpg/png format.
+                upload multiple images at once, provided each image is below{" "}
+                <span className="font-bold">1Mb </span>
+                and in <span className="font-bold">jpg/png </span> format.
               </p>
               {isUploading && (
                 <div className="flex items-center text-sm text-gray-600">

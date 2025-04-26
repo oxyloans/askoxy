@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import axios from "axios";
-import { message, Modal, notification } from "antd";
+import { Button, message, Modal, notification } from "antd";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
@@ -21,6 +21,7 @@ interface Campaign {
   imageUrls: Image[];
   campaignTypeAddBy: string;
   campaignStatus: boolean;
+  campainInputType: string;
 }
 
 const CampaignDetails: React.FC = () => {
@@ -66,7 +67,6 @@ const CampaignDetails: React.FC = () => {
           `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
         );
 
-        // Assign the last 4 characters of campaignId
         const campaignsWithIds = response.data.map((campaign) => ({
           ...campaign,
           campaignId: campaign.campaignId.slice(-4), // Use last 4 digits
@@ -90,7 +90,6 @@ const CampaignDetails: React.FC = () => {
             );
 
             if (fallbackCampaign) {
-              // Update URL with correct campaignId
               const newUrl = location.pathname.replace(
                 campaignId,
                 fallbackCampaign.campaignId as string
@@ -280,6 +279,16 @@ const CampaignDetails: React.FC = () => {
     setIsOpen(false);
     navigate("/main/profile");
   };
+  const handleBuyNow = () => {
+    if (!userId) {
+      message.warning("Please login to buy now.");
+      navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", `/main/dashboard/products`);
+      return;
+    } else {
+      navigate("/main/dashboard/products");
+    }
+  };
 
   const renderNotFoundPage = () => {
     return (
@@ -346,6 +355,19 @@ const CampaignDetails: React.FC = () => {
             </h1>
 
             <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
+              {campaign.campainInputType === "PRODUCT" && (
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => {
+                    handleBuyNow();
+                  }}
+                  aria-label="Visit our site"
+                  disabled={isButtonDisabled || interested}
+                >
+                  Buy Now
+                </button>
+              )}
+
               <button
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => {
@@ -354,7 +376,7 @@ const CampaignDetails: React.FC = () => {
                 aria-label="Visit our site"
                 disabled={isButtonDisabled || interested}
               >
-                {!interested ? "I'm Interested" : "Alredy Participated"}
+                {!interested ? "I'm Interested" : "Already Participated"}
               </button>
               <button
                 className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f9b91a] transition-all"
@@ -366,9 +388,7 @@ const CampaignDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Content Container */}
           <div className="flex flex-col gap-8 mb-8">
-            {/* Image Container */}
             {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
               campaign.imageUrls.length === 1 ? (
                 <div className="flex justify-center px-4 sm:px-6">
@@ -378,32 +398,32 @@ const CampaignDetails: React.FC = () => {
                       <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
                     </div>
 
-                    <div className="min-h-[200px] bg-gray-50 rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 rounded-lg overflow-hidden">
                       <img
                         src={campaign.imageUrls[0].imageUrl}
                         alt={campaign.campaignType}
-                        className="w-full h-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                         onLoad={(e) => {
                           const img = e.target as HTMLImageElement;
                           const aspectRatio =
                             img.naturalWidth / img.naturalHeight;
                           const container = img.parentElement;
 
-                          // Set container aspect ratio based on image orientation
                           if (container) {
+                            // Instead of setting aspect ratio on container, set max-height based on orientation
                             if (aspectRatio > 1.2) {
                               // Horizontal image
-                              container.style.aspectRatio = "16/9";
-                              img.style.maxHeight = "480px";
+                              img.style.maxHeight = "min(480px, 70vh)";
                             } else if (aspectRatio < 0.8) {
                               // Vertical image
-                              container.style.aspectRatio = "2/3";
-                              img.style.maxHeight = "600px";
+                              img.style.maxHeight = "min(600px, 80vh)";
                             } else {
                               // Square-ish image
-                              container.style.aspectRatio = "1";
-                              img.style.maxHeight = "500px";
+                              img.style.maxHeight = "min(500px, 75vh)";
                             }
+
+                            // Ensure container height matches image
+                            container.style.height = "auto";
                           }
 
                           // Remove loading spinner
@@ -426,18 +446,18 @@ const CampaignDetails: React.FC = () => {
                   {campaign.imageUrls.map((image, index) => (
                     <div
                       key={image.imageId}
-                      className="relative bg-gray-50 rounded-lg overflow-hidden"
+                      className="relative bg-gray-50 rounded-lg overflow-hidden h-auto"
                     >
                       {/* Loading placeholder */}
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
                         <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
                       </div>
 
-                      <div className="min-h-[200px] bg-gray-50 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
                         <img
                           src={image.imageUrl}
                           alt={`${campaign.campaignType} - ${index + 1}`}
-                          className="w-full h-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                           onLoad={(e) => {
                             const img = e.target as HTMLImageElement;
                             const aspectRatio =
@@ -445,20 +465,20 @@ const CampaignDetails: React.FC = () => {
                             const container = img.parentElement;
 
                             if (container) {
-                              // Set container aspect ratio based on image orientation
+                              // Set image max-height based on orientation
                               if (aspectRatio > 1.2) {
                                 // Horizontal image
-                                container.style.aspectRatio = "16/9";
-                                img.style.maxHeight = "320px";
+                                img.style.maxHeight = "min(320px, 50vh)";
                               } else if (aspectRatio < 0.8) {
                                 // Vertical image
-                                container.style.aspectRatio = "2/3";
-                                img.style.maxHeight = "400px";
+                                img.style.maxHeight = "min(400px, 60vh)";
                               } else {
                                 // Square-ish image
-                                container.style.aspectRatio = "1";
-                                img.style.maxHeight = "360px";
+                                img.style.maxHeight = "min(360px, 55vh)";
                               }
+
+                              // Ensure container height matches image
+                              container.style.height = "auto";
 
                               // Center the image if it's smaller than container
                               if (img.naturalWidth < img.offsetWidth) {
