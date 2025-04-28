@@ -72,6 +72,9 @@ const Categories: React.FC<CategoriesProps> = ({
   const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
     null
   );
+  const [disabledFilters, setDisabledFilters] = useState<{
+    [key: string]: boolean;
+  }>({});
   const location = useLocation();
   const navigate = useNavigate();
   const [loadingItems, setLoadingItems] = useState<{
@@ -394,27 +397,23 @@ const Categories: React.FC<CategoriesProps> = ({
       }));
     }
   };
+const getCurrentCategoryItems = () => {
+  const currentCategory =
+    categories.find((cat) => cat.categoryName === activeCategory) ||
+    categories[0];
+  if (!currentCategory) return [];
 
-  const getCurrentCategoryItems = () => {
-    const currentCategory =
-      categories.find((cat) => cat.categoryName === activeCategory) ||
-      console.log("====================================");
+  let items = currentCategory.itemsResponseDtoList;
 
-    console.log("====================================");
-    if (!currentCategory) return [];
+  if (activeWeightFilter) {
+    items = items.filter((item) => {
+      const itemWeight = parseFloat(item.weight).toFixed(1);
+      return itemWeight === activeWeightFilter;
+    });
+  }
 
-    let items = currentCategory.itemsResponseDtoList;
-
-    if (activeWeightFilter) {
-      items = items.filter((item) => {
-        const itemWeight = parseInt(item.weight).toFixed(1);
-        return itemWeight === activeWeightFilter;
-      });
-    }
-
-    return items;
-  };
-
+  return items;
+};
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
     const category = categories.find(
@@ -422,18 +421,30 @@ const Categories: React.FC<CategoriesProps> = ({
     );
     return category?.subCategories || [];
   };
-
-  const handleWeightFilterClick = (weight: string | null) => {
-    setActiveWeightFilter(weight);
-    setSelectedFilterKey("0");
-    setSelectedFilter("ALL");
-  };
-
-  const handleResetFilters = () => {
+const handleWeightFilterClick = (value: string) => {
+  // If currently active, deactivate it
+  if (activeWeightFilter === value) {
     setActiveWeightFilter(null);
-    setSelectedFilterKey("0");
-    setSelectedFilter("ALL");
-  };
+  } else {
+    // Otherwise set as active
+    setActiveWeightFilter(value);
+  }
+
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "toggle_weight_filter", {
+      filter_value: value,
+      new_state: activeWeightFilter === value ? "off" : "on",
+    });
+  }
+
+  setSelectedFilterKey("0");
+  setSelectedFilter("ALL");
+};
+  // const handleResetFilters = () => {
+  //   setActiveWeightFilter(null);
+  //   setSelectedFilterKey("0");
+  //   setSelectedFilter("ALL");
+  // };
 
   // 1+1 free rice bag modal starts here
 
@@ -722,26 +733,41 @@ const Categories: React.FC<CategoriesProps> = ({
           {weightFilters.map((filter, index) => (
             <motion.button
               key={index}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{
+                scale:
+                  filter.value === "1.0" && disabledFilters[filter.value]
+                    ? 1
+                    : 1.02,
+              }}
+              whileTap={{
+                scale:
+                  filter.value === "1.0" && disabledFilters[filter.value]
+                    ? 1
+                    : 0.98,
+              }}
               className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                filter.value === activeWeightFilter
+                filter.value === "1.0" && disabledFilters[filter.value]
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                  : filter.value === activeWeightFilter
                   ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
                   : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
               }`}
               onClick={() => handleWeightFilterClick(filter.value)}
+              disabled={filter.value === "1.0" && disabledFilters[filter.value]}
+              title={
+                filter.value === "1.0" && disabledFilters[filter.value]
+                  ? "Disabled. Click Reset to enable."
+                  : ""
+              }
             >
               {filter.label}
+              {filter.value === "1.0" && (
+                <span className="ml-1 text-xs">
+                  {disabledFilters[filter.value] ? "(Disabled)" : ""}
+                </span>
+              )}
             </motion.button>
           ))}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100 transition-all duration-300"
-            onClick={handleResetFilters}
-          >
-            Reset
-          </motion.button>
         </div>
       </div>
 

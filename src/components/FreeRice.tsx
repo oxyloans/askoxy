@@ -14,6 +14,8 @@ import Rice2 from "../assets/img/RICEU7.png";
 import Rice3 from "../assets/img/RICEU10.png";
 import Rice4 from "../assets/img/RICEU9.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
+import Retro from "../assets/img/retro.png";
+import O5 from "../assets/img/tb1.png";
 
 // Type definitions
 interface RiceProduct {
@@ -43,6 +45,20 @@ const FreeRiceBlog: React.FC = () => {
     {
       id: 2,
       imageUrl: Rice2,
+      title: "5KG Premium Rice Bag",
+      description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
+      weight: 5.0,
+    },
+    {
+      id: 2,
+      imageUrl: Retro,
+      title: "5KG Premium Rice Bag",
+      description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
+      weight: 5.0,
+    },
+    {
+      id: 2,
+      imageUrl: O5,
       title: "5KG Premium Rice Bag",
       description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
       weight: 5.0,

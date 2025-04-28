@@ -18,9 +18,13 @@ import RudrakshaImage from "../assets/img/freerudraksha.png";
 
 import O1 from "../assets/img/o1.png";
 import O2 from "../assets/img/o2.png";
+import O8 from "../assets/img/StudyAbroda.png";
 import O3 from "../assets/img/o3.png";
 import O4 from "../assets/img/o4.png";
-
+import O5 from "../assets/img/tb1.png";
+import O6 from "../assets/img/26kg.png";
+import O7 from "../assets/img/retro.png";
+import O9 from "../assets/img/35kg1.png";
 
 // Product Skeleton Component
 const ProductSkeleton: React.FC<{ index: number }> = ({ index }) => {
@@ -155,25 +159,51 @@ const Home: React.FC = () => {
       id: "o3",
       src: O3,
       alt: "Products",
-      path: "/main/dashboard/products?weight=1.0"
-    }, {
-      id: "o1",
-      src: O1,
-      alt: "OxyLoans",
-      path: "/main/service/oxyloans-service"
+      path: "/main/dashboard/products?weight=1.0",
     },
     {
       id: "o2",
       src: O2,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=5.0",
+    },
+    {
+      id: "o6",
+      src: O7,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=5.0",
+    },
+    {
+      id: "o1",
+      src: O6,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=10.0",
+    },
+
+    {
+      id: "o6",
+      src: O9,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=26.0",
+    },
+    {
+      id: "o1",
+      src: O1,
+      alt: "OxyLoans",
+      path: "/main/service/oxyloans-service",
+    },
+    {
+      id: "o2",
+      src: O8,
       alt: "Study Abroad",
-      path: "/main/services/studyabroad"
+      path: "/main/services/studyabroad",
     },
     {
       id: "o4",
       src: O4,
       alt: "Villa @36Lakshs",
-      path: "/main/services/campaign/37b3"
-    }
+      path: "/main/services/campaign/37b3",
+    },
   ];
 
   const sortItemsByName = (items: Item[]): Item[] => {

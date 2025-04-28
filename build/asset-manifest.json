@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.ff0e7f37.css",
-    "main.js": "/static/js/main.bdd8c604.js",
+    "main.css": "/static/css/main.5620ce9f.css",
+    "main.js": "/static/js/main.1afcc154.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.png": "/static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.f22986a86ab61897cfab.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -25,16 +25,21 @@
     "static/media/bmvcoin.png": "/static/media/bmvcoin.d4b8d7a173edac896cdc.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
     "static/media/RICEU1.png": "/static/media/RICEU1.edf64b4f457e2173b6eb.png",
+    "static/media/tb1.png": "/static/media/tb1.c24dd9c2d84aa3328081.png",
+    "static/media/retro.png": "/static/media/retro.e7a8f9d8a90af29245c1.png",
+    "static/media/o2.png": "/static/media/o2.167528e93bf4892271a5.png",
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
     "static/media/RICEU7.png": "/static/media/RICEU7.016b8b9d37b6c9a67ad9.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
+    "static/media/26kg.png": "/static/media/26kg.2b031468cb89257cd9e7.png",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
     "static/media/games.png": "/static/media/games.a8a1f4e472b2b491412b.png",
     "static/media/Beauty (1).png": "/static/media/Beauty (1).6d1fc399b6274f1ea4f1.png",
     "static/media/jsr.png": "/static/media/jsr.64de972fa7a43ac39c6f.png",
     "static/media/srihmt.png": "/static/media/srihmt.8ac41c993ef8fb63d5a0.png",
     "static/media/fivestar.png": "/static/media/fivestar.0bd3f1470c7d62af722a.png",
+    "static/media/35kg1.png": "/static/media/35kg1.8ff0a8b96d0ac21be3e9.png",
     "static/media/gajrajever.png": "/static/media/gajrajever.c775e11363169c5c2a27.png",
     "static/media/Kurnool.png": "/static/media/Kurnool.ffdc2bb600535a25d85b.png",
     "static/media/cowbrand.png": "/static/media/cowbrand.99bc4772c7a7afcf761a.png",
@@ -133,7 +138,7 @@
     "static/media/Pets.png": "/static/media/Pets.ca3ab0d5bb314a9dc270.png",
     "static/media/IMAGE 16.png": "/static/media/IMAGE 16.e2c205dbc69cbfa0b18a.png",
     "static/media/loan services.png": "/static/media/loan services.d1ec8a6c9d10588e8412.png",
-    "static/media/o2.png": "/static/media/o2.5993d0be5c2d681d469f.png",
+    "static/media/StudyAbroda.png": "/static/media/StudyAbroda.5993d0be5c2d681d469f.png",
     "static/media/BUY 1 GET 1.png": "/static/media/BUY 1 GET 1.350a5a19662ae252efbb.png",
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
     "static/media/IMAGE 3.png": "/static/media/IMAGE 3.5588a13795e17eb3e259.png",
@@ -182,11 +187,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.ff0e7f37.css.map": "/static/css/main.ff0e7f37.css.map",
-    "main.bdd8c604.js.map": "/static/js/main.bdd8c604.js.map"
+    "main.5620ce9f.css.map": "/static/css/main.5620ce9f.css.map",
+    "main.1afcc154.js.map": "/static/js/main.1afcc154.js.map"
   },
   "entrypoints": [
-    "static/css/main.ff0e7f37.css",
-    "static/js/main.bdd8c604.js"
+    "static/css/main.5620ce9f.css",
+    "static/js/main.1afcc154.js"
   ]
 }
