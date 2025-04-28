@@ -62,7 +62,6 @@ interface AssignedOrder {
   orderAddress?: OrderAddress;
 }
 
-// Interface for picked up orders (different structure)
 interface PickedUpOrder {
   orderId: string;
   orderDate: string;
@@ -70,10 +69,8 @@ interface PickedUpOrder {
   totalAmount: number;
   deliveryBoyId: string;
   orderItems: OrderItem[];
-  // No orderAddress in this response
 }
 
-// Union type to handle both response types
 type Order = AssignedOrder | PickedUpOrder;
 
 const DeliveryBoyOrders: React.FC = () => {
@@ -105,29 +102,36 @@ const DeliveryBoyOrders: React.FC = () => {
           { deliveryBoyId, orderStatus: 3 }
         );
         assignedData = assignedResponse.data || [];
-      } catch (err) {
-        message.warning("Failed to fetch assigned orders.");
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          message.success("No assigned orders found.");
+        } else {
+          message.warning("Failed to fetch assigned orders.");
+        }
       }
 
-      // Delivered Orders
       try {
         const deliveredResponse = await axios.post(
           `${BASE_URL}/order-service/getAssignedOrdersToDeliveryBoy`,
           { deliveryBoyId, orderStatus: 4 }
         );
         deliveredData = deliveredResponse.data || [];
-      } catch (err) {
-        message.warning("Failed to fetch delivered orders.");
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          message.success("No delivered orders found.");
+        } else {
+          message.warning("Failed to fetch assigned orders.");
+        }
       }
 
       // Picked Up Orders
       try {
         const pickedUpResponse = await axios.get(
-          `${BASE_URL}/order-service/getPickupDataBasedOnId?deliveryBoyId=${deliveryBoyId}`
+          `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`
         );
         pickedUpData = pickedUpResponse.data || [];
       } catch (err) {
-        message.warning("Failed to fetch picked up orders.");
+        message.success("Failed to fetch picked up orders.");
       }
 
       // Set state
@@ -183,7 +187,7 @@ const DeliveryBoyOrders: React.FC = () => {
     return (
       <Row gutter={[16, 16]}>
         {orders.map((order) => (
-          <Col key={order.orderId} xs={24} sm={12} lg={12} xl={12}>
+          <Col key={order.orderId} xs={24} sm={12} md={8} lg={8} xl={8}>
             <Card
               className="w-full border-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2"
               bordered={false}
@@ -273,7 +277,6 @@ const DeliveryBoyOrders: React.FC = () => {
                   </div>
                 )}
 
-                {/* Items Section - First 2 items only */}
                 <div className="flex flex-col space-y-2">
                   <div className="flex items-center">
                     <ShoppingOutlined className="mr-2 text-blue-500" />
@@ -285,8 +288,8 @@ const DeliveryBoyOrders: React.FC = () => {
                   <div className="bg-gray-50 p-3 rounded-md max-h-[80px] overflow-y-auto scrollbar-hide">
                     {order.orderItems && order.orderItems.length > 0 ? (
                       <div className="space-y-2">
-                        {order.orderItems.slice(0, 2).map((item, index) => (
-                          <div key={index} className="flex justify-between">
+                        {order.orderItems.slice(0, 3).map((item, index) => (
+                          <div key={index} className="flex flex-col">
                             <Typography.Text ellipsis className="max-w-[70%]">
                               {item.itemName ||
                                 item.itemBarCode ||
@@ -299,9 +302,9 @@ const DeliveryBoyOrders: React.FC = () => {
                             )}
                           </div>
                         ))}
-                        {order.orderItems.length > 2 && (
+                        {order.orderItems.length > 3 && (
                           <Typography.Text type="secondary">
-                            +{order.orderItems.length - 2} more items
+                            +{order.orderItems.length - 3} more items
                           </Typography.Text>
                         )}
                       </div>
@@ -367,8 +370,8 @@ const DeliveryBoyOrders: React.FC = () => {
   ];
 
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-gray-100 min-h-screen p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Delivery Boy Profile Section */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 border-l-4 border-blue-500">
           <div className="flex items-center">
@@ -387,7 +390,6 @@ const DeliveryBoyOrders: React.FC = () => {
             </div>
           </div>
         </div>
-
         <Title level={2} className="text-center mb-6">
           Orders Details
         </Title>
@@ -404,7 +406,7 @@ const DeliveryBoyOrders: React.FC = () => {
             items={items}
             activeKey={activeTab}
             onChange={setActiveTab}
-            className="bg-white p-4 rounded-lg shadow-md"
+            className="bg-white p-4 rounded-lg shadow-md w-full"
           />
         )}
       </div>

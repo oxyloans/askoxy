@@ -19,7 +19,10 @@ import {
   Radio,
   Space,
   Empty,
+  Avatar,
+  Badge,
 } from "antd";
+
 import {
   ClockCircleOutlined,
   CheckCircleOutlined,
@@ -29,18 +32,27 @@ import {
   ShoppingCartOutlined,
   ExclamationCircleOutlined,
   CarOutlined,
+  PhoneOutlined,
+  HomeOutlined,
+  CalendarOutlined,
+  EnvironmentOutlined,
+  NumberOutlined,
 } from "@ant-design/icons";
-import BASE_URL from "../Config";
+
 import {
-  Calendar,
-  FileText,
-  Info,
-  MapPin,
+  User,
   Phone,
   Smartphone,
+  Calendar,
+  MapPin,
+  FileText,
+  Info,
   Truck,
-  User,
 } from "lucide-react";
+
+import BASE_URL from "../Config";
+
+const { Title, Text } = Typography;
 
 // Type Definitions
 interface OrderAddress {
@@ -191,27 +203,31 @@ const OrderDetailsPage: React.FC = () => {
       .then((response) => {
         const status = response.data?.freeContainerStatus;
 
-        if (status !== null) {
-          const steelContainerItem = ordersData.orderItems?.find((item) =>
-            item.itemName?.toLowerCase().includes("steel")
-          );
+        const steelContainerItem = ordersData.orderItems?.find((item) =>
+          item.itemName?.toLowerCase().includes("steel")
+        );
 
+        const eligibleItem = ordersData.orderItems?.find(
+          (item) => item.weight === 10 || item.weight === 26
+        );
+
+        if (status === null) {
           if (steelContainerItem) {
             setButtonLabel("Remove");
             setShowButton(true);
             setSelectedItem(steelContainerItem);
+          } else if (eligibleItem) {
+            setButtonLabel("Add");
+            setShowButton(true);
+            setSelectedItem(eligibleItem);
           } else {
             setShowButton(false);
           }
         } else {
-          const eligibleItem = ordersData.orderItems?.find(
-            (item) => item.weight === 10 || item.weight === 26
-          );
-
-          if (eligibleItem) {
-            setButtonLabel("Add");
+          if (steelContainerItem) {
+            setButtonLabel("Remove");
             setShowButton(true);
-            setSelectedItem(eligibleItem);
+            setSelectedItem(steelContainerItem);
           } else {
             setShowButton(false);
           }
@@ -720,7 +736,8 @@ const OrderDetailsPage: React.FC = () => {
 
           {(orderStatus === "1" ||
             orderStatus === "2" ||
-            orderStatus === "3") && (
+            orderStatus === "3" ||
+            orderStatus === "PickedUp") && (
             <div className="px-4 py-4 bg-gray-50 flex flex-row flex-wrap space-x-2 sm:justify-end sm:space-x-3 border-b items-end">
               {showButton && (
                 <Button
@@ -775,186 +792,110 @@ const OrderDetailsPage: React.FC = () => {
             </div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-6 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
             {/* Customer Details Card */}
-            <div className="bg-white rounded-xl shadow-md border border-blue-50 overflow-hidden">
-              <div className="bg-blue-50 px-5 py-4 border-b border-blue-100 flex items-center">
-                <UserOutlined className="mr-3 text-blue-600 text-xl" />
-                <h2 className="text-lg font-semibold text-blue-800">
+            <Card
+              title={
+                <span className="text-blue-600">
+                  <UserOutlined className="mr-2" />
                   Customer Details
-                </h2>
-              </div>
-              {/* <div className="bg-white shadow-lg rounded-lg overflow-hidden"> */}
-              <div className="p-4 sm:p-6">
-                <div className="space-y-4">
-                  {/* Customer Name Section */}
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-blue-50 p-2 rounded-full">
-                        <User className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-600">
-                        Name
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800">
-                      {orderDetails.customerName || "N/A"}
-                    </span>
-                  </div>
-
-                  {/* Primary Mobile Number Section */}
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-green-50 p-2 rounded-full">
-                        <Phone className="h-5 w-5 text-green-500" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-600">
-                        Mobile
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800">
-                      {orderDetails.mobileNumber || ""}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-purple-50 p-2 rounded-full">
-                        <Smartphone className="h-5 w-5 text-purple-500" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-600">
-                        Alt. Mobile
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800">
-                      {getMobileNumber()}
-                    </span>
-                  </div>
-
-                  {/* Order Date Section */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-orange-50 p-2 rounded-full">
-                        <Calendar className="h-5 w-5 text-orange-500" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-600">
-                        Order Date
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800">
-                      {formatDate(orderDetails.orderDate) || ""}
-                    </span>
+                </span>
+              }
+              className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-blue-500"
+              bordered={false}
+              headStyle={{ backgroundColor: "rgba(239, 246, 255, 0.7)" }}
+              bodyStyle={{ backgroundColor: "white" }}
+            >
+              <div className="flex items-center mb-4">
+                <Avatar
+                  size={64}
+                  icon={<UserOutlined />}
+                  className="bg-blue-500"
+                />
+                <div className="ml-4">
+                  <Title level={4} className="mb-0">
+                    {orderDetails.customerName || "N/A"}
+                  </Title>
+                  <div className="mt-1">
+                    <Tag className="text-purple-500 font-bold text-base">
+                      Order #{orderDetails.orderId.slice(-4)}
+                    </Tag>
                   </div>
                 </div>
               </div>
-              {/* </div> */}
-            </div>
+              <Divider />
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center">
+                  <PhoneOutlined className="mr-2 text-green-500" />
+                  <Text className="text-base">
+                    {orderDetails.mobileNumber || ""}
+                  </Text>
+                </div>
+                <Badge status="success" text="Primary" />
+              </div>
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center">
+                  <PhoneOutlined className="mr-2 text-purple-500" />
+                  <Text className="text-base">{getMobileNumber()}</Text>
+                </div>
+                <Badge status="processing" text="Alternative" />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <CalendarOutlined className="mr-2 text-orange-500" />
+                  <Text>{formatDate(orderDetails.orderDate) || ""}</Text>
+                </div>
+                <Text type="secondary">Order Date</Text>
+              </div>
+            </Card>
 
             {/* Delivery Address Card */}
-            <div className="bg-white rounded-xl shadow-md border border-green-50 overflow-hidden">
-              <div className="bg-green-50 px-5 py-4 border-b border-green-100 flex items-center">
-                <MapPin className="mr-3 text-green-600 text-xl" />
-                <h2 className="text-lg font-semibold text-green-800">
+            <Card
+              title={
+                <span className="text-green-600">
+                  <HomeOutlined className="mr-2" />
                   Delivery Address
-                </h2>
+                </span>
+              }
+              className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-green-500"
+              bordered={false}
+              headStyle={{ backgroundColor: "rgba(240, 253, 244, 0.7)" }}
+              bodyStyle={{ backgroundColor: "white" }}
+            >
+              <div className="mb-4">
+                <Text strong className="block mb-1">
+                  Address :
+                </Text>
               </div>
-              <div className="p-5">
-                <div className="space-y-4 text-gray-700">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <div className="font-medium text-gray-600 flex items-center">
-                      <span className="mr-2 text-blue-500">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <rect
-                            x="3"
-                            y="3"
-                            width="18"
-                            height="18"
-                            rx="2"
-                            ry="2"
-                          ></rect>
-                          <line x1="3" y1="9" x2="21" y2="9"></line>
-                          <line x1="9" y1="21" x2="9" y2="9"></line>
-                        </svg>
-                      </span>
-                      Flat No
-                    </div>
-                    <span className="text-gray-800 font-semibold">
-                      {orderDetails.orderAddress?.flatNo || ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <div className="font-medium text-gray-600 flex items-center">
-                      <span className="mr-2 text-green-500">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M20.69 12.22 14 8.11a2 2 0 0 0-2 0l-6.69 4.11a2 2 0 0 0-.87 1.64v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a2 2 0 0 0-.94-1.64z"></path>
-                          <polyline points="22 12 14 7 6 12"></polyline>
-                        </svg>
-                      </span>
-                      Address
-                    </div>
-                    <span className="text-gray-800 font-semibold max-w-[200px] text-right">
-                      {orderDetails.orderAddress?.address || ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <div className="font-medium text-gray-600 flex items-center">
-                      <span className="mr-2 text-purple-500">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                          <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                      </span>
-                      Landmark
-                    </div>
-                    <span className="text-gray-800 font-semibold">
-                      {orderDetails.orderAddress?.landMark || ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="font-medium text-gray-600 flex items-center">
-                      <span className="mr-2 text-red-500">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                          <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                      </span>
-                      Pincode
-                    </div>
-                    <span className="text-gray-800 font-semibold">
-                      {orderDetails.orderAddress?.pincode || ""}
-                    </span>
-                  </div>
+              <Text className="block mb-4">
+                {orderDetails.orderAddress?.flatNo || ""},{" "}
+                {orderDetails.orderAddress?.address || ""},{" "}
+                {orderDetails.orderAddress?.landMark || ""},{" "}
+                {orderDetails.orderAddress?.pincode || ""}
+              </Text>
+              <Divider />
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center">
+                  <HomeOutlined className="mr-2 text-blue-500" />
+                  <Text>Flat No:</Text>
                 </div>
+                <Text>{orderDetails.orderAddress?.flatNo || ""}</Text>
               </div>
-            </div>
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center">
+                  <EnvironmentOutlined className="mr-2 text-purple-500" />
+                  <Text>Landmark:</Text>
+                </div>
+                <Text>{orderDetails.orderAddress?.landMark || ""}</Text>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <NumberOutlined className="mr-2 text-red-500" />
+                  <Text>Pincode:</Text>
+                </div>
+                <Text>{orderDetails.orderAddress?.pincode || ""}</Text>
+              </div>
+            </Card>
           </div>
 
           <div className="p-6 bg-gray-50 border-t">

@@ -122,6 +122,7 @@ import ReferredData from "./AskoxyAdmin/RefferedData";
 import FreeRiceBlog from "./components/FreeRice";
 import { SearchProvider } from "./until/SearchContext";
 import SearchMain from "./Dashboard/SearchMain";
+import OrderReport from "./AskoxyAdmin/OrderReport";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -454,6 +455,7 @@ const App: React.FC = () => {
               />
               <Route path="dataAssigned" element={<DataAssigned />} />
               <Route path="referredData" element={<ReferredData />} />
+              <Route path="orderReport" element={<OrderReport/>} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

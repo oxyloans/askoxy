@@ -12,6 +12,7 @@ import {
   FaClipboardList,
   FaHeadset,
   FaUsers,
+  FaFileAlt,
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
@@ -48,10 +49,40 @@ const Sidebar: React.FC = () => {
       roles: ["SELLER", "HELPDESKADMIN"],
     },
     {
+      title: "Orders Report",
+      icon: <FaFileAlt className="text-blue-400" />,
+      link: "/admn/orderReport",
+      roles: ["SELLER"],
+    },
+    {
       title: "Registered Users",
       icon: <FaUser className="text-purple-400" />,
       link: "/admn/registeredUsers",
       roles: ["SELLER", "HELPDESKADMIN"],
+    },
+    {
+      title: "Assigned Data",
+      icon: <FaClipboardList className="text-yellow-400" />,
+      link: "/admn/assignedData",
+      roles: ["HELPDESKADMIN"],
+    },
+    {
+      title: "All Assigned Users",
+      icon: <FaClipboardList className="text-yellow-400" />,
+      link: "/admn/dataAssigned",
+      roles: ["SELLER"],
+    },
+    {
+      title: "Referred Data",
+      icon: <FaUsers className="text-blue-500" />,
+      link: "/admn/referredData",
+      roles: ["HELPDESKADMIN"],
+    },
+    {
+      title: "HelpDesk Team",
+      icon: <FaHeadset className="text-green-400" />,
+      link: "/admn/helpdeskusers",
+      roles: ["SELLER"],
     },
     {
       title: "Add Service",
@@ -70,30 +101,6 @@ const Sidebar: React.FC = () => {
       icon: <FaDatabase className="text-yellow-400" />,
       link: "/admn/allqueries",
       roles: ["SELLER", "HELPDESKADMIN"],
-    },
-    {
-      title: "Assigned Data",
-      icon: <FaClipboardList className="text-yellow-400" />,
-      link: "/admn/assignedData",
-      roles: ["HELPDESKADMIN"],
-    },
-    {
-      title: "Assigned Users",
-      icon: <FaClipboardList className="text-yellow-400" />,
-      link: "/admn/dataAssigned",
-      roles: ["SELLER"],
-    },
-    {
-      title: "Referred Data",
-      icon: <FaUsers className="text-blue-500" />,
-      link: "/admn/referredData",
-      roles: ["HELPDESKADMIN"],
-    },
-    {
-      title: "HelpDesk Team",
-      icon: <FaHeadset className="text-green-400" />,
-      link: "/admn/helpdeskusers",
-      roles: ["SELLER"],
     },
     {
       title: "Logout",
@@ -219,18 +226,18 @@ const Sidebar: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="mt-4 px-2">
-          <ul className="space-y-1">
+        <nav className="mt-2 px-2">
+          <ul className="space-y-0.5">
             {visibleItems.map((item, index) => (
               <li key={index}>
                 <Link
                   to={item.link}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors relative group
-                    ${
-                      isActive(item.link)
-                        ? "bg-gray-900 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
+                  className={`flex items-center px-3 py-2 rounded-lg transition-colors relative group text-sm
+            ${
+              isActive(item.link)
+                ? "bg-gray-900 text-white"
+                : "text-gray-300 hover:bg-gray-700 hover:text-white"
+            }`}
                   onClick={(e) => {
                     if (item.onClick) {
                       e.preventDefault();
@@ -240,13 +247,13 @@ const Sidebar: React.FC = () => {
                     }
                   }}
                 >
-                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-lg">{item.icon}</span>
                   {collapsed && !isMobileOpen ? (
-                    <span className="absolute left-full ml-2 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 pointer-events-none">
+                    <span className="absolute left-full ml-2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 pointer-events-none">
                       {item.title}
                     </span>
                   ) : (
-                    <span className="ml-3 font-medium truncate">
+                    <span className="ml-2 font-medium truncate">
                       {item.title}
                     </span>
                   )}

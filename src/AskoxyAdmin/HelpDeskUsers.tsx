@@ -331,12 +331,12 @@ const HelpDeskUsers: React.FC = () => {
 
   const handleAssignUsers = async (userId: string, pageNo = 1) => {
     setAssignUserId(userId);
-    setAssignUserModalVisible(true); // Show modal immediately
+    setAssignUserModalVisible(true);
     setAssignUserLoading(true);
     try {
-      setAssignUserId(userId); // Save for future pagination
+      setAssignUserId(userId);
       const response = await axios.post(
-        `${BASE_URL}/user-service/allOxyUsersAssignedBasedOnId?helpdeskUserId=${userId}`,
+        `${BASE_URL}/user-service/assigned-users/${userId}`,
         {
           pageNo,
           pageSize: 10,
@@ -745,7 +745,7 @@ const HelpDeskUsers: React.FC = () => {
             <Table<TableUser>
               columns={columns}
               dataSource={dataSource}
-              pagination={{ pageSize: 10 }}
+              pagination={{ pageSize: 30 }}
               scroll={{ x: true }}
               rowClassName={(record) =>
                 record.emailVerified === "true" ? "" : "ant-table-row-error"
@@ -808,7 +808,7 @@ const HelpDeskUsers: React.FC = () => {
                   <Col xs={12}>
                     <Card>
                       <Statistic
-                        title="Today Calls Count("
+                        title="Today Calls Count"
                         value={reportData.dayCount}
                         valueStyle={{ color: "#1890ff" }}
                       />

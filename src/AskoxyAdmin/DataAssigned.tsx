@@ -98,7 +98,6 @@ const DataAssigned: React.FC = () => {
   const [uniqueId, setUniqueId] = useState<string>("");
   const [helpDeskUsers, setHelpDeskUsers] = useState<HelpDeskUser[]>([]);
 
-  // Comments state
   const [commentsModalVisible, setCommentsModalVisible] =
     useState<boolean>(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -109,6 +108,9 @@ const DataAssigned: React.FC = () => {
   const updatedBy = localStorage.getItem("userName")?.toUpperCase();
   const [orderId, setOrderId] = useState<string>("");
   const storedUniqueId = localStorage.getItem("uniquId");
+  const [error, setError] = useState<string | null>(null);
+  const [filteredData, setFilteredData] = useState<UserData[]>([]);
+
   useEffect(() => {
     if (storedUniqueId) {
       setUniqueId(storedUniqueId);
@@ -157,6 +159,7 @@ const DataAssigned: React.FC = () => {
       );
 
       setUserData(response.data.activeUsersResponse);
+      setFilteredData(response.data.activeUsersResponse);
       setTotalCount(response.data.totalCount);
       setLoading(false);
     } catch (error) {
@@ -249,22 +252,6 @@ const DataAssigned: React.FC = () => {
       setSubmittingComment(false);
     }
   };
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  const filteredData = searchTerm
-    ? userData.filter(
-        (user) =>
-          user.mobileNumber?.includes(searchTerm) ||
-          user.lastFourDigitsUserId?.includes(searchTerm) ||
-          user.assignedTo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (user.firstName &&
-            user.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          String(user.ericeCustomerId).includes(searchTerm)
-      )
-    : userData;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
@@ -432,8 +419,8 @@ const DataAssigned: React.FC = () => {
         <Tooltip title={text || "No Address Provided"}>
           <span className="flex items-center">
             {text ? (
-              text.length > 15 ? (
-                `${text.substring(0, 15)}...`
+              text.length > 25 ? (
+                `${text.substring(0, 25)}...`
               ) : (
                 text
               )
@@ -464,6 +451,58 @@ const DataAssigned: React.FC = () => {
     },
   ];
 
+  const handleChange = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    setSearchTerm(value);
+
+    if (value.trim() === "") {
+      setError(null);
+      setFilteredData(userData);
+      return;
+    }
+
+    if (digits.length > 0 && digits.length < 10) {
+      setError("Please enter 10 digits mobile number");
+      setFilteredData(
+        value
+          ? userData.filter(
+              (user) =>
+                user.whastappNumber?.includes(value) ||
+                user.lastFourDigitsUserId?.includes(value) ||
+                (user.firstName &&
+                  user.firstName.toLowerCase().includes(value.toLowerCase())) ||
+                String(user.ericeCustomerId).includes(value)
+            )
+          : userData
+      );
+      return;
+    }
+    setError(null);
+    if (digits.length >= 10) {
+      searchApi(digits);
+    }
+  };
+
+  const searchApi = async (whatsappNumber: string) => {
+    setLoading(true);
+    try {
+      const payload = { whatsappNumber };
+      const { data } = await axios.post<ApiResponse>(
+        `${BASE_URL}/user-service/searchAndAssignOxyUser`,
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      // setUserData(data.activeUsersResponse);
+      setFilteredData(data.activeUsersResponse);
+    } catch (err) {
+      console.error(err);
+      // setError("Search failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="shadow-lg rounded-lg border-0">
       <div className="flex justify-between items-center">
@@ -474,10 +513,12 @@ const DataAssigned: React.FC = () => {
           <Input
             placeholder="Search by mobile, ID or name"
             prefix={<SearchOutlined className="text-gray-400" />}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => handleChange(e.target.value)}
             allowClear
             className="rounded-md"
           />
+          {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
         </div>
       </div>
       <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4"></div>
@@ -492,7 +533,7 @@ const DataAssigned: React.FC = () => {
             <Table
               columns={columns}
               dataSource={filteredData}
-              rowKey="userId"
+              rowKey={(record, index) => `${record.userId}-${index ?? 0}`}
               pagination={false}
               className="border border-gray-200 rounded-lg"
               scroll={{ x: 1200 }}

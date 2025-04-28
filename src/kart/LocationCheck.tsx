@@ -11,13 +11,14 @@ interface Cords {
   lng: number;
 }
 
-// Define the central position and radius
+// Define the central position and radius 
+//17.4856614,78.4239638
 const centralPosition: Coordinates = {
-  latitude: 17.4752533,
-  longitude: 78.3847054,
+  latitude: 17.4856614,
+  longitude: 78.4239638,
 };
 
-const radius = 20000;
+const radius = 25000;
 
 // Utility to check if a position is within a radius
 export const isWithinRadius = (coord1: Cords) => {

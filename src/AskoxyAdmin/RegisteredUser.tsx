@@ -54,6 +54,7 @@ interface UserData {
   flatNo: string | null;
   landMark: string | null;
   pinCode: string | null;
+  helpdeskuserId: string | null;
   address: string | null;
   addressType: string | null;
   registerFrom: string;
@@ -66,6 +67,28 @@ interface ApiResponse {
   totalPages: number;
   number: number;
   size: number;
+}
+
+interface OrderHistory {
+  createdDate: string | null;
+  orderId: string;
+  pickUpDate: string | null;
+  placedDate: string | null;
+  acceptedDate: string | null;
+  assignedDate: string | null;
+  deliveredDate: string | null;
+  canceledDate: string | null;
+  rejectedDate: string | null;
+  status: string;
+}
+
+interface OrderItem {
+  itemId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  orderId: string;
+  containerStatus: string | null;
 }
 
 interface OrderData {
@@ -82,13 +105,39 @@ interface OrderData {
   dayOfWeek: string;
   expectedDeliveryDate: string;
   orderItems: any[] | null;
+  customerMobile?: string | null;
+  testUser?: boolean;
+  paymentStatus?: string | null;
+  alternativeMobileNumber?: string | null;
+  customerName?: string | null;
+  orderHistory?: OrderHistory[] | null;
+  orderAddress?: string | null;
+  sellerId?: string | null;
+  deliveryBoyId?: string | null;
+  deliveryBoyMobile?: string | null;
+  deliveryBoyName?: string | null;
+  orderAssignedDate?: string | null;
+  orderCanceledDate?: string | null;
+  distance?: number | null;
+  choosedLocations?: string[] | null;
+  orderItem?: OrderItem[] | null;
 }
+
 interface Comment {
   adminComments: string;
   commentsUpdateBy: string;
   commentsCreatedDate?: string;
   userId?: string;
 }
+interface HelpDeskUser {
+  mail: string;
+  userId: string;
+  createdAt: string;
+  emailVerified: string;
+  name: string;
+  lastFourDigitsUserId: string;
+}
+
 const timeOptions = [
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
@@ -131,11 +180,12 @@ const RegisteredUser: React.FC = () => {
   const [userId1, setUserId1] = useState("");
   const userType = localStorage.getItem("primaryType");
   const [storedUniqueId, setStoredUniqueId] = useState<string | null>("");
+  const [helpDeskUsers, setHelpDeskUsers] = useState<HelpDeskUser[]>([]);
   const [selectedTimeFrame, setSelectedTimeFrame] =
     useState<string>("thisWeek");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 50,
     total: 10,
     showSizeChanger: false,
   });
@@ -221,7 +271,7 @@ const RegisteredUser: React.FC = () => {
       const response = await axios.get<ApiResponse>(
         `${BASE_URL}/user-service/date-rangeuserdetails?endDate=${endDate}&page=${
           pagination.current - 1
-        }&size=${10}&startDate=${startDate}`
+        }&size=${50}&startDate=${startDate}`
       );
 
       setUserData(response.data.content);
@@ -257,7 +307,7 @@ const RegisteredUser: React.FC = () => {
     setLoader(true);
     try {
       const response = await axios.post(
-        BASE_URL + "/order-service/getAllOrders_customerId",
+        BASE_URL + "/order-service/getAllOrders_customerId1",
         { userId },
         {
           headers: {
@@ -346,6 +396,7 @@ const RegisteredUser: React.FC = () => {
 
   useEffect(() => {
     fetchUserData();
+    fetchHelpDeskUsers();
   }, [selectedTimeFrame, pagination.current]);
 
   const fetchCounts = async () => {
@@ -374,6 +425,29 @@ const RegisteredUser: React.FC = () => {
     } catch (error) {
       console.error("Failed to fetch data:", error);
     }
+  };
+  const fetchHelpDeskUsers = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/user-service/getAllHelpDeskUsers`,
+        {
+          headers: {
+            accept: "*/*",
+          },
+        }
+      );
+      setHelpDeskUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching helpdesk users:", error);
+      message.error("Failed to fetch helpdesk users");
+    }
+  };
+
+  const getHelpDeskName = (assignedToId: string | null): string => {
+    const helpDeskUser = helpDeskUsers.find(
+      (user) => user.userId === assignedToId
+    );
+    return helpDeskUser ? helpDeskUser.name : "Unknown";
   };
 
   const columns = [
@@ -478,9 +552,11 @@ const RegisteredUser: React.FC = () => {
       render: (_: string, record: UserData) => (
         <>
           <Tag className="mb-1" color="green">
-            {record.userType === "NEW USER" ? "ASKOXY" : "ERICE"}
+            {record.userType === "NEWUSER" ? "ASKOXY" : "ERICE"}
           </Tag>
-          <Tag color="geekblue">{record.registerFrom}</Tag>
+          {record.registerFrom && (
+            <Tag color="geekblue">{record.registerFrom}</Tag>
+          )}
         </>
       ),
     },
@@ -489,12 +565,27 @@ const RegisteredUser: React.FC = () => {
       key: "createdAt",
       width: 90,
       align: "center" as const,
-      render: (record: UserData) => (
-        <Text strong>
-          {/* {record.created_at} */}
-          {formatDate(record.created_at)}
-        </Text>
-      ),
+      render: (record: UserData) => {
+        const helpDeskName = getHelpDeskName(record?.helpdeskuserId);
+        return (
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className=" font-bold">{formatDate(record.created_at)}</span>
+
+            {record.helpdeskuserId && (
+              <div className="flex flex-row items-center justify-center mt-2">
+                <span className="mr-2 text-gray-400">to:</span>
+                <Tag
+                  color="cyan"
+                  className="w-fit flex items-center justify-center"
+                >
+                  <UserOutlined className="mr-1" />
+                  {helpDeskName}
+                </Tag>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Address",
@@ -512,22 +603,11 @@ const RegisteredUser: React.FC = () => {
         const isAddressPresent = fullAddress.length > 0;
 
         return (
-          <div
-            style={{
-              maxWidth: "150px",
-              padding: "4px",
-              textAlign: "center",
-            }}
-          >
+          <div className="max-w-full max-h-[80px] p-1 text-center overflow-auto scrollbar-hide">
             <Text
-              style={{
-                wordWrap: "break-word",
-                whiteSpace: "normal",
-                display: "block",
-                lineHeight: "1.4",
-                color: isAddressPresent ? "inherit" : "#8c8c8c",
-                fontStyle: isAddressPresent ? "normal" : "",
-              }}
+              className={`whitespace-normal break-words block overflow-auto leading-6 ${
+                isAddressPresent ? "text-inherit" : "text-gray-500 italic"
+              }`}
             >
               {isAddressPresent ? fullAddress : "No Address"}
             </Text>
@@ -592,76 +672,216 @@ const RegisteredUser: React.FC = () => {
     },
   };
 
-  const orderColumns = [
-    {
-      title: "Order ID",
-      dataIndex: "newOrderId",
-      key: "newOrderId",
-      render: (text: string, record: OrderData) => (
-        <a onClick={() => viewSpecificOrder(record.orderId)}>{text}</a>
-      ),
-    },
-    {
-      title: "Date",
-      dataIndex: "orderDate",
-      key: "orderDate",
-      render: (text: string) => {
-        return new Date(text).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "2-digit",
-        });
+  const getColumnsForAllOrders = (orders: OrderData[]) => {
+    const columns = [
+      {
+        title: "Order ID",
+        dataIndex: "newOrderId",
+        key: "newOrderId",
+        render: (text: string, record: OrderData) => (
+          <strong className="text-bold">{record.newOrderId}</strong>
+        ),
       },
-    },
-    {
-      title: "Amount",
-      dataIndex: "grandTotal",
-      key: "grandTotal",
-      render: (text: number) => `₹${text.toFixed(2)}`,
-    },
-    {
-      title: "Expected Delivery",
-      dataIndex: "expectedDeliveryDate",
-      key: "expectedDeliveryDate",
-      render: (expectedDeliveryDate: string, record: OrderData) => (
-        <div>
-          <p>{expectedDeliveryDate}</p>
-          <p>{record.timeSlot}</p>
-          <p>{record.dayOfWeek}</p>
-        </div>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "orderStatus",
-      key: "orderStatus",
-      render: (text: string) => (
-        <Tag color={getStatusColor(text)}>{getStatusText(text)}</Tag>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 120,
-      align: "center" as const,
-      render: (record: OrderData) => (
-        <Space direction="vertical" size="small">
-          <Button
-            type="default"
-            size="small"
-            onClick={() => {
-              setRecord(selectedUser);
-              showCommentsModal(selectedUser);
-              setOrderId(record.orderId);
-            }}
-            className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
-          >
-            Comments
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+      {
+        title: "Date",
+        dataIndex: "orderDate",
+        key: "orderDate",
+        render: (text: string) => {
+          return new Date(text).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+          });
+        },
+      },
+      {
+        title: "Order Items",
+        dataIndex: "orderItem",
+        key: "orderItems",
+        width: 150,
+        render: (_text: any, record: OrderData) => {
+          const items = record.orderItem || [];
+          return (
+            <div className="text-xs">
+              {items.map((item, index) => (
+                <div
+                  key={item.itemId}
+                  className={index !== 0 ? "mt-2 pt-2 border-t" : ""}
+                >
+                  <p>
+                    <strong>{item.productName}</strong>
+                  </p>
+                  {item.containerStatus && (
+                    <p className="text-green-500 text-bold text-sm ">
+                      <strong>{item.containerStatus}</strong>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
+        title: "Amount",
+        dataIndex: "grandTotal",
+        key: "grandTotal",
+        render: (text: number) => `₹${text.toFixed(2)}`,
+      },
+      {
+        title: "Expected Delivery",
+        dataIndex: "expectedDeliveryDate",
+        key: "expectedDeliveryDate",
+        render: (expectedDeliveryDate: string, record: OrderData) => (
+          <div>
+            <p>{expectedDeliveryDate}</p>
+            <p>{record.timeSlot}</p>
+            <p>{record.dayOfWeek}</p>
+          </div>
+        ),
+      },
+      {
+        title: "Status",
+        dataIndex: "orderStatus",
+        key: "orderStatus",
+        render: (_text: any, record: OrderData) => (
+          <div className="flex flex-col gap-2 items-center">
+            <Tag color={getStatusColor(record.orderStatus)}>
+              {getStatusText(record.orderStatus)}
+            </Tag>
+            <Tag color="green">{getPaymentTypeText(record.paymentType)}</Tag>
+          </div>
+        ),
+      },
+      {
+        title: "Actions",
+        key: "orderId",
+        width: 120,
+        align: "center" as const,
+        render: (record: OrderData) => (
+          <Space direction="vertical" size="small">
+            <Button
+              type="default"
+              size="small"
+              onClick={() => {
+                setRecord(selectedUser);
+                showCommentsModal(selectedUser);
+                setOrderId(record.orderId);
+              }}
+              className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
+            >
+              Comments
+            </Button>
+          </Space>
+        ),
+      },
+    ];
+
+    if (["1", "2", "3"].includes(userOrders[0]?.orderStatus)) {
+      columns.splice(3, 0, {
+        title: "Expected Delivery",
+        dataIndex: "expectedDeliveryDate",
+        key: "expectedDeliveryDate",
+        render: (expectedDeliveryDate: string, record: OrderData) => (
+          <div>
+            <p>{expectedDeliveryDate}</p>
+            <p>{record.timeSlot}</p>
+            <p>{record.dayOfWeek}</p>
+          </div>
+        ),
+      });
+    }
+
+    // if (["3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
+    //   columns.splice(columns.length - 1, 0, {
+    //     title: "Delivery Boy Details",
+    //     dataIndex: "deliveryBoyName", // Add dataIndex to fix type error
+    //     key: "deliveryBoyDetails",
+    //     render: (text: string, record: OrderData) => (
+    //       <div>
+    //         <p>
+    //           <strong>Name:</strong> {record.deliveryBoyName || "N/A"}
+    //         </p>
+    //         <p>
+    //           <strong>Mobile:</strong> {record.deliveryBoyMobile || "N/A"}
+    //         </p>
+    //       </div>
+    //     ),
+    //   });
+    // }
+
+    if (
+      ["1", "2", "3", "4", "PickedUp"].includes(userOrders[0]?.orderStatus) &&
+      userOrders[0]?.orderHistory?.length
+    ) {
+      columns.splice(columns.length - 1, 0, {
+        title: "Order Timeline",
+        dataIndex: "orderHistory", // Add dataIndex to fix type error
+        key: "orderTimeline",
+        width: 130,
+        render: (_text: any, record: OrderData) => {
+          const history = record.orderHistory || [];
+
+          // Find the relevant dates from order history
+          const findDate = (status: string) => {
+            const entry = history.find((h) => h.status === status);
+            if (!entry) return null;
+
+            // Determine which date field to use based on status
+            if (status === "1") return entry.placedDate;
+            if (status === "2") return entry.acceptedDate;
+            if (status === "3") return entry.assignedDate;
+            if (status === "PickedUp") return entry.pickUpDate;
+            if (status === "4") return entry.deliveredDate;
+            return null;
+          };
+
+          // Format date to show only time if it's today
+          const formatDate = (dateStr: string | null) => {
+            if (!dateStr) return "N/A";
+            const date = new Date(dateStr);
+            return date.toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "2-digit",
+            });
+          };
+
+          return (
+            <div className="text-xs">
+              {findDate("1") && (
+                <p>
+                  <strong>Placed:</strong> {formatDate(findDate("1"))}
+                </p>
+              )}
+              {findDate("2") && (
+                <p>
+                  <strong>Accepted:</strong> {formatDate(findDate("2"))}
+                </p>
+              )}
+              {findDate("3") && (
+                <p>
+                  <strong>Assigned:</strong> {formatDate(findDate("3"))}
+                </p>
+              )}
+              {findDate("PickedUp") && (
+                <p>
+                  <strong>Picked Up:</strong> {formatDate(findDate("PickedUp"))}
+                </p>
+              )}
+              {findDate("4") && record.orderStatus === "4" && (
+                <p>
+                  <strong>Delivered:</strong> {formatDate(findDate("4"))}
+                </p>
+              )}
+            </div>
+          );
+        },
+      });
+    }
+
+    return columns;
+  };
 
   const handleToggleTestUser = async (record: UserData) => {
     setLoading(true);
@@ -836,8 +1056,7 @@ const RegisteredUser: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         {
-          mobileNumber: mobileNumber1 || null,
-          whatsappNumber: whatsappNumber1 || null,
+          number: mobileNumber1 || null,
           userId: userId1 || null,
         },
         {
@@ -862,6 +1081,8 @@ const RegisteredUser: React.FC = () => {
         pinCode: user.pincode || null,
         address: user.address || null,
         addressType: user.addressType || null,
+        userType: user.userType || null,
+        registerFrom: user.registeredFrom || null,
       }));
 
       setFilteredUserData(transformed);
@@ -916,32 +1137,32 @@ const RegisteredUser: React.FC = () => {
         <div className="mt-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Mobile Number"
+              placeholder="Enter mobile/whatsapp Number"
               value={mobileNumber1}
               onChange={(e) => setMobileNumber1(e.target.value)}
               prefix={<PhoneOutlined />}
               allowClear
-              className="w-[160px] m-0" // Added m-0 to remove margin
+              className="w-[220px] m-0" // Added m-0 to remove margin
             />
-            <Input
+            {/* <Input
               placeholder="WhatsApp Number"
               value={whatsappNumber1}
               onChange={(e) => setWhatsappNumber1(e.target.value)}
               prefix={<WhatsAppOutlined style={{ color: "#25D366" }} />}
               allowClear
-              className="w-[180px] m-0" // Added m-0 to remove margin
-            />
+              className="w-[180px] m-0"
+            /> */}
             <Input
               placeholder="User ID"
               value={userId1}
               onChange={(e) => setUserId1(e.target.value)}
               prefix={<UserOutlined />}
               allowClear
-              className="w-[150px] m-0" // Added m-0 to remove margin
+              className="w-[150px] m-0"
             />
             <Button
               type="primary"
-              className="bg-[rgb(0,_140,_186)] w-[90px] text-white m-0" // Added m-0 to remove margin
+              className="bg-[rgb(0,_140,_186)] w-[90px] text-white m-0"
               onClick={handleUserSearch}
               loading={loading}
               disabled={!mobileNumber1 && !whatsappNumber1 && !userId1}
@@ -1233,7 +1454,7 @@ const RegisteredUser: React.FC = () => {
                         Customer Information
                       </span>
                     }
-                    className="rounded-lg shadow-md bg-gradient-to-r from-white to-blue-50"
+                    className="rounded-lg shadow-md bg-white"
                   >
                     <Row gutter={[16, 16]}>
                       <Col span={12}>
@@ -1338,11 +1559,11 @@ const RegisteredUser: React.FC = () => {
                         {userOrders.length} orders found
                       </Text>
                     }
-                    className="rounded-lg shadow-md bg-gradient-to-r from-white to-blue-50"
+                    className="rounded-lg shadow-md bg-white"
                   >
                     <Table
                       dataSource={userOrders}
-                      columns={orderColumns}
+                      columns={getColumnsForAllOrders(userOrders)}
                       rowKey="orderId"
                       pagination={false}
                       size="small"
