@@ -26,6 +26,7 @@ import AdminSidebar from "./AskoxyAdmin/Sider";
 import Home from "./Dashboard/Home";
 import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
 import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
+import ForgotPasswordPage from "./Pages/Auth/Forgotpage";
 
 import ScrollToTop from "./components/ScrollToTop";
 import TicketHistory from "./components/TicketHistory";
@@ -177,6 +178,7 @@ const App: React.FC = () => {
             <Route path="/assigned-task" element={<AssignedTasksPage />} />
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
+            <Route path="/forgot" element={<ForgotPasswordPage />} />
             <Route
               path="/communities/maruthielite"
               element={<RiceSalePage />}

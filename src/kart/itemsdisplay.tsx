@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import {
   ShoppingCart,
   Home,
@@ -16,6 +16,7 @@ import {
   MessageCircle,
   AlertCircle,
   Loader2,
+  Ticket,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ValidationPopup from "./ValidationPopup";
@@ -75,9 +76,14 @@ const ItemDisplayPage = () => {
     items: { [key: string]: boolean };
     status: { [key: string]: string };
   }>({
-    items: {}, // Stores boolean values for each item
-    status: {}, // Stores status strings for each item
+    items: {},
+    status: {},
   });
+
+  const [movieOfferClaimed, setMovieOfferClaimed] = useState(false);
+  const movieOfferModalShownRef = useRef(false);
+
+  const [chatFeatureComingSoon, setChatFeatureComingSoon] = useState(true);
 
   const context = useContext(CartContext);
 
@@ -111,7 +117,8 @@ const ItemDisplayPage = () => {
   };
 
   useEffect(() => {
-    console.log(state.item);
+    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
+    setMovieOfferClaimed(offerClaimed);
 
     if (itemId) {
       if (!state?.item) {
@@ -130,6 +137,8 @@ const ItemDisplayPage = () => {
       state: { item },
       replace: true,
     });
+
+    movieOfferModalShownRef.current = false;
   };
 
   const fetchCartData = async (itemId: string) => {
@@ -241,21 +250,80 @@ const ItemDisplayPage = () => {
     return false;
   };
 
-  const handleAddToCart = async (item: Item) => {
+  const checkMovieOfferStatus = (): boolean => {
+    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
+    console.log("Movie ticket offer claimed (localStorage):", offerClaimed);
+    return offerClaimed;
+  };
+
+  const findFiveKgBag = (item: Item): boolean => {
+    const weight = parseFloat(item.weight?.toString() || "0");
+    const weightUnit = item.weightUnit?.toLowerCase() || item.units?.toLowerCase() || "";
+    return (weight === 5 && weightUnit.includes("kg"));
+  };
+
+  const showMovieOfferModal = (item: Item, isAddToCart: boolean = false) => {
+    movieOfferModalShownRef.current = true;
+
+    const modalContent = (
+      <div>
+        <p>
+          🎉 Congratulations! You're eligible for a Free PVR Movie Ticket to
+          watch <strong>HIT: The Third Case</strong> with your purchase of a 5KG
+          rice bag!
+        </p>
+        <br />
+        <p>
+          ✅ Offer valid only once per user
+          <br />🎟 Applicable exclusively on 5KG rice bags
+          <br />🚚 Redeemable on your first successful delivery only
+          <br />❗ Once claimed, the offer cannot be reused
+        </p>
+        <br />
+        <p>🔥 Grab yours while it lasts — enjoy the movie on us</p>
+      </div>
+    );
+
+    if (isAddToCart) {
+      Modal.confirm({
+        title: "🎁 Special Offer!",
+        content: modalContent,
+        okText: "Claim Movie Ticket",
+        cancelText: "No Thanks",
+        onOk: async () => {
+          try {
+            localStorage.setItem("movieOfferClaimed", "true");
+            setMovieOfferClaimed(true);
+            message.success(
+              "Movie ticket offer claimed! Details will be shared upon delivery."
+            );
+            await addToCartAfterOffer(item);
+          } catch (err) {
+            console.error("Movie ticket offer claim failed:", err);
+            message.error(
+              "Unable to claim the movie ticket offer. Please try again."
+            );
+          }
+        },
+        onCancel: async () => {
+          console.log("Movie offer declined");
+          await addToCartAfterOffer(item);
+        },
+      });
+    } else {
+      Modal.info({
+        title: "🎁 Special Offer!",
+        content: modalContent,
+        okText: "Close",
+      });
+    }
+  };
+
+  const addToCartAfterOffer = async (item: Item) => {
     setLoadingItems((prev) => ({
       ...prev,
       items: { ...prev.items, [item.itemId]: true },
     }));
-
-    if (!token || !customerId) {
-      message.warning("Please login to add items to the cart.");
-      setTimeout(() => navigate("/whatsapplogin"), 2000);
-      return;
-    }
-    if (!checkProfileCompletion()) {
-      setShowValidationPopup(true);
-      return;
-    }
 
     try {
       await axios.post(
@@ -264,7 +332,6 @@ const ItemDisplayPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // GA4 Add to Cart Event Tracking
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "add_to_cart", {
           currency: "INR",
@@ -281,8 +348,9 @@ const ItemDisplayPage = () => {
         });
       }
 
-      fetchCartData("");
+      await fetchCartData("");
       message.success("Item added to cart successfully.");
+
       setTimeout(() => {
         setLoadingItems((prev) => ({
           ...prev,
@@ -296,6 +364,24 @@ const ItemDisplayPage = () => {
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
       }));
+    }
+  };
+
+  const handleAddToCart = async (item: Item) => {
+    if (!token || !customerId) {
+      message.warning("Please login to add items to the cart.");
+      setTimeout(() => navigate("/whatsapplogin"), 2000);
+      return;
+    }
+    if (!checkProfileCompletion()) {
+      setShowValidationPopup(true);
+      return;
+    }
+
+    if (findFiveKgBag(item) && !movieOfferClaimed) {
+      showMovieOfferModal(item, true);
+    } else {
+      await addToCartAfterOffer(item);
     }
   };
 
@@ -328,7 +414,6 @@ const ItemDisplayPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // GA4 Remove from Cart Event Tracking (Full Removal)
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "remove_from_cart", {
             currency: "INR",
@@ -357,7 +442,6 @@ const ItemDisplayPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // GA4 Event Tracking for Quantity Change
         if (typeof window !== "undefined" && window.gtag) {
           const eventName = increment ? "add_to_cart" : "remove_from_cart";
           window.gtag("event", eventName, {
@@ -401,80 +485,24 @@ const ItemDisplayPage = () => {
     setMessages((prev) => [...prev, newMessage]);
     setInputMessage("");
 
-    const mapTypeToRole = (type: any) => {
-      if (type === "sent") return "user";
-      if (type === "received") return "assistant";
-      return "system";
-    };
-
-    const previousMessages = messages.map((msg) => ({
-      role: mapTypeToRole(msg.type),
-      content: msg.text,
-    }));
-
-    previousMessages.push({
-      role: "user",
-      content: newMessage.text,
-    });
-
-    const getLastAssistantMessage = (msgs: Message[]) => {
-      return (
-        [...msgs].reverse().find((msg) => msg.type === "received")?.text || ""
-      );
-    };
-
-    const lastAssistantMessage = getLastAssistantMessage(messages);
-    if (lastAssistantMessage) {
-      previousMessages.push({
-        role: "assistant",
-        content: lastAssistantMessage,
-      });
-    }
-
-    try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4-turbo",
-          messages: previousMessages,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messages.length + 2,
-          text: response.data.choices[0].message.content,
-          type: "system" as const,
-        },
-      ]);
-    } catch (error) {
-      console.error("Error getting AI response:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messages.length + 2,
-          text: "Sorry, I couldn't process your request at the moment.",
-          type: "system" as const,
-        },
-      ]);
-    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: messages.length + 2,
+        text: "Our product assistant feature is coming soon! We appreciate your interest. Check back later for personalized product assistance.",
+        type: "system" as const,
+      },
+    ]);
   };
 
   const handleChatView = (value: any) => {
     setShowChatSection(!showChatSection);
-    if (messages.length == 0) {
+    if (messages.length === 0 && showChatSection === false) {
       setMessages((prev) => [
         ...prev,
         {
           id: messages.length + 1,
-          text: `What would you like to know about ${value} this product?`,
+          text: `Our intelligent product assistant feature is coming soon! You'll be able to ask questions about ${value} and get helpful answers.`,
           type: "system" as const,
         },
       ]);
@@ -536,7 +564,7 @@ const ItemDisplayPage = () => {
                       <span className="bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
                         {calculateDiscount(
                           Number(itemDetails.itemMrp) ||
-                            Number(itemDetails.priceMrp),
+                          Number(itemDetails.priceMrp),
                           Number(itemDetails.itemPrice)
                         )}
                         % OFF
@@ -623,7 +651,7 @@ const ItemDisplayPage = () => {
                               }
                               disabled={
                                 cartItems[itemDetails.itemId] >=
-                                  itemDetails.quantity ||
+                                itemDetails.quantity ||
                                 loadingItems.items[itemDetails.itemId] ||
                                 (itemDetails.itemPrice === 1 &&
                                   cartItems[itemDetails.itemId] >= 1)
@@ -670,10 +698,33 @@ const ItemDisplayPage = () => {
                         Out of Stock
                       </button>
                     )}
+
+                    {itemDetails && findFiveKgBag(itemDetails) && !movieOfferClaimed && (
+                      <div className="mt-2 bg-yellow-100 border border-yellow-200 text-yellow-800 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Ticket className="w-5 h-5 text-yellow-700" />
+                          <span className="text-sm font-medium">Get 1 PVR Free Movie Ticket</span>
+                        </div>
+                        <button
+                          onClick={() => showMovieOfferModal(itemDetails)}
+                          className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-md"
+                        >
+                          View Offer
+                        </button>
+                      </div>
+                    )}
+
+                    {itemDetails && findFiveKgBag(itemDetails) && movieOfferClaimed && (
+                      <div className="mt-2 bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 flex items-center">
+                        <Ticket className="w-5 h-5 text-green-600 mr-2" />
+                        <span className="text-sm font-medium">Movie ticket offer claimed! Details will be shared upon delivery.</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
+
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-4">Product Details</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -686,14 +737,14 @@ const ItemDisplayPage = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-purple-50 p-3 rounded-lg">
                   <span className="font-medium">
-                    {itemDetails?.itemDescription}
+                    {itemDetails?.itemDescription || "No description available."}
                   </span>
                 </div>
               </div>
             </div>
           </div>
           <div className="lg:col-span-4">
-            <div className="sticky top-8 space-y-8">
+            <div className="sticky top-8 space-y-6">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">
@@ -712,27 +763,31 @@ const ItemDisplayPage = () => {
                 </div>
                 {showChatSection && (
                   <div className="h-[400px] flex flex-col">
-                    <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                      {messages.map((msg, idx) => (
+                    <div className="flex-1 overflow-y-auto space-y-4 p-2 mb-4">
+                      {messages.map((msg) => (
                         <div
-                          key={idx}
+                          key={msg.id}
                           className={`flex ${
-                            msg.type === "sent"
-                              ? "justify-end"
-                              : "justify-start"
+                            msg.type === "sent" ? "justify-end" : "justify-start"
                           }`}
                         >
                           <div
-                            className={`max-w-[75%] p-3 rounded-lg ${
+                            className={`${
                               msg.type === "sent"
                                 ? "bg-purple-600 text-white"
-                                : "bg-purple-50 border border-purple-100"
-                            }`}
+                                : msg.type === "system"
+                                ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                                : "bg-gray-100 text-gray-800"
+                            } rounded-lg p-3 max-w-[80%]`}
                           >
-                            {msg.type === "system" && (
-                              <Bot className="w-4 h-4 text-purple-600 mb-1" />
+                            {msg.type === "system" ? (
+                              <div className="flex items-start gap-2">
+                                <Bot className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                                <div>{msg.text}</div>
+                              </div>
+                            ) : (
+                              msg.text
                             )}
-                            <span className="text-sm">{msg.text}</span>
                           </div>
                         </div>
                       ))}
@@ -741,142 +796,136 @@ const ItemDisplayPage = () => {
                       <input
                         type="text"
                         value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        onKeyPress={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setInputMessage(e.target.value)
+                        }
+                        placeholder="Ask about this product..."
+                        className="flex-1 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                        onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) =>
                           e.key === "Enter" && handleSendMessage()
                         }
-                        className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Ask about this product..."
                       />
                       <button
                         onClick={handleSendMessage}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700"
                       >
-                        Send
+                        <MessageCircle className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
                 )}
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold mb-4">Related Items</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {relatedItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all"
-                      onClick={() => handleRelatedItemClick(item)}
+                {!showChatSection && chatFeatureComingSoon && (
+                  <div className="space-y-4">
+                    <p className="text-gray-600">
+                      Have questions about this product? Our AI assistant can help
+                      you with product information, recommendations, and more.
+                    </p>
+                    <button
+                      onClick={() => handleChatView(itemDetails?.itemName)}
+                      className="w-full py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 flex items-center justify-center gap-2"
                     >
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {calculateDiscount(item.itemMrp, item.itemPrice)}% OFF
-                      </div>
-                      <div className="p-3">
-                        <div className="h-32 bg-gray-100 rounded-md mb-3"></div>
-                        <h3 className="font-medium text-gray-800 line-clamp-2 mb-1">
-                          {item.itemName}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">₹{item.itemPrice}</span>
-                          <span className="text-gray-500 text-sm line-through">
-                            ₹{item.itemMrp}
-                          </span>
+                      <Bot className="w-5 h-5" />
+                      Chat with Product Assistant
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {relatedItems.length > 0 && (
+                <div className="bg-white rounded-xl p-6 shadow-sm">
+                  <h2 className="text-xl font-bold mb-4">You May Also Like</h2>
+                  <div className="space-y-4">
+                    {relatedItems.slice(0, 3).map((item) => (
+                      <div
+                        key={item.itemId}
+                        className="flex items-center gap-3 p-2 hover:bg-purple-50 rounded-lg cursor-pointer transition-colors"
+                        onClick={() => handleRelatedItemClick(item)}
+                      >
+                        <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                          <img
+                            src={item.itemImage || item.image}
+                            alt={item.itemName}
+                            className="w-full h-full object-contain"
+                          />
                         </div>
-                        <div className="mt-3">
-                          {item.quantity !== 0 ? (
-                            cartItems[item.itemId] ? (
-                              <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className={`p-1.5 rounded-lg transition-all ${
-                                    cartItems[item.itemId] <= 1
-                                      ? "bg-red-100 text-red-600 hover:bg-red-200"
-                                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleQuantityChange(item, false);
-                                  }}
-                                  disabled={loadingItems.items[item.itemId]}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </motion.button>
-                                {loadingItems.items[item.itemId] ? (
-                                  <Loader2 className="animate-spin text-purple-600 w-4 h-4" />
-                                ) : (
-                                  <span className="font-medium text-purple-700">
-                                    {cartItems[item.itemId]}
-                                  </span>
-                                )}
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className={`p-1.5 rounded-lg transition-all ${
-                                    cartItems[item.itemId] >= item.quantity
-                                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (cartItems[item.itemId] < item.quantity) {
-                                      handleQuantityChange(item, true);
-                                    }
-                                  }}
-                                  disabled={
-                                    cartItems[item.itemId] >= item.quantity ||
-                                    loadingItems.items[item.itemId]
-                                  }
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </motion.button>
-                              </div>
-                            ) : (
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 line-clamp-1">
+                            {item.itemName}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-purple-600 font-medium">
+                              ₹{item.itemPrice}
+                            </span>
+                            <span className="text-sm text-gray-500 line-through">
+                              ₹{item.itemMrp || item.priceMrp}
+                            </span>
+                          </div>
+                        </div>
+                        {item.quantity > 0 ? (
+                          cartItems[item.itemId] ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="p-1 bg-purple-100 text-purple-600 rounded-md hover:bg-purple-200"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (!loadingItems.items[item.itemId]) {
-                                    handleAddToCart(item);
-                                  }
+                                  handleQuantityChange(item, false);
                                 }}
-                                className="w-full py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transform transition-all flex items-center justify-center gap-1.5"
                               >
-                                {loadingItems.items[item.itemId] ? (
-                                  <Loader2 className="animate-spin w-4 h-4" />
-                                ) : (
-                                  <>
-                                    <ShoppingCart className="w-4 h-4" />
-                                    Add to Cart
-                                  </>
-                                )}
-                              </motion.button>
-                            )
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="font-medium w-6 text-center">
+                                {cartItems[item.itemId]}
+                              </span>
+                              <button
+                                className={`p-1 rounded-md ${
+                                  cartItems[item.itemId] >= item.quantity
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                                }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  !isMaxStockReached(item) && handleQuantityChange(item, true);
+                                }}
+                                disabled={cartItems[item.itemId] >= item.quantity}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
                           ) : (
                             <button
-                              disabled
-                              className="w-full py-2 bg-gray-200 text-gray-600 text-sm rounded-lg flex items-center justify-center gap-1.5 cursor-not-allowed"
+                              className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToCart(item);
+                              }}
                             >
                               <ShoppingCart className="w-4 h-4" />
-                              Out of Stock
                             </button>
-                          )}
-                        </div>
+                          )
+                        ) : (
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-md">
+                            Out of Stock
+                          </span>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
+      </div>
+
+      <Footer />
+
+      {showValidationPopup && (
         <ValidationPopup
           isOpen={showValidationPopup}
           onClose={() => setShowValidationPopup(false)}
           onAction={handleProfileRedirect}
         />
-      </div>
-      <Footer />
+      )}
     </div>
   );
 };

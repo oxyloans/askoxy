@@ -125,20 +125,20 @@ const CartPage: React.FC = () => {
     onePlusOneConfirmedRef.current = true;
   };
 
-  const maybeShowOnePlusOneModal = async () => {
-    if (onePlusOneModalShownRef.current) return;
+  // const maybeShowOnePlusOneModal = async () => {
+  //   if (onePlusOneModalShownRef.current) return;
 
-    const hasClaimed = await checkOnePlusOneStatus();
-    if (hasClaimed || hasShownOnePlusOne) return;
+  //   const hasClaimed = await checkOnePlusOneStatus();
+  //   if (hasClaimed || hasShownOnePlusOne) return;
 
-    const eligibleBag = findOneKgBag();
-    if (!eligibleBag) return;
+  //   const eligibleBag = findOneKgBag();
+  //   if (!eligibleBag) return;
 
-    onePlusOneModalShownRef.current = true;
-    setHasShownOnePlusOne(true);
+  //   onePlusOneModalShownRef.current = true;
+  //   setHasShownOnePlusOne(true);
 
-    setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
-  };
+  //   setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
+  // };
 
   const findOneKgBag = (): CartItem | null => {
     const oneKgBags = cartData.filter((item) => {
@@ -213,27 +213,27 @@ const CartPage: React.FC = () => {
     initializeCartPage();
   }, []);
 
-  useEffect(() => {
-    const checkAndShowFallbackOnePlusOne = async () => {
-      if (onePlusOneModalShownRef.current) return;
+  // useEffect(() => {
+  //   const checkAndShowFallbackOnePlusOne = async () => {
+  //     if (onePlusOneModalShownRef.current) return;
 
-      const hasClaimed = await checkOnePlusOneStatus();
-      const eligibleBag = findOneKgBag();
+  //     const hasClaimed = await checkOnePlusOneStatus();
+  //     const eligibleBag = findOneKgBag();
 
-      if (
-        cartData.length > 0 &&
-        !hasClaimed &&
-        !modalDisplayedRef.current &&
-        eligibleBag
-      ) {
-        onePlusOneModalShownRef.current = true;
-        setHasShownOnePlusOne(true);
-        setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
-      }
-    };
+  //     if (
+  //       cartData.length > 0 &&
+  //       !hasClaimed &&
+  //       !modalDisplayedRef.current &&
+  //       eligibleBag
+  //     ) {
+  //       onePlusOneModalShownRef.current = true;
+  //       setHasShownOnePlusOne(true);
+  //       setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
+  //     }
+  //   };
 
-    checkAndShowFallbackOnePlusOne();
-  }, [cartData]);
+  //   checkAndShowFallbackOnePlusOne();
+  // }, [cartData]);
 
   useEffect(() => {
     if (
@@ -541,74 +541,74 @@ const CartPage: React.FC = () => {
       );
     };
 
-    Modal.confirm({
-      title: "Special Offer!",
-      content: <PlanModalContent />,
-      okText: "Confirm Selection",
-      cancelText: "Cancel",
-      onOk: async () => {
-        if (!selected) {
-          message.info("Please select a plan before confirming.");
-          return Promise.reject();
-        }
-        setSelectedPlan(selected);
-        await handleInterested();
-        containerModalCompletedRef.current = true;
-        await maybeShowOnePlusOneModal();
-      },
-      onCancel: async () => {
-        setSelectedPlan(null);
-        containerModalCompletedRef.current = true;
-        await maybeShowOnePlusOneModal();
-      },
-    });
+    // Modal.confirm({
+    //   title: "Special Offer!",
+    //   content: <PlanModalContent />,
+    //   okText: "Confirm Selection",
+    //   cancelText: "Cancel",
+    //   onOk: async () => {
+    //     if (!selected) {
+    //       message.info("Please select a plan before confirming.");
+    //       return Promise.reject();
+    //     }
+    //     setSelectedPlan(selected);
+    //     await handleInterested();
+    //     containerModalCompletedRef.current = true;
+    //     await maybeShowOnePlusOneModal();
+    //   },
+    //   onCancel: async () => {
+    //     setSelectedPlan(null);
+    //     containerModalCompletedRef.current = true;
+    //     await maybeShowOnePlusOneModal();
+    //   },
+    // });
   };
 
-  const showOnePlusOneModal = (item: CartItem) => {
-    Modal.confirm({
-      title: "🎁 1+1 Offer on 1kg Rice!",
-      content: (
-        <p>
-          You're eligible for our <strong>1+1 offer</strong>! Get another{" "}
-          <strong>{item.itemName}</strong> absolutely free.
-        </p>
-      ),
-      okText: "Add Free Bag",
-      cancelText: "No Thanks",
-      onOk: async () => {
-        try {
-          const currentQuantity = cartItems[item.itemId] || 0;
+  // const showOnePlusOneModal = (item: CartItem) => {
+  //   Modal.confirm({
+  //     title: "🎁 1+1 Offer on 1kg Rice!",
+  //     content: (
+  //       <p>
+  //         You're eligible for our <strong>1+1 offer</strong>! Get another{" "}
+  //         <strong>{item.itemName}</strong> absolutely free.
+  //       </p>
+  //     ),
+  //     okText: "Add Free Bag",
+  //     cancelText: "No Thanks",
+  //     onOk: async () => {
+  //       try {
+  //         const currentQuantity = cartItems[item.itemId] || 0;
 
-          await axios.patch(
-            `${BASE_URL}/cart-service/cart/incrementCartData`,
-            {
-              cartQuantity: currentQuantity + 1,
-              customerId,
-              itemId: item.itemId,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+  //         await axios.patch(
+  //           `${BASE_URL}/cart-service/cart/incrementCartData`,
+  //           {
+  //             cartQuantity: currentQuantity + 1,
+  //             customerId,
+  //             itemId: item.itemId,
+  //           },
+  //           {
+  //             headers: {
+  //               Authorization: `Bearer ${token}`,
+  //               "Content-Type": "application/json",
+  //             },
+  //           }
+  //         );
 
-          setFreeItemsMap((prev) => ({
-            ...prev,
-            [item.itemId]: 1,
-          }));
+  //         setFreeItemsMap((prev) => ({
+  //           ...prev,
+  //           [item.itemId]: 1,
+  //         }));
 
-          await setOnePlusOneClaimed();
-          message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
-          await fetchCartData();
-        } catch (err) {
-          console.error("1+1 offer failed:", err);
-          message.error("Unable to apply the 1+1 offer. Please try again.");
-        }
-      },
-    });
-  };
+  //         await setOnePlusOneClaimed();
+  //         message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
+  //         await fetchCartData();
+  //       } catch (err) {
+  //         console.error("1+1 offer failed:", err);
+  //         message.error("Unable to apply the 1+1 offer. Please try again.");
+  //       }
+  //     },
+  //   });
+  // };
 
   const getCoordinates = async (address: string) => {
     try {

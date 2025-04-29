@@ -944,30 +944,33 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Header Images Section */}
-      <div className="w-full bg-white border-b border-gray-100 py-6">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {headerImages.map((image) => (
-              <motion.div
-                key={image.id}
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="cursor-pointer overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 bg-white"
-                onHoverStart={() => setHoveredImage(image.id)}
-                onHoverEnd={() => setHoveredImage(null)}
-                onClick={() => navigate(image.path)}
-              >
+      <div className="w-full bg-white border-b border-gray-100 py-3 md:py-6">
+      <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
+        {/* Responsive grid with better sizing for all devices */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
+          {headerImages.map((image) => (
+            <motion.div
+              key={image.id}
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="cursor-pointer overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-white"
+              onHoverStart={() => setHoveredImage(image.id)}
+              onHoverEnd={() => setHoveredImage(null)}
+            >
+              <div className="relative w-full h-0 pb-[75%]">
                 <motion.img
                   src={image.src}
                   alt={image.alt || "Header image"}
-                  className="w-full h-40 object-cover rounded-xl"
+                  className="absolute inset-0 w-full h-full object-cover rounded-lg"
                   animate={{ scale: hoveredImage === image.id ? 1.05 : 1 }}
+                  transition={{ duration: 0.3 }}
                 />
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
+    </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
