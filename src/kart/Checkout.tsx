@@ -9,6 +9,7 @@ import {
   Truck,
   Tag,
   ShoppingBag,
+  Globe,
   Clock,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -66,7 +67,7 @@ const CheckoutPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
-  const [coupenDetails, setCoupenDetails] = useState<any>(null);
+  const [coupenDetails, setCoupenDetails] = useState<number>(0);
   const [coupenLoading, setCoupenLoading] = useState(false);
   const [walletAmount, setWalletAmount] = useState<number>(0);
   const [walletTotal, setWalletTotal] = useState<number>(0);
@@ -85,6 +86,7 @@ const CheckoutPage: React.FC = () => {
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [afterWallet, setAfterWallet] = useState<number>(0);
   const [usedWalletAmount, setUsedWalletAmount] = useState<number>(0);
+  const [isDeliveryTimelineModalVisible, setIsDeliveryTimelineModalVisible] = useState(false);
   const [orderId, setOrderId] = useState<string>();
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
@@ -93,6 +95,8 @@ const CheckoutPage: React.FC = () => {
     whatsappNumber: "",
   });
   const [merchantTransactionId, setMerchantTransactionId] = useState();
+  const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] = useState(false);
+  const [isOneTimeFreeOfferActive, setIsOneTimeFreeOfferActive] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
@@ -134,6 +138,104 @@ const CheckoutPage: React.FC = () => {
       Requery(paymentId);
     }
   }, [orderId]);
+
+  useEffect(() => {
+    if (selectedTimeSlot && !isDeliveryTimelineModalVisible) {
+      setIsDeliveryTimelineModalVisible(true);
+    }
+  }, [selectedTimeSlot]);
+
+  const handleSelectTimeSlot = (
+    date: string,
+    timeSlot: string,
+    day: string
+  ) => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(timeSlot);
+    setSelectedDay(day);
+    setShowTimeSlotModal(false);
+    message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
+    setIsDeliveryTimelineModalVisible(true);
+  };
+
+  const handleShowDeliveryTimeline = () => {
+    if (isOneTimeFreeOfferActive) {
+      setShowDeliveryTimelineModal(true);
+    }
+  };
+
+  const renderDeliveryTimelineModal = () => {
+    return (
+      <Modal
+        title="Delivery Timeline"
+        open={isDeliveryTimelineModalVisible}
+        onCancel={() => setIsDeliveryTimelineModalVisible(false)}
+        footer={[
+          <button 
+            key="telugu" 
+            onClick={() => {
+              Modal.info({
+                title: 'డెలివరీ సమయం',
+                content: (
+                  <div>
+                    <p>📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
+                    <p>మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
+                    <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                  </div>
+                ),
+                okText: 'Close'
+              });
+            }}
+            className="mr-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+          >
+            View in Telugu
+          </button>,
+          <button 
+            key="english" 
+            onClick={() => {
+              Modal.info({
+                title: 'Delivery Timeline',
+                content: (
+                  <div>
+                    <p>📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
+                    <p>With your support, we'll be able to grow and serve you even better. 🙏</p>
+                    <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
+                  </div>
+                ),
+                okText: 'Close'
+              });
+            }}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+          >
+            View in English
+          </button>
+        ]}
+        centered
+        width={500}
+        closeIcon={<X className="w-5 h-5" />}
+      >
+        <div className="text-center">
+          {freeTicketAvailable === "YES" ? (
+            <div>
+              <Globe className="w-16 h-16 mx-auto text-green-500 mb-4" />
+              <h3 className="text-xl font-bold mb-2">1+1 Free Offer Active!</h3>
+              <p className="mb-4">
+                Choose your preferred language to view delivery timeline details.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
+              <h3 className="text-xl font-bold mb-2">Delivery Information</h3>
+              <p className="mb-4">
+                Choose your preferred language to view delivery timeline details.
+              </p>
+            </div>
+          )}
+        </div>
+      </Modal>
+    );
+  };
 
   const formatDate = (date: Date, isToday: boolean = false): string => {
     const monthNames = [
@@ -294,18 +396,6 @@ const CheckoutPage: React.FC = () => {
     setShowTimeSlotModal(true);
   };
 
-  const handleSelectTimeSlot = (
-    date: string,
-    timeSlot: string,
-    day: string
-  ) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(timeSlot);
-    setSelectedDay(day);
-    setShowTimeSlotModal(false);
-    message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
-  };
-
   const fetchCartData = async () => {
     try {
       const response = await axios.get(
@@ -373,7 +463,7 @@ const CheckoutPage: React.FC = () => {
       .then((response) => {
         const { discount, grandTotal } = response.data;
         message.info(response.data.message);
-        setCoupenDetails(discount);
+        setCoupenDetails(discount || 0);
         setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
       })
@@ -387,7 +477,10 @@ const CheckoutPage: React.FC = () => {
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
-    setCoupenDetails(null);
+    setCoupenDetails(0);
+    setUseWallet(false);
+    setUsedWalletAmount(0);
+    setAfterWallet(walletAmount);
     message.info("Coupon removed successfully");
   };
 
@@ -417,32 +510,26 @@ const CheckoutPage: React.FC = () => {
     let total = totalAmount + deliveryBoyFee;
     let usedWallet = 0;
 
-    if (coupenApplied) {
-      total -= coupenDetails;
+    // Apply coupon discount if applicable
+    if (coupenApplied && coupenDetails > 0) {
+      total = Math.max(0, total - coupenDetails);
     }
 
+    // Apply wallet amount if selected
     if (useWallet && walletAmount > 0) {
-      if (walletAmount >= total) {
-        usedWallet = total;
-        total = 0;
-      } else {
-        usedWallet = walletAmount;
-        total -= walletAmount;
-      }
+      usedWallet = Math.min(walletAmount, total);
+      total = Math.max(0, total - usedWallet);
     }
 
-    total = Math.max(0, total);
-
-    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0);
+    // Update states
     setUsedWalletAmount(usedWallet);
+    setAfterWallet(walletAmount - usedWallet);
     setGrandTotalAmount(total);
 
+    // Automatically switch to COD if total is zero
     if (total === 0) {
       setSelectedPayment("COD");
     }
-
-    console.log("Used Wallet:", usedWallet);
-    console.log("Final Grand Total:", total);
   }
 
   const handleCheckboxToggle = () => {
@@ -473,14 +560,12 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     grandTotalfunc();
   }, [
-    grandTotal,
-    subGst,
+    totalAmount,
     deliveryBoyFee,
     coupenApplied,
     coupenDetails,
     useWallet,
     walletAmount,
-    totalAmount,
   ]);
 
   const handlePayment = async () => {
@@ -562,7 +647,7 @@ const CheckoutPage: React.FC = () => {
               item_name: item.itemName,
               price: parseFloat(item.itemPrice),
               quantity: parseInt(item.cartQuantity),
-              item_category: "Rice", // Assuming Rice as default category
+              item_category: "Rice",
             })),
           });
         }
@@ -795,7 +880,22 @@ const CheckoutPage: React.FC = () => {
         title="Select Delivery Time Slot"
         open={showTimeSlotModal}
         onCancel={() => setShowTimeSlotModal(false)}
-        footer={null}
+        footer={[
+          <button 
+            key="delivery-info" 
+            onClick={handleShowDeliveryTimeline}
+            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center"
+          >
+            <Truck className="w-5 h-5 mr-2" /> Delivery Info
+          </button>,
+          <button 
+            key="close" 
+            onClick={() => setShowTimeSlotModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          >
+            Close
+          </button>
+        ]}
         centered
         width={500}
         closeIcon={<X className="w-5 h-5" />}
@@ -1127,6 +1227,7 @@ const CheckoutPage: React.FC = () => {
       </div>
       <Footer />
       {renderTimeSlotModal()}
+      {renderDeliveryTimelineModal()}
     </div>
   );
 };

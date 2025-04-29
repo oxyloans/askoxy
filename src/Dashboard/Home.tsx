@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useCallback, useContext } from "rea
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Bot, ShoppingBag, Briefcase, Loader2, Droplet, Star, TrendingUp, ArrowRight, Search, ChevronRight, Settings, HandCoins, Gem, Globe } from "lucide-react";
+import { Coins, Bot, ShoppingBag, Briefcase, Loader2, Droplet, Star, TrendingUp, ArrowRight, Search, ChevronRight, Settings, HandCoins, Gem, Globe, Package, Gift, Ticket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import BASE_URL from "../Config";
 import checkProfileCompletion from "../until/ProfileCheck";
 import { CartContext } from "../until/CartContext";
+import ProductOfferModals from "./ProductOffermodals"; 
 import ProductImg1 from "../assets/img/ricecard1.png";
 import ProductImg2 from "../assets/img/ricecard2.png";
 import ServiceImg1 from "../assets/img/oxyloasntemp (1).png";
@@ -136,6 +137,75 @@ const Home: React.FC = () => {
     setCartCount(count);  // Update local state
     setCount(count);      // Update context state
   }, [setCount]);
+  
+  // Define fetchCartData first before using it in ProductOfferModals
+  const fetchCartData = useCallback(async (itemId: string = "") => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) return;
+
+    if (itemId !== "") {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [itemId]: true },
+      }));
+    }
+
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
+      );
+
+      const cartList = response.data?.customerCartResponseList || [];
+
+      if (cartList.length > 0) {
+        const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
+          acc[item.itemId] = Number(item.cartQuantity) || 0;
+          return acc;
+        }, {});
+
+        // Use type assertion and additional type guard
+        const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
+          return sum + (typeof qty === 'number' ? qty : 0);
+        }, 0);
+
+        // Update both local state and context
+        const roundedTotal = Math.round(totalQuantity);
+        setCartItems(cartItemsMap);
+        setCartData(cartList);
+        localStorage.setItem("cartCount", cartList.length.toString());
+        setCartCount(roundedTotal);  // Local state
+        setCount(roundedTotal);      // Context state
+      } else {
+        setCartItems({});
+        setCartData([]);
+        localStorage.setItem("cartCount", "0");
+        setCartCount(0);  // Local state
+        setCount(0);      // Context state
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+    } finally {
+      if (itemId !== "") {
+        setLoadingItems((prev) => ({
+          ...prev,
+          items: { ...prev.items, [itemId]: false },
+        }));
+      }
+    }
+  }, [updateCartCount, setCount]); // Add setCount to the dependency array
+  
+  // Now initialize ProductOfferModals hooks after fetchCartData is defined
+  const { 
+    handleItemAddedToCart, 
+    freeItemsMap, 
+    movieOfferMap, 
+    setFreeItemsMap, 
+    setMovieOfferMap 
+  } = ProductOfferModals({
+    fetchCartData,
+    cartData,
+    cartItems
+  });
 
   // Variants for header image hover effect
   const headerImageVariants = {
@@ -212,60 +282,7 @@ const Home: React.FC = () => {
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
   };
 
-  const fetchCartData = useCallback(async (itemId: string = "") => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) return;
-
-    if (itemId !== "") {
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [itemId]: true },
-      }));
-    }
-
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
-      );
-
-      const cartList = response.data?.customerCartResponseList || [];
-
-      if (cartList.length > 0) {
-        const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
-          acc[item.itemId] = Number(item.cartQuantity) || 0;
-          return acc;
-        }, {});
-
-        // Use type assertion and additional type guard
-        const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
-          return sum + (typeof qty === 'number' ? qty : 0);
-        }, 0);
-
-        // Update both local state and context
-        const roundedTotal = Math.round(totalQuantity);
-        setCartItems(cartItemsMap);
-        setCartData(cartList);
-        localStorage.setItem("cartCount", cartList.length.toString());
-        setCartCount(roundedTotal);  // Local state
-        setCount(roundedTotal);      // Context state - Add this line
-      } else {
-        setCartItems({});
-        setCartData([]);
-        localStorage.setItem("cartCount", "0");
-        setCartCount(0);  // Local state
-        setCount(0);      // Context state - Add this line
-      }
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-    } finally {
-      if (itemId !== "") {
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [itemId]: false },
-        }));
-      }
-    }
-  }, [updateCartCount, setCount]); // Add setCount to the dependency array
+  // Remove this duplicate definition since we're moving it up
 
   const fetchCategories = useCallback(async () => {
     if (categoriesFetched.current) return;
@@ -410,10 +427,10 @@ const Home: React.FC = () => {
 
   const handleAddToCart = async (item: DashboardItem) => {
     if (!item.itemId) return;
-
+  
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-
+  
     if (!accessToken || !userId) {
       message.warning("Please login to add items to the cart.");
       setTimeout(() => {
@@ -421,7 +438,7 @@ const Home: React.FC = () => {
       }, 2000);
       return;
     }
-
+  
     if (!checkProfileCompletion()) {
       Modal.error({
         title: "Profile Incomplete",
@@ -433,21 +450,28 @@ const Home: React.FC = () => {
       }, 4000);
       return;
     }
-
+  
     try {
       setLoadingItems(prev => ({
         ...prev,
         items: { ...prev.items, [item.itemId as string]: true }
       }));
-
+  
       const response = await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         { customerId: userId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-
-      fetchCartData(item.itemId);
+  
+      await fetchCartData(item.itemId);
       message.success(response.data.errorMessage);
+      
+      // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
+      // so use setTimeout to give the cart update time to complete
+      setTimeout(async () => {
+        // After successfully adding to cart, check for applicable offers
+        await handleItemAddedToCart(item);
+      }, 300);
     } catch (error) {
       console.error("Error adding to cart:", error);
       message.error("Error adding to cart.");
@@ -457,21 +481,20 @@ const Home: React.FC = () => {
       }));
     }
   };
-
   const handleQuantityChange = async (item: DashboardItem, increment: boolean) => {
     if (!item.itemId) return;
-
+  
     const userId = localStorage.getItem("userId");
     if (!userId) {
       message.warning("Please login to update cart");
       return;
     }
-
+  
     if (item.quantity !== undefined && cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
       return;
     }
-
+  
     if (!checkProfileCompletion()) {
       Modal.error({
         title: "Profile Incomplete",
@@ -483,28 +506,28 @@ const Home: React.FC = () => {
       }, 4000);
       return;
     }
-
+  
     const status = increment ? "add" : "remove";
-
+  
     try {
       setLoadingItems(prev => ({
         ...prev,
         items: { ...prev.items, [item.itemId as string]: true },
         status: { ...prev.status, [item.itemId as string]: status }
       }));
-
+  
       if (!increment && cartItems[item.itemId] <= 1) {
         const targetCartId = cartData.find(
           (cart) => cart.itemId === item.itemId
         )?.cartId;
-
+  
         const response = await axios.delete(
           `${BASE_URL}/cart-service/cart/remove`,
           {
             data: { id: targetCartId },
           }
         );
-
+  
         if (response) {
           message.success("Item removed from cart successfully.");
         } else {
@@ -514,18 +537,27 @@ const Home: React.FC = () => {
         const endpoint = increment
           ? `${BASE_URL}/cart-service/cart/incrementCartData`
           : `${BASE_URL}/cart-service/cart/decrementCartData`;
-
+  
         const response = await axios.patch(endpoint, {
           customerId: userId,
           itemId: item.itemId,
         });
-
+  
         if (!response) {
           message.error("Sorry, Please try again");
         }
       }
-
-      fetchCartData(item.itemId);
+  
+      await fetchCartData(item.itemId);
+      
+      // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
+      // so use setTimeout to give the cart update time to complete
+      if (increment) {
+        setTimeout(async () => {
+          // Check for offers when incrementing quantity
+          await handleItemAddedToCart(item);
+        }, 300);
+      }
     } catch (error) {
       console.error("Error updating quantity:", error);
       message.error("Error updating item quantity");
@@ -566,11 +598,48 @@ const Home: React.FC = () => {
     }
   };
 
+  // Helper function to check for special offers based on weight
+  const getOfferBadge = (item: DashboardItem) => {
+    const weight = parseFloat(item.weight || "0");
+    
+    if (weight === 1) {
+      return (
+        <div className="absolute top-1 right-1 z-10">
+          <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+            <Gift size={10} className="mr-1" /> Buy 1 Get 1 Free
+          </span>
+        </div>
+      );
+    } else if (weight === 5) {
+      return (
+        <div className="absolute top-1 right-1 z-10">
+          <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+            <Ticket size={10} className="mr-1" /> Free Movie Ticket
+          </span>
+        </div>
+      );
+    } else if (weight === 10 || weight === 26) {
+      return (
+        <div className="absolute top-1 right-1 z-10">
+          <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+            <Package size={10} className="mr-1" /> Free Container
+          </span>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   const renderProductItem = (item: DashboardItem, index: number) => {
     // Skip rendering if quantity is 0 (out of stock)
     if (item.quantity === 0) {
       return null;
     }
+
+    const weight = parseFloat(item.weight || "0");
+    const hasOffer = weight === 1 || weight === 5 || weight === 10 || weight === 26;
+    const offerBadge = getOfferBadge(item);
 
     return (
       <motion.div
@@ -596,7 +665,10 @@ const Home: React.FC = () => {
           </div>
         )}
 
-        {item.quantity && item.quantity < 6 ? (
+        {/* Render offer badge or quantity indicator */}
+        {hasOffer && hoveredProduct === (item.itemId ?? item.id) ? (
+          offerBadge
+        ) : item.quantity && item.quantity < 6 ? (
           <div className="absolute top-1 right-1 z-10">
             <span className="bg-yellow-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full">
               Only {item.quantity} left
@@ -652,7 +724,7 @@ const Home: React.FC = () => {
             >
               {item.title}
             </h3>
-            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{item.weight == "1" ? "Kg" : "Kgs"}</p>
+            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{parseFloat(item.weight || "0") <= 1 ? "Kg" : "Kgs"}</p>
 
             <div className="flex items-baseline space-x-2">
               <span className="text-lg font-semibold text-gray-900">₹{item.itemPrice ?? 0}</span>
@@ -660,6 +732,26 @@ const Home: React.FC = () => {
                 <span className="text-sm text-gray-500 line-through">₹{item.itemMrp}</span>
               )}
             </div>
+
+            {/* Special offer indicators for different weights */}
+            {weight === 1 && (
+              <div className="flex items-center mt-1">
+                <Gift size={14} className="text-green-500 mr-1" />
+                <span className="text-xs text-green-600 font-medium">Buy 1 Get 1 Free</span>
+              </div>
+            )}
+            {weight === 5 && (
+              <div className="flex items-center mt-1">
+                <Ticket size={14} className="text-blue-500 mr-1" />
+                <span className="text-xs text-blue-600 font-medium">Free Movie Ticket</span>
+              </div>
+            )}
+            {(weight === 10 || weight === 26) && (
+              <div className="flex items-center mt-1">
+                <Package size={14} className="text-purple-500 mr-1" />
+                <span className="text-xs text-purple-600 font-medium">Free Steel Container</span>
+              </div>
+            )}
 
             {item.itemId && cartItems[item.itemId] > 0 ? (
               <motion.div
@@ -693,6 +785,10 @@ const Home: React.FC = () => {
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   {item.itemId ? cartItems[item.itemId] : 0}
+                  {/* Show "free" indicator for 1kg offer if applicable */}
+                  {item.itemId && freeItemsMap[item.itemId] && weight === 1 && (
+                    <span className="bg-green-100 text-green-600 text-xs ml-1 px-1 rounded">+1 Free</span>
+                  )}
                 </motion.span>
 
                 <motion.button
@@ -975,6 +1071,31 @@ const Home: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Special Offers Banner Section */}
+        <section className="mb-8">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-5 sm:px-8 sm:py-6 flex flex-col sm:flex-row items-center justify-between">
+              <div className="mb-4 sm:mb-0 text-center sm:text-left">
+                <h2 className="text-white text-xl font-bold mb-2">Exclusive Rice Offers!</h2>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-sm">
+                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                    <Gift size={14} className="mr-1" /> Buy 1kg Get 1kg Free
+                  </div>
+                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                    <Ticket size={14} className="mr-1" /> Free Movie Ticket with 5kg
+                  </div>
+                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                    <Package size={14} className="mr-1" /> Free Container with 10kg & 26kg
+                  </div>
+                </div>
+              </div>
+              <button onClick={viewAllProducts} className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-2 rounded-full font-medium text-sm flex items-center transition-colors">
+                Shop Now <ArrowRight size={16} className="ml-1" />
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Products Section */}
         <section ref={productsRef} className="mb-12">
           <div className="flex items-center mb-4 gap-10">
