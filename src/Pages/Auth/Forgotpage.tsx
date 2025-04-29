@@ -1,25 +1,79 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Mail, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Mail, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 // Define types
 type FormStep = 'enter-email' | 'verification' | 'reset-password' | 'success';
 
 const ForgotPasswordPage: React.FC = () => {
+  // Router hooks
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   // State management
   const [currentStep, setCurrentStep] = useState<FormStep>('enter-email');
   const [email, setEmail] = useState<string>('');
   const [verificationCode, setVerificationCode] = useState<string>('');
+  const [resetToken, setResetToken] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [tokenValidated, setTokenValidated] = useState<boolean>(false);
+
+  // Check for token in URL on component mount
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const userEmail = searchParams.get('email');
+    
+    if (token && userEmail) {
+      setResetToken(token);
+      setEmail(userEmail);
+      validateResetToken(token, userEmail);
+    }
+  }, [searchParams]);
+
+  // Validate token from email link
+  const validateResetToken = async (token: string, email: string) => {
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('https://www.askoxy.ai/forgot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          method: 'email',
+          email: email,
+          token: token,
+          action: 'validate-token'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setTokenValidated(true);
+        setCurrentStep('reset-password');
+      } else {
+        setError(data.message || 'Invalid or expired reset link');
+        setCurrentStep('enter-email');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+      setCurrentStep('enter-email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Go back to previous step
   const handleGoBack = () => {
     if (currentStep === 'verification') {
       setCurrentStep('enter-email');
-    } else if (currentStep === 'reset-password') {
+    } else if (currentStep === 'reset-password' && !tokenValidated) {
       setCurrentStep('verification');
     }
     setError('');
@@ -83,6 +137,7 @@ const ForgotPasswordPage: React.FC = () => {
       const data = await response.json();
 
       if (response.ok) {
+        setResetToken(data.token || '');
         setCurrentStep('reset-password');
       } else {
         setError(data.message || 'Invalid verification code');
@@ -113,7 +168,7 @@ const ForgotPasswordPage: React.FC = () => {
     }
 
     try {
-      // API call to reset password
+      // API call to reset password with token
       const response = await fetch('https://www.askoxy.ai/forgot', {
         method: 'POST',
         headers: {
@@ -122,7 +177,7 @@ const ForgotPasswordPage: React.FC = () => {
         body: JSON.stringify({
           method: 'email',
           email: email,
-          code: verificationCode,
+          token: resetToken,
           password: newPassword,
           action: 'reset-password'
         }),
@@ -142,6 +197,36 @@ const ForgotPasswordPage: React.FC = () => {
     }
   };
 
+  // Password validation checks
+  const validatePasswordStrength = (password: string) => {
+    const hasMinLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    return {
+      hasMinLength,
+      hasUpperCase,
+      hasLowerCase,
+      hasNumbers,
+      hasSpecialChar,
+      isStrong: hasMinLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar
+    };
+  };
+
+  const passwordCheck = validatePasswordStrength(newPassword);
+
+  // Loading overlay
+  const LoadingOverlay = () => (
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-4 rounded-lg flex items-center space-x-3">
+        <Loader2 className="h-6 w-6 text-purple-600 animate-spin" />
+        <span>Processing...</span>
+      </div>
+    </div>
+  );
+
   // Render different form steps
   const renderFormStep = () => {
     switch (currentStep) {
@@ -153,7 +238,7 @@ const ForgotPasswordPage: React.FC = () => {
             </h2>
             
             <p className="text-gray-600 text-center text-sm md:text-base">
-              Enter your email address and we'll send you a verification code to reset your password.
+              Enter your email address and we'll send you a link to reset your password.
             </p>
             
             <div className="space-y-4">
@@ -191,7 +276,7 @@ const ForgotPasswordPage: React.FC = () => {
                   isLoading ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
-                {isLoading ? 'Sending...' : 'Send Verification Code'}
+                {isLoading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </div>
           </form>
@@ -247,6 +332,16 @@ const ForgotPasswordPage: React.FC = () => {
               >
                 {isLoading ? 'Verifying...' : 'Verify Code'}
               </button>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => handleSendVerificationCode({ preventDefault: () => {} } as React.FormEvent)}
+                  className="text-purple-600 text-sm hover:text-purple-800"
+                >
+                  Didn't receive the code? Send again
+                </button>
+              </div>
             </div>
           </form>
         );
@@ -255,13 +350,15 @@ const ForgotPasswordPage: React.FC = () => {
         return (
           <form onSubmit={handleResetPassword} className="space-y-6">
             <div className="flex items-center mb-4">
-              <button
-                type="button"
-                onClick={handleGoBack}
-                className="mr-3 text-purple-600 hover:text-purple-800"
-              >
-                <ArrowLeft size={20} />
-              </button>
+              {!tokenValidated && (
+                <button
+                  type="button"
+                  onClick={handleGoBack}
+                  className="mr-3 text-purple-600 hover:text-purple-800"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+              )}
               <h2 className="text-xl md:text-2xl font-bold text-gray-800">Reset Password</h2>
             </div>
             
@@ -293,6 +390,44 @@ const ForgotPasswordPage: React.FC = () => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                
+                {newPassword && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-gray-600 mb-1">Password must contain:</p>
+                    <ul className="space-y-1">
+                      <li className={`text-xs flex items-center ${passwordCheck.hasMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+                        <div className={`mr-1 ${passwordCheck.hasMinLength ? 'text-green-600' : 'text-gray-400'}`}>
+                          <CheckCircle size={12} />
+                        </div>
+                        At least 8 characters
+                      </li>
+                      <li className={`text-xs flex items-center ${passwordCheck.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
+                        <div className={`mr-1 ${passwordCheck.hasUpperCase ? 'text-green-600' : 'text-gray-400'}`}>
+                          <CheckCircle size={12} />
+                        </div>
+                        One uppercase letter
+                      </li>
+                      <li className={`text-xs flex items-center ${passwordCheck.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
+                        <div className={`mr-1 ${passwordCheck.hasLowerCase ? 'text-green-600' : 'text-gray-400'}`}>
+                          <CheckCircle size={12} />
+                        </div>
+                        One lowercase letter
+                      </li>
+                      <li className={`text-xs flex items-center ${passwordCheck.hasNumbers ? 'text-green-600' : 'text-gray-500'}`}>
+                        <div className={`mr-1 ${passwordCheck.hasNumbers ? 'text-green-600' : 'text-gray-400'}`}>
+                          <CheckCircle size={12} />
+                        </div>
+                        One number
+                      </li>
+                      <li className={`text-xs flex items-center ${passwordCheck.hasSpecialChar ? 'text-green-600' : 'text-gray-500'}`}>
+                        <div className={`mr-1 ${passwordCheck.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
+                          <CheckCircle size={12} />
+                        </div>
+                        One special character
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
               
               <div>
@@ -305,10 +440,20 @@ const ForgotPasswordPage: React.FC = () => {
                     type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all ${
+                      confirmPassword && newPassword !== confirmPassword
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-300'
+                    }`}
                     placeholder="Confirm new password"
                     required
                   />
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <div className="text-red-600 text-xs mt-1 flex items-center">
+                      <XCircle size={12} className="mr-1" />
+                      Passwords don't match
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -321,9 +466,11 @@ const ForgotPasswordPage: React.FC = () => {
               
               <button
                 type="submit"
-                disabled={isLoading}
-                className={`w-full bg-purple-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors ${
-                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                disabled={isLoading || newPassword !== confirmPassword || !passwordCheck.isStrong}
+                className={`w-full bg-purple-600 text-white font-medium py-3 px-4 rounded-lg transition-colors ${
+                  isLoading || newPassword !== confirmPassword || !passwordCheck.isStrong
+                    ? 'opacity-70 cursor-not-allowed bg-purple-400'
+                    : 'hover:bg-purple-700'
                 }`}
               >
                 {isLoading ? 'Updating...' : 'Reset Password'}
@@ -345,7 +492,7 @@ const ForgotPasswordPage: React.FC = () => {
               Your password has been updated successfully. You can now login with your new password.
             </p>
             <button
-              onClick={() => window.location.href = '/login'}
+              onClick={() => navigate('/login')}
               className="w-full bg-purple-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors"
             >
               Back to Login
@@ -357,8 +504,9 @@ const ForgotPasswordPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-purple-50 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
+      {isLoading && <LoadingOverlay />}
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-      </div>   
+      </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-purple-100">
           {renderFormStep()}

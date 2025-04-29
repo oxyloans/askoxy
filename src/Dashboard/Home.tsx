@@ -101,12 +101,12 @@ interface Category {
 
 
 const Home: React.FC = () => {
-   // Move this to the top of the component
-   const context = useContext(CartContext);
-   if (!context) {
-     throw new Error("Home must be used within a CartProvider");
-   }
-   const { count, setCount } = context;
+  // Move this to the top of the component
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("Home must be used within a CartProvider");
+  }
+  const { count, setCount } = context;
   const [products, setProducts] = useState<DashboardItem[]>([]);
   const [displayProducts, setDisplayProducts] = useState<DashboardItem[]>([]);
   const [displayCount, setDisplayCount] = useState(5);
@@ -215,32 +215,32 @@ const Home: React.FC = () => {
   const fetchCartData = useCallback(async (itemId: string = "") => {
     const userId = localStorage.getItem("userId");
     if (!userId) return;
-  
+
     if (itemId !== "") {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
       }));
     }
-  
+
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
       );
-  
+
       const cartList = response.data?.customerCartResponseList || [];
-  
+
       if (cartList.length > 0) {
         const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
           acc[item.itemId] = Number(item.cartQuantity) || 0;
           return acc;
         }, {});
-  
+
         // Use type assertion and additional type guard
         const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
           return sum + (typeof qty === 'number' ? qty : 0);
         }, 0);
-  
+
         // Update both local state and context
         const roundedTotal = Math.round(totalQuantity);
         setCartItems(cartItemsMap);
@@ -945,32 +945,33 @@ const Home: React.FC = () => {
     <div className="min-h-screen">
       {/* Header Images Section */}
       <div className="w-full bg-white border-b border-gray-100 py-3 md:py-6">
-      <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
-        {/* Responsive grid with better sizing for all devices */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
-          {headerImages.map((image) => (
-            <motion.div
-              key={image.id}
-              whileHover={{ scale: 1.03 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="cursor-pointer overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-white"
-              onHoverStart={() => setHoveredImage(image.id)}
-              onHoverEnd={() => setHoveredImage(null)}
-            >
-              <div className="relative w-full h-0 pb-[75%]">
-                <motion.img
-                  src={image.src}
-                  alt={image.alt || "Header image"}
-                  className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                  animate={{ scale: hoveredImage === image.id ? 1.05 : 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </motion.div>
-          ))}
+        <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
+          {/* Responsive grid with better sizing for all devices */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
+            {headerImages.map((image) => (
+              <motion.div
+                key={image.id}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="cursor-pointer overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-white"
+                onHoverStart={() => setHoveredImage(image.id)}
+                onHoverEnd={() => setHoveredImage(null)}
+                onClick={() => navigate(image.path)} // Add this onClick handler to navigate to the image path
+              >
+                <div className="relative w-full h-0 pb-[75%]">
+                  <motion.img
+                    src={image.src}
+                    alt={image.alt || "Header image"}
+                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                    animate={{ scale: hoveredImage === image.id ? 1.05 : 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -1086,53 +1087,53 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {loading
               ? Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={`skeleton-service-${index}`}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
-                  >
-                    <div className="h-40 bg-gray-200"></div>
-                    <div className="p-4">
-                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                <div
+                  key={`skeleton-service-${index}`}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
+                >
+                  <div className="h-40 bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))
+              : services.map((service, index) => (
+                <motion.div
+                  key={service.id}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  variants={serviceCardVariants}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                  onClick={() => navigate(service.path)}
+                >
+                  <div className="aspect-video relative overflow-hidden bg-gray-100">
+                    <img
+                      src={service.image}
+                      alt={service.title}
+                      className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-40"></div>
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="text-white font-bold text-lg drop-shadow-md">
+                        {service.title}
+                      </h3>
                     </div>
                   </div>
-                ))
-              : services.map((service, index) => (
-                  <motion.div
-                    key={service.id}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                    variants={serviceCardVariants}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                    onClick={() => navigate(service.path)}
-                  >
-                    <div className="aspect-video relative overflow-hidden bg-gray-100">
-                      <img
-                        src={service.image}
-                        alt={service.title}
-                        className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-40"></div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <h3 className="text-white font-bold text-lg drop-shadow-md">
-                          {service.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-gray-700 text-sm">
-                        {service.description}
-                      </p>
-                      <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
-                        Learn More
-                        <ChevronRight size={16} className="ml-1" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+                  <div className="p-4">
+                    <p className="text-gray-700 text-sm">
+                      {service.description}
+                    </p>
+                    <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
+                      Learn More
+                      <ChevronRight size={16} className="ml-1" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
           </div>
         </section>
 
@@ -1157,22 +1158,22 @@ const Home: React.FC = () => {
             <div className="grid grid-cols-1 gap-5">
               {loading
                 ? Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg animate-pulse h-24 flex items-center px-4"
-                      >
-                        <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
-                        <div className="space-y-2 flex-1">
-                          <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4"></div>
-                          <div className="h-3 bg-blue-200 rounded animate-pulse w-1/2"></div>
-                        </div>
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg animate-pulse h-24 flex items-center px-4"
+                    >
+                      <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4"></div>
+                        <div className="h-3 bg-blue-200 rounded animate-pulse w-1/2"></div>
                       </div>
-                    ))
+                    </div>
+                  ))
                 : freeGPTs.map((item, index) =>
-                    renderDigitalServiceCard(item, index, "gpt")
-                  )}
+                  renderDigitalServiceCard(item, index, "gpt")
+                )}
             </div>
 
             {!loading && freeGPTs.length === 0 && (
@@ -1202,22 +1203,22 @@ const Home: React.FC = () => {
             <div className="grid grid-cols-1 gap-5">
               {loading
                 ? Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-lg animate-pulse h-24 flex items-center px-4"
-                      >
-                        <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
-                        <div className="space-y-2 flex-1">
-                          <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4"></div>
-                          <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
-                        </div>
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-lg animate-pulse h-24 flex items-center px-4"
+                    >
+                      <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4"></div>
+                        <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
                       </div>
-                    ))
+                    </div>
+                  ))
                 : cryptocurrency.map((item, index) =>
-                    renderDigitalServiceCard(item, index, "crypto")
-                  )}
+                  renderDigitalServiceCard(item, index, "crypto")
+                )}
             </div>
 
             {!loading && cryptocurrency.length === 0 && (
