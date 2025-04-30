@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import React, { useContext, useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2, X, Trash2 } from "lucide-react";
@@ -7,7 +7,6 @@ import { isWithinRadius } from "./LocationCheck";
 import { Button, message, Modal } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
-import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 
 interface Address {
@@ -60,7 +59,6 @@ const CartPage: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
   const [checkoutError, setCheckoutError] = useState<boolean>(false);
@@ -125,24 +123,28 @@ const CartPage: React.FC = () => {
     onePlusOneConfirmedRef.current = true;
   };
 
-  // const maybeShowOnePlusOneModal = async () => {
-  //   if (onePlusOneModalShownRef.current) return;
+  const maybeShowOnePlusOneModal = async () => {
+    if (onePlusOneModalShownRef.current) return;
 
-  //   const hasClaimed = await checkOnePlusOneStatus();
-  //   if (hasClaimed || hasShownOnePlusOne) return;
+    try {
+      const hasClaimed = await checkOnePlusOneStatus();
+      if (hasClaimed || hasShownOnePlusOne) return;
 
-  //   const eligibleBag = findOneKgBag();
-  //   if (!eligibleBag) return;
+      const eligibleBag = findOneKgBag();
+      if (!eligibleBag) return;
 
-  //   onePlusOneModalShownRef.current = true;
-  //   setHasShownOnePlusOne(true);
+      onePlusOneModalShownRef.current = true;
+      setHasShownOnePlusOne(true);
 
-  //   setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
-  // };
+      setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
+    } catch (error) {
+      console.error("Error in maybeShowOnePlusOneModal:", error);
+    }
+  };
 
   const findOneKgBag = (): CartItem | null => {
     const oneKgBags = cartData.filter((item) => {
-      const weight = parseFloat(item.weight?.toString() || "0");
+      const weight = parseWeight(item.weight);
       return weight === 1 && item.units?.toLowerCase().includes("kg");
     });
 
@@ -164,8 +166,8 @@ const CartPage: React.FC = () => {
       console.warn(`Invalid weight value: ${weight}, defaulting to 0`);
       return 0;
     }
-    const match = weight.match(/(\d+(\.\d+)?)/);
-    const result = match ? parseFloat(match[0]) : 0;
+    const cleanedWeight = weight.replace(/[^0-9.]/g, "");
+    const result = parseFloat(cleanedWeight) || 0;
     console.log(`Parsed string ${weight} to ${result}`);
     return result;
   };
@@ -186,7 +188,8 @@ const CartPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setAddresses(response.data);
+      console.log("Fetched addresses:", response.data);
+      setAddresses(response.data || []);
       setSelectedAddress(response.data[0] || null);
     } catch (error) {
       console.error("Error fetching addresses:", error);
@@ -205,40 +208,186 @@ const CartPage: React.FC = () => {
         setContainerPreference(preference);
       } catch (error) {
         console.error("Error initializing cart page:", error);
+        message.error("Failed to load cart data. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
 
     initializeCartPage();
-  }, []);
-
-  // useEffect(() => {
-  //   const checkAndShowFallbackOnePlusOne = async () => {
-  //     if (onePlusOneModalShownRef.current) return;
-
-  //     const hasClaimed = await checkOnePlusOneStatus();
-  //     const eligibleBag = findOneKgBag();
-
-  //     if (
-  //       cartData.length > 0 &&
-  //       !hasClaimed &&
-  //       !modalDisplayedRef.current &&
-  //       eligibleBag
-  //     ) {
-  //       onePlusOneModalShownRef.current = true;
-  //       setHasShownOnePlusOne(true);
-  //       setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
-  //     }
-  //   };
-
-  //   checkAndShowFallbackOnePlusOne();
-  // }, [cartData]);
+  }, [customerId, token]);
 
   useEffect(() => {
+    const checkAndShowFallbackOnePlusOne = async () => {
+      if (onePlusOneModalShownRef.current) return;
+
+      try {
+        const hasClaimed = await checkOnePlusOneStatus();
+        const eligibleBag = findOneKgBag();
+
+        if (
+          cartData.length > 0 &&
+          !hasClaimed &&
+          !modalDisplayedRef.current &&
+          eligibleBag
+        ) {
+          onePlusOneModalShownRef.current = true;
+          setHasShownOnePlusOne(true);
+          setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
+        }
+      } catch (error) {
+        console.error("Error in checkAndShowFallbackOnePlusOne:", error);
+      }
+    };
+
+    checkAndShowFallbackOnePlusOne();
+  }, [cartData]);
+
+  const showContainerModal = useCallback(() => {
+    console.log("showContainerModal called with:", {
+      containerPreference,
+      modalDisplayed: modalDisplayedRef.current,
+      cartData,
+    });
+
+    if (
+      containerPreference?.toLowerCase() === "interested" ||
+      modalDisplayedRef.current
+    ) {
+      console.log("Modal not shown - already interested or displayed");
+      return;
+    }
+
+    const hasContainer = cartData.some((item) =>
+      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+        item.itemId
+      )
+    );
+    if (hasContainer) {
+      console.log("Modal not shown - cart already has container");
+      modalDisplayedRef.current = true;
+      return;
+    }
+
+    const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
+    const hasValidLightBag = cartData.some((item) => {
+      const weight = parseWeight(item.weight);
+      return weight <= 10 && weight !== 1 && weight !== 5;
+    });
+
+    console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
+
+    if (!hasHeavyBag && !hasValidLightBag) {
+      console.log("Modal not shown - no eligible items");
+      return;
+    }
+
+    modalDisplayedRef.current = true;
+
+    const PlanModalContent = () => {
+      const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(
+        selectedPlan
+      );
+
+      return (
+        <div className="text-center">
+          <p className="mt-2">
+            Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
+            or refer 9 friends and when they buy their first bag, the container
+            is yours forever.
+          </p>
+          <p className="mt-2 text-sm text-gray-600 font-semibold">
+            * No purchase in 90 days or gap of 90 days between purchases =
+            Container will be taken back
+          </p>
+          <p className="mt-1 text-sm text-gray-700 italic">
+            Choose the plan that best suits your needs and enjoy exclusive
+            benefits.
+          </p>
+
+          <div className="mt-4 space-y-4">
+            {["planA", "planB"].map((planKey) => (
+              <div className="flex items-center" key={planKey}>
+                <input
+                  type="radio"
+                  name="planSelection"
+                  checked={tempPlan === planKey}
+                  onChange={() => {
+                    setTempPlan(planKey as "planA" | "planB");
+                    setSelectedPlan(planKey as "planA" | "planB");
+                  }}
+                  className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPlanDetails(planKey as "planA" | "planB");
+                    setIsPlanDetailsModalOpen(true);
+                  }}
+                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${
+                    tempPlan === planKey
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                  }`}
+                >
+                  {planKey === "planA"
+                    ? "Plan A: Free Steel Container Policy"
+                    : "Plan B: Referral Program"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    try {
+      Modal.confirm({
+        title: "Special Offer!",
+        content: <PlanModalContent />,
+        okText: "Confirm Selection",
+        cancelText: "Cancel",
+        onOk: async () => {
+          try {
+            if (!selectedPlan) {
+              message.info("Please select a plan before confirming.");
+              return Promise.reject(new Error("No plan selected"));
+            }
+            await handleInterested();
+            containerModalCompletedRef.current = true;
+            await maybeShowOnePlusOneModal();
+          } catch (error) {
+            console.error("Error in Modal onOk:", error);
+            message.error("Failed to process container selection.");
+            throw error;
+          }
+        },
+        onCancel: async () => {
+          try {
+            setSelectedPlan(null);
+            containerModalCompletedRef.current = true;
+            await maybeShowOnePlusOneModal();
+          } catch (error) {
+            console.error("Error in Modal onCancel:", error);
+            message.error("Failed to cancel container selection.");
+            throw error;
+          }
+        },
+      });
+    } catch (error) {
+      console.error("Error displaying container modal:", error);
+    }
+  }, [cartData, containerPreference, customerId, token, selectedPlan]);
+
+  useEffect(() => {
+    console.log("useEffect triggered with:", {
+      cartDataLength: cartData.length,
+      containerPreference,
+      modalDisplayed: modalDisplayedRef.current,
+    });
     if (
       cartData.length > 0 &&
-      containerPreference?.toLowerCase() !== "interested" &&
+      (containerPreference === null || containerPreference?.toLowerCase() !== "interested") &&
       !modalDisplayedRef.current
     ) {
       console.log(
@@ -250,55 +399,63 @@ const CartPage: React.FC = () => {
       showContainerModal();
     } else {
       console.log(
-        "Modal not triggered - containerPreference:",
-        containerPreference,
-        "modalDisplayed:",
-        modalDisplayedRef.current
+        "Modal not triggered - reasons:",
+        {
+          cartDataEmpty: cartData.length === 0,
+          containerPreferenceInterested:
+            containerPreference?.toLowerCase() === "interested",
+          modalAlreadyDisplayed: modalDisplayedRef.current,
+        }
       );
     }
-  }, [cartData, containerPreference]);
+  }, [cartData, containerPreference, showContainerModal]);
 
   useEffect(() => {
     if (isPlanDetailsModalOpen && currentPlanDetails) {
-      Modal.info({
-        title:
-          currentPlanDetails === "planA"
-            ? "Free Steel Container Policy"
-            : "Referral Program",
-        content: (
-          <div className="space-y-4 text-left">
-            {currentPlanDetails === "planA" ? (
-              <>
-                <ul className="list-disc pl-5 text-gray-700 space-y-1">
-                  <li>
-                    Buy 9 bags of rice in 3 years to keep the container forever
-                  </li>
-                  <li>
-                    Refer 9 friends who make a purchase – keep the container
-                  </li>
-                  <li>Gap of 90 days = container is taken back</li>
-                </ul>
-              </>
-            ) : (
-              <>
-                <ul className="list-disc pl-5 text-gray-700 space-y-1">
-                  <li>Refer friends using your unique link</li>
-                  <li>They must sign up and buy rice</li>
-                  <li>You get a free container + ₹50 cashback</li>
-                </ul>
-              </>
-            )}
-          </div>
-        ),
-        onOk: () => setIsPlanDetailsModalOpen(false),
-        okText: "Close",
-        cancelButtonProps: { style: { display: "none" } },
-      });
+      try {
+        Modal.info({
+          title:
+            currentPlanDetails === "planA"
+              ? "Free Steel Container Policy"
+              : "Referral Program",
+          content: (
+            <div className="space-y-4 text-left">
+              {currentPlanDetails === "planA" ? (
+                <>
+                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>
+                      Buy 9 bags of rice in 3 years to keep the container forever
+                    </li>
+                    <li>
+                      Refer 9 friends who make a purchase – keep the container
+                    </li>
+                    <li>Gap of 90 days = container is taken back</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Refer friends using your unique link</li>
+                    <li>They must sign up and buy rice</li>
+                    <li>You get a free container + ₹50 cashback</li>
+                  </ul>
+                </>
+              )}
+            </div>
+          ),
+          onOk: () => setIsPlanDetailsModalOpen(false),
+          okText: "Close",
+          cancelButtonProps: { style: { display: "none" } },
+        });
+      } catch (error) {
+        console.error("Error displaying plan details modal:", error);
+      }
     }
   }, [isPlanDetailsModalOpen, currentPlanDetails]);
 
   const fetchCartData = async () => {
     try {
+      console.log("Fetching cart data for customerId:", customerId);
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
@@ -307,8 +464,9 @@ const CartPage: React.FC = () => {
           },
         }
       );
-      if (response.data.customerCartResponseList) {
-        const cartItemsMap = response.data.customerCartResponseList.reduce(
+      console.log("Cart API response:", response.data);
+      if (response.data?.customerCartResponseList) {
+        const cartItemsMap: { [key: string]: number } = response.data.customerCartResponseList.reduce(
           (acc: { [key: string]: number }, item: CartItem) => {
             acc[item.itemId] = item.cartQuantity || 0;
             return acc;
@@ -316,9 +474,10 @@ const CartPage: React.FC = () => {
           {}
         );
         setCartItems(cartItemsMap);
-        const totalQuantity = Object.values(
-          cartItemsMap as Record<string, number>
-        ).reduce((sum, qty) => sum + qty, 0);
+        const totalQuantity = Object.values(cartItemsMap).reduce(
+          (sum: number, qty: number) => sum + qty,
+          0
+        );
         setCount(totalQuantity);
       } else {
         setCartItems({});
@@ -330,16 +489,17 @@ const CartPage: React.FC = () => {
       );
       if (outOfStockItems.length > 0) {
         setCheckoutError(true);
-        alert(
+        message.warning(
           `Please decrease the quantity for: ${outOfStockItems
             .map((item: CartItem) => item.itemName)
             .join(", ")} before proceeding to checkout.`
         );
       }
-      setCartData(response.data?.customerCartResponseList || []);
-      console.log("Cart Data:", response.data?.customerCartResponseList);
+      setCartData(updatedCart);
+      console.log("Updated cart data:", updatedCart);
     } catch (error) {
       console.error("Error fetching cart items:", error);
+      message.error("Failed to fetch cart items.");
     } finally {
       setIsLoading(false);
     }
@@ -347,6 +507,7 @@ const CartPage: React.FC = () => {
 
   const fetchContainerPreference = async (): Promise<string | null> => {
     try {
+      console.log("Fetching container preference for customerId:", customerId);
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`,
         {
@@ -355,7 +516,7 @@ const CartPage: React.FC = () => {
           },
         }
       );
-      const status = response.data.freeContainerStatus
+      const status = response.data?.freeContainerStatus
         ? response.data.freeContainerStatus.toLowerCase()
         : null;
       console.log("Fetched container preference:", status);
@@ -407,6 +568,7 @@ const CartPage: React.FC = () => {
         itemPrice: 0,
       };
 
+      console.log("Adding container to cart:", containerItemData);
       await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         containerItemData,
@@ -427,188 +589,59 @@ const CartPage: React.FC = () => {
     }
   };
 
-  const showContainerModal = () => {
-    if (
-      containerPreference?.toLowerCase() === "interested" ||
-      modalDisplayedRef.current
-    ) {
-      return;
-    }
-
-    const hasContainer = cartData.some((item) =>
-      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-        item.itemId
-      )
-    );
-    if (hasContainer) {
-      modalDisplayedRef.current = true;
-      return;
-    }
-
-    const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
-    const hasValidLightBag = cartData.some((item) => {
-      const weight = parseWeight(item.weight);
-      return weight <= 10 && weight !== 1 && weight !== 5;
-    });
-
-    if (!hasHeavyBag && !hasValidLightBag) {
-      return;
-    }
-
-    modalDisplayedRef.current = true;
-
-    let selected: "planA" | "planB" | null = selectedPlan;
-
-    const PlanModalContent = () => {
-      const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(
-        selectedPlan
-      );
-
-      useEffect(() => {
-        selected = tempPlan;
-      }, [tempPlan]);
-
-      const planDetails: Record<"planA" | "planB", JSX.Element> = {
-        planA: (
-          <ul className="list-disc pl-5 space-y-2 text-left">
-            <li>Buy 9 bags of rice in 3 years to keep the container forever</li>
-            <li>Refer 9 friends who make a purchase – keep the container</li>
-            <li>Gap of 90 days = container is taken back</li>
-            <li>
-              Choose the plan that best suits your needs for long-term
-              convenience
-            </li>
-          </ul>
+  const showOnePlusOneModal = (item: CartItem) => {
+    try {
+      Modal.confirm({
+        title: "🎁 1+1 Offer on 1kg Rice!",
+        content: (
+          <p>
+            You're eligible for our <strong>1+1 offer</strong>! Get another{" "}
+            <strong>{item.itemName}</strong> absolutely free.
+          </p>
         ),
-        planB: (
-          <ul className="list-disc pl-5 space-y-2 text-left">
-            <li>Refer friends using your unique link</li>
-            <li>They must sign up and buy rice</li>
-            <li>You get a free container + ₹50 cashback</li>
-            <li>
-              Choose the plan that best suits your needs for long-term
-              convenience
-            </li>
-          </ul>
-        ),
-      };
+        okText: "Add Free Bag",
+        cancelText: "No Thanks",
+        onOk: async () => {
+          try {
+            const currentQuantity = cartItems[item.itemId] || 0;
 
-      return (
-        <div className="text-center">
-          <p className="mt-2">
-            Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
-            or refer 9 friends and when they buy their first bag, the container
-            is yours forever.
-          </p>
-          <p className="mt-2 text-sm text-gray-600 font-semibold">
-            * No purchase in 90 days or gap of 90 days between purchases =
-            Container will be taken back
-          </p>
-          <p className="mt-1 text-sm text-gray-700 italic">
-            Choose the plan that best suits your needs and enjoy exclusive
-            benefits.
-          </p>
+            await axios.patch(
+              `${BASE_URL}/cart-service/cart/incrementCartData`,
+              {
+                cartQuantity: currentQuantity + 1,
+                customerId,
+                itemId: item.itemId,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
 
-          <div className="mt-4 space-y-4">
-            {["planA", "planB"].map((planKey) => (
-              <div className="flex items-center" key={planKey}>
-                <input
-                  type="radio"
-                  name="planSelection"
-                  checked={tempPlan === planKey}
-                  onChange={() => setTempPlan(planKey as "planA" | "planB")}
-                  className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentPlanDetails(planKey as "planA" | "planB");
-                    setIsPlanDetailsModalOpen(true);
-                  }}
-                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${tempPlan === planKey
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                    }`}
-                >
-                  {planKey === "planA"
-                    ? "Plan A: Free Steel Container Policy"
-                    : "Plan B: Referral Program"}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
+            setFreeItemsMap((prev) => ({
+              ...prev,
+              [item.itemId]: 1,
+            }));
 
-    // Modal.confirm({
-    //   title: "Special Offer!",
-    //   content: <PlanModalContent />,
-    //   okText: "Confirm Selection",
-    //   cancelText: "Cancel",
-    //   onOk: async () => {
-    //     if (!selected) {
-    //       message.info("Please select a plan before confirming.");
-    //       return Promise.reject();
-    //     }
-    //     setSelectedPlan(selected);
-    //     await handleInterested();
-    //     containerModalCompletedRef.current = true;
-    //     await maybeShowOnePlusOneModal();
-    //   },
-    //   onCancel: async () => {
-    //     setSelectedPlan(null);
-    //     containerModalCompletedRef.current = true;
-    //     await maybeShowOnePlusOneModal();
-    //   },
-    // });
+            await setOnePlusOneClaimed();
+            message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
+            await fetchCartData();
+          } catch (error) {
+            console.error("Error applying 1+1 offer:", error);
+            message.error("Unable to apply the 1+1 offer. Please try again.");
+            throw error;
+          }
+        },
+        onCancel: () => {
+          console.log("1+1 offer modal cancelled");
+        },
+      });
+    } catch (error) {
+      console.error("Error displaying 1+1 modal:", error);
+    }
   };
-
-  // const showOnePlusOneModal = (item: CartItem) => {
-  //   Modal.confirm({
-  //     title: "🎁 1+1 Offer on 1kg Rice!",
-  //     content: (
-  //       <p>
-  //         You're eligible for our <strong>1+1 offer</strong>! Get another{" "}
-  //         <strong>{item.itemName}</strong> absolutely free.
-  //       </p>
-  //     ),
-  //     okText: "Add Free Bag",
-  //     cancelText: "No Thanks",
-  //     onOk: async () => {
-  //       try {
-  //         const currentQuantity = cartItems[item.itemId] || 0;
-
-  //         await axios.patch(
-  //           `${BASE_URL}/cart-service/cart/incrementCartData`,
-  //           {
-  //             cartQuantity: currentQuantity + 1,
-  //             customerId,
-  //             itemId: item.itemId,
-  //           },
-  //           {
-  //             headers: {
-  //               Authorization: `Bearer ${token}`,
-  //               "Content-Type": "application/json",
-  //             },
-  //           }
-  //         );
-
-  //         setFreeItemsMap((prev) => ({
-  //           ...prev,
-  //           [item.itemId]: 1,
-  //         }));
-
-  //         await setOnePlusOneClaimed();
-  //         message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
-  //         await fetchCartData();
-  //       } catch (err) {
-  //         console.error("1+1 offer failed:", err);
-  //         message.error("Unable to apply the 1+1 offer. Please try again.");
-  //       }
-  //     },
-  //   });
-  // };
 
   const getCoordinates = async (address: string) => {
     try {
@@ -617,8 +650,9 @@ const CartPage: React.FC = () => {
         address
       )}&key=${API_KEY}`;
       const response = await axios.get(url);
-      return response.data.results[0]?.geometry.location;
+      return response.data.results[0]?.geometry.location || null;
     } catch (error) {
+      console.error("Error fetching coordinates:", error);
       return null;
     }
   };
@@ -743,6 +777,7 @@ const CartPage: React.FC = () => {
       await fetchAddresses();
       setTimeout(resetAddressForm, 3000);
     } catch (err) {
+      console.error("Error saving address:", err);
       setSuccessMessage("");
       const apiError = err as ApiError;
       setError(apiError.response?.data?.message || "Failed to save address");
@@ -759,7 +794,6 @@ const CartPage: React.FC = () => {
   };
 
   const handleIncrease = async (item: CartItem) => {
-    // Check if the item is a container and prevent increment
     if (isContainer(item.itemId)) {
       message.info("This is a free promotional container. Quantity cannot be changed.");
       return;
@@ -771,7 +805,6 @@ const CartPage: React.FC = () => {
 
       if (currentQuantity >= item.quantity) {
         message.warning(`Only ${item.quantity} units available in stock`);
-        setLoadingItems((prev) => ({ ...prev, [item.itemId]: false }));
         return;
       }
 
@@ -792,7 +825,6 @@ const CartPage: React.FC = () => {
         }
       );
 
-      // GA4 Add to Cart Event Tracking
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "add_to_cart", {
           currency: "INR",
@@ -818,9 +850,7 @@ const CartPage: React.FC = () => {
     }
   };
 
-
   const handleDecrease = async (item: CartItem) => {
-    // Check if the item is a container and prevent decrement
     if (isContainer(item.itemId)) {
       message.info("This is a free promotional container. Quantity cannot be changed.");
       return;
@@ -847,7 +877,6 @@ const CartPage: React.FC = () => {
           }
         );
 
-        // GA4 Remove from Cart Event Tracking
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "remove_from_cart", {
             currency: "INR",
@@ -893,7 +922,6 @@ const CartPage: React.FC = () => {
         },
       });
 
-      // GA4 Remove from Cart Event Tracking for full removal
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "remove_from_cart", {
           currency: "INR",
@@ -949,7 +977,6 @@ const CartPage: React.FC = () => {
       pincode: "",
     });
     setEditingAddressId(null);
-    setShowAddressForm(false);
   };
 
   const handleToProcess = async () => {
@@ -972,28 +999,32 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    const isAddressValid = await handleAddressChange(selectedAddress);
-    if (isAddressValid?.isWithin) {
-      // GA4 Begin Checkout Event Tracking
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "begin_checkout", {
-          currency: "INR",
-          value: cartData.reduce(
-            (acc, item) =>
-              acc + parseFloat(item.itemPrice) * item.cartQuantity,
-            0
-          ),
-          items: cartData.map((item) => ({
-            item_id: item.itemId,
-            item_name: item.itemName,
-            price: parseFloat(item.itemPrice),
-            quantity: item.cartQuantity,
-            item_category: "Rice",
-          })),
-        });
-      }
+    try {
+      const isAddressValid = await handleAddressChange(selectedAddress);
+      if (isAddressValid?.isWithin) {
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "begin Sykes_checkout", {
+            currency: "INR",
+            value: cartData.reduce(
+              (acc, item) =>
+                acc + parseFloat(item.itemPrice) * item.cartQuantity,
+              0
+            ),
+            items: cartData.map((item) => ({
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: parseFloat(item.itemPrice),
+              quantity: item.cartQuantity,
+              item_category: "Rice",
+            })),
+          });
+        }
 
-      navigate("/main/checkout", { state: { selectedAddress } });
+        navigate("/main/checkout", { state: { selectedAddress } });
+      }
+    } catch (error) {
+      console.error("Error processing checkout:", error);
+      message.error("Failed to validate address for checkout.");
     }
   };
 
@@ -1014,7 +1045,7 @@ const CartPage: React.FC = () => {
   useEffect(() => {
     fetchCartData();
     fetchAddresses();
-  }, []);
+  }, [customerId, token]);
 
   useEffect(() => {
     const hasStockIssues = cartData.some(
@@ -1034,51 +1065,55 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    const withinRadius = await isWithinRadius(coordinates);
-    console.log({ withinRadius });
+    try {
+      const withinRadius = await isWithinRadius(coordinates);
+      console.log({ withinRadius });
 
-    if (!withinRadius.isWithin) {
-      Modal.error({
-        title: "Delivery Unavailable",
-        content: (
-          <>
-            <p>
-              Sorry! We're unable to deliver to this address as it is{" "}
-              {withinRadius.distanceInKm} km away, beyond our 20 km delivery
-              radius. Please select another saved address within the radius or
-              add a new one to proceed. We appreciate your understanding!
-            </p>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button type="default" onClick={() => Modal.destroyAll()}>
-                Cancel
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => {
-                  Modal.destroyAll();
-                  setIsAddressModalOpen(true);
-                }}
-              >
-                Add New Address
-              </Button>
-            </div>
-          </>
-        ),
-        footer: null,
-      });
+      if (!withinRadius.isWithin) {
+        Modal.error({
+          title: "Delivery Unavailable",
+          content: (
+            <>
+              <p>
+                Sorry! We're unable to deliver to this address as it is{" "}
+                {withinRadius.distanceInKm} km away, beyond our 20 km delivery
+                radius. Please select another saved address within the radius or
+                add a new one to proceed. We appreciate your understanding!
+              </p>
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button type="default" onClick={() => Modal.destroyAll()}>
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    Modal.destroyAll();
+                    setIsAddressModalOpen(true);
+                  }}
+                >
+                  Add New Address
+                </Button>
+              </div>
+            </>
+          ),
+          footer: null,
+        });
 
-      const updatedWithinRadius = {
-        ...withinRadius,
-        isWithin: false,
-      };
+        const updatedWithinRadius = {
+          ...withinRadius,
+          isWithin: false,
+        };
 
-      return updatedWithinRadius;
+        return updatedWithinRadius;
+      }
+      setSelectedAddress(selectedAddress);
+      return withinRadius;
+    } catch (error) {
+      console.error("Error checking address radius:", error);
+      message.error("Failed to validate address.");
+      return null;
     }
-    setSelectedAddress(selectedAddress);
-    return withinRadius;
   };
-
-  const handleCartData = async () => { };
 
   const isCheckoutDisabled = (): boolean => {
     if (!cartData || cartData.length === 0) {
@@ -1153,7 +1188,7 @@ const CartPage: React.FC = () => {
                   <h2 className="text-xl font-bold mb-4">Your cart is empty</h2>
                   <button
                     onClick={() => navigate("/main/dashboard/products")}
-                    className=" bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-2 rounded-md hover:bg-purple-700"
+                    className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-2 rounded-md hover:bg-purple-700"
                   >
                     Browse items
                   </button>
@@ -1187,16 +1222,16 @@ const CartPage: React.FC = () => {
                             {item.quantity === 1 ? "item" : "items"} left
                           </p>
                         )}
-                        <h3 className="text-smc md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
+                        <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
                           {item.itemName}
                         </h3>
                         <p className="text-sm text-gray-600">
                           Weight: {item.weight}{" "}
-                          {item.units == "pcs"
+                          {item.units === "pcs"
                             ? "Pc"
-                            : item.weight == "1"
-                              ? "Kg"
-                              : "Kgs"}
+                            : parseWeight(item.weight) === 1
+                            ? "Kg"
+                            : "Kgs"}
                         </p>
                         <div className="flex items-center mt-1">
                           <p className="text-sm line-through text-gray-400 mr-2">
@@ -1225,8 +1260,9 @@ const CartPage: React.FC = () => {
                             <motion.button
                               whileHover={{ scale: isContainer(item.itemId) ? 1 : 1.02 }}
                               whileTap={{ scale: isContainer(item.itemId) ? 1 : 0.98 }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${isContainer(item.itemId) ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                                isContainer(item.itemId) ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
                               onClick={() => handleDecrease(item)}
                               disabled={loadingItems[item.itemId] || isContainer(item.itemId)}
                               aria-label="Decrease quantity"
@@ -1245,12 +1281,23 @@ const CartPage: React.FC = () => {
                             </div>
 
                             <motion.button
-                              whileHover={{ scale: isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity ? 1 : 1.02 }}
-                              whileTap={{ scale: isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity ? 1 : 0.98 }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${cartItems[item.itemId] >= item.quantity || isContainer(item.itemId)
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                                }`}
+                              whileHover={{
+                                scale:
+                                  isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity
+                                    ? 1
+                                    : 1.02,
+                              }}
+                              whileTap={{
+                                scale:
+                                  isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity
+                                    ? 1
+                                    : 0.98,
+                              }}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                                cartItems[item.itemId] >= item.quantity || isContainer(item.itemId)
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
                               onClick={() => {
                                 if (cartItems[item.itemId] < item.quantity && !isContainer(item.itemId)) {
                                   handleIncrease(item);
@@ -1321,7 +1368,7 @@ const CartPage: React.FC = () => {
           </main>
 
           <div className="w-full lg:w-1/4">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border broder-black-500">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-500">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold">Delivery Address</h2>
                 <button
@@ -1340,7 +1387,7 @@ const CartPage: React.FC = () => {
                 </span>
               )}
               <div className="mb-4">
-                <label className="block font-bold text-gray-700  mb-1">
+                <label className="block font-bold text-gray-700 mb-1">
                   Select Address
                 </label>
                 <select
@@ -1425,34 +1472,35 @@ const CartPage: React.FC = () => {
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0
                   ) && (
-                      <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                        <p className="font-semibold">
-                          Quantity adjustments needed:
-                        </p>
-                        <ul className="ml-4 mt-1 list-disc">
-                          {cartData
-                            .filter(
-                              (item) =>
-                                item.cartQuantity > item.quantity &&
-                                item.quantity > 0
-                            )
-                            .map((item) => (
-                              <li key={item.itemId}>
-                                {item.itemName} - Only {item.quantity} in stock
-                                (you have {item.cartQuantity})
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    )}
+                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                      <p className="font-semibold">
+                        Quantity adjustments needed:
+                      </p>
+                      <ul className="ml-4 mt-1 list-disc">
+                        {cartData
+                          .filter(
+                            (item) =>
+                              item.cartQuantity > item.quantity &&
+                              item.quantity > 0
+                          )
+                          .map((item) => (
+                            <li key={item.itemId}>
+                              {item.itemName} - Only {item.quantity} in stock
+                              (you have {item.cartQuantity})
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${isCheckoutDisabled()
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
-                      }`}
+                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${
+                      isCheckoutDisabled()
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
+                    }`}
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled()}
                   >
@@ -1558,10 +1606,7 @@ const CartPage: React.FC = () => {
                     onChange={(e) =>
                       setAddressFormData((prev) => ({
                         ...prev,
-                        addressType: e.target.value as
-                          | "Home"
-                          | "Work"
-                          | "Others",
+                        addressType: e.target.value as "Home" | "Work" | "Others",
                       }))
                     }
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"

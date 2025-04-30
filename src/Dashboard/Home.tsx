@@ -282,8 +282,6 @@ const Home: React.FC = () => {
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
   };
 
-  // Remove this duplicate definition since we're moving it up
-
   const fetchCategories = useCallback(async () => {
     if (categoriesFetched.current) return;
 
@@ -481,6 +479,7 @@ const Home: React.FC = () => {
       }));
     }
   };
+
   const handleQuantityChange = async (item: DashboardItem, increment: boolean) => {
     if (!item.itemId) return;
   
@@ -618,14 +617,6 @@ const Home: React.FC = () => {
           </span>
         </div>
       );
-    } else if (weight === 10 || weight === 26) {
-      return (
-        <div className="absolute top-1 right-1 z-10">
-          <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-            <Package size={10} className="mr-1" /> Free Container
-          </span>
-        </div>
-      );
     }
     
     return null;
@@ -638,7 +629,7 @@ const Home: React.FC = () => {
     }
 
     const weight = parseFloat(item.weight || "0");
-    const hasOffer = weight === 1 || weight === 5 || weight === 10 || weight === 26;
+    const hasOffer = weight === 1 || weight === 5;
     const offerBadge = getOfferBadge(item);
 
     return (
@@ -734,7 +725,7 @@ const Home: React.FC = () => {
             </div>
 
             {/* Special offer indicators for different weights */}
-            {weight === 1 && (
+            {/* {weight === 1 && (
               <div className="flex items-center mt-1">
                 <Gift size={14} className="text-green-500 mr-1" />
                 <span className="text-xs text-green-600 font-medium">Buy 1 Get 1 Free</span>
@@ -745,13 +736,7 @@ const Home: React.FC = () => {
                 <Ticket size={14} className="text-blue-500 mr-1" />
                 <span className="text-xs text-blue-600 font-medium">Free Movie Ticket</span>
               </div>
-            )}
-            {(weight === 10 || weight === 26) && (
-              <div className="flex items-center mt-1">
-                <Package size={14} className="text-purple-500 mr-1" />
-                <span className="text-xs text-purple-600 font-medium">Free Steel Container</span>
-              </div>
-            )}
+            )} */}
 
             {item.itemId && cartItems[item.itemId] > 0 ? (
               <motion.div
@@ -984,7 +969,6 @@ const Home: React.FC = () => {
     },
   };
 
-
   const renderDigitalServiceCard = (item: DashboardItem, index: number, type: 'gpt' | 'crypto') => {
     const bgGradient = type === 'gpt'
       ? 'from-blue-600 to-indigo-700'
@@ -1072,7 +1056,7 @@ const Home: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Special Offers Banner Section */}
-        <section className="mb-8">
+        {/* <section className="mb-8">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-5 sm:px-8 sm:py-6 flex flex-col sm:flex-row items-center justify-between">
               <div className="mb-4 sm:mb-0 text-center sm:text-left">
@@ -1084,9 +1068,6 @@ const Home: React.FC = () => {
                   <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
                     <Ticket size={14} className="mr-1" /> Free Movie Ticket with 5kg
                   </div>
-                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
-                    <Package size={14} className="mr-1" /> Free Container with 10kg & 26kg
-                  </div>
                 </div>
               </div>
               <button onClick={viewAllProducts} className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-2 rounded-full font-medium text-sm flex items-center transition-colors">
@@ -1094,7 +1075,7 @@ const Home: React.FC = () => {
               </button>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Products Section */}
         <section ref={productsRef} className="mb-12">

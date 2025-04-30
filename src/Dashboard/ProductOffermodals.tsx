@@ -7,26 +7,11 @@ import {
   ShoppingBag, 
   Gift, 
   Ticket, 
-  Package, 
-  Award, 
-  Users, 
-  Calendar, 
   Info, 
-  CheckCircle,
-  AlertCircle,
-  Box,
-  Zap,
-  Share, 
-  UserPlus, 
-  DollarSign
+  CheckCircle, 
 } from "lucide-react";
 import BASE_URL from "../Config";
 
-// Constants for container IDs
-const CONTAINER_ITEM_IDS = {
-  HEAVY_BAG: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61", // 26kg container
-  LIGHT_BAG: "53d7f68c-f770-4a70-ad67-ee2726a1f8f3", // 10kg container
-};
 
 interface ProductItem {
   itemId?: string;
@@ -89,59 +74,13 @@ const ProductOfferModals = ({
     [key: string]: boolean;
   }>({});
 
-  // State variables for container offer (10kg and 26kg)
-  const [containerPreference, setContainerPreference] = useState<string | null>(null);
-  const modalDisplayedRef = useRef<boolean>(false);
-  const containerModalCompletedRef = useRef<boolean>(false);
-  const [selectedPlan, setSelectedPlan] = useState<"planA" | "planB" | null>(null);
-  const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] = useState<boolean>(false);
-  const [currentPlanDetails, setCurrentPlanDetails] = useState<"planA" | "planB" | null>(null);
-
   // Reset modal shown flags when component mounts
   useEffect(() => {
     setOnePlusOneModalShown(false);
     setMovieOfferModalShown(false);
     onePlusOneModalOpenRef.current = false;
     movieOfferModalOpenRef.current = false;
-    modalDisplayedRef.current = false;
-    containerModalCompletedRef.current = false;
   }, []);
-
-  // Fetch container preference
-  const fetchContainerPreference = useCallback(async (): Promise<string | null> => {
-    const customerId = localStorage.getItem("userId");
-    const token = localStorage.getItem("accessToken");
-    if (!customerId || !token) return null;
-
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const status = response.data.freeContainerStatus
-        ? response.data.freeContainerStatus.toLowerCase()
-        : null;
-      console.log("Fetched container preference:", status);
-      return status;
-    } catch (error) {
-      console.error("Error fetching container preference:", error);
-      return null;
-    }
-  }, []);
-
-  // Initialize container preference
-  useEffect(() => {
-    const initContainerPreference = async () => {
-      const preference = await fetchContainerPreference();
-      setContainerPreference(preference);
-    };
-    
-    initContainerPreference();
-  }, [fetchContainerPreference]);
 
   // 1Kg Rice Bag: One Plus One Offer
   const checkOnePlusOneStatus = async (): Promise<boolean> => {
@@ -466,7 +405,7 @@ const ProductOfferModals = ({
     showMovieOfferModal(eligibleBag);
   };
 
-  // Container Offer for 26kg and 10kg Rice
+  // Helper function to parse weight
   const parseWeight = (weight: unknown): number => {
     if (typeof weight === "number") {
       return weight;
@@ -479,453 +418,13 @@ const ProductOfferModals = ({
     return result;
   };
 
-  const showContainerModal = (item: ProductItem) => {
-    if (!item.itemId) return;
-
-    // First check if we have already shown the modal or user already made a selection
-    if (
-      containerPreference?.toLowerCase() === "interested" ||
-      containerModalCompletedRef.current ||
-      modalDisplayedRef.current
-    ) {
-      return;
-    }
-
-    // Check if user already has a container in cart
-    const hasContainer = cartData.some((cartItem) =>
-      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-        cartItem.itemId
-      )
-    );
-    
-    if (hasContainer) {
-      modalDisplayedRef.current = true;
-      return;
-    }
-
-    // Parse weight correctly, ensuring we get a numeric value
-    const weight = parseWeight(item.weight);
-    
-    // Modified eligibility check for container offers
-    // 10kg and 26kg are eligible for container
-    const isEligibleWeight = weight === 10 || weight === 26;
-    
-    // If not an eligible weight, exit early
-    if (!isEligibleWeight) {
-      return;
-    }
-
-    // Mark that we've displayed the modal
-    modalDisplayedRef.current = true;
-
-    let selected: "planA" | "planB" | null = selectedPlan;
-
-    const PlanModalContent = () => {
-      const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(
-        selectedPlan
-      );
-
-      useEffect(() => {
-        selected = tempPlan;
-      }, [tempPlan]);
-
-      const planDetails: Record<"planA" | "planB", JSX.Element> = {
-        planA: (
-          <ul className="list-disc pl-5 space-y-2 text-left">
-            <li>Buy 9 bags of rice in 3 years to keep the container forever</li>
-            <li>Refer 9 friends who make a purchase – keep the container</li>
-            <li>Gap of 90 days = container is taken back</li>
-            <li>
-              Choose the plan that best suits your needs for long-term
-              convenience
-            </li>
-          </ul>
-        ),
-        planB: (
-          <ul className="list-disc pl-5 space-y-2 text-left">
-            <li>Refer friends using your unique link</li>
-            <li>They must sign up and buy rice</li>
-            <li>You get a free container + ₹50 cashback</li>
-            <li>
-              Choose the plan that best suits your needs for long-term
-              convenience
-            </li>
-          </ul>
-        ),
-      };
-
-      return (
-        <div className="text-center">
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-lg mb-5 text-white relative">
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-10">
-              <Package size={80} />
-            </div>
-            <h3 className="text-xl font-bold mb-2">FREE Steel Container</h3>
-            <p className="text-white text-opacity-90">
-              With your purchase of {weight}kg rice bag
-            </p>
-          </div>
-          
-          <p className="mb-4 text-gray-700">
-            Get a premium quality steel container absolutely free with your rice purchase.
-            Choose one of our special plans to keep the container forever!
-          </p>
-          
-          <div className="mt-6 space-y-4">
-            <div className="flex items-stretch gap-3">
-              <Radio.Group 
-                onChange={(e) => setTempPlan(e.target.value)} 
-                value={tempPlan}
-                className="w-full"
-              >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <div className={`border rounded-lg p-4 transition-all ${tempPlan === "planA" ? "border-purple-500 bg-purple-50" : "border-gray-200"}`}>
-                    <Radio value="planA" className="w-full">
-                      <div className="ml-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-purple-700">Plan A: Loyalty Program</h4>
-                          <Tag color="purple">Most Popular</Tag>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">Buy 9 bags in 3 years or refer 9 friends</p>
-                        <Button 
-                          type="link" 
-                          size="small" 
-                          className="p-0 h-auto text-purple-600"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setCurrentPlanDetails("planA");
-                            setIsPlanDetailsModalOpen(true);
-                          }}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </Radio>
-                  </div>
-                  
-                  <div className={`border rounded-lg p-4 transition-all ${tempPlan === "planB" ? "border-purple-500 bg-purple-50" : "border-gray-200"}`}>
-                    <Radio value="planB" className="w-full">
-                      <div className="ml-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-purple-700">Plan B: Referral Rewards</h4>
-                          <Tag color="green">Extra Benefits</Tag>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">Earn rewards for referring friends</p>
-                        <Button 
-                          type="link" 
-                          size="small" 
-                          className="p-0 h-auto text-purple-600"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setCurrentPlanDetails("planB");
-                            setIsPlanDetailsModalOpen(true);
-                          }}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </Radio>
-                  </div>
-                </Space>
-              </Radio.Group>
-            </div>
-          </div>
-          
-          <div className="mt-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200 text-left">
-            <div className="flex items-center text-yellow-700 font-medium mb-1">
-              <AlertCircle size={16} className="mr-1" />
-              <span>Important Note</span>
-            </div>
-            <p className="text-sm text-gray-700">
-              If there's a gap of 90 days between purchases, the container may be reclaimed.
-              Select a plan above to secure permanent ownership.
-            </p>
-          </div>
-        </div>
-      );
-    };
-
-    Modal.confirm({
-      title: (
-        <div className="flex items-center text-purple-700">
-          <Package className="mr-2 text-purple-600" size={24} />
-          <span className="text-xl font-bold">Free Steel Container Offer!</span>
-        </div>
-      ),
-      icon: null,
-      content: <PlanModalContent />,
-      okText: "Confirm Selection",
-      okButtonProps: { 
-        style: { background: '#8B5CF6', borderColor: '#7C3AED' },
-      },
-      cancelText: "No Thanks",
-      width: 520,
-      className: "container-modal",
-      maskClosable: false,
-      onOk: async () => {
-        if (!selected) {
-          message.info("Please select a plan before confirming.");
-          return Promise.reject();
-        }
-        setSelectedPlan(selected);
-        await handleInterested(item);
-        containerModalCompletedRef.current = true;
-        return Promise.resolve();
-      },
-      onCancel: async () => {
-        setSelectedPlan(null);
-        containerModalCompletedRef.current = true;
-      },
-    });
-  };
-
-  const handleInterested = async (item: ProductItem) => {
-    const customerId = localStorage.getItem("userId");
-    const token = localStorage.getItem("accessToken");
-    if (!customerId || !token) return;
-
-    try {
-      const hasContainer = cartData.some((cartItem) =>
-        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-          cartItem.itemId
-        )
-      );
-      
-      if (hasContainer) {
-        message.info("You have already opted for a container.");
-        modalDisplayedRef.current = true;
-        return;
-      }
-
-      let containerItemId: string;
-      const weight = parseWeight(item.weight);
-
-      // Determine which container to add based on the weight
-      if (weight === 26) {
-        containerItemId = CONTAINER_ITEM_IDS.HEAVY_BAG;
-      } else if (weight === 10) {
-        containerItemId = CONTAINER_ITEM_IDS.LIGHT_BAG;
-      } else {
-        message.info("No eligible items for a free container.");
-        return;
-      }
-
-      const containerItemData = {
-        itemId: containerItemId,
-        customerId: customerId,
-        cartQuantity: 1,
-        itemPrice: 0,
-      };
-
-      await axios.post(
-        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
-        containerItemData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // GA4 Add to Cart Event Tracking for container
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "add_to_cart", {
-          currency: "INR",
-          value: 0,
-          items: [
-            {
-              item_id: containerItemId,
-              item_name: "Free Container",
-              price: 0,
-              quantity: 1,
-              item_category: "Container",
-              promotion_id: "free_container_promo",
-              promotion_name: "Free Container with Rice Purchase"
-            },
-          ],
-        });
-      }
-
-      modalDisplayedRef.current = true;
-      message.success({
-        content: (
-          <div className="flex items-center">
-            <Package size={16} className="mr-2 text-green-500" />
-            <span>Free steel container added to your cart!</span>
-          </div>
-        ),
-        icon: null,
-      });
-      
-      await fetchCartData();
-    } catch (error) {
-      console.error("Error adding container to cart:", error);
-      message.error("Failed to add free container. Please try again.");
-    }
-  };
-
-  // Plan details modal
-  useEffect(() => {
-    if (isPlanDetailsModalOpen && currentPlanDetails) {
-      Modal.info({
-        title: (
-          <div className="flex items-center text-purple-700">
-            {currentPlanDetails === "planA" ? (
-              <Award className="mr-2 text-purple-600" size={22} />
-            ) : (
-              <Users className="mr-2 text-purple-600" size={22} />
-            )}
-            <span className="text-lg font-bold">
-              {currentPlanDetails === "planA" 
-                ? "Free Steel Container Policy" 
-                : "Referral Program Details"}
-            </span>
-          </div>
-        ),
-        icon: null,
-        content: (
-          <div className="py-2">
-            {currentPlanDetails === "planA" ? (
-              <div>
-                <div className="bg-gradient-to-r from-purple-100 to-indigo-100 p-4 rounded-lg mb-4">
-                  <div className="flex items-center mb-3">
-                    <Calendar className="text-purple-600 mr-2" size={20} />
-                    <h4 className="font-bold text-purple-800">Loyalty Timeline</h4>
-                  </div>
-                  <div className="flex items-center justify-between relative mb-2">
-                    <div className="w-full h-1 bg-purple-200 absolute"></div>
-                    <div className="z-10 bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center">1</div>
-                    <div className="z-10 bg-purple-500 text-white w-8 h-8 rounded-full flex items-center justify-center">5</div>
-                    <div className="z-10 bg-purple-700 text-white w-8 h-8 rounded-full flex items-center justify-center">9</div>
-                  </div>
-                  <div className="text-sm text-purple-700 flex justify-between">
-                    <div className="text-center">Start</div>
-                    <div className="text-center">Progress</div>
-                    <div className="text-center">Keep Forever</div>
-                  </div>
-                </div>
-                
-                <h4 className="font-semibold mb-2 text-gray-700">How the Program Works:</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-start">
-                    <Box className="text-purple-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Buy a 26kg/10kg bag of rice to get a free steel container with your order</span>
-                  </li>
-                  <li className="flex items-start">
-                  <CheckCircle className="text-green-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Purchase 9 rice bags over 3 years to keep the container permanently</span>
-                  </li>
-                  <li className="flex items-start">
-                    <UserPlus className="text-blue-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>OR refer 9 friends who make a purchase to keep the container</span>
-                  </li>
-                  <li className="flex items-start">
-                    <AlertCircle className="text-amber-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>If there's a gap of 90 days between purchases, the container may be reclaimed</span>
-                  </li>
-                </ul>
-                
-                <Divider />
-                
-                <h4 className="font-semibold mb-2 text-gray-700">Benefits:</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-start">
-                    <Zap className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Premium quality steel container that keeps rice fresh longer</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Zap className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Pest-proof, moisture-resistant storage solution</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Zap className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Easy-to-clean and maintain for years of use</span>
-                  </li>
-                </ul>
-              </div>
-            ) : (
-              <div>
-                <div className="bg-gradient-to-r from-green-100 to-blue-100 p-4 rounded-lg mb-4">
-                  <div className="flex items-center mb-3">
-                    <Share className="text-blue-600 mr-2" size={20} />
-                    <h4 className="font-bold text-blue-800">Referral Program</h4>
-                  </div>
-                  <div className="flex items-center justify-center space-x-3 mb-3">
-                    <div className="text-center bg-white rounded-lg px-3 py-2 shadow-sm">
-                      <UserPlus size={24} className="text-blue-500 mx-auto mb-1" />
-                      <div className="text-sm font-medium text-gray-800">Refer Friends</div>
-                    </div>
-                    <div className="text-gray-400">→</div>
-                    <div className="text-center bg-white rounded-lg px-3 py-2 shadow-sm">
-                      <Package size={24} className="text-purple-500 mx-auto mb-1" />
-                      <div className="text-sm font-medium text-gray-800">Free Container</div>
-                    </div>
-                    <div className="text-gray-400">+</div>
-                    <div className="text-center bg-white rounded-lg px-3 py-2 shadow-sm">
-                      <DollarSign size={24} className="text-green-500 mx-auto mb-1" />
-                      <div className="text-sm font-medium text-gray-800">₹50 Cashback</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <h4 className="font-semibold mb-2 text-gray-700">How the Program Works:</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-start">
-                    <Share className="text-blue-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Share your unique referral link with friends and family</span>
-                  </li>
-                  <li className="flex items-start">
-                    <UserPlus className="text-blue-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>When they sign up and make their first purchase, you earn rewards</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Package className="text-purple-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Get a free steel container added to your next order</span>
-                  </li>
-                  <li className="flex items-start">
-                    <DollarSign className="text-green-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>PLUS ₹50 cashback credited to your account for each successful referral</span>
-                  </li>
-                </ul>
-                
-                <Divider />
-                
-                <h4 className="font-semibold mb-2 text-gray-700">Additional Benefits:</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-start">
-                    <Zap className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>No upper limit on referrals - refer more friends for more rewards</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Zap className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={16} />
-                    <span>Special seasonal bonuses during festival periods</span>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        ),
-        okText: "Got it",
-        width: 500,
-        className: "plan-details-modal",
-        onOk: () => {
-          setIsPlanDetailsModalOpen(false);
-          setCurrentPlanDetails(null);
-        },
-      });
-    }
-  }, [isPlanDetailsModalOpen, currentPlanDetails]);
-
   // Main function that handles adding items to cart and showing appropriate offer modals
   const handleItemAddedToCart = useCallback(
     async (item: ProductItem): Promise<void> => {
       const weight = parseWeight(item.weight);
       
       // First check if we've already shown modals for this session
-      if (onePlusOneModalShown && movieOfferModalShown && modalDisplayedRef.current) {
+      if (onePlusOneModalShown && movieOfferModalShown) {
         return;
       }
       
@@ -934,15 +433,6 @@ const ProductOfferModals = ({
         return;
       }
       
-      // Check if this is a 10kg or 26kg rice bag (eligible for container)
-      if ((weight === 10 || weight === 26) && 
-          containerPreference === null &&
-          !containerModalCompletedRef.current &&
-          !modalDisplayedRef.current) {
-        showContainerModal(item);
-        return; // Exit early to not show other modals at the same time
-      }
-
       // 1kg rice bag offer
       if (weight === 1 && !onePlusOneModalShown && !hasShownOnePlusOne) {
         await maybeShowOnePlusOneModal(item);
@@ -955,7 +445,7 @@ const ProductOfferModals = ({
         return; // Exit early to not show other modals
       }
     },
-    [containerPreference, onePlusOneModalShown, movieOfferModalShown, hasShownOnePlusOne, hasShownMovieOffer]
+    [onePlusOneModalShown, movieOfferModalShown, hasShownOnePlusOne, hasShownMovieOffer]
   );
 
   return {
