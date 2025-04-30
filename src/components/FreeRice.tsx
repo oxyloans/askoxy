@@ -17,6 +17,9 @@ import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 import Retro from "../assets/img/retro.png";
 import O5 from "../assets/img/tb1.png";
 
+// Campaign Base URL
+const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/freerice";
+
 // Type definitions
 interface RiceProduct {
   id: number;
@@ -26,11 +29,61 @@ interface RiceProduct {
   weight: number;
 }
 
+// UTM Parameters Interface
+interface UTMParams {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+}
+
 const FreeRiceBlog: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [imgLoadError, setImgLoadError] = useState<Record<number, boolean>>({});
+  const [utmParams, setUtmParams] = useState<UTMParams>({});
   const navigate = useNavigate();
+
+  // UTM Parameters Tracking
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const source = searchParams.get("utm_source");
+    const medium = searchParams.get("utm_medium");
+    const campaign = searchParams.get("utm_campaign");
+    const content = searchParams.get("utm_content");
+
+    const utmData: UTMParams = {
+      ...(source && { utm_source: source }),
+      ...(medium && { utm_medium: medium }),
+      ...(campaign && { utm_campaign: campaign }),
+      ...(content && { utm_content: content }),
+    };
+
+    setUtmParams(utmData);
+
+    // Optional: Store UTM data in sessionStorage for later use
+    if (Object.keys(utmData).length > 0) {
+      sessionStorage.setItem("utmData", JSON.stringify(utmData));
+    }
+  }, []);
+
+  // Generate Campaign URL with UTM Parameters
+  const generateCampaignUrl = (weight?: number) => {
+    const baseUrl = CAMPAIGN_BASE_URL;
+    const utmParams = new URLSearchParams();
+
+    // Add default campaign parameters
+    utmParams.set("utm_source", "organic");
+    utmParams.set("utm_medium", "website");
+    utmParams.set("utm_campaign", "free_rice_campaign_2025");
+
+    // Add optional parameters
+    if (weight) {
+      utmParams.set("utm_content", `${weight}kg_rice`);
+    }
+
+    return `${baseUrl}?${utmParams.toString()}`;
+  };
 
   // Rice product data with weights, titles and descriptions
   const riceProducts: RiceProduct[] = [
@@ -50,21 +103,21 @@ const FreeRiceBlog: React.FC = () => {
       weight: 5.0,
     },
     {
-      id: 2,
+      id: 3,
       imageUrl: Retro,
       title: "5KG Premium Rice Bag",
       description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
       weight: 5.0,
     },
     {
-      id: 2,
+      id: 4,
       imageUrl: O5,
       title: "5KG Premium Rice Bag",
       description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
       weight: 5.0,
     },
     {
-      id: 3,
+      id: 5,
       imageUrl: Rice3,
       title: "10KG Premium Rice Bag",
       description:
@@ -72,7 +125,7 @@ const FreeRiceBlog: React.FC = () => {
       weight: 10.0,
     },
     {
-      id: 4,
+      id: 6,
       imageUrl: Rice4,
       title: "26KG Premium Rice Bag",
       description:
@@ -103,12 +156,15 @@ const FreeRiceBlog: React.FC = () => {
       // Store redirect path for after authentication
       sessionStorage.setItem("redirectPath", targetUrl);
 
+      // Generate campaign URL with current product weight
+      const campaignUrl = generateCampaignUrl(weight);
+
       // Check if user is already logged in
       if (userId) {
-        window.location.href = targetUrl;
+        window.location.href = campaignUrl;
       } else {
         // Redirect to WhatsApp register/login page
-        window.location.href = "/whatsappregister";
+        window.location.href = campaignUrl;
       }
     } catch (error) {
       console.error("Navigation error:", error);
@@ -121,9 +177,14 @@ const FreeRiceBlog: React.FC = () => {
   const handleSignIn = () => {
     try {
       setIsLoading(true);
+      // Generate campaign URL for sign in
+      const campaignUrl = generateCampaignUrl();
+      
       // Set the default redirect path to the dashboard products page
       sessionStorage.setItem("redirectPath", "/main/dashboard/products");
-      window.location.href = "/whatsappregister";
+      
+      // Redirect to WhatsApp register with campaign URL
+      window.location.href = campaignUrl;
     } catch (error) {
       console.error("Sign in error:", error);
       // Handle error appropriately
@@ -205,7 +266,6 @@ const FreeRiceBlog: React.FC = () => {
             src={AskOxyLogo}
             alt="AskOxy Logo"
             className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105"
-            
             tabIndex={0}
             role="banner"
           />
@@ -248,6 +308,11 @@ const FreeRiceBlog: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Campaign Information */}
+        <div className="text-sm text-green-600 mt-2 text-center">
+          Discover Our Free Rice Campaign at <strong>www.askoxy.ai/freerice</strong>
+        </div>
       </header>
 
       {/* Main Content */}
