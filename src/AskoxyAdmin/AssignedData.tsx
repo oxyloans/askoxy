@@ -902,7 +902,7 @@ const AssignedDataPage: React.FC = () => {
     try {
       const payload = { number: whatsappNumber };
       const { data } = await axios.post<ApiResponse>(
-        `${BASE_URL}/user-service/searchAndAssignOxyUser`,
+        `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         payload,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -929,7 +929,7 @@ const AssignedDataPage: React.FC = () => {
         </h1>
         <div className="w-64">
           <Input
-            placeholder="Search by mobile, ID or name"
+            placeholder="Search by mobile number"
             prefix={<SearchOutlined className="text-gray-400" />}
             value={searchTerm}
             onChange={(e) => handleChange(e.target.value)}

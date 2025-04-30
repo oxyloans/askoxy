@@ -13,6 +13,7 @@ import {
   FaHeadset,
   FaUsers,
   FaFileAlt,
+  FaComments,
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
@@ -55,6 +56,12 @@ const Sidebar: React.FC = () => {
       roles: ["SELLER"],
     },
     {
+      title: "User Feedback",
+      icon: <FaComments className="text-green-400" />,
+      link: "/admn/feedback",
+      roles: ["SELLER"],
+    },
+    {
       title: "Registered Users",
       icon: <FaUser className="text-purple-400" />,
       link: "/admn/registeredUsers",
@@ -84,8 +91,9 @@ const Sidebar: React.FC = () => {
       link: "/admn/helpdeskusers",
       roles: ["SELLER"],
     },
+
     {
-      title: "Add Service",
+      title: "Add Service / Product",
       icon: <FaPlusCircle className="text-green-400" />,
       link: "/admn/campaignsadd",
       roles: ["SELLER"],

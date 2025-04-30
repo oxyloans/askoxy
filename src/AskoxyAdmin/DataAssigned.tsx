@@ -486,15 +486,16 @@ const DataAssigned: React.FC = () => {
   const searchApi = async (whatsappNumber: string) => {
     setLoading(true);
     try {
-      const payload = { whatsappNumber };
+      const payload = { number:whatsappNumber };
       const { data } = await axios.post<ApiResponse>(
-        `${BASE_URL}/user-service/searchAndAssignOxyUser`,
+        `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         payload,
         { headers: { "Content-Type": "application/json" } }
       );
-
+      console.log({data})
       // setUserData(data.activeUsersResponse);
       setFilteredData(data.activeUsersResponse);
+      setLoading(false);
     } catch (err) {
       console.error(err);
       // setError("Search failed. Please try again.");
@@ -511,7 +512,7 @@ const DataAssigned: React.FC = () => {
         </h1>
         <div className="w-64">
           <Input
-            placeholder="Search by mobile, ID or name"
+            placeholder="Search by mobile number"
             prefix={<SearchOutlined className="text-gray-400" />}
             value={searchTerm}
             onChange={(e) => handleChange(e.target.value)}
@@ -527,7 +528,7 @@ const DataAssigned: React.FC = () => {
         <div className="flex justify-center items-center h-64">
           <Spin size="large" tip="Loading your assigned users..." />
         </div>
-      ) : filteredData.length > 0 ? (
+      ) : filteredData!=null? (
         <>
           <div className="overflow-x-auto">
             <Table

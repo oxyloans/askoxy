@@ -21,6 +21,7 @@ import HiringService from "./components/Services/HiringService";
 import DesignTemplatesPage from "./Templates/Templatehome";
 import UniversityPromoCard from "./Templates/UniversityPromoCard";
 import PromoCard from "./Templates/PromoCard";
+import RiceOfferFAQs from "./Dashboard/Faqs";
 
 import AdminSidebar from "./AskoxyAdmin/Sider";
 import Home from "./Dashboard/Home";
@@ -179,6 +180,7 @@ const App: React.FC = () => {
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
+            <Route path="/faqs" element={<RiceOfferFAQs />} />
             <Route
               path="/communities/maruthielite"
               element={<RiceSalePage />}

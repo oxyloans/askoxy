@@ -72,9 +72,7 @@ const CheckoutPage: React.FC = () => {
   const [walletAmount, setWalletAmount] = useState<number>(0);
   const [walletTotal, setWalletTotal] = useState<number>(0);
   const [coupenApplied, setCoupenApplied] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
-    "ONLINE"
-  );
+  const [selectedPayment] = useState<"ONLINE">("ONLINE"); // Removed COD option
   const [selectedAddress, setSelectedAddress] = useState<Address>(
     state?.selectedAddress || null
   );
@@ -525,11 +523,6 @@ const CheckoutPage: React.FC = () => {
     setUsedWalletAmount(usedWallet);
     setAfterWallet(walletAmount - usedWallet);
     setGrandTotalAmount(total);
-
-    // Automatically switch to COD if total is zero
-    if (total === 0) {
-      setSelectedPayment("COD");
-    }
   }
 
   const handleCheckboxToggle = () => {
@@ -610,7 +603,7 @@ const CheckoutPage: React.FC = () => {
           customerId,
           flatNo: selectedAddress.flatNo,
           landMark: selectedAddress.landMark,
-          orderStatus: selectedPayment,
+          orderStatus: "ONLINE", // Always set to ONLINE
           pincode: selectedAddress.pincode,
           walletAmount: usedWalletAmount,
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
@@ -636,7 +629,7 @@ const CheckoutPage: React.FC = () => {
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "purchase", {
             transaction_id:
-              response.data.paymentId || `COD_${new Date().getTime()}`,
+              response.data.paymentId || `ONLINE_${new Date().getTime()}`,
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
@@ -652,12 +645,8 @@ const CheckoutPage: React.FC = () => {
           });
         }
 
-        if (selectedPayment === "COD" && !response.data.paymentId) {
-          Modal.success({
-            content: "Order placed Successfully",
-            onOk: () => navigate("/main/myorders"),
-          });
-        } else if (selectedPayment === "ONLINE" && response.data.paymentId) {
+        // Always proceed with online payment
+        if (response.data.paymentId) {
           const number = localStorage.getItem("whatsappNumber");
           const withoutCountryCode = number?.replace("+91", "");
           sessionStorage.setItem("address", JSON.stringify(selectedAddress));
@@ -694,6 +683,21 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
+
+  // Modify the render method to remove COD option
+  const renderPaymentMethods = () => {
+    return (
+      <div className="space-y-3">
+        <div className="p-3 border rounded-md border-purple-500 bg-purple-50 flex items-center">
+          <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
+            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
+          </div>
+          <span className="ml-2">Online Payment</span>
+        </div>
+      </div>
+    );
+  };
+
   const getepayPortal = async (data: any) => {
     const JsonData = JSON.stringify(data);
     const mer = data.merchantTransactionId;
@@ -727,21 +731,7 @@ const CheckoutPage: React.FC = () => {
         localStorage.setItem("paymentId", data.paymentId);
         localStorage.setItem("merchantTransactionId", mer);
         const paymentUrl = data.paymentUrl;
-
-        Modal.confirm({
-          title: "Proceed to Payment?",
-          content:
-            "You can choose to continue with online payment or switch to Cash on Delivery.",
-          okText: "Continue Payment",
-          cancelText: "Switch to COD",
-          onOk() {
-            window.location.href = paymentUrl;
-          },
-          onCancel() {
-            setSelectedPayment("COD");
-            message.info("Payment method changed to Cash on Delivery");
-          },
-        });
+        window.location.href = paymentUrl;
       })
       .catch((error) => {
         console.log("getepayPortal", error.response);
@@ -1037,55 +1027,12 @@ const CheckoutPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="bg-white border rounded-lg p-4">
+                 <div className="bg-white border rounded-lg p-4">
                     <div className="flex items-center mb-3">
                       <CreditCard className="w-5 h-5 mr-2 text-purple-500" />
                       <h3 className="font-medium">Payment Method</h3>
                     </div>
-                    <div className="space-y-3">
-                      <div
-                        className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                          selectedPayment === "ONLINE"
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200"
-                        }`}
-                        onClick={() => setSelectedPayment("ONLINE")}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded-full border ${
-                            selectedPayment === "ONLINE"
-                              ? "border-purple-500 bg-white"
-                              : "border-gray-400"
-                          }`}
-                        >
-                          {selectedPayment === "ONLINE" && (
-                            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-                          )}
-                        </div>
-                        <span className="ml-2">Online Payment</span>
-                      </div>
-                      <div
-                        className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                          selectedPayment === "COD"
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200"
-                        }`}
-                        onClick={() => setSelectedPayment("COD")}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded-full border ${
-                            selectedPayment === "COD"
-                              ? "border-purple-500 bg-white"
-                              : "border-gray-400"
-                          }`}
-                        >
-                          {selectedPayment === "COD" && (
-                            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-                          )}
-                        </div>
-                        <span className="ml-2">Cash on Delivery</span>
-                      </div>
-                    </div>
+                    {renderPaymentMethods()}
                   </div>
                 </div>
 

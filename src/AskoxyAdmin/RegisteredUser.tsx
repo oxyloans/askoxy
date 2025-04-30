@@ -59,6 +59,7 @@ interface UserData {
   addressType: string | null;
   registerFrom: string;
   userType: string;
+  assignedTo: string | null;
 }
 
 interface ApiResponse {
@@ -566,12 +567,12 @@ const RegisteredUser: React.FC = () => {
       width: 90,
       align: "center" as const,
       render: (record: UserData) => {
-        const helpDeskName = getHelpDeskName(record?.helpdeskuserId);
+        const helpDeskName = getHelpDeskName(record.helpdeskuserId || record.assignedTo);
         return (
           <div className="flex flex-col items-center justify-center text-center">
             <span className=" font-bold">{formatDate(record.created_at)}</span>
 
-            {record.helpdeskuserId && (
+            {(record.helpdeskuserId || record.assignedTo ) && (
               <div className="flex flex-row items-center justify-center mt-2">
                 <span className="mr-2 text-gray-400">to:</span>
                 <Tag
@@ -579,7 +580,7 @@ const RegisteredUser: React.FC = () => {
                   className="w-fit flex items-center justify-center"
                 >
                   <UserOutlined className="mr-1" />
-                  {helpDeskName}
+                  {helpDeskName}  
                 </Tag>
               </div>
             )}
@@ -1053,7 +1054,7 @@ const RegisteredUser: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(
+      const response = await axios.post( 
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         {
           number: mobileNumber1 || null,
@@ -1083,6 +1084,7 @@ const RegisteredUser: React.FC = () => {
         addressType: user.addressType || null,
         userType: user.userType || null,
         registerFrom: user.registeredFrom || null,
+        assignedTo:user.assignedTo || null
       }));
 
       setFilteredUserData(transformed);

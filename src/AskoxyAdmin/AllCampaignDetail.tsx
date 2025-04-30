@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
-import { message, Modal, Button, Input, Upload, Table, Tag } from "antd";
+import { message, Modal, Button, Input, Upload, Table, Tag, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IndexKind } from "typescript";
 import { imageUrls } from "../assets/images";
@@ -327,8 +327,9 @@ const AllCampaignsDetails: React.FC = () => {
       title: <div className="text-center">Description</div>,
       dataIndex: "campaignDescription",
       key: "campaignDescription",
+      width: 250,
       render: (text: any) => (
-        <div className="w-[200px] h-[100px] overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <div className="w-[200px] h-[120px] overflow-y-auto overflow-x-hidden scrollbar-hide">
           {text}
         </div>
       ),
@@ -352,6 +353,7 @@ const AllCampaignsDetails: React.FC = () => {
 
         return (
           <div className="flex flex-wrap items-center gap-2">
+            <span>without Authorization url :</span>
             <a
               href={campaignUrl}
               target="_blank"
@@ -383,6 +385,7 @@ const AllCampaignsDetails: React.FC = () => {
 
         return (
           <div className="flex flex-wrap items-center gap-2">
+            <span>Authorization url :</span>
             <a
               href={campaignUrl}
               target="_blank"
@@ -433,7 +436,9 @@ const AllCampaignsDetails: React.FC = () => {
         </h1>
 
         {loading ? (
-          <p className="text-gray-600">Loading Services...</p>
+          <div className="flex justify-center items-center">
+            <Spin tip="Loading Services..." size="large" />
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <Table

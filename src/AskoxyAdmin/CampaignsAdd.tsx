@@ -213,12 +213,18 @@ const CampaignsAdd: React.FC = () => {
     });
   };
 
+  function capitalizeFirstLetter(str: string) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <div className="flex flex-1 justify-center">
         <div className="w-full max-w-2xl bg-gray-50 rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            Add New Service
+            Add New{" "}
+            <span>{capitalizeFirstLetter(formData.campainInputType)}</span>
           </h1>
           <form>
             <div className="mb-4">
@@ -302,7 +308,8 @@ const CampaignsAdd: React.FC = () => {
                 htmlFor="campaignType"
                 className="block text-sm font-medium text-gray-700"
               >
-                Service Name
+                <span>{capitalizeFirstLetter(formData.campainInputType)}</span>{" "}
+                Name
               </label>
               <input
                 type="text"
@@ -325,6 +332,7 @@ const CampaignsAdd: React.FC = () => {
                 htmlFor="campaignDescription"
                 className="block text-sm font-medium text-gray-700"
               >
+                <span>{capitalizeFirstLetter(formData.campainInputType)}</span>{" "}
                 Description
               </label>
               <textarea
@@ -450,7 +458,8 @@ const CampaignsAdd: React.FC = () => {
                 htmlFor="campaignTypeAddBy"
                 className="block text-sm font-medium text-gray-700"
               >
-                Service Added By
+                <span>{capitalizeFirstLetter(formData.campainInputType)}</span>{" "}
+                Added By
               </label>
               <select
                 id="campaignTypeAddBy"
