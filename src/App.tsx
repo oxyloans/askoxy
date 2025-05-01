@@ -125,6 +125,8 @@ import FreeRiceBlog from "./components/FreeRice";
 import { SearchProvider } from "./until/SearchContext";
 import SearchMain from "./Dashboard/SearchMain";
 import OrderReport from "./AskoxyAdmin/OrderReport";
+import LeaveApplicationPage from "./Pages/Auth/LeaveApplicationPage";
+import TeamLeaveStatus from "./Pages/Auth/TeamLeaveStatus";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -175,6 +177,8 @@ const App: React.FC = () => {
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />
             <Route path="/taskupdated" element={<TaskUpdate />} />
+            <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
+                        <Route path="/leavestatus" element={<TeamLeaveStatus />} />
             <Route path="/all-statuses" element={<AllStatusPage />} />
             <Route path="/assigned-task" element={<AssignedTasksPage />} />
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />

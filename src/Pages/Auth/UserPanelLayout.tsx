@@ -2,33 +2,27 @@ import React, { useState, useEffect, ReactNode } from "react";
 import { Layout, Menu, Row, Grid, Avatar, Tooltip } from "antd";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
-import { MdLogout, MdSubscriptions, MdInventory } from "react-icons/md";
+import { MdLogout } from "react-icons/md";
 import { FaClipboardCheck, FaExchangeAlt } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
-import { FaUserEdit } from "react-icons/fa";
 import {
   FaTachometerAlt,
   FaUsers,
   FaSlideshare,
-  FaBoxOpen,
-  FaStore,
-  FaShoppingCart,
-  FaHandsHelping,
   FaHistory,
-  FaListAlt,
 } from "react-icons/fa";
-import { BiSolidCategory, BiSolidCoupon } from "react-icons/bi";
+import type { MenuProps } from "antd";
 
 const { Header, Sider, Content, Footer } = Layout;
 const { useBreakpoint } = Grid;
 
-interface SidebarItem {
+type MenuItem = {
   key: string;
-  label: string;
-  icon: React.ReactNode;
-  link: string;
-  color?: string; // Optional color property
-}
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+  children?: MenuItem[];
+  popupClassName?: string;
+};
 
 interface UserPanelLayoutProps {
   children: ReactNode;
@@ -40,10 +34,14 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("User");
   const location = useLocation();
+  const [openKeys, setOpenKeys] = useState<string[]>([]);
 
   useEffect(() => {
     const handleResize = (): void => {
       setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth <= 768) {
+        setCollapsed(true);
+      }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -52,58 +50,79 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     const storedUserName = localStorage.getItem("userName") || "User";
     setUserName(storedUserName);
 
+    // Check if current path is under a submenu and open it
+    const pathParts = location.pathname.split("/");
+    if (
+      pathParts.includes("leaveapproval") ||
+      pathParts.includes("leavestatus")
+    ) {
+      setOpenKeys(["leave-management"]);
+    }
+
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (screens.xs) {
       setCollapsed(true); // Always collapse on small screens
-    } else if (screens.md) {
-      setCollapsed(false); // Expand on larger screens
     }
   }, [screens]);
 
-  const sidebarItems: SidebarItem[] = [
-    {
-      key: "plan-of-the-day",
-      label: "Daily Plan Of The Day ",
-      icon: <FaTachometerAlt className="text-blue-500" />,
-      link: "/planoftheday",
-    },
-    {
-      key: "end-of-the-day",
-      label: "End Of The Day Summary",
-      icon: <FaHistory className="text-green-500" />,
-      link: "/taskupdated",
-    },
-    {
-      key: "task-overview",
-      label: "Daily Activity Status",
-      icon: <FaSlideshare className="text-purple-500" />,
-      link: "/all-statuses",
-    },
-    {
-      key: "task-assignments",
-      label: "Admin Assigned Task List",
-      icon: <FaExchangeAlt className="text-orange-500" />,
-      link: "/assigned-task",
-    },
-    {
-      key: "user-assigned-tasks",
-      label: "Tasks Received from Admin",
-      icon: <FaUsers className="text-red-500" />,
-      link: "/taskassigneduser",
-    },
-  ];
+  const getMenuItems = (): MenuItem[] => {
+    return [
+      {
+        key: "/planoftheday",
+        label: <Link to="/planoftheday">Daily Plan Of The Day</Link>,
+        icon: <FaTachometerAlt className="text-blue-500" />,
+      },
+      {
+        key: "/taskupdated",
+        label: <Link to="/taskupdated">End Of The Day Report</Link>,
+        icon: <FaHistory className="text-green-500" />,
+      },
+      {
+        key: "leave-management",
+        label: "Leave Management",
+        icon: <FaClipboardCheck className="text-red-500" />,
+        children: [
+          {
+            key: "/leaveapproval",
+            label: <Link to="/leaveapproval">Approve Requests</Link>,
+            icon: <FaUsers className="text-yellow-500" />,
+          },
+          {
+            key: "/leavestatus",
+            label: <Link to="/leavestatus">My Leave Status</Link>,
+            icon: <FaUsers className="text-yellow-500" />,
+          },
+        ],
+      },
+      {
+        key: "/all-statuses",
+        label: <Link to="/all-statuses">Daily Activity Status</Link>,
+        icon: <FaSlideshare className="text-purple-500" />,
+      },
+      {
+        key: "/assigned-task",
+        label: <Link to="/assigned-task">Manage Team Tasks</Link>,
+        icon: <FaExchangeAlt className="text-orange-500" />,
+      },
+      {
+        key: "/taskassigneduser",
+        label: <Link to="/taskassigneduser">My Assigned Tasks</Link>,
+        icon: <FaUsers className="text-red-500" />,
+      },
+    ];
+  };
 
   const toggleCollapse = (): void => {
     setCollapsed((prev) => !prev);
   };
 
   const handleSignOut = (): void => {
-    localStorage.clear(); // Clear all local storage items
-    sessionStorage.clear(); // Clear all session storage items
-    window.location.href = "/userlogin"; // Redirect to login
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = "/userlogin";
   };
 
   // Get user initials for avatar
@@ -117,19 +136,63 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     );
   };
 
+  // Handle open change for submenu
+  const onOpenChange = (keys: string[]) => {
+    setOpenKeys(keys);
+  };
+
+  // Calculate dynamic styles
+  const siderStyles = {
+    position: "fixed" as const,
+    height: "100vh",
+    zIndex: 10,
+    left: collapsed && isMobile ? "-80px" : 0,
+    transition: "left 0.3s ease-in-out",
+  };
+
+  const contentStyles = {
+    padding: screens.xs ? "12px" : "24px",
+    width: screens.xs ? "100%" : `calc(100% - ${collapsed ? "80px" : "250px"})`,
+    marginLeft: screens.xs ? "0px" : collapsed ? "80px" : "250px",
+    marginTop: "64px",
+    minHeight: "calc(100vh - 64px - 64px)",
+    transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
+  };
+
+  const headerStyles = {
+    padding: screens.xs ? "0 12px" : "0 18px",
+    width: screens.xs ? "100%" : `calc(100% - ${collapsed ? "80px" : "250px"})`,
+    marginLeft: screens.xs ? "0px" : collapsed ? "80px" : "250px",
+    position: "fixed" as const,
+    zIndex: 9,
+    height: "64px",
+    transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
+  };
+
+  const footerStyles = {
+    width: screens.xs ? "100%" : `calc(100% - ${collapsed ? "80px" : "250px"})`,
+    marginLeft: screens.xs ? "0px" : collapsed ? "80px" : "250px",
+    height: "64px",
+    transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
+  };
+
+  const onBreakpoint = (broken: boolean) => {
+    if (broken) {
+      setCollapsed(true);
+    }
+  };
+
   return (
     <Layout className="min-h-screen">
       <Sider
         collapsed={collapsed}
         onCollapse={setCollapsed}
         breakpoint="md"
-        width={screens.xs ? 200 : 250}
-        collapsedWidth={screens.xs ? 0 : 80}
-        className="bg-gray-800 fixed h-screen z-10 shadow-md"
-        style={{
-          left: collapsed ? (isMobile ? "-200px" : "-80px") : 0,
-          transition: "left 0.3s ease-in-out",
-        }}
+        onBreakpoint={onBreakpoint}
+        width={250}
+        collapsedWidth={isMobile ? 0 : 80}
+        className="bg-gray-800 shadow-md"
+        style={siderStyles}
       >
         <div className="text-center font-bold mt-4 mb-1 text-lg">
           <div className="text-white">{collapsed ? "A" : "ASKOXY.AI"}</div>
@@ -151,19 +214,11 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
           mode="inline"
           className="bg-gray-800 mt-4"
           selectedKeys={[location.pathname]}
-          items={sidebarItems.map((item) => ({
-            key: item.link,
-            icon: item.icon,
-            label: (
-              <Link
-                to={item.link}
-                className="text-gray-300 hover:text-yellow-400 no-underline transition-colors duration-200"
-              >
-                {item.label}
-              </Link>
-            ),
-          }))}
+          openKeys={openKeys}
+          onOpenChange={onOpenChange}
+          items={getMenuItems()}
           style={{ borderRight: 0 }}
+          triggerSubMenuAction="click"
         />
 
         {/* User Profile at the bottom of sidebar */}
@@ -187,22 +242,13 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
       <Layout>
         <Header
           className="flex justify-between items-center bg-white shadow-sm"
-          style={{
-            padding: screens.xs ? "0 12px" : "0 18px",
-            width: screens.xs
-              ? "100%"
-              : `calc(100% - ${collapsed ? "0px" : "250px"})`,
-            marginLeft: screens.xs ? "0px" : collapsed ? "0px" : "250px",
-            position: "fixed", // Make header fixed
-            zIndex: 9, // Lower than sidebar but still above content
-            height: "64px", // Explicit height
-            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
-          }}
+          style={headerStyles}
         >
           <div className="flex items-center">
             <button
               onClick={toggleCollapse}
               className="bg-transparent border-none cursor-pointer text-lg text-blue-500 hover:text-blue-700 mr-2"
+              aria-label={collapsed ? "Expand menu" : "Collapse menu"}
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </button>
@@ -221,49 +267,27 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
               </span>
             </div>
 
-            <div
+            <button
               onClick={handleSignOut}
-              className="flex items-center cursor-pointer hover:text-red-500 transition-colors duration-200"
+              className="flex items-center cursor-pointer hover:text-red-500 transition-colors duration-200 bg-transparent border-none"
+              aria-label="Log out"
             >
               <MdLogout className="mr-2 text-gray-500 text-lg hover:text-red-500" />
               <span className="text-gray-500 text-sm">Log out</span>
-            </div>
+            </button>
           </div>
         </Header>
 
-        <Content
-          className="bg-gray-50"
-          style={{
-            padding: screens.xs ? "12px" : "24px",
-            width: screens.xs
-              ? "100%"
-              : `calc(100% - ${collapsed ? "0px" : "250px"})`,
-            marginLeft: screens.xs ? "0px" : collapsed ? "0px" : "250px",
-            marginTop: "64px", // Match header height
-            minHeight: "calc(100vh - 64px - 64px)", // viewport - header - footer
-            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
-          }}
-        >
+        <Content className="bg-gray-50" style={contentStyles}>
           <div className="bg-white p-4 rounded-lg shadow-sm">{children}</div>
         </Content>
 
         <Footer
-          className="text-center bg-white shadow-inner text-gray-500 text-sm"
-          style={{
-            width: screens.xs
-              ? "100%"
-              : `calc(100% - ${collapsed ? "0px" : "250px"})`,
-            marginLeft: screens.xs ? "0px" : collapsed ? "0px" : "250px",
-            height: "64px", // Fixed footer height
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
-          }}
+          className="text-center bg-white shadow-inner text-gray-500 text-sm flex items-center justify-center"
+          style={footerStyles}
         >
-          <div className="flex flex-col items-center sm:flex-row sm:space-x-2">
-            
-            <div>
+          <div className="w-full flex justify-center items-center">
+            <div className="text-center">
               <span className="font-medium mr-1">Task Management</span>
               ©2025 Created by ASKOXY.AI Company
             </div>

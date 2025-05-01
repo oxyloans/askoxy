@@ -83,6 +83,7 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
     "CHANDU",
     "SWATHI",
     "SHANTHI",
+    "VISWA"
   ];
 
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -258,7 +259,7 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
         <Row gutter={16} className="mb-6">
           <Col xs={24} sm={12} md={8}>
             <Select
-              placeholder="Select a user"
+              placeholder="Select a your name"
               style={{ width: "100%" }}
               onChange={handleUserChange}
               value={selectedUser || undefined}
