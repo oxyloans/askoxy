@@ -69,6 +69,7 @@ interface PickedUpOrder {
   totalAmount: number;
   deliveryBoyId: string;
   orderItems: OrderItem[];
+  orderAddress?: OrderAddress;
 }
 
 type Order = AssignedOrder | PickedUpOrder;
@@ -254,7 +255,7 @@ const DeliveryBoyOrders: React.FC = () => {
                 </div>
 
                 {/* Delivery Address - Only for assigned/delivered orders */}
-                {!isPickedUpOrder(order) && order.orderAddress && (
+                { order.orderAddress && (
                   <div className="flex flex-col space-y-2">
                     <div className="flex items-center">
                       <EnvironmentOutlined className="mr-2 text-red-500" />

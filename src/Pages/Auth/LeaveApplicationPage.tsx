@@ -50,6 +50,7 @@ const LeaveApplicationPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [leaveDays, setLeaveDays] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [screenSize, setScreenSize] = useState<string>("");
 
   useEffect(() => {
     // Get username from localStorage
@@ -57,6 +58,28 @@ const LeaveApplicationPage: React.FC = () => {
     if (name) {
       setUserName(name);
     }
+
+    // Add resize listener for responsive handling
+    const handleResize = () => {
+      if (window.innerWidth < 576) {
+        setScreenSize("xs");
+      } else if (window.innerWidth >= 576 && window.innerWidth < 992) {
+        setScreenSize("sm");
+      } else {
+        setScreenSize("lg");
+      }
+    };
+
+    // Set initial size
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Clean up
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   // Function to disallow past dates
@@ -151,7 +174,13 @@ const LeaveApplicationPage: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div style={{ padding: "24px" }}>
+      <div
+        style={{
+          padding: screenSize === "xs" ? "12px" : "24px",
+          maxWidth: "100%",
+          overflowX: "hidden",
+        }}
+      >
         <Card
           bordered={false}
           className="leave-application-card"
@@ -159,23 +188,40 @@ const LeaveApplicationPage: React.FC = () => {
             boxShadow: "0 8px 24px rgba(0, 0, 0, 0.1)",
             borderRadius: "12px",
             background: "linear-gradient(to right, #ffffff, #f9f9ff)",
+            width: "100%",
+            padding: screenSize === "xs" ? "12px" : "24px",
+          }}
+          bodyStyle={{
+            padding: screenSize === "xs" ? "12px" : "24px",
           }}
         >
           <Row
             align="middle"
             justify="space-between"
             style={{ marginBottom: 16 }}
+            gutter={[16, 16]}
+            wrap
           >
-            <Col>
-              <Title level={2} style={{ marginBottom: 0 }}>
-                <Space>
-                  <CalendarOutlined style={{ color: "#1890ff" }} /> Leave
+            <Col xs={24} sm={12}>
+              <Title
+                level={screenSize === "xs" ? 3 : 2}
+                style={{
+                  marginBottom: 0,
+                  fontSize: screenSize === "xs" ? "1rem" : "1.4rem",
+                }}
+              >
+                <Space wrap>
+                  <CalendarOutlined style={{ color: "#1890ff" }} />Leave
                   Application
                 </Space>
               </Title>
             </Col>
-            <Col>
-              <Space>
+            <Col
+              xs={24}
+              sm={12}
+              style={{ textAlign: screenSize === "xs" ? "left" : "right" }}
+            >
+              <Space wrap>
                 <Avatar
                   icon={<UserOutlined />}
                   style={{ backgroundColor: "#1890ff" }}
@@ -187,10 +233,10 @@ const LeaveApplicationPage: React.FC = () => {
             </Col>
           </Row>
 
-          <Paragraph type="secondary" style={{ marginBottom: 24 }}>
+          {/* <Paragraph type="secondary" style={{ marginBottom: 24 }}>
             Request time off by selecting your leave dates and providing a
             reason
-          </Paragraph>
+          </Paragraph> */}
 
           <Divider style={{ marginTop: 0 }} />
 
@@ -200,8 +246,14 @@ const LeaveApplicationPage: React.FC = () => {
             onFinish={onFinish}
             requiredMark="optional"
             scrollToFirstError
+            style={{ width: "100%" }}
           >
-            <Row gutter={[24, 16]}>
+            <Row
+              gutter={[
+                { xs: 8, sm: 16, md: 24 },
+                { xs: 8, sm: 16 },
+              ]}
+            >
               <Col xs={24} sm={12}>
                 <Form.Item
                   name="fromDate"
@@ -262,13 +314,15 @@ const LeaveApplicationPage: React.FC = () => {
               <div
                 style={{
                   background: "rgba(24, 144, 255, 0.1)",
-                  padding: "16px",
+                  padding: screenSize === "xs" ? "12px" : "16px",
                   borderRadius: "8px",
                   marginBottom: "24px",
                   borderLeft: "4px solid #1890ff",
+                  overflowX: "auto",
+                  width: "100%",
                 }}
               >
-                <Space>
+                <Space wrap={screenSize === "xs"}>
                   <InfoCircleOutlined style={{ color: "#1890ff" }} />
                   <Text strong>
                     Leave Duration: {leaveDays} day{leaveDays !== 1 ? "s" : ""}
@@ -293,24 +347,32 @@ const LeaveApplicationPage: React.FC = () => {
               ]}
             >
               <TextArea
-                rows={4}
+                rows={screenSize === "xs" ? 3 : 4}
                 placeholder="Briefly describe the reason for your leave request"
                 showCount
                 maxLength={2000}
-                style={{ borderRadius: "8px", padding: "12px" }}
+                style={{
+                  borderRadius: "8px",
+                  padding: screenSize === "xs" ? "8px" : "12px",
+                }}
               />
             </Form.Item>
 
-            <Form.Item style={{ marginTop: 32, marginBottom: 8 }}>
+            <Form.Item
+              style={{
+                marginTop: screenSize === "xs" ? 24 : 32,
+                marginBottom: 8,
+              }}
+            >
               <Button
                 type="primary"
                 htmlType="submit"
                 loading={loading}
                 block
-                size="large"
+                size={screenSize === "xs" ? "middle" : "large"}
                 icon={<SendOutlined />}
                 style={{
-                  height: "48px",
+                  height: screenSize === "xs" ? "40px" : "48px",
                   borderRadius: "8px",
                   background: "#1890ff",
                   boxShadow: "0 2px 8px rgba(24, 144, 255, 0.35)",

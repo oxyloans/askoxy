@@ -55,12 +55,7 @@ const Sidebar: React.FC = () => {
       link: "/admn/orderReport",
       roles: ["SELLER"],
     },
-    {
-      title: "User Feedback",
-      icon: <FaComments className="text-green-400" />,
-      link: "/admn/feedback",
-      roles: ["SELLER"],
-    },
+  
     {
       title: "Registered Users",
       icon: <FaUser className="text-purple-400" />,
@@ -102,6 +97,12 @@ const Sidebar: React.FC = () => {
       title: "All Service Details",
       icon: <RiListUnordered className="text-purple-400" />,
       link: "/admn/allcampaignsdetails",
+      roles: ["SELLER"],
+    },
+    {
+      title: "User Feedback",
+      icon: <FaComments className="text-green-400" />,
+      link: "/admn/feedback",
       roles: ["SELLER"],
     },
     {

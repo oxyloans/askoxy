@@ -127,6 +127,7 @@ import SearchMain from "./Dashboard/SearchMain";
 import OrderReport from "./AskoxyAdmin/OrderReport";
 import LeaveApplicationPage from "./Pages/Auth/LeaveApplicationPage";
 import TeamLeaveStatus from "./Pages/Auth/TeamLeaveStatus";
+import FeedbackDashboard from "./AskoxyAdmin/FeedBack";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -464,6 +465,7 @@ const App: React.FC = () => {
               <Route path="dataAssigned" element={<DataAssigned />} />
               <Route path="referredData" element={<ReferredData />} />
               <Route path="orderReport" element={<OrderReport/>} />
+              <Route path="feedback" element={<FeedbackDashboard />} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

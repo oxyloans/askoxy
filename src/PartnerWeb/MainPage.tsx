@@ -556,21 +556,21 @@ const MainPage: React.FC = () => {
         </div>
       ),
     },
-    {
-      title: "Expected Delivery",
-      dataIndex: "expectedDeliveryDate",
-      key: "expectedDeliveryDate",
-      width: 160,
-      render: (_: string, record: OrderData) => {
-        if (!record.expectedDeliveryDate || !record.timeSlot) {
-          return "N/A";
-        }
-        return `${record.expectedDeliveryDate} (${record.timeSlot})`;
-      },
-      sorter: (a: OrderData, b: OrderData) =>
-        new Date(a.expectedDeliveryDate || "").getTime() -
-        new Date(b.expectedDeliveryDate || "").getTime(),
-    },
+    // {
+    //   title: "Expected Delivery",
+    //   dataIndex: "expectedDeliveryDate",
+    //   key: "expectedDeliveryDate",
+    //   width: 160,
+    //   render: (_: string, record: OrderData) => {
+    //     if (!record.expectedDeliveryDate || !record.timeSlot) {
+    //       return "N/A";
+    //     }
+    //     return `${record.expectedDeliveryDate} (${record.timeSlot})`;
+    //   },
+    //   sorter: (a: OrderData, b: OrderData) =>
+    //     new Date(a.expectedDeliveryDate || "").getTime() -
+    //     new Date(b.expectedDeliveryDate || "").getTime(),
+    // },
     {
       title: "Distance",
       key: "distance",
@@ -834,7 +834,7 @@ const MainPage: React.FC = () => {
               }}
               loading={loading}
               onChange={handleTableChange}
-              scroll={{ x: 1100 }}
+              // scroll={{ x: 1100 }}
               size={isMobile ? "small" : "middle"}
             />
           </Card>

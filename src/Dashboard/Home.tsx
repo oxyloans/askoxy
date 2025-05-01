@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useCallback, useContext } from "rea
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Bot, ShoppingBag, Briefcase, Loader2, Droplet, Star, TrendingUp, ArrowRight, Search, ChevronRight, Settings, HandCoins, Gem, Globe, Package, Gift, Ticket } from "lucide-react";
+import { Coins, Bot, ShoppingBag, Briefcase, Loader2, Droplet, Star, TrendingUp, ArrowRight, Search, ChevronRight, Settings, HandCoins, Gem, Globe, Package, Gift, Ticket, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import BASE_URL from "../Config";
 import checkProfileCompletion from "../until/ProfileCheck";
 import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals"; 
+import RiceOfferFAQs from "./Faqs"; // Import the FAQs component
 import ProductImg1 from "../assets/img/ricecard1.png";
 import ProductImg2 from "../assets/img/ricecard2.png";
 import ServiceImg1 from "../assets/img/oxyloasntemp (1).png";
@@ -129,9 +130,13 @@ const Home: React.FC = () => {
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const productsRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const categoriesFetched = useRef(false);
   const initialDataFetched = useRef(false);
+  
+  // Add state for promotional offers modal
+  const [showOffersModal, setShowOffersModal] = useState(false);
 
   const updateCartCount = useCallback((count: number) => {
     setCartCount(count);  // Update local state
@@ -206,6 +211,23 @@ const Home: React.FC = () => {
     cartData,
     cartItems
   });
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    // Initial check
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
 
   // Variants for header image hover effect
   const headerImageVariants = {
@@ -724,20 +746,6 @@ const Home: React.FC = () => {
               )}
             </div>
 
-            {/* Special offer indicators for different weights */}
-            {/* {weight === 1 && (
-              <div className="flex items-center mt-1">
-                <Gift size={14} className="text-green-500 mr-1" />
-                <span className="text-xs text-green-600 font-medium">Buy 1 Get 1 Free</span>
-              </div>
-            )}
-            {weight === 5 && (
-              <div className="flex items-center mt-1">
-                <Ticket size={14} className="text-blue-500 mr-1" />
-                <span className="text-xs text-blue-600 font-medium">Free Movie Ticket</span>
-              </div>
-            )} */}
-
             {item.itemId && cartItems[item.itemId] > 0 ? (
               <motion.div
                 className="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2"
@@ -1036,7 +1044,7 @@ const Home: React.FC = () => {
                 className="cursor-pointer overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-white"
                 onHoverStart={() => setHoveredImage(image.id)}
                 onHoverEnd={() => setHoveredImage(null)}
-                onClick={() => navigate(image.path)} // Add this onClick handler to navigate to the image path
+                onClick={() => navigate(image.path)}
               >
                 <div className="relative w-full h-0 pb-[75%]">
                   <motion.img
@@ -1055,28 +1063,44 @@ const Home: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Special Offers Banner Section */}
-        {/* <section className="mb-8">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl shadow-md overflow-hidden">
-            <div className="px-6 py-5 sm:px-8 sm:py-6 flex flex-col sm:flex-row items-center justify-between">
-              <div className="mb-4 sm:mb-0 text-center sm:text-left">
-                <h2 className="text-white text-xl font-bold mb-2">Exclusive Rice Offers!</h2>
-                <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-sm">
-                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
-                    <Gift size={14} className="mr-1" /> Buy 1kg Get 1kg Free
-                  </div>
-                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
-                    <Ticket size={14} className="mr-1" /> Free Movie Ticket with 5kg
-                  </div>
-                </div>
+        {/* Special Offers Banner Section with Button to open modal */}
+        <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-center justify-between">
+          <div className="w-full md:w-3/5 mb-6 md:mb-0 text-center md:text-left">
+            <h2 className="text-white text-xl md:text-2xl font-bold mb-3">Exclusive Rice Offers!</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
+                <Gift size={isMobile ? 12 : 16} className="mr-2" /> Buy 1kg Get 1kg Free
               </div>
-              <button onClick={viewAllProducts} className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-2 rounded-full font-medium text-sm flex items-center transition-colors">
-                Shop Now <ArrowRight size={16} className="ml-1" />
-              </button>
+              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
+                <Ticket size={isMobile ? 12 : 16} className="mr-2" /> Free Movie Ticket with 5kg
+              </div>
+              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
+                <Package size={isMobile ? 12 : 16} className="mr-2" /> Buy 10kg Get 18KG+ Steel Container
+              </div>
+              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
+                <ShoppingBag size={isMobile ? 12 : 16} className="mr-2" /> Buy 26kg Get 35KG+ Steel Container
+              </div>
             </div>
           </div>
-        </section> */}
-
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <button
+              onClick={() => setShowOffersModal(true)}
+              className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
+            >
+              <Info size={16} className="mr-2" /> FAQS
+            </button>
+            <button
+              onClick={viewAllProducts}
+              className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
+            >
+              Shop Now <ArrowRight size={16} className="ml-2" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
         {/* Products Section */}
         <section ref={productsRef} className="mb-12">
           <div className="flex items-center mb-4 gap-10">
@@ -1332,6 +1356,21 @@ const Home: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Promotional Offers Modal */}
+      <Modal
+        visible={showOffersModal}
+        onCancel={() => setShowOffersModal(false)}
+        footer={null}
+        width={1000}
+        centered
+        bodyStyle={{ padding: 0 }}
+        className="promotional-offers-modal"
+      >
+        <div className="p-0">
+          <RiceOfferFAQs />
+        </div>
+      </Modal>
 
       {/* Footer */}
       <Footer />

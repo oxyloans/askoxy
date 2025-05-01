@@ -339,7 +339,7 @@ const CheckoutPage: React.FC = () => {
       message.error("Failed to fetch delivery time slots");
     }
   };
-
+  
   const submitOrder = async (
     selectedSlot: TimeSlot,
     selectedTimeSlot: string,

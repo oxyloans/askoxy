@@ -126,7 +126,7 @@ const RiceOfferFAQs: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 bg-purple-50">
       <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8 text-purple-800">
-        Rice Purchase Offer – Frequently Asked Questions
+        Promotional Offers – Frequently Asked Questions
       </h1>
       <div className="space-y-6">
         {faqs.map((faq) => (

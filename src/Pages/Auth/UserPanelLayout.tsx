@@ -279,7 +279,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         </Header>
 
         <Content className="bg-gray-50" style={contentStyles}>
-          <div className="bg-white p-4 rounded-lg shadow-sm">{children}</div>
+          <div className="">{children}</div>
         </Content>
 
         <Footer
