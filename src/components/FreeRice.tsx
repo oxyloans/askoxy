@@ -17,7 +17,7 @@ import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 import Retro from "../assets/img/retro.png";
 import O5 from "../assets/img/tb1.png";
 
-// Campaign Base URL
+// Campaign Base URL - ensure this is correct
 const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/freerice";
 
 // Type definitions
@@ -69,7 +69,7 @@ const FreeRiceBlog: React.FC = () => {
 
   // Generate Campaign URL with UTM Parameters
   const generateCampaignUrl = (weight?: number) => {
-    const baseUrl = CAMPAIGN_BASE_URL;
+    let baseUrl = CAMPAIGN_BASE_URL;
     const utmParams = new URLSearchParams();
 
     // Add default campaign parameters
@@ -151,20 +151,19 @@ const FreeRiceBlog: React.FC = () => {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
       const formattedWeight = weight.toFixed(1);
-      const targetUrl = `/main/dashboard/products?weight=${formattedWeight}`;
+      const targetPath = `/main/dashboard/products?weight=${formattedWeight}`;
 
       // Store redirect path for after authentication
-      sessionStorage.setItem("redirectPath", targetUrl);
-
-      // Generate campaign URL with current product weight
-      const campaignUrl = generateCampaignUrl(weight);
+      sessionStorage.setItem("redirectPath", targetPath);
 
       // Check if user is already logged in
       if (userId) {
-        window.location.href = campaignUrl;
+        // Use React Router's navigate for SPA navigation
+        navigate(targetPath);
       } else {
-        // Redirect to WhatsApp register/login page
-        window.location.href = campaignUrl;
+        // If not logged in, navigate to the register/login page 
+        // with target path saved in session storage
+        navigate(`/register?redirect=${encodeURIComponent(targetPath)}`);
       }
     } catch (error) {
       console.error("Navigation error:", error);
@@ -177,20 +176,22 @@ const FreeRiceBlog: React.FC = () => {
   const handleSignIn = () => {
     try {
       setIsLoading(true);
-      // Generate campaign URL for sign in
-      const campaignUrl = generateCampaignUrl();
-      
       // Set the default redirect path to the dashboard products page
-      sessionStorage.setItem("redirectPath", "/main/dashboard/products");
+      const redirectPath = "/main/dashboard/products";
+      sessionStorage.setItem("redirectPath", redirectPath);
       
-      // Redirect to WhatsApp register with campaign URL
-      window.location.href = campaignUrl;
+      // Use React Router's navigate instead of window.location
+      navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
     } catch (error) {
       console.error("Sign in error:", error);
       // Handle error appropriately
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogoClick = () => {
+    navigate('/');
   };
 
   const toggleMobileMenu = () => {
@@ -207,7 +208,7 @@ const FreeRiceBlog: React.FC = () => {
   // Product Card Component
   const ProductCard = ({ product }: { product: RiceProduct }) => (
     <div
-      className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition duration-300 flex flex-col h-full"
+      className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition duration-300 flex flex-col h-full cursor-pointer"
       role="button"
       tabIndex={0}
       aria-label={`Order ${product.title}`}
@@ -222,7 +223,7 @@ const FreeRiceBlog: React.FC = () => {
       {/* Image container with fixed width and height */}
       <div
         className="w-full relative overflow-hidden"
-        style={{ height: "220px", width: "288.01px", maxWidth: "100%" }}
+        style={{ height: "220px", maxWidth: "100%" }}
       >
         {imgLoadError[product.id] ? (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -268,6 +269,13 @@ const FreeRiceBlog: React.FC = () => {
             className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105"
             tabIndex={0}
             role="banner"
+            onClick={handleLogoClick}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleLogoClick();
+              }
+            }}
           />
           <div className="flex items-center gap-4">
             <button
@@ -311,7 +319,14 @@ const FreeRiceBlog: React.FC = () => {
 
         {/* Campaign Information */}
         <div className="text-sm text-green-600 mt-2 text-center">
-          Discover Our Free Rice Campaign at <strong>www.askoxy.ai/freerice</strong>
+          <a 
+            href={CAMPAIGN_BASE_URL} 
+            className="hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Discover Our Free Rice Campaign at <strong>www.askoxy.ai/freerice</strong>
+          </a>
         </div>
       </header>
 
@@ -328,7 +343,7 @@ const FreeRiceBlog: React.FC = () => {
           </div>
 
           {/* Rice Product Grid with consistent card heights */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {riceProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -243,141 +243,152 @@ const CartPage: React.FC = () => {
     checkAndShowFallbackOnePlusOne();
   }, [cartData]);
 
-  const showContainerModal = useCallback(() => {
-    console.log("showContainerModal called with:", {
-      containerPreference,
-      modalDisplayed: modalDisplayedRef.current,
-      cartData,
-    });
+// Here's the modified showContainerModal function to fix the plan selection issue
 
-    if (
-      containerPreference?.toLowerCase() === "interested" ||
-      modalDisplayedRef.current
-    ) {
-      console.log("Modal not shown - already interested or displayed");
-      return;
-    }
+const showContainerModal = useCallback(() => {
+  console.log("showContainerModal called with:", {
+    containerPreference,
+    modalDisplayed: modalDisplayedRef.current,
+    cartData,
+  });
 
-    const hasContainer = cartData.some((item) =>
-      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-        item.itemId
-      )
-    );
-    if (hasContainer) {
-      console.log("Modal not shown - cart already has container");
-      modalDisplayedRef.current = true;
-      return;
-    }
+  if (
+    containerPreference?.toLowerCase() === "interested" ||
+    modalDisplayedRef.current
+  ) {
+    console.log("Modal not shown - already interested or displayed");
+    return;
+  }
 
-    const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
-    const hasValidLightBag = cartData.some((item) => {
-      const weight = parseWeight(item.weight);
-      return weight <= 10 && weight !== 1 && weight !== 5;
-    });
-
-    console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
-
-    if (!hasHeavyBag && !hasValidLightBag) {
-      console.log("Modal not shown - no eligible items");
-      return;
-    }
-
+  const hasContainer = cartData.some((item) =>
+    [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+      item.itemId
+    )
+  );
+  if (hasContainer) {
+    console.log("Modal not shown - cart already has container");
     modalDisplayedRef.current = true;
+    return;
+  }
 
-    const PlanModalContent = () => {
-      const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(
-        selectedPlan
-      );
+  const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
+  const hasValidLightBag = cartData.some((item) => {
+    const weight = parseWeight(item.weight);
+    return weight <= 10 && weight !== 1 && weight !== 5;
+  });
 
-      return (
-        <div className="text-center">
-          <p className="mt-2">
-            Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
-            or refer 9 friends and when they buy their first bag, the container
-            is yours forever.
-          </p>
-          <p className="mt-2 text-sm text-gray-600 font-semibold">
-            * No purchase in 90 days or gap of 90 days between purchases =
-            Container will be taken back
-          </p>
-          <p className="mt-1 text-sm text-gray-700 italic">
-            Choose the plan that best suits your needs and enjoy exclusive
-            benefits.
-          </p>
+  console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
 
-          <div className="mt-4 space-y-4">
-            {["planA", "planB"].map((planKey) => (
-              <div className="flex items-center" key={planKey}>
-                <input
-                  type="radio"
-                  name="planSelection"
-                  checked={tempPlan === planKey}
-                  onChange={() => {
-                    setTempPlan(planKey as "planA" | "planB");
-                    setSelectedPlan(planKey as "planA" | "planB");
-                  }}
-                  className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentPlanDetails(planKey as "planA" | "planB");
-                    setIsPlanDetailsModalOpen(true);
-                  }}
-                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${
-                    tempPlan === planKey
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                  }`}
-                >
-                  {planKey === "planA"
-                    ? "Plan A: Free Steel Container Policy"
-                    : "Plan B: Referral Program"}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
+  if (!hasHeavyBag && !hasValidLightBag) {
+    console.log("Modal not shown - no eligible items");
+    return;
+  }
+
+  modalDisplayedRef.current = true;
+
+  // Create a ref to track the selected plan inside the modal
+  const modalSelectedPlanRef = { current: null as "planA" | "planB" | null };
+
+  const PlanModalContent = () => {
+    const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(selectedPlan);
+
+    // Update both the state and the ref when a plan is selected
+    const handlePlanSelect = (planKey: "planA" | "planB") => {
+      setTempPlan(planKey);
+      setSelectedPlan(planKey);
+      modalSelectedPlanRef.current = planKey; // This is the key change - store selection in ref
     };
 
-    try {
-      Modal.confirm({
-        title: "Special Offer!",
-        content: <PlanModalContent />,
-        okText: "Confirm Selection",
-        cancelText: "Cancel",
-        onOk: async () => {
-          try {
-            if (!selectedPlan) {
-              message.info("Please select a plan before confirming.");
-              return Promise.reject(new Error("No plan selected"));
-            }
-            await handleInterested();
-            containerModalCompletedRef.current = true;
-            await maybeShowOnePlusOneModal();
-          } catch (error) {
-            console.error("Error in Modal onOk:", error);
-            message.error("Failed to process container selection.");
-            throw error;
+    return (
+      <div className="text-center">
+        <p className="mt-2">
+          Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
+          or refer 9 friends and when they buy their first bag, the container
+          is yours forever.
+        </p>
+        <p className="mt-2 text-sm text-gray-600 font-semibold">
+          * No purchase in 90 days or gap of 90 days between purchases =
+          Container will be taken back
+        </p>
+        <p className="mt-1 text-sm text-gray-700 italic">
+          Choose the plan that best suits your needs and enjoy exclusive
+          benefits.
+        </p>
+
+        <div className="mt-4 space-y-4">
+          {["planA", "planB"].map((planKey) => (
+            <div className="flex items-center" key={planKey}>
+              <input
+                type="radio"
+                name="planSelection"
+                checked={tempPlan === planKey}
+                onChange={() => handlePlanSelect(planKey as "planA" | "planB")}
+                className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPlanDetails(planKey as "planA" | "planB");
+                  setIsPlanDetailsModalOpen(true);
+                }}
+                className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${
+                  tempPlan === planKey
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                }`}
+              >
+                {planKey === "planA"
+                  ? "Plan A: Free Steel Container Policy"
+                  : "Plan B: Referral Program"}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  try {
+    Modal.confirm({
+      title: "Special Offer!",
+      content: <PlanModalContent />,
+      okText: "Confirm Selection",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          // Check the ref instead of the state
+          if (!modalSelectedPlanRef.current) {
+            message.info("Please select a plan before confirming.");
+            return Promise.reject(new Error("No plan selected"));
           }
-        },
-        onCancel: async () => {
-          try {
-            setSelectedPlan(null);
-            containerModalCompletedRef.current = true;
-            await maybeShowOnePlusOneModal();
-          } catch (error) {
-            console.error("Error in Modal onCancel:", error);
-            message.error("Failed to cancel container selection.");
-            throw error;
-          }
-        },
-      });
-    } catch (error) {
-      console.error("Error displaying container modal:", error);
-    }
-  }, [cartData, containerPreference, customerId, token, selectedPlan]);
+          // Just to ensure state is also set
+          setSelectedPlan(modalSelectedPlanRef.current);
+          
+          await handleInterested();
+          containerModalCompletedRef.current = true;
+          await maybeShowOnePlusOneModal();
+        } catch (error) {
+          console.error("Error in Modal onOk:", error);
+          message.error("Failed to process container selection.");
+          throw error;
+        }
+      },
+      onCancel: async () => {
+        try {
+          setSelectedPlan(null);
+          containerModalCompletedRef.current = true;
+          await maybeShowOnePlusOneModal();
+        } catch (error) {
+          console.error("Error in Modal onCancel:", error);
+          message.error("Failed to cancel container selection.");
+          throw error;
+        }
+      },
+    });
+  } catch (error) {
+    console.error("Error displaying container modal:", error);
+  }
+}, [cartData, containerPreference, customerId, token, selectedPlan]);
 
   useEffect(() => {
     console.log("useEffect triggered with:", {

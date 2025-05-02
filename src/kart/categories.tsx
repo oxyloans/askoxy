@@ -223,7 +223,7 @@ const Categories: React.FC<CategoriesProps> = ({
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      // GA4 Add to Cart Event Tracking
+      // GA4 Add to Cart Event Tracking - KEEP THIS ONE
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "add_to_cart", {
           currency: "INR",
@@ -318,19 +318,24 @@ const Categories: React.FC<CategoriesProps> = ({
           message.success("Item removed from cart successfully.");
 
           if (typeof window !== "undefined" && window.gtag) {
-            window.gtag("event", "remove_from_cart", {
-              currency: "INR",
-              value: item.itemPrice,
-              items: [
-                {
-                  item_id: item.itemId,
-                  item_name: item.itemName,
-                  price: item.itemPrice,
-                  quantity: 1,
-                  item_category: activeCategory || "General",
-                },
-              ],
-            });
+            window.gtag(
+              "event",
+              increment ? "add_to_cart" : "remove_from_cart",
+              {
+                currency: "INR",
+                value: item.itemPrice,
+                items: [
+                  {
+                    item_id: item.itemId,
+                    item_name: item.itemName,
+                    price: item.itemPrice,
+                    quantity: 1,
+                    item_category: activeCategory || "General",
+                    action: increment ? "increment" : "decrement",
+                  },
+                ],
+              }
+            );
           }
         } else {
           setLoadingItems((prev) => ({
@@ -397,23 +402,23 @@ const Categories: React.FC<CategoriesProps> = ({
       }));
     }
   };
-const getCurrentCategoryItems = () => {
-  const currentCategory =
-    categories.find((cat) => cat.categoryName === activeCategory) ||
-    categories[0];
-  if (!currentCategory) return [];
+  const getCurrentCategoryItems = () => {
+    const currentCategory =
+      categories.find((cat) => cat.categoryName === activeCategory) ||
+      categories[0];
+    if (!currentCategory) return [];
 
-  let items = currentCategory.itemsResponseDtoList;
+    let items = currentCategory.itemsResponseDtoList;
 
-  if (activeWeightFilter) {
-    items = items.filter((item) => {
-      const itemWeight = parseFloat(item.weight).toFixed(1);
-      return itemWeight === activeWeightFilter;
-    });
-  }
+    if (activeWeightFilter) {
+      items = items.filter((item) => {
+        const itemWeight = parseFloat(item.weight).toFixed(1);
+        return itemWeight === activeWeightFilter;
+      });
+    }
 
-  return items;
-};
+    return items;
+  };
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
     const category = categories.find(
@@ -421,25 +426,25 @@ const getCurrentCategoryItems = () => {
     );
     return category?.subCategories || [];
   };
-const handleWeightFilterClick = (value: string) => {
-  // If currently active, deactivate it
-  if (activeWeightFilter === value) {
-    setActiveWeightFilter(null);
-  } else {
-    // Otherwise set as active
-    setActiveWeightFilter(value);
-  }
+  const handleWeightFilterClick = (value: string) => {
+    // If currently active, deactivate it
+    if (activeWeightFilter === value) {
+      setActiveWeightFilter(null);
+    } else {
+      // Otherwise set as active
+      setActiveWeightFilter(value);
+    }
 
-  if (typeof window !== "undefined" && window.gtag) {
-    window.gtag("event", "toggle_weight_filter", {
-      filter_value: value,
-      new_state: activeWeightFilter === value ? "off" : "on",
-    });
-  }
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "toggle_weight_filter", {
+        filter_value: value,
+        new_state: activeWeightFilter === value ? "off" : "on",
+      });
+    }
 
-  setSelectedFilterKey("0");
-  setSelectedFilter("ALL");
-};
+    setSelectedFilterKey("0");
+    setSelectedFilter("ALL");
+  };
   // const handleResetFilters = () => {
   //   setActiveWeightFilter(null);
   //   setSelectedFilterKey("0");
@@ -697,11 +702,10 @@ const handleWeightFilterClick = (value: string) => {
               key={index}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                activeCategory === category.categoryName
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeCategory === category.categoryName
                   ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
                   : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
-              }`}
+                }`}
               onClick={() => {
                 onCategoryClick(category.categoryName);
                 if (typeof window !== "undefined" && window.gtag) {
@@ -745,13 +749,12 @@ const handleWeightFilterClick = (value: string) => {
                     ? 1
                     : 0.98,
               }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                filter.value === "1.0" && disabledFilters[filter.value]
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${filter.value === "1.0" && disabledFilters[filter.value]
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
                   : filter.value === activeWeightFilter
-                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
-                  : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
-              }`}
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
+                    : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
+                }`}
               onClick={() => handleWeightFilterClick(filter.value)}
               disabled={filter.value === "1.0" && disabledFilters[filter.value]}
               title={
@@ -778,11 +781,10 @@ const handleWeightFilterClick = (value: string) => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                !activeSubCategory
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!activeSubCategory
                   ? "bg-purple-100 text-purple-700"
                   : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-              }`}
+                }`}
               onClick={() => {
                 setActiveSubCategory(null);
                 if (typeof window !== "undefined" && window.gtag) {
@@ -801,11 +803,10 @@ const handleWeightFilterClick = (value: string) => {
                 key={subCategory.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  activeSubCategory === subCategory.id
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${activeSubCategory === subCategory.id
                     ? "bg-purple-100 text-purple-700"
                     : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                }`}
+                  }`}
                 onClick={() => {
                   setActiveSubCategory(subCategory.id);
                   if (typeof window !== "undefined" && window.gtag) {
@@ -929,8 +930,8 @@ const handleWeightFilterClick = (value: string) => {
                     {item.units == "pcs"
                       ? "Pc"
                       : item.weight == "1"
-                      ? "Kg"
-                      : "Kgs"}
+                        ? "Kg"
+                        : "Kgs"}
                   </p>
                   <div className="flex items-baseline space-x-2">
                     <span className="text-lg font-semibold text-gray-900">
@@ -962,20 +963,13 @@ const handleWeightFilterClick = (value: string) => {
                         >
                           -
                         </motion.button>
-                        {loadingItems.items[item.itemId] ? (
-                          <Loader2 className="animate-spin text-purple-600" />
-                        ) : (
-                          <span className="font-medium text-purple-700">
-                            {cartItems[item.itemId]}
-                          </span>
-                        )}
+
                         <motion.button
                           whileTap={{ scale: 0.9 }}
-                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                            cartItems[item.itemId] >= item.quantity
+                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${cartItems[item.itemId] >= item.quantity
                               ? "opacity-50 cursor-not-allowed"
                               : ""
-                          }`}
+                            }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (cartItems[item.itemId] < item.quantity) {
@@ -1011,21 +1005,7 @@ const handleWeightFilterClick = (value: string) => {
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddToCart(item);
-                        if (typeof window !== "undefined" && window.gtag) {
-                          window.gtag("event", "add_to_cart", {
-                            currency: "INR",
-                            value: item.itemPrice,
-                            items: [
-                              {
-                                item_id: item.itemId,
-                                item_name: item.itemName,
-                                price: item.itemPrice,
-                                quantity: 1,
-                                item_category: activeCategory || "General",
-                              },
-                            ],
-                          });
-                        }
+                        // REMOVE the duplicate Google Analytics tracking here
                       }}
                       disabled={loadingItems.items[item.itemId]}
                     >

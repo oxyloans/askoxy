@@ -447,10 +447,10 @@ const Home: React.FC = () => {
 
   const handleAddToCart = async (item: DashboardItem) => {
     if (!item.itemId) return;
-  
+    
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-  
+    
     if (!accessToken || !userId) {
       message.warning("Please login to add items to the cart.");
       setTimeout(() => {
@@ -458,7 +458,7 @@ const Home: React.FC = () => {
       }, 2000);
       return;
     }
-  
+    
     if (!checkProfileCompletion()) {
       Modal.error({
         title: "Profile Incomplete",
@@ -470,21 +470,38 @@ const Home: React.FC = () => {
       }, 4000);
       return;
     }
-  
+    
     try {
       setLoadingItems(prev => ({
         ...prev,
         items: { ...prev.items, [item.itemId as string]: true }
       }));
-  
+      
       const response = await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         { customerId: userId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-  
+      
       await fetchCartData(item.itemId);
       message.success(response.data.errorMessage);
+      
+      // Track the event with Google Analytics
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "add_to_cart", {
+          currency: "INR",
+          value: item.itemPrice,
+          items: [
+            {
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: item.itemPrice,
+              quantity: 1,
+              item_category: activeCategory || "General",
+            },
+          ],
+        });
+      }
       
       // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
       // so use setTimeout to give the cart update time to complete
@@ -501,7 +518,6 @@ const Home: React.FC = () => {
       }));
     }
   };
-
   const handleQuantityChange = async (item: DashboardItem, increment: boolean) => {
     if (!item.itemId) return;
   
