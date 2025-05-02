@@ -20,6 +20,10 @@ import O5 from "../assets/img/tb1.png";
 // Campaign Base URL - ensure this is correct
 const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/freerice";
 
+// Authentication URLs
+const LOGIN_URL = "/whatsapplogin";
+const REGISTER_URL = "/whatsappregister";
+
 // Type definitions
 interface RiceProduct {
   id: number;
@@ -153,17 +157,27 @@ const FreeRiceBlog: React.FC = () => {
       const formattedWeight = weight.toFixed(1);
       const targetPath = `/main/dashboard/products?weight=${formattedWeight}`;
 
-      // Store redirect path for after authentication
+      // Store the redirect path in both localStorage and sessionStorage
+      localStorage.setItem("redirectPath", targetPath);
       sessionStorage.setItem("redirectPath", targetPath);
+      
+      // Also store as returnUrl and next which are common parameter names
+      localStorage.setItem("returnUrl", targetPath);
+      sessionStorage.setItem("returnUrl", targetPath);
+      localStorage.setItem("next", targetPath);
+      sessionStorage.setItem("next", targetPath);
 
       // Check if user is already logged in
       if (userId) {
-        // Use React Router's navigate for SPA navigation
+        // Use React Router's navigate for SPA navigation when already logged in
         navigate(targetPath);
       } else {
-        // If not logged in, navigate to the register/login page 
-        // with target path saved in session storage
-        navigate(`/register?redirect=${encodeURIComponent(targetPath)}`);
+        // If not logged in, redirect to WhatsApp registration with the target path
+        // Try multiple parameter names that might be expected by the auth system
+        const registerUrl = `${REGISTER_URL}?redirect=${encodeURIComponent(targetPath)}`;
+        
+        // Force a full page reload for authentication
+        window.location.href = registerUrl;
       }
     } catch (error) {
       console.error("Navigation error:", error);
@@ -178,10 +192,21 @@ const FreeRiceBlog: React.FC = () => {
       setIsLoading(true);
       // Set the default redirect path to the dashboard products page
       const redirectPath = "/main/dashboard/products";
-      sessionStorage.setItem("redirectPath", redirectPath);
       
-      // Use React Router's navigate instead of window.location
-      navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+      // Store the redirect path in multiple storage locations
+      localStorage.setItem("redirectPath", redirectPath);
+      sessionStorage.setItem("redirectPath", redirectPath);
+      localStorage.setItem("returnUrl", redirectPath);
+      sessionStorage.setItem("returnUrl", redirectPath);
+      localStorage.setItem("next", redirectPath);
+      sessionStorage.setItem("next", redirectPath);
+
+      // Redirect to WhatsApp login with the redirect parameter
+      const loginUrl = `${LOGIN_URL}?redirect=${encodeURIComponent(redirectPath)}`;
+      
+      // Force a full page reload for authentication
+      window.location.href = loginUrl;
+      
     } catch (error) {
       console.error("Sign in error:", error);
       // Handle error appropriately
@@ -191,6 +216,7 @@ const FreeRiceBlog: React.FC = () => {
   };
 
   const handleLogoClick = () => {
+    // For logo click, navigate is fine since we're not crossing auth boundaries
     navigate('/');
   };
 
@@ -278,15 +304,19 @@ const FreeRiceBlog: React.FC = () => {
             }}
           />
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleSignIn}
+            <a
+              href={LOGIN_URL}
+              onClick={(e) => {
+                e.preventDefault();
+                handleSignIn();
+                return false;
+              }}
               className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 shadow transition duration-300"
-              disabled={isLoading}
               aria-busy={isLoading}
             >
               <User className="w-5 h-5" />
               {isLoading ? "Loading..." : "Sign In"}
-            </button>
+            </a>
             <button
               onClick={toggleMobileMenu}
               className="sm:hidden focus:outline-none"
@@ -306,28 +336,20 @@ const FreeRiceBlog: React.FC = () => {
             className="sm:hidden mt-2 bg-white shadow-md rounded-lg px-4 py-2 animate-fade-in-down"
             role="menu"
           >
-            <button
-              onClick={handleSignIn}
+            <a
+              href={LOGIN_URL}
+              onClick={(e) => {
+                e.preventDefault();
+                handleSignIn();
+                return false;
+              }}
               className="block w-full text-left text-purple-600 hover:text-purple-800 py-2 font-medium"
               role="menuitem"
-              disabled={isLoading}
             >
               {isLoading ? "Loading..." : "Sign In"}
-            </button>
+            </a>
           </div>
         )}
-
-        {/* Campaign Information */}
-        <div className="text-sm text-green-600 mt-2 text-center">
-          <a 
-            href={CAMPAIGN_BASE_URL} 
-            className="hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Discover Our Free Rice Campaign at <strong>www.askoxy.ai/freerice</strong>
-          </a>
-        </div>
       </header>
 
       {/* Main Content */}

@@ -285,7 +285,7 @@ const WhatsappRegister = () => {
         if (response.data.mobileOtpSession === null) {
           setShowSuccessPopup(false);
           setError("You already registered with this number.");
-          setTimeout(() => navigate("/whatsapplogin"), 1500);
+          setTimeout(() => navigate("/whatsapplogin"), 1000);
         } else {
           setIsButtonEnabled(true);
           setOtpShow(true);
