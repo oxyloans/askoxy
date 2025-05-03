@@ -1,7 +1,7 @@
 import { Dashboard } from "@mui/icons-material";
 import axios from "axios";
-import { Bot, Check, Coins, Copy, HelpCircle, Info, Settings, ShoppingBag, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Bot, Check, Coins, Copy, HelpCircle, Info, Settings, SendHorizonal, ShoppingBag, X } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardMain from "./Dashboardmain";
 import BASE_URL from "../Config";
@@ -17,14 +17,32 @@ interface DashboardItem {
 }
 
 const Tabview = () => {
-  const [multichainId, setMultichainId] = useState<string>("");
-  const [bmvCoin, setBmvCoin] = useState<number>(0);
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("services");
-  const [isScrolled, setIsScrolled] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [showBmvModal, setShowBmvModal] = useState<boolean>(false);
+  const [multichainId, setMultichainId] = useState("");
+  const [bmvCoin, setBmvCoin] = useState(0);
+  const [isCopied, setIsCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("services");
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [showBmvModal, setShowBmvModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [userMobileNumber, setUserMobileNumber] = useState("");
+  
+  // Refs for uncontrolled inputs
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+  
+  const [transferStatus, setTransferStatus] = useState({
+    loading: false,
+    success: false,
+    error: null as string | null,
+  });
+  
+  // Add state to store transfer details for the success message
+  const [transferDetails, setTransferDetails] = useState({
+    recipientMobile: "",
+    amount: ""
+  });
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,6 +85,7 @@ const Tabview = () => {
       );
       setMultichainId(response.data.multiChainId);
       setBmvCoin(response.data.coinAllocated);
+      setUserMobileNumber(response.data.mobileNumber || "");
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -97,6 +116,91 @@ const Tabview = () => {
     }
   };
 
+  const handleTransferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Get values from refs
+    const recipientMobile = mobileInputRef.current?.value || "";
+    const transferAmount = amountInputRef.current?.value || "";
+    
+    // Validate form
+    if (!recipientMobile || !transferAmount) {
+      setTransferStatus({
+        loading: false,
+        success: false,
+        error: "Please fill in all fields",
+      });
+      return;
+    }
+
+    // Validate mobile number
+    if (recipientMobile.length !== 10 || !/^\d{10}$/.test(recipientMobile)) {
+      setTransferStatus({
+        loading: false,
+        success: false,
+        error: "Please enter a valid 10-digit mobile number",
+      });
+      return;
+    }
+
+    // Validate amount
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0 || amount > bmvCoin) {
+      setTransferStatus({
+        loading: false,
+        success: false,
+        error: `Please enter a valid amount between 1 and ${bmvCoin}`,
+      });
+      return;
+    }
+
+    try {
+      setTransferStatus({ loading: true, success: false, error: null });
+      
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${BASE_URL}/user-service/assetTransfer`,
+        {
+          from_mobile: userMobileNumber,
+          to_mobile: recipientMobile,
+          amount: transferAmount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Save the transfer details for the success message
+      setTransferDetails({
+        recipientMobile: recipientMobile,
+        amount: transferAmount
+      });
+      
+      // Handle successful transfer
+      setTransferStatus({ loading: false, success: true, error: null });
+      
+      // Refresh coin balance
+      fetchUserData();
+      
+      // Reset form and close modal after delay
+      setTimeout(() => {
+        if (mobileInputRef.current) mobileInputRef.current.value = "";
+        if (amountInputRef.current) amountInputRef.current.value = "";
+        setShowTransferModal(false);
+        setTransferStatus({ loading: false, success: false, error: null });
+      }, 2000);
+      
+    } catch (error: any) {
+      setTransferStatus({
+        loading: false,
+        success: false,
+        error: error.response?.data?.message || "Transfer failed. Please try again.",
+      });
+    }
+  };
+
   const TabButton: React.FC<{
     tab: string;
     icon: React.ReactNode;
@@ -117,11 +221,6 @@ const Tabview = () => {
     >
       {icon}
       <span>{label}</span>
-      {/* {count && (
-          <span className="ml-1 px-2 py-0.5 text-xs bg-purple-200 text-purple-700 rounded-full">
-            {count}
-          </span>
-        )} */}
     </button>
   );
 
@@ -159,6 +258,118 @@ const Tabview = () => {
         >
           Got it
         </button>
+      </div>
+    </div>
+  );
+
+  const TransferModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4 relative">
+        <button
+          onClick={() => {
+            setShowTransferModal(false);
+            setTransferStatus({ loading: false, success: false, error: null });
+            if (mobileInputRef.current) mobileInputRef.current.value = "";
+            if (amountInputRef.current) amountInputRef.current.value = "";
+          }}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          aria-label="Close modal"
+        >
+          <X size={20} />
+        </button>
+        
+        <div className="flex items-center mb-6">
+          <div className="p-2 rounded-full bg-purple-100 mr-3">
+            <SendHorizonal className="h-6 w-6 text-purple-600" />
+          </div>
+          <h2 className="text-xl font-bold text-purple-700">Transfer BMVCoins</h2>
+        </div>
+        
+        {transferStatus.success ? (
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+            <p className="text-lg font-medium text-gray-900">Transfer Successful!</p>
+            <p className="text-sm text-gray-500 mt-2 mb-4">
+              {transferDetails.amount} BMVCoins transferred to {transferDetails.recipientMobile}
+            </p>
+            <button
+              onClick={() => {
+                setShowTransferModal(false);
+                setTransferStatus({ loading: false, success: false, error: null });
+                if (mobileInputRef.current) mobileInputRef.current.value = "";
+                if (amountInputRef.current) amountInputRef.current.value = "";
+              }}
+              className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleTransferSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="to_mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                Recipient Mobile Number
+              </label>
+              <input
+                type="text"
+                id="to_mobile"
+                name="to_mobile"
+                ref={mobileInputRef}
+                placeholder="Enter 10-digit mobile number"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                maxLength={10}
+                required
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between mb-2">
+                <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+                  Amount
+                </label>
+                <span className="text-sm text-gray-500">
+                  Available: {bmvCoin}
+                </span>
+              </div>
+              <input
+                type="text"
+                id="amount"
+                name="amount"
+                ref={amountInputRef}
+                placeholder="Enter amount to transfer"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                required
+              />
+            </div>
+            
+            {transferStatus.error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{transferStatus.error}</p>
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              disabled={transferStatus.loading}
+              className={`mt-4 w-full py-3 px-4 rounded-lg font-medium text-white
+                ${transferStatus.loading 
+                  ? "bg-purple-400 cursor-not-allowed" 
+                  : "bg-purple-600 hover:bg-purple-700 transition-colors"}`}
+            >
+              {transferStatus.loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : "Transfer BMVCoins"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -222,16 +433,28 @@ const Tabview = () => {
             </button>
           </div>
 
-          {/* BMV Coins Section - Updated with clickable image */}
-          <div className="bg-white p-3 rounded-lg shadow-lg w-full md:w-auto flex items-center justify-end">
-            <div className="flex items-center cursor-pointer" onClick={() => setShowBmvModal(true)}>
-              <img 
-                src={BMVICON} 
-                alt="BMV Coin" 
-                className="w-26 h-8 mr-2 hover:opacity-80 transition-opacity"
-              />
-              <span className="text-m font-bold text-purple-600 mr-1">: {bmvCoin}</span>
-              <HelpCircle size={18} className="text-purple-600" />
+          {/* BMV Coins Section - Updated with clickable image and transfer button */}
+          <div className="bg-white p-3 rounded-lg shadow-lg w-full md:w-auto">
+            <div className="flex items-center justify-end">
+              <div className="flex items-center cursor-pointer mr-4" onClick={() => setShowBmvModal(true)}>
+                <img 
+                  src={BMVICON} 
+                  alt="BMV Coin" 
+                  className="h-8 mr-2 hover:opacity-80 transition-opacity"
+                />
+                <span className="text-m font-bold text-purple-600 mr-1">{bmvCoin}</span>
+                <HelpCircle size={18} className="text-purple-600 ml-1" />
+              </div>
+              
+              {/* New Transfer Button */}
+              <button
+                onClick={() => setShowTransferModal(true)}
+                className="p-2 bg-white border border-purple-600 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors flex items-center"
+                aria-label="Transfer BMV Coins"
+              >
+                <SendHorizonal className="w-4 h-4 mr-1" />
+                <span className="text-xs">Transfer</span>
+              </button>
             </div>
           </div>
         </div>
@@ -239,6 +462,9 @@ const Tabview = () => {
 
       {/* BMV Info Modal */}
       {showBmvModal && <BMVInfoModal />}
+      
+      {/* Transfer Modal */}
+      {showTransferModal && <TransferModal />}
     </div>
   );
 };
