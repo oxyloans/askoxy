@@ -61,6 +61,18 @@ interface TimeSlot {
   isAvailable: boolean;
 }
 
+// Type definitions
+interface DayInfo {
+  dayOfWeek: string;
+  date: string;
+  formattedDay: string;
+}
+
+// Extend the original TimeSlot interface to include formattedDay
+interface ExtendedTimeSlot extends TimeSlot {
+  formattedDay?: string;
+}
+
 const CheckoutPage: React.FC = () => {
   const { state } = useLocation();
   const [cartData, setCartData] = useState<CartItem[]>([]);
@@ -101,6 +113,7 @@ const CheckoutPage: React.FC = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<string>("");
+  const [language, setLanguage] = useState<"english" | "telugu">("english");
   const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
@@ -143,202 +156,212 @@ const CheckoutPage: React.FC = () => {
     }
   }, [selectedTimeSlot]);
 
-  const handleSelectTimeSlot = (
-    date: string,
-    timeSlot: string,
-    day: string
-  ) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(timeSlot);
-    setSelectedDay(day);
-    setShowTimeSlotModal(false);
-    message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
-    setIsDeliveryTimelineModalVisible(true);
-  };
+  // Type-safe time slot selection handler
+const handleSelectTimeSlot = (date: string, timeSlot: string, day: string): void => {
+  setSelectedDate(date);
+  setSelectedTimeSlot(timeSlot);
+  setSelectedDay(day);
+  setShowTimeSlotModal(false);
+  message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
+  setIsDeliveryTimelineModalVisible(true);
+};
+
+// Type definition for time slot object used in rendering
+interface TimeSlotObj {
+  key: string;
+  value: string | null;
+}
 
   const handleShowDeliveryTimeline = () => {
     if (isOneTimeFreeOfferActive) {
       setShowDeliveryTimelineModal(true);
     }
   };
-
-  const renderDeliveryTimelineModal = () => {
-    return (
-      <Modal
-        title="Delivery Timeline"
-        open={isDeliveryTimelineModalVisible}
-        onCancel={() => setIsDeliveryTimelineModalVisible(false)}
-        footer={[
+// Replace the old renderDeliveryTimelineModal function with this one
+const renderDeliveryTimelineModal = () => {
+  return (
+    <Modal
+      title="Delivery Information"
+      open={isDeliveryTimelineModalVisible}
+      onCancel={() => setIsDeliveryTimelineModalVisible(false)}
+      footer={null}
+      centered
+      width={500}
+      closeIcon={<X className="w-5 h-5" />}
+    >
+      <div className="text-center">
+        <div className="mb-4 flex justify-center">
           <button 
-            key="telugu" 
-            onClick={() => {
-              Modal.info({
-                title: 'డెలివరీ సమయం',
-                content: (
-                  <div>
-                    <p>📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
-                    <p>మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
-                    <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
-                  </div>
-                ),
-                okText: 'Close'
-              });
-            }}
-            className="mr-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+            onClick={() => setLanguage("english")}
+            className={`px-4 py-2 rounded-l-md transition-colors ${language === "english" ? "bg-purple-500 text-white" : "bg-gray-200 text-gray-700"}`}
           >
-            View in Telugu
-          </button>,
-          <button 
-            key="english" 
-            onClick={() => {
-              Modal.info({
-                title: 'Delivery Timeline',
-                content: (
-                  <div>
-                    <p>📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
-                    <p>With your support, we'll be able to grow and serve you even better. 🙏</p>
-                    <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
-                  </div>
-                ),
-                okText: 'Close'
-              });
-            }}
-            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-          >
-            View in English
+            English
           </button>
-        ]}
-        centered
-        width={500}
-        closeIcon={<X className="w-5 h-5" />}
-      >
-        <div className="text-center">
-          {freeTicketAvailable === "YES" ? (
-            <div>
-              <Globe className="w-16 h-16 mx-auto text-green-500 mb-4" />
-              <h3 className="text-xl font-bold mb-2">1+1 Free Offer Active!</h3>
-              <p className="mb-4">
-                Choose your preferred language to view delivery timeline details.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
-              <h3 className="text-xl font-bold mb-2">Delivery Information</h3>
-              <p className="mb-4">
-                Choose your preferred language to view delivery timeline details.
-              </p>
-            </div>
-          )}
+          <button 
+            onClick={() => setLanguage("telugu")}
+            className={`px-4 py-2 rounded-r-md transition-colors ${language === "telugu" ? "bg-purple-500 text-white" : "bg-gray-200 text-gray-700"}`}
+          >
+            తెలుగు
+          </button>
         </div>
-      </Modal>
+
+        {freeTicketAvailable === "YES" ? (
+          <div>
+            <Globe className="w-16 h-16 mx-auto text-green-500 mb-4" />
+            <h3 className="text-xl font-bold mb-4">
+              {language === "english" ? "1+1 Free Offer Active!" : "1+1 ఉచిత ఆఫర్ యాక్టివ్!"}
+            </h3>
+            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
+              {language === "english" ? (
+                <>
+                  <p className="mb-3">📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
+                  <p className="mb-3">With your support, we'll be able to grow and serve you even better. 🙏</p>
+                  <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-3">📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
+                  <p className="mb-3">మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
+                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
+            <h3 className="text-xl font-bold mb-4">
+              {language === "english" ? "Delivery Information" : "డెలివరీ సమాచారం"}
+            </h3>
+            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
+              {language === "english" ? (
+                <>
+                  <p className="mb-3">📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
+                  <p className="mb-3">With your support, we'll be able to grow and serve you even better. 🙏</p>
+                  <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-3">📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
+                  <p className="mb-3">మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
+                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        
+        <button
+          onClick={() => setIsDeliveryTimelineModalVisible(false)}
+          className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+        >
+          {language === "english" ? "Close" : "మూసివేయి"}
+        </button>
+      </div>
+    </Modal>
+  );
+};
+ 
+// Updated function to get next available days, not just the next 3 calendar days
+const getAvailableDays = (maxDays: number = 14): DayInfo[] => {
+  const today = new Date();
+  
+  // Start from tomorrow
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const startDate = tomorrow;
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+  
+  // Generate information for the next maxDays days
+  const nextDays: DayInfo[] = [];
+  for (let offset = 0; offset < maxDays; offset++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + offset);
+    
+    nextDays.push({
+      dayOfWeek: daysOfWeek[date.getDay()].toUpperCase(),
+      date: `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`,
+      formattedDay: daysOfWeek[date.getDay()]
+    });
+  }
+  
+  return nextDays;
+};
+
+const fetchTimeSlots = async (): Promise<void> => {
+  try {
+    setLoading(true);
+    
+    const response = await axios.get(
+      `${BASE_URL}/order-service/fetchTimeSlotlist`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-  };
 
-  const formatDate = (date: Date, isToday: boolean = false): string => {
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    const today = new Date();
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-
-    if (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    ) {
-      return "Today";
-    }
-    return `${day}-${month}-${year}`;
-  };
-
-  const isOrderPlacedToday = (orderDate?: string | null) => {
-    if (!orderDate) return false;
-    const today = new Date();
-    const orderDateObj = new Date(orderDate);
-    return (
-      orderDateObj.getDate() === today.getDate() &&
-      orderDateObj.getMonth() === today.getMonth() &&
-      orderDateObj.getFullYear() === today.getFullYear()
-    );
-  };
-
-  const fetchTimeSlots = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/order-service/fetchTimeSlotlist`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data && Array.isArray(response.data)) {
-        const currentDate = new Date();
-        const currentDay = currentDate.getDay();
-        const dayNames = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ];
-        const startDayOffset = 1;
-
-        const formattedTimeSlots = [];
-
-        for (let index = 0; index < 3; index++) {
-          const dayOffset = startDayOffset + index;
-          const slotDate = new Date(currentDate);
-          slotDate.setDate(currentDate.getDate() + dayOffset);
-          const dayIndex = (currentDay + dayOffset) % 7;
-          const dayOfWeek = dayNames[dayIndex].toUpperCase();
-          const formattedDate = `${String(slotDate.getDate()).padStart(
-            2,
-            "0"
-          )}-${String(slotDate.getMonth() + 1).padStart(
-            2,
-            "0"
-          )}-${slotDate.getFullYear()}`;
-
-          const slotData = response.data[index];
-
-          if (slotData) {
-            if (!slotData.isAvailable) {
-              formattedTimeSlots.push({
-                ...slotData,
-                dayOfWeek,
-                expectedDeliveryDate: formattedDate,
-                timeSlot1: slotData.timeSlot1 || null,
-                timeSlot2: slotData.timeSlot2 || null,
-                timeSlot3: slotData.timeSlot3 || null,
-                timeSlot4: slotData.timeSlot4 || null,
-                isAvailable: slotData.isAvailable,
-                date: formattedDate,
-              });
-            }
+    if (response.data && Array.isArray(response.data)) {
+      // Get information for the next 14 days (or adjust as needed)
+      const nextDays = getAvailableDays(14);
+      
+      // Define a type for the API response slots
+      interface ApiTimeSlot {
+        id: string;
+        dayOfWeek: string;
+        timeSlot1: string | null;
+        timeSlot2: string | null;
+        timeSlot3: string | null;
+        timeSlot4: string | null;
+        isAvailable: boolean;
+      }
+      
+      // Process and format time slots
+      const formattedTimeSlots: ExtendedTimeSlot[] = [];
+      
+      // Iterate through days until we find 3 available days or reach the end
+      for (const dayInfo of nextDays) {
+        // Find matching slot for this day
+        const matchingSlot = response.data.find(
+          (slot: ApiTimeSlot) => slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
+        );
+        
+        // If we find an available slot for this day, add it to our formatted slots
+        if (matchingSlot) {
+          // Check if at least one time slot is available
+          const hasTimeSlot = matchingSlot.timeSlot1 || matchingSlot.timeSlot2 || 
+                             matchingSlot.timeSlot3 || matchingSlot.timeSlot4;
+          
+          if (hasTimeSlot) {
+            formattedTimeSlots.push({
+              id: matchingSlot.id,
+              dayOfWeek: dayInfo.dayOfWeek,
+              expectedDeliveryDate: dayInfo.date,
+              timeSlot1: matchingSlot.timeSlot1,
+              timeSlot2: matchingSlot.timeSlot2,
+              timeSlot3: matchingSlot.timeSlot3,
+              timeSlot4: matchingSlot.timeSlot4,
+              isAvailable: false, // isAvailable=false means slots are available for selection
+              isToday: false,
+              date: dayInfo.date,
+              formattedDay: dayInfo.formattedDay
+            });
           }
         }
-
-        setTimeSlots(formattedTimeSlots);
+        
+        // If we've found 3 available days, we can stop
+        if (formattedTimeSlots.length >= 3) {
+          break;
+        }
       }
-    } catch (error) {
-      console.error("Error fetching time slots:", error);
-      message.error("Failed to fetch delivery time slots");
+      
+      // Set the time slots state with what we found (might be fewer than 3)
+      setTimeSlots(formattedTimeSlots);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching time slots:", error);
+    message.error("Failed to fetch delivery time slots");
+  } finally {
+    setLoading(false);
+  }
+};
   
   const submitOrder = async (
     selectedSlot: TimeSlot,
@@ -863,93 +886,128 @@ const CheckoutPage: React.FC = () => {
         .catch((error) => console.log("Payment Status", error));
     }
   }
-
-  const renderTimeSlotModal = () => {
+  const renderTimeSlotModal = (): JSX.Element => {
     return (
       <Modal
         title="Select Delivery Time Slot"
         open={showTimeSlotModal}
         onCancel={() => setShowTimeSlotModal(false)}
         footer={[
-          <button 
-            key="delivery-info" 
-            onClick={handleShowDeliveryTimeline}
-            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center"
+          <button
+            key="delivery-info"
+            onClick={() => {
+              setShowTimeSlotModal(false);
+              setTimeout(() => {
+                setIsDeliveryTimelineModalVisible(true);
+              }, 100);
+            }}
+            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center transition-colors"
           >
             <Truck className="w-5 h-5 mr-2" /> Delivery Info
           </button>,
-          <button 
-            key="close" 
+          <button
+            key="close"
             onClick={() => setShowTimeSlotModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
           >
             Close
           </button>
         ]}
         centered
-        width={500}
+        width={580}
         closeIcon={<X className="w-5 h-5" />}
       >
         <div className="max-h-[70vh] overflow-y-auto">
           {timeSlots.length === 0 ? (
             <div className="text-center text-gray-500 p-4">
-              No available delivery slots
+              <Clock className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+              <p>No available delivery slots</p>
+              <p className="text-sm text-gray-400 mt-1">Please try again later</p>
             </div>
           ) : (
-            timeSlots.map((slot, index) => (
-              <div key={slot.id || index} className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="text-lg font-medium">
-                    {slot.dayOfWeek || `Day ${index + 1}`}
+            timeSlots.map((slot, index) => {
+              // Create a formatted day name from dayOfWeek if formattedDay is not available
+              const displayDay = (slot as ExtendedTimeSlot).formattedDay ||
+                                 slot.dayOfWeek.charAt(0) + slot.dayOfWeek.slice(1).toLowerCase();
+                      
+              return (
+                <div key={slot.id || index} className="mb-6 px-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-lg font-medium flex items-center">
+                      <span className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-2">
+                        <span className="text-sm">{index + 1}</span>
+                      </span>
+                      {displayDay}
+                    </div>
+                    <div className="text-sm md:text-base text-gray-700 font-medium">{slot.date}</div>
                   </div>
-                  <div className="text-right text-gray-700">{slot.date}</div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    slot.timeSlot1,
-                    slot.timeSlot2,
-                    slot.timeSlot3,
-                    slot.timeSlot4,
-                  ].map(
-                    (timeSlot, i) =>
-                      timeSlot && (
-                        <div
-                          key={i}
-                          className={`py-3 px-4 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition ${
-                            selectedTimeSlot === timeSlot &&
-                            selectedDate === slot.date
-                              ? "border-green-500 bg-green-50"
-                              : "border-gray-200"
-                          }`}
-                          onClick={() =>
-                            handleSelectTimeSlot(
-                              slot.date || "",
-                              timeSlot || "",
-                              slot.dayOfWeek || ""
-                            )
-                          }
-                        >
-                          <div className="flex items-center justify-between">
-                            <span>{timeSlot}</span>
-                            <span className="text-xs text-green-600">
-                              Available
-                            </span>
+                  
+                  {/* Updated to 4-grid layout */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'slot1', value: slot.timeSlot1 },
+                      { key: 'slot2', value: slot.timeSlot2 },
+                      { key: 'slot3', value: slot.timeSlot3 },
+                      { key: 'slot4', value: slot.timeSlot4 },
+                    ].map(
+                      (timeSlotObj: TimeSlotObj, i: number) =>
+                        timeSlotObj.value && (
+                          <div
+                            key={`${slot.id}-${i}`}
+                            className={`p-3 border rounded-lg cursor-pointer 
+                              hover:bg-green-50 hover:shadow-md transition-all duration-200
+                              ${
+                                selectedTimeSlot === timeSlotObj.value &&
+                                selectedDate === slot.date
+                                  ? "border-green-500 bg-green-50 shadow-md"
+                                  : "border-gray-200"
+                              }`}
+                            onClick={() =>
+                              // Add a null check before passing to handleSelectTimeSlot
+                              timeSlotObj.value &&
+                              handleSelectTimeSlot(
+                                slot.date,
+                                timeSlotObj.value,
+                                slot.dayOfWeek
+                              )
+                            }
+                            role="button"
+                            aria-selected={selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date}
+                            aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
+                            tabIndex={0}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <Clock className={`w-4 h-4 mr-2 ${selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date ? "text-green-600" : "text-gray-500"} flex-shrink-0`} />
+                                <span className="text-sm font-medium">{timeSlotObj.value}</span>
+                              </div>
+                              {selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date ? (
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                                  Selected
+                                </span>
+                              ) : (
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">
+                                  Available
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )
+                        )
+                    )}
+                  </div>
+                  
+                  {index < timeSlots.length - 1 && (
+                    <div className="border-b border-gray-100 mt-4"></div>
                   )}
                 </div>
-                {index < timeSlots.length - 1 && (
-                  <div className="border-b border-gray-100 mt-4"></div>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </Modal>
     );
   };
-
+  
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1 p-4 lg:p-6">

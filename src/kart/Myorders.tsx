@@ -203,6 +203,15 @@ const MyOrders: React.FC = () => {
         day: "numeric",
       });
 
+      // Add GA tracking for invoice download
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "download_invoice", {
+          currency: "INR",
+          order_id: order.newOrderId || order.orderId,
+          value: order.grandTotal
+        });
+      }
+
       const invoiceContent = `
     INVOICE
     =============================
@@ -335,40 +344,20 @@ const MyOrders: React.FC = () => {
         setSelectedTimeSlot(orderData.timeSlot || "");
         setSelectedDate(orderData.expectedDeliveryDate || "");
         setIsDetailsOpen(true);
+
+        // Add GA tracking for order view
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "view_order_details", {
+            currency: "INR",
+            order_id: orderData.newOrderId || orderData.orderId,
+            value: orderData.grandTotal
+          });
+        }
+
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
     }
-  };
-
-  // First, let's implement the missing getNextSevenDays function
-  const getNextSevenDays = (): { dayOfWeek: string; formattedDay: string; date: string; isToday?: boolean }[] => {
-    const days = [];
-    const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    const formattedDaysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-
-      const dayOfWeek = daysOfWeek[date.getDay()];
-      const formattedDay = formattedDaysOfWeek[date.getDay()];
-
-      // Format date as DD-MM-YYYY
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      const formattedDate = `${day}-${month}-${year}`;
-
-      days.push({
-        dayOfWeek,
-        formattedDay,
-        date: formattedDate,
-        isToday: i === 0
-      });
-    }
-
-    return days;
   };
 
   const openEditDeliveryTime = async () => {
@@ -376,12 +365,12 @@ const MyOrders: React.FC = () => {
     setShowTimeSlotPopup(false); // Initially don't show the time slot popup until day is selected
     await fetchAvailableTimeSlots(selectedOrder?.orderId || '');
   };
-  
-  const getNextAvailableDays = (): { 
-    dayOfWeek: string; 
-    formattedDay: string; 
-    date: string; 
-    isToday: boolean 
+
+  const getNextAvailableDays = (): {
+    dayOfWeek: string;
+    formattedDay: string;
+    date: string;
+    isToday: boolean
   }[] => {
     const days = [];
     // Upper case format for API matching
@@ -389,10 +378,17 @@ const MyOrders: React.FC = () => {
     // Formatted display version
     const formattedDaysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
-    // Get next 7 days starting from today
+    // Always start from tomorrow, regardless of the current time
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const startDate = tomorrow;
+    
+    // Get next 7 days starting from tomorrow (instead of just 3)
+    // This gives us more potential days to find 3 available ones
     for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
   
       const dayOfWeek = daysOfWeek[date.getDay()];
       const formattedDay = formattedDaysOfWeek[date.getDay()];
@@ -407,127 +403,133 @@ const MyOrders: React.FC = () => {
         dayOfWeek,
         formattedDay,
         date: formattedDate,
-        isToday: i === 0
+        isToday: i === 0 && date.getDate() === today.getDate()
       });
     }
   
     return days;
   };
+
+  const fetchAvailableTimeSlots = async (orderId: string) => {
+    setIsLoading2(true);
+    try {
+      const token = localStorage.getItem("token");
   
-// Function to fetch available time slots from the API - Fixed version
-const fetchAvailableTimeSlots = async (orderId: string) => {
-  setIsLoading2(true);
-  try {
-    const token = localStorage.getItem("token");
-
-    const response = await axios.get(
-      `${BASE_URL}/order-service/fetchTimeSlotlist`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (response.data && Array.isArray(response.data)) {
-      // Get potential delivery days
-      const potentialDays = getNextAvailableDays();
-      
-      // Process the available time slots
-      const processedTimeSlots: TimeSlot[] = [];
-      
-      // For each day of the week
-      for (const dayInfo of potentialDays) {
-        // Find if this day exists in the API response
-        const apiSlot = response.data.find(
-          (slot: any) => slot.dayOfWeek === dayInfo.dayOfWeek
-        );
-        
-        if (apiSlot) {
-          // Create a processed time slot with all information from the API
-          // BUT REVERSE THE AVAILABILITY FLAG (true means inactive in your API)
-          processedTimeSlots.push({
-            id: apiSlot.id,
-            dayOfWeek: apiSlot.dayOfWeek,
-            isAvailable: !apiSlot.isAvailable, // REVERSE the API's availability flag
-            timeSlot1: apiSlot.timeSlot1?.trim() || '',
-            timeSlot2: apiSlot.timeSlot2?.trim() || '',
-            timeSlot3: apiSlot.timeSlot3?.trim() || '',
-            timeSlot4: apiSlot.timeSlot4?.trim() || '',
-            date: dayInfo.date,
-            isToday: dayInfo.isToday
-          });
-        } else {
-          // If not in API response, add the day as unavailable
-          processedTimeSlots.push({
-            id: Math.random(), // Generate a random ID
-            dayOfWeek: dayInfo.dayOfWeek,
-            isAvailable: false, // Mark as unavailable since not in API
-            timeSlot1: '10:00 AM - 07:00 PM', // Default time slots
-            timeSlot2: '',
-            timeSlot3: '',
-            timeSlot4: '',
-            date: dayInfo.date,
-            isToday: dayInfo.isToday
-          });
+      const response = await axios.get(
+        `${BASE_URL}/order-service/fetchTimeSlotlist`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      }
-
-      // Take only the closest 3 days to show
-      const limitedTimeSlots = processedTimeSlots.slice(0, 3);
-      
-      // Set the time slots in state
-      setAvailableTimeSlots(limitedTimeSlots);
-      setTimeSlotsForTwoDays(limitedTimeSlots);
-
-      // Initialize slot selection if we have valid slots and there's a selected order
-      if (selectedOrder && limitedTimeSlots.length > 0) {
-        // Filter to get only available slots
-        const availableSlots = limitedTimeSlots.filter(slot => slot.isAvailable);
-        
-        // If the order already has a day selected, use that if available in our list
-        if (selectedOrder.dayOfWeek && selectedOrder.timeSlot) {
-          const existingSlot = limitedTimeSlots.find(
-            slot => slot.dayOfWeek === selectedOrder.dayOfWeek
+      );
+  
+      if (response.data && Array.isArray(response.data)) {
+        // Get potential delivery days (now up to 7 days)
+        const potentialDays = getNextAvailableDays();
+  
+        // Process the available time slots
+        const allProcessedTimeSlots: TimeSlot[] = [];
+  
+        // For each day of the week in our potential days
+        for (const dayInfo of potentialDays) {
+          // Find if this day exists in the API response
+          const apiSlot = response.data.find(
+            (slot: any) => slot.dayOfWeek === dayInfo.dayOfWeek
           );
-
-          if (existingSlot && existingSlot.isAvailable) {
-            setSelectedDay(existingSlot.dayOfWeek);
-            setSelectedTimeSlot(selectedOrder.timeSlot);
-            setSelectedDate(existingSlot.date || "");
+  
+          if (apiSlot) {
+            // IMPORTANT: In the API, isAvailable=false means the slot IS available (opposite logic)
+            const isActuallyAvailable = !apiSlot.isAvailable;
+            
+            // Create a processed time slot with all information
+            allProcessedTimeSlots.push({
+              id: apiSlot.id,
+              dayOfWeek: apiSlot.dayOfWeek,
+              isAvailable: isActuallyAvailable,
+              timeSlot1: apiSlot.timeSlot1?.trim() || '',
+              timeSlot2: apiSlot.timeSlot2?.trim() || '',
+              timeSlot3: apiSlot.timeSlot3?.trim() || '',
+              timeSlot4: apiSlot.timeSlot4?.trim() || '',
+              date: dayInfo.date,
+              isToday: dayInfo.isToday
+            });
+          } else {
+            // If not in API response, add the day as unavailable
+            allProcessedTimeSlots.push({
+              id: Math.random(), // Generate a random ID
+              dayOfWeek: dayInfo.dayOfWeek,
+              isAvailable: false, // Mark as unavailable since not in API
+              timeSlot1: '', // Default time slots
+              timeSlot2: '',
+              timeSlot3: '',
+              timeSlot4: '',
+              date: dayInfo.date,
+              isToday: dayInfo.isToday
+            });
+          }
+        }
+  
+        // FILTER: Only keep available days
+        const availableTimeSlots = allProcessedTimeSlots.filter(slot => slot.isAvailable);
+        
+        // Take only up to 3 available days
+        const timeSlotSelection = availableTimeSlots.slice(0, 3);
+  
+        // If we don't have any available slots, we'll still show the original slots but mark them as unavailable
+        const timeSlotsToShow = timeSlotSelection.length > 0 ? timeSlotSelection : allProcessedTimeSlots.slice(0, 3);
+  
+        // Set the time slots in state
+        setAvailableTimeSlots(allProcessedTimeSlots); // Keep all slots for reference
+        setTimeSlotsForTwoDays(timeSlotsToShow); // Only show the filtered slots to user
+  
+        // Initialize slot selection if we have valid slots and there's a selected order
+        if (selectedOrder && timeSlotsToShow.length > 0) {
+          // Filter to get only available slots
+          const availableSlots = timeSlotsToShow.filter(slot => slot.isAvailable);
+  
+          // If the order already has a day selected, use that if available in our list
+          if (selectedOrder.dayOfWeek && selectedOrder.timeSlot) {
+            const existingSlot = timeSlotsToShow.find(
+              slot => slot.dayOfWeek === selectedOrder.dayOfWeek
+            );
+  
+            if (existingSlot && existingSlot.isAvailable) {
+              setSelectedDay(existingSlot.dayOfWeek);
+              setSelectedTimeSlot(selectedOrder.timeSlot);
+              setSelectedDate(existingSlot.date || "");
+            } else if (availableSlots.length > 0) {
+              // Default to first available day
+              const firstAvailableSlot = availableSlots[0];
+              setSelectedDay(firstAvailableSlot.dayOfWeek);
+              setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
+              setSelectedDate(firstAvailableSlot.date || "");
+            }
           } else if (availableSlots.length > 0) {
-            // Default to first available day
+            // No existing selection, use first available day
             const firstAvailableSlot = availableSlots[0];
             setSelectedDay(firstAvailableSlot.dayOfWeek);
             setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
             setSelectedDate(firstAvailableSlot.date || "");
           }
-        } else if (availableSlots.length > 0) {
-          // No existing selection, use first available day
-          const firstAvailableSlot = availableSlots[0];
-          setSelectedDay(firstAvailableSlot.dayOfWeek);
-          setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
-          setSelectedDate(firstAvailableSlot.date || "");
         }
       }
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+      message.error("Failed to fetch available time slots");
+    } finally {
+      setIsLoading2(false);
     }
-  } catch (error) {
-    console.error("Error fetching time slots:", error);
-    message.error("Failed to fetch available time slots");
-  } finally {
-    setIsLoading2(false);
-  }
-};
-  
- 
+  };
+
 
   // This component shows information about the currently selected time slot
   const SelectedDeliveryTime: React.FC = () => {
     if (!selectedTimeSlot || !selectedDay || !selectedDate) {
       return null;
     }
-  
+
     return (
       <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
         <p className="text-sm text-gray-700 font-medium mb-2">Selected Delivery Time:</p>
@@ -546,7 +548,7 @@ const fetchAvailableTimeSlots = async (orderId: string) => {
   };
   const formatDayOfWeek = (day: string): string => {
     if (!day || day === "NO_SLOT") return "No Slot Available";
-  
+
     // Convert uppercase day to proper case format
     const dayMap: Record<string, string> = {
       MONDAY: "Monday",
@@ -557,7 +559,7 @@ const fetchAvailableTimeSlots = async (orderId: string) => {
       SATURDAY: "Saturday",
       SUNDAY: "Sunday",
     };
-    
+
     return dayMap[day] || day;
   };
 
@@ -669,214 +671,217 @@ const fetchAvailableTimeSlots = async (orderId: string) => {
     setSelectedDay(dayOfWeek);
   };
 
-  const handleClearSelection = () => {
-    setSelectedDay("");
-    setSelectedTimeSlot("");
-    setSelectedDate("");
-  };
-
   // Updated updateDeliveryTimeSlot function
-const updateDeliveryTimeSlot = async () => {
-  if (!selectedOrder || !selectedDay || !selectedDate) {
-    message.warning("Please select a delivery day");
-    return;
-  }
-  
-  // Find the selected slot to check availability
-  const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
-  
-  // Check if selected slot is available (remember we've reversed the flag)
-  if (!currentSelectedSlot || !currentSelectedSlot.isAvailable) {
-    message.error("The selected day is not available for delivery");
-    return;
-  }
-  
-  // Check if a time slot has been selected
-  if (!selectedTimeSlot) {
-    message.warning("Please select a time slot");
-    return;
-  }
-
-  setTimeSlotUpdating(true);
-  try {
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-      message.error("User ID is missing");
+  const updateDeliveryTimeSlot = async () => {
+    if (!selectedOrder || !selectedDay || !selectedDate) {
+      message.warning("Please select a delivery day");
       return;
     }
-
-    const requestUrl = `${BASE_URL}/order-service/userSelectedDiffslot`;
-    
-    const requestBody = {
-      dayOfWeek: selectedDay,
-      expectedDeliveryDate: selectedDate,
-      orderId: selectedOrder.orderId,
-      timeSlot: selectedTimeSlot,
-      userId: userId,
-    };
-
-    const response = await axios.patch(requestUrl, requestBody, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      timeout: 10000, // 10 second timeout to prevent hanging requests
-    });
-
-    if (response.data && (response.data.error || response.data.message === "error")) {
-      throw new Error(response.data.message || "Server returned an error");
-    }
-
-    // Update the selected order with the new time slot information
-    setSelectedOrder((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        dayOfWeek: selectedDay,
-        timeSlot: selectedTimeSlot,
-        expectedDeliveryDate: selectedDate,
-      };
-    });
-
-    // Show success message
-    setTimeSlotUpdateSuccess(true);
-    message.success("Delivery time updated successfully");
-    
-    // Close popup after 2 seconds
-    setTimeout(() => {
-      setTimeSlotUpdateSuccess(false);
-      setIsEditingDeliveryTime(false);
-      setShowTimeSlotPopup(false);
-    }, 2000);
-    
-    // Refresh orders list
-    if (localStorage.getItem("userId")) {
-      fetchOrders(localStorage.getItem("userId") || "");
-    }
-  } catch (error) {
-    console.error("Error updating time slot:", error);
-    message.error("Failed to update delivery time. Please try again later.");
-  } finally {
-    setTimeSlotUpdating(false);
-  }
-};
-
-// This component is the Edit Delivery Time Modal template
-const EditDeliveryTimeModal = () => {
-  // Find the selected slot for availability check
-  const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
   
-  return isEditingDeliveryTime && selectedOrder ? (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
-          <h2 className="text-xl font-semibold">Update Delivery Time</h2>
-          <button
-            onClick={() => setIsEditingDeliveryTime(false)}
-            className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    // Find the selected slot to check availability
+    const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
+  
+    // Check if selected slot is available
+    if (!currentSelectedSlot || !currentSelectedSlot.isAvailable) {
+      message.error("The selected day is not available for delivery");
+      return;
+    }
+  
+    // Check if a time slot has been selected
+    if (!selectedTimeSlot) {
+      message.warning("Please select a time slot");
+      return;
+    }
+  
+    // Add GA tracking for updated delivery time
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "update_delivery_time", {
+        order_id: selectedOrder?.orderId,
+        day_of_week: selectedDay,
+        time_slot: selectedTimeSlot
+      });
+    }
+  
+    setTimeSlotUpdating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+  
+      if (!userId) {
+        message.error("User ID is missing");
+        return;
+      }
+  
+      const requestUrl = `${BASE_URL}/order-service/userSelectedDiffslot`;
+  
+      const requestBody = {
+        dayOfWeek: selectedDay,
+        expectedDeliveryDate: selectedDate,
+        orderId: selectedOrder.orderId,
+        timeSlot: selectedTimeSlot,
+        userId: userId,
+      };
+  
+      const response = await axios.patch(requestUrl, requestBody, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 10000, // 10 second timeout to prevent hanging requests
+      });
+  
+      if (response.data && (response.data.error || response.data.message === "error")) {
+        throw new Error(response.data.message || "Server returned an error");
+      }
+  
+      // Update the selected order with the new time slot information
+      setSelectedOrder((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          dayOfWeek: selectedDay,
+          timeSlot: selectedTimeSlot,
+          expectedDeliveryDate: selectedDate,
+        };
+      });
+  
+      // Show success message
+      setTimeSlotUpdateSuccess(true);
+      message.success("Delivery time updated successfully");
+  
+      // Close popup after 2 seconds
+      setTimeout(() => {
+        setTimeSlotUpdateSuccess(false);
+        setIsEditingDeliveryTime(false);
+        setShowTimeSlotPopup(false);
+      }, 2000);
+  
+      // Refresh orders list
+      if (localStorage.getItem("userId")) {
+        fetchOrders(localStorage.getItem("userId") || "");
+      }
+    } catch (error) {
+      console.error("Error updating time slot:", error);
+      message.error("Failed to update delivery time. Please try again later.");
+    } finally {
+      setTimeSlotUpdating(false);
+    }
+  };
 
-        <div className="p-6">
-          {timeSlotUpdateSuccess ? (
-            <div className="text-center py-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Delivery Time Updated
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Your delivery time has been successfully updated.
-              </p>
-              <button
-                onClick={() => setIsEditingDeliveryTime(false)}
-                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="mb-6">
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    Select Delivery Day
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Choose your preferred delivery day
-                  </p>
+  // This component is the Edit Delivery Time Modal template
+  const EditDeliveryTimeModal = () => {
+    // Find the selected slot for availability check
+    const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
+
+    return isEditingDeliveryTime && selectedOrder ? (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
+          <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
+            <h2 className="text-xl font-semibold">Update Delivery Time</h2>
+            <button
+              onClick={() => setIsEditingDeliveryTime(false)}
+              className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="p-6">
+            {timeSlotUpdateSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-500" />
                 </div>
-                {isLoading2 ? (
-                  <div className="flex justify-center items-center p-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Use the improved day selection list component */}
-                    <DaySelectionList />
-
-                    {/* Render the time slot popup */}
-                    <TimeSlotPopupModal />
-
-                    {/* Display selected time if any */}
-                    <EnhancedDeliveryTime />
-                    
-                    {/* Instructions for unavailable slots */}
-                    {currentSelectedSlot && !currentSelectedSlot.isAvailable && (
-                      <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                        <div className="flex items-start">
-                          <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-0.5" />
-                          <p className="text-sm text-gray-700">
-                            This day is currently unavailable for delivery. Please select a different day.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action buttons */}
-                    <div className="flex space-x-3 mt-6">
-                      <button
-                        className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
-                        onClick={() => setIsEditingDeliveryTime(false)}
-                      >
-                        Cancel
-                      </button>
-                      {selectedTimeSlot && selectedDay && (
-                        <button
-                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
-                          onClick={updateDeliveryTimeSlot}
-                          disabled={timeSlotUpdating || !currentSelectedSlot?.isAvailable}
-                        >
-                          {timeSlotUpdating ? (
-                            <span className="flex items-center justify-center">
-                              <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
-                              Updating...
-                            </span>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-5 h-5 mr-2" />
-                              Confirm
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Delivery Time Updated
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Your delivery time has been successfully updated.
+                </p>
+                <button
+                  onClick={() => setIsEditingDeliveryTime(false)}
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Close
+                </button>
               </div>
-            </>
-          )}
+            ) : (
+              <>
+                <div className="mb-6">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      Select Delivery Day
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Choose your preferred delivery day
+                    </p>
+                  </div>
+                  {isLoading2 ? (
+                    <div className="flex justify-center items-center p-8">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Use the improved day selection list component */}
+                      <DaySelectionList />
+
+                      {/* Render the time slot popup */}
+                      <TimeSlotPopupModal />
+
+                      {/* Display selected time if any */}
+                      <EnhancedDeliveryTime />
+
+                      {/* Instructions for unavailable slots */}
+                      {currentSelectedSlot && !currentSelectedSlot.isAvailable && (
+                        <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                          <div className="flex items-start">
+                            <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-0.5" />
+                            <p className="text-sm text-gray-700">
+                              This day is currently unavailable for delivery. Please select a different day.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex space-x-3 mt-6">
+                        <button
+                          className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+                          onClick={() => setIsEditingDeliveryTime(false)}
+                        >
+                          Cancel
+                        </button>
+                        {selectedTimeSlot && selectedDay && (
+                          <button
+                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
+                            onClick={updateDeliveryTimeSlot}
+                            disabled={timeSlotUpdating || !currentSelectedSlot?.isAvailable}
+                          >
+                            {timeSlotUpdating ? (
+                              <span className="flex items-center justify-center">
+                                <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
+                                Updating...
+                              </span>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-5 h-5 mr-2" />
+                                Confirm
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  ) : null;
-};
-  
+    ) : null;
+  };
+
 
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return "N/A";
@@ -930,23 +935,23 @@ const EditDeliveryTimeModal = () => {
   const formatDeliveryDate = (dateString: string): string => {
     if (!dateString) return "";
     if (dateString === "N/A") return "";
-  
+
     try {
       // Handle DD-MM-YYYY format
       if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
         const [day, month, year] = dateString.split("-").map(Number);
-  
+
         // Use the correct month name
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  
+
         // Return formatted date
         return `${day} ${monthNames[month - 1]} ${year}`;
       }
-  
+
       // Handle date object format
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "";
-  
+
       return date.toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
@@ -997,32 +1002,76 @@ const EditDeliveryTimeModal = () => {
     return option || { emoji: "🙂", text: "Feedback Provided" };
   };
 
-  const handleDaySelection = (slot: TimeSlot) => {
-    // Always set the active tab regardless of availability (for UI purposes)
-    setActiveTab(slot.id);
-    setSelectedDay(slot.dayOfWeek);
-    setSelectedDate(slot.date || "");
-    
-    // Always show the time slot popup so we can show an unavailable message if needed
-    setShowTimeSlotPopup(true);
-  };
+  // Day selection handler
+const handleDaySelection = (slot: TimeSlot) => {
+  // Always set the active tab regardless of availability (for UI purposes)
+  setActiveTab(slot.id);
+  setSelectedDay(slot.dayOfWeek);
+  setSelectedDate(slot.date || "");
 
-  const EnhancedTimeSlotPopup: React.FC = () => {
+  // Always show the time slot popup so we can show an unavailable message if needed
+  setShowTimeSlotPopup(true);
+};
+
+
+  // This component shows time slot options in the popup
+  const TimeSlotPopupModal: React.FC = () => {
     if (!showTimeSlotPopup) return null;
-  
-    const activeSlot = timeSlotsForTwoDays.find(slot => slot.id === activeTab);
-    
-    // Safety check - only show the popup if the slot is available
-    if (!activeSlot || !activeSlot.isAvailable) return null;
-  
+
+    const selectedSlot = timeSlotsForTwoDays.find(slot => slot.id === activeTab);
+
+    // Only proceed if we have a selected slot
+    if (!selectedSlot) return null;
+
+    // Check if this slot is available according to our modified flag
+    if (!selectedSlot.isAvailable) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
+            <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-4 flex justify-between items-center rounded-t-lg">
+              <h2 className="text-xl font-semibold">
+                Unavailable Day
+              </h2>
+              <button
+                onClick={() => setShowTimeSlotPopup(false)}
+                className="p-1 hover:bg-red-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <div className="mb-4">
+                <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  This day is unavailable for delivery
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  We're sorry, but {formatDayOfWeek(selectedSlot.dayOfWeek)} is currently not available for delivery.
+                  Please select a different day.
+                </p>
+
+                <button
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  onClick={() => setShowTimeSlotPopup(false)}
+                >
+                  Select Another Day
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Get non-empty time slots
     const availableTimeSlots = [
-      activeSlot.timeSlot1,
-      activeSlot.timeSlot2,
-      activeSlot.timeSlot3,
-      activeSlot.timeSlot4,
+      selectedSlot.timeSlot1,
+      selectedSlot.timeSlot2,
+      selectedSlot.timeSlot3,
+      selectedSlot.timeSlot4,
     ].filter(Boolean);
-  
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
         <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
@@ -1037,35 +1086,34 @@ const EditDeliveryTimeModal = () => {
               <X className="h-6 w-6" />
             </button>
           </div>
-  
+
           <div className="p-6 overflow-y-auto">
             <div className="mb-4">
               <div className="flex items-center mb-4">
                 <CalendarDays className="w-5 h-5 mr-2 text-purple-500" />
                 <span className="font-medium">
-                  {activeSlot.isToday
+                  {selectedSlot.isToday
                     ? "Today"
-                    : formatDayOfWeek(activeSlot.dayOfWeek)
-                  } - {formatDeliveryDate(activeSlot.date || "")}
+                    : formatDayOfWeek(selectedSlot.dayOfWeek)
+                  } - {formatDeliveryDate(selectedSlot.date || "")}
                 </span>
               </div>
-  
+
               <div className="grid grid-cols-1 gap-4">
                 {availableTimeSlots.map((timeSlot, index) => (
                   <div
                     key={`timeSlot-${index}`}
-                    className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${
-                      selectedTimeSlot === timeSlot &&
-                      selectedDate === activeSlot.date &&
-                      selectedDay === activeSlot.dayOfWeek
+                    className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${selectedTimeSlot === timeSlot &&
+                        selectedDate === selectedSlot.date &&
+                        selectedDay === selectedSlot.dayOfWeek
                         ? "border-green-500 bg-green-50 shadow-sm"
                         : "border-gray-200 bg-white"
-                    }`}
+                      }`}
                     onClick={() =>
                       handleSelectTimeSlot(
-                        activeSlot.date || "",
+                        selectedSlot.date || "",
                         timeSlot,
-                        activeSlot.dayOfWeek
+                        selectedSlot.dayOfWeek
                       )
                     }
                   >
@@ -1080,7 +1128,7 @@ const EditDeliveryTimeModal = () => {
               </div>
             </div>
           </div>
-  
+
           <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
             <div className="flex space-x-3">
               <button
@@ -1118,296 +1166,126 @@ const EditDeliveryTimeModal = () => {
     );
   };
 
-// This component shows time slot options in the popup
-const TimeSlotPopupModal: React.FC = () => {
-  if (!showTimeSlotPopup) return null;
-
-  const selectedSlot = timeSlotsForTwoDays.find(slot => slot.id === activeTab);
-  
-  // Only proceed if we have a selected slot
-  if (!selectedSlot) return null;
-  
-  // Check if this slot is available according to our modified flag
-  if (!selectedSlot.isAvailable) {
+  // This component renders the day selection list with improved availability indication
+  const DaySelectionList: React.FC = () => {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-        <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
-          <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-4 flex justify-between items-center rounded-t-lg">
-            <h2 className="text-xl font-semibold">
-              Unavailable Day
-            </h2>
+      <div className="grid grid-cols-1 gap-3 mb-4">
+        {timeSlotsForTwoDays.map((slot) => {
+          const isActive = activeTab === slot.id;
+          const isAvailable = slot.isAvailable; // We've already reversed this when processing API
+
+          return (
             <button
-              onClick={() => setShowTimeSlotPopup(false)}
-              className="p-1 hover:bg-red-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              key={`day-${slot.id}`}
+              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${isAvailable
+                  ? `hover:bg-purple-50 hover:border-purple-500 ${isActive ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                  }`
+                  : "border-gray-200 bg-gray-50 opacity-80"
+                }`}
+              onClick={() => handleDaySelection(slot)}
             >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="p-6 text-center">
-            <div className="mb-4">
-              <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                This day is unavailable for delivery
-              </h3>
-              <p className="text-gray-600 mb-4">
-                We're sorry, but {formatDayOfWeek(selectedSlot.dayOfWeek)} is currently not available for delivery. 
-                Please select a different day.
-              </p>
-              
-              <button
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-                onClick={() => setShowTimeSlotPopup(false)}
-              >
-                Select Another Day
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Get non-empty time slots
-  const availableTimeSlots = [
-    selectedSlot.timeSlot1,
-    selectedSlot.timeSlot2,
-    selectedSlot.timeSlot3,
-    selectedSlot.timeSlot4,
-  ].filter(Boolean);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
-          <h2 className="text-xl font-semibold">
-            Select Time Slot
-          </h2>
-          <button
-            onClick={() => setShowTimeSlotPopup(false)}
-            className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto">
-          <div className="mb-4">
-            <div className="flex items-center mb-4">
-              <CalendarDays className="w-5 h-5 mr-2 text-purple-500" />
-              <span className="font-medium">
-                {selectedSlot.isToday
-                  ? "Today"
-                  : formatDayOfWeek(selectedSlot.dayOfWeek)
-                } - {formatDeliveryDate(selectedSlot.date || "")}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              {availableTimeSlots.map((timeSlot, index) => (
-                <div
-                  key={`timeSlot-${index}`}
-                  className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${
-                    selectedTimeSlot === timeSlot &&
-                    selectedDate === selectedSlot.date &&
-                    selectedDay === selectedSlot.dayOfWeek
-                      ? "border-green-500 bg-green-50 shadow-sm"
-                      : "border-gray-200 bg-white"
-                  }`}
-                  onClick={() =>
-                    handleSelectTimeSlot(
-                      selectedSlot.date || "",
-                      timeSlot,
-                      selectedSlot.dayOfWeek
-                    )
-                  }
-                >
-                  <div className="flex items-center">
-                    <Clock className="w-5 h-5 mr-3 text-gray-500" />
-                    <span className="font-medium text-lg">
-                      {timeSlot}
-                    </span>
-                  </div>
+              <div className="flex items-center">
+                {isAvailable ? (
+                  <CalendarDays className="w-5 h-5 mr-3 text-purple-500" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 mr-3 text-orange-500" />
+                )}
+                <div className="text-left">
+                  <span className={`font-medium ${isAvailable ? "text-gray-900" : "text-gray-500"} block`}>
+                    {slot.isToday ? "Today" : formatDayOfWeek(slot.dayOfWeek)}
+                    {!isAvailable && " (Unavailable)"}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {slot.date ? formatDeliveryDate(slot.date) : ""}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
-          <div className="flex space-x-3">
-            <button
-              className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
-              onClick={() => setShowTimeSlotPopup(false)}
-            >
-              Back
-            </button>
-            <button
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
-              onClick={updateDeliveryTimeSlot}
-              disabled={
-                timeSlotUpdating ||
-                !selectedDay ||
-                !selectedTimeSlot ||
-                !selectedDate
-              }
-            >
-              {timeSlotUpdating ? (
-                <span className="flex items-center justify-center">
-                  <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
-                  Updating...
-                </span>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Confirm
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// This component renders the day selection list with improved availability indication
-const DaySelectionList: React.FC = () => {
-  return (
-    <div className="grid grid-cols-1 gap-3 mb-4">
-      {timeSlotsForTwoDays.map((slot) => {
-        const isActive = activeTab === slot.id;
-        const isAvailable = slot.isAvailable; // We've already reversed this when processing API
-        
-        return (
-          <button
-            key={`day-${slot.id}`}
-            className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
-              isAvailable 
-                ? `hover:bg-purple-50 hover:border-purple-500 ${
-                    isActive ? "border-purple-500 bg-purple-50" : "border-gray-200"
-                  }` 
-                : "border-gray-200 bg-gray-50 opacity-80"
-            }`}
-            onClick={() => handleDaySelection(slot)}
-          >
-            <div className="flex items-center">
-              {isAvailable ? (
-                <CalendarDays className="w-5 h-5 mr-3 text-purple-500" />
-              ) : (
-                <AlertCircle className="w-5 h-5 mr-3 text-orange-500" />
-              )}
-              <div className="text-left">
-                <span className={`font-medium ${isAvailable ? "text-gray-900" : "text-gray-500"} block`}>
-                  {slot.isToday ? "Today" : formatDayOfWeek(slot.dayOfWeek)}
-                  {!isAvailable && " (Unavailable)"}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {slot.date ? formatDeliveryDate(slot.date) : ""}
-                </span>
               </div>
-            </div>
-            {isAvailable ? (
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            ) : (
-              <X className="h-5 w-5 text-orange-400" />
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
+              {isAvailable ? (
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              ) : (
+                <X className="h-5 w-5 text-orange-400" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
-// This component shows a message when no time slots are available
-const NoTimeSlotsMessage: React.FC = () => {
-  return (
-    <div className="text-center p-6 bg-orange-50 rounded-lg border border-orange-100 mb-4">
-      <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-3" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">No Available Time Slots</h3>
-      <p className="text-gray-600 mb-2">
-        We couldn't find any available delivery time slots for the selected day.
-      </p>
-      <p className="text-gray-600">
-        Please select another day or try again later.
-      </p>
-    </div>
-  );
-};
 
-// Improved display of selected time slot that shows unavailability clearly
-const EnhancedDeliveryTime: React.FC = () => {
-  // If nothing selected, don't show anything
-  if (!selectedDay || !selectedDate) {
-    return null;
-  }
+  // Improved display of selected time slot that shows unavailability clearly
+  const EnhancedDeliveryTime: React.FC = () => {
+    // If nothing selected, don't show anything
+    if (!selectedDay || !selectedDate) {
+      return null;
+    }
 
-  // Find the selected slot to check availability
-  const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
-  
-  // Special case for unavailable slots - we've already reversed the flag
-  if (currentSelectedSlot && !currentSelectedSlot.isAvailable) {
+    // Find the selected slot to check availability
+    const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
+
+    // Special case for unavailable slots - we've already reversed the flag
+    if (currentSelectedSlot && !currentSelectedSlot.isAvailable) {
+      return (
+        <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-100">
+          <p className="text-sm text-gray-700 font-medium mb-2">Selected Day (Unavailable):</p>
+          <div className="flex items-center mt-1">
+            <CalendarDays className="w-4 h-4 mr-2 text-orange-600" />
+            <span className="font-medium">
+              {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+            </span>
+          </div>
+          <div className="flex items-center mt-3 text-orange-700">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            <span className="text-sm">This day is not available for delivery</span>
+          </div>
+          <p className="text-xs text-gray-600 mt-2">
+            Please select another day from the list above.
+          </p>
+        </div>
+      );
+    }
+
+    // Normal case for available slots with selected time
+    if (selectedTimeSlot) {
+      return (
+        <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+          <p className="text-sm text-gray-700 font-medium mb-2">Selected Delivery Time:</p>
+          <div className="flex items-center mt-1">
+            <CalendarDays className="w-4 h-4 mr-2 text-purple-600" />
+            <span className="font-medium">
+              {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+            </span>
+          </div>
+          <div className="flex items-center mt-1">
+            <Clock className="w-4 h-4 mr-2 text-purple-600" />
+            <span>{selectedTimeSlot}</span>
+          </div>
+        </div>
+      );
+    }
+
+    // Available day selected but no time slot yet
     return (
-      <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-100">
-        <p className="text-sm text-gray-700 font-medium mb-2">Selected Day (Unavailable):</p>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <p className="text-sm text-gray-700 font-medium mb-2">Selected Day:</p>
         <div className="flex items-center mt-1">
-          <CalendarDays className="w-4 h-4 mr-2 text-orange-600" />
+          <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
           <span className="font-medium">
             {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
           </span>
         </div>
-        <div className="flex items-center mt-3 text-orange-700">
-          <AlertCircle className="w-4 h-4 mr-2" />
-          <span className="text-sm">This day is not available for delivery</span>
-        </div>
-        <p className="text-xs text-gray-600 mt-2">
-          Please select another day from the list above.
-        </p>
-      </div>
-    );
-  }
-
-  // Normal case for available slots with selected time
-  if (selectedTimeSlot) {
-    return (
-      <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
-        <p className="text-sm text-gray-700 font-medium mb-2">Selected Delivery Time:</p>
-        <div className="flex items-center mt-1">
-          <CalendarDays className="w-4 h-4 mr-2 text-purple-600" />
-          <span className="font-medium">
-            {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+        <div className="flex items-center mt-2 text-blue-700">
+          <Clock className="w-4 h-4 mr-2" />
+          <span className="text-sm">
+            {currentSelectedSlot?.isAvailable
+              ? "Please select a time slot"
+              : "This day is unavailable for delivery"}
           </span>
         </div>
-        <div className="flex items-center mt-1">
-          <Clock className="w-4 h-4 mr-2 text-purple-600" />
-          <span>{selectedTimeSlot}</span>
-        </div>
       </div>
     );
-  }
-  
-  // Available day selected but no time slot yet
-  return (
-    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-      <p className="text-sm text-gray-700 font-medium mb-2">Selected Day:</p>
-      <div className="flex items-center mt-1">
-        <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
-        <span className="font-medium">
-          {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
-        </span>
-      </div>
-      <div className="flex items-center mt-2 text-blue-700">
-        <Clock className="w-4 h-4 mr-2" />
-        <span className="text-sm">
-          {currentSelectedSlot?.isAvailable 
-            ? "Please select a time slot" 
-            : "This day is unavailable for delivery"}
-        </span>
-      </div>
-    </div>
-  );
-};
-  
+  };
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-8">
@@ -2084,119 +1962,119 @@ const EnhancedDeliveryTime: React.FC = () => {
         )}
 
 
-{isEditingDeliveryTime && selectedOrder && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
-        <h2 className="text-xl font-semibold">Update Delivery Time</h2>
-        <button
-          onClick={() => setIsEditingDeliveryTime(false)}
-          className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-        >
-          <X className="h-6 w-6" />
-        </button>
-      </div>
-
-      <div className="p-6">
-        {timeSlotUpdateSuccess ? (
-          <div className="text-center py-6">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-500" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Delivery Time Updated
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Your delivery time has been successfully updated.
-            </p>
-            <button
-              onClick={() => setIsEditingDeliveryTime(false)}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <div className="text-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  Select Delivery Day
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Choose your preferred delivery day
-                </p>
+        {isEditingDeliveryTime && selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
+                <h2 className="text-xl font-semibold">Update Delivery Time</h2>
+                <button
+                  onClick={() => setIsEditingDeliveryTime(false)}
+                  className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-              {isLoading2 ? (
-                <div className="flex justify-center items-center p-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
-                </div>
-              ) : (
-                <>
-                  {/* Use the improved day selection list component */}
-                  <DaySelectionList />
 
-                  {/* Render the time slot popup */}
-                  <TimeSlotPopupModal />
-
-                  {/* Display selected time if any */}
-                  <SelectedDeliveryTime />
-                  
-                  {/* Instructions for unavailable slots */}
-                  {(() => {
-                    // Find the selected slot to check availability
-                    const slotCurrentlySelected = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
-                    return (
-                      slotCurrentlySelected && !slotCurrentlySelected.isAvailable && (
-                        <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                          <div className="flex items-start">
-                            <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-0.5" />
-                            <p className="text-sm text-gray-700">
-                              This day is currently unavailable for delivery. Please select a different day.
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    );
-                  })()}
-
-                  {/* Action buttons */}
-                  <div className="flex space-x-3 mt-6">
+              <div className="p-6">
+                {timeSlotUpdateSuccess ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Delivery Time Updated
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Your delivery time has been successfully updated.
+                    </p>
                     <button
-                      className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
                       onClick={() => setIsEditingDeliveryTime(false)}
+                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
                     >
-                      Cancel
+                      Close
                     </button>
-                    {selectedTimeSlot && selectedDay && (
-                      <button
-                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
-                        onClick={updateDeliveryTimeSlot}
-                        disabled={timeSlotUpdating || !(timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay)?.isAvailable)}
-                      >
-                        {timeSlotUpdating ? (
-                          <span className="flex items-center justify-center">
-                            <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
-                            Updating...
-                          </span>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-5 h-5 mr-2" />
-                            Confirm
-                          </>
-                        )}
-                      </button>
-                    )}
                   </div>
-                </>
-              )}
+                ) : (
+                  <>
+                    <div className="mb-6">
+                      <div className="text-center mb-4">
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">
+                          Select Delivery Day
+                        </h3>
+                        <p className="text-gray-600 text-sm">
+                          Choose your preferred delivery day
+                        </p>
+                      </div>
+                      {isLoading2 ? (
+                        <div className="flex justify-center items-center p-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Use the improved day selection list component */}
+                          <DaySelectionList />
+
+                          {/* Render the time slot popup */}
+                          <TimeSlotPopupModal />
+
+                          {/* Display selected time if any */}
+                          <SelectedDeliveryTime />
+
+                          {/* Instructions for unavailable slots */}
+                          {(() => {
+                            // Find the selected slot to check availability
+                            const slotCurrentlySelected = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
+                            return (
+                              slotCurrentlySelected && !slotCurrentlySelected.isAvailable && (
+                                <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                                  <div className="flex items-start">
+                                    <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-0.5" />
+                                    <p className="text-sm text-gray-700">
+                                      This day is currently unavailable for delivery. Please select a different day.
+                                    </p>
+                                  </div>
+                                </div>
+                              )
+                            );
+                          })()}
+
+                          {/* Action buttons */}
+                          <div className="flex space-x-3 mt-6">
+                            <button
+                              className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+                              onClick={() => setIsEditingDeliveryTime(false)}
+                            >
+                              Cancel
+                            </button>
+                            {selectedTimeSlot && selectedDay && (
+                              <button
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
+                                onClick={updateDeliveryTimeSlot}
+                                disabled={timeSlotUpdating || !(timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay)?.isAvailable)}
+                              >
+                                {timeSlotUpdating ? (
+                                  <span className="flex items-center justify-center">
+                                    <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
+                                    Updating...
+                                  </span>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="w-5 h-5 mr-2" />
+                                    Confirm
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </>
+          </div>
         )}
-      </div>
-    </div>
-  </div>
-)}
 
         {isFeedbackOpen && orderToRate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

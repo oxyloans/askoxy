@@ -703,8 +703,8 @@ const Categories: React.FC<CategoriesProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeCategory === category.categoryName
-                  ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                  : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
+                ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
+                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
                 }`}
               onClick={() => {
                 onCategoryClick(category.categoryName);
@@ -750,10 +750,10 @@ const Categories: React.FC<CategoriesProps> = ({
                     : 0.98,
               }}
               className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${filter.value === "1.0" && disabledFilters[filter.value]
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                  : filter.value === activeWeightFilter
-                    ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
-                    : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                : filter.value === activeWeightFilter
+                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
                 }`}
               onClick={() => handleWeightFilterClick(filter.value)}
               disabled={filter.value === "1.0" && disabledFilters[filter.value]}
@@ -782,8 +782,8 @@ const Categories: React.FC<CategoriesProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!activeSubCategory
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                ? "bg-purple-100 text-purple-700"
+                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                 }`}
               onClick={() => {
                 setActiveSubCategory(null);
@@ -804,8 +804,8 @@ const Categories: React.FC<CategoriesProps> = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${activeSubCategory === subCategory.id
-                    ? "bg-purple-100 text-purple-700"
-                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                 onClick={() => {
                   setActiveSubCategory(subCategory.id);
@@ -967,8 +967,8 @@ const Categories: React.FC<CategoriesProps> = ({
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${cartItems[item.itemId] >= item.quantity
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
                             }`}
                           onClick={(e) => {
                             e.stopPropagation();

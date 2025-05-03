@@ -414,6 +414,19 @@ useEffect(() => {
         },
       });
 
+      // Track profile update event with TypeScript-safe implementation
+    if (typeof window !== "undefined" && window.gtag) {
+      // Create a type-safe list of fields that are not empty
+      const updatedFields = Object.entries(payload)
+        .filter(([_, value]) => value !== '')
+        .map(([key, _]) => key);
+      
+      window.gtag("event", "profile_update", {
+        method: "form_submission",
+        fields_updated: updatedFields.join(',')
+      });
+    }
+
       setSuccessMessage("Profile updated successfully!");
       setEditStatus(true);
       localStorage.setItem("profileData", JSON.stringify(payload));
@@ -478,11 +491,26 @@ useEffect(() => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+         // Track address update event
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "update_address", {
+          address_type: addressFormData.addressType,
+          editing: true
+        });
+      }
+
         setSuccessMessage("Address updated successfully!");
       } else {
         await axios.post(`${BASE_URL}/user-service/addAddress`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // Track new address addition event
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "add_address", {
+          address_type: addressFormData.addressType
+        });
+      }
         setSuccessMessage("Address added successfully!");
       }
 

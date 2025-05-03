@@ -106,14 +106,14 @@ const WhatsappRegister = () => {
     }
   }, [phoneNumber]);
 
-    const handleClose = () => {
-      setIsClosing(true);
-      const entryPoint = localStorage.getItem("entryPoint") || "/";
-      console.log("Closing - Redirecting to:", entryPoint); // Debug log
-      setTimeout(() => {
-        navigate(entryPoint);
-      }, 300);
-    };
+  const handleClose = () => {
+    setIsClosing(true);
+    const entryPoint = localStorage.getItem("entryPoint") || "/";
+    console.log("Closing - Redirecting to:", entryPoint); // Debug log
+    setTimeout(() => {
+      navigate(entryPoint);
+    }, 300);
+  };
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");
@@ -291,8 +291,7 @@ const WhatsappRegister = () => {
           setOtpShow(true);
           setShowSuccessPopup(true);
           setMessage(
-            `OTP sent successfully to your ${
-              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            `OTP sent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
             } number`
           );
           setResendDisabled(true);
@@ -319,7 +318,7 @@ const WhatsappRegister = () => {
         } else {
           setError(
             err.response.data.message ||
-              "An error occurred. Please try again later."
+            "An error occurred. Please try again later."
           );
         }
       } else {
@@ -419,7 +418,7 @@ const WhatsappRegister = () => {
         localStorage.removeItem("refferrerId");
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem("redirectPath");
-          
+
           if (redirectPath) {
             window.location.href = redirectPath;
             sessionStorage.removeItem("redirectPath");
@@ -429,7 +428,7 @@ const WhatsappRegister = () => {
         }, 1000);
       }
 
-      } catch (err: any) {
+    } catch (err: any) {
       // Handle axios error response
       if (err.response && err.response.data && err.response.data.message) {
         setOtpError(err.response.data.message);
@@ -487,8 +486,7 @@ const WhatsappRegister = () => {
 
           setShowSuccessPopup(true);
           setMessage(
-            `OTP resent successfully to your ${
-              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            `OTP resent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
             } number`
           );
           // Clear existing OTP
@@ -536,9 +534,8 @@ const WhatsappRegister = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-4">
       <div
-        className={`max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${
-          isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
-        }`}
+        className={`max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          }`}
       >
         {/* Header */}
         <div className="bg-purple-600 p-4 relative">
@@ -604,15 +601,13 @@ const WhatsappRegister = () => {
                 <div className="flex gap-4">
                   <button
                     type="button"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                      otpMethod === "whatsapp"
-                        ? "bg-green-500 text-white shadow-md"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    } ${
-                      isPhoneDisabled || isMethodDisabled
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${otpMethod === "whatsapp"
+                      ? "bg-green-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      } ${isPhoneDisabled || isMethodDisabled
                         ? "opacity-70 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     onClick={() => handleMethodChange("whatsapp")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
@@ -621,15 +616,13 @@ const WhatsappRegister = () => {
                   </button>
                   <button
                     type="button"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                      otpMethod === "mobile"
-                        ? "bg-purple-600 text-white shadow-md"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    } ${
-                      isPhoneDisabled || isMethodDisabled
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${otpMethod === "mobile"
+                      ? "bg-purple-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      } ${isPhoneDisabled || isMethodDisabled
                         ? "opacity-70 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     onClick={() => handleMethodChange("mobile")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
@@ -740,11 +733,10 @@ const WhatsappRegister = () => {
                   id="otpSubmitButton"
                   type="submit"
                   disabled={isLoading || (!showOtp && !isOtpButtonEnabled)}
-                  className={`w-full py-3 ${
-                    !showOtp && !isOtpButtonEnabled
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700"
-                  } text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full py-3 ${!showOtp && !isOtpButtonEnabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700"
+                    } text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

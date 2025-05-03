@@ -243,152 +243,151 @@ const CartPage: React.FC = () => {
     checkAndShowFallbackOnePlusOne();
   }, [cartData]);
 
-// Here's the modified showContainerModal function to fix the plan selection issue
+  // Here's the modified showContainerModal function to fix the plan selection issue
 
-const showContainerModal = useCallback(() => {
-  console.log("showContainerModal called with:", {
-    containerPreference,
-    modalDisplayed: modalDisplayedRef.current,
-    cartData,
-  });
+  const showContainerModal = useCallback(() => {
+    console.log("showContainerModal called with:", {
+      containerPreference,
+      modalDisplayed: modalDisplayedRef.current,
+      cartData,
+    });
 
-  if (
-    containerPreference?.toLowerCase() === "interested" ||
-    modalDisplayedRef.current
-  ) {
-    console.log("Modal not shown - already interested or displayed");
-    return;
-  }
+    if (
+      containerPreference?.toLowerCase() === "interested" ||
+      modalDisplayedRef.current
+    ) {
+      console.log("Modal not shown - already interested or displayed");
+      return;
+    }
 
-  const hasContainer = cartData.some((item) =>
-    [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-      item.itemId
-    )
-  );
-  if (hasContainer) {
-    console.log("Modal not shown - cart already has container");
+    const hasContainer = cartData.some((item) =>
+      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+        item.itemId
+      )
+    );
+    if (hasContainer) {
+      console.log("Modal not shown - cart already has container");
+      modalDisplayedRef.current = true;
+      return;
+    }
+
+    const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
+    const hasValidLightBag = cartData.some((item) => {
+      const weight = parseWeight(item.weight);
+      return weight <= 10 && weight !== 1 && weight !== 5;
+    });
+
+    console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
+
+    if (!hasHeavyBag && !hasValidLightBag) {
+      console.log("Modal not shown - no eligible items");
+      return;
+    }
+
     modalDisplayedRef.current = true;
-    return;
-  }
 
-  const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
-  const hasValidLightBag = cartData.some((item) => {
-    const weight = parseWeight(item.weight);
-    return weight <= 10 && weight !== 1 && weight !== 5;
-  });
+    // Create a ref to track the selected plan inside the modal
+    const modalSelectedPlanRef = { current: null as "planA" | "planB" | null };
 
-  console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
+    const PlanModalContent = () => {
+      const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(selectedPlan);
 
-  if (!hasHeavyBag && !hasValidLightBag) {
-    console.log("Modal not shown - no eligible items");
-    return;
-  }
+      // Update both the state and the ref when a plan is selected
+      const handlePlanSelect = (planKey: "planA" | "planB") => {
+        setTempPlan(planKey);
+        setSelectedPlan(planKey);
+        modalSelectedPlanRef.current = planKey; // This is the key change - store selection in ref
+      };
 
-  modalDisplayedRef.current = true;
+      return (
+        <div className="text-center">
+          <p className="mt-2">
+            Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
+            or refer 9 friends and when they buy their first bag, the container
+            is yours forever.
+          </p>
+          <p className="mt-2 text-sm text-gray-600 font-semibold">
+            * No purchase in 90 days or gap of 90 days between purchases =
+            Container will be taken back
+          </p>
+          <p className="mt-1 text-sm text-gray-700 italic">
+            Choose the plan that best suits your needs and enjoy exclusive
+            benefits.
+          </p>
 
-  // Create a ref to track the selected plan inside the modal
-  const modalSelectedPlanRef = { current: null as "planA" | "planB" | null };
-
-  const PlanModalContent = () => {
-    const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(selectedPlan);
-
-    // Update both the state and the ref when a plan is selected
-    const handlePlanSelect = (planKey: "planA" | "planB") => {
-      setTempPlan(planKey);
-      setSelectedPlan(planKey);
-      modalSelectedPlanRef.current = planKey; // This is the key change - store selection in ref
+          <div className="mt-4 space-y-4">
+            {["planA", "planB"].map((planKey) => (
+              <div className="flex items-center" key={planKey}>
+                <input
+                  type="radio"
+                  name="planSelection"
+                  checked={tempPlan === planKey}
+                  onChange={() => handlePlanSelect(planKey as "planA" | "planB")}
+                  className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPlanDetails(planKey as "planA" | "planB");
+                    setIsPlanDetailsModalOpen(true);
+                  }}
+                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${tempPlan === planKey
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                    }`}
+                >
+                  {planKey === "planA"
+                    ? "Plan A: Free Steel Container Policy"
+                    : "Plan B: Referral Program"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     };
 
-    return (
-      <div className="text-center">
-        <p className="mt-2">
-          Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
-          or refer 9 friends and when they buy their first bag, the container
-          is yours forever.
-        </p>
-        <p className="mt-2 text-sm text-gray-600 font-semibold">
-          * No purchase in 90 days or gap of 90 days between purchases =
-          Container will be taken back
-        </p>
-        <p className="mt-1 text-sm text-gray-700 italic">
-          Choose the plan that best suits your needs and enjoy exclusive
-          benefits.
-        </p>
+    try {
+      Modal.confirm({
+        title: "Special Offer!",
+        content: <PlanModalContent />,
+        okText: "Confirm Selection",
+        cancelText: "Cancel",
+        onOk: async () => {
+          try {
+            // Check the ref instead of the state
+            if (!modalSelectedPlanRef.current) {
+              message.info("Please select a plan before confirming.");
+              return Promise.reject(new Error("No plan selected"));
+            }
+            // Just to ensure state is also set
+            setSelectedPlan(modalSelectedPlanRef.current);
 
-        <div className="mt-4 space-y-4">
-          {["planA", "planB"].map((planKey) => (
-            <div className="flex items-center" key={planKey}>
-              <input
-                type="radio"
-                name="planSelection"
-                checked={tempPlan === planKey}
-                onChange={() => handlePlanSelect(planKey as "planA" | "planB")}
-                className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentPlanDetails(planKey as "planA" | "planB");
-                  setIsPlanDetailsModalOpen(true);
-                }}
-                className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${
-                  tempPlan === planKey
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                }`}
-              >
-                {planKey === "planA"
-                  ? "Plan A: Free Steel Container Policy"
-                  : "Plan B: Referral Program"}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  try {
-    Modal.confirm({
-      title: "Special Offer!",
-      content: <PlanModalContent />,
-      okText: "Confirm Selection",
-      cancelText: "Cancel",
-      onOk: async () => {
-        try {
-          // Check the ref instead of the state
-          if (!modalSelectedPlanRef.current) {
-            message.info("Please select a plan before confirming.");
-            return Promise.reject(new Error("No plan selected"));
+            await handleInterested();
+            containerModalCompletedRef.current = true;
+            await maybeShowOnePlusOneModal();
+          } catch (error) {
+            console.error("Error in Modal onOk:", error);
+            message.error("Failed to process container selection.");
+            throw error;
           }
-          // Just to ensure state is also set
-          setSelectedPlan(modalSelectedPlanRef.current);
-          
-          await handleInterested();
-          containerModalCompletedRef.current = true;
-          await maybeShowOnePlusOneModal();
-        } catch (error) {
-          console.error("Error in Modal onOk:", error);
-          message.error("Failed to process container selection.");
-          throw error;
-        }
-      },
-      onCancel: async () => {
-        try {
-          setSelectedPlan(null);
-          containerModalCompletedRef.current = true;
-          await maybeShowOnePlusOneModal();
-        } catch (error) {
-          console.error("Error in Modal onCancel:", error);
-          message.error("Failed to cancel container selection.");
-          throw error;
-        }
-      },
-    });
-  } catch (error) {
-    console.error("Error displaying container modal:", error);
-  }
-}, [cartData, containerPreference, customerId, token, selectedPlan]);
+        },
+        onCancel: async () => {
+          try {
+            setSelectedPlan(null);
+            containerModalCompletedRef.current = true;
+            await maybeShowOnePlusOneModal();
+          } catch (error) {
+            console.error("Error in Modal onCancel:", error);
+            message.error("Failed to cancel container selection.");
+            throw error;
+          }
+        },
+      });
+    } catch (error) {
+      console.error("Error displaying container modal:", error);
+    }
+  }, [cartData, containerPreference, customerId, token, selectedPlan]);
 
   useEffect(() => {
     console.log("useEffect triggered with:", {
@@ -888,6 +887,7 @@ const showContainerModal = useCallback(() => {
           }
         );
 
+        // Fire analytics event for decreasing quantity
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "remove_from_cart", {
             currency: "INR",
@@ -911,6 +911,8 @@ const showContainerModal = useCallback(() => {
 
         await fetchCartData();
       } else {
+        // For quantity = 1, we'll remove the item, but handle analytics in removeCartItem only
+        // Don't fire any analytics event here to avoid duplication
         await removeCartItem(item);
       }
     } catch (error) {
@@ -1241,8 +1243,8 @@ const showContainerModal = useCallback(() => {
                           {item.units === "pcs"
                             ? "Pc"
                             : parseWeight(item.weight) === 1
-                            ? "Kg"
-                            : "Kgs"}
+                              ? "Kg"
+                              : "Kgs"}
                         </p>
                         <div className="flex items-center mt-1">
                           <p className="text-sm line-through text-gray-400 mr-2">
@@ -1271,9 +1273,8 @@ const showContainerModal = useCallback(() => {
                             <motion.button
                               whileHover={{ scale: isContainer(item.itemId) ? 1 : 1.02 }}
                               whileTap={{ scale: isContainer(item.itemId) ? 1 : 0.98 }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                                isContainer(item.itemId) ? "opacity-50 cursor-not-allowed" : ""
-                              }`}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${isContainer(item.itemId) ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                               onClick={() => handleDecrease(item)}
                               disabled={loadingItems[item.itemId] || isContainer(item.itemId)}
                               aria-label="Decrease quantity"
@@ -1304,11 +1305,10 @@ const showContainerModal = useCallback(() => {
                                     ? 1
                                     : 0.98,
                               }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                                cartItems[item.itemId] >= item.quantity || isContainer(item.itemId)
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${cartItems[item.itemId] >= item.quantity || isContainer(item.itemId)
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
-                              }`}
+                                }`}
                               onClick={() => {
                                 if (cartItems[item.itemId] < item.quantity && !isContainer(item.itemId)) {
                                   handleIncrease(item);
@@ -1327,7 +1327,7 @@ const showContainerModal = useCallback(() => {
 
                           {isContainer(item.itemId) && (
                             <div className="ml-2 bg-purple-100 text-purple-800 text-xs rounded-full px-2 py-1 flex items-center">
-                              <span>Promo</span>
+                              <span>Free</span>
                             </div>
                           )}
 
@@ -1483,35 +1483,34 @@ const showContainerModal = useCallback(() => {
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0
                   ) && (
-                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                      <p className="font-semibold">
-                        Quantity adjustments needed:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter(
-                            (item) =>
-                              item.cartQuantity > item.quantity &&
-                              item.quantity > 0
-                          )
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} - Only {item.quantity} in stock
-                              (you have {item.cartQuantity})
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
+                      <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                        <p className="font-semibold">
+                          Quantity adjustments needed:
+                        </p>
+                        <ul className="ml-4 mt-1 list-disc">
+                          {cartData
+                            .filter(
+                              (item) =>
+                                item.cartQuantity > item.quantity &&
+                                item.quantity > 0
+                            )
+                            .map((item) => (
+                              <li key={item.itemId}>
+                                {item.itemName} - Only {item.quantity} in stock
+                                (you have {item.cartQuantity})
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
 
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${
-                      isCheckoutDisabled()
+                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${isCheckoutDisabled()
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
-                    }`}
+                      }`}
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled()}
                   >

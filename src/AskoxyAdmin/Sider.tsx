@@ -17,6 +17,7 @@ import {
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
+import { message } from "antd";
 
 interface SidebarItem {
   title: string;
@@ -123,13 +124,18 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const primaryType = localStorage.getItem("primaryType");
 
-    if (!primaryType || primaryType === undefined) {
+    if (
+      !primaryType ||
+      primaryType === undefined ||
+      (primaryType !== "SELLER" && primaryType !== "HELPDESKADMIN")
+    ) {
+      message.info("Your not Supposed to Login to the SuperAdmin");
       navigate("/admin");
       return;
     }
 
     setUserRole(primaryType);
-  }, [navigate]);
+  }, [navigate]);
 
   // Force reset collapsed state when screen size changes
   useEffect(() => {

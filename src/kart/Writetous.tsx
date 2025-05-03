@@ -89,7 +89,7 @@ const WriteToUs: React.FC = () => {
     fetchProfileData();
     handleLocationState();
     fetchCartCount();
-    
+
     if (id) {
       fetchExistingQuery();
     }
@@ -100,7 +100,7 @@ const WriteToUs: React.FC = () => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       const customerId = localStorage.getItem('userId');
-      
+
       const response = await axios.get(
         `${BASE_URL}/user-service/customerProfileDetails`,
         {
@@ -108,9 +108,9 @@ const WriteToUs: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
+
       const data = response.data;
-      
+
       // Update form data with profile information
       setFormData(prevData => ({
         ...prevData,
@@ -118,11 +118,11 @@ const WriteToUs: React.FC = () => {
         userEmail: data.email || "",
         whatsappNumber: data.whatsappNumber || "",
       }));
-      
+
       // Check if profile is complete
       const isComplete = Boolean(data.firstName && data.firstName.trim());
       setProfileComplete(isComplete);
-      
+
       // If profile is incomplete, show the alert immediately
       if (!isComplete) {
         setShowProfileAlert(true);
@@ -234,14 +234,14 @@ const WriteToUs: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
-    
+
     // Prevent changing userFirstName if profile is complete
     if (name === "userFirstName" && profileComplete) {
       return;
     }
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -272,6 +272,16 @@ const WriteToUs: React.FC = () => {
           },
         }
       );
+
+      // Track file upload
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "file_upload", {
+          file_type: file.type,
+          file_size: file.size,
+          file_name: file.name,
+          content_type: "support_attachment"
+        });
+      }
 
       setFormData((prev) => ({
         ...prev,
@@ -331,6 +341,15 @@ const WriteToUs: React.FC = () => {
 
     try {
       await axios.post(BASE_URL + "/user-service/write/saveData", data);
+
+      // Track query submission
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "submit_support_query", {
+          has_attachment: !!formData.documentId,
+          related_to_order: showOrderInfo,
+          query_length: finalQuery.length
+        });
+      }
       setFormData({
         query: "",
         documentName: "",
@@ -355,9 +374,8 @@ const WriteToUs: React.FC = () => {
 
   const showNotification = (message: string, type: "success" | "error") => {
     const notificationElement = document.createElement("div");
-    notificationElement.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
-      type === "success" ? "bg-green-500" : "bg-red-500"
-    } text-white transform transition-transform duration-300 ease-in-out`;
+    notificationElement.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type === "success" ? "bg-green-500" : "bg-red-500"
+      } text-white transform transition-transform duration-300 ease-in-out`;
     notificationElement.textContent = message;
     document.body.appendChild(notificationElement);
     setTimeout(() => {
@@ -430,11 +448,10 @@ const WriteToUs: React.FC = () => {
                     value={formData.userFirstName}
                     onChange={handleInputChange}
                     placeholder="Enter your first name"
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      !formData.userFirstName
+                    className={`w-full px-4 py-3 rounded-lg border ${!formData.userFirstName
                         ? "border-red-500"
                         : "border-gray-200"
-                    } ${profileComplete ? "bg-gray-100" : "bg-gray-50"}`}
+                      } ${profileComplete ? "bg-gray-100" : "bg-gray-50"}`}
                     readOnly={profileComplete}
                   />
                   {!formData.userFirstName && (
@@ -444,7 +461,7 @@ const WriteToUs: React.FC = () => {
                   )}
                   {!profileComplete && (
                     <p className="text-sm text-blue-600">
-                      <button 
+                      <button
                         type="button"
                         onClick={handleProfileAlertConfirm}
                         className="underline hover:text-blue-800"
@@ -454,7 +471,7 @@ const WriteToUs: React.FC = () => {
                     </p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Email Address *
@@ -465,9 +482,8 @@ const WriteToUs: React.FC = () => {
                     value={formData.userEmail}
                     onChange={handleInputChange}
                     placeholder="Enter your email address"
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      !formData.userEmail ? "border-red-500" : "border-gray-200"
-                    } bg-gray-50`}
+                    className={`w-full px-4 py-3 rounded-lg border ${!formData.userEmail ? "border-red-500" : "border-gray-200"
+                      } bg-gray-50`}
                   />
                   {!formData.userEmail && (
                     <p className="text-sm text-red-500">Email is required</p>
@@ -540,9 +556,8 @@ const WriteToUs: React.FC = () => {
                   name="query"
                   value={formData.query}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${
-                    errors.query ? "border-red-500" : "border-gray-200"
-                  }`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${errors.query ? "border-red-500" : "border-gray-200"
+                    }`}
                   placeholder="Please describe your query in detail..."
                 />
 

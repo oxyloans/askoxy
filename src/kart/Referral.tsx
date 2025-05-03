@@ -3,7 +3,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import BASE_URL from "../Config";
 
 import {
-  
+
   Copy,
   Link as LinkIcon,
   X,
@@ -193,6 +193,14 @@ const ReferralPage: React.FC = () => {
   const handleShare = (action: "whatsapp" | "copy") => {
     setShareAction(action);
 
+    // Track share action
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "share_referral", {
+        method: action,
+        content_type: "referral_link"
+      });
+    }
+
     if (action === "whatsapp") {
       setPhoneNumber(undefined);
       setError("");
@@ -275,12 +283,19 @@ const ReferralPage: React.FC = () => {
         }
       );
 
+      // Track friend invitation
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "invite_friend", {
+        method: "whatsapp_invitation",
+        invitation_sent: true
+      });
+    }
       setIsModalOpen(false);
       fetchRefereeDetails();
 
       Modal.success({
         content: response.data.message || "Referral sent successfully!",
-        onOk: () => {},
+        onOk: () => { },
       });
     } catch (error: any) {
       // Type error as 'any' to handle axios error
@@ -348,6 +363,14 @@ const ReferralPage: React.FC = () => {
   const handleWhatsAppShare = () => {
     const message = `ASKOXY.AI is an AI-powered platform integrating 34+ marketplaces, designed to
 simplify lives with innovative solutions, including premium rice delivery. - ${referralLink}`;
+
+    // Track WhatsApp share
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "share_referral", {
+        method: "whatsapp_broadcast",
+        content_type: "referral_link"
+      });
+    }
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
@@ -363,7 +386,7 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
 
     Modal.success({
       content: "Referral link copied to clipboard!",
-      onOk: () => {},
+      onOk: () => { },
     });
   };
 
@@ -527,11 +550,10 @@ simplify lives with innovative solutions, including premium rice delivery. - ${r
                           </td>
                           <td className="whitespace-nowrap px-4 py-4 text-sm">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                referee.referenceStatus === "REGISTERED"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-amber-100 text-amber-800"
-                              }`}
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium ${referee.referenceStatus === "REGISTERED"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-amber-100 text-amber-800"
+                                }`}
                             >
                               {referee.referenceStatus}
                             </span>
