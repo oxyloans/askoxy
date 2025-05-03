@@ -103,6 +103,11 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         icon: <FaSlideshare className="text-purple-500" />,
       },
       {
+        key: "/usermobilenumberupdate",
+        label: <Link to="/usermobilenumberupdate">Mobile Number Updated</Link>,
+        icon: <FaSlideshare className="text-purple-500" />,
+      },
+      {
         key: "/assigned-task",
         label: <Link to="/assigned-task">Manage Team Tasks</Link>,
         icon: <FaExchangeAlt className="text-orange-500" />,

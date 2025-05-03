@@ -7,7 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
-
+import UseCases from "./Finone/UseCases";
 import Landingpage from "./components/Landingpage";
 import Freerudraksha from "./components/Services/Freerudraksh";
 import HitMovie from "./components/Services/HitMovie";
@@ -128,11 +128,12 @@ import OrderReport from "./AskoxyAdmin/OrderReport";
 import LeaveApplicationPage from "./Pages/Auth/LeaveApplicationPage";
 import TeamLeaveStatus from "./Pages/Auth/TeamLeaveStatus";
 import FeedbackDashboard from "./AskoxyAdmin/FeedBack";
+import MobileNumberUpdate from "./Pages/Auth/EmployeeProfilePage";
 const App: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const validEntryPoints = ["/", "/future", "/freerice"];
+    const validEntryPoints = ["/", "/future", "/freerice", "/glms"];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
       localStorage.setItem("entryPoint", location.pathname);
@@ -173,7 +174,9 @@ const App: React.FC = () => {
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
             <Route path="/movietickets" element={<Pushpa2GPT />} />
+            <Route path="/usermobilenumberupdate" element={<MobileNumberUpdate/>} />
             <Route path="/userregister" element={<UserRegister />} />
+            <Route path="/glms" element={<UseCases/>} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />
