@@ -18,6 +18,9 @@ import {
   Divider,
   Empty,
   Tooltip,
+  Select,
+  Switch,
+  message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -28,14 +31,11 @@ import {
   PhoneOutlined,
   EyeOutlined,
   WhatsAppOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import dayjs, { Dayjs } from "dayjs";
-import utc from "dayjs/plugin/utc"; // Import UTC plugin
 
-dayjs.extend(utc); // Enable UTC plugin
-
-// Define the type for a help desk user
 interface HelpDeskUser {
   mail: string;
   userId: string;
@@ -43,6 +43,7 @@ interface HelpDeskUser {
   emailVerified: string;
   name: string;
   lastFourDigitsUserId: string;
+  testUserStatus: boolean;
 }
 
 interface ReportResponse {
@@ -92,11 +93,6 @@ interface UserData {
   assignedTo: string;
 }
 
-interface UserDetailsResponse {
-  totalCount: null | string;
-  activeUsersResponse: UserDetail[];
-}
-
 interface UserDetail {
   userId: string;
   userType: string;
@@ -131,11 +127,6 @@ interface UserDetail {
   assignedTo: null | string;
 }
 
-interface ApiResponse {
-  totalCount: number;
-  activeUsersResponse: UserData[];
-}
-
 interface TableUser extends HelpDeskUser {
   key: string;
 }
@@ -156,6 +147,7 @@ const { Header, Content } = Layout;
 const { Title } = Typography;
 
 const HelpDeskUsers: React.FC = () => {
+  const [selectedCaller, setSelectedCaller] = useState<string>("All");
   const [users, setUsers] = useState<HelpDeskUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,24 +167,23 @@ const HelpDeskUsers: React.FC = () => {
   const [assignUserTotal, setAssignUserTotal] = useState(0);
   const [assignUserId, setAssignUserId] = useState("");
   const [assignUserLoading, setAssignUserLoading] = useState(false);
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}/user-service/getAllHelpDeskUsers`
+      );
+      setUsers(response.data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch help desk users. Please try again later.");
+      console.error("Error fetching help desk users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${BASE_URL}/user-service/getAllHelpDeskUsers`
-        );
-        setUsers(response.data);
-        setError(null);
-      } catch (err) {
-        setError("Failed to fetch help desk users. Please try again later.");
-        console.error("Error fetching help desk users:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
 
@@ -367,6 +358,33 @@ const HelpDeskUsers: React.FC = () => {
     }
   };
 
+  const handleToggleTestUser = async (record: HelpDeskUser) => {
+    setLoading(true);
+    const payload = {
+      id: record.userId,
+      testUser: !record.testUserStatus,
+    };
+
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/user-service/updateTestUsers`,
+        payload
+      );
+
+      if (response.status === 200) {
+        message.success("User status updated successfully");
+        setLoading(false);
+        fetchUsers();
+      } else {
+        message.error("Failed to update user status");
+      }
+    } catch (error) {
+      message.error("Failed to update user status");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const columns: ColumnsType<TableUser> = [
     {
       title: "User ID",
@@ -397,6 +415,21 @@ const HelpDeskUsers: React.FC = () => {
       dataIndex: "mail",
       key: "mail",
     },
+    {
+      title: "User Status",
+      dataIndex: "testUserStatus",
+      key: "testUserStatus",
+      render: (status: boolean, record: HelpDeskUser) => (
+        <Switch
+          checked={!status}
+          onChange={() => handleToggleTestUser(record)}
+          checkedChildren="Active"
+          unCheckedChildren="Leave"
+          className={!status ? "bg-green-500" : "bg-red-500"}
+        />
+      ),
+    },
+
     {
       title: "Assigned Users",
       key: "assignedUsers",
@@ -675,6 +708,7 @@ const HelpDeskUsers: React.FC = () => {
   ): string => {
     return dateValue ? new Date(dateValue).toLocaleDateString() : "N/A";
   };
+
   return (
     <Layout>
       <Header

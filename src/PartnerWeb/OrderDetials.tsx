@@ -48,6 +48,11 @@ import {
   FileText,
   Info,
   Truck,
+  Barcode,
+  Scale,
+  Package,
+  Package2,
+  BadgePercent,
 } from "lucide-react";
 
 import BASE_URL from "../Config";
@@ -271,7 +276,7 @@ const OrderDetailsPage: React.FC = () => {
     }
   };
 
-  const proceedWithContainerAction = (isAdd: boolean) => {
+  const proceedWithContainerAction = async (isAdd: boolean) => {
     let payload;
 
     if (isAdd) {
@@ -303,20 +308,23 @@ const OrderDetailsPage: React.FC = () => {
       };
     }
 
-    axios
-      .post(`${BASE_URL}/order-service/containerAddForSt`, payload)
-      .then(() => {
-        message.success(
-          isAdd
-            ? "Container added successfully"
-            : "Container removed successfully"
-        );
-        fetchOrderDetails(orderStatus);
-      })
-      .catch((error) => {
-        console.log("Error in containerAddForStore:", error);
-        message.error("Something went wrong, please try again");
-      });
+    try {
+      await axios.patch(
+        `${BASE_URL}/order-service/containerAddForStore`,
+        payload
+      );
+
+      message.success(
+        isAdd
+          ? "Container added successfully"
+          : "Container removed successfully"
+      );
+
+      fetchOrderDetails(orderStatus);
+    } catch (error) {
+      console.log("Error in containerAddForStore:", error);
+      message.error("Something went wrong, please try again");
+    }
   };
 
   const getStatusText = (status: string) => {
@@ -621,7 +629,7 @@ const OrderDetailsPage: React.FC = () => {
     });
   };
 
-  // Handle final rejection submission
+
   const handleFinalReject = async () => {
     try {
       await rejectForm.validateFields();
@@ -768,7 +776,7 @@ const OrderDetailsPage: React.FC = () => {
                 </button>
               )}
 
-              {orderStatus === "3" && (
+              {(orderStatus === "3" || orderStatus === "PickedUp") && (
                 <button
                   onClick={fetchDeliveryBoys}
                   className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition flex items-center text-xs font-medium w-auto h-8"
@@ -780,7 +788,8 @@ const OrderDetailsPage: React.FC = () => {
 
               {(orderStatus === "1" ||
                 orderStatus === "2" ||
-                orderStatus === "3") && (
+                orderStatus === "3" ||
+                orderStatus === "PickedUp") && (
                 <button
                   onClick={() => showRejectConfirmation()}
                   className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition flex items-center text-xs font-medium w-auto h-8"
@@ -903,23 +912,60 @@ const OrderDetailsPage: React.FC = () => {
               <ShoppingCartOutlined className="mr-3 text-blue-600" />
               Order Items
             </h2>
-            <div className="space-y-3">
-              {(orderDetails.orderItems || []).map((item) => (
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {orderDetails.orderItems.map((item) => (
                 <div
                   key={item.itemId}
-                  className="bg-white rounded-lg shadow-sm p-4 flex justify-between items-center border"
+                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200"
                 >
-                  <div className="flex-grow">
-                    <h3 className="text-base font-semibold text-gray-800 mb-1">
-                      {item.itemName || ""}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      Quantity: {item.quantity || 0} | Price: ₹
-                      {(item.itemprice || 0).toFixed(2)}
-                    </p>
+                  {/* Item header with more subtle color */}
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 py-3 px-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-gray-800 font-medium w-full pr-2 line-clamp-2">
+                        {item.itemName || "Unnamed Item"}
+                      </h3>
+                      <div className="bg-white p-1 rounded-full shadow-sm flex-shrink-0">
+                        <Package className="text-blue-500" size={16} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-xs font-medium ml-4">
-                    {item.itemBarCode || ""}
+
+                  {/* Item details */}
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center text-gray-700">
+                        <BadgePercent className="w-4 h-4 text-blue-500 mr-2" />
+                        <span className="font-medium">Price:</span>
+                        <span className="ml-auto font-semibold text-gray-800">
+                          ₹{(item.itemprice || 0).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center text-gray-700">
+                        <Package2 className="text-blue-500 mr-2" size={16} />
+                        <span className="font-medium">Quantity:</span>
+                        <span className="ml-auto">{item.quantity || 0}</span>
+                      </div>
+
+                      <div className="flex items-center text-gray-700">
+                        <Scale className="text-blue-500 mr-2" size={16} />
+                        <span className="font-medium">Weight:</span>
+                        <span className="ml-auto">
+                          {item.weight || "N/A"} kgs
+                        </span>
+                      </div>
+
+                      {item.itemBarCode && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <Barcode className="text-gray-500" size={16} />
+                            <div className="bg-gray-100 text-blue-500 px-3 py-1 rounded-full text-xs font-medium">
+                              {item.itemBarCode}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

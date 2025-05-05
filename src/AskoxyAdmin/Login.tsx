@@ -78,10 +78,14 @@ const Login: React.FC = () => {
           icon: <LoginOutlined />,
           className: "custom-message-success",
         });
-
-        navigate("/admn/dashboard");
+        if (primaryType === "SELLER") {
+          navigate("/admn/helpdashboard");
+        } else if (primaryType === "HELPDESKADMIN") {
+          navigate("/admn/dashboard");
+        } else {
+          navigate("/admn/dashboard");
+        }
       } else {
-        // Handle server error messages
         setError(response.data.errorMessage || "Invalid email or password");
       }
     } catch (error: any) {

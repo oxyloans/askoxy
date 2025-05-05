@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { message, Select, Table } from "antd";
+import { DatePicker, message, Select, Table } from "antd";
 import {
   ShoppingBag,
   ClipboardList,
@@ -14,6 +14,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import BASE_URL from "../Config";
+import dayjs from "dayjs";
 
 interface OrderCountData {
   orderPlacedCount: number;
@@ -48,6 +49,8 @@ const OrderReport: React.FC = () => {
   const [monthlyLoading, setMonthlyLoading] = useState<boolean>(true);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [weightFilter, setWeightFilter] = useState("all");
+  const [startDate, setStartDate] = useState(dayjs().startOf("month"));
+  const [endDate, setEndDate] = useState(dayjs());
 
   const fetchOrderData = async () => {
     setLoading(true);
@@ -85,10 +88,12 @@ const OrderReport: React.FC = () => {
   };
 
   const fetchMonthlySalesData = async () => {
+    const formattedStartDate = startDate.format("YYYY-MM-DD");
+    const formattedEndDate = endDate.format("YYYY-MM-DD");
     try {
       setMonthlyLoading(true);
       const response = await axios.get(
-        `${BASE_URL}/order-service/notification_to_dev_team_monthly`
+        `${BASE_URL}/order-service/notification_to_dev_team_monthly?endDate=${formattedEndDate}&startDate=${formattedStartDate}`
       );
       setMonthlySalesData(response.data);
     } catch (err) {
@@ -384,6 +389,36 @@ const OrderReport: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-2">
+            {/* Start Date */}
+            <DatePicker
+              value={startDate}
+              format="DD/MM/YYYY"
+              onChange={(date) => setStartDate(date)}
+              allowClear={false}
+              placeholder="Start Date"
+              className="w-full sm:w-auto"
+            />
+
+            {/* End Date */}
+            <DatePicker
+              value={endDate}
+              format="DD/MM/YYYY"
+              onChange={(date) => setEndDate(date)}
+              allowClear={false}
+              placeholder="End Date"
+              className="w-full sm:w-auto"
+            />
+
+            {/* Get Data Button */}
+            <button
+              onClick={fetchMonthlySalesData}
+              className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            >
+              Get Data
+            </button>
           </div>
 
           {monthlyLoading ? (

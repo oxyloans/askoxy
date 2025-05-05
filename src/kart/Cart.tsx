@@ -4,7 +4,7 @@ import axios from "axios";
 import { Loader2, X, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
-import { Button, message, Modal } from "antd";
+import { Button, message, Modal, notification } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
@@ -52,7 +52,7 @@ const CartPage: React.FC = () => {
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<{ [key: string]: number }>({});
   const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>({});
-  const [selectedPlan, setSelectedPlan] = useState<"planA" | "planB" | null>(null);
+  // const [selectedPlan, setSelectedPlan] = useState<"planA" | "planB" | null>(null);
   const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] = useState<boolean>(false);
   const [currentPlanDetails, setCurrentPlanDetails] = useState<"planA" | "planB" | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -92,6 +92,16 @@ const CartPage: React.FC = () => {
   const containerModalCompletedRef = useRef<boolean>(false);
   const onePlusOneModalShownRef = useRef(false);
   const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>({});
+
+  const [mobileNumbers, setMobileNumbers] = useState<string[]>([]);
+  const [currentNumber, setCurrentNumber] = useState<string>("");
+ const [selectedPlan, setSelectedPlan] = useState<string[]>([]);
+  const [isPlanModalVisible, setIsPlanModalVisible] = useState(false);
+  const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
+  const mobileNumberRaw = localStorage.getItem("mobilenumber") || "";
+  const rawNumber = mobileNumberRaw || whatsappNumber;
+  const [isReferralModalVisible, setIsReferralModalVisible] = useState(false);
+  const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
 
   const checkOnePlusOneStatus = async (): Promise<boolean> => {
     const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
@@ -204,7 +214,7 @@ const CartPage: React.FC = () => {
           fetchCartData(),
           fetchContainerPreference(),
         ]);
-        console.log("Initialization complete - preference:", preference);
+        // console.log("Initialization complete - preference:", preference);
         setContainerPreference(preference);
       } catch (error) {
         console.error("Error initializing cart page:", error);
@@ -245,223 +255,206 @@ const CartPage: React.FC = () => {
 
   // Here's the modified showContainerModal function to fix the plan selection issue
 
-  const showContainerModal = useCallback(() => {
-    console.log("showContainerModal called with:", {
-      containerPreference,
-      modalDisplayed: modalDisplayedRef.current,
-      cartData,
-    });
+  // const showContainerModal = useCallback(() => {
+  //   console.log("showContainerModal called with:", {
+  //     containerPreference,
+  //     modalDisplayed: modalDisplayedRef.current,
+  //     cartData,
+  //   });
 
-    if (
-      containerPreference?.toLowerCase() === "interested" ||
-      modalDisplayedRef.current
-    ) {
-      console.log("Modal not shown - already interested or displayed");
-      return;
-    }
+  //   if (
+  //     containerPreference?.toLowerCase() === "interested" ||
+  //     modalDisplayedRef.current
+  //   ) {
+  //     console.log("Modal not shown - already interested or displayed");
+  //     return;
+  //   }
 
-    const hasContainer = cartData.some((item) =>
-      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-        item.itemId
-      )
-    );
-    if (hasContainer) {
-      console.log("Modal not shown - cart already has container");
-      modalDisplayedRef.current = true;
-      return;
-    }
+  //   const hasContainer = cartData.some((item) =>
+  //     [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+  //       item.itemId
+  //     )
+  //   );
+  //   if (hasContainer) {
+  //     console.log("Modal not shown - cart already has container");
+  //     modalDisplayedRef.current = true;
+  //     return;
+  //   }
 
-    const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
-    const hasValidLightBag = cartData.some((item) => {
-      const weight = parseWeight(item.weight);
-      return weight <= 10 && weight !== 1 && weight !== 5;
-    });
+  //   const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
+  //   const hasValidLightBag = cartData.some((item) => {
+  //     const weight = parseWeight(item.weight);
+  //     return weight <= 10 && weight !== 1 && weight !== 5;
+  //   });
 
-    console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
+  //   console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
 
-    if (!hasHeavyBag && !hasValidLightBag) {
-      console.log("Modal not shown - no eligible items");
-      return;
-    }
+  //   if (!hasHeavyBag && !hasValidLightBag) {
+  //     console.log("Modal not shown - no eligible items");
+  //     return;
+  //   }
 
-    modalDisplayedRef.current = true;
+  //   modalDisplayedRef.current = true;
 
-    // Create a ref to track the selected plan inside the modal
-    const modalSelectedPlanRef = { current: null as "planA" | "planB" | null };
+  //   // Create a ref to track the selected plan inside the modal
+  //   const modalSelectedPlanRef = { current: null as "planA" | "planB" | null };
 
-    const PlanModalContent = () => {
-      const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(selectedPlan);
+  //   const PlanModalContent = () => {
+  //     const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(selectedPlan);
 
-      // Update both the state and the ref when a plan is selected
-      const handlePlanSelect = (planKey: "planA" | "planB") => {
-        setTempPlan(planKey);
-        setSelectedPlan(planKey);
-        modalSelectedPlanRef.current = planKey; // This is the key change - store selection in ref
-      };
+  //     // Update both the state and the ref when a plan is selected
+  //     const handlePlanSelect = (planKey: "planA" | "planB") => {
+  //       setTempPlan(planKey);
+  //       setSelectedPlan(planKey);
+  //       modalSelectedPlanRef.current = planKey; // This is the key change - store selection in ref
+  //     };
 
-      return (
-        <div className="text-center">
-          <p className="mt-2">
-            Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
-            or refer 9 friends and when they buy their first bag, the container
-            is yours forever.
-          </p>
-          <p className="mt-2 text-sm text-gray-600 font-semibold">
-            * No purchase in 90 days or gap of 90 days between purchases =
-            Container will be taken back
-          </p>
-          <p className="mt-1 text-sm text-gray-700 italic">
-            Choose the plan that best suits your needs and enjoy exclusive
-            benefits.
-          </p>
+  //     return (
+  //       <div className="text-center">
+  //         <p className="mt-2">
+  //           Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
+  //           or refer 9 friends and when they buy their first bag, the container
+  //           is yours forever.
+  //         </p>
+  //         <p className="mt-2 text-sm text-gray-600 font-semibold">
+  //           * No purchase in 90 days or gap of 90 days between purchases =
+  //           Container will be taken back
+  //         </p>
+  //         <p className="mt-1 text-sm text-gray-700 italic">
+  //           Choose the plan that best suits your needs and enjoy exclusive
+  //           benefits.
+  //         </p>
 
-          <div className="mt-4 space-y-4">
-            {["planA", "planB"].map((planKey) => (
-              <div className="flex items-center" key={planKey}>
-                <input
-                  type="radio"
-                  name="planSelection"
-                  checked={tempPlan === planKey}
-                  onChange={() => handlePlanSelect(planKey as "planA" | "planB")}
-                  className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentPlanDetails(planKey as "planA" | "planB");
-                    setIsPlanDetailsModalOpen(true);
-                  }}
-                  className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${tempPlan === planKey
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                    }`}
-                >
-                  {planKey === "planA"
-                    ? "Plan A: Free Steel Container Policy"
-                    : "Plan B: Referral Program"}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
+  //         <div className="mt-4 space-y-4">
+  //           {["planA", "planB"].map((planKey) => (
+  //             <div className="flex items-center" key={planKey}>
+  //               <input
+  //                 type="radio"
+  //                 name="planSelection"
+  //                 checked={tempPlan === planKey}
+  //                 onChange={() => handlePlanSelect(planKey as "planA" | "planB")}
+  //                 className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+  //               />
+  //               <button
+  //                 type="button"
+  //                 onClick={() => {
+  //                   setCurrentPlanDetails(planKey as "planA" | "planB");
+  //                   setIsPlanDetailsModalOpen(true);
+  //                 }}
+  //                 className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${tempPlan === planKey
+  //                     ? "bg-purple-600 text-white"
+  //                     : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+  //                   }`}
+  //               >
+  //                 {planKey === "planA"
+  //                   ? "Plan A: Free Steel Container Policy"
+  //                   : "Plan B: Referral Program"}
+  //               </button>
+  //             </div>
+  //           ))}
+  //         </div>
+  //       </div>
+  //     );
+  //   };
 
-    try {
-      Modal.confirm({
-        title: "Special Offer!",
-        content: <PlanModalContent />,
-        okText: "Confirm Selection",
-        cancelText: "Cancel",
-        onOk: async () => {
-          try {
-            // Check the ref instead of the state
-            if (!modalSelectedPlanRef.current) {
-              message.info("Please select a plan before confirming.");
-              return Promise.reject(new Error("No plan selected"));
-            }
-            // Just to ensure state is also set
-            setSelectedPlan(modalSelectedPlanRef.current);
+  //   try {
+  //     Modal.confirm({
+  //       title: "Special Offer!",
+  //       content: <PlanModalContent />,
+  //       okText: "Confirm Selection",
+  //       cancelText: "Cancel",
+  //       onOk: async () => {
+  //         try {
+  //           // Check the ref instead of the state
+  //           if (!modalSelectedPlanRef.current) {
+  //             message.info("Please select a plan before confirming.");
+  //             return Promise.reject(new Error("No plan selected"));
+  //           }
+  //           // Just to ensure state is also set
+  //           setSelectedPlan(modalSelectedPlanRef.current);
 
-            await handleInterested();
-            containerModalCompletedRef.current = true;
-            await maybeShowOnePlusOneModal();
-          } catch (error) {
-            console.error("Error in Modal onOk:", error);
-            message.error("Failed to process container selection.");
-            throw error;
-          }
-        },
-        onCancel: async () => {
-          try {
-            setSelectedPlan(null);
-            containerModalCompletedRef.current = true;
-            await maybeShowOnePlusOneModal();
-          } catch (error) {
-            console.error("Error in Modal onCancel:", error);
-            message.error("Failed to cancel container selection.");
-            throw error;
-          }
-        },
-      });
-    } catch (error) {
-      console.error("Error displaying container modal:", error);
-    }
-  }, [cartData, containerPreference, customerId, token, selectedPlan]);
+  //           await handleInterested();
+  //           containerModalCompletedRef.current = true;
+  //           await maybeShowOnePlusOneModal();
+  //         } catch (error) {
+  //           console.error("Error in Modal onOk:", error);
+  //           message.error("Failed to process container selection.");
+  //           throw error;
+  //         }
+  //       },
+  //       onCancel: async () => {
+  //         try {
+  //           setSelectedPlan(null);
+  //           containerModalCompletedRef.current = true;
+  //           await maybeShowOnePlusOneModal();
+  //         } catch (error) {
+  //           console.error("Error in Modal onCancel:", error);
+  //           message.error("Failed to cancel container selection.");
+  //           throw error;
+  //         }
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error("Error displaying container modal:", error);
+  //   }
+  // }, [cartData, containerPreference, customerId, token, selectedPlan]);
 
   useEffect(() => {
-    console.log("useEffect triggered with:", {
-      cartDataLength: cartData.length,
-      containerPreference,
-      modalDisplayed: modalDisplayedRef.current,
-    });
+
     if (
       cartData.length > 0 &&
       (containerPreference === null || containerPreference?.toLowerCase() !== "interested") &&
       !modalDisplayedRef.current
     ) {
-      console.log(
-        "Triggering showContainerModal - cartData:",
-        cartData.length,
-        "containerPreference:",
-        containerPreference
-      );
+      
       showContainerModal();
     } else {
-      console.log(
-        "Modal not triggered - reasons:",
-        {
-          cartDataEmpty: cartData.length === 0,
-          containerPreferenceInterested:
-            containerPreference?.toLowerCase() === "interested",
-          modalAlreadyDisplayed: modalDisplayedRef.current,
-        }
-      );
-    }
-  }, [cartData, containerPreference, showContainerModal]);
 
-  useEffect(() => {
-    if (isPlanDetailsModalOpen && currentPlanDetails) {
-      try {
-        Modal.info({
-          title:
-            currentPlanDetails === "planA"
-              ? "Free Steel Container Policy"
-              : "Referral Program",
-          content: (
-            <div className="space-y-4 text-left">
-              {currentPlanDetails === "planA" ? (
-                <>
-                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
-                    <li>
-                      Buy 9 bags of rice in 3 years to keep the container forever
-                    </li>
-                    <li>
-                      Refer 9 friends who make a purchase – keep the container
-                    </li>
-                    <li>Gap of 90 days = container is taken back</li>
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
-                    <li>Refer friends using your unique link</li>
-                    <li>They must sign up and buy rice</li>
-                    <li>You get a free container + ₹50 cashback</li>
-                  </ul>
-                </>
-              )}
-            </div>
-          ),
-          onOk: () => setIsPlanDetailsModalOpen(false),
-          okText: "Close",
-          cancelButtonProps: { style: { display: "none" } },
-        });
-      } catch (error) {
-        console.error("Error displaying plan details modal:", error);
-      }
     }
-  }, [isPlanDetailsModalOpen, currentPlanDetails]);
+  }, [cartData ]);
+
+  // useEffect(() => {
+  //   if (isPlanDetailsModalOpen && currentPlanDetails) {
+  //     try {
+  //       Modal.info({
+  //         title:
+  //           currentPlanDetails === "planA"
+  //             ? "Free Steel Container Policy"
+  //             : "Referral Program",
+  //         content: (
+  //           <div className="space-y-4 text-left">
+  //             {currentPlanDetails === "planA" ? (
+  //               <>
+  //                 <ul className="list-disc pl-5 text-gray-700 space-y-1">
+  //                   <li>
+  //                     Buy 9 bags of rice in 3 years to keep the container forever
+  //                   </li>
+  //                   <li>
+  //                     Refer 9 friends who make a purchase – keep the container
+  //                   </li>
+  //                   <li>Gap of 90 days = container is taken back</li>
+  //                 </ul>
+  //               </>
+  //             ) : (
+  //               <>
+  //                 <ul className="list-disc pl-5 text-gray-700 space-y-1">
+  //                   <li>Refer friends using your unique link</li>
+  //                   <li>They must sign up and buy rice</li>
+  //                   <li>You get a free container + ₹50 cashback</li>
+  //                 </ul>
+  //               </>
+  //             )}
+  //           </div>
+  //         ),
+  //         onOk: () => setIsPlanDetailsModalOpen(false),
+  //         okText: "Close",
+  //         cancelButtonProps: { style: { display: "none" } },
+  //       });
+  //     } catch (error) {
+  //       console.error("Error displaying plan details modal:", error);
+  //     }
+  //   }
+  // }, [isPlanDetailsModalOpen, currentPlanDetails]);
 
   const fetchCartData = async () => {
     try {
@@ -517,7 +510,6 @@ const CartPage: React.FC = () => {
 
   const fetchContainerPreference = async (): Promise<string | null> => {
     try {
-      console.log("Fetching container preference for customerId:", customerId);
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`,
         {
@@ -526,7 +518,7 @@ const CartPage: React.FC = () => {
           },
         }
       );
-      const status = response.data?.freeContainerStatus
+      const status = response.data.freeContainerStatus
         ? response.data.freeContainerStatus.toLowerCase()
         : null;
       console.log("Fetched container preference:", status);
@@ -537,40 +529,156 @@ const CartPage: React.FC = () => {
     }
   };
 
-  const handleInterested = async () => {
+  const updateContainerPreference = async (
+    preferenceTypes: string[],
+    collectedNumb: string[]
+  ) => {
     try {
-      const hasContainer = cartData.some((item) =>
-        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-          item.itemId
-        )
+      const itemIds = cartData.map((item) => item.itemId);
+
+      const mobilenumber = rawNumber.replace("+91", "").trim();
+      // console.log(referralNumbers);
+
+      const requestBody: any = {
+        created_at: new Date().toISOString(),
+        itemIds: itemIds,
+        mobilenumber: mobilenumber,
+        referenceMobileNumbers: collectedNumb,
+        user_id: customerId,
+      };
+
+      if (preferenceTypes.includes("planA")) {
+        requestBody.plana = "YES";
+      }
+
+      if (preferenceTypes.includes("planB")) {
+        requestBody.planb = "YES";
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/reference-service/referenceoffer`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          validateStatus: () => true,
+        }
       );
-      if (hasContainer) {
-        message.info("You have already opted for a container.");
-        modalDisplayedRef.current = true;
-        return;
+
+      if (response.status === 400) {
+        if (
+          preferenceTypes.includes("planA") ||
+          preferenceTypes.includes("planB")
+        ) {
+          message.error(response.data.message || "Something went wrong.", 5);
+        }
+        return false;
       }
 
-      let containerItemId: string;
+      if (response.status === 200) {
+        const resData = response.data;
+        const messages = [];
 
-      const hasHeavyBag = cartData.some((item) => {
-        const weight = parseWeight(item.weight);
-        return weight > 10;
-      });
+        const isPlanA = preferenceTypes.includes("planA");
+        const isPlanB = preferenceTypes.includes("planB");
 
-      const hasValidLightBag = cartData.some((item) => {
-        const weight = parseWeight(item.weight);
-        return weight <= 10 && weight !== 1 && weight !== 5;
-      });
+        const alreadySaved = Array.isArray(resData.alreadySavedReferences)
+          ? resData.alreadySavedReferences
+          : [];
+        const newlySaved = Array.isArray(resData.newlySavedReferences)
+          ? resData.newlySavedReferences
+          : [];
 
-      if (hasHeavyBag) {
-        containerItemId = CONTAINER_ITEM_IDS.HEAVY_BAG;
-      } else if (hasValidLightBag) {
-        containerItemId = CONTAINER_ITEM_IDS.LIGHT_BAG;
-      } else {
-        message.info("No eligible items for a free container.");
-        return;
+        if ((isPlanA && isPlanB) || isPlanB) {
+          if (alreadySaved.length > 0 && newlySaved.length > 0) {
+            messages.push(
+              `Already referred numbers: ${alreadySaved.join(", ")}. ` +
+                `Newly referred numbers: ${newlySaved.join(", ")}.`
+            );
+          } else if (alreadySaved.length > 0) {
+            messages.push(
+              `These numbers are already referred: ${alreadySaved.join(", ")}`
+            );
+          } else if (newlySaved.length > 0) {
+            messages.push(
+              `The following numbers have been referred successfully: ${newlySaved.join(
+                ", "
+              )}`
+            );
+          }
+        } else if (isPlanA) {
+          messages.push("Plan A updated successfully.");
+        } else if (isPlanB) {
+          if (alreadySaved.length > 0 && newlySaved.length === 0) {
+            messages.push(
+              `These numbers are referred successfully : ${alreadySaved.join(
+                ", "
+              )}`
+            );
+          }
+
+          if (alreadySaved.length === 0 && newlySaved.length > 0) {
+            messages.push(
+              `The following numbers have been referred successfully: ${newlySaved.join(
+                ", "
+              )}`
+            );
+          }
+        }
+
+        if (messages.length > 0) {
+    
+          message.success({
+            content: messages.join(" "),
+            duration: 8,
+          });
+        } else {
+          message.success({
+            content: resData.message || "Plans updated successfully.",
+            duration: 5,
+          });
+        }
+
+        return true;
       }
 
+      message.error("Unexpected response from the server.");
+    } catch (error) {
+      console.error("Error submitting reference offer:", error);
+      return true;
+    }
+  };
+
+  const checkEligibilityForContainer = (cartItems: CartItem[]) => {
+    const hasContainer = cartItems.some((item) =>
+      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+        item.itemId
+      )
+    );
+
+    if (hasContainer) {
+      return { eligible: false, reason: "already_has_container" };
+    }
+
+    const hasHeavyBag = cartItems.some((item) => parseWeight(item.weight) > 10);
+    const hasValidLightBag = cartItems.some((item) => {
+      const weight = parseWeight(item.weight);
+      return weight <= 10 && weight !== 1 && weight !== 5;
+    });
+
+    if (hasHeavyBag) {
+      return { eligible: true, containerType: CONTAINER_ITEM_IDS.HEAVY_BAG };
+    } else if (hasValidLightBag) {
+      return { eligible: true, containerType: CONTAINER_ITEM_IDS.LIGHT_BAG };
+    }
+
+    return { eligible: false, reason: "no_eligible_items" };
+  };
+
+  const addContainerToCart = async (containerItemId: string | undefined) => {
+    try {
       const containerItemData = {
         itemId: containerItemId,
         customerId: customerId,
@@ -578,7 +686,6 @@ const CartPage: React.FC = () => {
         itemPrice: 0,
       };
 
-      console.log("Adding container to cart:", containerItemData);
       await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         containerItemData,
@@ -590,14 +697,161 @@ const CartPage: React.FC = () => {
         }
       );
 
-      modalDisplayedRef.current = true;
       message.success("Free container added to your cart at ₹0.");
       await fetchCartData();
+      return true;
     } catch (error) {
       console.error("Error adding container to cart:", error);
       message.error("Failed to add free container. Please try again.");
+      return false;
     }
   };
+  const handleInterested = async (selectedPlanTypes: string[]) => {
+    const eligibility = checkEligibilityForContainer(cartData);
+    setSelectedPlans(selectedPlanTypes);
+    if (!eligibility.eligible) {
+      if (eligibility.reason === "already_has_container") {
+        message.info("You have already opted for a container.");
+      } else {
+        message.info("No eligible items for a free container.");
+      }
+      return false;
+    }
+
+    if (selectedPlanTypes.includes("planB") && mobileNumbers.length === 0) {
+      setMobileNumbers([]);
+      setCurrentNumber("");
+      setIsReferralModalVisible(true);
+      return false;
+    }
+
+    const res = await updateContainerPreference(
+      selectedPlanTypes,
+      mobileNumbers
+    );
+    return res === true
+      ? await addContainerToCart(eligibility.containerType)
+      : null;
+  };
+
+  const handleReferralOk = () => {
+    if (mobileNumbers.length === 0) {
+      message.error("Please enter at least one mobile number.");
+      return;
+    }
+
+    handleInterested(selectedPlan);
+    setIsReferralModalVisible(false);
+  };
+
+  const handleReferralCancel = async () => {
+    if (mobileNumbers.length === 0) {
+      Modal.confirm({
+        title: "No Mobile Numbers Entered",
+        content:
+          "Are you sure you want to skip? Without adding atleast one mobile number, the container will not be added to your cart and the offer will not be applied.",
+        okText: "Yes, Skip",
+        cancelText: "Go Back",
+        onOk() {
+          setIsReferralModalVisible(false);
+        },
+      });
+    } else {
+      handleInterested(selectedPlan);
+      setIsReferralModalVisible(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    Modal.confirm({
+      title: "Are you sure you want to close?",
+      content:
+        "Are you sure you want to close? Without adding atleast one mobile numbers, the container will not be added to your cart and the offer will not be applied.",
+      okText: "Yes, Close",
+      cancelText: "Stay",
+      onOk() {
+        setIsReferralModalVisible(false);
+      },
+    });
+  };
+
+  const handleAddNumber = () => {
+    if (
+      !currentNumber ||
+      currentNumber.length !== 10 ||
+      !/^\d+$/.test(currentNumber)
+    ) {
+      message.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (mobileNumbers.includes(currentNumber)) {
+      message.error("This mobile number is already added");
+      return;
+    }
+    if (currentNumber === rawNumber) {
+      message.error("Your not Supposed to add your own number");
+      return;
+    }
+
+    setMobileNumbers([...mobileNumbers, currentNumber]);
+    setCurrentNumber("");
+  };
+
+  const handleRemoveNumber = (index: number) => {
+    const newNumbers = [...mobileNumbers];
+    newNumbers.splice(index, 1);
+    setMobileNumbers(newNumbers);
+    console.log("After removal, mobile numbers:", newNumbers); // Log to verify
+  };
+
+  const showContainerModal = async () => {
+    const containerPreference = await fetchContainerPreference();
+    if (containerPreference === "interested") {
+      return;
+    }
+
+    const eligibility = checkEligibilityForContainer(cartData);
+    if (!eligibility.eligible) {
+      return;
+    }
+
+    setIsPlanModalVisible(true);
+    setSelectedPlan([]); // Reset to empty array for multiple selections
+  };
+
+  const handlePlanOk = async () => {
+    if (selectedPlan.length === 0) {
+      message.info("Please select at least one plan before confirming.");
+      return;
+    }
+
+    setIsPlanModalVisible(false);
+
+    // We'll collect referral numbers if Plan B is selected
+    const success = await handleInterested(selectedPlan);
+
+    if (success && typeof maybeShowOnePlusOneModal === "function") {
+      await maybeShowOnePlusOneModal();
+    }
+  };
+
+  const handlePlanCancel = async () => {
+    Modal.confirm({
+      title: "Please confirm",
+      content:
+        "Are you sure you want to close? If Yes, the container will not be added to your cart and the offer will not be applied.",
+      okText: "Yes, Go Back",
+      cancelText: "Stay",
+      onOk: async () => {
+        setIsPlanModalVisible(false);
+        if (typeof maybeShowOnePlusOneModal === "function") {
+          await maybeShowOnePlusOneModal();
+        }
+      },
+      onCancel: () => {},
+    });
+  };
+
 
   const showOnePlusOneModal = (item: CartItem) => {
     try {
@@ -1647,6 +1901,163 @@ const CartPage: React.FC = () => {
           )}
         </div>
 
+
+
+        <Modal
+          title=""
+          visible={isReferralModalVisible}
+          onOk={handleReferralOk}
+          onCancel={handleModalClose}
+          okText="Submit"
+          cancelText="Skip"
+          closable={true}
+          footer={[
+            <Button key="skip" onClick={handleReferralCancel}>
+              Skip
+            </Button>,
+            <Button key="submit" type="primary" onClick={handleReferralOk}>
+              Submit
+            </Button>,
+          ]}
+        >
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">
+              Enter Referral Mobile Numbers:
+            </h3>
+            <p className="text-sm text-gray-600">
+              You can add up to 9 mobile numbers for your referrals.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {mobileNumbers.map((number, index) => (
+                <div
+                  key={index}
+                  className="bg-purple-100 px-3 py-1 rounded-full flex items-center"
+                >
+                  <span className="text-sm">{number}</span>
+                  <button
+                    className="ml-2 text-red-500 font-bold"
+                    onClick={() => handleRemoveNumber(index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex space-x-2 items-center border rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-purple-400">
+              <span className="text-gray-500">📱</span>
+              <input
+                type="text"
+                className="flex-1 outline-none"
+                placeholder="Enter 10-digit mobile number"
+                value={currentNumber}
+                onChange={(e) => {
+                  const input = e.target.value.replace(/\D/g, "");
+                  if (input.length <= 10) {
+                    setCurrentNumber(input);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleAddNumber();
+                  }
+                }}
+                maxLength={10}
+                pattern="\d{10}"
+              />
+              <button
+                className="bg-purple-600 text-white px-4 py-1 rounded-lg disabled:opacity-50"
+                onClick={handleAddNumber}
+                disabled={
+                  mobileNumbers.length >= 9 || currentNumber.length !== 10
+                }
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          title="🎁 Special Offer: Free Rice Container!"
+          visible={isPlanModalVisible}
+          onOk={handlePlanOk}
+          onCancel={handlePlanCancel}
+          okText="Continue"
+          cancelText="Cancel"
+        >
+          <div className="text-center text-gray-800">
+            <p className="text-lg font-medium mt-1">
+              Buy a 26kg or 10kg rice bag and get a{" "}
+              <strong>FREE rice container</strong>!
+            </p>
+            <p className="text-sm text-gray-600 italic">
+              (Note: Container remains Oxy Group asset until ownership is
+              earned.)
+            </p>
+
+            <div className="mt-4 text-left">
+              <h3 className="text-md font-semibold mb-2">
+                📋 How to Earn Ownership:
+              </h3>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong>Plan A:</strong> Purchase 9 bags within the next 3
+                  years and the container is yours forever.
+                </li>
+                <li className="list-none text-center text-gray-500">AND/OR</li>
+                <li>
+                  <strong>Plan B:</strong> Refer 9 people. Once each of them
+                  buys their first bag, the container is yours.
+                </li>
+              </ul>
+            </div>
+
+            <p className="mt-4 text-sm font-semibold">
+              ⚠️ Note: If there's no purchase within 90 days or a 90+ day gap
+              between purchases, the container will be taken back.
+            </p>
+
+            <div className="mt-4">
+              <h4 className="font-semibold mb-3">Choose Plan(s):</h4>
+              <div className="space-y-4">
+                {["planA", "planB"].map((planKey) => (
+                  <div key={planKey}>
+                    <label
+                      htmlFor={planKey}
+                      className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors shadow-sm ${
+                        selectedPlan.includes(planKey)
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-white text-gray-800 hover:bg-gray-100 border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        id={planKey}
+                        name="planSelection"
+                        checked={selectedPlan.includes(planKey)}
+                        onChange={() => {
+                          if (selectedPlan.includes(planKey)) {
+                            setSelectedPlan(
+                              selectedPlan.filter((p) => p !== planKey)
+                            );
+                          } else {
+                            setSelectedPlan([...selectedPlan, planKey]);
+                          }
+                        }}
+                        className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      />
+                      <span className="text-sm font-medium">
+                        {planKey === "planA"
+                          ? "Plan A: Free Steel Container Policy"
+                          : "Plan B: Referral 9 members"}
+                      </span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Modal>
         <Footer />
       </div>
     </div>

@@ -101,6 +101,7 @@ import TaskAssignedUser from "./Pages/Auth/TaskAssignedUser";
 import TaskUpdate from "./Pages/Auth/EndoftheDay";
 import UserRegister from "./Pages/Auth/UserRegister";
 import UserLogin from "./Pages/Auth/UserLogin";
+import CallerHistoryPage from "./AskoxyAdmin/HelpdeskTodayCalls";
 // *************************PARTNER START****************************//
 
 import PartnerLogin from "./PartnerWeb/PartnerLogin";
@@ -129,6 +130,7 @@ import LeaveApplicationPage from "./Pages/Auth/LeaveApplicationPage";
 import TeamLeaveStatus from "./Pages/Auth/TeamLeaveStatus";
 import FeedbackDashboard from "./AskoxyAdmin/FeedBack";
 import MobileNumberUpdate from "./Pages/Auth/EmployeeProfilePage";
+import HelpDeskDashboard from "./AskoxyAdmin/HelpDeskDashboard";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -436,9 +438,12 @@ const App: React.FC = () => {
             <Route path="/partnerLogin" element={<PartnerLogin />} />
             <Route path="/home" element={<PartnerHome />}>
               <Route index element={<MainPage />} />{" "}
-              <Route path="newOrders" element={<NewOrders />} />
+              {/* <Route path="newOrders" element={<NewOrders />} />
               <Route path="acceptedOrders" element={<AcceptedOrders />} />
-              <Route path="assignedOrders" element={<AssignedOrders />} />
+              <Route path="assignedOrders" element={<AssignedOrders />} /> */}
+              <Route path="newOrders/:status" element={<NewOrders />} />
+              <Route path="acceptedOrders/:status" element={<NewOrders />} />
+              <Route path="assignedOrders/:status" element={<NewOrders />} />
               <Route path="orderDetails" element={<OrderDetailsPage />} />
               <Route path="allOrders" element={<AllOrders />} />
               <Route path="dbList" element={<DeliveryBoyList />} />
@@ -446,6 +451,7 @@ const App: React.FC = () => {
               <Route path="scan-qr" element={<BarcodeScanner />} />
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
+              <Route path="feedback" element={<FeedbackDashboard />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}
@@ -469,6 +475,8 @@ const App: React.FC = () => {
               <Route path="referredData" element={<ReferredData />} />
               <Route path="orderReport" element={<OrderReport/>} />
               <Route path="feedback" element={<FeedbackDashboard />} />
+              <Route path="helpdashboard" element={<HelpDeskDashboard />} />
+              <Route path="todaycalls" element={<CallerHistoryPage />} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

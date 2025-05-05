@@ -14,6 +14,8 @@ import {
   FaUsers,
   FaFileAlt,
   FaComments,
+  FaConciergeBell,
+  FaPhone,
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
@@ -45,10 +47,16 @@ const Sidebar: React.FC = () => {
 
   const allSidebarItems: SidebarItem[] = [
     {
-      title: "Dashboard",
-      icon: <FaTachometerAlt className="text-blue-400" />,
-      link: "/admn/dashboard",
-      roles: ["SELLER", "HELPDESKADMIN"],
+      title: "HelpDesk Dashboard",
+      icon: <FaHeadset className="text-green-400" />,
+      link: "/admn/helpdashboard",
+      roles: ["SELLER"],
+    },
+    {
+      title: "HelpDesk Team",
+      icon: <FaConciergeBell className="text-pink-400" />,
+      link: "/admn/helpDeskUsers",
+      roles: ["SELLER"],
     },
     {
       title: "Orders Report",
@@ -56,7 +64,13 @@ const Sidebar: React.FC = () => {
       link: "/admn/orderReport",
       roles: ["SELLER"],
     },
-  
+    {
+      title: "Interested Users",
+      icon: <FaTachometerAlt className="text-blue-400" />,
+      link: "/admn/dashboard",
+      roles: ["SELLER", "HELPDESKADMIN"],
+    },
+
     {
       title: "Registered Users",
       icon: <FaUser className="text-purple-400" />,
@@ -80,12 +94,6 @@ const Sidebar: React.FC = () => {
       icon: <FaUsers className="text-blue-500" />,
       link: "/admn/referredData",
       roles: ["HELPDESKADMIN"],
-    },
-    {
-      title: "HelpDesk Team",
-      icon: <FaHeadset className="text-green-400" />,
-      link: "/admn/helpdeskusers",
-      roles: ["SELLER"],
     },
 
     {
@@ -113,6 +121,12 @@ const Sidebar: React.FC = () => {
       roles: ["SELLER", "HELPDESKADMIN"],
     },
     {
+      title: "My Calls",
+      icon: <FaPhone className="text-blue-400" />,
+      link: "/admn/todaycalls",
+      roles: ["HELPDESKADMIN"],
+    },
+    {
       title: "Logout",
       icon: <FaSignOutAlt className="text-red-400" />,
       link: "/admin",
@@ -135,21 +149,19 @@ const Sidebar: React.FC = () => {
     }
 
     setUserRole(primaryType);
-  }, [navigate]);
+  }, [navigate]);
 
   // Force reset collapsed state when screen size changes
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
 
-      // If transitioning from mobile to desktop, ensure sidebar is expanded
       if (isMobile && !mobile) {
         setCollapsed(false);
       }
 
       setIsMobile(mobile);
 
-      // Set mobile menu closed when transitioning
       if (mobile !== isMobile) {
         setIsMobileOpen(false);
       }
@@ -167,7 +179,7 @@ const Sidebar: React.FC = () => {
   const toggleMobileMenu = () => {
     setIsMobileOpen((prev) => !prev);
     if (isMobile) {
-      setCollapsed(false); // Always show labels when opening on mobile
+      setCollapsed(false);
     }
   };
 
@@ -185,7 +197,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile overlay - capture clicks outside sidebar */}
       {isMobileOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20"

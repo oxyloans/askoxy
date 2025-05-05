@@ -6,6 +6,7 @@ import {
   Empty,
   Badge,
   Card,
+  Table,
   Tag,
   List,
   Typography,
@@ -180,159 +181,195 @@ const DeliveryBoyOrders: React.FC = () => {
     return "totalAmount" in order && order.orderStatus === "PickedUp";
   };
 
-  const renderOrderCards = (orders: Order[], type: string) => {
+  const renderOrderTable = (orders: Order[], type: string) => {
     if (orders.length === 0) {
       return <Empty description="No orders found" />;
     }
 
-    return (
-      <Row gutter={[16, 16]}>
-        {orders.map((order) => (
-          <Col key={order.orderId} xs={24} sm={12} md={8} lg={8} xl={8}>
-            <Card
-              className="w-full border-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2"
-              bordered={false}
+    // Sort orders by orderDate (latest first)
+    const sortedOrders = [...orders].sort(
+      (a, b) =>
+        new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+    );
+
+    const columns = [
+      {
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Order ID</span>
+        ),
+        dataIndex: "orderId",
+        key: "orderId",
+        width: 120,
+        render: (_: any, order: Order) => (
+          <div className="flex flex-col">
+            <Typography.Text
+              strong
+              className="text-blue-600 cursor-pointer hover:underline"
+              onClick={() => handleOrderDetails(order)}
             >
-              <div className="flex flex-col space-y-4">
-                {/* Order ID Section */}
-                <div className="flex justify-between items-center">
-                  <Typography.Text strong>
-                    OrderId : #
-                    <span className="text-purple-900 text-xl">
-                      {"uniqueId" in order
-                        ? order.uniqueId
-                        : order.orderId.slice(-4)}
-                    </span>
-                  </Typography.Text>
-                  <Tag
-                    color={
-                      type === "assigned"
-                        ? "blue"
-                        : type === "picked"
-                        ? "orange"
-                        : "green"
-                    }
+              #{"uniqueId" in order ? order.uniqueId : order.orderId.slice(-4)}
+            </Typography.Text>
+            <Tag color="blue" className="mt-1 w-fit">
+              {type === "assigned"
+                ? "placed"
+                : type === "picked"
+                ? "Picked Up"
+                : "Delivered"}
+            </Tag>
+          </div>
+        ),
+      },
+      {
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Items</span>
+        ),
+        key: "items",
+        width: 200,
+        render: (_: any, order: Order) => (
+          <div className="space-y-1">
+            {order.orderItems && order.orderItems.length > 0 ? (
+              <>
+                {order.orderItems.slice(0, 2).map((item, index) => (
+                  <Typography.Text
+                    key={index}
+                    className="block text-gray-800"
+                    ellipsis={{
+                      tooltip:
+                        item.itemName || item.itemBarCode || "Unnamed Item",
+                    }}
                   >
-                    {type === "assigned"
-                      ? "Assigned"
-                      : type === "picked"
-                      ? "Picked Up"
-                      : "Delivered"}
-                  </Tag>
-                </div>
-
-                {/* Date Section */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <CalendarOutlined className="mr-2 text-gray-500" />
-                    <Typography.Text type="secondary">Date</Typography.Text>
-                  </div>
-                  <Typography.Text>
-                    {new Date(order.orderDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </Typography.Text>
-                </div>
-
-                {/* Amount Section */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <DollarOutlined className="mr-2 text-green-600" />
-                    <Typography.Text strong>Amount</Typography.Text>
-                  </div>
-                  <Typography.Text strong type="success">
-                    {new Intl.NumberFormat("en-IN", {
-                      style: "currency",
-                      currency: "INR",
-                    }).format(
-                      isPickedUpOrder(order)
-                        ? order.totalAmount || 0
-                        : order.subTotal || order.grandTotal || 0
+                    {item.itemName || item.itemBarCode || "Unnamed Item"}
+                    {item.price && (
+                      <span className="text-gray-500 ml-2">₹{item.price}</span>
                     )}
                   </Typography.Text>
-                </div>
-
-                {/* Delivery Address - Only for assigned/delivered orders */}
-                { order.orderAddress && (
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center">
-                      <EnvironmentOutlined className="mr-2 text-red-500" />
-                      <Typography.Text strong>Delivery Address</Typography.Text>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-md h-[90px] overflow-y-auto break-words scrollbar-hide">
-                      <Typography.Text className="block leading-tight">
-                        {order.orderAddress.flatNo
-                          ? `${order.orderAddress.flatNo}, `
-                          : ""}
-                        {order.orderAddress.address || ""}
-                        {order.orderAddress.landMark
-                          ? `, ${order.orderAddress.landMark}`
-                          : ""}
-                        {order.orderAddress.pincode
-                          ? ` - ${order.orderAddress.pincode}`
-                          : ""}
-                      </Typography.Text>
-                    </div>
-                  </div>
+                ))}
+                {order.orderItems.length > 2 && (
+                  <Typography.Text className="text-gray-500 text-sm">
+                    +{order.orderItems.length - 2} more
+                  </Typography.Text>
                 )}
+              </>
+            ) : (
+              <Typography.Text className="text-gray-400">
+                No items
+              </Typography.Text>
+            )}
+          </div>
+        ),
+      },
+      {
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Amount</span>
+        ),
+        key: "amount",
+        width: 120,
+        render: (_: any, order: Order) => (
+          <Typography.Text strong className="text-green-600 whitespace-nowrap">
+            {new Intl.NumberFormat("en-IN", {
+              style: "currency",
+              currency: "INR",
+              minimumFractionDigits: 2,
+            }).format(
+              isPickedUpOrder(order)
+                ? order.totalAmount || 0
+                : order.subTotal || order.grandTotal || 0
+            )}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: <span className="font-bold text-black text-[1.05em]">Date</span>,
+        dataIndex: "orderDate",
+        key: "orderDate",
+        width: 120,
+        render: (date: string) => (
+          <Typography.Text className="text-gray-800 whitespace-nowrap">
+            {new Date(date).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "numeric",
+              year: "numeric",
+            })}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Address</span>
+        ),
+        key: "address",
+        width: 250,
+        render: (_: any, order: Order) =>
+          order.orderAddress ? (
+            <div
+              className="max-h-[60px] overflow-y-auto"
+              style={{
+                scrollbarWidth: "none", // Firefox
+                msOverflowStyle: "none", // IE and Edge
+              }}
+            >
+              <style>
+                {`
+                  div::-webkit-scrollbar {
+                    display: none; // Chrome, Safari, and Opera
+                  }
+                `}
+              </style>
+              <Typography.Text className="block text-gray-800">
+                {order.orderAddress.flatNo
+                  ? `${order.orderAddress.flatNo}, `
+                  : ""}
+                {order.orderAddress.address || ""}
+              </Typography.Text>
+              {order.orderAddress.landMark && (
+                <Typography.Text className="block text-gray-800">
+                  {order.orderAddress.landMark}
+                </Typography.Text>
+              )}
+              {order.orderAddress.pincode && (
+                <Typography.Text className="block text-gray-800">
+                  {order.orderAddress.pincode}
+                </Typography.Text>
+              )}
+            </div>
+          ) : (
+            <Typography.Text className="text-gray-400">N/A</Typography.Text>
+          ),
+      },
+      {
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Action</span>
+        ),
+        key: "action",
+        width: 120,
+        render: (_: any, order: Order) => (
+          <Button
+            type="primary"
+            size="small"
+            className="bg-purple-500 hover:bg-purple-600"
+            onClick={() => handleOrderDetails(order)}
+          >
+            View
+          </Button>
+        ),
+      },
+    ];
 
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center">
-                    <ShoppingOutlined className="mr-2 text-blue-500" />
-                    <Typography.Text strong>Items</Typography.Text>
-                    <Typography.Text type="secondary" className="ml-2">
-                      ({order.orderItems?.length || 0})
-                    </Typography.Text>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-md max-h-[80px] overflow-y-auto scrollbar-hide">
-                    {order.orderItems && order.orderItems.length > 0 ? (
-                      <div className="space-y-2">
-                        {order.orderItems.slice(0, 3).map((item, index) => (
-                          <div key={index} className="flex flex-col">
-                            <Typography.Text ellipsis className="max-w-[70%]">
-                              {item.itemName ||
-                                item.itemBarCode ||
-                                "Unnamed Item"}
-                            </Typography.Text>
-                            {item.price && (
-                              <Typography.Text type="secondary">
-                                ₹{item.price}
-                              </Typography.Text>
-                            )}
-                          </div>
-                        ))}
-                        {order.orderItems.length > 3 && (
-                          <Typography.Text type="secondary">
-                            +{order.orderItems.length - 3} more items
-                          </Typography.Text>
-                        )}
-                      </div>
-                    ) : (
-                      <Typography.Text type="secondary">
-                        No items
-                      </Typography.Text>
-                    )}
-                  </div>
-                </div>
-
-                {/* View Details Button */}
-                <div className="mt-auto">
-                  <Button
-                    type="primary"
-                    icon={<EyeOutlined />}
-                    className="w-full"
-                    onClick={() => handleOrderDetails(order)}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+    return (
+      <Table
+        columns={columns}
+        dataSource={sortedOrders}
+        rowKey="orderId"
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "20", "50"],
+        }}
+        className="w-full shadow-sm rounded-lg"
+        rowClassName="hover:bg-gray-50"
+        bordered
+        scroll={{ x: 1000 }}
+      />
     );
   };
 
@@ -345,7 +382,7 @@ const DeliveryBoyOrders: React.FC = () => {
           Assigned {assignedOrders.length > 0 && `(${assignedOrders.length})`}
         </div>
       ),
-      children: renderOrderCards(assignedOrders, "assigned"),
+      children: renderOrderTable(assignedOrders, "assigned"),
     },
     {
       key: "picked",
@@ -355,7 +392,7 @@ const DeliveryBoyOrders: React.FC = () => {
           Picked Up {pickedUpOrders.length > 0 && `(${pickedUpOrders.length})`}
         </div>
       ),
-      children: renderOrderCards(pickedUpOrders, "picked"),
+      children: renderOrderTable(pickedUpOrders, "picked"),
     },
     {
       key: "delivered",
@@ -366,7 +403,7 @@ const DeliveryBoyOrders: React.FC = () => {
           {deliveredOrders.length > 0 && `(${deliveredOrders.length})`}
         </div>
       ),
-      children: renderOrderCards(deliveredOrders, "delivered"),
+      children: renderOrderTable(deliveredOrders, "delivered"),
     },
   ];
 

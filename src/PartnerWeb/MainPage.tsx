@@ -25,6 +25,7 @@ import {
   Radio,
   Space,
   Empty,
+  DatePicker,
 } from "antd";
 import { ColumnsType } from "antd/es/table";
 import {
@@ -38,6 +39,7 @@ import { Truck, ShoppingBag, ShoppingCart, Store } from "lucide-react";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Dayjs } from "dayjs";
 
 type OrderData = {
   orderId: string;
@@ -54,6 +56,18 @@ type OrderData = {
   distancefromMiyapur: string;
   distancefromMythriNager: string;
   choosedLocations: string;
+  orderItems: OrderItems[];
+  orderFrom: string;
+  userType: string;
+};
+
+type OrderItems = {
+  itemName: string;
+  quantity: string;
+  singleItemPrice: number;
+  itemMrpPrice: number;
+  price: number;
+  weight: string;
 };
 
 type DeliveryBoy = {
@@ -105,6 +119,19 @@ const MainPage: React.FC = () => {
   const [dbLoading1, setdbLoading1] = useState<boolean>(false);
   const handleTableChange = (pagination: any) => {
     setPagination(pagination);
+  };
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const handleFilterByDate = () => {
+    if (!selectedDate) {
+      return;
+    }
+
+    const filtered = filteredOrders.filter((order) => {
+      return order.expectedDeliveryDate === selectedDate;
+    });
+
+    setFilteredOrders(filtered.length > 0 ? filtered : filteredOrders);
   };
 
   const STATUS_COLORS = {
@@ -443,6 +470,7 @@ const MainPage: React.FC = () => {
         );
 
       case "3":
+      case "PickedUp":
         return (
           <div className="flex flex-col md:flex-row gap-2">
             <div className="group relative">
@@ -480,30 +508,33 @@ const MainPage: React.FC = () => {
 
   const columns: ColumnsType<OrderData> = [
     {
-      title: "S.No",
-      dataIndex: "index",
-      key: "index",
-      width: 60,
-      sorter: (a, b) => a.orderId.localeCompare(b.orderId),
-      render: (_text, _record, index) =>
-        (pagination.current - 1) * pagination.pageSize + index + 1,
-    },
-    {
       title: "Order ID",
       dataIndex: "uniqueId",
       key: "uniqueId",
-      width: 120,
+      width: 100,
       sorter: (a, b) => a.uniqueId.localeCompare(b.uniqueId),
       render: (text: string, record: OrderData) => (
-        <div>
-          <Typography.Text className="text-lg font-semibold">
+        <div className="flex flex-col gap-1">
+          <Typography.Text
+            className="text-xl font-bold cursor-pointer hover:text-blue-500"
+            onClick={() => handleViewDetails(record)}
+          >
             #{text}
           </Typography.Text>
-          <div className="flex items-center gap-2 mt-1">
-            <Tag color={getStatusColor(record.orderStatus)}>
-              {getStatusText(record.orderStatus)}
+          <Tag
+            color={getStatusColor(record.orderStatus)}
+            className="w-fit text-xs"
+          >
+            {getStatusText(record.orderStatus)}
+          </Tag>
+          {record.orderFrom && (
+            <Tag color="green" className="w-fit text-xs">
+              {record.orderFrom}
             </Tag>
-          </div>
+          )}
+          <Tag color="purple" className="w-fit text-xs">
+            {record.userType}
+          </Tag>
         </div>
       ),
     },
@@ -511,21 +542,25 @@ const MainPage: React.FC = () => {
       title: "Order Address",
       dataIndex: "orderAddress",
       key: "orderAddress",
-      width: 180,
+      width: 190,
       sorter: (a, b) =>
         (a.orderAddress?.address || "").localeCompare(
           b.orderAddress?.address || ""
         ),
-      render: (_text, record: OrderData) => (
-        <div className="w-[160px] h-[100px] overflow-y-auto overflow-x-hidden scrollbar-hide">
-          {record.orderAddress?.address || "Not provided"}
-        </div>
-      ),
+      render: (_: any, record: any) => {
+        return (
+          <div className="w-[200px] h-[120px] overflow-y-auto overflow-x-hidden scrollbar-hide">
+            {record.orderAddress
+              ? `${record.orderAddress.flatNo}, ${record.orderAddress.address}, ${record.orderAddress.landMark}, ${record.orderAddress.pincode}`
+              : "No Address Available"}
+          </div>
+        );
+      },
     },
     {
       title: "Order Pincode",
       key: "orderPincode",
-      width: 120,
+      width: 80,
       sorter: (a, b) =>
         (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
       render: (record: OrderData) => (
@@ -541,79 +576,82 @@ const MainPage: React.FC = () => {
       ),
     },
     {
-      title: "Order Date",
+      title: "Date & Items",
       key: "datetime",
-      width: 110,
+      width: 90,
       sorter: (a: OrderData, b: OrderData) =>
         new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime(),
       render: (record: OrderData) => (
         <div className="whitespace-nowrap">
           <Typography.Text>
-            {record.orderDate
-              ? new Date(record.orderDate).toLocaleDateString()
-              : "Not provided"}
+            <div>
+              <strong>Order:</strong>{" "}
+              {record.orderDate
+                ? new Date(record.orderDate).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "2-digit",
+                  })
+                : "Not provided"}
+            </div>
+            <div>
+              <strong>Expected:</strong>{" "}
+              {record.expectedDeliveryDate
+                ? (() => {
+                    const [day, month, year] =
+                      record.expectedDeliveryDate.split("-");
+                    const correctedDate = new Date(`${month}-${day}-${year}`);
+                    return correctedDate.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "2-digit",
+                    });
+                  })()
+                : "Not provided"}
+            </div>
           </Typography.Text>
-        </div>
-      ),
-    },
-    // {
-    //   title: "Expected Delivery",
-    //   dataIndex: "expectedDeliveryDate",
-    //   key: "expectedDeliveryDate",
-    //   width: 160,
-    //   render: (_: string, record: OrderData) => {
-    //     if (!record.expectedDeliveryDate || !record.timeSlot) {
-    //       return "N/A";
-    //     }
-    //     return `${record.expectedDeliveryDate} (${record.timeSlot})`;
-    //   },
-    //   sorter: (a: OrderData, b: OrderData) =>
-    //     new Date(a.expectedDeliveryDate || "").getTime() -
-    //     new Date(b.expectedDeliveryDate || "").getTime(),
-    // },
-    {
-      title: "Distance",
-      key: "distance",
-      width: 180,
-      render: (record: OrderData) => (
-        <div className="flex flex-col space-y-1">
-          <div className="flex items-center">
-            <span className="mr-2 w-20">Miyapur:</span>
-            <span className="text-gray-500">
-              {record.distancefromMiyapur || "Not given"}
-            </span>
-          </div>
-          <div className="flex items-center">
-            <span className="mr-2 w-25">MythriNagar:</span>
-            <span className="text-gray-500 ">
-              {record.distancefromMythriNager || "Not given"}
-            </span>
-          </div>
-          <div className="flex items-center">
-            <span className="mr-2 w-20">Selected:</span>
-            <span className="text-green-600">
-              {record.choosedLocations || "Not given"}
-            </span>
-          </div>
-        </div>
-      ),
-      sorter: (a: OrderData, b: OrderData) => {
-        const getNumericDistance = (distance: string) => {
-          if (!distance) return 0;
-          const numVal = parseFloat(distance.replace(/[^\d.]/g, ""));
-          return isNaN(numVal) ? 0 : numVal;
-        };
+          <div className="bg-blue-50 p-2 rounded-md max-h-[100px] overflow-y-auto scrollbar-hide w-[220px]">
+            {record.orderItems && record.orderItems.length > 0 ? (
+              <div className="space-y-2">
+                {record.orderItems.map((item, index) => (
+                  <div key={index} className="flex flex-col">
+                    {/* Item Name */}
+                    <Typography.Text
+                      strong
+                      className="text-green-700 font-semibold text-sm"
+                      ellipsis={{ tooltip: item.itemName }}
+                    >
+                      {item.itemName || "Unnamed Item"}
+                    </Typography.Text>
 
-        const distA = getNumericDistance(a.distancefromMiyapur);
-        const distB = getNumericDistance(b.distancefromMiyapur);
-        return distA - distB;
-      },
+                    <div className="flex gap-2 text-xs text-gray-700">
+                      {item.price && (
+                        <Typography.Text className="text-red-600 font-medium text-xs">
+                          ₹{item.price}
+                        </Typography.Text>
+                      )}
+
+                      {item.quantity && <span>Qty: {item.quantity}</span>}
+                      {item.weight && <span>Weight: {item.weight}kgs</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Typography.Text type="secondary" className="text-xs">
+                No items
+              </Typography.Text>
+            )}
+          </div>
+        </div>
+      ),
     },
+
     {
       title: "Actions",
       dataIndex: "orderStatus",
       key: "orderStatus",
-      width: 180,
+      width: 160,
       sorter: (a, b) => a.orderStatus.localeCompare(b.orderStatus),
       render: (text: string, record: OrderData) => {
         return (
@@ -636,11 +674,53 @@ const MainPage: React.FC = () => {
         );
       },
     },
+    {
+      title: "Distance",
+      key: "distance",
+      width: 100,
+      render: (record: OrderData) => (
+        <div className="flex flex-col space-y-0.5 text-sm text-gray-600">
+          <div className="flex justify-between">
+            <span>Miyapur:</span>
+            <span>{record.distancefromMiyapur || "N/A"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>MythriNagar:</span>
+            <span>{record.distancefromMythriNager || "N/A"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Selected:</span>
+            <span className="text-green-500">
+              {record.choosedLocations || "N/A"}
+            </span>
+          </div>
+        </div>
+      ),
+      sorter: (a: OrderData, b: OrderData) => {
+        const getNumericDistance = (distance: string) => {
+          if (!distance) return 0;
+          const numVal = parseFloat(distance.replace(/[^\d.]/g, ""));
+          return isNaN(numVal) ? 0 : numVal;
+        };
+
+        const distA = getNumericDistance(a.distancefromMiyapur);
+        const distB = getNumericDistance(b.distancefromMiyapur);
+        return distA - distB;
+      },
+    },
   ];
 
   const handleCancelCLick = () => {
     setdbModalVisible(false);
     setSelectedDeliveryBoy(null);
+  };
+
+  const handleDateChange = (date: any, dateString: string | string[]) => {
+    if (Array.isArray(dateString)) {
+      setSelectedDate(dateString[0] || null);
+    } else {
+      setSelectedDate(dateString);
+    }
   };
 
   return (
@@ -804,21 +884,43 @@ const MainPage: React.FC = () => {
                   }}
                   className="w-full sm:max-w-[250px]"
                 />
-                {/* <Select
-                  className="w-full sm:max-w-[250px]"
-                  placeholder="Filter by Order Status"
-                  allowClear
-                  value={selectedStatus}
-                  onChange={handleStatusFilter}
-                >
-                  <Select.Option value="1">New Orders</Select.Option>
-                  <Select.Option value="2">Accepted Orders</Select.Option>
-                  <Select.Option value="3">Assigned Orders</Select.Option>
-                </Select> */}
               </div>
             }
             bodyStyle={{ padding: 0 }}
           >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 p-2 w-full">
+              <DatePicker
+                format="DD-MM-YYYY"
+                onChange={handleDateChange}
+                placeholder="Select Expected delivery date"
+                allowClear
+                className="w-full sm:w-[320px]"
+              />
+              <Button
+                style={{
+                  backgroundColor: "rgb(0, 140, 186)",
+                  borderColor: "rgb(0, 140, 186)",
+                }}
+                type="primary"
+                onClick={handleFilterByDate}
+                className="w-full sm:w-auto"
+              >
+                Get Data
+              </Button>
+
+              <div className="flex justify-end w-full p-2">
+                <Button
+                  onClick={() => {
+                    setFilteredOrders(orderDetails);
+                    setSelectedDate(null);
+                  }}
+                  className="bg-blue-400 sm:w-auto"
+                >
+                  Get All Orders
+                </Button>
+              </div>
+            </div>
+
             <Table
               columns={columns}
               className="p-4"
@@ -834,7 +936,7 @@ const MainPage: React.FC = () => {
               }}
               loading={loading}
               onChange={handleTableChange}
-              // scroll={{ x: 1100 }}
+              scroll={{ x: "max-content" }}
               size={isMobile ? "small" : "middle"}
             />
           </Card>

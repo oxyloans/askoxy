@@ -15,6 +15,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from "@ant-design/icons";
+import { FaComments } from "react-icons/fa";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -34,22 +35,22 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const sidebarItems = [
     {
-      key: "/home/",
+      key: "/home",
       icon: <DashboardOutlined />,
       label: "Dashboard",
     },
     {
-      key: "/home/newOrders",
+      key: "/home/newOrders/1",
       icon: <ShoppingCartOutlined />,
       label: "New Orders",
     },
     {
-      key: "/home/acceptedOrders",
+      key: "/home/acceptedOrders/2",
       icon: <CheckOutlined />,
       label: "Accepted Orders",
     },
     {
-      key: "/home/AssignedOrders",
+      key: "/home/AssignedOrders/3",
       icon: <TruckOutlined />,
       label: "Assigned Orders",
     },
@@ -72,6 +73,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "/home/queryManagement",
       icon: <QuestionCircleOutlined />,
       label: "All Queries",
+    },
+    {
+      key: "/home/feedback",
+      icon: <FaComments />,
+      label: "User Feedback",
     },
     {
       key: "/home/scan-qr",
