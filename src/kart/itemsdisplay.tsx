@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
@@ -16,7 +16,6 @@ import {
   MessageCircle,
   AlertCircle,
   Loader2,
-  Ticket,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ValidationPopup from "./ValidationPopup";
@@ -80,9 +79,6 @@ const ItemDisplayPage = () => {
     status: {},
   });
 
-  const [movieOfferClaimed, setMovieOfferClaimed] = useState(false);
-  const movieOfferModalShownRef = useRef(false);
-
   const [chatFeatureComingSoon, setChatFeatureComingSoon] = useState(true);
 
   const context = useContext(CartContext);
@@ -117,9 +113,6 @@ const ItemDisplayPage = () => {
   };
 
   useEffect(() => {
-    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
-    setMovieOfferClaimed(offerClaimed);
-
     if (itemId) {
       if (!state?.item) {
         fetchItemDetails(itemId);
@@ -137,8 +130,6 @@ const ItemDisplayPage = () => {
       state: { item },
       replace: true,
     });
-
-    movieOfferModalShownRef.current = false;
   };
 
   const fetchCartData = async (itemId: string) => {
@@ -250,76 +241,17 @@ const ItemDisplayPage = () => {
     return false;
   };
 
-  const checkMovieOfferStatus = (): boolean => {
-    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
-    console.log("Movie ticket offer claimed (localStorage):", offerClaimed);
-    return offerClaimed;
-  };
-
-  const findFiveKgBag = (item: Item): boolean => {
-    const weight = parseFloat(item.weight?.toString() || "0");
-    const weightUnit = item.weightUnit?.toLowerCase() || item.units?.toLowerCase() || "";
-    return (weight === 5 && weightUnit.includes("kg"));
-  };
-
-  const showMovieOfferModal = (item: Item, isAddToCart: boolean = false) => {
-    movieOfferModalShownRef.current = true;
-
-    const modalContent = (
-      <div>
-        <p>
-          🎉 Congratulations! You're eligible for a Free PVR Movie Ticket to
-          watch <strong>HIT: The Third Case</strong> with your purchase of a 5KG
-          rice bag!
-        </p>
-        <br />
-        <p>
-          ✅ Offer valid only once per user
-          <br />🎟 Applicable exclusively on 5KG rice bags
-          <br />🚚 Redeemable on your first successful delivery only
-          <br />❗ Once claimed, the offer cannot be reused
-        </p>
-        <br />
-        <p>🔥 Grab yours while it lasts — enjoy the movie on us</p>
-      </div>
-    );
-
-    if (isAddToCart) {
-      Modal.confirm({
-        title: "🎁 Special Offer!",
-        content: modalContent,
-        okText: "Claim Movie Ticket",
-        cancelText: "No Thanks",
-        onOk: async () => {
-          try {
-            localStorage.setItem("movieOfferClaimed", "true");
-            setMovieOfferClaimed(true);
-            message.success(
-              "Movie ticket offer claimed! Details will be shared upon delivery."
-            );
-            await addToCartAfterOffer(item);
-          } catch (err) {
-            console.error("Movie ticket offer claim failed:", err);
-            message.error(
-              "Unable to claim the movie ticket offer. Please try again."
-            );
-          }
-        },
-        onCancel: async () => {
-          console.log("Movie offer declined");
-          await addToCartAfterOffer(item);
-        },
-      });
-    } else {
-      Modal.info({
-        title: "🎁 Special Offer!",
-        content: modalContent,
-        okText: "Close",
-      });
+  const handleAddToCart = async (item: Item) => {
+    if (!token || !customerId) {
+      message.warning("Please login to add items to the cart.");
+      setTimeout(() => navigate("/whatsapplogin"), 2000);
+      return;
     }
-  };
+    if (!checkProfileCompletion()) {
+      setShowValidationPopup(true);
+      return;
+    }
 
-  const addToCartAfterOffer = async (item: Item) => {
     setLoadingItems((prev) => ({
       ...prev,
       items: { ...prev.items, [item.itemId]: true },
@@ -364,24 +296,6 @@ const ItemDisplayPage = () => {
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
       }));
-    }
-  };
-
-  const handleAddToCart = async (item: Item) => {
-    if (!token || !customerId) {
-      message.warning("Please login to add items to the cart.");
-      setTimeout(() => navigate("/whatsapplogin"), 2000);
-      return;
-    }
-    if (!checkProfileCompletion()) {
-      setShowValidationPopup(true);
-      return;
-    }
-
-    if (findFiveKgBag(item) && !movieOfferClaimed) {
-      showMovieOfferModal(item, true);
-    } else {
-      await addToCartAfterOffer(item);
     }
   };
 
@@ -698,28 +612,6 @@ const ItemDisplayPage = () => {
                         Out of Stock
                       </button>
                     )}
-
-                    {itemDetails && findFiveKgBag(itemDetails) && !movieOfferClaimed && (
-                      <div className="mt-2 bg-yellow-100 border border-yellow-200 text-yellow-800 rounded-lg p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Ticket className="w-5 h-5 text-yellow-700" />
-                          <span className="text-sm font-medium">Get 1 PVR Free Movie Ticket</span>
-                        </div>
-                        <button
-                          onClick={() => showMovieOfferModal(itemDetails)}
-                          className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-md"
-                        >
-                          View Offer
-                        </button>
-                      </div>
-                    )}
-
-                    {itemDetails && findFiveKgBag(itemDetails) && movieOfferClaimed && (
-                      <div className="mt-2 bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 flex items-center">
-                        <Ticket className="w-5 h-5 text-green-600 mr-2" />
-                        <span className="text-sm font-medium">Movie ticket offer claimed! Details will be shared upon delivery.</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -899,16 +791,22 @@ const ItemDisplayPage = () => {
                                 handleAddToCart(item);
                               }}
                             >
-                              <ShoppingCart className="w-4 h-4" />
+                             <ShoppingCart className="w-4 h-4" />
                             </button>
                           )
                         ) : (
-                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-md">
-                            Out of Stock
+                          <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                            Out of stock
                           </span>
                         )}
                       </div>
                     ))}
+                    <button
+                      onClick={() => navigate("/main/dashboard/products")}
+                      className="w-full py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2"
+                    >
+                      View More Products
+                    </button>
                   </div>
                 </div>
               )}
@@ -917,8 +815,6 @@ const ItemDisplayPage = () => {
         </div>
       </div>
 
-      <Footer />
-
       {showValidationPopup && (
         <ValidationPopup
           isOpen={showValidationPopup}
@@ -926,6 +822,8 @@ const ItemDisplayPage = () => {
           onAction={handleProfileRedirect}
         />
       )}
+
+      <Footer />
     </div>
   );
 };

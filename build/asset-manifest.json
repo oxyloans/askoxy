@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.535caf15.css",
-    "main.js": "/static/js/main.8f4e030c.js",
+    "main.css": "/static/css/main.686fc276.css",
+    "main.js": "/static/js/main.a91228ee.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.png": "/static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.f22986a86ab61897cfab.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -27,7 +27,6 @@
     "static/media/RICEU1.png": "/static/media/RICEU1.edf64b4f457e2173b6eb.png",
     "static/media/tb1.png": "/static/media/tb1.c24dd9c2d84aa3328081.png",
     "static/media/retro.png": "/static/media/retro.e7a8f9d8a90af29245c1.png",
-    "static/media/o2.png": "/static/media/o2.167528e93bf4892271a5.png",
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
     "static/media/RICEU7.png": "/static/media/RICEU7.016b8b9d37b6c9a67ad9.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
@@ -187,11 +186,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.535caf15.css.map": "/static/css/main.535caf15.css.map",
-    "main.8f4e030c.js.map": "/static/js/main.8f4e030c.js.map"
+    "main.686fc276.css.map": "/static/css/main.686fc276.css.map",
+    "main.a91228ee.js.map": "/static/js/main.a91228ee.js.map"
   },
   "entrypoints": [
-    "static/css/main.535caf15.css",
-    "static/js/main.8f4e030c.js"
+    "static/css/main.686fc276.css",
+    "static/js/main.a91228ee.js"
   ]
 }

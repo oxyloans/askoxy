@@ -8,6 +8,7 @@ import {
   CreditCard,
   Users,
   MessageSquare,
+  Coins,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -23,20 +24,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
- const handleSignout = () => {
-   const entryPoint = localStorage.getItem("entryPoint") || "/";
-   console.log("Signing out - Redirecting to:", entryPoint); // Debug log
+  const handleSignout = () => {
+    const entryPoint = localStorage.getItem("entryPoint") || "/";
+    console.log("Signing out - Redirecting to:", entryPoint); // Debug log
 
-   localStorage.removeItem("userId");
-   localStorage.removeItem("email");
-   localStorage.removeItem("accessToken");
-   localStorage.removeItem("mobileNumber");
-   localStorage.removeItem("whatsappNumber");
-   localStorage.clear();
-   localStorage.setItem("entryPoint", entryPoint); // Preserve entry point
+    localStorage.removeItem("userId");
+    localStorage.removeItem("email");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("mobileNumber");
+    localStorage.removeItem("whatsappNumber");
+    localStorage.clear();
+    localStorage.setItem("entryPoint", entryPoint); // Preserve entry point
 
-   navigate(entryPoint);
- };
+    navigate(entryPoint);
+  };
 
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
@@ -79,6 +80,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
       to: "/main/writetous",
       icon: <MessageSquare size={20} />,
       label: "Write to Us",
+    },
+    {
+      to: "/main/crypto",
+      icon: <Coins size={20} />,
+      label: "My Crypto",
     },
   ];
 

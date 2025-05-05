@@ -22,6 +22,7 @@ import DesignTemplatesPage from "./Templates/Templatehome";
 import UniversityPromoCard from "./Templates/UniversityPromoCard";
 import PromoCard from "./Templates/PromoCard";
 import RiceOfferFAQs from "./Dashboard/Faqs";
+import MyCrypto from "./Dashboard/MyCrypto";
 
 import AdminSidebar from "./AskoxyAdmin/Sider";
 import Home from "./Dashboard/Home";
@@ -176,15 +177,18 @@ const App: React.FC = () => {
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
             <Route path="/movietickets" element={<Pushpa2GPT />} />
-            <Route path="/usermobilenumberupdate" element={<MobileNumberUpdate/>} />
+            <Route
+              path="/usermobilenumberupdate"
+              element={<MobileNumberUpdate />}
+            />
             <Route path="/userregister" element={<UserRegister />} />
-            <Route path="/glms" element={<UseCases/>} />
+            <Route path="/glms" element={<UseCases />} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />
             <Route path="/taskupdated" element={<TaskUpdate />} />
             <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
-                        <Route path="/leavestatus" element={<TeamLeaveStatus />} />
+            <Route path="/leavestatus" element={<TeamLeaveStatus />} />
             <Route path="/all-statuses" element={<AllStatusPage />} />
             <Route path="/assigned-task" element={<AssignedTasksPage />} />
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
@@ -409,6 +413,14 @@ const App: React.FC = () => {
                 }
               />
               <Route
+                path="crypto"
+                element={
+                  <RequireAuth>
+                    <MyCrypto />
+                  </RequireAuth>
+                }
+              />
+              <Route
                 path="tickethistory"
                 element={
                   <RequireAuth>
@@ -443,7 +455,7 @@ const App: React.FC = () => {
               <Route path="assignedOrders" element={<AssignedOrders />} /> */}
               <Route path="newOrders/:status" element={<NewOrders />} />
               <Route path="acceptedOrders/:status" element={<NewOrders />} />
-              <Route path="assignedOrders/:status" element={<NewOrders />} />
+              <Route path="assignedOrders/:status" element={<NewOrders />} />
               <Route path="orderDetails" element={<OrderDetailsPage />} />
               <Route path="allOrders" element={<AllOrders />} />
               <Route path="dbList" element={<DeliveryBoyList />} />
@@ -451,7 +463,7 @@ const App: React.FC = () => {
               <Route path="scan-qr" element={<BarcodeScanner />} />
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
-              <Route path="feedback" element={<FeedbackDashboard />} />
+              <Route path="feedback" element={<FeedbackDashboard />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}
@@ -473,10 +485,10 @@ const App: React.FC = () => {
               />
               <Route path="dataAssigned" element={<DataAssigned />} />
               <Route path="referredData" element={<ReferredData />} />
-              <Route path="orderReport" element={<OrderReport/>} />
-              <Route path="feedback" element={<FeedbackDashboard />} />
+              <Route path="orderReport" element={<OrderReport />} />
+              <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="helpdashboard" element={<HelpDeskDashboard />} />
-              <Route path="todaycalls" element={<CallerHistoryPage />} />
+              <Route path="todaycalls" element={<CallerHistoryPage />} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

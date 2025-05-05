@@ -512,48 +512,62 @@ const fetchTimeSlots = async (): Promise<void> => {
         { customerId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
       setWalletAmount(usableAmount);
-      setAfterWallet(usableAmount);
+      setAfterWallet(usableAmount); // Initially, after wallet = available wallet
       setWalletMessage(response.data.message || "");
-      setUsedWalletAmount(0);
+      setUsedWalletAmount(0); // Initially no wallet amount is used
+      
+      // Make sure to reset these states when getting new wallet information
+      setUseWallet(false);
     } catch (error: unknown) {
       console.error("Error fetching wallet amount:", error);
       message.error("Failed to fetch wallet balance");
       setWalletAmount(0);
       setAfterWallet(0);
       setUsedWalletAmount(0);
+      setUseWallet(false);
     }
   };
 
   function grandTotalfunc() {
-    let total = totalAmount + deliveryBoyFee;
-    let usedWallet = 0;
-
+    // Start with base amount before any discounts
+    const baseTotal = totalAmount + deliveryBoyFee;
+    let discountedTotal = baseTotal;
+    
     // Apply coupon discount if applicable
     if (coupenApplied && coupenDetails > 0) {
-      total = Math.max(0, total - coupenDetails);
+      discountedTotal = Math.max(0, discountedTotal - coupenDetails);
     }
-
-    // Apply wallet amount if selected
+    
+    // Calculate wallet usage
+    let newUsedWalletAmount = 0;
     if (useWallet && walletAmount > 0) {
-      usedWallet = Math.min(walletAmount, total);
-      total = Math.max(0, total - usedWallet);
+      // Only use what's needed from wallet, up to available amount
+      newUsedWalletAmount = Math.min(walletAmount, discountedTotal);
+      discountedTotal = Math.max(0, discountedTotal - newUsedWalletAmount);
     }
-
-    // Update states
-    setUsedWalletAmount(usedWallet);
-    setAfterWallet(walletAmount - usedWallet);
-    setGrandTotalAmount(total);
+    
+    // Update states correctly
+    setUsedWalletAmount(newUsedWalletAmount);
+    setAfterWallet(walletAmount - newUsedWalletAmount);
+    setGrandTotalAmount(discountedTotal);
   }
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
+    
+    // Calculate the current total after any coupon discounts
+    let currentTotal = totalAmount + deliveryBoyFee;
+    if (coupenApplied && coupenDetails > 0) {
+      currentTotal = Math.max(0, currentTotal - coupenDetails);
+    }
+    
     const potentialUsedAmount = newValue
-      ? Math.min(walletAmount, grandTotalAmount || grandTotal)
+      ? Math.min(walletAmount, currentTotal)
       : 0;
-
+  
     Modal.confirm({
       title: newValue ? "Confirm Wallet Usage" : "Remove Wallet Usage",
       content: newValue
@@ -563,8 +577,19 @@ const fetchTimeSlots = async (): Promise<void> => {
         : `Stop using ₹${usedWalletAmount.toFixed(2)} from your wallet?`,
       onOk: () => {
         setUseWallet(newValue);
-        setUsedWalletAmount(potentialUsedAmount);
-        setAfterWallet(walletAmount - potentialUsedAmount);
+        
+        if (newValue) {
+          // If enabling wallet, calculate proper amount to use
+          setUsedWalletAmount(potentialUsedAmount);
+          setAfterWallet(walletAmount - potentialUsedAmount);
+          setGrandTotalAmount(currentTotal - potentialUsedAmount);
+        } else {
+          // If disabling wallet, reset wallet usage and recalculate total
+          setUsedWalletAmount(0);
+          setAfterWallet(walletAmount);
+          setGrandTotalAmount(currentTotal);
+        }
+        
         message.success(newValue ? "Wallet applied" : "Wallet removed");
       },
       onCancel: () => {
@@ -572,7 +597,6 @@ const fetchTimeSlots = async (): Promise<void> => {
       },
     });
   };
-
   useEffect(() => {
     grandTotalfunc();
   }, [
@@ -584,13 +608,14 @@ const fetchTimeSlots = async (): Promise<void> => {
     walletAmount,
   ]);
 
+
   const handlePayment = async () => {
     try {
       const hasStockIssues = cartData.some(
         (item) =>
           parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
       );
-
+  
       if (hasStockIssues) {
         Modal.error({
           title: "Stock Issues",
@@ -601,24 +626,28 @@ const fetchTimeSlots = async (): Promise<void> => {
         });
         return;
       }
-
+  
       if (!selectedTimeSlot) {
         Modal.error({ title: "Error", content: "Please select a time slot." });
         return;
       }
-
-      if (useWallet && walletAmount < usedWalletAmount) {
+  
+      // Validate that wallet usage doesn't exceed available amount
+      if (useWallet && usedWalletAmount > walletAmount) {
         Modal.error({
           title: "Wallet Error",
           content: "Insufficient wallet balance",
         });
         return;
       }
-
+  
       setLoading(true);
-
+  
       const avail = freeTicketAvailable === "YES" ? "YES" : null;
-
+      
+      // Make sure we're passing the correct wallet amount
+      const finalWalletAmount = useWallet ? usedWalletAmount : 0;
+  
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
@@ -628,7 +657,7 @@ const fetchTimeSlots = async (): Promise<void> => {
           landMark: selectedAddress.landMark,
           orderStatus: "ONLINE", // Always set to ONLINE
           pincode: selectedAddress.pincode,
-          walletAmount: usedWalletAmount,
+          walletAmount: finalWalletAmount, // Use the correct wallet amount
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
           couponValue: coupenApplied ? coupenDetails : 0,
           deliveryBoyFee,
@@ -644,10 +673,11 @@ const fetchTimeSlots = async (): Promise<void> => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
+      // Rest of the function remains unchanged
       if (response.status === 200 && response.data) {
         await fetchCartData();
-
+  
         // GA4 Purchase Event Tracking
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "purchase", {
@@ -667,13 +697,13 @@ const fetchTimeSlots = async (): Promise<void> => {
             })),
           });
         }
-
+  
         // Always proceed with online payment
         if (response.data.paymentId) {
           const number = localStorage.getItem("whatsappNumber");
           const withoutCountryCode = number?.replace("+91", "");
           sessionStorage.setItem("address", JSON.stringify(selectedAddress));
-
+  
           const paymentData = {
             mid: "1152305",
             amount: grandTotalAmount,
@@ -692,7 +722,7 @@ const fetchTimeSlots = async (): Promise<void> => {
             txnNote: "Rice Order In Live",
             vpa: "getepay.merchant128638@icici",
           };
-
+  
           getepayPortal(paymentData);
         } else {
           message.error("Order failed");

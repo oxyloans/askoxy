@@ -61,7 +61,7 @@ interface CartItem {
 
 interface HeaderImage {
   id: string | number;
-  src: string;
+  src: string; 
   alt?: string;
   path: string;
 }
@@ -253,18 +253,18 @@ const Home: React.FC = () => {
       alt: "Products",
       path: "/main/dashboard/products?weight=1.0",
     },
-    {
-      id: "o2",
-      src: O2,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=5.0",
-    },
-    {
-      id: "o6",
-      src: O7,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=5.0",
-    },
+    // {
+    //   id: "o2",
+    //   src: O2,
+    //   alt: "Products",
+    //   path: "/main/dashboard/products?weight=5.0",
+    // },
+    // {
+    //   id: "o6",
+    //   src: O7,
+    //   alt: "Products",
+    //   path: "/main/dashboard/products?weight=5.0",
+    // },
     {
       id: "o1",
       src: O6,
@@ -1051,7 +1051,7 @@ const Home: React.FC = () => {
       <div className="w-full bg-white border-b border-gray-100 py-3 md:py-6">
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
           {/* Responsive grid with better sizing for all devices */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols3- md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-4"> 
             {headerImages.map((image) => (
               <motion.div
                 key={image.id}
@@ -1086,12 +1086,6 @@ const Home: React.FC = () => {
           <div className="w-full md:w-3/5 mb-6 md:mb-0 text-center md:text-left">
             <h2 className="text-white text-xl md:text-2xl font-bold mb-3">Exclusive Rice Offers!</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
-                <Gift size={isMobile ? 12 : 16} className="mr-2" /> Buy 1kg Get 1kg Free
-              </div>
-              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
-                <Ticket size={isMobile ? 12 : 16} className="mr-2" /> Free Movie Ticket with 5kg
-              </div>
               <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
                 <Package size={isMobile ? 12 : 16} className="mr-2" /> Buy 10kg Get 18KG+ Steel Container
               </div>

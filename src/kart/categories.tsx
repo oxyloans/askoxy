@@ -97,14 +97,6 @@ const Categories: React.FC<CategoriesProps> = ({
   const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
     {}
   );
-  //Free Movie tickets for 5 kg rice bag
-  const movieOfferModalShownRef = useRef(false);
-  const [hasShownMovieOffer, setHasShownMovieOffer] = useState(
-    localStorage.getItem("movieOfferClaimed") === "true"
-  );
-  const [movieOfferMap, setMovieOfferMap] = useState<{
-    [key: string]: boolean;
-  }>({});
 
   const weightFilters = [
     { label: "1 KG", value: "1.0" },
@@ -223,7 +215,7 @@ const Categories: React.FC<CategoriesProps> = ({
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      // GA4 Add to Cart Event Tracking - KEEP THIS ONE
+      // GA4 Add to Cart Event Tracking
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "add_to_cart", {
           currency: "INR",
@@ -240,13 +232,7 @@ const Categories: React.FC<CategoriesProps> = ({
         });
       }
 
-      // Check for movie ticket offer (5kg bags) first
-      await maybeShowMovieOfferModal(item);
-      // Check for 1+1 offer (1kg bags) if no 5kg offer was shown
-      if (!movieOfferModalShownRef.current) {
-        await maybeShowOnePlusOneModal(item);
-      }
-
+      await maybeShowOnePlusOneModal(item);
       await fetchCartData(item.itemId);
       message.success("Item added to cart successfully.");
       setLoadingItems((prev) => ({
@@ -343,7 +329,7 @@ const Categories: React.FC<CategoriesProps> = ({
             items: { ...prev.items, [item.itemId]: false },
             status: { ...prev.status, [item.itemId]: "" },
           }));
-          message.success("Sorry, Please try again");
+          message.error("Sorry, Please try again");
         }
       } else {
         setLoadingItems((prev) => ({
@@ -388,10 +374,10 @@ const Categories: React.FC<CategoriesProps> = ({
             items: { ...prev.items, [item.itemId]: false },
             status: { ...prev.status, [item.itemId]: "" },
           }));
-          message.success("Sorry, Please try again");
+          message.error("Sorry, Please try again");
         }
       }
-      fetchCartData(item.itemId);
+      await fetchCartData(item.itemId);
     } catch (error) {
       console.error("Error updating quantity:", error);
       message.error("Error updating item quantity");
@@ -402,6 +388,7 @@ const Categories: React.FC<CategoriesProps> = ({
       }));
     }
   };
+
   const getCurrentCategoryItems = () => {
     const currentCategory =
       categories.find((cat) => cat.categoryName === activeCategory) ||
@@ -419,6 +406,7 @@ const Categories: React.FC<CategoriesProps> = ({
 
     return items;
   };
+
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
     const category = categories.find(
@@ -426,12 +414,11 @@ const Categories: React.FC<CategoriesProps> = ({
     );
     return category?.subCategories || [];
   };
+
   const handleWeightFilterClick = (value: string) => {
-    // If currently active, deactivate it
     if (activeWeightFilter === value) {
       setActiveWeightFilter(null);
     } else {
-      // Otherwise set as active
       setActiveWeightFilter(value);
     }
 
@@ -445,13 +432,6 @@ const Categories: React.FC<CategoriesProps> = ({
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
   };
-  // const handleResetFilters = () => {
-  //   setActiveWeightFilter(null);
-  //   setSelectedFilterKey("0");
-  //   setSelectedFilter("ALL");
-  // };
-
-  // 1+1 free rice bag modal starts here
 
   const checkOnePlusOneStatus = async (): Promise<boolean> => {
     const accessToken = localStorage.getItem("accessToken");
@@ -469,7 +449,7 @@ const Categories: React.FC<CategoriesProps> = ({
       return offeravail >= 2;
     } catch (error) {
       console.error("Failed to fetch 1+1 offer availability:", error);
-      return true; // Default to true to avoid showing modal on error
+      return true;
     }
   };
 
@@ -502,7 +482,7 @@ const Categories: React.FC<CategoriesProps> = ({
       cancelText: "No Thanks",
       onOk: async () => {
         try {
-          const currentQuantity = cartItems[item.itemId] || 1; // Use 1 as fallback since item is already added
+          const currentQuantity = cartItems[item.itemId] || 1;
 
           await axios.patch(
             `${BASE_URL}/cart-service/cart/incrementCartData`,
@@ -552,146 +532,6 @@ const Categories: React.FC<CategoriesProps> = ({
     showOnePlusOneModal(eligibleBag);
   };
 
-  //Free Movie Ticket upon buying 5 kg rice bag modal
-
-  // const checkMovieOfferStatus = async (): Promise<boolean> => {
-  //   const accessToken = localStorage.getItem("accessToken");
-  //   try {
-  //     const response = await axios.get(
-  //       `${BASE_URL}/cart-service/cart/freeTicketsforCustomer?customerId=${customerId}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       }
-  //     );
-  //     const freeTickets = response.data?.freeTickets || null;
-  //     console.log("Movie ticket offer freeTickets:", freeTickets);
-  //     return freeTickets !== null; // Return true if offer is claimed (not null), false if available (null)
-  //   } catch (error) {
-  //     console.error("Failed to fetch movie ticket offer status:", error);
-  //     return true; // Default to true to avoid showing modal on error
-  //   }
-  // };
-
-  const checkMovieOfferStatus = async (): Promise<boolean> => {
-    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
-    console.log("Movie ticket offer claimed (localStorage):", offerClaimed);
-    return offerClaimed;
-  };
-
-  const findFiveKgBag = (item: Item): Item | null => {
-    const weight = parseFloat(item.weight?.toString() || "0");
-    if (weight === 5 && item.units?.toLowerCase().includes("kg")) {
-      return item;
-    }
-    return null;
-  };
-
-  // const showMovieOfferModal = (item: Item) => {
-  //   Modal.confirm({
-  //     title: "🎬 Free Movie Ticket Offer!",
-  //     content: (
-  //       <p>
-  //         Congratulations! You're eligible for a{" "}
-  //         <strong>Free Movie Ticket</strong> to the latest{" "}
-  //         <strong>HIT: The Third Case</strong> movie with your purchase of a{" "}
-  //         <strong>5kg {item.itemName}</strong>!
-  //         <br />
-  //         <br />
-  //         <strong>Please Note:</strong> The Free Movie Ticket Offer is valid
-  //         only once per user and applies exclusively to 5kg rice bags only. This
-  //         offer can only be redeemed once per address and is applicable on the
-  //         first successful delivery only. Once claimed, it cannot be reused.
-  //         Grab it while it lasts!
-  //       </p>
-  //     ),
-  //     okText: "Claim Movie Ticket",
-  //     cancelText: "No Thanks",
-  //     onOk: async () => {
-  //       try {
-  //         setMovieOfferMap((prev) => ({
-  //           ...prev,
-  //           [item.itemId]: true,
-  //         }));
-  //         message.success(
-  //           "Movie ticket offer claimed! Details will be shared upon delivery."
-  //         );
-  //         await fetchCartData(item.itemId);
-  //       } catch (err) {
-  //         console.error("Movie ticket offer claim failed:", err);
-  //         message.error(
-  //           "Unable to claim the movie ticket offer. Please try again."
-  //         );
-  //       }
-  //     },
-  //     onCancel: async () => {
-  //       // No action needed; item is already added
-  //     },
-  //   });
-  // };
-
-  const showMovieOfferModal = (item: Item) => {
-    Modal.confirm({
-      title: "🎁 Special Offer!",
-      content: (
-        <p>
-          🎉 Congratulations! You're eligible for a Free PVR Movie Ticket to
-          watch <strong>HIT: The Third Case</strong> with your purchase of a 5KG
-          rice bag! <br />
-          <br />
-          ✅ Offer valid only once per user
-          <br /> 🎟 Applicable exclusively on 5KG rice bags
-          <br /> 🚚 Redeemable on your first successful delivery only
-          <br />❗ Once claimed, the offer cannot be reused
-          <br />
-          <br />
-          🔥 Grab yours while it lasts — enjoy the movie on us
-        </p>
-      ),
-      okText: "Claim Movie Ticket",
-      cancelText: "No Thanks",
-      onOk: async () => {
-        try {
-          // Simulate offer claim by updating localStorage
-          localStorage.setItem("movieOfferClaimed", "true");
-          setHasShownMovieOffer(true);
-
-          setMovieOfferMap((prev) => ({
-            ...prev,
-            [item.itemId]: true,
-          }));
-
-          message.success(
-            "Movie ticket offer claimed! Details will be shared upon delivery."
-          );
-          await fetchCartData(item.itemId);
-        } catch (err) {
-          console.error("Movie ticket offer claim failed:", err);
-          message.error(
-            "Unable to claim the movie ticket offer. Please try again."
-          );
-        }
-      },
-      onCancel: async () => {
-        // No action needed; item is already added
-      },
-    });
-  };
-
-  const maybeShowMovieOfferModal = async (item: Item) => {
-    if (movieOfferModalShownRef.current) return;
-
-    const eligibleBag = findFiveKgBag(item);
-    if (!eligibleBag) return;
-
-    const isOfferClaimed = await checkMovieOfferStatus();
-    if (isOfferClaimed) return;
-
-    movieOfferModalShownRef.current = true;
-    showMovieOfferModal(eligibleBag);
-  };
-
   return (
     <div className="bg-white shadow-lg px-4 sm:px-6 lg:px-8 py-4">
       {/* Category Tabs */}
@@ -702,10 +542,11 @@ const Categories: React.FC<CategoriesProps> = ({
               key={index}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeCategory === category.categoryName
-                ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
-                }`}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                activeCategory === category.categoryName
+                  ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
+                  : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
+              }`}
               onClick={() => {
                 onCategoryClick(category.categoryName);
                 if (typeof window !== "undefined" && window.gtag) {
@@ -749,12 +590,13 @@ const Categories: React.FC<CategoriesProps> = ({
                     ? 1
                     : 0.98,
               }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${filter.value === "1.0" && disabledFilters[filter.value]
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                : filter.value === activeWeightFilter
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                filter.value === "1.0" && disabledFilters[filter.value]
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                  : filter.value === activeWeightFilter
                   ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
                   : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
-                }`}
+              }`}
               onClick={() => handleWeightFilterClick(filter.value)}
               disabled={filter.value === "1.0" && disabledFilters[filter.value]}
               title={
@@ -781,10 +623,11 @@ const Categories: React.FC<CategoriesProps> = ({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!activeSubCategory
-                ? "bg-purple-100 text-purple-700"
-                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                }`}
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                !activeSubCategory
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+              }`}
               onClick={() => {
                 setActiveSubCategory(null);
                 if (typeof window !== "undefined" && window.gtag) {
@@ -803,10 +646,11 @@ const Categories: React.FC<CategoriesProps> = ({
                 key={subCategory.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${activeSubCategory === subCategory.id
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  activeSubCategory === subCategory.id
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                }`}
                 onClick={() => {
                   setActiveSubCategory(subCategory.id);
                   if (typeof window !== "undefined" && window.gtag) {
@@ -930,8 +774,8 @@ const Categories: React.FC<CategoriesProps> = ({
                     {item.units == "pcs"
                       ? "Pc"
                       : item.weight == "1"
-                        ? "Kg"
-                        : "Kgs"}
+                      ? "Kg"
+                      : "Kgs"}
                   </p>
                   <div className="flex items-baseline space-x-2">
                     <span className="text-lg font-semibold text-gray-900">
@@ -963,13 +807,20 @@ const Categories: React.FC<CategoriesProps> = ({
                         >
                           -
                         </motion.button>
-
+                        {loadingItems.items[item.itemId] ? (
+                          <Loader2 className="animate-spin text-purple-600 w-5 h-5" />
+                        ) : (
+                          <span className="text-purple-600 font-medium">
+                            {cartItems[item.itemId]}
+                          </span>
+                        )}
                         <motion.button
                           whileTap={{ scale: 0.9 }}
-                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${cartItems[item.itemId] >= item.quantity
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                            }`}
+                          className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
+                            cartItems[item.itemId] >= item.quantity
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (cartItems[item.itemId] < item.quantity) {
@@ -991,11 +842,6 @@ const Categories: React.FC<CategoriesProps> = ({
                           🎁 1 Free bag (1+1 Offer Applied)
                         </p>
                       )}
-                      {movieOfferMap[item.itemId] && (
-                        <p className="text-sm text-blue-600 font-medium">
-                          🎬 Free Movie Ticket Claimed
-                        </p>
-                      )}
                     </div>
                   ) : (
                     <motion.button
@@ -1005,7 +851,6 @@ const Categories: React.FC<CategoriesProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddToCart(item);
-                        // REMOVE the duplicate Google Analytics tracking here
                       }}
                       disabled={loadingItems.items[item.itemId]}
                     >
