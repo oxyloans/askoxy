@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { DatePicker, Button, Spin, Alert, Tag, Tooltip, Empty } from "antd";
-import {
-  CalendarOutlined,
-  SearchOutlined,
-  ScheduleOutlined,
-  UserOutlined,
-  FieldTimeOutlined,
-  TagOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  InfoCircleOutlined,
-} from "@ant-design/icons";
 import axios from "axios";
 import dayjs from "dayjs";
 import BASE_URL from "../../Config";
@@ -88,9 +76,11 @@ const LeaveStatus: React.FC = () => {
     fetchLeaveStatus(selectedDate);
   };
 
-  // Format date
-  const formatDate = (date: string): string => {
-    return dayjs(date).format("MMMM D, YYYY");
+  // Format date range
+  const formatDateRange = (fromDate: string, endDate: string): string => {
+    return `${dayjs(fromDate).format("YYYY-MM-DD")} to ${dayjs(endDate).format(
+      "YYYY-MM-DD"
+    )}`;
   };
 
   // Calculate leave duration
@@ -104,34 +94,34 @@ const LeaveStatus: React.FC = () => {
       case "LEAVE":
         return {
           color: "success",
-          label: "Approved",
-          icon: <CheckCircleOutlined />,
-          bgClass: "bg-green-50",
+          label: "LEAVE",
+          bgClass: "bg-green-100",
           textClass: "text-green-800",
+          dotClass: "bg-green-600",
         };
-      case "PENDING":
-        return {
-          color: "warning",
-          label: "Pending",
-          icon: <ClockCircleOutlined />,
-          bgClass: "bg-yellow-50",
-          textClass: "text-yellow-800",
-        };
-      case "REJECTED":
-        return {
-          color: "error",
-          label: "Rejected",
-          icon: <CloseCircleOutlined />,
-          bgClass: "bg-red-50",
-          textClass: "text-red-800",
-        };
+      // case "PENDING":
+      //   return {
+      //     color: "warning",
+      //     label: "Pending",
+      //     bgClass: "bg-yellow-100",
+      //     textClass: "text-yellow-800",
+      //     dotClass: "bg-yellow-600",
+      //   };
+      // case "REJECTED":
+      //   return {
+      //     color: "error",
+      //     label: "Rejected",
+      //     bgClass: "bg-red-100",
+      //     textClass: "text-red-800",
+      //     dotClass: "bg-red-600",
+      //   };
       default:
         return {
           color: "default",
           label: status,
-          icon: <InfoCircleOutlined />,
-          bgClass: "bg-gray-50",
+          bgClass: "bg-gray-100",
           textClass: "text-gray-800",
+          dotClass: "bg-gray-600",
         };
     }
   };
@@ -149,90 +139,65 @@ const LeaveStatus: React.FC = () => {
     return (
       <div
         key={leaveData.id}
-        className="bg-white rounded-lg shadow-md border border-gray-100 transition-all duration-300 hover:shadow-lg mb-6"
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg mb-6 animate-fade-in"
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between bg-gray-50">
-          <div className="flex items-center mb-2 md:mb-0">
-            <Tag
-              icon={statusDetails.icon}
-              color={statusDetails.color}
-              className="px-3 py-1 text-sm font-medium flex items-center"
+        <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between bg-gray-50 rounded-t-2xl">
+          <div className="flex items-center mb-2 sm:mb-0">
+            <div
+              className={`px-3 py-1 rounded-full flex items-center ${statusDetails.bgClass} ${statusDetails.textClass}`}
             >
+              <span
+                className={`w-2 h-2 rounded-full mr-2 ${statusDetails.dotClass}`}
+              ></span>
               {statusDetails.label}
-            </Tag>
+            </div>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-600">
             <Tooltip title={`Full ID: ${leaveData.id}`}>
               <span className="font-medium">Request ID:</span> #{shortId}
             </Tooltip>
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 mr-4 transition-all duration-300 hover:bg-blue-100">
-                <UserOutlined />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Employee</p>
-                <p className="text-base font-medium">{leaveData.name}</p>
-              </div>
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500 font-bold mb-1">
+                Employee Name
+              </span>
+              <span className="text-sm text-gray-800">{displayName}</span>
             </div>
 
-            <div className="flex items-start">
-              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-purple-50 text-purple-500 mr-4 transition-all duration-300 hover:bg-purple-100">
-                <FieldTimeOutlined />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Duration</p>
-                <p className="text-base font-medium">
-                  {duration} day{duration !== 1 ? "s" : ""}
-                </p>
-              </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500 font-bold mb-1">
+                Duration
+              </span>
+              <span className="text-sm text-gray-800">
+                {duration} day{duration !== 1 ? "s" : ""}
+              </span>
             </div>
 
-            <div className="flex items-start">
-              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-green-50 text-green-500 mr-4 transition-all duration-300 hover:bg-green-100">
-                <CalendarOutlined />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">From Date</p>
-                <p className="text-base font-medium">
-                  {formatDate(leaveData.fromDate)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-red-50 text-red-500 mr-4 transition-all duration-300 hover:bg-red-100">
-                <CalendarOutlined />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">To Date</p>
-                <p className="text-base font-medium">
-                  {formatDate(leaveData.endDate)}
-                </p>
-              </div>
+            <div className="flex flex-col sm:col-span-2">
+              <span className="text-sm text-gray-500 font-bold mb-1">
+                Date Range
+              </span>
+              <span className="text-sm text-gray-800">
+                {formatDateRange(leaveData.fromDate, leaveData.endDate)}
+              </span>
             </div>
           </div>
 
           <div className="mt-6">
-            <div className="flex items-start mb-2">
-              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-500 mr-4 transition-all duration-300 hover:bg-gray-100">
-                <TagOutlined />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Reason</p>
-              </div>
-            </div>
-            <div className="mt-2 p-4 bg-gray-50 rounded-lg text-gray-700 transition-all duration-300 hover:bg-gray-100">
+            <span className="text-sm text-gray-500 font-bold mb-1 block">
+              Reason
+            </span>
+            <div className="mt-2 p-4 bg-gray-50 rounded-lg text-gray-700 text-sm leading-relaxed transition-all duration-300 hover:bg-gray-100">
               {leaveData.requestSummary}
             </div>
           </div>
 
           {leaveData.createdAt && (
-            <div className="mt-4 text-right text-xs text-gray-400">
+            <div className="mt-4 text-right text-xs text-gray-500">
               Request created: {createdDate}
             </div>
           )}
@@ -245,8 +210,8 @@ const LeaveStatus: React.FC = () => {
   const renderLeaveInfo = () => {
     if (loading) {
       return (
-        <div className="flex justify-center items-center py-16">
-          <Spin size="large" />
+        <div className="flex justify-center items-center py-16 bg-gray-50 rounded-lg">
+          <Spin size="large" tip="Loading leave requests..." />
         </div>
       );
     }
@@ -258,12 +223,13 @@ const LeaveStatus: React.FC = () => {
           description={error}
           type="error"
           showIcon
-          className="mb-4"
+          className="mb-6 rounded-lg shadow-sm"
           action={
             <Button
               size="small"
               type="primary"
               onClick={() => fetchLeaveStatus(selectedDate)}
+              className="rounded-md"
             >
               Retry
             </Button>
@@ -278,7 +244,7 @@ const LeaveStatus: React.FC = () => {
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
-              <span className="text-gray-500">
+              <span className="text-gray-600 text-base">
                 No leave requests found for{" "}
                 {selectedDate.format("MMMM D, YYYY")}
               </span>
@@ -288,8 +254,7 @@ const LeaveStatus: React.FC = () => {
             type="primary"
             href="/leaveapproval"
             size="large"
-            icon={<ScheduleOutlined />}
-            className="mt-6 hover:scale-105 transition-transform"
+            className="mt-6 rounded-md hover:scale-105 transition-transform duration-200"
           >
             Request Leave
           </Button>
@@ -299,21 +264,21 @@ const LeaveStatus: React.FC = () => {
 
     return (
       <div>
-        <div className="mb-4 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-700">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h3 className="text-xl font-semibold text-gray-800">
             {leaveDataList.length} Leave Request
             {leaveDataList.length !== 1 ? "s" : ""} Found
           </h3>
           <Button
             onClick={handleRefresh}
-            icon={<SearchOutlined />}
             loading={refreshing}
+            className="w-full sm:w-auto rounded-md border-gray-300 hover:bg-gray-100 transition-colors"
           >
             Refresh
           </Button>
         </div>
 
-        <div>
+        <div className="grid grid-cols-1 gap-6">
           {leaveDataList.map((leaveData) => renderLeaveCard(leaveData))}
         </div>
       </div>
@@ -329,59 +294,134 @@ const LeaveStatus: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <div className="p-6 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="mb-4 md:mb-0">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-1 flex items-center">
-                <CalendarOutlined className="mr-2" /> Leave Status
-              </h2>
-              <p className="text-gray-500">
-                View and manage your leave requests
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-              <DatePicker
-                value={selectedDate}
-                onChange={handleDateChange}
-                format="YYYY-MM-DD"
-                allowClear={false}
-                className="w-full sm:w-auto"
-                disabledDate={(current) => {
-                  // Can't select days beyond today + 1 year
-                  return current && current > today.add(1, "year");
-                }}
-              />
-              <div className="flex space-x-2 w-full sm:w-auto">
-                <Tooltip title="Check leave status">
-                  <Button
-                    type="primary"
-                    icon={<SearchOutlined />}
-                    onClick={() => fetchLeaveStatus(selectedDate)}
-                    className="flex-grow sm:flex-grow-0"
-                  >
-                    Check
-                  </Button>
-                </Tooltip>
-                {!isToday && (
-                  <Tooltip title="View today's leave status">
-                    <Button
-                      onClick={() => handleDateChange(today)}
-                      className="flex-grow sm:flex-grow-0"
-                    >
-                      Today
-                    </Button>
-                  </Tooltip>
-                )}
+      <div className="min-h-screen bg-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg overflow-hidden">
+            <div className="p-4 sm:p-6 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 flex items-center">
+                   
+                   My Leave Requests
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Track and manage your leave requests with ease
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={handleDateChange}
+                    format="YYYY-MM-DD"
+                    allowClear={false}
+                    className="w-full sm:w-48 rounded-md border-gray-300 focus:border-blue-500 transition-colors"
+                    disabledDate={(current) => {
+                      return current && current > today.add(1, "year");
+                    }}
+                  />
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Tooltip title="Check leave status">
+                      <Button
+                        type="primary"
+                        onClick={() => fetchLeaveStatus(selectedDate)}
+                        className="w-full sm:w-auto rounded-md bg-blue-600 hover:bg-blue-700 transition-colors"
+                      >
+                        Check
+                      </Button>
+                    </Tooltip>
+                    {!isToday && (
+                      <Tooltip title="View today's leave status">
+                        <Button
+                          onClick={() => handleDateChange(today)}
+                          className="w-full sm:w-auto rounded-md border-gray-300 hover:bg-gray-100 transition-colors"
+                        >
+                          Today
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
+
+            <div className="p-4 sm:p-6">{renderLeaveInfo()}</div>
           </div>
         </div>
-
-        <div className="p-6">{renderLeaveInfo()}</div>
       </div>
     </UserPanelLayout>
   );
 };
+
+// Add custom animation styles
+const styles = `
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Additional responsive styles */
+@media (max-width: 640px) {
+  .ant-btn {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  
+  .ant-picker {
+    padding: 6px;
+    font-size: 14px;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  .text-sm {
+    font-size: 0.8125rem;
+  }
+  
+  .p-4 {
+    padding: 0.75rem;
+  }
+  
+  .gap-4 {
+    gap: 0.75rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .max-w-7xl {
+    max-width: 95%;
+  }
+  
+  .grid-cols-1 {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 767px) {
+  .ant-btn, .ant-picker, .ant-tag {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+`;
 
 export default LeaveStatus;

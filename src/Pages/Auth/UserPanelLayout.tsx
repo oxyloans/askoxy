@@ -10,6 +10,10 @@ import {
   FaUsers,
   FaSlideshare,
   FaHistory,
+  FaMobileAlt,
+  FaCalendar,
+  FaClipboard,
+  FaEdit,
 } from "react-icons/fa";
 import type { MenuProps } from "antd";
 
@@ -80,20 +84,22 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         label: <Link to="/taskupdated">End Of The Day Report</Link>,
         icon: <FaHistory className="text-green-500" />,
       },
+
       {
-        key: "leave-management",
-        label: "Leave Management",
-        icon: <FaClipboardCheck className="text-red-500" />,
+        key: "Employee Leave Request",
+        label: "Employee Leave Request",
+        icon: <FaCalendar className="text-purple-500" />, // Calendar icon for overall leave management
         children: [
           {
             key: "/leaveapproval",
-            label: <Link to="/leaveapproval">Approve Requests</Link>,
-            icon: <FaUsers className="text-yellow-500" />,
+
+            label: <Link to="/leaveapproval">Request to Apply Leave</Link>,
+            icon: <FaEdit className="text-purple-500" />, // Document with pen icon for applying/requesting leave
           },
           {
             key: "/leavestatus",
-            label: <Link to="/leavestatus">My Leave Status</Link>,
-            icon: <FaUsers className="text-yellow-500" />,
+            label: <Link to="/leavestatus">My Leave requests</Link>,
+            icon: <FaClipboard className="text-purple-500" />, // Clipboard with list icon for viewing leave statuses
           },
         ],
       },
@@ -104,8 +110,9 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
       },
       {
         key: "/usermobilenumberupdate",
-        label: <Link to="/usermobilenumberupdate">Mobile Number Updated</Link>,
-        icon: <FaSlideshare className="text-purple-500" />,
+        icon: <FaMobileAlt className="text-orange-500" />,
+
+        label: <Link to="/usermobilenumberupdate">Update Mobile Number</Link>,
       },
       {
         key: "/assigned-task",
