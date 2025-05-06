@@ -130,7 +130,6 @@ const OrderReport: React.FC = () => {
     setWeightFilter(value);
   };
 
-  // Filter by weight first
   const filteredSalesData = useMemo(() => {
     return monthlySalesData.filter((item) => {
       if (weightFilter === "all") return true;
@@ -138,7 +137,6 @@ const OrderReport: React.FC = () => {
     });
   }, [monthlySalesData, weightFilter]);
 
-  // Then sort the filtered data
   const sortedFilteredData = useMemo(() => {
     return [...filteredSalesData].sort((a, b) => {
       if (sortOrder === "desc") {
@@ -149,7 +147,6 @@ const OrderReport: React.FC = () => {
     });
   }, [filteredSalesData, sortOrder]);
 
-  // Define columns separately
   const columns = [
     {
       title: "Rank",
@@ -242,7 +239,7 @@ const OrderReport: React.FC = () => {
     {
       label: "Orders Accepted",
       value: orderData?.orderAcceptedCount || 0,
-      icon: <CheckCircle className="w-8 h-8 text-green-600" />,
+      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
       color: "bg-green-100",
       textColor: "text-green-800",
       borderColor: "border-green-200",
@@ -272,6 +269,32 @@ const OrderReport: React.FC = () => {
       borderColor: "border-blue-200",
     },
   ];
+  const downloadCSV = (): void => {
+    if (!sortedFilteredData || sortedFilteredData.length === 0) return;
+
+    const header = ["Rank", "Item Name", "Weight (kg)", "Quantity Sold"];
+    const rows = sortedFilteredData.map((item, index) => {
+      const rank = index + 1;
+      const itemName = item.itemName;
+      const weight = `${item.weigth} kg`;
+      const quantitySold = item.totalItemQuantity;
+
+      return [rank, itemName, weight, quantitySold];
+    });
+
+    const csvContent = [header, ...rows]
+      .map((row) => row.map((field) => `"${field}"`).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Monthly_Sales_Report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
@@ -286,27 +309,21 @@ const OrderReport: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className={`bg-white rounded-xl shadow-md border ${stat.borderColor} p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col`}
+              className={`bg-white rounded-xl shadow-md border ${stat.borderColor} p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center`}
             >
               <div
-                className={`${stat.color} w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto`}
+                className={`${stat.color} w-16 h-16 rounded-full flex items-center justify-center mb-4`}
               >
                 {stat.icon}
               </div>
-              <div className="flex flex-col justify-between flex-grow text-center">
-                <div className="h-12 flex items-center justify-center">
-                  <p className={`text-lg font-medium ${stat.textColor}`}>
-                    {stat.label}
-                  </p>
-                </div>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {stat.value}
-                </p>
-              </div>
+              <p className={`text-lg font-medium ${stat.textColor} mb-1`}>
+                {stat.label}
+              </p>
+              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -419,6 +436,16 @@ const OrderReport: React.FC = () => {
             >
               Get Data
             </button>
+
+            {/* Push Download CSV to far right */}
+            <div className="flex-grow flex justify-end">
+              <button
+                onClick={downloadCSV}
+                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+              >
+                Download CSV
+              </button>
+            </div>
           </div>
 
           {monthlyLoading ? (

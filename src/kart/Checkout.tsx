@@ -48,6 +48,7 @@ interface ProfileData {
   whatsappNumber: string;
 }
 
+// Update the TimeSlot interface to include the status properties
 interface TimeSlot {
   id: string;
   dayOfWeek: string;
@@ -59,6 +60,11 @@ interface TimeSlot {
   date: string;
   isToday: boolean;
   isAvailable: boolean;
+  // Add these new properties as optional to maintain compatibility
+  slot1Status?: boolean;
+  slot2Status?: boolean;
+  slot3Status?: boolean;
+  slot4Status?: boolean;
 }
 
 // Type definitions
@@ -919,7 +925,18 @@ const fetchTimeSlots = async (): Promise<void> => {
   const renderTimeSlotModal = (): JSX.Element => {
     return (
       <Modal
-        title="Select Delivery Time Slot"
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-purple-500" />
+              Select Delivery Time
+            </div>
+            <X
+              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={() => setShowTimeSlotModal(false)}
+            />
+          </div>
+        }
         open={showTimeSlotModal}
         onCancel={() => setShowTimeSlotModal(false)}
         footer={[
@@ -931,107 +948,140 @@ const fetchTimeSlots = async (): Promise<void> => {
                 setIsDeliveryTimelineModalVisible(true);
               }, 100);
             }}
-            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center transition-colors"
+            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 flex items-center transition-colors"
           >
             <Truck className="w-5 h-5 mr-2" /> Delivery Info
           </button>,
           <button
             key="close"
             onClick={() => setShowTimeSlotModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
           >
             Close
           </button>
         ]}
         centered
-        width={580}
-        closeIcon={<X className="w-5 h-5" />}
+        width={600}
+        closeIcon={null}
+        className="time-slot-modal"
       >
-        <div className="max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
           {timeSlots.length === 0 ? (
-            <div className="text-center text-gray-500 p-4">
-              <Clock className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-              <p>No available delivery slots</p>
-              <p className="text-sm text-gray-400 mt-1">Please try again later</p>
+            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
+              <Clock className="w-16 h-16 text-purple-200 mb-4" />
+              <p className="text-lg font-medium mb-2">No available delivery slots</p>
+              <p className="text-sm text-gray-400">Please try again later</p>
             </div>
           ) : (
-            timeSlots.map((slot, index) => {
-              // Create a formatted day name from dayOfWeek if formattedDay is not available
-              const displayDay = (slot as ExtendedTimeSlot).formattedDay ||
-                                 slot.dayOfWeek.charAt(0) + slot.dayOfWeek.slice(1).toLowerCase();
-                      
-              return (
-                <div key={slot.id || index} className="mb-6 px-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-lg font-medium flex items-center">
-                      <span className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-2">
-                        <span className="text-sm">{index + 1}</span>
-                      </span>
-                      {displayDay}
+            <div className="space-y-6">
+              {timeSlots.map((slot, index) => {
+                // Create a formatted day name from dayOfWeek if formattedDay is not available
+                const displayDay = (slot as ExtendedTimeSlot).formattedDay ||
+                                  slot.dayOfWeek.charAt(0) + slot.dayOfWeek.slice(1).toLowerCase();
+                
+                // Check if all timeslots have the same timing
+                const uniqueTimeSlots = new Set([slot.timeSlot1, slot.timeSlot2, slot.timeSlot3, slot.timeSlot4].filter(Boolean));
+                const allSameTimings = uniqueTimeSlots.size === 1;
+                
+                // Create time slot objects - handle cases where status properties might not exist
+                const timeSlotObjects = [
+                  { key: 'slot1', value: slot.timeSlot1, status: (slot as any).slot1Status === true },
+                  { key: 'slot2', value: slot.timeSlot2, status: (slot as any).slot2Status === true },
+                  { key: 'slot3', value: slot.timeSlot3, status: (slot as any).slot3Status === true },
+                  { key: 'slot4', value: slot.timeSlot4, status: (slot as any).slot4Status === true },
+                ];
+    
+                // If all timings are the same, only keep the first available one
+                const filteredTimeSlots = allSameTimings 
+                  ? [timeSlotObjects.find(slot => slot.value && !slot.status) || timeSlotObjects[0]]
+                  : timeSlotObjects.filter(slot => slot.value && !slot.status);
+                
+                return (
+                  <div key={slot.id || index} className={`rounded-lg ${index < timeSlots.length - 1 ? "border-b pb-6" : ""}`}>
+                    <div className="flex items-center mb-4">
+                      <div 
+                        className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 shadow-sm"
+                        aria-hidden="true"
+                      >
+                        <span className="font-semibold">{index + 1}</span>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-gray-800">{displayDay}</div>
+                        <div className="text-sm text-gray-500">{slot.date}</div>
+                      </div>
                     </div>
-                    <div className="text-sm md:text-base text-gray-700 font-medium">{slot.date}</div>
-                  </div>
-                  
-                  {/* Updated to 4-grid layout */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'slot1', value: slot.timeSlot1 },
-                      { key: 'slot2', value: slot.timeSlot2 },
-                      { key: 'slot3', value: slot.timeSlot3 },
-                      { key: 'slot4', value: slot.timeSlot4 },
-                    ].map(
-                      (timeSlotObj: TimeSlotObj, i: number) =>
-                        timeSlotObj.value && (
-                          <div
-                            key={`${slot.id}-${i}`}
-                            className={`p-3 border rounded-lg cursor-pointer 
-                              hover:bg-green-50 hover:shadow-md transition-all duration-200
-                              ${
-                                selectedTimeSlot === timeSlotObj.value &&
-                                selectedDate === slot.date
-                                  ? "border-green-500 bg-green-50 shadow-md"
-                                  : "border-gray-200"
-                              }`}
-                            onClick={() =>
-                              // Add a null check before passing to handleSelectTimeSlot
-                              timeSlotObj.value &&
-                              handleSelectTimeSlot(
-                                slot.date,
-                                timeSlotObj.value,
-                                slot.dayOfWeek
-                              )
-                            }
-                            role="button"
-                            aria-selected={selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date}
-                            aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
-                            tabIndex={0}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <Clock className={`w-4 h-4 mr-2 ${selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date ? "text-green-600" : "text-gray-500"} flex-shrink-0`} />
-                                <span className="text-sm font-medium">{timeSlotObj.value}</span>
+                    
+                    {filteredTimeSlots.length === 0 ? (
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg text-center text-gray-500">
+                        No time slots available for this day
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4 pl-6 border-l-2 border-purple-100">
+                        {filteredTimeSlots.map((timeSlotObj) => (
+                          timeSlotObj.value && (
+                            <div
+                              key={`${slot.id}-${timeSlotObj.key}`}
+                              onClick={() => 
+                                timeSlotObj.value &&
+                                handleSelectTimeSlot(
+                                  slot.date,
+                                  timeSlotObj.value,
+                                  slot.dayOfWeek
+                                )
+                              }
+                              className={`
+                                relative p-3 rounded-lg cursor-pointer transition-all duration-200
+                                ${
+                                  selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date
+                                    ? "bg-green-50 border border-green-500 shadow-md"
+                                    : "bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                                }
+                              `}
+                              role="button"
+                              aria-selected={selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date}
+                              aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
+                              tabIndex={0}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <Clock 
+                                    className={`w-4 h-4 mr-2 flex-shrink-0 ${
+                                      selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date 
+                                        ? "text-green-600" 
+                                        : "text-purple-500"
+                                    }`} 
+                                  />
+                                  <span className={`font-medium ${
+                                    selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date 
+                                      ? "text-green-800" 
+                                      : "text-gray-700"
+                                  }`}>
+                                    {timeSlotObj.value}
+                                  </span>
+                                </div>
+                                {selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date ? (
+                                  <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  </span>
+                                ) : (
+                                  <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
+                                    Available
+                                  </span>
+                                )}
                               </div>
-                              {selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date ? (
-                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                                  Selected
-                                </span>
-                              ) : (
-                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">
-                                  Available
-                                </span>
-                              )}
                             </div>
-                          </div>
-                        )
+                          )
+                        ))}
+                      </div>
                     )}
                   </div>
-                  
-                  {index < timeSlots.length - 1 && (
-                    <div className="border-b border-gray-100 mt-4"></div>
-                  )}
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
       </Modal>

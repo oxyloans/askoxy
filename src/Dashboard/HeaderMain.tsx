@@ -142,7 +142,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
     setProfileLoader(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`,
+        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

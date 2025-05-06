@@ -132,6 +132,7 @@ import TeamLeaveStatus from "./Pages/Auth/TeamLeaveStatus";
 import FeedbackDashboard from "./AskoxyAdmin/FeedBack";
 import MobileNumberUpdate from "./Pages/Auth/EmployeeProfilePage";
 import HelpDeskDashboard from "./AskoxyAdmin/HelpDeskDashboard";
+import ExchangeOrdersPage from "./PartnerWeb/ExchangeOrders";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -464,6 +465,7 @@ const App: React.FC = () => {
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
               <Route path="feedback" element={<FeedbackDashboard />} />
+              <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}

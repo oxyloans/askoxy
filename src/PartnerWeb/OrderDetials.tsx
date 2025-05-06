@@ -199,6 +199,7 @@ const OrderDetailsPage: React.FC = () => {
   const [buttonLabel, setButtonLabel] = useState<string>("");
   const [showButton, setShowButton] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [preference, setPreference] = useState<string | null>();
 
   const fetchContainerStatus = (ordersData: Order) => {
     axios
@@ -207,7 +208,7 @@ const OrderDetailsPage: React.FC = () => {
       )
       .then((response) => {
         const status = response.data?.freeContainerStatus;
-
+        setPreference(status);
         const steelContainerItem = ordersData.orderItems?.find((item) =>
           item.itemName?.toLowerCase().includes("steel")
         );
@@ -729,6 +730,15 @@ const OrderDetailsPage: React.FC = () => {
                 </h1>
               </div>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+              {preference === null ? (
+                  <span className="text-blue-950 bg-blue-200 rounded-lg px-2 py-1 text-center">
+                    Container not given
+                  </span>
+                ) : (
+                  <span className="text-blue-950 bg-blue-200 rounded-lg px-2 py-1 text-center">
+                    Container given
+                  </span>
+                )}
                 <div
                   className={`px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider text-center
           ${getStatusColor(orderDetails.orderStatus)}`}

@@ -373,9 +373,9 @@ const RegisteredUser: React.FC = () => {
   };
   const getPaymentTypeText = (type: number) => {
     switch (type) {
-      case 1:
-        return "Online";
       case 2:
+        return "Online";
+      case 1:
         return "Cash on Delivery";
       default:
         return "Unknown";
@@ -553,7 +553,7 @@ const RegisteredUser: React.FC = () => {
       render: (_: string, record: UserData) => (
         <>
           <Tag className="mb-1" color="green">
-            {record.userType === "NEWUSER" ? "ASKOXY" : "ERICE"}
+            {record.userType }
           </Tag>
           {record.registerFrom && (
             <Tag color="geekblue">{record.registerFrom}</Tag>
@@ -729,18 +729,18 @@ const RegisteredUser: React.FC = () => {
         key: "grandTotal",
         render: (text: number) => `₹${text.toFixed(2)}`,
       },
-      {
-        title: "Expected Delivery",
-        dataIndex: "expectedDeliveryDate",
-        key: "expectedDeliveryDate",
-        render: (expectedDeliveryDate: string, record: OrderData) => (
-          <div>
-            <p>{expectedDeliveryDate}</p>
-            <p>{record.timeSlot}</p>
-            <p>{record.dayOfWeek}</p>
-          </div>
-        ),
-      },
+      // {
+      //   title: "Expected Delivery",
+      //   dataIndex: "expectedDeliveryDate",
+      //   key: "expectedDeliveryDate",
+      //   render: (expectedDeliveryDate: string, record: OrderData) => (
+      //     <div>
+      //       <p>{expectedDeliveryDate}</p>
+      //       <p>{record.timeSlot}</p>
+      //       <p>{record.dayOfWeek}</p>
+      //     </div>
+      //   ),
+      // },
       {
         title: "Status",
         dataIndex: "orderStatus",
@@ -778,7 +778,7 @@ const RegisteredUser: React.FC = () => {
       },
     ];
 
-    if (["1", "2", "3"].includes(userOrders[0]?.orderStatus)) {
+    if (["1", "2", "3","PickedUp"].includes(userOrders[0]?.orderStatus)) {
       columns.splice(3, 0, {
         title: "Expected Delivery",
         dataIndex: "expectedDeliveryDate",
