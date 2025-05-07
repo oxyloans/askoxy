@@ -1,11 +1,12 @@
+
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
 import Footer from "../components/Footer";
 import {
-  ArrowLeft,
-  CreditCard,
+  ArrowLeft, 
+  CreditCard,Plus,
   Truck,
   Tag,
   ShoppingBag,
@@ -90,7 +91,7 @@ const CheckoutPage: React.FC = () => {
   const [walletAmount, setWalletAmount] = useState<number>(0);
   const [walletTotal, setWalletTotal] = useState<number>(0);
   const [coupenApplied, setCoupenApplied] = useState(false);
-  const [selectedPayment] = useState<"ONLINE">("ONLINE"); // Removed COD option
+  const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">("ONLINE");
   const [selectedAddress, setSelectedAddress] = useState<Address>(
     state?.selectedAddress || null
   );
@@ -112,7 +113,6 @@ const CheckoutPage: React.FC = () => {
   });
   const [merchantTransactionId, setMerchantTransactionId] = useState();
   const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] = useState(false);
-  const [isOneTimeFreeOfferActive, setIsOneTimeFreeOfferActive] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
@@ -125,8 +125,8 @@ const CheckoutPage: React.FC = () => {
   const token = localStorage.getItem("accessToken");
   const userData = localStorage.getItem("profileData");
   const [isButtonDisabled, setisButtonDisabled] = useState(false);
+  const [showOtherOptions, setShowOtherOptions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [freeTicketAvailable, setFreeTicketAvailable] = useState();
 
   const context = useContext(CartContext);
   if (!context) {
@@ -179,9 +179,7 @@ interface TimeSlotObj {
 }
 
   const handleShowDeliveryTimeline = () => {
-    if (isOneTimeFreeOfferActive) {
-      setShowDeliveryTimelineModal(true);
-    }
+    setShowDeliveryTimelineModal(true);
   };
 // Replace the old renderDeliveryTimelineModal function with this one
 const renderDeliveryTimelineModal = () => {
@@ -211,51 +209,27 @@ const renderDeliveryTimelineModal = () => {
           </button>
         </div>
 
-        {freeTicketAvailable === "YES" ? (
-          <div>
-            <Globe className="w-16 h-16 mx-auto text-green-500 mb-4" />
-            <h3 className="text-xl font-bold mb-4">
-              {language === "english" ? "1+1 Free Offer Active!" : "1+1 ఉచిత ఆఫర్ యాక్టివ్!"}
-            </h3>
-            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
-              {language === "english" ? (
-                <>
-                  <p className="mb-3">📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
-                  <p className="mb-3">With your support, we'll be able to grow and serve you even better. 🙏</p>
-                  <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
-                </>
-              ) : (
-                <>
-                  <p className="mb-3">📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
-                  <p className="mb-3">మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
-                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
-                </>
-              )}
-            </div>
+        <div>
+          <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
+          <h3 className="text-xl font-bold mb-4">
+            {language === "english" ? "Delivery Information" : "డెలివరీ సమాచారం"}
+          </h3>
+          <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
+            {language === "english" ? (
+              <>
+                <p className="mb-3">📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
+                <p className="mb-3">With your support, we'll be able to grow and serve you even better. 🙏</p>
+                <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
+              </>
+            ) : (
+              <>
+                <p className="mb-3">📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
+                <p className="mb-3">మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
+                <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+              </>
+            )}
           </div>
-        ) : (
-          <div>
-            <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
-            <h3 className="text-xl font-bold mb-4">
-              {language === "english" ? "Delivery Information" : "డెలివరీ సమాచారం"}
-            </h3>
-            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
-              {language === "english" ? (
-                <>
-                  <p className="mb-3">📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
-                  <p className="mb-3">With your support, we'll be able to grow and serve you even better. 🙏</p>
-                  <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
-                </>
-              ) : (
-                <>
-                  <p className="mb-3">📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
-                  <p className="mb-3">మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
-                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+        </div>
         
         <button
           onClick={() => setIsDeliveryTimelineModalVisible(false)}
@@ -468,7 +442,6 @@ const fetchTimeSlots = async (): Promise<void> => {
       setDeliveryBoyFee(totalDeliveryFee);
       setTotalAmount(parseFloat(response.data.totalSumWithGstSum));
       setGrandTotal(parseFloat(response.data.totalSum));
-      setFreeTicketAvailable(response.data.offerElgible);
     } catch (error) {
       console.error("Error fetching cart items:", error);
       message.error("Failed to fetch cart items");
@@ -614,7 +587,6 @@ const fetchTimeSlots = async (): Promise<void> => {
     walletAmount,
   ]);
 
-
   const handlePayment = async () => {
     try {
       const hasStockIssues = cartData.some(
@@ -648,8 +620,6 @@ const fetchTimeSlots = async (): Promise<void> => {
       }
   
       setLoading(true);
-  
-      const avail = freeTicketAvailable === "YES" ? "YES" : null;
       
       // Make sure we're passing the correct wallet amount
       const finalWalletAmount = useWallet ? usedWalletAmount : 0;
@@ -661,7 +631,7 @@ const fetchTimeSlots = async (): Promise<void> => {
           customerId,
           flatNo: selectedAddress.flatNo,
           landMark: selectedAddress.landMark,
-          orderStatus: "ONLINE", // Always set to ONLINE
+          orderStatus: selectedPayment, // Use the selected payment method
           pincode: selectedAddress.pincode,
           walletAmount: finalWalletAmount, // Use the correct wallet amount
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
@@ -675,12 +645,13 @@ const fetchTimeSlots = async (): Promise<void> => {
           timeSlot: selectedTimeSlot,
           latitude: selectedAddress.latitude,
           longitude: selectedAddress.longitude,
-          freeTicketAvailable: avail,
+          orderFrom: "WEB",
+          paymentType: selectedPayment === "COD" ? 0 : 1, // Add payment type: 0 for COD, 1 for ONLINE
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      // Rest of the function remains unchanged
+      // Handle different payment flows based on selected method
       if (response.status === 200 && response.data) {
         await fetchCartData();
   
@@ -688,12 +659,13 @@ const fetchTimeSlots = async (): Promise<void> => {
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "purchase", {
             transaction_id:
-              response.data.paymentId || `ONLINE_${new Date().getTime()}`,
+              response.data.paymentId || `${selectedPayment}_${new Date().getTime()}`,
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
             shipping: deliveryBoyFee,
             coupon: coupenApplied ? couponCode.toUpperCase() : "",
+            payment_type: selectedPayment,
             items: cartData.map((item) => ({
               item_id: item.itemId,
               item_name: item.itemName,
@@ -704,34 +676,46 @@ const fetchTimeSlots = async (): Promise<void> => {
           });
         }
   
-        // Always proceed with online payment
-        if (response.data.paymentId) {
-          const number = localStorage.getItem("whatsappNumber");
-          const withoutCountryCode = number?.replace("+91", "");
-          sessionStorage.setItem("address", JSON.stringify(selectedAddress));
-  
-          const paymentData = {
-            mid: "1152305",
-            amount: grandTotalAmount,
-            merchantTransactionId: response.data.paymentId,
-            transactionDate: new Date(),
-            terminalId: "getepay.merchant128638@icici",
-            udf1: withoutCountryCode,
-            udf2: `${profileData.firstName} ${profileData.lastName}`,
-            udf3: profileData.email,
-            ru: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-            callbackUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-            currency: "INR",
-            paymentMode: "ALL",
-            txnType: "single",
-            productType: "IPG",
-            txnNote: "Rice Order In Live",
-            vpa: "getepay.merchant128638@icici",
-          };
-  
-          getepayPortal(paymentData);
+        // Handle COD orders differently than online payments
+        if (selectedPayment === "COD") {
+          // For COD, just show success and redirect
+          Modal.success({
+            content: "Order placed successfully! You'll pay on delivery.",
+            onOk: () => {
+              navigate("/main/myorders");
+              fetchCartData();
+            },
+          });
         } else {
-          message.error("Order failed");
+          // For online payment, proceed with payment gateway
+          if (response.data.paymentId) {
+            const number = localStorage.getItem("whatsappNumber");
+            const withoutCountryCode = number?.replace("+91", "");
+            sessionStorage.setItem("address", JSON.stringify(selectedAddress));
+  
+            const paymentData = {
+              mid: "1152305",
+              amount: grandTotalAmount,
+              merchantTransactionId: response.data.paymentId,
+              transactionDate: new Date(),
+              terminalId: "getepay.merchant128638@icici",
+              udf1: withoutCountryCode,
+              udf2: `${profileData.firstName} ${profileData.lastName}`,
+              udf3: profileData.email,
+              ru: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              callbackUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              currency: "INR",
+              paymentMode: "ALL",
+              txnType: "single",
+              productType: "IPG",
+              txnNote: "Rice Order In Live",
+              vpa: "getepay.merchant128638@icici",
+            };
+  
+            getepayPortal(paymentData);
+          } else {
+            message.error("Order failed");
+          }
         }
       }
     } catch (error) {
@@ -742,17 +726,46 @@ const fetchTimeSlots = async (): Promise<void> => {
     }
   };
 
-
-  // Modify the render method to remove COD option
   const renderPaymentMethods = () => {
     return (
       <div className="space-y-3">
         <div className="p-3 border rounded-md border-purple-500 bg-purple-50 flex items-center">
           <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
-            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
+            <div className={`w-2 h-2 rounded-full ${selectedPayment === "ONLINE" ? "bg-purple-500" : ""} m-0.5`}></div>
           </div>
-          <span className="ml-2">Online Payment</span>
+          <label className="ml-2 flex-grow cursor-pointer" onClick={() => setSelectedPayment("ONLINE")}>
+            Online Payment
+          </label>
         </div>
+        
+        {!showOtherOptions ? (
+          <button 
+            onClick={() => setShowOtherOptions(true)}
+            className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Other Options
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="p-3 border rounded-md border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50 flex items-center cursor-pointer transition-colors"
+                 onClick={() => setSelectedPayment("COD")}>
+              <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
+                <div className={`w-2 h-2 rounded-full ${selectedPayment === "COD" ? "bg-purple-500" : ""} m-0.5`}></div>
+              </div>
+              <label className="ml-2 flex-grow cursor-pointer">
+                Cash on Delivery (COD)
+              </label>
+            </div>
+            <button 
+              onClick={() => setShowOtherOptions(false)}
+              className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Close Options
+            </button>
+          </div>
+        )}
       </div>
     );
   };
