@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { DatePicker, Button, Spin, Alert, Tag, Tooltip, Empty } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
-import BASE_URL from "../../Config";
+import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 
 // Interface for leave data

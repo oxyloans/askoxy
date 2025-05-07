@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
 import Footer from "../components/Footer";
 import {
-  ArrowLeft, 
-  CreditCard,Plus,
+  ArrowLeft,
+  CreditCard,
+  Plus,
   Truck,
   Tag,
   ShoppingBag,
@@ -91,7 +91,9 @@ const CheckoutPage: React.FC = () => {
   const [walletAmount, setWalletAmount] = useState<number>(0);
   const [walletTotal, setWalletTotal] = useState<number>(0);
   const [coupenApplied, setCoupenApplied] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">("ONLINE");
+  const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
+    "ONLINE"
+  );
   const [selectedAddress, setSelectedAddress] = useState<Address>(
     state?.selectedAddress || null
   );
@@ -103,7 +105,8 @@ const CheckoutPage: React.FC = () => {
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [afterWallet, setAfterWallet] = useState<number>(0);
   const [usedWalletAmount, setUsedWalletAmount] = useState<number>(0);
-  const [isDeliveryTimelineModalVisible, setIsDeliveryTimelineModalVisible] = useState(false);
+  const [isDeliveryTimelineModalVisible, setIsDeliveryTimelineModalVisible] =
+    useState(false);
   const [orderId, setOrderId] = useState<string>();
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
@@ -112,7 +115,8 @@ const CheckoutPage: React.FC = () => {
     whatsappNumber: "",
   });
   const [merchantTransactionId, setMerchantTransactionId] = useState();
-  const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] = useState(false);
+  const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] =
+    useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
@@ -163,186 +167,249 @@ const CheckoutPage: React.FC = () => {
   }, [selectedTimeSlot]);
 
   // Type-safe time slot selection handler
-const handleSelectTimeSlot = (date: string, timeSlot: string, day: string): void => {
-  setSelectedDate(date);
-  setSelectedTimeSlot(timeSlot);
-  setSelectedDay(day);
-  setShowTimeSlotModal(false);
-  message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
-  setIsDeliveryTimelineModalVisible(true);
-};
+  const handleSelectTimeSlot = (
+    date: string,
+    timeSlot: string,
+    day: string
+  ): void => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(timeSlot);
+    setSelectedDay(day);
+    setShowTimeSlotModal(false);
+    message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
+    setIsDeliveryTimelineModalVisible(true);
+  };
 
-// Type definition for time slot object used in rendering
-interface TimeSlotObj {
-  key: string;
-  value: string | null;
-}
+  // Type definition for time slot object used in rendering
+  interface TimeSlotObj {
+    key: string;
+    value: string | null;
+  }
 
   const handleShowDeliveryTimeline = () => {
     setShowDeliveryTimelineModal(true);
   };
-// Replace the old renderDeliveryTimelineModal function with this one
-const renderDeliveryTimelineModal = () => {
-  return (
-    <Modal
-      title="Delivery Information"
-      open={isDeliveryTimelineModalVisible}
-      onCancel={() => setIsDeliveryTimelineModalVisible(false)}
-      footer={null}
-      centered
-      width={500}
-      closeIcon={<X className="w-5 h-5" />}
-    >
-      <div className="text-center">
-        <div className="mb-4 flex justify-center">
-          <button 
-            onClick={() => setLanguage("english")}
-            className={`px-4 py-2 rounded-l-md transition-colors ${language === "english" ? "bg-purple-500 text-white" : "bg-gray-200 text-gray-700"}`}
-          >
-            English
-          </button>
-          <button 
-            onClick={() => setLanguage("telugu")}
-            className={`px-4 py-2 rounded-r-md transition-colors ${language === "telugu" ? "bg-purple-500 text-white" : "bg-gray-200 text-gray-700"}`}
-          >
-            తెలుగు
-          </button>
-        </div>
-
-        <div>
-          <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
-          <h3 className="text-xl font-bold mb-4">
-            {language === "english" ? "Delivery Information" : "డెలివరీ సమాచారం"}
-          </h3>
-          <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
-            {language === "english" ? (
-              <>
-                <p className="mb-3">📦 <strong>Delivery Timeline:</strong> Your order will be delivered within 4 hours to 4 days, depending on the volume of orders and location. We're doing our best to group nearby orders together so we can deliver more efficiently and sustainably. 🚚</p>
-                <p className="mb-3">With your support, we'll be able to grow and serve you even better. 🙏</p>
-                <p>Please support us by spreading the word to friends and family nearby! More orders = faster and more efficient deliveries for everyone! Thank you again!</p>
-              </>
-            ) : (
-              <>
-                <p className="mb-3">📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి 4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚</p>
-                <p className="mb-3">మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏</p>
-                <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
-              </>
-            )}
+  // Replace the old renderDeliveryTimelineModal function with this one
+  const renderDeliveryTimelineModal = () => {
+    return (
+      <Modal
+        title="Delivery Information"
+        open={isDeliveryTimelineModalVisible}
+        onCancel={() => setIsDeliveryTimelineModalVisible(false)}
+        footer={null}
+        centered
+        width={500}
+        closeIcon={<X className="w-5 h-5" />}
+      >
+        <div className="text-center">
+          <div className="mb-4 flex justify-center">
+            <button
+              onClick={() => setLanguage("english")}
+              className={`px-4 py-2 rounded-l-md transition-colors ${
+                language === "english"
+                  ? "bg-purple-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setLanguage("telugu")}
+              className={`px-4 py-2 rounded-r-md transition-colors ${
+                language === "telugu"
+                  ? "bg-purple-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              తెలుగు
+            </button>
           </div>
+
+          <div>
+            <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
+            <h3 className="text-xl font-bold mb-4">
+              {language === "english"
+                ? "Delivery Information"
+                : "డెలివరీ సమాచారం"}
+            </h3>
+            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
+              {language === "english" ? (
+                <>
+                  <p className="mb-3">
+                    📦 <strong>Delivery Timeline:</strong> Your order will be
+                    delivered within 4 hours to 4 days, depending on the volume
+                    of orders and location. We're doing our best to group nearby
+                    orders together so we can deliver more efficiently and
+                    sustainably. 🚚
+                  </p>
+                  <p className="mb-3">
+                    With your support, we'll be able to grow and serve you even
+                    better. 🙏
+                  </p>
+                  <p>
+                    Please support us by spreading the word to friends and
+                    family nearby! More orders = faster and more efficient
+                    deliveries for everyone! Thank you again!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-3">
+                    📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి
+                    4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ
+                    ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి
+                    సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚
+                  </p>
+                  <p className="mb-3">
+                    మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు
+                    మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత
+                    మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
+                  </p>
+                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsDeliveryTimelineModalVisible(false)}
+            className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+          >
+            {language === "english" ? "Close" : "మూసివేయి"}
+          </button>
         </div>
-        
-        <button
-          onClick={() => setIsDeliveryTimelineModalVisible(false)}
-          className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
-        >
-          {language === "english" ? "Close" : "మూసివేయి"}
-        </button>
-      </div>
-    </Modal>
-  );
-};
- 
-// Updated function to get next available days, not just the next 3 calendar days
-const getAvailableDays = (maxDays: number = 14): DayInfo[] => {
-  const today = new Date();
-  
-  // Start from tomorrow
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const startDate = tomorrow;
-  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-  
-  // Generate information for the next maxDays days
-  const nextDays: DayInfo[] = [];
-  for (let offset = 0; offset < maxDays; offset++) {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + offset);
-    
-    nextDays.push({
-      dayOfWeek: daysOfWeek[date.getDay()].toUpperCase(),
-      date: `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`,
-      formattedDay: daysOfWeek[date.getDay()]
-    });
-  }
-  
-  return nextDays;
-};
-
-const fetchTimeSlots = async (): Promise<void> => {
-  try {
-    setLoading(true);
-    
-    const response = await axios.get(
-      `${BASE_URL}/order-service/fetchTimeSlotlist`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      </Modal>
     );
+  };
 
-    if (response.data && Array.isArray(response.data)) {
-      // Get information for the next 14 days (or adjust as needed)
-      const nextDays = getAvailableDays(14);
-      
-      // Define a type for the API response slots
-      interface ApiTimeSlot {
-        id: string;
-        dayOfWeek: string;
-        timeSlot1: string | null;
-        timeSlot2: string | null;
-        timeSlot3: string | null;
-        timeSlot4: string | null;
-        isAvailable: boolean;
-      }
-      
-      // Process and format time slots
-      const formattedTimeSlots: ExtendedTimeSlot[] = [];
-      
-      // Iterate through days until we find 3 available days or reach the end
-      for (const dayInfo of nextDays) {
-        // Find matching slot for this day
-        const matchingSlot = response.data.find(
-          (slot: ApiTimeSlot) => slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
-        );
-        
-        // If we find an available slot for this day, add it to our formatted slots
-        if (matchingSlot) {
-          // Check if at least one time slot is available
-          const hasTimeSlot = matchingSlot.timeSlot1 || matchingSlot.timeSlot2 || 
-                             matchingSlot.timeSlot3 || matchingSlot.timeSlot4;
-          
-          if (hasTimeSlot) {
-            formattedTimeSlots.push({
-              id: matchingSlot.id,
-              dayOfWeek: dayInfo.dayOfWeek,
-              expectedDeliveryDate: dayInfo.date,
-              timeSlot1: matchingSlot.timeSlot1,
-              timeSlot2: matchingSlot.timeSlot2,
-              timeSlot3: matchingSlot.timeSlot3,
-              timeSlot4: matchingSlot.timeSlot4,
-              isAvailable: false, // isAvailable=false means slots are available for selection
-              isToday: false,
-              date: dayInfo.date,
-              formattedDay: dayInfo.formattedDay
-            });
+  // Updated function to get next available days, not just the next 3 calendar days
+  const getAvailableDays = (maxDays: number = 14): DayInfo[] => {
+    const today = new Date();
+
+    // Start from tomorrow
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const startDate = tomorrow;
+    const daysOfWeek = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const months = [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+    ];
+
+    // Generate information for the next maxDays days
+    const nextDays: DayInfo[] = [];
+    for (let offset = 0; offset < maxDays; offset++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + offset);
+
+      nextDays.push({
+        dayOfWeek: daysOfWeek[date.getDay()].toUpperCase(),
+        date: `${String(date.getDate()).padStart(2, "0")}-${
+          months[date.getMonth()]
+        }-${date.getFullYear()}`,
+        formattedDay: daysOfWeek[date.getDay()],
+      });
+    }
+
+    return nextDays;
+  };
+
+  const fetchTimeSlots = async (): Promise<void> => {
+    try {
+      setLoading(true);
+
+      const response = await axios.get(
+        `${BASE_URL}/order-service/fetchTimeSlotlist`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        // Get information for the next 14 days (or adjust as needed)
+        const nextDays = getAvailableDays(14);
+
+        // Define a type for the API response slots
+        interface ApiTimeSlot {
+          id: string;
+          dayOfWeek: string;
+          timeSlot1: string | null;
+          timeSlot2: string | null;
+          timeSlot3: string | null;
+          timeSlot4: string | null;
+          isAvailable: boolean;
+        }
+
+        // Process and format time slots
+        const formattedTimeSlots: ExtendedTimeSlot[] = [];
+
+        // Iterate through days until we find 3 available days or reach the end
+        for (const dayInfo of nextDays) {
+          // Find matching slot for this day
+          const matchingSlot = response.data.find(
+            (slot: ApiTimeSlot) =>
+              slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
+          );
+
+          // If we find an available slot for this day, add it to our formatted slots
+          if (matchingSlot) {
+            // Check if at least one time slot is available
+            const hasTimeSlot =
+              matchingSlot.timeSlot1 ||
+              matchingSlot.timeSlot2 ||
+              matchingSlot.timeSlot3 ||
+              matchingSlot.timeSlot4;
+
+            if (hasTimeSlot) {
+              formattedTimeSlots.push({
+                id: matchingSlot.id,
+                dayOfWeek: dayInfo.dayOfWeek,
+                expectedDeliveryDate: dayInfo.date,
+                timeSlot1: matchingSlot.timeSlot1,
+                timeSlot2: matchingSlot.timeSlot2,
+                timeSlot3: matchingSlot.timeSlot3,
+                timeSlot4: matchingSlot.timeSlot4,
+                isAvailable: false, // isAvailable=false means slots are available for selection
+                isToday: false,
+                date: dayInfo.date,
+                formattedDay: dayInfo.formattedDay,
+              });
+            }
+          }
+
+          // If we've found 3 available days, we can stop
+          if (formattedTimeSlots.length >= 3) {
+            break;
           }
         }
-        
-        // If we've found 3 available days, we can stop
-        if (formattedTimeSlots.length >= 3) {
-          break;
-        }
+
+        // Set the time slots state with what we found (might be fewer than 3)
+        setTimeSlots(formattedTimeSlots);
       }
-      
-      // Set the time slots state with what we found (might be fewer than 3)
-      setTimeSlots(formattedTimeSlots);
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+      message.error("Failed to fetch delivery time slots");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching time slots:", error);
-    message.error("Failed to fetch delivery time slots");
-  } finally {
-    setLoading(false);
-  }
-};
-  
+  };
+
   const submitOrder = async (
     selectedSlot: TimeSlot,
     selectedTimeSlot: string,
@@ -491,13 +558,13 @@ const fetchTimeSlots = async (): Promise<void> => {
         { customerId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
       setWalletAmount(usableAmount);
       setAfterWallet(usableAmount); // Initially, after wallet = available wallet
       setWalletMessage(response.data.message || "");
       setUsedWalletAmount(0); // Initially no wallet amount is used
-      
+
       // Make sure to reset these states when getting new wallet information
       setUseWallet(false);
     } catch (error: unknown) {
@@ -514,12 +581,12 @@ const fetchTimeSlots = async (): Promise<void> => {
     // Start with base amount before any discounts
     const baseTotal = totalAmount + deliveryBoyFee;
     let discountedTotal = baseTotal;
-    
+
     // Apply coupon discount if applicable
     if (coupenApplied && coupenDetails > 0) {
       discountedTotal = Math.max(0, discountedTotal - coupenDetails);
     }
-    
+
     // Calculate wallet usage
     let newUsedWalletAmount = 0;
     if (useWallet && walletAmount > 0) {
@@ -527,7 +594,7 @@ const fetchTimeSlots = async (): Promise<void> => {
       newUsedWalletAmount = Math.min(walletAmount, discountedTotal);
       discountedTotal = Math.max(0, discountedTotal - newUsedWalletAmount);
     }
-    
+
     // Update states correctly
     setUsedWalletAmount(newUsedWalletAmount);
     setAfterWallet(walletAmount - newUsedWalletAmount);
@@ -536,17 +603,17 @@ const fetchTimeSlots = async (): Promise<void> => {
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-    
+
     // Calculate the current total after any coupon discounts
     let currentTotal = totalAmount + deliveryBoyFee;
     if (coupenApplied && coupenDetails > 0) {
       currentTotal = Math.max(0, currentTotal - coupenDetails);
     }
-    
+
     const potentialUsedAmount = newValue
       ? Math.min(walletAmount, currentTotal)
       : 0;
-  
+
     Modal.confirm({
       title: newValue ? "Confirm Wallet Usage" : "Remove Wallet Usage",
       content: newValue
@@ -556,7 +623,7 @@ const fetchTimeSlots = async (): Promise<void> => {
         : `Stop using ₹${usedWalletAmount.toFixed(2)} from your wallet?`,
       onOk: () => {
         setUseWallet(newValue);
-        
+
         if (newValue) {
           // If enabling wallet, calculate proper amount to use
           setUsedWalletAmount(potentialUsedAmount);
@@ -568,7 +635,7 @@ const fetchTimeSlots = async (): Promise<void> => {
           setAfterWallet(walletAmount);
           setGrandTotalAmount(currentTotal);
         }
-        
+
         message.success(newValue ? "Wallet applied" : "Wallet removed");
       },
       onCancel: () => {
@@ -593,7 +660,7 @@ const fetchTimeSlots = async (): Promise<void> => {
         (item) =>
           parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
       );
-  
+
       if (hasStockIssues) {
         Modal.error({
           title: "Stock Issues",
@@ -604,12 +671,12 @@ const fetchTimeSlots = async (): Promise<void> => {
         });
         return;
       }
-  
+
       if (!selectedTimeSlot) {
         Modal.error({ title: "Error", content: "Please select a time slot." });
         return;
       }
-  
+
       // Validate that wallet usage doesn't exceed available amount
       if (useWallet && usedWalletAmount > walletAmount) {
         Modal.error({
@@ -618,12 +685,12 @@ const fetchTimeSlots = async (): Promise<void> => {
         });
         return;
       }
-  
+
       setLoading(true);
-      
+
       // Make sure we're passing the correct wallet amount
       const finalWalletAmount = useWallet ? usedWalletAmount : 0;
-  
+
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
@@ -650,16 +717,17 @@ const fetchTimeSlots = async (): Promise<void> => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       // Handle different payment flows based on selected method
       if (response.status === 200 && response.data) {
         await fetchCartData();
-  
+
         // GA4 Purchase Event Tracking
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "purchase", {
             transaction_id:
-              response.data.paymentId || `${selectedPayment}_${new Date().getTime()}`,
+              response.data.paymentId ||
+              `${selectedPayment}_${new Date().getTime()}`,
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
@@ -675,7 +743,7 @@ const fetchTimeSlots = async (): Promise<void> => {
             })),
           });
         }
-  
+
         // Handle COD orders differently than online payments
         if (selectedPayment === "COD") {
           // For COD, just show success and redirect
@@ -692,7 +760,7 @@ const fetchTimeSlots = async (): Promise<void> => {
             const number = localStorage.getItem("whatsappNumber");
             const withoutCountryCode = number?.replace("+91", "");
             sessionStorage.setItem("address", JSON.stringify(selectedAddress));
-  
+
             const paymentData = {
               mid: "1152305",
               amount: grandTotalAmount,
@@ -711,7 +779,7 @@ const fetchTimeSlots = async (): Promise<void> => {
               txnNote: "Rice Order In Live",
               vpa: "getepay.merchant128638@icici",
             };
-  
+
             getepayPortal(paymentData);
           } else {
             message.error("Order failed");
@@ -729,17 +797,28 @@ const fetchTimeSlots = async (): Promise<void> => {
   const renderPaymentMethods = () => {
     return (
       <div className="space-y-3">
-        <div className="p-3 border rounded-md border-purple-500 bg-purple-50 flex items-center">
+        <div
+          className={`p-3 border rounded-md ${
+            selectedPayment === "ONLINE"
+              ? "border-purple-500 bg-purple-50"
+              : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
+          } flex items-center cursor-pointer transition-colors`}
+          onClick={() => setSelectedPayment("ONLINE")}
+        >
           <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
-            <div className={`w-2 h-2 rounded-full ${selectedPayment === "ONLINE" ? "bg-purple-500" : ""} m-0.5`}></div>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                selectedPayment === "ONLINE" ? "bg-purple-500" : ""
+              } m-0.5`}
+            ></div>
           </div>
-          <label className="ml-2 flex-grow cursor-pointer" onClick={() => setSelectedPayment("ONLINE")}>
+          <label className="ml-2 flex-grow cursor-pointer">
             Online Payment
           </label>
         </div>
-        
+
         {!showOtherOptions ? (
-          <button 
+          <button
             onClick={() => setShowOtherOptions(true)}
             className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
           >
@@ -748,16 +827,26 @@ const fetchTimeSlots = async (): Promise<void> => {
           </button>
         ) : (
           <div className="space-y-3">
-            <div className="p-3 border rounded-md border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50 flex items-center cursor-pointer transition-colors"
-                 onClick={() => setSelectedPayment("COD")}>
+            <div
+              className={`p-3 border rounded-md ${
+                selectedPayment === "COD"
+                  ? "border-purple-500 bg-purple-50"
+                  : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
+              } flex items-center cursor-pointer transition-colors`}
+              onClick={() => setSelectedPayment("COD")}
+            >
               <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
-                <div className={`w-2 h-2 rounded-full ${selectedPayment === "COD" ? "bg-purple-500" : ""} m-0.5`}></div>
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    selectedPayment === "COD" ? "bg-purple-500" : ""
+                  } m-0.5`}
+                ></div>
               </div>
               <label className="ml-2 flex-grow cursor-pointer">
                 Cash on Delivery (COD)
               </label>
             </div>
-            <button 
+            <button
               onClick={() => setShowOtherOptions(false)}
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
             >
@@ -971,7 +1060,7 @@ const fetchTimeSlots = async (): Promise<void> => {
             className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
           >
             Close
-          </button>
+          </button>,
         ]}
         centered
         width={600}
@@ -982,113 +1071,174 @@ const fetchTimeSlots = async (): Promise<void> => {
           {timeSlots.length === 0 ? (
             <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
               <Clock className="w-16 h-16 text-purple-200 mb-4" />
-              <p className="text-lg font-medium mb-2">No available delivery slots</p>
+              <p className="text-lg font-medium mb-2">
+                No available delivery slots
+              </p>
               <p className="text-sm text-gray-400">Please try again later</p>
             </div>
           ) : (
             <div className="space-y-6">
               {timeSlots.map((slot, index) => {
                 // Create a formatted day name from dayOfWeek if formattedDay is not available
-                const displayDay = (slot as ExtendedTimeSlot).formattedDay ||
-                                  slot.dayOfWeek.charAt(0) + slot.dayOfWeek.slice(1).toLowerCase();
-                
+                const displayDay =
+                  (slot as ExtendedTimeSlot).formattedDay ||
+                  slot.dayOfWeek.charAt(0) +
+                    slot.dayOfWeek.slice(1).toLowerCase();
+
                 // Check if all timeslots have the same timing
-                const uniqueTimeSlots = new Set([slot.timeSlot1, slot.timeSlot2, slot.timeSlot3, slot.timeSlot4].filter(Boolean));
+                const uniqueTimeSlots = new Set(
+                  [
+                    slot.timeSlot1,
+                    slot.timeSlot2,
+                    slot.timeSlot3,
+                    slot.timeSlot4,
+                  ].filter(Boolean)
+                );
                 const allSameTimings = uniqueTimeSlots.size === 1;
-                
+
                 // Create time slot objects - handle cases where status properties might not exist
                 const timeSlotObjects = [
-                  { key: 'slot1', value: slot.timeSlot1, status: (slot as any).slot1Status === true },
-                  { key: 'slot2', value: slot.timeSlot2, status: (slot as any).slot2Status === true },
-                  { key: 'slot3', value: slot.timeSlot3, status: (slot as any).slot3Status === true },
-                  { key: 'slot4', value: slot.timeSlot4, status: (slot as any).slot4Status === true },
+                  {
+                    key: "slot1",
+                    value: slot.timeSlot1,
+                    status: (slot as any).slot1Status === true,
+                  },
+                  {
+                    key: "slot2",
+                    value: slot.timeSlot2,
+                    status: (slot as any).slot2Status === true,
+                  },
+                  {
+                    key: "slot3",
+                    value: slot.timeSlot3,
+                    status: (slot as any).slot3Status === true,
+                  },
+                  {
+                    key: "slot4",
+                    value: slot.timeSlot4,
+                    status: (slot as any).slot4Status === true,
+                  },
                 ];
-    
+
                 // If all timings are the same, only keep the first available one
-                const filteredTimeSlots = allSameTimings 
-                  ? [timeSlotObjects.find(slot => slot.value && !slot.status) || timeSlotObjects[0]]
-                  : timeSlotObjects.filter(slot => slot.value && !slot.status);
-                
+                const filteredTimeSlots = allSameTimings
+                  ? [
+                      timeSlotObjects.find(
+                        (slot) => slot.value && !slot.status
+                      ) || timeSlotObjects[0],
+                    ]
+                  : timeSlotObjects.filter(
+                      (slot) => slot.value && !slot.status
+                    );
+
                 return (
-                  <div key={slot.id || index} className={`rounded-lg ${index < timeSlots.length - 1 ? "border-b pb-6" : ""}`}>
+                  <div
+                    key={slot.id || index}
+                    className={`rounded-lg ${
+                      index < timeSlots.length - 1 ? "border-b pb-6" : ""
+                    }`}
+                  >
                     <div className="flex items-center mb-4">
-                      <div 
+                      <div
                         className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 shadow-sm"
                         aria-hidden="true"
                       >
                         <span className="font-semibold">{index + 1}</span>
                       </div>
                       <div>
-                        <div className="text-lg font-semibold text-gray-800">{displayDay}</div>
+                        <div className="text-lg font-semibold text-gray-800">
+                          {displayDay}
+                        </div>
                         <div className="text-sm text-gray-500">{slot.date}</div>
                       </div>
                     </div>
-                    
+
                     {filteredTimeSlots.length === 0 ? (
                       <div className="px-4 py-3 bg-gray-50 rounded-lg text-center text-gray-500">
                         No time slots available for this day
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4 pl-6 border-l-2 border-purple-100">
-                        {filteredTimeSlots.map((timeSlotObj) => (
-                          timeSlotObj.value && (
-                            <div
-                              key={`${slot.id}-${timeSlotObj.key}`}
-                              onClick={() => 
-                                timeSlotObj.value &&
-                                handleSelectTimeSlot(
-                                  slot.date,
-                                  timeSlotObj.value,
-                                  slot.dayOfWeek
-                                )
-                              }
-                              className={`
+                        {filteredTimeSlots.map(
+                          (timeSlotObj) =>
+                            timeSlotObj.value && (
+                              <div
+                                key={`${slot.id}-${timeSlotObj.key}`}
+                                onClick={() =>
+                                  timeSlotObj.value &&
+                                  handleSelectTimeSlot(
+                                    slot.date,
+                                    timeSlotObj.value,
+                                    slot.dayOfWeek
+                                  )
+                                }
+                                className={`
                                 relative p-3 rounded-lg cursor-pointer transition-all duration-200
                                 ${
-                                  selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date
+                                  selectedTimeSlot === timeSlotObj.value &&
+                                  selectedDate === slot.date
                                     ? "bg-green-50 border border-green-500 shadow-md"
                                     : "bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50"
                                 }
                               `}
-                              role="button"
-                              aria-selected={selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date}
-                              aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
-                              tabIndex={0}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                  <Clock 
-                                    className={`w-4 h-4 mr-2 flex-shrink-0 ${
-                                      selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date 
-                                        ? "text-green-600" 
-                                        : "text-purple-500"
-                                    }`} 
-                                  />
-                                  <span className={`font-medium ${
-                                    selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date 
-                                      ? "text-green-800" 
-                                      : "text-gray-700"
-                                  }`}>
-                                    {timeSlotObj.value}
-                                  </span>
+                                role="button"
+                                aria-selected={
+                                  selectedTimeSlot === timeSlotObj.value &&
+                                  selectedDate === slot.date
+                                }
+                                aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
+                                tabIndex={0}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <Clock
+                                      className={`w-4 h-4 mr-2 flex-shrink-0 ${
+                                        selectedTimeSlot ===
+                                          timeSlotObj.value &&
+                                        selectedDate === slot.date
+                                          ? "text-green-600"
+                                          : "text-purple-500"
+                                      }`}
+                                    />
+                                    <span
+                                      className={`font-medium ${
+                                        selectedTimeSlot ===
+                                          timeSlotObj.value &&
+                                        selectedDate === slot.date
+                                          ? "text-green-800"
+                                          : "text-gray-700"
+                                      }`}
+                                    >
+                                      {timeSlotObj.value}
+                                    </span>
+                                  </div>
+                                  {selectedTimeSlot === timeSlotObj.value &&
+                                  selectedDate === slot.date ? (
+                                    <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="h-4 w-4 text-white"
+                                          viewBox="0 0 20 20"
+                                          fill="currentColor"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                      </div>
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
+                                      Available
+                                    </span>
+                                  )}
                                 </div>
-                                {selectedTimeSlot === timeSlotObj.value && selectedDate === slot.date ? (
-                                  <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
-                                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                      </svg>
-                                    </div>
-                                  </span>
-                                ) : (
-                                  <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
-                                    Available
-                                  </span>
-                                )}
                               </div>
-                            </div>
-                          )
-                        ))}
+                            )
+                        )}
                       </div>
                     )}
                   </div>
@@ -1100,7 +1250,7 @@ const fetchTimeSlots = async (): Promise<void> => {
       </Modal>
     );
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1 p-4 lg:p-6">
@@ -1178,7 +1328,7 @@ const fetchTimeSlots = async (): Promise<void> => {
                     </div>
                   </div>
 
-                 <div className="bg-white border rounded-lg p-4">
+                  <div className="bg-white border rounded-lg p-4">
                     <div className="flex items-center mb-3">
                       <CreditCard className="w-5 h-5 mr-2 text-purple-500" />
                       <h3 className="font-medium">Payment Method</h3>

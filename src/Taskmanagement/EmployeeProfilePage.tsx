@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import BASE_URL from "../../Config";
+import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 
 interface MobileNumberUpdateProps {

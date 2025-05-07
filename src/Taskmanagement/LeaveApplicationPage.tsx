@@ -25,7 +25,7 @@ import type { DatePickerProps } from "antd/es/date-picker";
 import axios from "axios";
 import dayjs from "dayjs";
 import UserPanelLayout from "./UserPanelLayout";
-import BASE_URL from "../../Config";
+import BASE_URL from "../Config";
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 

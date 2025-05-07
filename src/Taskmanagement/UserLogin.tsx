@@ -10,7 +10,7 @@ import {
   Divider,
 } from "antd";
 import axios, { AxiosError } from "axios";
-import BASE_URL from "../../Config";
+import BASE_URL from "../Config";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
 

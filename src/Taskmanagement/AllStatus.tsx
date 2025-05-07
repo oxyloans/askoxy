@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import UserPanelLayout from "./UserPanelLayout";
-import BASE_URL from "../../Config";
+import BASE_URL from "../Config";
 import axios from "axios";
 import {
   Card,

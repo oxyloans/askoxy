@@ -7,7 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
-import UseCases from "./Finone/UseCases";
+import UseCases from "./Finone/System/UseCases";
 import Landingpage from "./components/Landingpage";
 import Freerudraksha from "./components/Services/Freerudraksh";
 import HitMovie from "./components/Services/HitMovie";
@@ -93,15 +93,15 @@ import OxyLoans from "./components/Services/OxyLoans";
 import UniversityOffers from "./Dashboard/Offerletter";
 import PinkFunding from "./components/PinkFunding";
 import CurrentLandingPage from "./components/CurrentLandinPage";
-import PlanOfTheDay from "./Pages/Auth/PlanOfTheDay";
-import UserPanelLayout from "./Pages/Auth/UserPanelLayout";
-import AllStatusPage from "./Pages/Auth/AllStatus";
-import AssignedTasksPage from "./Pages/Auth/AssignedTasks";
-import UserDetails from "./Pages/Auth/UserDetails";
-import TaskAssignedUser from "./Pages/Auth/TaskAssignedUser";
-import TaskUpdate from "./Pages/Auth/EndoftheDay";
-import UserRegister from "./Pages/Auth/UserRegister";
-import UserLogin from "./Pages/Auth/UserLogin";
+import PlanOfTheDay from "./Taskmanagement/PlanOfTheDay";
+import UserPanelLayout from "./Taskmanagement/UserPanelLayout";
+import AllStatusPage from "./Taskmanagement/AllStatus";
+import AssignedTasksPage from "./Taskmanagement/AssignedTasks";
+
+import TaskAssignedUser from "./Taskmanagement/TaskAssignedUser";
+import TaskUpdate from "./Taskmanagement/EndoftheDay";
+import UserRegister from "./Taskmanagement/UserRegister";
+import UserLogin from "./Taskmanagement/UserLogin";
 import CallerHistoryPage from "./AskoxyAdmin/HelpdeskTodayCalls";
 // *************************PARTNER START****************************//
 
@@ -127,10 +127,10 @@ import FreeRiceBlog from "./components/FreeRice";
 import { SearchProvider } from "./until/SearchContext";
 import SearchMain from "./Dashboard/SearchMain";
 import OrderReport from "./AskoxyAdmin/OrderReport";
-import LeaveApplicationPage from "./Pages/Auth/LeaveApplicationPage";
-import TeamLeaveStatus from "./Pages/Auth/TeamLeaveStatus";
+import LeaveApplicationPage from "./Taskmanagement/LeaveApplicationPage";
+import TeamLeaveStatus from "./Taskmanagement/TeamLeaveStatus";
 import FeedbackDashboard from "./AskoxyAdmin/FeedBack";
-import MobileNumberUpdate from "./Pages/Auth/EmployeeProfilePage";
+import MobileNumberUpdate from "./Taskmanagement/EmployeeProfilePage";
 import HelpDeskDashboard from "./AskoxyAdmin/HelpDeskDashboard";
 import ExchangeOrdersPage from "./PartnerWeb/ExchangeOrders";
 const App: React.FC = () => {

@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2, X, Trash2 } from "lucide-react";
@@ -51,10 +57,15 @@ interface ApiError {
 const CartPage: React.FC = () => {
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<{ [key: string]: number }>({});
-  const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>({});
-  
-  const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] = useState<boolean>(false);
-  const [currentPlanDetails, setCurrentPlanDetails] = useState<"planA" | "planB" | null>(null);
+  const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+
+  const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] =
+    useState<boolean>(false);
+  const [currentPlanDetails, setCurrentPlanDetails] = useState<
+    "planA" | "planB" | null
+  >(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -86,14 +97,18 @@ const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
-  const [containerPreference, setContainerPreference] = useState<string | null>(null);
+  const [containerPreference, setContainerPreference] = useState<string | null>(
+    null
+  );
   const [hasShownOnePlusOne, setHasShownOnePlusOne] = useState(false);
   const onePlusOneConfirmedRef = useRef<boolean>(false);
   const containerModalCompletedRef = useRef<boolean>(false);
   const onePlusOneModalShownRef = useRef(false);
-  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>({});
+  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
+    {}
+  );
   const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-  const mobileNumberRaw = localStorage.getItem("mobilenumber") || "";
+  const mobileNumberRaw = localStorage.getItem("mobileNumber") || "";
   const rawNumber = mobileNumberRaw || whatsappNumber;
   const [isReferralModalVisible, setIsReferralModalVisible] = useState(false);
   const [mobileNumbers, setMobileNumbers] = useState<string[]>([]);
@@ -250,8 +265,6 @@ const CartPage: React.FC = () => {
     checkAndShowFallbackOnePlusOne();
   }, [cartData]);
 
-
-
   // const showContainerModal = useCallback(() => {
   //   console.log("showContainerModal called with:", {
   //     containerPreference,
@@ -382,7 +395,7 @@ const CartPage: React.FC = () => {
   //         try {
   //           setSelectedPlan(null);
   //           containerModalCompletedRef.current = true;
-            
+
   //         } catch (error) {
   //           console.error("Error in Modal onCancel:", error);
   //           message.error("Failed to cancel container selection.");
@@ -398,11 +411,12 @@ const CartPage: React.FC = () => {
   useEffect(() => {
     if (
       cartData.length > 0 &&
-      (containerPreference === null || containerPreference?.toLowerCase() !== "interested") &&
+      (containerPreference === null ||
+        containerPreference?.toLowerCase() !== "interested") &&
       !modalDisplayedRef.current
     ) {
       showContainerModal();
-    } 
+    }
   }, [cartData]);
 
   useEffect(() => {
@@ -419,7 +433,8 @@ const CartPage: React.FC = () => {
                 <>
                   <ul className="list-disc pl-5 text-gray-700 space-y-1">
                     <li>
-                      Buy 9 bags of rice in 3 years to keep the container forever
+                      Buy 9 bags of rice in 3 years to keep the container
+                      forever
                     </li>
                     <li>
                       Refer 9 friends who make a purchase – keep the container
@@ -461,13 +476,14 @@ const CartPage: React.FC = () => {
       );
       console.log("Cart API response:", response.data);
       if (response.data?.customerCartResponseList) {
-        const cartItemsMap: { [key: string]: number } = response.data.customerCartResponseList.reduce(
-          (acc: { [key: string]: number }, item: CartItem) => {
-            acc[item.itemId] = item.cartQuantity || 0;
-            return acc;
-          },
-          {}
-        );
+        const cartItemsMap: { [key: string]: number } =
+          response.data.customerCartResponseList.reduce(
+            (acc: { [key: string]: number }, item: CartItem) => {
+              acc[item.itemId] = item.cartQuantity || 0;
+              return acc;
+            },
+            {}
+          );
         setCartItems(cartItemsMap);
         const totalQuantity = Object.values(cartItemsMap).reduce(
           (sum: number, qty: number) => sum + qty,
@@ -527,9 +543,10 @@ const CartPage: React.FC = () => {
   ) => {
     try {
       const itemIds = cartData.map((item) => item.itemId);
- 
+
       let trimmed = rawNumber.trim();
-let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : trimmed;
+      let mobilenumber =
+        trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : trimmed;
 
       const requestBody: any = {
         created_at: new Date().toISOString(),
@@ -782,7 +799,7 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
     if (currentNumber === rawNumber) {
       message.error("Adding your own number is not allowed.");
       return;
-    } 
+    }
 
     setMobileNumbers([...mobileNumbers, currentNumber]);
     setCurrentNumber("");
@@ -807,7 +824,7 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
     }
 
     setIsPlanModalVisible(true);
-    setSelectedPlan([]); 
+    setSelectedPlan([]);
   };
 
   const handlePlanOk = async () => {
@@ -842,8 +859,6 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
       onCancel: () => {},
     });
   };
-
-
 
   // const showOnePlusOneModal = (item: CartItem) => {
   //   try {
@@ -1046,12 +1061,17 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
   };
 
   const isContainer = (itemId: string): boolean => {
-    return [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(itemId);
+    return [
+      CONTAINER_ITEM_IDS.HEAVY_BAG,
+      CONTAINER_ITEM_IDS.LIGHT_BAG,
+    ].includes(itemId);
   };
 
   const handleIncrease = async (item: CartItem) => {
     if (isContainer(item.itemId)) {
-      message.info("This is a free promotional container. Quantity cannot be changed.");
+      message.info(
+        "This is a free promotional container. Quantity cannot be changed."
+      );
       return;
     }
 
@@ -1108,7 +1128,9 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
 
   const handleDecrease = async (item: CartItem) => {
     if (isContainer(item.itemId)) {
-      message.info("This is a free promotional container. Quantity cannot be changed.");
+      message.info(
+        "This is a free promotional container. Quantity cannot be changed."
+      );
       return;
     }
 
@@ -1489,8 +1511,8 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
                           {item.units === "pcs"
                             ? "Pc"
                             : parseWeight(item.weight) === 1
-                              ? "Kg"
-                              : "Kgs"}
+                            ? "Kg"
+                            : "Kgs"}
                         </p>
                         <div className="flex items-center mt-1">
                           <p className="text-sm line-through text-gray-400 mr-2">
@@ -1517,12 +1539,22 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
                         <div className="flex items-center justify-between md:justify-end w-full">
                           <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
                             <motion.button
-                              whileHover={{ scale: isContainer(item.itemId) ? 1 : 1.02 }}
-                              whileTap={{ scale: isContainer(item.itemId) ? 1 : 0.98 }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${isContainer(item.itemId) ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                              whileHover={{
+                                scale: isContainer(item.itemId) ? 1 : 1.02,
+                              }}
+                              whileTap={{
+                                scale: isContainer(item.itemId) ? 1 : 0.98,
+                              }}
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                                isContainer(item.itemId)
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
                               onClick={() => handleDecrease(item)}
-                              disabled={loadingItems[item.itemId] || isContainer(item.itemId)}
+                              disabled={
+                                loadingItems[item.itemId] ||
+                                isContainer(item.itemId)
+                              }
                               aria-label="Decrease quantity"
                             >
                               <span className="font-medium">-</span>
@@ -1541,22 +1573,29 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
                             <motion.button
                               whileHover={{
                                 scale:
-                                  isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity
+                                  isContainer(item.itemId) ||
+                                  cartItems[item.itemId] >= item.quantity
                                     ? 1
                                     : 1.02,
                               }}
                               whileTap={{
                                 scale:
-                                  isContainer(item.itemId) || cartItems[item.itemId] >= item.quantity
+                                  isContainer(item.itemId) ||
+                                  cartItems[item.itemId] >= item.quantity
                                     ? 1
                                     : 0.98,
                               }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${cartItems[item.itemId] >= item.quantity || isContainer(item.itemId)
+                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                                cartItems[item.itemId] >= item.quantity ||
+                                isContainer(item.itemId)
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
-                                }`}
+                              }`}
                               onClick={() => {
-                                if (cartItems[item.itemId] < item.quantity && !isContainer(item.itemId)) {
+                                if (
+                                  cartItems[item.itemId] < item.quantity &&
+                                  !isContainer(item.itemId)
+                                ) {
                                   handleIncrease(item);
                                 }
                               }}
@@ -1729,34 +1768,35 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0
                   ) && (
-                      <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                        <p className="font-semibold">
-                          Quantity adjustments needed:
-                        </p>
-                        <ul className="ml-4 mt-1 list-disc">
-                          {cartData
-                            .filter(
-                              (item) =>
-                                item.cartQuantity > item.quantity &&
-                                item.quantity > 0
-                            )
-                            .map((item) => (
-                              <li key={item.itemId}>
-                                {item.itemName} - Only {item.quantity} in stock
-                                (you have {item.cartQuantity})
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    )}
+                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                      <p className="font-semibold">
+                        Quantity adjustments needed:
+                      </p>
+                      <ul className="ml-4 mt-1 list-disc">
+                        {cartData
+                          .filter(
+                            (item) =>
+                              item.cartQuantity > item.quantity &&
+                              item.quantity > 0
+                          )
+                          .map((item) => (
+                            <li key={item.itemId}>
+                              {item.itemName} - Only {item.quantity} in stock
+                              (you have {item.cartQuantity})
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${isCheckoutDisabled()
+                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${
+                      isCheckoutDisabled()
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
-                      }`}
+                    }`}
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled()}
                   >
@@ -1862,7 +1902,10 @@ let mobilenumber = trimmed.length > 10 ? trimmed.replace(/^(\+91|91)/, "") : tri
                     onChange={(e) =>
                       setAddressFormData((prev) => ({
                         ...prev,
-                        addressType: e.target.value as "Home" | "Work" | "Others",
+                        addressType: e.target.value as
+                          | "Home"
+                          | "Work"
+                          | "Others",
                       }))
                     }
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"

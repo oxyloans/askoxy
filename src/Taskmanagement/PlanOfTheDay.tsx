@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import UserPanelLayout from "./UserPanelLayout";
-import BASE_URL from "../../Config";
+import BASE_URL from "../Config";
 import {
   Form,
   Input,
@@ -286,7 +286,6 @@ const PlanOfTheDay: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2 sm:mb-4">
             {/* Team Tag and Title */}
             <div className="flex items-center gap-2">
-              
               <Text strong className="text-base sm:text-lg text-gray-800">
                 Today Plan Of The Day
               </Text>
@@ -389,7 +388,9 @@ const PlanOfTheDay: React.FC = () => {
           optionLabelProp="label"
           showSearch
           filterOption={(input, option) =>
-            (typeof option?.label === "string" && option.label.toLowerCase().includes(input.toLowerCase())) ?? false
+            (typeof option?.label === "string" &&
+              option.label.toLowerCase().includes(input.toLowerCase())) ??
+            false
           }
         >
           {TEAM_OPTIONS.map((team) => (
@@ -471,6 +472,13 @@ const PlanOfTheDay: React.FC = () => {
               </Tooltip>
             </div>
           </div>
+
+          {/* Notification Card - Added here */}
+          <Card className="mx-2 mt-0 mb-0 bg-orange-50 border-orange-200 shadow-sm rounded-lg p-2 text-sm sm:text-base">
+            <Text strong>Note: </Text>
+            All employees must update their mobile number in the left panel.
+            Click, enter, and save. Mandatory.
+          </Card>
 
           <div className="p-5 md:p-6 lg:p-8">
             {fetchingStatus
