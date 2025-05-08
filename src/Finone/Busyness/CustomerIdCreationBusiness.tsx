@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CustomerIdCreation1: React.FC = () => {
+const CustomerIdCreation: React.FC = () => {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">LOS Workflow for Customer ID Creation</h1>
@@ -185,4 +185,4 @@ End
   );
 };
 
-export default CustomerIdCreation1;
+export default CustomerIdCreation;

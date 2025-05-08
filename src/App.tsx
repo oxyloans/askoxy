@@ -124,6 +124,7 @@ import DataAssigned from "./AskoxyAdmin/DataAssigned";
 import ReferredData from "./AskoxyAdmin/RefferedData";
 
 import FreeRiceBlog from "./components/FreeRice";
+import MeyaporeMetro from "./components/MeyaporeMetro";
 import { SearchProvider } from "./until/SearchContext";
 import SearchMain from "./Dashboard/SearchMain";
 import OrderReport from "./AskoxyAdmin/OrderReport";
@@ -137,7 +138,13 @@ const App: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const validEntryPoints = ["/", "/future", "/freerice", "/glms"];
+    const validEntryPoints = [
+      "/",
+      "/future",
+      "/freerice",
+      "/glms",
+      "/miyaporemetro",
+    ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
       localStorage.setItem("entryPoint", location.pathname);
@@ -177,6 +184,7 @@ const App: React.FC = () => {
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
+            <Route path="/miyaporemetro" element={<MeyaporeMetro />} />
             <Route path="/movietickets" element={<Pushpa2GPT />} />
             <Route
               path="/usermobilenumberupdate"

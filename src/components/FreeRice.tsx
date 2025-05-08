@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
-import Rice1 from "../assets/img/BUY 1 GET 1.png";
+import Rice1 from "../assets/img/o3.png";
 import Rice2 from "../assets/img/RICEU7.png";
-import Rice3 from "../assets/img/RICEU10.png";
-import Rice4 from "../assets/img/RICEU9.png";
+import Rice3 from "../assets/img/35kg1.png";
+import Rice4 from "../assets/img/26kg.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 import Retro from "../assets/img/retro.png";
 import O5 from "../assets/img/tb1.png";
@@ -99,30 +99,30 @@ const FreeRiceBlog: React.FC = () => {
         "Enjoy premium quality rice with our limited-time Buy 1 Get 1 Free offer — ideal for small families looking for great value and taste.",
       weight: 1.0,
     },
-    {
-      id: 2,
-      imageUrl: Rice2,
-      title: "5KG Premium Rice Bag",
-      description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
-      weight: 5.0,
-    },
-    {
-      id: 3,
-      imageUrl: Retro,
-      title: "5KG Premium Rice Bag",
-      description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
-      weight: 5.0,
-    },
-    {
-      id: 4,
-      imageUrl: O5,
-      title: "5KG Premium Rice Bag",
-      description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
-      weight: 5.0,
-    },
+    // {
+    //   id: 2,
+    //   imageUrl: Rice2,
+    //   title: "5KG Premium Rice Bag",
+    //   description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
+    //   weight: 5.0,
+    // },
+    // {
+    //   id: 3,
+    //   imageUrl: Retro,
+    //   title: "5KG Premium Rice Bag",
+    //   description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
+    //   weight: 5.0,
+    // },
+    // {
+    //   id: 4,
+    //   imageUrl: O5,
+    //   title: "5KG Premium Rice Bag",
+    //   description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
+    //   weight: 5.0,
+    // },
     {
       id: 5,
-      imageUrl: Rice3,
+      imageUrl: Rice4,
       title: "10KG Premium Rice Bag",
       description:
         "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
@@ -130,7 +130,7 @@ const FreeRiceBlog: React.FC = () => {
     },
     {
       id: 6,
-      imageUrl: Rice4,
+      imageUrl: Rice3,
       title: "26KG Premium Rice Bag",
       description:
         "Buy a 26KG Rice Bag and Get an 35+ KG Steel Container Worth ₹2300 free!",
@@ -160,7 +160,7 @@ const FreeRiceBlog: React.FC = () => {
       // Store the redirect path in both localStorage and sessionStorage
       localStorage.setItem("redirectPath", targetPath);
       sessionStorage.setItem("redirectPath", targetPath);
-      
+
       // Also store as returnUrl and next which are common parameter names
       localStorage.setItem("returnUrl", targetPath);
       sessionStorage.setItem("returnUrl", targetPath);
@@ -174,8 +174,10 @@ const FreeRiceBlog: React.FC = () => {
       } else {
         // If not logged in, redirect to WhatsApp registration with the target path
         // Try multiple parameter names that might be expected by the auth system
-        const registerUrl = `${REGISTER_URL}?redirect=${encodeURIComponent(targetPath)}`;
-        
+        const registerUrl = `${REGISTER_URL}?redirect=${encodeURIComponent(
+          targetPath
+        )}`;
+
         // Force a full page reload for authentication
         window.location.href = registerUrl;
       }
@@ -192,7 +194,7 @@ const FreeRiceBlog: React.FC = () => {
       setIsLoading(true);
       // Set the default redirect path to the dashboard products page
       const redirectPath = "/main/dashboard/products";
-      
+
       // Store the redirect path in multiple storage locations
       localStorage.setItem("redirectPath", redirectPath);
       sessionStorage.setItem("redirectPath", redirectPath);
@@ -202,11 +204,12 @@ const FreeRiceBlog: React.FC = () => {
       sessionStorage.setItem("next", redirectPath);
 
       // Redirect to WhatsApp login with the redirect parameter
-      const loginUrl = `${LOGIN_URL}?redirect=${encodeURIComponent(redirectPath)}`;
-      
+      const loginUrl = `${LOGIN_URL}?redirect=${encodeURIComponent(
+        redirectPath
+      )}`;
+
       // Force a full page reload for authentication
       window.location.href = loginUrl;
-      
     } catch (error) {
       console.error("Sign in error:", error);
       // Handle error appropriately
@@ -217,7 +220,7 @@ const FreeRiceBlog: React.FC = () => {
 
   const handleLogoClick = () => {
     // For logo click, navigate is fine since we're not crossing auth boundaries
-    navigate('/');
+    navigate("/");
   };
 
   const toggleMobileMenu = () => {
@@ -285,14 +288,14 @@ const FreeRiceBlog: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-gray-100 font-sans antialiased">
       {/* Header */}
-      <header className="bg-white shadow-sm px-4 py-4 sticky top-0 z-50">
+      <header className="bg-white shadow-md px-4 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <img
             src={AskOxyLogo}
-            alt="AskOxy Logo"
-            className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105"
+            alt="RiceOrder Logo"
+            className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-110 focus:scale-110"
             tabIndex={0}
             role="banner"
             onClick={handleLogoClick}
@@ -303,7 +306,7 @@ const FreeRiceBlog: React.FC = () => {
               }
             }}
           />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <a
               href={LOGIN_URL}
               onClick={(e) => {
@@ -311,15 +314,36 @@ const FreeRiceBlog: React.FC = () => {
                 handleSignIn();
                 return false;
               }}
-              className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 shadow transition duration-300"
+              className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
               aria-busy={isLoading}
             >
               <User className="w-5 h-5" />
-              {isLoading ? "Loading..." : "Sign In"}
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                  Loading...
+                </span>
+              ) : (
+                "Sign In"
+              )}
             </a>
             <button
               onClick={toggleMobileMenu}
-              className="sm:hidden focus:outline-none"
+              className="sm:hidden focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md p-2"
               aria-label={mobileMenuOpen ? "Close Menu" : "Open Menu"}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
@@ -333,7 +357,7 @@ const FreeRiceBlog: React.FC = () => {
         {mobileMenuOpen && (
           <div
             id="mobile-menu"
-            className="sm:hidden mt-2 bg-white shadow-md rounded-lg px-4 py-2 animate-fade-in-down"
+            className="sm:hidden mt-3 bg-white shadow-lg rounded-xl px-4 py-3 animate-slide-down"
             role="menu"
           >
             <a
@@ -343,7 +367,7 @@ const FreeRiceBlog: React.FC = () => {
                 handleSignIn();
                 return false;
               }}
-              className="block w-full text-left text-purple-600 hover:text-purple-800 py-2 font-medium"
+              className="block w-full text-left text-indigo-600 hover:text-indigo-800 py-2.5 font-medium transition-colors duration-200"
               role="menuitem"
             >
               {isLoading ? "Loading..." : "Sign In"}
@@ -354,32 +378,33 @@ const FreeRiceBlog: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-grow">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-              Order Rice Online
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+          <div className="text-center mb-10 sm:mb-16">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 animate-gradient">
+              Order Premium Rice Online
             </h1>
-            <p className="text-sm sm:text-md md:text-lg text-gray-600 mt-3 max-w-2xl mx-auto">
-              Premium quality rice delivered to your doorstep
+            <p className="text-base sm:text-lg md:text-xl text-gray-700 mt-4 max-w-3xl mx-auto">
+              Discover our curated selection of high-quality rice, delivered
+              fresh to your door.
             </p>
           </div>
 
-          {/* Rice Product Grid with consistent card heights */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Rice Product Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {riceProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
           {/* Impact Message */}
-          <div className="mt-10 text-center">
-            <div className="p-4 sm:p-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl shadow-sm max-w-3xl mx-auto">
-              <h3 className="font-semibold text-lg text-purple-700 mb-2">
-                Make an Impact with Your Purchase
+          <div className="mt-12 sm:mt-16 text-center">
+            <div className="p-6 sm:p-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl shadow-md max-w-4xl mx-auto">
+              <h3 className="font-semibold text-xl text-indigo-700 mb-3">
+                Your Purchase Makes a Difference
               </h3>
-              <p className="text-sm sm:text-md text-gray-700">
-                Every order helps us donate rice to families in need. Join
-                thousands of customers making a difference with every purchase.
+              <p className="text-base sm:text-lg text-gray-700">
+                With every order, we donate rice to families in need. Join our
+                community of conscious shoppers creating positive impact.
               </p>
             </div>
           </div>

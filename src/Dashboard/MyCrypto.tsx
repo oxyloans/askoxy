@@ -3,6 +3,8 @@ import axios from "axios";
 import {
   Coins,
   Copy,
+  Sparkles,
+  ChevronRight,
   Info,
   SendHorizonal,
   ExternalLink,
@@ -15,10 +17,12 @@ import {
   ChevronDown,
   ChevronUp,
   Menu,
+  Plus,
+  Minus,
+  HelpCircle,
 } from "lucide-react";
 import BASE_URL from "../Config";
 import BMVICON from "../assets/img/bmvlogo.png";
-import BMVCoinImage from "../assets/img/bmvcoin.png";
 
 interface Transfer {
   txMobileNumber: string;
@@ -41,6 +45,7 @@ const MyCrypto: React.FC = () => {
   const [showTransfersModal, setShowTransfersModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [shouldFetchTransfers, setShouldFetchTransfers] = useState(false);
+  const [showFaqModal, setShowFaqModal] = useState(false);
 
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
@@ -49,14 +54,20 @@ const MyCrypto: React.FC = () => {
 
   // Data state
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [filteredTransfers, setFilteredTransfers] = useState<Transfer[]>([]);
+  const [transferFilter, setTransferFilter] = useState<
+    "all" | "sent" | "received"
+  >("all");
 
   // Single place to define expandedTxId - at component level
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
   // Refs for uncontrolled inputs
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const transferModalRef = useRef<HTMLDivElement>(null);
   const transfersInitialized = useRef(false);
 
   // Transfer state
@@ -91,10 +102,18 @@ const MyCrypto: React.FC = () => {
       ) {
         closeTransfersModal();
       }
+
+      if (
+        showTransferModal &&
+        transferModalRef.current &&
+        !transferModalRef.current.contains(event.target as Node)
+      ) {
+        setShowTransferModal(false);
+      }
     };
 
     // Add event listener when modal is shown
-    if (showTransfersModal) {
+    if (showTransfersModal || showTransferModal) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
@@ -102,16 +121,32 @@ const MyCrypto: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showTransfersModal]);
+  }, [showTransfersModal, showTransferModal]);
 
   // Fetch user data only once on mount
   useEffect(() => {
     fetchUserData();
   }, []);
 
+  // Filter transfers when filter changes or transfers update
+  useEffect(() => {
+    if (transfers.length > 0) {
+      const filtered = transfers.filter((transfer) => {
+        const isSent = transfer.txMobileNumber === userMobileNumber;
+        if (transferFilter === "sent") return isSent;
+        if (transferFilter === "received") return !isSent;
+        return true; // 'all' filter
+      });
+      setFilteredTransfers(filtered);
+    } else {
+      setFilteredTransfers([]);
+    }
+  }, [transfers, transferFilter, userMobileNumber]);
+
   // Function to close transfers modal with clean state
   const closeTransfersModal = () => {
     setShowTransfersModal(false);
+    setTransferFilter("all"); // Reset filter when closing
   };
 
   // Toggle expanded view for a transaction
@@ -182,18 +217,14 @@ const MyCrypto: React.FC = () => {
       setTransfersLoading(true);
       setTransfersError(null);
 
-      // Updated API endpoint - using the correct bmvhistory endpoint with proper formatting
-      const response = await axios.get(
-        `${BASE_URL}/api/user-service/bmvhistory`,
-        {
-          params: { mobileNumber: userMobileNumber },
-          // Add timeout to prevent infinite loading state
-          timeout: 15000,
-          // Handle 204 responses properly (No Content)
-          validateStatus: (status) =>
-            (status >= 200 && status < 300) || status === 204,
-        }
-      );
+      const response = await axios.get(`${BASE_URL}/user-service/bmvhistory`, {
+        params: { mobileNumber: userMobileNumber },
+        // Add timeout to prevent infinite loading state
+        timeout: 1000,
+        // Handle 204 responses properly (No Content)
+        validateStatus: (status) =>
+          (status >= 200 && status < 300) || status === 204,
+      });
 
       // Guard against component unmounting during async operation
       if (!isMounted.current) return;
@@ -264,6 +295,34 @@ const MyCrypto: React.FC = () => {
       setShouldFetchTransfers(true);
     }
   };
+
+  interface NavItem {
+    label: string;
+    icon: React.ElementType;
+    color: string;
+    action: () => void;
+  }
+
+  const navItems: NavItem[] = [
+    {
+      label: "BMVCoin",
+      icon: Info,
+      color: "purple",
+      action: () => setShowBmvModal(true),
+    },
+    {
+      label: "Transfers",
+      icon: History,
+      color: "blue",
+      action: handleOpenTransfersModal,
+    },
+    {
+      label: "FAQs",
+      icon: HelpCircle,
+      color: "green",
+      action: () => setShowFaqModal(true),
+    },
+  ];
 
   // Copy multichain ID to clipboard
   const handleCopyMultichainId = async () => {
@@ -393,515 +452,878 @@ const MyCrypto: React.FC = () => {
     }
   };
 
-// BMVInfoModal Component with mobile-optimized close button
-const BMVInfoModal = () => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-md relative overflow-y-auto max-h-[90vh]">
-      {/* Fixed close button - completely redesigned for mobile */}
-      <button
-        onClick={() => setShowBmvModal(false)}
-        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center 
-                  bg-white hover:bg-gray-100 rounded-full transition-colors z-50
-                  shadow-lg border border-gray-200"
-        aria-label="Close modal"
-      >
-        <X size={16} strokeWidth={2.5} className="text-gray-700" />
-      </button>
+  // BMVInfoModal Component with mobile-optimized close button
+  const BMVInfoModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-md relative overflow-y-auto max-h-[90vh]">
+        {/* Fixed close button - completely redesigned for mobile */}
+        <button
+          onClick={() => setShowBmvModal(false)}
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center 
+                    bg-white hover:bg-gray-100 rounded-full transition-colors z-50
+                    shadow-lg border border-gray-200"
+          aria-label="Close modal"
+        >
+          <X size={16} strokeWidth={2.5} className="text-gray-700" />
+        </button>
 
-      <div className="flex items-center gap-3 mb-5">
-        <img src={BMVICON} alt="BMV Coin" className="h-10" />
-      </div>
-
-      {/* Rest of BMVInfoModal content remains the same */}
-      <div className="text-gray-700 space-y-4">
-        <p className="text-base sm:text-lg">
-          BMVCoins are our platform's native cryptocurrency that can be used
-          for discounts on products and services.
-        </p>
-
-        <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
-          <p className="font-medium text-purple-800">Current value:</p>
-          <p className="text-purple-700 text-base sm:text-lg">
-            1,000 BMVCoins = ₹10 discount
-          </p>
+        <div className="flex items-center gap-3 mb-5">
+          <img src={BMVICON} alt="BMV Coin" className="h-10" />
         </div>
 
-        <div>
-          <p className="font-medium text-base sm:text-lg">
-            Future potential value:
+        {/* Rest of BMVInfoModal content remains the same */}
+        <div className="text-gray-700 space-y-4">
+          <p className="text-base sm:text-lg">
+            BMVCoins are our platform's native cryptocurrency that can be used
+            for discounts on products and services.
           </p>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <div className="bg-blue-50 p-3 rounded-lg text-center">
-              <p className="text-blue-800 text-sm sm:text-base">Minimum</p>
-              <p className="text-base sm:text-lg font-bold text-blue-700">
-                ₹10,000
-              </p>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg text-center">
-              <p className="text-green-800 text-sm sm:text-base">
-                Great Value
-              </p>
-              <p className="text-base sm:text-lg font-bold text-green-700">
-                $10,000
-              </p>
-            </div>
+
+          <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
+            <p className="font-medium text-purple-800">Current value:</p>
+            <p className="text-purple-700 text-base sm:text-lg">
+              1,000 BMVCoins = ₹10 discount
+            </p>
           </div>
-        </div>
 
-        <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
-          <p className="font-medium mb-2 sm:mb-3 text-base sm:text-lg">
-            Important information:
-          </p>
-          <ul className="space-y-2">
-            <li className="flex items-start">
-              <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
-                •
-              </span>
-              <span className="text-sm sm:text-base">
-                A minimum of 20,000 BMVCoins is required for redemption.
-              </span>
-            </li>
-            <li className="flex items-start">
-              <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
-                •
-              </span>
-              <span className="text-sm sm:text-base">
-                When we reach 1 million users, BMVCoins will launch on public
-                tradeable blockchains.
-              </span>
-            </li>
-            <li className="flex items-start">
-              <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
-                •
-              </span>
-              <span className="text-sm sm:text-base">
-                Expected opening value: minimum of $0.10 USD per coin.
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <button
-        onClick={() => setShowBmvModal(false)}
-        className="mt-5 sm:mt-6 w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium text-base sm:text-lg"
-      >
-        Got it
-      </button>
-    </div>
-  </div>
-);
-
-// Transfers Modal Component with fixed close button
-const TransfersModal = () => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div
-        ref={modalRef}
-        className="bg-white p-4 sm:p-6 rounded-xl shadow-xl w-full max-w-md sm:max-w-2xl mx-2 sm:mx-4 relative max-h-[95vh] flex flex-col overflow-hidden"
-      >
-        {/* Fixed header with completely redesigned close button for mobile */}
-        <div className="relative mb-6 sm:mb-6 sticky top-0 bg-white z-10 pt-3 pb-3">
-          {/* Title centered for better mobile layout */}
-          <div className="flex items-center justify-center">
-            <div className="p-2 sm:p-3 rounded-full bg-purple-100 mr-2 sm:mr-3">
-              <History className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-purple-700">
-              Transfer History
-            </h2>
-          </div>
-          
-          {/* Mobile-optimized close button positioned in top-right corner */}
-          <button
-            onClick={closeTransfersModal}
-            className="absolute top-0 right-0 w-10 h-10 flex items-center justify-center
-                      bg-white hover:bg-gray-100 rounded-full transition-colors z-50
-                      shadow-lg border border-gray-200"
-            aria-label="Close modal"
-          >
-            <X size={18} strokeWidth={2.5} className="text-gray-700" />
-          </button>
-        </div>
-
-        {/* Clean divider with sufficient margin */}
-        <div className="w-full h-px bg-gray-200 mb-4"></div>
-
-        {/* Rest of the TransfersModal component remains the same */}
-        <div className="flex-1 overflow-y-auto">
-          {transfersLoading ? (
-            // Loading state - simplified
-            <div className="flex flex-col justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-10 sm:h-12 w-10 sm:w-12 border-t-2 border-b-2 border-purple-600 mb-4"></div>
-              <p className="text-gray-600">Loading transfer history...</p>
-            </div>
-          ) : transfersError ? (
-            // Error state
-            <div className="p-4 sm:p-6 bg-red-50 border border-red-200 rounded-lg text-center">
-              <p className="text-red-600 mb-4">{transfersError}</p>
-              <button
-                onClick={() => {
-                  setTransfersError(null);
-                  setTransfersLoading(true);
-                  fetchTransfers();
-                }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : transfers.length === 0 ? (
-            // Empty state
-            <div className="text-center py-8 sm:py-12">
-              <div className="mb-4 flex justify-center">
-                <History className="h-12 sm:h-16 w-12 sm:w-16 text-gray-300" />
+          <div>
+            <p className="font-medium text-base sm:text-lg">
+              Future potential value:
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="bg-blue-50 p-3 rounded-lg text-center">
+                <p className="text-blue-800 text-sm sm:text-base">Minimum</p>
+                <p className="text-base sm:text-lg font-bold text-blue-700">
+                  ₹10,000
+                </p>
               </div>
-              <p className="text-base sm:text-lg text-gray-600 mb-3 sm:mb-4">
-                No transactions found.
-              </p>
-              <p className="text-sm sm:text-base text-gray-500 px-2">
-                Your transaction history will appear here once you send or
-                receive BMVCoins.
-              </p>
+              <div className="bg-green-50 p-3 rounded-lg text-center">
+                <p className="text-green-800 text-sm sm:text-base">
+                  Great Value
+                </p>
+                <p className="text-base sm:text-lg font-bold text-green-700">
+                  $10,000
+                </p>
+              </div>
             </div>
-          ) : (
-            // Transfers list - remains the same
-            <div className="space-y-3 sm:space-y-4 pr-1">
-              {transfers.map((transfer, index) => {
-                // Correctly determine if current user is sender or receiver
-                const isSent = transfer.txMobileNumber === userMobileNumber;
-                const otherPartyMobile = isSent
-                  ? transfer.rxMobileNumber
-                  : transfer.txMobileNumber;
-                const isExpanded = expandedTxId === index;
+          </div>
 
-                return (
-                  <div
-                    key={index}
-                    className={`p-3 sm:p-4 rounded-lg border transition-all duration-200 ${
-                      isExpanded
-                        ? "bg-white border-purple-300 shadow-md"
-                        : "bg-gray-50 border-gray-200 hover:border-purple-200"
-                    }`}
-                  >
-                    {/* Transaction header - always visible */}
-                    <div
-                      className="flex justify-between items-center cursor-pointer"
-                      onClick={() => toggleExpand(index)}
-                    >
-                      <div className="flex items-center">
-                        <div
-                          className={`p-2 rounded-full mr-2 sm:mr-3 ${
-                            isSent ? "bg-red-100" : "bg-green-100"
-                          }`}
-                        >
-                          {isSent ? (
-                            <SendHorizonal className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-                          ) : (
-                            <SendHorizonal className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 transform rotate-180" />
-                          )}
-                        </div>
-                        <div>
-                          <p
-                            className={`text-xs sm:text-sm ${
-                              isSent ? "text-red-600" : "text-green-600"
-                            } font-medium`}
-                          >
-                            {isSent ? "Sent to" : "Received from"}
-                          </p>
-                          <p className="font-medium text-sm sm:text-base text-gray-800">
-                            {otherPartyMobile}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right flex items-center">
-                        <p
-                          className={`font-bold text-base sm:text-lg mr-2 ${
-                            isSent ? "text-red-600" : "text-green-600"
-                          }`}
-                        >
-                          {isSent ? "-" : "+"}
-                          {transfer.amountTransfer}
-                        </p>
-                        {isExpanded ? (
-                          <ChevronUp size={16} className="text-gray-500" />
-                        ) : (
-                          <ChevronDown size={16} className="text-gray-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Expanded transaction details */}
-                    {isExpanded && (
-                      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 space-y-3">
-                        <div>
-                          <p className="text-gray-500 text-xs sm:text-sm mb-1">
-                            Recipient Mobile
-                          </p>
-                          <p className="font-medium text-xs sm:text-base text-gray-800">
-                            {transfer.rxMobileNumber}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-gray-500 text-xs sm:text-sm mb-1">
-                            From Address
-                          </p>
-                          <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 break-all">
-                            <p className="font-mono text-gray-800 text-xs sm:text-sm">
-                              {transfer.txChainAddress ||
-                                "Address not available"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-gray-500 text-xs sm:text-sm mb-1">
-                            To Address
-                          </p>
-                          <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 break-all">
-                            <p className="font-mono text-gray-800 text-xs sm:text-sm">
-                              {transfer.rxChainAddress ||
-                                "Address not available"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-gray-500 text-xs sm:text-sm mb-1">
-                            Amount
-                          </p>
-                          <p className="font-bold text-lg sm:text-xl text-purple-700">
-                            {transfer.amountTransfer} BMVCoins
-                          </p>
-                        </div>
-
-                        {transfer.txChainAddress && (
-                          <button
-                            className="w-full mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center text-xs sm:text-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(
-                                `http://bmv.money:2750/address/${transfer.txChainAddress}`
-                              );
-                            }}
-                          >
-                            <ExternalLink size={14} className="mr-2" />
-                            View on OxyChain Explorer
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+            <p className="font-medium mb-2 sm:mb-3 text-base sm:text-lg">
+              Important information:
+            </p>
+            <ul className="space-y-2">
+              <li className="flex items-start">
+                <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
+                  •
+                </span>
+                <span className="text-sm sm:text-base">
+                  A minimum of 20,000 BMVCoins is required for redemption.
+                </span>
+              </li>
+              <li className="flex items-start">
+                <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
+                  •
+                </span>
+                <span className="text-sm sm:text-base">
+                  When we reach 1 million users, BMVCoins will launch on public
+                  tradeable blockchains.
+                </span>
+              </li>
+              <li className="flex items-start">
+                <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
+                  •
+                </span>
+                <span className="text-sm sm:text-base">
+                  Expected opening value: minimum of $0.10 USD per coin.
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        {/* Fixed footer with refresh button - remains the same */}
-        {!transfersLoading && transfers.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-gray-200 flex justify-center sticky bottom-0 bg-white">
-            <button
-              onClick={() => {
-                setTransfersLoading(true);
-                fetchTransfers();
-              }}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mr-2"
-              >
-                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-              </svg>
-              Refresh
-            </button>
-          </div>
-        )}
+        <button
+          onClick={() => setShowBmvModal(false)}
+          className="mt-5 sm:mt-6 w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium text-base sm:text-lg"
+        >
+          Got it
+        </button>
       </div>
     </div>
   );
-};
-  return (
-    <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4">
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+
+  // TransferModal Component - THIS WAS THE MISSING COMPONENT
+  const TransferModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div
+        ref={transferModalRef}
+        className="bg-white p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-md relative overflow-y-auto max-h-[90vh]"
+      >
+        {/* Fixed close button - optimized for mobile */}
+        <button
+          onClick={() => setShowTransferModal(false)}
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center 
+                    bg-white hover:bg-gray-100 rounded-full transition-colors z-50
+                    shadow-lg border border-gray-200"
+          aria-label="Close modal"
+        >
+          <X size={16} strokeWidth={2.5} className="text-gray-700" />
+        </button>
+
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-3 rounded-full bg-purple-100">
+            <SendHorizonal className="h-6 w-6 text-purple-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800">Transfer BMVCoins</h2>
         </div>
-      ) : (
-        <div>
-          {/* Main Card */}
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden border border-purple-100 mb-6 sm:mb-8">
-            {/* Header */}
-          
-<div className="bg-gradient-to-r from-purple-600 to-purple-800 px-4 sm:px-6 py-4 sm:py-6 text-white">
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-    {/* Title */}
-    <h1 className="text-2xl font-bold flex items-center">
-      <Coins className="mr-3" size={28} />
-      My BMVCoins
-    </h1>
 
-    {/* Buttons */}
-    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
-      <button
-        onClick={handleOpenTransfersModal}
-        className="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition flex items-center justify-center"
-      >
-        <History size={16} className="mr-2" />
-        My Transfers
-      </button>
-      <button
-        onClick={() => setShowBmvModal(true)}
-        className="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition flex items-center justify-center"
-      >
-        <Info size={16} className="mr-2" />
-        About BMVCoins
-      </button>
-    </div>
-  </div>
-</div>
-
-
-            {/* Balance Section */}
-            <div className="p-4 sm:p-6 border-b border-gray-100">
-              <div className="flex flex-wrap sm:flex-nowrap items-center">
-                <img
-                  src={BMVICON}
-                  alt="BMV Coin"
-                  className="h-8 sm:h-10 w-auto mr-3 sm:mr-4"
+        {/* Show different content based on transfer status */}
+        {transferStatus.success ? (
+          <div className="text-center py-4">
+            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Check className="h-6 w-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-green-600 mb-2">
+              Transfer Successful!
+            </h3>
+            <p className="text-gray-700 mb-4">
+              You have successfully transferred {transferDetails.amount}{" "}
+              BMVCoins to {transferDetails.recipientMobile}.
+            </p>
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <p className="text-gray-500 mb-1">Updated Balance:</p>
+              <p className="text-2xl font-bold text-purple-700">
+                {bmvCoin} BMVCoins
+              </p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleTransferSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="recipientMobile"
+                  className="block text-gray-700 font-medium mb-1"
+                >
+                  Recipient Mobile Number
+                </label>
+                <input
+                  ref={mobileInputRef}
+                  type="text"
+                  id="recipientMobile"
+                  placeholder="Enter 10-digit mobile number"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  maxLength={10}
+                  pattern="\d{10}"
                 />
-                <div>
-                  <p className="text-gray-500 font-medium text-sm sm:text-base">
-                    Current Balance
-                  </p>
-                  <h2 className="text-2xl sm:text-4xl font-bold text-purple-700">
-                    {bmvCoin}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setShowTransferModal(true)}
-                  className="ml-auto mt-3 sm:mt-0 w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
-                >
-                  <SendHorizonal size={18} className="mr-2" />
-                  Transfer
-                </button>
               </div>
-            </div>
 
-            {/* Blockchain ID Section */}
-            <div className="p-4 sm:p-6 border-b border-gray-100 bg-gray-50">
-              <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-2 sm:mb-3 flex items-center">
-                <Shield className="mr-2" size={18} />
-                Your Blockchain ID
-              </h3>
-              <div className="flex items-center justify-between bg-white p-2 sm:p-3 rounded-lg border border-gray-200">
-                <p className="text-gray-800 font-medium overflow-hidden text-ellipsis text-xs sm:text-sm">
-                  {multichainId}
-                </p>
-                <button
-                  onClick={handleCopyMultichainId}
-                  className="p-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors ml-2 flex-shrink-0"
-                  aria-label="Copy blockchain ID"
+              <div>
+                <label
+                  htmlFor="amount"
+                  className="block text-gray-700 font-medium mb-1"
                 >
-                  {isCopied ? <Check size={16} /> : <Copy size={16} />}
-                </button>
-              </div>
-              <div className="mt-2 sm:mt-3">
-                <button
-                  onClick={() => window.open("http://bmv.money:2750/")}
-                  className="px-3 sm:px-4 py-1 sm:py-2 text-purple-600 hover:text-purple-700 transition-colors flex items-center text-xs sm:text-sm"
-                >
-                  <ExternalLink size={14} className="mr-2" />
-                  View on OxyChain Explorer
-                </button>
-              </div>
-            </div>
-
-            {/* Value & Benefits */}
-            <div className="p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4 flex items-center">
-                <TrendingUp className="mr-2" size={18} />
-                BMVCoin Value & Benefits
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
-                  <div className="flex items-center mb-1 sm:mb-2">
-                    <DollarSign size={16} className="text-blue-600 mr-2" />
-                    <p className="font-medium text-blue-800 text-sm sm:text-base">
-                      Current Value
-                    </p>
+                  Amount to Transfer
+                </label>
+                <div className="relative">
+                  <input
+                    ref={amountInputRef}
+                    type="number"
+                    id="amount"
+                    placeholder="Enter amount"
+                    min="1"
+                    max={bmvCoin}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    BMVCoins
                   </div>
-                  <p className="text-blue-700 text-sm sm:text-base">
-                    1,000 BMVCoins = ₹10 discount on our platform
-                  </p>
                 </div>
-
-                <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
-                  <div className="flex items-center mb-1 sm:mb-2">
-                    <TrendingUp size={16} className="text-green-600 mr-2" />
-                    <p className="font-medium text-green-800 text-sm sm:text-base">
-                      Future Potential
-                    </p>
-                  </div>
-                  <p className="text-green-700 text-sm sm:text-base">
-                    Expected value up to $10,000 (₹8,00,000+)
-                  </p>
-                </div>
+                <p className="text-gray-500 text-sm mt-1">
+                  Available: {bmvCoin} BMVCoins
+                </p>
               </div>
 
-              <div className="mt-3 sm:mt-4 bg-purple-50 p-3 sm:p-4 rounded-lg">
-                <p className="font-bold text-purple-800 mb-2 text-sm sm:text-base">
-                  How to use your BMVCoins:
-                </p>
-                <ul className="space-y-1 sm:space-y-2 text-purple-700 text-xs sm:text-sm">
+              {transferStatus.error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600">
+                  {transferStatus.error}
+                </div>
+              )}
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-500 text-sm mb-1">Important:</p>
+                <ul className="space-y-1 text-gray-600 text-sm">
                   <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 mr-2 mt-0.5">
+                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
                       •
                     </span>
-                    <span>Get discounts on products and services</span>
+                    <span>All transfers are final and cannot be reversed.</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 mr-2 mt-0.5">
+                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
                       •
                     </span>
-                    <span>Hold for future value growth</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 mr-2 mt-0.5">
-                      •
-                    </span>
-                    <span>Transfer to other users</span>
+                    <span>The recipient must be a registered user.</span>
                   </li>
                 </ul>
               </div>
 
               <button
-                onClick={() => setShowBmvModal(true)}
-                className="mt-4 sm:mt-6 w-full p-3 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-lg hover:from-purple-600 hover:to-purple-800 transition-colors flex items-center justify-center"
+                type="submit"
+                className="w-full p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center"
+                disabled={transferStatus.loading}
               >
-                <Info size={18} className="mr-2" />
-                Learn More About BMVCoins
+                {transferStatus.loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <SendHorizonal size={18} className="mr-2" />
+                    Transfer Now
+                  </>
+                )}
               </button>
             </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+
+  // Transfers Modal Component with fixed close button and filters
+  const TransfersModal = () => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+        <div
+          ref={modalRef}
+          className="bg-white p-4 sm:p-6 rounded-xl shadow-xl w-full max-w-md sm:max-w-2xl mx-2 sm:mx-4 relative max-h-[95vh] flex flex-col overflow-hidden"
+        >
+          {/* Fixed header with completely redesigned close button for mobile */}
+          <div className="relative mb-4 sm:mb-6 sticky top-0 bg-white z-10 pt-3 pb-3">
+            {/* Title centered for better mobile layout */}
+            <div className="flex items-center justify-center">
+              <div className="p-2 sm:p-3 rounded-full bg-purple-100 mr-2 sm:mr-3 mb-2">
+                <History className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-purple-700">
+                Transfer History
+              </h2>
+            </div>
+
+            {/* Mobile-optimized close button positioned in top-right corner */}
+            <button
+              onClick={closeTransfersModal}
+              className="absolute top-0 right-0 w-10 h-10 flex items-center justify-center
+                        bg-white hover:bg-gray-100 rounded-full transition-colors z-50
+                        shadow-lg border border-gray-200"
+              aria-label="Close modal"
+            >
+              <X size={18} strokeWidth={2.5} className="text-gray-700" />
+            </button>
+          </div>
+
+          {/* Filter buttons */}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <button
+              onClick={() => setTransferFilter("all")}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                transferFilter === "all"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All Transactions
+            </button>
+            <button
+              onClick={() => setTransferFilter("sent")}
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+                transferFilter === "sent"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Minus size={16} className="mr-1" />
+              Coins Sent
+            </button>
+            <button
+              onClick={() => setTransferFilter("received")}
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+                transferFilter === "received"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Plus size={16} className="mr-1" />
+              Coins Received
+            </button>
+          </div>
+
+          {/* Clean divider with sufficient margin */}
+          <div className="w-full h-px bg-gray-200 mb-4"></div>
+
+          {/* Rest of the TransfersModal component remains the same */}
+          <div className="flex-1 overflow-y-auto">
+            {transfersLoading ? (
+              // Loading state - simplified
+              <div className="flex flex-col justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-10 sm:h-12 w-10 sm:w-12 border-t-2 border-b-2 border-purple-600 mb-4"></div>
+                <p className="text-gray-600">Loading transfer history...</p>
+              </div>
+            ) : transfersError ? (
+              // Error state
+              <div className="p-4 sm:p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+                <p className="text-red-600 mb-4">{transfersError}</p>
+                <button
+                  onClick={() => {
+                    setTransfersError(null);
+                    setTransfersLoading(true);
+                    fetchTransfers();
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : filteredTransfers.length === 0 ? (
+              // Empty state
+              <div className="text-center py-8 sm:py-12">
+                <div className="mb-4 flex justify-center">
+                  <History className="h-12 sm:h-16 w-12 sm:w-16 text-gray-300" />
+                </div>
+                <p className="text-base sm:text-lg text-gray-600 mb-3 sm:mb-4">
+                  No {transferFilter === "all" ? "" : transferFilter}{" "}
+                  transactions found.
+                </p>
+                <p className="text-sm sm:text-base text-gray-500 px-2">
+                  {transferFilter === "all"
+                    ? "Your transaction history will appear here once you send or receive BMVCoins."
+                    : `No ${transferFilter} transactions found.`}
+                </p>
+              </div>
+            ) : (
+              // Transfers list
+              <div className="space-y-3 sm:space-y-4 pr-1">
+                {filteredTransfers.map((transfer, index) => {
+                  // Correctly determine if current user is sender or receiver
+                  const isSent = transfer.txMobileNumber === userMobileNumber;
+                  const otherPartyMobile = isSent
+                    ? transfer.rxMobileNumber
+                    : transfer.txMobileNumber;
+                  const isExpanded = expandedTxId === index;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`p-3 sm:p-4 rounded-lg border transition-all duration-200 ${
+                        isExpanded
+                          ? "bg-white border-purple-300 shadow-md"
+                          : "bg-gray-50 border-gray-200 hover:border-purple-200"
+                      }`}
+                    >
+                      {/* Transaction header - always visible */}
+                      <div
+                        className="flex justify-between items-center cursor-pointer"
+                        onClick={() => toggleExpand(index)}
+                      >
+                        <div className="flex items-center">
+                          <div
+                            className={`p-2 rounded-full mr-2 sm:mr-3 ${
+                              isSent ? "bg-red-100" : "bg-green-100"
+                            }`}
+                          >
+                            {isSent ? (
+                              <SendHorizonal className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                            ) : (
+                              <SendHorizonal className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 transform rotate-180" />
+                            )}
+                          </div>
+                          <div>
+                            <p
+                              className={`text-xs sm:text-sm ${
+                                isSent ? "text-red-600" : "text-green-600"
+                              } font-medium`}
+                            >
+                              {isSent ? "Sent to" : "Received from"}
+                            </p>
+                            <p className="font-medium text-sm sm:text-base text-gray-800">
+                              {otherPartyMobile}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right flex items-center">
+                          <p
+                            className={`font-bold text-base sm:text-lg mr-2 ${
+                              isSent ? "text-red-600" : "text-green-600"
+                            }`}
+                          >
+                            {isSent ? "-" : "+"}
+                            {transfer.amountTransfer}
+                          </p>
+                          {isExpanded ? (
+                            <ChevronUp className="h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-500" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expanded details */}
+                      {isExpanded && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">From</p>
+                              <p className="text-sm font-medium text-gray-800 break-all">
+                                {transfer.txMobileNumber}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">To</p>
+                              <p className="text-sm font-medium text-gray-800 break-all">
+                                {transfer.rxMobileNumber}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Chain Address (From)
+                              </p>
+                              <p className="text-sm font-medium text-gray-800 break-all">
+                                {transfer.txChainAddress || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Chain Address (To)
+                              </p>
+                              <p className="text-sm font-medium text-gray-800 break-all">
+                                {transfer.rxChainAddress || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Footer with refresh button if there are transfers */}
+          {transfers.length > 0 && !transfersLoading && (
+            <div className="mt-4 sm:mt-6 border-t border-gray-200 pt-4 sm:pt-6 flex justify-center">
+              <button
+                onClick={() => {
+                  setTransfersLoading(true);
+                  fetchTransfers();
+                }}
+                className="px-4 py-2 flex items-center text-purple-600 hover:text-purple-800 transition-colors font-medium"
+              >
+                <History size={18} className="mr-2" />
+                Refresh Transfer History
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // FAQ Modal Component
+  const FaqModal = () => {
+    const faqData = [
+      {
+        title: "Crypto vs No GST Goods",
+        questions: [
+          {
+            question: "Can I use crypto for GST-free goods?",
+            answer: "Yes, only for non-GST items like unbranded grains.",
+          },
+          {
+            question: "Is crypto allowed for regular shopping?",
+            answer: "Only if both buyer and seller agree.",
+          },
+          {
+            question: "Are crypto rewards taxable?",
+            answer: "Yes, they may be under capital gains rules.",
+          },
+        ],
+      },
+      {
+        title: "GST vs 1–25kg & 26kg+",
+        questions: [
+          {
+            question: "Why buy 26kg rice bags?",
+            answer: "To avoid 5% GST on smaller packs.",
+          },
+          {
+            question: "What's GST on 1–25kg bags?",
+            answer: "5% on the bag's total value.",
+          },
+          {
+            question: "Is GST added to unpackaged rice?",
+            answer: "No, only packed goods under 25kg.",
+          },
+          {
+            question: "Can coins be used to avoid GST?",
+            answer:
+              "The government may ask why using coins avoids GST. Hence, coins can be exchanged with goods for non-GST goods only.",
+          },
+        ],
+      },
+    ];
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
+          {/* Close button */}
+          <button
+            onClick={() => setShowFaqModal(false)}
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center 
+                      bg-white hover:bg-gray-100 rounded-full transition-colors z-50
+                      shadow-lg border border-gray-200"
+            aria-label="Close modal"
+          >
+            <X size={16} strokeWidth={2.5} className="text-gray-700" />
+          </button>
+
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 rounded-full bg-purple-100 mb-2">
+              <HelpCircle className="h-6 w-6 text-purple-600" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="space-y-6">
+            {faqData.map((section, sectionIndex) => (
+              <div
+                key={sectionIndex}
+                className="border border-gray-200 rounded-lg overflow-hidden"
+              >
+                <div className="bg-gray-50 p-4">
+                  <h3 className="font-semibold text-lg text-gray-800">
+                    {section.title}
+                  </h3>
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {section.questions.map((item, itemIndex) => {
+                    const isExpanded =
+                      expandedFaq === `${sectionIndex}-${itemIndex}`;
+                    return (
+                      <div
+                        key={itemIndex}
+                        className="transition-all duration-200"
+                      >
+                        <button
+                          onClick={() =>
+                            setExpandedFaq(
+                              isExpanded ? null : `${sectionIndex}-${itemIndex}`
+                            )
+                          }
+                          className="w-full p-4 text-left flex justify-between items-center hover:bg-gray-50"
+                        >
+                          <span className="font-medium text-gray-800 pr-4">
+                            {item.question}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                          )}
+                        </button>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-1 text-gray-600">
+                            {item.answer}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
+    );
+  };
+
+  // Main component render
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Header Bar - Mobile optimized with hamburger menu */}
+      <header className=" bg-white/90 backdrop-blur-sm ">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            {/* Logo Section - Enhanced for mobile */}
+            <div className="flex items-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl blur-lg opacity-75"></div>
+                <div className="relative bg-gradient-to-r from-purple-600 to-blue-600 p-2.5 rounded-xl shadow-lg">
+                  <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+              </div>
+              <div className="ml-3 sm:ml-4">
+                <h1 className="text-3xl sm:text-2xl mx-2 mt-2 font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  MyCrypto
+                </h1>
+              </div>
+            </div>
+
+            {/* Desktop Navigation - Enhanced */}
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={item.action}
+                  className={`group px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 transition-all duration-200 flex items-center relative overflow-hidden ${
+                    item.color === "purple"
+                      ? "hover:text-purple-600 hover:bg-purple-50"
+                      : item.color === "blue"
+                      ? "hover:text-blue-600 hover:bg-blue-50"
+                      : item.color === "green"
+                      ? "hover:text-green-600 hover:bg-green-50"
+                      : ""
+                  }`}
+                >
+                  <span
+                    className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${
+                      item.color === "purple"
+                        ? "bg-gradient-to-r from-purple-500 to-purple-600"
+                        : item.color === "blue"
+                        ? "bg-gradient-to-r from-blue-500 to-blue-600"
+                        : item.color === "green"
+                        ? "bg-gradient-to-r from-green-500 to-green-600"
+                        : ""
+                    }`}
+                  ></span>
+                  <item.icon size={16} className="mr-2 relative z-10" />
+                  <span className="relative z-10">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 shadow-sm"
+            >
+              {showMobileMenu ? (
+                <X className="h-5 w-5 text-gray-700" />
+              ) : (
+                <Menu className="h-5 w-5 text-gray-700" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Menu - Animated and Enhanced */}
+        <div
+          className={`md:hidden border-t border-gray-100 bg-white/95 backdrop-blur-xl transition-all duration-300 ease-in-out ${
+            showMobileMenu
+              ? "max-h-96 opacity-100"
+              : "max-h-0 opacity-0 overflow-hidden"
+          }`}
+        >
+          <nav className="px-4 py-3 space-y-1">
+            {navItems.map((item, index) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  item.action();
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all duration-200 transform ${
+                  showMobileMenu
+                    ? "translate-x-0 opacity-100"
+                    : "translate-x-4 opacity-0"
+                } group ${
+                  item.color === "purple"
+                    ? "hover:bg-purple-50"
+                    : item.color === "blue"
+                    ? "hover:bg-blue-50"
+                    : item.color === "green"
+                    ? "hover:bg-green-50"
+                    : ""
+                }`}
+                style={{
+                  transitionDelay: showMobileMenu ? `${index * 100}ms` : "0ms",
+                }}
+              >
+                <div className="flex items-center">
+                  <div
+                    className={`p-2 rounded-lg transition-colors ${
+                      item.color === "purple"
+                        ? "bg-purple-100 group-hover:bg-purple-200"
+                        : item.color === "blue"
+                        ? "bg-blue-100 group-hover:bg-blue-200"
+                        : item.color === "green"
+                        ? "bg-green-100 group-hover:bg-green-200"
+                        : ""
+                    }`}
+                  >
+                    <item.icon
+                      size={20}
+                      className={
+                        item.color === "purple"
+                          ? "text-purple-600"
+                          : item.color === "blue"
+                          ? "text-blue-600"
+                          : item.color === "green"
+                          ? "text-green-600"
+                          : ""
+                      }
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <span className="font-medium text-gray-900">
+                      {item.label}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {item.label === "BMVCoin" && "Learn about our token"}
+                      {item.label === "Transfers" && "View transaction history"}
+                      {item.label === "FAQs" && "Get help & support"}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className={`transform group-hover:translate-x-1 transition-transform ${
+                    item.color === "purple"
+                      ? "text-purple-600"
+                      : item.color === "blue"
+                      ? "text-blue-600"
+                      : item.color === "green"
+                      ? "text-green-600"
+                      : ""
+                  }`}
+                />
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto px-4 py-6 sm:py-8">
+        {isLoading ? (
+          // Loading state
+          <div className="flex flex-col justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mb-4"></div>
+            <p className="text-gray-600">Loading your crypto details...</p>
+          </div>
+        ) : (
+          // Content when loaded
+          <div className="space-y-6 sm:space-y-8">
+            {/* BMV Coin Card */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+              <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between mb-5">
+                {/* BMVCoin info */}
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+                    BMVCoin
+                  </h2>
+                  <button
+                    onClick={() => setShowBmvModal(true)}
+                    className="text-sm text-purple-600 hover:text-purple-800 transition-colors flex items-center"
+                  >
+                    <Info size={14} className="mr-1" />
+                    About BMVCoin
+                  </button>
+                </div>
+
+                {/* Transfer button */}
+                <button
+                  onClick={() => setShowTransferModal(true)}
+                  className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center text-sm"
+                >
+                  <SendHorizonal size={16} className="mr-1.5" />
+                  Transfer
+                </button>
+              </div>
+
+              {/* Coin Balance */}
+              <div className="bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl p-5 text-white mb-5">
+                <p className="text-purple-200 mb-1">Your Balance</p>
+                <p className="text-3xl sm:text-4xl font-bold mb-2">
+                  {bmvCoin} <span className="text-lg">BMVCoins</span>
+                </p>
+              </div>
+
+              {/* Key Benefits */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 bg-green-50 rounded-lg flex items-center">
+                  <DollarSign className="h-8 w-8 text-green-600 mr-3" />
+                  <div>
+                    <p className="font-medium text-gray-800">Discounts</p>
+                    <p className="text-sm text-gray-600">Save on products</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg flex items-center">
+                  <Shield className="h-8 w-8 text-blue-600 mr-3" />
+                  <div>
+                    <p className="font-medium text-gray-800">Secure</p>
+                    <p className="text-sm text-gray-600">
+                      Blockchain protected
+                    </p>
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg flex items-center">
+                  <TrendingUp className="h-8 w-8 text-purple-600 mr-3" />
+                  <div>
+                    <p className="font-medium text-gray-800">Growth</p>
+                    <p className="text-sm text-gray-600">
+                      Future trading value
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Multichain ID Card */}
+            <div className="bg-white p-3 sm:p-5 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
+                Your Multichain ID
+              </h2>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg flex items-center justify-between mb-3 sm:mb-4">
+                <div className="truncate pr-2 flex-1">
+                  <p className="text-xs text-gray-500 mb-1">Wallet Address</p>
+                  <p className="text-xs sm:text-sm font-mono font-medium text-gray-800 truncate">
+                    {multichainId || "Not available"}
+                  </p>
+                </div>
+                <button
+                  onClick={handleCopyMultichainId}
+                  className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                  disabled={!multichainId}
+                  aria-label="Copy to clipboard"
+                >
+                  {isCopied ? (
+                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                  )}
+                </button>
+              </div>
+              <div className="flex items-start text-gray-600 text-xs sm:text-sm">
+                <Info size={14} className="mr-1.5 mt-0.5 flex-shrink-0" />
+                <p>
+                  Your multichain ID is used to identify your wallet across
+                  different blockchains.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
 
       {/* Modals */}
       {showBmvModal && <BMVInfoModal />}
-      {showTransferModal && <TransfersModal />}
+      {showTransferModal && <TransferModal />}
       {showTransfersModal && <TransfersModal />}
+      {showFaqModal && <FaqModal />}
     </div>
   );
 };

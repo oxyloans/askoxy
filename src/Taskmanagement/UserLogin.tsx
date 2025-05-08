@@ -48,12 +48,12 @@ const UserLogin: React.FC = () => {
   }, [error]);
 
   // Redirect if already logged in
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      navigate("/userPanelLayout");
-    }
-  }, [navigate]);
+  // useEffect(() => {
+  //   const token = localStorage.getItem("accessToken");
+  //   if (token) {
+  //     navigate("/userPanelLayout");
+  //   }
+  // }, [navigate]);
 
   const handleLogin = async (): Promise<void> => {
     setLoading(true);
@@ -75,7 +75,7 @@ const UserLogin: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 10000, // 10 seconds timeout
+          timeout: 1000, // 10 seconds timeout
         }
       );
 

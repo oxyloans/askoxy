@@ -77,6 +77,19 @@ import WF_for_Terms_Conditions_Business from "../Busyness/WF_for_Terms_Condition
 import WF_for_Capturing_Proposed_Asset_Details_Business from "../Busyness/WF_for_Capturing_Proposed_Asset_Details_Business";
 import WF_for_Check_Limit_Business from "../Busyness/WF_for_Check_Limit_Business";
 import WF_for_Evauating_the_Networth_of_the_Parties_Business from "../Busyness/WF_for_Evauating_the_Networth_of_the_Parties_Business";
+import Allocation_of_Delinquent_Cases_Allocation_Hold_Business from "../Busyness/Allocation_of_Delinquent_Cases_Allocation_Hold_Business";
+import Define_Allocation_Use_Case_Business from "../Busyness/Define_Allocation_Use_Case_Business";
+import Manual_Allocation_Use_Case_Business from "../Busyness/Manual_Allocation_Use_Case_Business";
+import Manual_Reallocation_Use_Case_Business from "../Busyness/Manual_Reallocation_Use_Case_Business";
+import Beginning_of_Day_Use_Case_Business from "../Busyness/Beginning_of_Day_Use_Case_Business";
+import Define_Queue_Use_Case_Business from "../Busyness/Define_Queue_Use_Case_Business";
+import Contact_Recording_Business from "../Busyness/Contact_Recording_Business";
+import Legal_Collections_Use_Case_Business from "../Busyness/Legal_Collections_Use_Case_Business";
+import Prioritize_Queue_Use_Case_Business from "../Busyness/Prioritize_Queue_Use_Case_Business";
+import Queue_Communication_Mapping_Use_Case_Business from "../Busyness/Queue_Communication_Mapping_Use_Case_Business";
+import Queue_Curing_Use_Case_Business from "../Busyness/Queue_Curing_Use_Case_Business";
+import WorkPlan_Use_Case_Business from "../Busyness/WorkPlan_Use_Case_Business";
+// import WorkPlan_Use_Case_Business from "../Busyness/Work_Plan_Use_Case_Business"; // Removed as the module does not exist
 
 // import CustomerIdCreation from "./Business/CustomerIdCreationBusiness"; // Removed as the module does not exist
 
@@ -345,11 +358,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "collections-1",
+          name: "Allocation of Delinquent Cases_Allocation Hold",
+          description: "Strategic hold placement for delinquent accounts",
+          component: Allocation_of_Delinquent_Cases_Allocation_Hold_Business,
+          type: "business",
+        },
+        {
           id: "collections-2",
           name: "Allocation of Delinquent Cases_Define Allocation contract",
           description: "Custom allocation rules for delinquent cases",
           component: Define_Allocation_Use_Case,
           type: "system",
+        },
+        {
+          id: "collections-2",
+          name: "Allocation of Delinquent Cases_Define Allocation contract",
+          description: "Custom allocation rules for delinquent cases",
+          component: Define_Allocation_Use_Case_Business,
+          type: "business",
         },
         {
           id: "collections-3",
@@ -359,11 +386,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "collections-3",
+          name: "Allocation of Delinquent Cases_Manual Allocation",
+          description: "Manual assignment of delinquent accounts",
+          component: Manual_Allocation_Use_Case_Business,
+          type: "business",
+        },
+        {
           id: "collections-4",
           name: "Allocation of Delinquent Cases_Manual Reallocation",
           description: "Flexible reallocation of delinquent cases",
           component: Manual_Reallocation_Use_Case,
           type: "system",
+        },
+        {
+          id: "collections-4",
+          name: "Allocation of Delinquent Cases_Manual Reallocation",
+          description: "Flexible reallocation of delinquent cases",
+          component: Manual_Reallocation_Use_Case_Business,
+          type: "business",
         },
         {
           id: "collections-5",
@@ -373,11 +414,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "collections-5",
+          name: "Beginning of Day Process",
+          description: "Automated daily collections initialization",
+          component: Beginning_of_Day_Use_Case_Business,
+          type: "business",
+        },
+        {
           id: "collections-6",
           name: "Classification of Delinquent Cases - Define Queue",
           description: "Queue-based delinquent case organization",
           component: Define_Queue_Use_Case,
           type: "system",
+        },
+        {
+          id: "collections-6",
+          name: "Classification of Delinquent Cases - Define Queue",
+          description: "Queue-based delinquent case organization",
+          component: Define_Queue_Use_Case_Business,
+          type: "business",
         },
         {
           id: "collections-7",
@@ -387,11 +442,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "collections-7",
+          name: "Contact Recording",
+          description: "Comprehensive contact history tracking",
+          component: Contact_Recording_Business,
+          type: "business",
+        },
+        {
           id: "collections-8",
           name: "Legal Collections Workflow",
           description: "Structured legal collections process",
           component: Legal_Collections_Use_Case,
           type: "system",
+        },
+        {
+          id: "collections-8",
+          name: "Legal Collections Workflow",
+          description: "Structured legal collections process",
+          component: Legal_Collections_Use_Case_Business,
+          type: "business",
         },
         {
           id: "collections-9",
@@ -401,11 +470,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "collections-9",
+          name: "Prioritizing a Queue",
+          description: "Intelligent queue prioritization system",
+          component: Prioritize_Queue_Use_Case_Business,
+          type: "business",
+        },
+        {
           id: "collections-10",
           name: "Queue Communication Mapping",
           description: "Automated communication channel mapping",
           component: Queue_Communication_Mapping_Use_Case,
           type: "system",
+        },
+        {
+          id: "collections-10",
+          name: "Queue Communication Mapping",
+          description: "Automated communication channel mapping",
+          component: Queue_Communication_Mapping_Use_Case_Business,
+          type: "business",
         },
         {
           id: "collections-11",
@@ -415,11 +498,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "collections-11",
+          name: "Queue Curing",
+          description: "Efficient queue resolution process",
+          component: Queue_Curing_Use_Case_Business,
+          type: "business",
+        },
+        {
           id: "collections-12",
           name: "Work Plan",
           description: "Strategic collections work planning",
           component: WorkPlan_Use_Case,
           type: "system",
+        },
+        {
+          id: "collections-12",
+          name: "Work Plan",
+          description: "Strategic collections work planning",
+          component: WorkPlan_Use_Case_Business,
+          type: "business",
         },
       ],
     },

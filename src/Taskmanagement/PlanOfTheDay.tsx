@@ -477,7 +477,7 @@ const PlanOfTheDay: React.FC = () => {
             All employees must update their mobile number in the left panel.
             Click, enter, and save. Mandatory.
           </Card>
-          ;
+          
           <div className="p-5 md:p-6 lg:p-8">
             {fetchingStatus
               ? renderLoadingState()
