@@ -143,7 +143,7 @@ const App: React.FC = () => {
       "/future",
       "/freerice",
       "/glms",
-      "/miyaporemetro",
+      "/miyapurmetro",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -184,7 +184,7 @@ const App: React.FC = () => {
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
-            <Route path="/miyaporemetro" element={<MeyaporeMetro />} />
+            <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
             <Route path="/movietickets" element={<Pushpa2GPT />} />
             <Route
               path="/usermobilenumberupdate"
@@ -473,7 +473,7 @@ const App: React.FC = () => {
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
               <Route path="feedback" element={<FeedbackDashboard />} />
-              <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
+              <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}

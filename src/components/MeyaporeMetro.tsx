@@ -17,7 +17,7 @@ import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 
 
 // Campaign Base URL
-const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/miyaporemetro";
+const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/miyapurmetro";
 
 // Authentication URLs
 const LOGIN_URL = "/whatsapplogin";
@@ -182,9 +182,9 @@ const MeyaporeMetro: React.FC = () => {
     }
   };
 
-  const handleLogoClick = () => {
-    navigate("/");
-  };
+//   const handleLogoClick = () => {
+//     navigate("/");
+//   };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -259,11 +259,11 @@ const MeyaporeMetro: React.FC = () => {
             className="h-10 sm:h-12 cursor-pointer transition-transform hover:scale-105 focus:scale-105"
             tabIndex={0}
             role="banner"
-            onClick={handleLogoClick}
+            // onClick={handleLogoClick}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                handleLogoClick();
+                // handleLogoClick();
               }
             }}
           />
@@ -341,12 +341,15 @@ const MeyaporeMetro: React.FC = () => {
       <main className="flex-grow">
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-              Order Premium Rice Online
+            <h1 className="text-1xl sm:text-2xl md:text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+              Premium Rice Now at Miyapur Metro Station – Book Online, Free
+              Delivery to Your Home!
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 mt-3 max-w-3xl mx-auto">
-              Discover our curated selection of high-quality rice, delivered
-              fresh to your door.
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 mt-3 max-w-3xl mx-auto">
+                Free Rice! Free Container! Explore our premium selection of
+                top-quality rice, delivered fresh to your doorstep.
+              </p>
             </p>
           </div>
 
