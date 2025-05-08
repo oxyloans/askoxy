@@ -339,17 +339,18 @@ const MeyaporeMetro: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-grow">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-1xl sm:text-2xl md:text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-              Premium Rice Now at Miyapur Metro Station – Book Online, Free
-              Delivery to Your Home!
+        <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6 sm:py-12">
+          <div className="text-center mb-4 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
+              Premium Rice Now at Miyapur Metro Station
             </h1>
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 mt-3 max-w-3xl mx-auto">
-              <p className="text-sm sm:text-base md:text-lg text-gray-600 mt-3 max-w-3xl mx-auto">
-                Free Rice! Free Container! Explore our premium selection of
-                top-quality rice, delivered fresh to your doorstep.
-              </p>
+
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-indigo-600 mb-4">
+              Book Online, Free Delivery to Your Home!
+            </h2>
+
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-purple-700 mt-2">
+              #Free Rice! #Free Container!
             </p>
           </div>
 

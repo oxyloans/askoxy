@@ -8,13 +8,20 @@ import {
   Card,
   Typography,
   Divider,
+  Space,
 } from "antd";
 import axios, { AxiosError } from "axios";
 import BASE_URL from "../Config";
 import { useNavigate, Link } from "react-router-dom";
-import { MailOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
+import {
+  MailOutlined,
+  LockOutlined,
+  LoginOutlined,
+  ExclamationCircleOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 interface LoginResponse {
   status: string;
@@ -22,6 +29,7 @@ interface LoginResponse {
   refreshToken?: string;
   id?: string;
   name?: string;
+  primaryType?: string;
   errorMessage?: string;
 }
 
@@ -35,6 +43,8 @@ const UserLogin: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState<boolean>(false);
+  const [userType, setUserType] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Clear error message after 5 seconds
@@ -48,16 +58,19 @@ const UserLogin: React.FC = () => {
   }, [error]);
 
   // Redirect if already logged in
-  // useEffect(() => {
-  //   const token = localStorage.getItem("accessToken");
-  //   if (token) {
-  //     navigate("/userPanelLayout");
-  //   }
-  // }, [navigate]);
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const type = localStorage.getItem("primaryType");
+    if (token && type === "EMPLOYEE") {
+      navigate("/userPanelLayout");
+    }
+  }, [navigate]);
 
   const handleLogin = async (): Promise<void> => {
     setLoading(true);
     setError(null);
+    setAccessDenied(false);
+    setUserType(null);
 
     if (!email || !password) {
       setError("Please fill in both email and password fields");
@@ -75,25 +88,45 @@ const UserLogin: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 1000, // 10 seconds timeout
+          timeout: 10000, // 10 seconds timeout (fixed from 1000)
         }
       );
 
       if (response.data.status === "Login Successful" && response.data.token) {
-        const { token, refreshToken, id, name } = response.data;
+        const { token, refreshToken, id, name, primaryType } = response.data;
 
+        // Store user info in localStorage
         localStorage.setItem("accessToken", token);
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
         if (id) localStorage.setItem("userId", id);
         if (name) localStorage.setItem("userName", name);
+        if (primaryType) localStorage.setItem("primaryType", primaryType);
 
-        message.success({
-          content: "Login successful! Redirecting to dashboard...",
-          icon: <LoginOutlined />,
-          className: "custom-message-success",
-        });
+        // Handle different user types
+        if (primaryType === "EMPLOYEE") {
+          message.success({
+            content: "Login successful! Redirecting to dashboard...",
+            icon: <LoginOutlined />,
+            className: "custom-message-success",
+            duration: 2,
+          });
 
-        navigate("/userPanelLayout");
+          // Slight delay for user to see success message
+          setTimeout(() => {
+            navigate("/userPanelLayout");
+          }, 1000);
+        } else if (
+          primaryType === "SELLER" ||
+          primaryType === "HELPDESKADMIN"
+        ) {
+          setAccessDenied(true);
+          setUserType(primaryType);
+
+          // Remove token for non-EMPLOYEE users
+          localStorage.removeItem("accessToken");
+        } else {
+          setError("Invalid user type. Please contact support.");
+        }
       } else {
         setError(response.data.errorMessage || "Invalid credentials provided");
       }
@@ -148,102 +181,150 @@ const UserLogin: React.FC = () => {
         className="w-full max-w-md shadow-xl rounded-lg overflow-hidden border-0"
         bodyStyle={{ padding: "2rem" }}
       >
-        <div className="text-center mb-6">
-          <Title level={3} className="font-medium text-gray-700 m-0">
-            Login to Task Management
-          </Title>
-        </div>
-
-        <Form layout="vertical" size="large" onFinish={handleLogin}>
-          <Form.Item
-            label={
-              <span className="text-gray-700 font-medium">Email Address</span>
-            }
-            name="email"
-            rules={[
-              { required: true, message: "Please enter your email" },
-              {
-                type: "email",
-                message: "Please enter a valid email address",
-              },
-            ]}
-            className="mb-4"
-          >
-            <Input
-              prefix={<MailOutlined className="text-gray-400 mr-2" />}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="rounded-md"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label={<span className="text-gray-700 font-medium">Password</span>}
-            name="password"
-            rules={[
-              { required: true, message: "Please enter your password" },
-              {
-                pattern:
-                  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                message:
-                  "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
-              },
-            ]}
-            className="mb-6"
-          >
-            <Input.Password
-              prefix={<LockOutlined className="text-gray-400 mr-2" />}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="rounded-md"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item className="mb-2">
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              icon={<LoginOutlined />}
-              className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
-              style={{ height: "48px" }}
-            >
-              Login
-            </Button>
-          </Form.Item>
-
-          {error && (
-            <Alert
-              message={error}
-              type="error"
-              showIcon
-              className="mt-4 rounded-md"
-              closable
-              onClose={() => setError(null)}
-            />
-          )}
-
-          <Divider className="my-6">
-            <Text className="text-gray-400">OR</Text>
-          </Divider>
-
+        {accessDenied ? (
           <div className="text-center">
-            <Text className="text-gray-600">Don't have an account?</Text>
-            <Link to="/userregister">
+            <ExclamationCircleOutlined
+              style={{ fontSize: 64, color: "#f5222d" }}
+            />
+            <Title level={3} className="font-medium text-gray-700 mt-4">
+              Access Denied
+            </Title>
+            <Paragraph className="mb-6 text-gray-600">
+              Your account type ({userType}) does not have access to the Task
+              Management system. This portal is only available for EMPLOYEE
+              accounts.
+            </Paragraph>
+            <Space direction="vertical" size="middle" className="w-full">
+              <Button
+                type="primary"
+                onClick={() => {
+                  setAccessDenied(false);
+                  setUserType(null);
+                  setEmail("");
+                  setPassword("");
+                }}
+                className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
+                icon={<UserOutlined />}
+                style={{ height: "48px" }}
+              >
+                Try Different Account
+              </Button>
               <Button
                 type="link"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="w-full rounded-md font-medium text-gray-600 hover:text-gray-800"
+                href="mailto:support@example.com"
               >
-                Create Account
+                Contact Support
               </Button>
-            </Link>
+            </Space>
           </div>
-        </Form>
+        ) : (
+          <>
+            <div className="text-center mb-6">
+              <Title level={3} className="font-medium text-gray-700 m-0">
+                Login to Task Management
+              </Title>
+              <Text type="secondary">
+                Enter your credentials to access the system
+              </Text>
+            </div>
+
+            <Form layout="vertical" size="large" onFinish={handleLogin}>
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">
+                    Email Address
+                  </span>
+                }
+                name="email"
+                rules={[
+                  { required: true, message: "Please enter your email" },
+                  {
+                    type: "email",
+                    message: "Please enter a valid email address",
+                  },
+                ]}
+                className="mb-4"
+              >
+                <Input
+                  prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="rounded-md"
+                  style={inputStyle}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">Password</span>
+                }
+                name="password"
+                rules={[
+                  { required: true, message: "Please enter your password" },
+                  {
+                    pattern:
+                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                    message:
+                      "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+                  },
+                ]}
+                className="mb-6"
+              >
+                <Input.Password
+                  prefix={<LockOutlined className="text-gray-400 mr-2" />}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="rounded-md"
+                  style={inputStyle}
+                />
+              </Form.Item>
+
+              <Form.Item className="mb-2">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  icon={<LoginOutlined />}
+                  className="w-full rounded-md font-medium shadow-md bg-blue-600 hover:bg-blue-500"
+                  style={{ height: "48px" }}
+                >
+                  Login
+                </Button>
+              </Form.Item>
+
+              {error && (
+                <Alert
+                  message={error}
+                  type="error"
+                  showIcon
+                  className="mt-4 rounded-md"
+                  closable
+                  onClose={() => setError(null)}
+                />
+              )}
+
+              <Divider className="my-6">
+                <Text className="text-gray-400">OR</Text>
+              </Divider>
+
+              <div className="text-center">
+                <Text className="text-gray-600">Don't have an account?</Text>
+                <Link to="/userregister">
+                  <Button
+                    type="link"
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Create Account
+                  </Button>
+                </Link>
+              </div>
+            </Form>
+          </>
+        )}
       </Card>
     </div>
   );

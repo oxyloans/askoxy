@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from "react";
-import { Layout, Menu, Row, Grid, Avatar, Tooltip } from "antd";
+import { Layout, Menu, Row, Grid, Avatar, Tooltip, message } from "antd";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
 import { FaClipboardCheck, FaExchangeAlt } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
@@ -14,6 +14,7 @@ import {
   FaCalendar,
   FaClipboard,
   FaEdit,
+  FaListAlt
 } from "react-icons/fa";
 import type { MenuProps } from "antd";
 
@@ -87,19 +88,19 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
 
       {
         key: "Employee Leave Request",
-        label: "Employee Leave Request",
+        label: "Employee Leave Request",
         icon: <FaCalendar className="text-purple-500" />, // Calendar icon for overall leave management
         children: [
           {
             key: "/leaveapproval",
 
-            label: <Link to="/leaveapproval">Request to Apply Leave</Link>,
+            label: <Link to="/leaveapproval">Apply for Leave</Link>,
             icon: <FaEdit className="text-purple-500" />, // Document with pen icon for applying/requesting leave
           },
           {
             key: "/leavestatus",
             label: <Link to="/leavestatus">My Leave requests</Link>,
-            icon: <FaClipboard className="text-purple-500" />, // Clipboard with list icon for viewing leave statuses
+            icon: <FaListAlt className="text-purple-500" />, // Clipboard with list icon for viewing leave statuses
           },
         ],
       },
@@ -126,6 +127,23 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
       },
     ];
   };
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const primaryType = localStorage.getItem("primaryType");
+
+    if (
+      !primaryType ||
+      primaryType === undefined || primaryType === null || (primaryType !== "EMPLOYEE" && primaryType !== "SELLER" && primaryType !== "HELPDESKADMIN")
+    ) {
+      message.info("Your not Supposed to Login to the Task Management System");
+      navigate("/userlogin");
+      return;
+    }
+
+    // Define or implement setUserRole if needed
+    console.warn("setUserRole is not defined. Please implement it if required.");
+  }, [navigate]);
 
   const toggleCollapse = (): void => {
     setCollapsed((prev) => !prev);
