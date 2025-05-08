@@ -134,6 +134,7 @@ import FeedbackDashboard from "./AskoxyAdmin/FeedBack";
 import MobileNumberUpdate from "./Taskmanagement/EmployeeProfilePage";
 import HelpDeskDashboard from "./AskoxyAdmin/HelpDeskDashboard";
 import ExchangeOrdersPage from "./PartnerWeb/ExchangeOrders";
+import GSTRiceFAQ from "./components/GstFAQ";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -192,6 +193,7 @@ const App: React.FC = () => {
             />
             <Route path="/userregister" element={<UserRegister />} />
             <Route path="/glms" element={<UseCases />} />
+            <Route path="/gstonrice" element={<GSTRiceFAQ/>}/>
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />

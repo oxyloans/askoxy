@@ -133,7 +133,6 @@ const SubscriptionCard: React.FC<{
 
   // Premium plan FAQ data
   const premiumFaqs = [
-
     {
       question: "Can I use both my advance and wallet balance for purchases?",
       answer: "Yes, you can use both your advance and wallet balance for purchases."
@@ -222,24 +221,44 @@ const SubscriptionCard: React.FC<{
               </span>
             </div>
             <div className="flex justify-between items-center mt-1">
-              {bonusAmount > 0 && (
+              {isPremiumPlan ? (
                 <span className={`
-      text-sm font-bold
-      ${isPremiumPlan ? "text-green-700" : "text-green-600"}
-      bg-gradient-to-r from-green-50 to-green-100
-      px-3 py-1
-      rounded-full
-      shadow-sm
-      hover:shadow-md transition-shadow duration-300
-      border border-green-200
-      flex items-center
-      transform hover:scale-105 transition-transform duration-300
-    `}>
+                  text-sm font-bold
+                  text-green-700
+                  bg-gradient-to-r from-green-50 to-green-100
+                  px-3 py-1
+                  rounded-full
+                  shadow-sm
+                  hover:shadow-md transition-shadow duration-300
+                  border border-green-200
+                  flex items-center
+                  transform hover:scale-105 transition-transform duration-300
+                `}>
                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L10 9.586l3.293-3.293A1 1 0 0112 7z" clipRule="evenodd" />
                   </svg>
-                  +₹{bonusAmount.toLocaleString()} bonus
+                  ₹2,000 bonus every month | ₹24,000 yearly
                 </span>
+              ) : (
+                bonusAmount > 0 && (
+                  <span className={`
+                    text-sm font-bold
+                    ${isPremiumPlan ? "text-green-700" : "text-green-600"}
+                    bg-gradient-to-r from-green-50 to-green-100
+                    px-3 py-1
+                    rounded-full
+                    shadow-sm
+                    hover:shadow-md transition-shadow duration-300
+                    border border-green-200
+                    flex items-center
+                    transform hover:scale-105 transition-transform duration-300
+                  `}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L10 9.586l3.293-3.293A1 1 0 0112 7z" clipRule="evenodd" />
+                    </svg>
+                    +₹{bonusAmount.toLocaleString()} bonus
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -247,31 +266,9 @@ const SubscriptionCard: React.FC<{
           <div className="mb-4">
             <h4 className={`text-sm font-bold ${isPremiumPlan ? "text-purple-800" : "text-gray-700"} mb-2`}>Benefits</h4>
             <ul className="space-y-2">
-              {/* Monthly Usage Limit - Only for non-premium plans */}
-              {/* {!isPremiumPlan && (
-                <li className="flex items-start">
-                  <div className="flex-shrink-0 h-5 w-5 text-purple-500 mt-0.5">
-                    <CheckCircle size={16} />
-                  </div>
-                  <span className="ml-2 text-sm font-bold text-gray-600">
-                    ₹{plan.limitAmount.toLocaleString()} Monthly usage limit
-                  </span>
-                </li>
-              )} */}
-
               {/* Plan-specific features */}
               {isPremiumPlan ? (
                 <>
-                  {/* <li className="flex items-start">
-                    <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
-                      <RefreshCw size={16} />
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-sm font-bold text-purple-700">
-                        ₹2,000 added after 30 days
-                      </span>
-                    </div>
-                  </li> */}
                   <li className="flex items-start">
                     <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
                       <Lock size={16} />
@@ -288,11 +285,10 @@ const SubscriptionCard: React.FC<{
                     </div>
                     <div className="ml-2">
                       <span className="text-sm font-bold text-purple-700">
-                        Monthly Added: ₹2,000 to your wallet
+                        Monthly Bonus: ₹2,000 added to your wallet
                       </span>
                     </div>
                   </li>
-
                   <li className="flex items-start">
                     <div className="flex-shrink-0 h-5 w-5 text-purple-600 mt-0.5">
                       <Zap size={16} />
@@ -303,7 +299,6 @@ const SubscriptionCard: React.FC<{
                       </span>
                     </div>
                   </li>
-
                 </>
               ) : (
                 <>
@@ -315,15 +310,6 @@ const SubscriptionCard: React.FC<{
                       Instant wallet credit
                     </span>
                   </li>
-                  {/* New Tenure Feature for non-premium plans */}
-                  {/* <li className="flex items-start">
-                    <div className="flex-shrink-0 h-5 w-5 text-purple-500 mt-0.5">
-                      <Calendar size={16} />
-                    </div>
-                    <span className="ml-2 text-sm font-bold text-gray-600">
-                      {Math.ceil((plan.getAmount - plan.limitAmount) / plan.limitAmount)} months tenure with unused balance carry forward
-                    </span>
-                  </li> */}
                 </>
               )}
             </ul>
@@ -424,7 +410,8 @@ const SubscriptionCard: React.FC<{
       )}
     </>
   );
-};
+};      
+
 
 const TransactionHistoryCard: React.FC<{ transaction: SubscriptionHistoryItem }> = ({ transaction }) => {
   const statusColor = {
@@ -870,7 +857,14 @@ const Subscription: React.FC = () => {
   const getPlans = async () => {
     try {
       const response = await axios.get<SubscriptionPlan[]>(`${BASE_URL}/order-service/getAllPlans`);
-      const sortedData = response.data.sort((a, b) => a.amount - b.amount);
+      // Sort with premium plan first, then by amount
+      const sortedData = response.data.sort((a, b) => {
+        // Premium plan (99000) comes first
+        if (a.amount === 99000) return -1;
+        if (b.amount === 99000) return 1;
+        // Then sort by amount
+        return a.amount - b.amount;
+      });
       setSubscriptionPlans(sortedData);
       // Track view subscription plans
       if (typeof window !== "undefined" && window.gtag) {
