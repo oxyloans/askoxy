@@ -89,6 +89,12 @@ import Prioritize_Queue_Use_Case_Business from "../Busyness/Prioritize_Queue_Use
 import Queue_Communication_Mapping_Use_Case_Business from "../Busyness/Queue_Communication_Mapping_Use_Case_Business";
 import Queue_Curing_Use_Case_Business from "../Busyness/Queue_Curing_Use_Case_Business";
 import WorkPlan_Use_Case_Business from "../Busyness/WorkPlan_Use_Case_Business";
+import EodBodDisplay from "../Busyness/EodBodDisplay";
+import AccountClosureDisplay from "../Busyness/AccountClosureDisplay";
+import ViewAccountStatusDisplay from "../Busyness/ViewAccountStatusDisplay";
+import DocumentMasterDisplay from "../Busyness/DocumentMasterDisplay";
+import FinanceReschedulingDisplay from "../Busyness/FinanceReschedulingDisplay";
+import FinanceReschedulingDueDateDisplay from "../Busyness/FinanceReschedulingDueDateDisplay";
 // import WorkPlan_Use_Case_Business from "../Busyness/Work_Plan_Use_Case_Business"; // Removed as the module does not exist
 
 // import CustomerIdCreation from "./Business/CustomerIdCreationBusiness"; // Removed as the module does not exist
@@ -632,6 +638,13 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "fms-15",
+          name: "WF_FMS_EOD_ BOD",
+          description: "End-of-day and beginning-of-day processing",
+          component: EodBodDisplay,
+          type: "business",
+        },
+        {
           id: "fms-16",
           name: "Work Flow Closure_Account Closure",
           description: "Structured account closure workflow",
@@ -639,11 +652,26 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "fms-16",
+          name: "Work Flow Closure_Account Closure",
+          description: "Structured account closure workflow",
+          component: AccountClosureDisplay,
+          type: "business",
+        },
+
+        {
           id: "fms-17",
           name: "Work Flow Closure_View Account Status",
           description: "Real-time account status monitoring",
           component: WF_Closure_View_Account_Status_Use_Case,
           type: "system",
+        },
+        {
+          id: "fms-17",
+          name: "Work Flow Closure_View Account Status",
+          description: "Real-time account status monitoring",
+          component: ViewAccountStatusDisplay,
+          type: "business",
         },
         {
           id: "fms-18",
@@ -653,6 +681,13 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "fms-18",
+          name: "Work Flow_Document Master",
+          description: "Centralized document management system",
+          component: DocumentMasterDisplay,
+          type: "business",
+        },
+        {
           id: "fms-19",
           name: "Work Flow_Finance Rescheduling_Bulk Prepayment",
           description: "Bulk prepayment rescheduling process",
@@ -660,11 +695,25 @@ const UseCases: React.FC = () => {
           type: "system",
         },
         {
+          id: "fms-19",
+          name: "Work Flow_Finance Rescheduling_Bulk Prepayment",
+          description: "Bulk prepayment rescheduling process",
+          component: FinanceReschedulingDisplay,
+          type: "business",
+        },
+        {
           id: "fms-20",
           name: "Work Flow_Finance Rescheduling_Due Date Change",
           description: "Flexible due date modification system",
           component: WF_Finance_Rescheduling_Due_Date_Change_Use_Case,
           type: "system",
+        },
+        {
+          id: "fms-20",
+          name: "Work Flow_Finance Rescheduling_Due Date Change",
+          description: "Flexible due date modification system",
+          component: FinanceReschedulingDueDateDisplay,
+          type: "business",
         },
         {
           id: "fms-21",

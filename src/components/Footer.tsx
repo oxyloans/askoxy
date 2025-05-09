@@ -54,7 +54,7 @@ const Footer = () => {
     },
     {
       icon: <Phone className="h-4 w-4" />,
-      content: "+91 98765 43210",
+      content: ["6300873713", "9701672159", "8008310244", "9000327627"],
       type: "phone",
     },
   ];
@@ -68,10 +68,13 @@ const Footer = () => {
             <img
               src={Logo}
               alt="AskOxy.AI Logo"
+              loading="lazy"
               className="h-12 w-auto object-contain"
             />
             <p className="text-gray-600 text-xs leading-relaxed">
-            Our OXY GROUP solves real-world problems with AI and Blockchain through ASKOXY.AI, delivering goods and services while rewarding users with BMVCOIN, built on Ethereum, for future value.
+              Our OXY GROUP solves real-world problems with AI and Blockchain
+              through ASKOXY.AI, delivering goods and services while rewarding
+              users with BMVCOIN, built on Ethereum, for future value.
             </p>
             <div className="flex space-x-3">
               {socialLinks.map((social) => (
@@ -80,6 +83,7 @@ const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={social.label}
                   className="text-gray-500 hover:text-purple-600 transition-colors duration-200"
                 >
                   {social.icon}
@@ -119,6 +123,18 @@ const Footer = () => {
                     <p className="text-xs text-gray-600 leading-tight">
                       {info.content}
                     </p>
+                  ) : info.type === "phone" && Array.isArray(info.content) ? (
+                    <div className="flex flex-col gap-1">
+                      {info.content.map((number, i) => (
+                        <a
+                          key={i}
+                          href={`tel:${number}`}
+                          className="text-xs text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                        >
+                          {number}
+                        </a>
+                      ))}
+                    </div>
                   ) : (
                     <a
                       href={`${info.type === "email" ? "mailto:" : "tel:"}${
@@ -151,6 +167,7 @@ const Footer = () => {
                 <img
                   src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
                   alt="Download on the App Store"
+                  loading="lazy"
                   className="w-28 sm:w-32"
                 />
               </a>
@@ -162,6 +179,7 @@ const Footer = () => {
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
                   alt="Get it on Google Play"
+                  loading="lazy"
                   className="w-28 sm:w-32"
                 />
               </a>

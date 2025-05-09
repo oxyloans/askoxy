@@ -23,7 +23,7 @@ import UniversityPromoCard from "./Templates/UniversityPromoCard";
 import PromoCard from "./Templates/PromoCard";
 import RiceOfferFAQs from "./Dashboard/Faqs";
 import MyCrypto from "./Dashboard/MyCrypto";
-
+import LoanManagementLandingPage from "./components/LoanManagementLandingPage";
 import AdminSidebar from "./AskoxyAdmin/Sider";
 import Home from "./Dashboard/Home";
 import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
@@ -135,6 +135,7 @@ import MobileNumberUpdate from "./Taskmanagement/EmployeeProfilePage";
 import HelpDeskDashboard from "./AskoxyAdmin/HelpDeskDashboard";
 import ExchangeOrdersPage from "./PartnerWeb/ExchangeOrders";
 import GSTRiceFAQ from "./components/GstFAQ";
+import LandingPage from "./GLMS/LandingPage";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -193,6 +194,7 @@ const App: React.FC = () => {
             />
             <Route path="/userregister" element={<UserRegister />} />
             <Route path="/glms" element={<UseCases />} />
+            <Route path="/glmshome" element={<LandingPage />} />
             <Route path="/gstonrice" element={<GSTRiceFAQ/>}/>
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
