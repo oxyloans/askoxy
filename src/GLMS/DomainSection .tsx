@@ -42,7 +42,7 @@ const domains = [
   {
     id: "collections",
     title: "Collections Management",
-    link: "/cms",
+    link: "/glmshome",
     description:
       "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
     icon: <CreditCard size={40} className="text-blue-600" />,
@@ -72,7 +72,7 @@ const domains = [
   {
     id: "fms",
     title: "Financial Management System",
-    link: "/fms",
+    link: "/glmshome",
     description:
       "End-to-end financial tracking, processing, and reporting for loan servicing.",
     icon: <DollarSign size={40} className="text-blue-600" />,
@@ -164,7 +164,7 @@ const DomainSection = () => {
 
         <div className="mt-10 text-center">
           <Link
-            to="/solutions"
+            to="/glmshome"
             className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-5 rounded-full font-medium inline-flex items-center text-sm sm:text-base transition-all duration-300"
           >
             View All Solutions

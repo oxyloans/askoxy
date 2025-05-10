@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useState} from "react";
 
 const sectionStyle = "bg-white shadow-lg rounded-xl p-4 md:p-6 mb-6";
 const titleStyle = "text-2xl md:text-3xl font-semibold text-blue-600 mb-4";
@@ -9,11 +9,71 @@ const tableHeaderStyle = "bg-gray-100 text-left text-sm text-gray-600";
 const tableCellStyle = "px-4 py-2 border-b text-gray-800";
 
 const CustomerCreationId: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalURL, setModalURL] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+  const openModal = (url: string, title: string) => {
+    setModalURL(url);
+    setModalTitle(title);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalURL("");
+    setModalTitle("");
+  };
   return (
     <div className="container mx-auto px-4 py-6 max-w-screen-xl">
       <h5 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">
         Customer ID Creation – System Development Breakdown
       </h5>
+
+      <div className="flex justify-center gap-4 mb-6">
+        <button
+          onClick={() =>
+            openModal(
+              "https://docs.google.com/document/d/1F8aXmDQpwGQ-bKGZpEPBDHrzltPxJ5bM/preview",
+              "Back End Code View"
+            )
+          }
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          View Back End Code
+        </button>
+
+        <button
+          onClick={() =>
+            openModal(
+              "https://docs.google.com/document/d/1ixT9000eGGKk7GBjeW6QOEMRsmX5YGqn/preview",
+              "Front End Code View"
+            )
+          }
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+        >
+          View Front End Code
+        </button>
+      </div>
+
+      {/* MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-4xl w-full relative shadow-xl">
+            <h3 className="text-xl font-bold mb-4">{modalTitle}</h3>
+            <iframe
+              src={modalURL}
+              title={modalTitle}
+              className="w-full h-[500px] border rounded"
+            ></iframe>
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-red-600 font-bold text-xl"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* SYSTEM USE CASE */}
       <div className={sectionStyle}>
