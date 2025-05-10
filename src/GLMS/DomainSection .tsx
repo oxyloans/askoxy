@@ -42,7 +42,7 @@ const domains = [
   {
     id: "collections",
     title: "Collections Management",
-    link: "/glmshome",
+    link: "/cms",
     description:
       "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
     icon: <CreditCard size={40} className="text-blue-600" />,

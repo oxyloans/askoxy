@@ -138,6 +138,8 @@ import GSTRiceFAQ from "./components/GstFAQ";
 import LandingPage from "./GLMS/LandingPage";
 import CASDashboard from "./GLMS/CAS/Pages/CASDashboard";
 import CASRouteRenderer from "./GLMS/CAS/Pages/CASRouteRenderer";
+import CMSRouteRenderer from "./GLMS/CMS/Pages/CMSRoutes";
+import CMSDashboard from "./GLMS/CMS/Pages/CMSDashboard";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -199,6 +201,8 @@ const App: React.FC = () => {
             <Route path="/glmshome" element={<UseCases />} />
             <Route path="/cas" element={<CASDashboard />} />
             <Route path="/cas/:useCaseId" element={<CASRouteRenderer />} />
+            <Route path="/cms" element={<CMSDashboard />} />
+            <Route path="/cms/:useCaseId" element={<CMSRouteRenderer />} />
             <Route path="/glms" element={<LandingPage />} />
             <Route path="/gstonrice" element={<GSTRiceFAQ />} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}

@@ -1,5 +1,6 @@
 import React from "react";
 import CustomerCreationId from "../Components/CustomerCreationId";
+import LinkingOfCoApplicantGuarantor from "../Components/Co-applicant&GuarantorLinking";
 
 // Dummy Components for remaining use cases
 declare const DummyComponent: React.FC<{ title: string }>;
@@ -16,7 +17,7 @@ export const useCaseRoutes: Record<
   },
   "document-upload": {
     title: "Document Upload",
-    component: createDummy("Document Upload")(),
+    component: <LinkingOfCoApplicantGuarantor/>,
   },
   "kyc-verification": {
     title: "KYC Verification",

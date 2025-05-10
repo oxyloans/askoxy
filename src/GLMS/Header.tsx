@@ -4,7 +4,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogostatic.png";
 
 interface HeaderProps {
-  onNavClick?: (id: any) => void;
+  onNavClick?: (id: string) => void;
 }
 
 function Header({ onNavClick }: HeaderProps) {
@@ -60,23 +60,29 @@ function Header({ onNavClick }: HeaderProps) {
 
   const handleNavClick = (id: string): void => {
     setActiveLink(id);
+
+    // Scroll to the section
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+
     if (onNavClick) {
       onNavClick(id);
     }
+
     setIsMenuOpen(false);
   };
+
   const navigate = useNavigate();
 
   const handleSignin = () => {
     navigate("/whatsappregister");
   };
-  
 
   const handledLogo = () => {
     navigate("/");
   };
-  
-
 
   return (
     <header

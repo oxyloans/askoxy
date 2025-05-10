@@ -50,7 +50,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header onNavClick={scrollToSection} />
+      <Header />
       <main className="flex-grow">
         <div ref={homeRef} id="home">
           <HeroSection />

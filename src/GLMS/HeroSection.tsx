@@ -1,13 +1,20 @@
 import React from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Compass } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RadhakrishnaImg from "../assets/img/radha sir.png";
-
+import { FaLinkedin } from "react-icons/fa";
 function HeroSection() {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate("/glmshome");
+    // Scroll to domains section
+    const domainsSection = document.getElementById("domains");
+    if (domainsSection) {
+      domainsSection.scrollIntoView({ behavior: "smooth" });
+    } else {
+      // Fallback if element not found
+      navigate("/glmshome");
+    }
   };
 
   return (
@@ -37,11 +44,12 @@ function HeroSection() {
             through domain depth, platform expertise, and scalable talent
             partnerships.
             <br />
-            We’re creating a <em>1 million+ strong talent pool</em> with
+            We're creating a <em>1 million+ strong talent pool</em> with
             continuous free training.
             <br />
-            ✅ Get job-ready for top product companies
-            <br />✅ Become a hot prospect for{" "}
+            ✅Get job-ready for top product companies
+            <br />
+            ✅Become a hot prospect for{" "}
             <strong>1,00,000+ banks and finance companies</strong>
           </p>
 
@@ -51,7 +59,10 @@ function HeroSection() {
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full flex items-center justify-center shadow-lg transition duration-300"
             >
               Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <span className="ml-2 flex items-center">
+                <Compass className="h-5 w-5 mr-1" />
+                <ArrowRight className="h-5 w-5" />
+              </span>
             </button>
           </div>
         </div>
@@ -71,8 +82,17 @@ function HeroSection() {
                 RadhaKrishna.T
               </h3>
               <p className="text-gray-600 text-lg">CEO & Co-Founder</p>
+              <a
+                href="https://www.linkedin.com/in/oxyradhakrishna/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 text-2xl"
+                title="Connect on LinkedIn"
+              >
+                <FaLinkedin />
+              </a>
             </div>
-
+            
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-28 h-28 bg-blue-200 opacity-30 rounded-full -mt-12 -mr-12"></div>
             <div className="absolute bottom-0 left-0 w-20 h-20 bg-purple-200 opacity-30 rounded-full -mb-10 -ml-10"></div>
