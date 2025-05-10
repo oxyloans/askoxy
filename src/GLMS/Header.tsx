@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogostatic.png";
 
@@ -40,7 +41,7 @@ function Header({ onNavClick }: HeaderProps) {
         if (
           !(e.target instanceof HTMLElement) ||
           (!e.target.closest(".mobile-menu-container") &&
-        !e.target.closest(".menu-button"))
+            !e.target.closest(".menu-button"))
         ) {
           setIsMenuOpen(false);
         }
@@ -52,15 +53,10 @@ function Header({ onNavClick }: HeaderProps) {
 
   const navLinks = [
     { id: "home", label: "Home" },
-    { id: "videos", label: "Videos" },
     { id: "domains", label: "Domains" },
+    { id: "videos", label: "Videos" },
     { id: "contact", label: "Contact" },
   ];
-
-  interface NavLink {
-    id: string;
-    label: string;
-  }
 
   const handleNavClick = (id: string): void => {
     setActiveLink(id);
@@ -69,6 +65,18 @@ function Header({ onNavClick }: HeaderProps) {
     }
     setIsMenuOpen(false);
   };
+  const navigate = useNavigate();
+
+  const handleSignin = () => {
+    navigate("/whatsappregister");
+  };
+  
+
+  const handledLogo = () => {
+    navigate("/");
+  };
+  
+
 
   return (
     <header
@@ -83,7 +91,7 @@ function Header({ onNavClick }: HeaderProps) {
           {/* Left: Logo */}
           <div
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={() => handleNavClick("home")}
+            onClick={handledLogo}
           >
             <img
               src={Askoxy}
@@ -117,7 +125,10 @@ function Header({ onNavClick }: HeaderProps) {
 
           {/* Right: Sign In */}
           <div className="hidden md:block">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105">
+            <button
+              onClick={handleSignin}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
+            >
               Sign In
             </button>
           </div>
@@ -157,7 +168,10 @@ function Header({ onNavClick }: HeaderProps) {
                 </li>
               ))}
               <li className="px-4 pt-4 pb-2">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-sm flex items-center justify-center">
+                <button
+                  onClick={handleSignin}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-sm flex items-center justify-center"
+                >
                   Sign In
                 </button>
               </li>

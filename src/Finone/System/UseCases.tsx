@@ -772,7 +772,7 @@ const UseCases: React.FC = () => {
       setSearchTerm("");
       const params = new URLSearchParams();
       if (newDomain) params.set("domain", newDomain);
-      window.history.pushState({}, "", `/glms?${params.toString()}`);
+      window.history.pushState({}, "", `/glmshome?${params.toString()}`);
       setIsLoading(false);
       if (newDomain && useCasesRef.current) {
         useCasesRef.current.scrollIntoView({ behavior: "smooth" });
@@ -797,7 +797,7 @@ const UseCases: React.FC = () => {
     setSelectedDomain(null);
     setSelectedUseCase(null);
     setSelectedUseCaseType(null);
-    window.history.pushState({}, "", "/glms");
+    window.history.pushState({}, "", "/glmshome");
   };
 
   const handleBackToUseCases = () => {
@@ -817,8 +817,8 @@ const UseCases: React.FC = () => {
     setSelectedDomain(null);
     setSelectedUseCase(null);
     setSelectedUseCaseType(null);
-    window.history.pushState({}, "", "/glms");
-    window.location.href = "/glms";
+    window.history.pushState({}, "", "/");
+    window.location.href = "/";
   };
 
   // Filter use cases
@@ -839,9 +839,10 @@ const UseCases: React.FC = () => {
       {/* Header */}
       <header className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          {/* Logo Section */}
           <div className="flex items-center">
             <img
-              src={Askoxylogo}
+              src={Askoxylogo} // Replace with your logo source
               alt="AskOxy Logo"
               className="h-10 cursor-pointer transition-transform hover:scale-105"
               onClick={handleLogoClick}
@@ -855,20 +856,24 @@ const UseCases: React.FC = () => {
               role="banner"
             />
           </div>
-          <nav className="hidden md:flex items-center space-x-6">
+{/* 
+          Web Menu */}
+          {/* <nav className="hidden md:flex items-center space-x-6">
             <a
-              href="/glms"
+              href="/glmshome"
               className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors"
             >
               About
             </a>
             <a
-              href="/glms"
+              href="/glmshome"
               className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors"
             >
               Contact
             </a>
-          </nav>
+          </nav> */}
+
+          {/* Mobile Menu Toggle */}
           <button
             onClick={toggleMobileMenu}
             className="md:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
@@ -882,22 +887,24 @@ const UseCases: React.FC = () => {
             )}
           </button>
         </div>
+
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-100 py-4 px-6 animate-slide-down">
-            <nav className="flex flex-col gap-4">
+            {/* <nav className="flex flex-col gap-4">
               <a
-                href="/about"
+                href="/glmshome"
                 className="text-gray-600 hover:text-indigo-600 font-medium text-sm"
               >
                 About
               </a>
               <a
-                href="/contact"
+                href="/glmshome"
                 className="text-gray-600 hover:text-indigo-600 font-medium text-sm"
               >
                 Contact
               </a>
-            </nav>
+            </nav> */}
           </div>
         )}
       </header>
@@ -906,7 +913,7 @@ const UseCases: React.FC = () => {
         {/* Main Heading */}
         {!selectedDomain && (
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            Global Management System
+            Global Loan Management System
           </h1>
         )}
 

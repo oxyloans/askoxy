@@ -136,6 +136,8 @@ import HelpDeskDashboard from "./AskoxyAdmin/HelpDeskDashboard";
 import ExchangeOrdersPage from "./PartnerWeb/ExchangeOrders";
 import GSTRiceFAQ from "./components/GstFAQ";
 import LandingPage from "./GLMS/LandingPage";
+import CASDashboard from "./GLMS/CAS/Pages/CASDashboard";
+import CASRouteRenderer from "./GLMS/CAS/Pages/CASRouteRenderer";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -145,6 +147,7 @@ const App: React.FC = () => {
       "/future",
       "/freerice",
       "/glms",
+      "/glmshome",
       "/miyapurmetro",
     ];
     if (validEntryPoints.includes(location.pathname)) {
@@ -193,9 +196,11 @@ const App: React.FC = () => {
               element={<MobileNumberUpdate />}
             />
             <Route path="/userregister" element={<UserRegister />} />
-            <Route path="/glms" element={<UseCases />} />
-            <Route path="/glmshome" element={<LandingPage />} />
-            <Route path="/gstonrice" element={<GSTRiceFAQ/>}/>
+            <Route path="/glmshome" element={<UseCases />} />
+            <Route path="/cas" element={<CASDashboard />} />
+            <Route path="/cas/:useCaseId" element={<CASRouteRenderer />} />
+            <Route path="/glms" element={<LandingPage />} />
+            <Route path="/gstonrice" element={<GSTRiceFAQ />} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />
