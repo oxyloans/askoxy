@@ -13,24 +13,24 @@ import {
   Menu,
 } from "lucide-react";
 import CustomerIdCreation from "./CustomerIdCreation";
-import LinkingOfCoApplicantGuarantor from "./LinkingOfCoApplicantGuarantor";
-import LinkingOfCustomerIdToLoan from "./LinkingOfCustomerIdToLoan";
-import WFLoanOrganizationSystemAppraisal from "./WFLoanOrganizationSystemAppraisal";
-import WFLoanAssessment from "./WFLoanAssessment";
-import RecommendationsWorkflow from "./RecommendationsWorkflow";
-import WF_for_Risk_Analysis from "./WF_for_Risk_Analysis";
-import WF_for_Sanction_Letter_Generation_Customer_Response from "./WF_for_Sanction_Letter_Generation_Customer_Response";
-import WF_for_Sanction_of_Loan from "./WF_for_Sanction_of_Loan";
-import WF_for_Terms_Conditions from "./WF_for_Terms_Conditions";
-import WF_for_Capturing_Proposed_Asset_Details from "./Capturing_Proposed_Asset_Details";
-import WF_for_Check_Limit from "./WF_for_Check_Limit";
-import WF_for_Evauating_the_Networth_of_the_Parties from "./WF_for_Evauating_the_Networth_of_the_Parties";
-import Allocation_of_Delinquent_Cases_Allocation_Hold from "./Allocation_of_Delinquent_Cases_Allocation_Hold";
+// import LinkingOfCoApplicantGuarantor from "./LinkingOfCoApplicantGuarantor";
+// import LinkingOfCustomerIdToLoan from "./LinkingOfCustomerIdToLoan";
+// import WFLoanOrganizationSystemAppraisal from "./WFLoanOrganizationSystemAppraisal";
+// import WFLoanAssessment from "./WFLoanAssessment";
+// import RecommendationsWorkflow from "./RecommendationsWorkflow";
+// import WF_for_Risk_Analysis from "./WF_for_Risk_Analysis";
+// import WF_for_Sanction_Letter_Generation_Customer_Response from "./WF_for_Sanction_Letter_Generation_Customer_Response";
+// import WF_for_Sanction_of_Loan from "./WF_for_Sanction_of_Loan";
+// import WF_for_Terms_Conditions from "./WF_for_Terms_Conditions";
+// import WF_for_Capturing_Proposed_Asset_Details from "./Capturing_Proposed_Asset_Details";
+// import WF_for_Check_Limit from "./WF_for_Check_Limit";
+// import WF_for_Evauating_the_Networth_of_the_Parties from "./WF_for_Evauating_the_Networth_of_the_Parties";
+// import Allocation_of_Delinquent_Cases_Allocation_Hold from "./Allocation_of_Delinquent_Cases_Allocation_Hold";
 import Asset_detials_Use_Case from "./Asset_detials_Use_Case";
-import Define_Allocation_Use_Case from "./Define_Allocation_Use_Case";
-import Manual_Allocation_Use_Case from "./Manual_Allocation_Use_Case";
-import Manual_Reallocation_Use_Case from "./Manual_Reallocation_Use_Case";
-import Beginning_of_Day_Use_Case from "./Beginning_of_Day_Use_Case";
+// import Define_Allocation_Use_Case from "./Define_Allocation_Use_Case";
+// import Manual_Allocation_Use_Case from "./Manual_Allocation_Use_Case";
+// import Manual_Reallocation_Use_Case from "./Manual_Reallocation_Use_Case";
+// import Beginning_of_Day_Use_Case from "./Beginning_of_Day_Use_Case";
 import Define_Queue_Use_Case from "./Define_Queue_Use_CaseProps";
 import Contact_Recording from "./Contact_Recording_Use_Case";
 import Legal_Collections_Use_Case from "./Legal_Collections_Use_Case";
@@ -41,7 +41,7 @@ import WorkPlan_Use_Case from "./Work_Plan_Use_Case";
 import PDC_Printing_Use_Case from "./PDC_Printing_Use_Case";
 import WF_Installment_Prepayment_Use_Case from "./WF_Installment_Prepayment_Use_Case";
 import WF_NPA_Grading_Use_Case from "./WF_NPA_Grading_Use_Case";
-import WF_NPA_Provisioning_Use_Case from "./WF_NPA_Provisioning_Use_Case";
+// import WF_NPA_Provisioning_Use_Case from "./WF_NPA_Provisioning_Use_Case";
 import WF_Settlements_Knock_Off_Use_Case from "./WF_Settlements_Knock_Off_Use_Case";
 import WF_Settlements_Cheque_Processing_Use_Case from "./WF_Settlements_Cheque_Processing_Use_Case";
 import WF_Settlements_Manual_Advice_Use_Case from "./WF_Settlements_Manual_Advice_Use_Case";
@@ -65,23 +65,23 @@ import WF_Repayment_Deferral_Finance_Wise_Use_Case from "./WF_Repayment_Deferral
 import WF_Repayment_Deferral_Portfolio_Wise_Use_Case from "./WF_Repayment_Deferral_Portfolio_Wise_Use_Case";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
 import CustomerIdCreation1 from "../Busyness/CustomerIdCreationBusiness";
-import LinkingOfCoApplicantGuarantorBusiness from "../Busyness/LinkingOfCoApplicantGuarantorBusiness";
-import LinkingOfCustomerIdToLoanBusiness from "../Busyness/LinkingOfCustomerIdToLoanBusiness";
-import WFLoanOrganizationSystemAppraisalBusiness from "../Busyness/WFLoanOrganizationSystemAppraisalBusiness";
-import WFLoanAssessmentBusiness from "../Busyness/WFLoanAssessmentBusiness";
-import WFRecommendationsBusiness from "../Busyness/WFRecommendationsBusiness";
-import WF_for_Risk_Analysis_Business from "../Busyness/WF_for_Risk_Analysis_Business";
-import WF_for_Sanction_Letter_Generation_Customer_Response_Business from "../Busyness/WF_for_Sanction_Letter_Generation_Customer_Response_Business";
-import WF_for_Sanction_of_Loan_Business from "../Busyness/WF_for_Sanction_of_Loan_Business";
-import WF_for_Terms_Conditions_Business from "../Busyness/WF_for_Terms_Conditions_Business";
-import WF_for_Capturing_Proposed_Asset_Details_Business from "../Busyness/WF_for_Capturing_Proposed_Asset_Details_Business";
-import WF_for_Check_Limit_Business from "../Busyness/WF_for_Check_Limit_Business";
-import WF_for_Evauating_the_Networth_of_the_Parties_Business from "../Busyness/WF_for_Evauating_the_Networth_of_the_Parties_Business";
-import Allocation_of_Delinquent_Cases_Allocation_Hold_Business from "../Busyness/Allocation_of_Delinquent_Cases_Allocation_Hold_Business";
-import Define_Allocation_Use_Case_Business from "../Busyness/Define_Allocation_Use_Case_Business";
-import Manual_Allocation_Use_Case_Business from "../Busyness/Manual_Allocation_Use_Case_Business";
-import Manual_Reallocation_Use_Case_Business from "../Busyness/Manual_Reallocation_Use_Case_Business";
-import Beginning_of_Day_Use_Case_Business from "../Busyness/Beginning_of_Day_Use_Case_Business";
+// import LinkingOfCoApplicantGuarantorBusiness from "../Busyness/LinkingOfCoApplicantGuarantorBusiness";
+// import LinkingOfCustomerIdToLoanBusiness from "../Busyness/LinkingOfCustomerIdToLoanBusiness";
+// import WFLoanOrganizationSystemAppraisalBusiness from "../Busyness/WFLoanOrganizationSystemAppraisalBusiness";
+// import WFLoanAssessmentBusiness from "../Busyness/WFLoanAssessmentBusiness";
+// import WFRecommendationsBusiness from "../Busyness/WFRecommendationsBusiness";
+// import WF_for_Risk_Analysis_Business from "../Busyness/WF_for_Risk_Analysis_Business";
+// import WF_for_Sanction_Letter_Generation_Customer_Response_Business from "../Busyness/WF_for_Sanction_Letter_Generation_Customer_Response_Business";
+// import WF_for_Sanction_of_Loan_Business from "../Busyness/WF_for_Sanction_of_Loan_Business";
+// import WF_for_Terms_Conditions_Business from "../Busyness/WF_for_Terms_Conditions_Business";
+// import WF_for_Capturing_Proposed_Asset_Details_Business from "../Busyness/WF_for_Capturing_Proposed_Asset_Details_Business";
+// import WF_for_Check_Limit_Business from "../Busyness/WF_for_Check_Limit_Business";
+// import WF_for_Evauating_the_Networth_of_the_Parties_Business from "../Busyness/WF_for_Evauating_the_Networth_of_the_Parties_Business";
+// import Allocation_of_Delinquent_Cases_Allocation_Hold_Business from "../Busyness/Allocation_of_Delinquent_Cases_Allocation_Hold_Business";
+// import Define_Allocation_Use_Case_Business from "../Busyness/Define_Allocation_Use_Case_Business";
+// import Manual_Allocation_Use_Case_Business from "../Busyness/Manual_Allocation_Use_Case_Business";
+// import Manual_Reallocation_Use_Case_Business from "../Busyness/Manual_Reallocation_Use_Case_Business";
+// import Beginning_of_Day_Use_Case_Business from "../Busyness/Beginning_of_Day_Use_Case_Business";
 import Define_Queue_Use_Case_Business from "../Busyness/Define_Queue_Use_Case_Business";
 import Contact_Recording_Business from "../Busyness/Contact_Recording_Business";
 import Legal_Collections_Use_Case_Business from "../Busyness/Legal_Collections_Use_Case_Business";
@@ -176,179 +176,179 @@ const UseCases: React.FC = () => {
           component: CustomerIdCreation1,
           type: "business",
         },
-        {
-          id: "cas-2",
-          name: "Linking of Co-applicant Guarantor",
-          description:
-            "Secure linking process for co-applicants and guarantors",
-          component: LinkingOfCoApplicantGuarantor,
-          type: "system",
-        },
-        {
-          id: "cas-2",
-          name: "Linking of Co-applicant Guarantor",
-          description:
-            "Secure linking process for co-applicants and guarantors",
-          component: LinkingOfCoApplicantGuarantorBusiness,
-          type: "business",
-        },
-        {
-          id: "cas-3",
-          name: "Linking of Customer ID to Loan",
-          description: "Automated loan assignment and eligibility verification",
-          component: LinkingOfCustomerIdToLoan,
-          type: "system",
-        },
-        {
-          id: "cas-3",
-          name: "Linking of Customer ID to Loan",
-          description: "Automated loan assignment and eligibility verification",
-          component: LinkingOfCustomerIdToLoanBusiness,
-          type: "business",
-        },
-        {
-          id: "cas-4",
-          name: "WF_Loan Organization System_Appraisal",
-          description: "Comprehensive loan appraisal workflow management",
-          component: WFLoanOrganizationSystemAppraisal,
-          type: "system",
-        },
-        {
-          id: "cas-4",
-          name: "WF_Loan Organization System_Appraisal",
-          description: "Comprehensive loan appraisal workflow management",
-          component: WFLoanOrganizationSystemAppraisalBusiness,
-          type: "business",
-        },
-        {
-          id: "cas-5",
-          name: "Work Flow for Loan Assessment",
-          description: "Structured loan evaluation and decision-making process",
-          component: WFLoanAssessment,
-          type: "system",
-        },
-        {
-          id: "cas-5",
-          name: "Work Flow for Loan Assessment",
-          description: "Structured loan evaluation and decision-making process",
-          component: WFLoanAssessmentBusiness,
-          type: "business",
-        },
-        {
-          id: "cas-6",
-          name: "Work Flow for Recommendations",
-          description: "Intelligent loan recommendation system",
-          component: RecommendationsWorkflow,
-          type: "system",
-        },
-        {
-          id: "cas-6",
-          name: "Work Flow for Recommendations",
-          description: "Intelligent loan recommendation system",
-          component: WFRecommendationsBusiness,
-          type: "business",
-        },
-        {
-          id: "cas-7",
-          name: "Work Flow for Risk Analysis",
-          description: "Advanced risk assessment for loan applications",
-          component: WF_for_Risk_Analysis,
-          type: "system",
-        },
-        {
-          id: "cas-7",
-          name: "Work Flow for Risk Analysis",
-          description: "Advanced risk assessment for loan applications",
-          component: WF_for_Risk_Analysis_Business,
-          type: "business",
-        },
-        {
-          id: "cas-8",
-          name: "Work Flow for Sanction Letter Generation & Customers Response",
-          description:
-            "Automated sanction letter creation and response tracking",
-          component: WF_for_Sanction_Letter_Generation_Customer_Response,
-          type: "system",
-        },
-        {
-          id: "cas-8",
-          name: "Work Flow for Sanction Letter Generation & Customers Response",
-          description:
-            "Automated sanction letter creation and response tracking",
-          component:
-            WF_for_Sanction_Letter_Generation_Customer_Response_Business,
-          type: "business",
-        },
-        {
-          id: "cas-9",
-          name: "Work Flow for Sanction of Loan",
-          description: "Efficient loan sanctioning process automation",
-          component: WF_for_Sanction_of_Loan,
-          type: "system",
-        },
-        {
-          id: "cas-9",
-          name: "Work Flow for Sanction of Loan",
-          description: "Efficient loan sanctioning process automation",
-          component: WF_for_Sanction_of_Loan_Business,
-          type: "business",
-        },
-        {
-          id: "cas-10",
-          name: "Work Flow for Terms & Conditions",
-          description: "Standardized terms and conditions management",
-          component: WF_for_Terms_Conditions,
-          type: "system",
-        },
-        {
-          id: "cas-10",
-          name: "Work Flow for Terms & Conditions",
-          description: "Standardized terms and conditions management",
-          component: WF_for_Terms_Conditions_Business,
-          type: "business",
-        },
-        {
-          id: "cas-11",
-          name: "Workflow for Capturing Proposed Asset Details",
-          description: "Detailed asset information capture process",
-          component: WF_for_Capturing_Proposed_Asset_Details,
-          type: "system",
-        },
-        {
-          id: "cas-11",
-          name: "Workflow for Capturing Proposed Asset Details",
-          description: "Detailed asset information capture process",
-          component: WF_for_Capturing_Proposed_Asset_Details_Business,
-          type: "business",
-        },
-        {
-          id: "cas-12",
-          name: "Workflow for Check Limit",
-          description: "Automated credit limit verification system",
-          component: WF_for_Check_Limit,
-          type: "system",
-        },
-        {
-          id: "cas-12",
-          name: "Workflow for Check Limit",
-          description: "Automated credit limit verification system",
-          component: WF_for_Check_Limit_Business,
-          type: "business",
-        },
-        {
-          id: "cas-13",
-          name: "Workflow for Evaluating the Networth of the Parties",
-          description: "Comprehensive net worth assessment workflow",
-          component: WF_for_Evauating_the_Networth_of_the_Parties,
-          type: "system",
-        },
-        {
-          id: "cas-13",
-          name: "Workflow for Evaluating the Networth of the Parties",
-          description: "Comprehensive net worth assessment workflow",
-          component: WF_for_Evauating_the_Networth_of_the_Parties_Business,
-          type: "business",
-        },
+        // {
+        //   id: "cas-2",
+        //   name: "Linking of Co-applicant Guarantor",
+        //   description:
+        //     "Secure linking process for co-applicants and guarantors",
+        //   component: LinkingOfCoApplicantGuarantor,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-2",
+        //   name: "Linking of Co-applicant Guarantor",
+        //   description:
+        //     "Secure linking process for co-applicants and guarantors",
+        //   component: LinkingOfCoApplicantGuarantorBusiness,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-3",
+        //   name: "Linking of Customer ID to Loan",
+        //   description: "Automated loan assignment and eligibility verification",
+        //   component: LinkingOfCustomerIdToLoan,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-3",
+        //   name: "Linking of Customer ID to Loan",
+        //   description: "Automated loan assignment and eligibility verification",
+        //   component: LinkingOfCustomerIdToLoanBusiness,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-4",
+        //   name: "WF_Loan Organization System_Appraisal",
+        //   description: "Comprehensive loan appraisal workflow management",
+        //   component: WFLoanOrganizationSystemAppraisal,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-4",
+        //   name: "WF_Loan Organization System_Appraisal",
+        //   description: "Comprehensive loan appraisal workflow management",
+        //   component: WFLoanOrganizationSystemAppraisalBusiness,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-5",
+        //   name: "Work Flow for Loan Assessment",
+        //   description: "Structured loan evaluation and decision-making process",
+        //   component: WFLoanAssessment,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-5",
+        //   name: "Work Flow for Loan Assessment",
+        //   description: "Structured loan evaluation and decision-making process",
+        //   component: WFLoanAssessmentBusiness,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-6",
+        //   name: "Work Flow for Recommendations",
+        //   description: "Intelligent loan recommendation system",
+        //   component: RecommendationsWorkflow,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-6",
+        //   name: "Work Flow for Recommendations",
+        //   description: "Intelligent loan recommendation system",
+        //   component: WFRecommendationsBusiness,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-7",
+        //   name: "Work Flow for Risk Analysis",
+        //   description: "Advanced risk assessment for loan applications",
+        //   component: WF_for_Risk_Analysis,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-7",
+        //   name: "Work Flow for Risk Analysis",
+        //   description: "Advanced risk assessment for loan applications",
+        //   component: WF_for_Risk_Analysis_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-8",
+        //   name: "Work Flow for Sanction Letter Generation & Customers Response",
+        //   description:
+        //     "Automated sanction letter creation and response tracking",
+        //   component: WF_for_Sanction_Letter_Generation_Customer_Response,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-8",
+        //   name: "Work Flow for Sanction Letter Generation & Customers Response",
+        //   description:
+        //     "Automated sanction letter creation and response tracking",
+        //   component:
+        //     WF_for_Sanction_Letter_Generation_Customer_Response_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-9",
+        //   name: "Work Flow for Sanction of Loan",
+        //   description: "Efficient loan sanctioning process automation",
+        //   component: WF_for_Sanction_of_Loan,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-9",
+        //   name: "Work Flow for Sanction of Loan",
+        //   description: "Efficient loan sanctioning process automation",
+        //   component: WF_for_Sanction_of_Loan_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-10",
+        //   name: "Work Flow for Terms & Conditions",
+        //   description: "Standardized terms and conditions management",
+        //   component: WF_for_Terms_Conditions,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-10",
+        //   name: "Work Flow for Terms & Conditions",
+        //   description: "Standardized terms and conditions management",
+        //   component: WF_for_Terms_Conditions_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-11",
+        //   name: "Workflow for Capturing Proposed Asset Details",
+        //   description: "Detailed asset information capture process",
+        //   component: WF_for_Capturing_Proposed_Asset_Details,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-11",
+        //   name: "Workflow for Capturing Proposed Asset Details",
+        //   description: "Detailed asset information capture process",
+        //   component: WF_for_Capturing_Proposed_Asset_Details_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-12",
+        //   name: "Workflow for Check Limit",
+        //   description: "Automated credit limit verification system",
+        //   component: WF_for_Check_Limit,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-12",
+        //   name: "Workflow for Check Limit",
+        //   description: "Automated credit limit verification system",
+        //   component: WF_for_Check_Limit_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "cas-13",
+        //   name: "Workflow for Evaluating the Networth of the Parties",
+        //   description: "Comprehensive net worth assessment workflow",
+        //   component: WF_for_Evauating_the_Networth_of_the_Parties,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-13",
+        //   name: "Workflow for Evaluating the Networth of the Parties",
+        //   description: "Comprehensive net worth assessment workflow",
+        //   component: WF_for_Evauating_the_Networth_of_the_Parties_Business,
+        //   type: "business",
+        // },
       ],
     },
     {
@@ -356,76 +356,76 @@ const UseCases: React.FC = () => {
       name: "Collections Management",
       icon: <CreditCard size={24} className="text-indigo-600" />,
       useCases: [
-        {
-          id: "collections-1",
-          name: "Allocation of Delinquent Cases_Allocation Hold",
-          description: "Strategic hold placement for delinquent accounts",
-          component: Allocation_of_Delinquent_Cases_Allocation_Hold,
-          type: "system",
-        },
-        {
-          id: "collections-1",
-          name: "Allocation of Delinquent Cases_Allocation Hold",
-          description: "Strategic hold placement for delinquent accounts",
-          component: Allocation_of_Delinquent_Cases_Allocation_Hold_Business,
-          type: "business",
-        },
-        {
-          id: "collections-2",
-          name: "Allocation of Delinquent Cases_Define Allocation contract",
-          description: "Custom allocation rules for delinquent cases",
-          component: Define_Allocation_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-2",
-          name: "Allocation of Delinquent Cases_Define Allocation contract",
-          description: "Custom allocation rules for delinquent cases",
-          component: Define_Allocation_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-3",
-          name: "Allocation of Delinquent Cases_Manual Allocation",
-          description: "Manual assignment of delinquent accounts",
-          component: Manual_Allocation_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-3",
-          name: "Allocation of Delinquent Cases_Manual Allocation",
-          description: "Manual assignment of delinquent accounts",
-          component: Manual_Allocation_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-4",
-          name: "Allocation of Delinquent Cases_Manual Reallocation",
-          description: "Flexible reallocation of delinquent cases",
-          component: Manual_Reallocation_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-4",
-          name: "Allocation of Delinquent Cases_Manual Reallocation",
-          description: "Flexible reallocation of delinquent cases",
-          component: Manual_Reallocation_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-5",
-          name: "Beginning of Day Process",
-          description: "Automated daily collections initialization",
-          component: Beginning_of_Day_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-5",
-          name: "Beginning of Day Process",
-          description: "Automated daily collections initialization",
-          component: Beginning_of_Day_Use_Case_Business,
-          type: "business",
-        },
+        // {
+        //   id: "collections-1",
+        //   name: "Allocation of Delinquent Cases_Allocation Hold",
+        //   description: "Strategic hold placement for delinquent accounts",
+        //   component: Allocation_of_Delinquent_Cases_Allocation_Hold,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-1",
+        //   name: "Allocation of Delinquent Cases_Allocation Hold",
+        //   description: "Strategic hold placement for delinquent accounts",
+        //   component: Allocation_of_Delinquent_Cases_Allocation_Hold_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-2",
+        //   name: "Allocation of Delinquent Cases_Define Allocation contract",
+        //   description: "Custom allocation rules for delinquent cases",
+        //   component: Define_Allocation_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-2",
+        //   name: "Allocation of Delinquent Cases_Define Allocation contract",
+        //   description: "Custom allocation rules for delinquent cases",
+        //   component: Define_Allocation_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-3",
+        //   name: "Allocation of Delinquent Cases_Manual Allocation",
+        //   description: "Manual assignment of delinquent accounts",
+        //   component: Manual_Allocation_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-3",
+        //   name: "Allocation of Delinquent Cases_Manual Allocation",
+        //   description: "Manual assignment of delinquent accounts",
+        //   component: Manual_Allocation_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-4",
+        //   name: "Allocation of Delinquent Cases_Manual Reallocation",
+        //   description: "Flexible reallocation of delinquent cases",
+        //   component: Manual_Reallocation_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-4",
+        //   name: "Allocation of Delinquent Cases_Manual Reallocation",
+        //   description: "Flexible reallocation of delinquent cases",
+        //   component: Manual_Reallocation_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-5",
+        //   name: "Beginning of Day Process",
+        //   description: "Automated daily collections initialization",
+        //   component: Beginning_of_Day_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-5",
+        //   name: "Beginning of Day Process",
+        //   description: "Automated daily collections initialization",
+        //   component: Beginning_of_Day_Use_Case_Business,
+        //   type: "business",
+        // },
         {
           id: "collections-6",
           name: "Classification of Delinquent Cases - Define Queue",
@@ -559,13 +559,13 @@ const UseCases: React.FC = () => {
           component: WF_NPA_Grading_Use_Case,
           type: "system",
         },
-        {
-          id: "fms-5",
-          name: "WF_ NPA Provisioning",
-          description: "Automated NPA provisioning workflow",
-          component: WF_NPA_Provisioning_Use_Case,
-          type: "system",
-        },
+        // {
+        //   id: "fms-5",
+        //   name: "WF_ NPA Provisioning",
+        //   description: "Automated NPA provisioning workflow",
+        //   component: WF_NPA_Provisioning_Use_Case,
+        //   type: "system",
+        // },
         {
           id: "fms-6",
           name: "WF_ Settlements - Knock Off",

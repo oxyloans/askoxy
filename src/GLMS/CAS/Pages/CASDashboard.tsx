@@ -1,5 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
 import {
   Users,
   FileText,
@@ -100,6 +101,8 @@ const useCases = [
 ];
 
 const CASDashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold text-center mb-8">
@@ -108,10 +111,9 @@ const CASDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {useCases.map((useCase) => (
-          <Link
+          <div
             key={useCase.path}
-            to={`/cas/${useCase.path}`}
-            className="block bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg hover:border-indigo-400 transition duration-200 ease-in-out"
+            className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg hover:border-indigo-400 transition duration-200 ease-in-out"
           >
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-full bg-gray-100">{useCase.icon}</div>
@@ -124,11 +126,27 @@ const CASDashboard: React.FC = () => {
                 </p>
               </div>
             </div>
-          </Link>
+            <div className="mt-4 flex justify-between gap-2">
+              <button
+                className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                onClick={() => navigate(`/cas/${useCase.path}/business`)}
+              >
+                Business Use Case
+              </button>
+              <button
+                className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                onClick={() => navigate(`/cas/${useCase.path}/system`)}
+              >
+                System Use Case
+              </button>
+            </div>
+          </div>
         ))}
       </div>
     </div>
   );
 };
+
+
 
 export default CASDashboard;

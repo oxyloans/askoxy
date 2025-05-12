@@ -140,6 +140,8 @@ import CASDashboard from "./GLMS/CAS/Pages/CASDashboard";
 import CASRouteRenderer from "./GLMS/CAS/Pages/CASRouteRenderer";
 import CMSRouteRenderer from "./GLMS/CMS/Pages/CMSRoutes";
 import CMSDashboard from "./GLMS/CMS/Pages/CMSDashboard";
+import FMSDashboard from "./GLMS/FMS/Pages/FMSDashboard";
+import FMSRouteRenderer from "./GLMS/FMS/Pages/FMSRoutes";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -200,9 +202,20 @@ const App: React.FC = () => {
             <Route path="/userregister" element={<UserRegister />} />
             <Route path="/glmshome" element={<UseCases />} />
             <Route path="/cas" element={<CASDashboard />} />
-            <Route path="/cas/:useCaseId" element={<CASRouteRenderer />} />
+            <Route
+              path="/cas/:useCaseId/:type"
+              element={<CASRouteRenderer />}
+            />
             <Route path="/cms" element={<CMSDashboard />} />
-            <Route path="/cms/:useCaseId" element={<CMSRouteRenderer />} />
+            <Route
+              path="/cms/:useCaseId/:type"
+              element={<CMSRouteRenderer />}
+            />
+            <Route path="/fms" element={<FMSDashboard />} />
+            <Route
+              path="/fms/:useCaseId/:type"
+              element={<FMSRouteRenderer />}
+            />
             <Route path="/glms" element={<LandingPage />} />
             <Route path="/gstonrice" element={<GSTRiceFAQ />} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}

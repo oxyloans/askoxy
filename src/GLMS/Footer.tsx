@@ -10,36 +10,56 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-gray-900 text-white pt-12 pb-6">
+    <footer className="bg-gray-900 text-white pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top section */}
+        {/* Top Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Company Info */}
           <div>
-            <h4 className="text-2xl font-bold mb-4">Global Loans Management Systems</h4>
-            <p className="text-gray-400 mb-6">
+            <h4 className="text-2xl font-bold mb-4">
+              Global Loans Management Systems
+            </h4>
+            <p className="text-gray-400 mb-6 text-sm leading-relaxed">
               Modernizing loan management systems globally through domain
               expertise and innovative technology solutions.
             </p>
             <div className="flex gap-4">
-              {[Facebook, Twitter, Linkedin, Instagram].map((Icon, idx) => (
-                <a
-                  key={idx}
-                  href="#"
-                  aria-label={`Visit our ${Icon.name}`}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Icon size={20} />
-                </a>
-              ))}
+              <a
+                href="#"
+                aria-label="Facebook"
+                className="text-blue-600 hover:text-white transition-colors"
+              >
+                <Facebook size={20} />
+              </a>
+              <a
+                href="#"
+                aria-label="Twitter"
+                className="text-sky-400 hover:text-white transition-colors"
+              >
+                <Twitter size={20} />
+              </a>
+              <a
+                href="#"
+                aria-label="LinkedIn"
+                className="text-blue-500 hover:text-white transition-colors"
+              >
+                <Linkedin size={20} />
+              </a>
+              <a
+                href="#"
+                aria-label="Instagram"
+                className="text-pink-500 hover:text-white transition-colors"
+              >
+                <Instagram size={20} />
+              </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-3">
-              {["Home", "Videos", "Domains", "Contact"].map((text) => (
+            <ul className="space-y-3 text-sm">
+              {["Home", "Videos", "Use Cases", "Contact"].map((text) => (
                 <li key={text}>
                   <a
                     href={`#${text.toLowerCase()}`}
@@ -55,7 +75,7 @@ const Footer = () => {
           {/* Services */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Our Services</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-sm">
               {[
                 "Loan Origination",
                 "Collections Management",
@@ -63,12 +83,9 @@ const Footer = () => {
                 "Customer Acquisition",
               ].map((service) => (
                 <li key={service}>
-                  <a
-                    // href="#"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
+                  <span className="text-gray-400 hover:text-white cursor-default transition-colors">
                     {service}
-                  </a>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -77,8 +94,14 @@ const Footer = () => {
           {/* Contact Info */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Contact</h3>
-            <address className="not-italic text-gray-400 space-y-3 text-sm">
-              <p>Ground Floor, Indu Fortune Fields,KPHB Colony, Hyderabad, Telangana - 500085</p>
+            <address className="not-italic text-gray-400 space-y-3 text-sm leading-relaxed">
+              <p>
+                Ground Floor, Indu Fortune Fields,
+                <br />
+                KPHB Colony, Hyderabad,
+                <br />
+                Telangana - 500085
+              </p>
               <p>
                 <a
                   href="mailto:support@globalloans.com"
@@ -104,7 +127,7 @@ const Footer = () => {
 
         {/* Bottom Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-          <p>
+          <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} Global Loans Management Systems.
             All rights reserved.
           </p>

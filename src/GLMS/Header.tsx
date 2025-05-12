@@ -1,34 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogostatic.png";
 
 interface HeaderProps {
-  onNavClick?: (id: string) => void;
+  // Modified to match the more specific type in LandingPage
+  onNavClick: (id: "home" | "videos" | "usecases" | "contact") => void;
+  activeLink: string;
 }
 
-function Header({ onNavClick }: HeaderProps) {
+function Header({ onNavClick, activeLink }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeLink, setActiveLink] = useState("home");
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
-
-      // Find which section is currently in view
-      const sections = ["home", "videos", "domains", "contact"];
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          // If the section is in the viewport (with some offset for the header)
-          if (rect.top <= 100 && rect.bottom >= 100) {
-            setActiveLink(section);
-            break;
-          }
-        }
-      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -51,26 +38,21 @@ function Header({ onNavClick }: HeaderProps) {
     }
   }, [isMenuOpen]);
 
-  const navLinks = [
+  const navLinks: Array<{
+    id: "home" | "videos" | "usecases" | "contact";
+    label: string;
+  }> = [
     { id: "home", label: "Home" },
-    { id: "domains", label: "Domains" },
     { id: "videos", label: "Videos" },
+    { id: "usecases", label: "Use Cases" },
     { id: "contact", label: "Contact" },
   ];
 
-  const handleNavClick = (id: string): void => {
-    setActiveLink(id);
-
-    // Scroll to the section
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-
-    if (onNavClick) {
-      onNavClick(id);
-    }
-
+  const handleNavClick = (
+    id: "home" | "videos" | "usecases" | "contact"
+  ): void => {
+    // Now this only calls the parent function
+    onNavClick(id);
     setIsMenuOpen(false);
   };
 
@@ -80,7 +62,7 @@ function Header({ onNavClick }: HeaderProps) {
     navigate("/whatsappregister");
   };
 
-  const handledLogo = () => {
+  const handleLogo = () => {
     navigate("/");
   };
 
@@ -97,7 +79,7 @@ function Header({ onNavClick }: HeaderProps) {
           {/* Left: Logo */}
           <div
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={handledLogo}
+            onClick={handleLogo}
           >
             <img
               src={Askoxy}

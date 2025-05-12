@@ -4,43 +4,49 @@ import { PlayCircle, X } from "lucide-react";
 const videos = [
   {
     id: 1,
-    title: "Loan Origination Process",
-    description: "Streamline your loan application and approval workflow",
+    title: "AI x Banking: 52 Real Use Cases in 60 Bite-Sized Videos",
+    description:
+      "A free video series built on 25 years of banking software experience, exploring the intersection of AI, GenAI, and banking through 52 real-world use cases",
     thumbnail: "https://img.youtube.com/vi/Ja0xLoXB9wQ/hqdefault.jpg",
     embedUrl: "https://www.youtube.com/embed/Ja0xLoXB9wQ",
   },
   {
     id: 2,
-    title: "Risk Assessment Tools",
-    description: "Advanced analytics for better decision making",
+    title: "Banking Use Cases with AI Prompt Design",
+    description:
+      "Explore real banking scenarios with user actions, system responses, activity diagrams, edge cases, and AI prompt design for automation.",
     thumbnail: "https://img.youtube.com/vi/razHRDyGvVs/hqdefault.jpg",
     embedUrl: "https://www.youtube.com/embed/razHRDyGvVs",
   },
   {
     id: 3,
-    title: "Customer Management Features",
-    description: "Build better relationships with borrowers",
+    title: "Unlock Career Opportunities in Loan Management Software",
+    description:
+      "100,000+ banks rely on loan management software. Learn skills in coding, banking domain, and prompt engineering for high-paying IT jobs.",
     thumbnail: "https://img.youtube.com/vi/YcutEdAwZ5k/hqdefault.jpg",
     embedUrl: "https://www.youtube.com/embed/YcutEdAwZ5k",
   },
   {
     id: 4,
-    title: "Reporting & Analytics",
-    description: "Gain insights from comprehensive reporting tools",
+    title: "AI x Banking: 52 Real Use Cases in 60 Bite-Sized Videos",
+    description:
+      "A free video series built on 25 years of banking software experience, exploring the intersection of AI, GenAI, and banking through 52 real-world use cases",
     thumbnail: "https://img.youtube.com/vi/pB8Ny9Nlw3w/hqdefault.jpg",
     embedUrl: "https://www.youtube.com/embed/pB8Ny9Nlw3w",
   },
   {
     id: 5,
-    title: "Integration Capabilities",
-    description: "Seamlessly connect with your existing systems",
+    title: "Banking Use Cases with AI Prompt Design",
+    description:
+      "Explore real banking scenarios with user actions, system responses, activity diagrams, edge cases, and AI prompt design for automation.",
     thumbnail: "https://img.youtube.com/vi/V7bgksFxk10/hqdefault.jpg",
     embedUrl: "https://www.youtube.com/embed/V7bgksFxk10",
   },
   {
     id: 6,
-    title: "Advanced Security Measures",
-    description: "Ensure your data is protected at all times",
+    title: "Unlock Career Opportunities in Loan Management Software",
+    description:
+      "100,000+ banks rely on loan management software. Learn skills in coding, banking domain, and prompt engineering for high-paying IT jobs.",
     thumbnail: "https://img.youtube.com/vi/Am2yg9Ala7w/hqdefault.jpg",
     embedUrl: "https://www.youtube.com/embed/Am2yg9Ala7w",
   },
@@ -74,13 +80,13 @@ const VideoSection = () => {
             <div
               key={video.id}
               onClick={() => setModalVideo(video.embedUrl)}
-              className="bg-white rounded-xl shadow hover:shadow-xl transition-all duration-300 cursor-pointer group"
+              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group"
             >
-              <div className="relative aspect-video">
+              <div className="relative aspect-video overflow-hidden rounded-t-xl">
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="absolute inset-0 w-full h-full object-cover rounded-t-xl"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                   <PlayCircle className="text-white w-12 h-12" />

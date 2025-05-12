@@ -4,19 +4,26 @@ import { useParams } from "react-router-dom";
 import { useCMSRoutes } from "../Routes/useCmsRoutes";
 
 const CMSRouteRenderer: React.FC = () => {
-  const { useCaseId } = useParams<{ useCaseId: string }>();
+  const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
   const useCase = useCMSRoutes[useCaseId || ""];
 
-  if (!useCase) {
+  if (!useCase || (type !== "business" && type !== "system")) {
     return (
-      <div className="text-red-600 text-center mt-8">Invalid use case</div>
+      <div className="text-red-600 text-center mt-8">
+        Invalid use case or type
+      </div>
     );
   }
 
+  const SelectedComponent = useCase[type];
+
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold text-blue-700 mb-4">{useCase.title}</h2>
-      {useCase.component}
+      <h2 className="text-2xl font-bold text-blue-700 mb-4">
+        {useCase.title} -{" "}
+        {type === "business" ? "Business Use Case" : "System Use Case"}
+      </h2>
+      {SelectedComponent}
     </div>
   );
 };

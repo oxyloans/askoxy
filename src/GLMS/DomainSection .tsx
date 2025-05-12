@@ -72,7 +72,7 @@ const domains = [
   {
     id: "fms",
     title: "Financial Management System",
-    link: "/glmshome",
+    link: "/fms",
     description:
       "End-to-end financial tracking, processing, and reporting for loan servicing.",
     icon: <DollarSign size={40} className="text-blue-600" />,
@@ -103,7 +103,7 @@ const domains = [
 
 const DomainSection = () => {
   return (
-    <section className="py-10 sm:py-12 md:py-16 lg:py-24 bg-gray-100/60 backdrop-blur-sm">
+    <section className="py-10 sm:py-12 md:py-16 lg:py-24 bg-gradient-to-br from-blue-50 to-green-50 backdrop-blur-lg">
       <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
@@ -115,12 +115,12 @@ const DomainSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 sm:gap-8">
           {domains.map((domain) => (
             <Link
               key={domain.id}
               to={domain.link} // Dynamically set the link based on the domain
-              className="block bg-white rounded-lg shadow hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] p-5 sm:p-6 h-full"
+              className="block bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.03] p-5 sm:p-6 h-full"
             >
               <div className="flex flex-col justify-between h-full">
                 <div>
@@ -128,11 +128,11 @@ const DomainSection = () => {
                     <div className="bg-blue-50 rounded-full p-3 mr-3">
                       {domain.icon}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                       {domain.title}
                     </h3>
                   </div>
-                  <p className="text-gray-600 text-sm mb-3">
+                  <p className="text-gray-600 text-sm sm:text-base mb-3">
                     {domain.description}
                   </p>
 
@@ -162,15 +162,15 @@ const DomainSection = () => {
           ))}
         </div>
 
-        <div className="mt-10 text-center">
+        {/* <div className="mt-10 text-center">
           <Link
             to="/glmshome"
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-5 rounded-full font-medium inline-flex items-center text-sm sm:text-base transition-all duration-300"
+            className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-full font-medium inline-flex items-center text-sm sm:text-base transition-all duration-300"
           >
             View All Solutions
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
-        </div>
+        </div> */}
       </div>
     </section>
   );
