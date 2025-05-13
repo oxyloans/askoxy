@@ -472,11 +472,7 @@ const PlanOfTheDay: React.FC = () => {
               </Tooltip>
             </div>
           </div>
-          <Card className="mx-2 mt-0 mb-0 bg-orange-50 border-orange-200 shadow-sm rounded-lg p-2 text-sm sm:text-base">
-            <Text strong>Note: </Text>
-            All employees must update their mobile number in the left panel.
-            Click, enter, and save. Mandatory.
-          </Card>
+          
           
           <div className="p-5 md:p-6 lg:p-8">
             {fetchingStatus

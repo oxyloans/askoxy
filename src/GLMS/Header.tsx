@@ -42,7 +42,7 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
     id: "home" | "videos" | "usecases" | "contact";
     label: string;
   }> = [
-    { id: "home", label: "Home" },
+    { id: "home", label: "Glms Home" },
     { id: "videos", label: "Videos" },
     { id: "usecases", label: "Use Cases" },
     { id: "contact", label: "Contact" },
@@ -61,6 +61,10 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
   const handleSignin = () => {
     navigate("/whatsappregister");
   };
+  const handleJobStreet = () => {
+    window.open("/jobstreet", "_blank");
+  };
+  
 
   const handleLogo = () => {
     navigate("/");
@@ -112,10 +116,19 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
           </nav>
 
           {/* Right: Sign In */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
+            {/* Job Street Button */}
+            <button
+              onClick={handleJobStreet}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
+            >
+              Job Street
+            </button>
+
+            {/* Sign In Button */}
             <button
               onClick={handleSignin}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
             >
               Sign In
             </button>
@@ -155,10 +168,20 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
                   </button>
                 </li>
               ))}
-              <li className="px-4 pt-4 pb-2">
+              {/* Job Street Button */}
+              <li className="px-4 pt-4">
+                <button
+                  onClick={handleJobStreet}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-sm flex items-center justify-center"
+                >
+                  Job Street
+                </button>
+              </li>
+              {/* Sign In Button */}
+              <li className="px-4 pt-2 pb-2">
                 <button
                   onClick={handleSignin}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-sm flex items-center justify-center"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-sm flex items-center justify-center"
                 >
                   Sign In
                 </button>

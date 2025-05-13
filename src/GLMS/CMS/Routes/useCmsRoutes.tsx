@@ -9,72 +9,87 @@ import ManualReallocationUseCase from "../Components/System/Manual_Reallocation_
 import ManualReallocationUseCaseBusiness from "../Components/Business/Manual_Reallocation_Use_Case_Business";
 import BeginningOfDayUseCase from "../Components/System/Beginning_of_Day_Use_Case";
 import BeginningOfDayUseCaseBusiness from "../Components/Business/Beginning_of_Day_Use_Case_Business";
-const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
-  <div className="p-4 bg-gray-100 text-center">{title} Component</div>
-);
+import ContactRecordingBusiness from "../Components/Business/Contact_Recording_Business";
+import ContactRecordingUseCase from "../Components/System/Contact_Recording_Use_Case";
+import DefineQueueUseCase from "../Components/System/Define_Queue_Use_CaseProps";
+import DefineQueueUseCaseBusiness from "../Components/Business/Define_Queue_Use_Case_Business";
+import LegalCollectionsUseCase from "../Components/System/Legal_Collections_Use_Case";
+import LegalCollectionsUseCaseBusiness from "../Components/Business/Legal_Collections_Use_Case_Business";
+import PrioritizeQueueUseCase from "../Components/System/Prioritize_Queue_Use_Case";
+import PrioritizeQueueUseCaseBusiness from "../Components/Business/Prioritize_Queue_Use_Case_Business";
+import QueueCommunicationMappingUseCaseBusiness from "../Components/Business/Queue_Communication_Mapping_Use_Case_Business";
+import QueueCommunicationMappingUseCase from "../Components/System/Queue_Communication_Mapping_Use_Case";
+import QueueCuringUseCase from "../Components/System/Queue_Curing_Use_CaseProps";
+import QueueCuringUseCaseBusiness from "../Components/Business/Queue_Curing_Use_Case_Business";
+import WorkPlanUseCaseBusiness from "../Components/Business/WorkPlan_Use_Case_Business";
+import WorkPlanUseCase from "../Components/System/Work_Plan_Use_Case";
+
+// const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
+//   <div className="p-4 bg-gray-100 text-center">{title} Component</div>
+// );
 
 export const useCMSRoutes: Record<
   string,
   { title: string; business: JSX.Element; system: JSX.Element }
 > = {
-  "customer-id-creation": {
+  "allocation-hold": {
     title: "Allocation of Delinquent Cases_Allocation Hold",
     business: <AllocationOfDelinquentCasesAllocationHoldBusiness />,
     system: <AllocationOfDelinquentCasesAllocationHold />,
   },
-  "co-applicant-linking": {
+  "define-allocation-contract": {
     title: "Allocation of Delinquent Cases_Define Allocation contract",
     business: <DefineAllocationUseCaseBusiness />,
     system: <DefineAllocationUseCase />,
   },
-  "customer-id-loan-link": {
+  "manual-allocation": {
     title: "Allocation of Delinquent Cases_Manual Allocation",
     business: <ManualAllocationUseCaseBusiness />,
     system: <ManualAllocationUseCase />,
   },
-  "loan-appraisal": {
+  "manual-reallocation": {
     title: "Allocation of Delinquent Cases_Manual Reallocation",
     business: <ManualReallocationUseCaseBusiness />,
     system: <ManualReallocationUseCase />,
   },
-  "loan-assessment": {
+  "bod-process": {
     title: "Beginning of Day Process",
     business: <BeginningOfDayUseCaseBusiness />,
     system: <BeginningOfDayUseCase />,
   },
-  "recommendation-workflow": {
+  "define-queue": {
     title: "Classification of Delinquent Cases - Define Queue",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <DefineQueueUseCaseBusiness />,
+    system: <DefineQueueUseCase />,
   },
-  "risk-analysis-upload": {
+  "contact-recording": {
     title: "Contact Recording",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <ContactRecordingBusiness />,
+    system: <ContactRecordingUseCase />,
   },
-  "sanction-disbursement": {
+  "legal-collections": {
     title: "Legal Collections Workflow",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <LegalCollectionsUseCaseBusiness />,
+    system: <LegalCollectionsUseCase />,
   },
-  "loan-repayment-schedule": {
+  "prioritize-queue": {
     title: "Prioritizing a Queue",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <PrioritizeQueueUseCaseBusiness />,
+    system: <PrioritizeQueueUseCase />,
   },
-  "terms-conditions-workflow": {
+  "communication-mapping": {
     title: "Queue Communication Mapping",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <QueueCommunicationMappingUseCaseBusiness />,
+    system: <QueueCommunicationMappingUseCase />,
   },
-  "asset-details-capture": {
+  "queue-curing": {
     title: "Queue Curing",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <QueueCuringUseCaseBusiness />,
+    system: <QueueCuringUseCase />,
   },
-  "limit-check-profile-update": {
+  "work-plan": {
     title: "Work Plan",
-    business: <DummyComponent title="Business View of Loan Linking" />,
-    system: <DummyComponent title="System View of Loan Linking" />,
+    business: <WorkPlanUseCaseBusiness />,
+    system: <WorkPlanUseCase />,
   },
 };

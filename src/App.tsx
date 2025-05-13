@@ -142,6 +142,7 @@ import CMSRouteRenderer from "./GLMS/CMS/Pages/CMSRoutes";
 import CMSDashboard from "./GLMS/CMS/Pages/CMSDashboard";
 import FMSDashboard from "./GLMS/FMS/Pages/FMSDashboard";
 import FMSRouteRenderer from "./GLMS/FMS/Pages/FMSRoutes";
+import JobStreet from "./GLMS/JobStreet/JobStreet";
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -200,7 +201,10 @@ const App: React.FC = () => {
               element={<MobileNumberUpdate />}
             />
             <Route path="/userregister" element={<UserRegister />} />
-            <Route path="/glmshome" element={<UseCases />} />
+
+            {/* <Route path="/glmshome" element={<UseCases />} /> */}
+            <Route path="/jobstreet" element={<JobStreet />} />
+            <Route path="/loanmanagement" element={<LoanManagementLandingPage />} />
             <Route path="/cas" element={<CASDashboard />} />
             <Route
               path="/cas/:useCaseId/:type"

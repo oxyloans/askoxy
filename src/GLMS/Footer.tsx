@@ -25,7 +25,7 @@ const Footer = () => {
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://www.facebook.com/ASKOXYAI"
                 aria-label="Facebook"
                 className="text-blue-600 hover:text-white transition-colors"
               >
@@ -39,14 +39,14 @@ const Footer = () => {
                 <Twitter size={20} />
               </a>
               <a
-                href="#"
+                href="https://www.linkedin.com/company/82577404/admin/dashboard/"
                 aria-label="LinkedIn"
                 className="text-blue-500 hover:text-white transition-colors"
               >
                 <Linkedin size={20} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/askoxy.ai_oxyrice/"
                 aria-label="Instagram"
                 className="text-pink-500 hover:text-white transition-colors"
               >
@@ -72,22 +72,50 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Services with Links */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Our Services</h3>
             <ul className="space-y-3 text-sm">
-              {[
-                "Loan Origination",
-                "Collections Management",
-                "Financial Systems",
-                "Customer Acquisition",
-              ].map((service) => (
-                <li key={service}>
-                  <span className="text-gray-400 hover:text-white cursor-default transition-colors">
-                    {service}
-                  </span>
-                </li>
-              ))}
+              <li>
+                <a
+                  href="https://oxyloans.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  OXYLOANS
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.oxybricks.world/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  OXYBRICKS
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.askoxy.ai/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  ASK OXY.AI
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.askoxy.ai/glms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  GLMS
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -96,7 +124,7 @@ const Footer = () => {
             <h3 className="text-xl font-semibold mb-4">Contact</h3>
             <address className="not-italic text-gray-400 space-y-3 text-sm leading-relaxed">
               <p>
-                Ground Floor, Indu Fortune Fields,
+                CC-02, Ground Floor, Indu Fortune Fields,
                 <br />
                 KPHB Colony, Hyderabad,
                 <br />
@@ -112,10 +140,10 @@ const Footer = () => {
               </p>
               <p>
                 <a
-                  href="tel:+917093485208"
+                  href="tel:+916300873713"
                   className="hover:text-white transition-colors"
                 >
-                  +91 70934 85208
+                  +91 6300873713
                 </a>
               </p>
             </address>

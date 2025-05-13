@@ -24,9 +24,11 @@ import WFForCheckLimit from "../Components/System/WF_for_Check_Limit";
 import WFForCheckLimitBusiness from "../Components/Business/WF_for_Check_Limit_Business";
 import WFEvaluatingTheNetworthOfTheParties from "../Components/System/WF_for_Evauating_the_Networth_of_the_Parties";
 import WFEvaluatingTheNetworthOfThePartiesBusiness from "../Components/Business/WF_for_Evauating_the_Networth_of_the_Parties_Business";
-const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
-  <div className="p-4 bg-gray-100 text-center">{title} Component</div>
-);
+import CustomerIdCreation from "../Components/System/CustomerIdCreation";
+import CustomerIdCreation1 from "../Components/Business/CustomerIdCreationBusiness";
+// const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
+//   <div className="p-4 bg-gray-100 text-center">{title} Component</div>
+// );
 
 export const useCaseRoutes: Record<
   string,
@@ -34,8 +36,8 @@ export const useCaseRoutes: Record<
 > = {
   "customer-id-creation": {
     title: "Customer ID Creation",
-    business: <DummyComponent title="Business View of Customer ID Creation" />,
-    system: <CustomerCreationId />,
+    business: <CustomerIdCreation1 />,
+    system: <CustomerIdCreation />,
   },
   "co-applicant-linking": {
     title: "Co-applicant & Guarantor Linking",
@@ -97,5 +99,4 @@ export const useCaseRoutes: Record<
     business: <WFEvaluatingTheNetworthOfThePartiesBusiness />,
     system: <WFEvaluatingTheNetworthOfTheParties />,
   },
-  
 };

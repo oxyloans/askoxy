@@ -1,6 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   FileText,
@@ -13,7 +12,7 @@ import {
   Calendar,
   AlertTriangle,
   Headphones,
-  XCircle
+  XCircle,
 } from "lucide-react";
 
 const useCases = [
@@ -105,18 +104,20 @@ const CASDashboard: React.FC = () => {
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-10 text-gray-800">
         Customer Acquisition System - Use Cases
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
         {useCases.map((useCase) => (
           <div
             key={useCase.path}
-            className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg hover:border-indigo-400 transition duration-200 ease-in-out"
+            className="bg-white border border-gray-200 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-200 ease-in-out"
           >
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-full bg-gray-100">{useCase.icon}</div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="p-3 rounded-full bg-gray-100 flex items-center justify-center">
+                {useCase.icon}
+              </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">
                   {useCase.title}
@@ -126,15 +127,16 @@ const CASDashboard: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex justify-between gap-2">
+
+            <div className="mt-5 flex flex-col sm:flex-row gap-2">
               <button
-                className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                className="text-sm px-3 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
                 onClick={() => navigate(`/cas/${useCase.path}/business`)}
               >
                 Business Use Case
               </button>
               <button
-                className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                className="text-sm px-3 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
                 onClick={() => navigate(`/cas/${useCase.path}/system`)}
               >
                 System Use Case
@@ -146,7 +148,5 @@ const CASDashboard: React.FC = () => {
     </div>
   );
 };
-
-
 
 export default CASDashboard;

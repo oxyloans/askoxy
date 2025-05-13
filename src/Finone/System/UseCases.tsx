@@ -12,7 +12,7 @@ import {
   X,
   Menu,
 } from "lucide-react";
-import CustomerIdCreation from "./CustomerIdCreation";
+// import CustomerIdCreation from "./CustomerIdCreation";
 // import LinkingOfCoApplicantGuarantor from "./LinkingOfCoApplicantGuarantor";
 // import LinkingOfCustomerIdToLoan from "./LinkingOfCustomerIdToLoan";
 // import WFLoanOrganizationSystemAppraisal from "./WFLoanOrganizationSystemAppraisal";
@@ -26,45 +26,45 @@ import CustomerIdCreation from "./CustomerIdCreation";
 // import WF_for_Check_Limit from "./WF_for_Check_Limit";
 // import WF_for_Evauating_the_Networth_of_the_Parties from "./WF_for_Evauating_the_Networth_of_the_Parties";
 // import Allocation_of_Delinquent_Cases_Allocation_Hold from "./Allocation_of_Delinquent_Cases_Allocation_Hold";
-import Asset_detials_Use_Case from "./Asset_detials_Use_Case";
+// import Asset_detials_Use_Case from "./Asset_detials_Use_Case";
 // import Define_Allocation_Use_Case from "./Define_Allocation_Use_Case";
 // import Manual_Allocation_Use_Case from "./Manual_Allocation_Use_Case";
 // import Manual_Reallocation_Use_Case from "./Manual_Reallocation_Use_Case";
 // import Beginning_of_Day_Use_Case from "./Beginning_of_Day_Use_Case";
-import Define_Queue_Use_Case from "./Define_Queue_Use_CaseProps";
-import Contact_Recording from "./Contact_Recording_Use_Case";
-import Legal_Collections_Use_Case from "./Legal_Collections_Use_Case";
-import Prioritize_Queue_Use_Case from "./Prioritize_Queue_Use_Case";
-import Queue_Communication_Mapping_Use_Case from "./Queue_Communication_Mapping_Use_Case";
-import Queue_Curing_Use_Case from "./Queue_Curing_Use_CaseProps";
-import WorkPlan_Use_Case from "./Work_Plan_Use_Case";
-import PDC_Printing_Use_Case from "./PDC_Printing_Use_Case";
-import WF_Installment_Prepayment_Use_Case from "./WF_Installment_Prepayment_Use_Case";
-import WF_NPA_Grading_Use_Case from "./WF_NPA_Grading_Use_Case";
-// import WF_NPA_Provisioning_Use_Case from "./WF_NPA_Provisioning_Use_Case";
-import WF_Settlements_Knock_Off_Use_Case from "./WF_Settlements_Knock_Off_Use_Case";
-import WF_Settlements_Cheque_Processing_Use_Case from "./WF_Settlements_Cheque_Processing_Use_Case";
-import WF_Settlements_Manual_Advice_Use_Case from "./WF_Settlements_Manual_Advice_Use_Case";
-import WF_Termination_Foreclosure_Closure_Use_Case from "./WF_Termination_Foreclosure_Closure_Use_Case";
-import WF_FMS_Finance_Viewer_Use_Case from "./WF_FMS_Finance_Viewer_Use_Case";
-import WF_FMS_Floating_Review_Process_Use_Case from "./WF_FMS_Floating_Review_Process_Use_Case";
-import WF_FMS_Settlements_Receipts_Use_Case from "./WF_FMS_Settlements_Receipts_Use_Case";
-import WF_FMS_Settlements_Payments_Use_Case from "./WF_FMS_Settlements_Payments_Use_Case";
-import WF_FMS_Settlements_Waive_Off_Use_Case from "./WF_FMS_Settlements_Waive_Off_Use_Case";
-import WF_FMS_EOD_BOD_Use_Case from "./WF_FMS_EOD_BOD_Use_Case";
-import WF_Closure_View_Account_Status_Use_Case from "./WF_Closure_View_Account_Status_Use_Case";
-import WF_Document_Master_Use_Case from "./WF_Document_Master_Use_Case";
-import System_Use_Case_Closure_Account from "./System_Use_Case_Closure_Account";
-import WF_Finance_Rescheduling_Bulk_Prepayment_Use_Case from "./WF_Finance_Rescheduling_Bulk_Prepayment_Use_Case";
-import WF_Finance_Rescheduling_Due_Date_Change_Use_Case from "./WF_Finance_Rescheduling_Due_Date_Change_Use_Case";
-import WF_Finance_Rescheduling_Profit_Rate_Change_Use_Case from "./WF_Finance_Rescheduling_Profit_Rate_Change_Use_Case";
-import WF_Finance_Rescheduling_Tenure_Change_Use_Case from "./WF_Finance_Rescheduling_Tenure_Change_Use_Case";
-import WF_Post_Disbursal_Edit_Use_Case_Updated from "./WF_Post_Disbursal_Edit_Use_Case_Updated";
-import WF_Repayment_Deferral_Constitution_Wise_Use_Case from "./WF_Repayment_Deferral_Constitution_Wise_Use_Case";
-import WF_Repayment_Deferral_Finance_Wise_Use_Case from "./WF_Repayment_Deferral_Finance_Wise_Use_Case";
-import WF_Repayment_Deferral_Portfolio_Wise_Use_Case from "./WF_Repayment_Deferral_Portfolio_Wise_Use_Case";
+// import Define_Queue_Use_Case from "./Define_Queue_Use_CaseProps";
+// import Contact_Recording from "./Contact_Recording_Use_Case";
+// import Legal_Collections_Use_Case from "./Legal_Collections_Use_Case";
+// import Prioritize_Queue_Use_Case from "./Prioritize_Queue_Use_Case";
+// import Queue_Communication_Mapping_Use_Case from "./Queue_Communication_Mapping_Use_Case";
+// import Queue_Curing_Use_Case from "./Queue_Curing_Use_CaseProps";
+// import WorkPlan_Use_Case from "./Work_Plan_Use_Case";
+// import PDC_Printing_Use_Case from "./PDC_Printing_Use_Case";
+// import WF_Installment_Prepayment_Use_Case from "./WF_Installment_Prepayment_Use_Case";
+// import WF_NPA_Grading_Use_Case from "./WF_NPA_Grading_Use_Case";
+// // import WF_NPA_Provisioning_Use_Case from "./WF_NPA_Provisioning_Use_Case";
+// import WF_Settlements_Knock_Off_Use_Case from "./WF_Settlements_Knock_Off_Use_Case";
+// import WF_Settlements_Cheque_Processing_Use_Case from "./WF_Settlements_Cheque_Processing_Use_Case";
+// import WF_Settlements_Manual_Advice_Use_Case from "./WF_Settlements_Manual_Advice_Use_Case";
+// import WF_Termination_Foreclosure_Closure_Use_Case from "./WF_Termination_Foreclosure_Closure_Use_Case";
+// import WF_FMS_Finance_Viewer_Use_Case from "./WF_FMS_Finance_Viewer_Use_Case";
+// import WF_FMS_Floating_Review_Process_Use_Case from "./WF_FMS_Floating_Review_Process_Use_Case";
+// import WF_FMS_Settlements_Receipts_Use_Case from "./WF_FMS_Settlements_Receipts_Use_Case";
+// import WF_FMS_Settlements_Payments_Use_Case from "./WF_FMS_Settlements_Payments_Use_Case";
+// import WF_FMS_Settlements_Waive_Off_Use_Case from "./WF_FMS_Settlements_Waive_Off_Use_Case";
+// import WF_FMS_EOD_BOD_Use_Case from "./WF_FMS_EOD_BOD_Use_Case";
+// import WF_Closure_View_Account_Status_Use_Case from "./WF_Closure_View_Account_Status_Use_Case";
+// import WF_Document_Master_Use_Case from "./WF_Document_Master_Use_Case";
+// import System_Use_Case_Closure_Account from "./System_Use_Case_Closure_Account";
+// import WF_Finance_Rescheduling_Bulk_Prepayment_Use_Case from "./WF_Finance_Rescheduling_Bulk_Prepayment_Use_Case";
+// import WF_Finance_Rescheduling_Due_Date_Change_Use_Case from "./WF_Finance_Rescheduling_Due_Date_Change_Use_Case";
+// import WF_Finance_Rescheduling_Profit_Rate_Change_Use_Case from "./WF_Finance_Rescheduling_Profit_Rate_Change_Use_Case";
+// import WF_Finance_Rescheduling_Tenure_Change_Use_Case from "./WF_Finance_Rescheduling_Tenure_Change_Use_Case";
+// import WF_Post_Disbursal_Edit_Use_Case_Updated from "./WF_Post_Disbursal_Edit_Use_Case_Updated";
+// import WF_Repayment_Deferral_Constitution_Wise_Use_Case from "./WF_Repayment_Deferral_Constitution_Wise_Use_Case";
+// import WF_Repayment_Deferral_Finance_Wise_Use_Case from "./WF_Repayment_Deferral_Finance_Wise_Use_Case";
+// import WF_Repayment_Deferral_Portfolio_Wise_Use_Case from "./WF_Repayment_Deferral_Portfolio_Wise_Use_Case";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
-import CustomerIdCreation1 from "../Busyness/CustomerIdCreationBusiness";
+// import CustomerIdCreation1 from "../Busyness/CustomerIdCreationBusiness";
 // import LinkingOfCoApplicantGuarantorBusiness from "../Busyness/LinkingOfCoApplicantGuarantorBusiness";
 // import LinkingOfCustomerIdToLoanBusiness from "../Busyness/LinkingOfCustomerIdToLoanBusiness";
 // import WFLoanOrganizationSystemAppraisalBusiness from "../Busyness/WFLoanOrganizationSystemAppraisalBusiness";
@@ -82,19 +82,19 @@ import CustomerIdCreation1 from "../Busyness/CustomerIdCreationBusiness";
 // import Manual_Allocation_Use_Case_Business from "../Busyness/Manual_Allocation_Use_Case_Business";
 // import Manual_Reallocation_Use_Case_Business from "../Busyness/Manual_Reallocation_Use_Case_Business";
 // import Beginning_of_Day_Use_Case_Business from "../Busyness/Beginning_of_Day_Use_Case_Business";
-import Define_Queue_Use_Case_Business from "../Busyness/Define_Queue_Use_Case_Business";
-import Contact_Recording_Business from "../Busyness/Contact_Recording_Business";
-import Legal_Collections_Use_Case_Business from "../Busyness/Legal_Collections_Use_Case_Business";
-import Prioritize_Queue_Use_Case_Business from "../Busyness/Prioritize_Queue_Use_Case_Business";
-import Queue_Communication_Mapping_Use_Case_Business from "../Busyness/Queue_Communication_Mapping_Use_Case_Business";
-import Queue_Curing_Use_Case_Business from "../Busyness/Queue_Curing_Use_Case_Business";
-import WorkPlan_Use_Case_Business from "../Busyness/WorkPlan_Use_Case_Business";
-import EodBodDisplay from "../Busyness/EodBodDisplay";
-import AccountClosureDisplay from "../Busyness/AccountClosureDisplay";
-import ViewAccountStatusDisplay from "../Busyness/ViewAccountStatusDisplay";
-import DocumentMasterDisplay from "../Busyness/DocumentMasterDisplay";
-import FinanceReschedulingDisplay from "../Busyness/FinanceReschedulingDisplay";
-import FinanceReschedulingDueDateDisplay from "../Busyness/FinanceReschedulingDueDateDisplay";
+// import Define_Queue_Use_Case_Business from "../Busyness/Define_Queue_Use_Case_Business";
+// import Contact_Recording_Business from "../Busyness/Contact_Recording_Business";
+// import Legal_Collections_Use_Case_Business from "../Busyness/Legal_Collections_Use_Case_Business";
+// import Prioritize_Queue_Use_Case_Business from "../Busyness/Prioritize_Queue_Use_Case_Business";
+// import Queue_Communication_Mapping_Use_Case_Business from "../Busyness/Queue_Communication_Mapping_Use_Case_Business";
+// import Queue_Curing_Use_Case_Business from "../Busyness/Queue_Curing_Use_Case_Business";
+// import WorkPlan_Use_Case_Business from "../Busyness/WorkPlan_Use_Case_Business";
+// import EodBodDisplay from "../Busyness/EodBodDisplay";
+// import AccountClosureDisplay from "../Busyness/AccountClosureDisplay";
+// import ViewAccountStatusDisplay from "../Busyness/ViewAccountStatusDisplay";
+// import DocumentMasterDisplay from "../Busyness/DocumentMasterDisplay";
+// import FinanceReschedulingDisplay from "../Busyness/FinanceReschedulingDisplay";
+// import FinanceReschedulingDueDateDisplay from "../Busyness/FinanceReschedulingDueDateDisplay";
 // import WorkPlan_Use_Case_Business from "../Busyness/Work_Plan_Use_Case_Business"; // Removed as the module does not exist
 
 // import CustomerIdCreation from "./Business/CustomerIdCreationBusiness"; // Removed as the module does not exist
@@ -160,22 +160,22 @@ const UseCases: React.FC = () => {
       name: "Customer Acquisition System",
       icon: <Users size={24} className="text-indigo-600" />,
       useCases: [
-        {
-          id: "cas-1",
-          name: "Customer ID Creation",
-          description:
-            "Streamlined digital onboarding with identity verification",
-          component: CustomerIdCreation,
-          type: "system",
-        },
-        {
-          id: "cas-1",
-          name: "Customer ID Creation",
-          description:
-            "Streamlined digital onboarding with identity verification",
-          component: CustomerIdCreation1,
-          type: "business",
-        },
+        // {
+        //   id: "cas-1",
+        //   name: "Customer ID Creation",
+        //   description:
+        //     "Streamlined digital onboarding with identity verification",
+        //   component: CustomerIdCreation,
+        //   type: "system",
+        // },
+        // {
+        //   id: "cas-1",
+        //   name: "Customer ID Creation",
+        //   description:
+        //     "Streamlined digital onboarding with identity verification",
+        //   component: CustomerIdCreation1,
+        //   type: "business",
+        // },
         // {
         //   id: "cas-2",
         //   name: "Linking of Co-applicant Guarantor",
@@ -426,104 +426,104 @@ const UseCases: React.FC = () => {
         //   component: Beginning_of_Day_Use_Case_Business,
         //   type: "business",
         // },
-        {
-          id: "collections-6",
-          name: "Classification of Delinquent Cases - Define Queue",
-          description: "Queue-based delinquent case organization",
-          component: Define_Queue_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-6",
-          name: "Classification of Delinquent Cases - Define Queue",
-          description: "Queue-based delinquent case organization",
-          component: Define_Queue_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-7",
-          name: "Contact Recording",
-          description: "Comprehensive contact history tracking",
-          component: Contact_Recording,
-          type: "system",
-        },
-        {
-          id: "collections-7",
-          name: "Contact Recording",
-          description: "Comprehensive contact history tracking",
-          component: Contact_Recording_Business,
-          type: "business",
-        },
-        {
-          id: "collections-8",
-          name: "Legal Collections Workflow",
-          description: "Structured legal collections process",
-          component: Legal_Collections_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-8",
-          name: "Legal Collections Workflow",
-          description: "Structured legal collections process",
-          component: Legal_Collections_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-9",
-          name: "Prioritizing a Queue",
-          description: "Intelligent queue prioritization system",
-          component: Prioritize_Queue_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-9",
-          name: "Prioritizing a Queue",
-          description: "Intelligent queue prioritization system",
-          component: Prioritize_Queue_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-10",
-          name: "Queue Communication Mapping",
-          description: "Automated communication channel mapping",
-          component: Queue_Communication_Mapping_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-10",
-          name: "Queue Communication Mapping",
-          description: "Automated communication channel mapping",
-          component: Queue_Communication_Mapping_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-11",
-          name: "Queue Curing",
-          description: "Efficient queue resolution process",
-          component: Queue_Curing_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-11",
-          name: "Queue Curing",
-          description: "Efficient queue resolution process",
-          component: Queue_Curing_Use_Case_Business,
-          type: "business",
-        },
-        {
-          id: "collections-12",
-          name: "Work Plan",
-          description: "Strategic collections work planning",
-          component: WorkPlan_Use_Case,
-          type: "system",
-        },
-        {
-          id: "collections-12",
-          name: "Work Plan",
-          description: "Strategic collections work planning",
-          component: WorkPlan_Use_Case_Business,
-          type: "business",
-        },
+        // {
+        //   id: "collections-6",
+        //   name: "Classification of Delinquent Cases - Define Queue",
+        //   description: "Queue-based delinquent case organization",
+        //   component: Define_Queue_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-6",
+        //   name: "Classification of Delinquent Cases - Define Queue",
+        //   description: "Queue-based delinquent case organization",
+        //   component: Define_Queue_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-7",
+        //   name: "Contact Recording",
+        //   description: "Comprehensive contact history tracking",
+        //   component: Contact_Recording,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-7",
+        //   name: "Contact Recording",
+        //   description: "Comprehensive contact history tracking",
+        //   component: Contact_Recording_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-8",
+        //   name: "Legal Collections Workflow",
+        //   description: "Structured legal collections process",
+        //   component: Legal_Collections_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-8",
+        //   name: "Legal Collections Workflow",
+        //   description: "Structured legal collections process",
+        //   component: Legal_Collections_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-9",
+        //   name: "Prioritizing a Queue",
+        //   description: "Intelligent queue prioritization system",
+        //   component: Prioritize_Queue_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-9",
+        //   name: "Prioritizing a Queue",
+        //   description: "Intelligent queue prioritization system",
+        //   component: Prioritize_Queue_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-10",
+        //   name: "Queue Communication Mapping",
+        //   description: "Automated communication channel mapping",
+        //   component: Queue_Communication_Mapping_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-10",
+        //   name: "Queue Communication Mapping",
+        //   description: "Automated communication channel mapping",
+        //   component: Queue_Communication_Mapping_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-11",
+        //   name: "Queue Curing",
+        //   description: "Efficient queue resolution process",
+        //   component: Queue_Curing_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-11",
+        //   name: "Queue Curing",
+        //   description: "Efficient queue resolution process",
+        //   component: Queue_Curing_Use_Case_Business,
+        //   type: "business",
+        // },
+        // {
+        //   id: "collections-12",
+        //   name: "Work Plan",
+        //   description: "Strategic collections work planning",
+        //   component: WorkPlan_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "collections-12",
+        //   name: "Work Plan",
+        //   description: "Strategic collections work planning",
+        //   component: WorkPlan_Use_Case_Business,
+        //   type: "business",
+        // },
       ],
     },
     {
@@ -531,34 +531,34 @@ const UseCases: React.FC = () => {
       name: "Financial Management System",
       icon: <BarChart size={24} className="text-indigo-600" />,
       useCases: [
-        {
-          id: "fms-1",
-          name: "Asset Details",
-          description: "Comprehensive asset management and tracking",
-          component: Asset_detials_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-2",
-          name: "PDC Printing",
-          description: "Automated post-dated cheque processing",
-          component: PDC_Printing_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-3",
-          name: "WF_ Installment Prepayment",
-          description: "Flexible installment prepayment handling",
-          component: WF_Installment_Prepayment_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-4",
-          name: "WF_ NPA Grading",
-          description: "Non-performing asset classification system",
-          component: WF_NPA_Grading_Use_Case,
-          type: "system",
-        },
+        // {
+        //   id: "fms-1",
+        //   name: "Asset Details",
+        //   description: "Comprehensive asset management and tracking",
+        //   component: Asset_detials_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-2",
+        //   name: "PDC Printing",
+        //   description: "Automated post-dated cheque processing",
+        //   component: PDC_Printing_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-3",
+        //   name: "WF_ Installment Prepayment",
+        //   description: "Flexible installment prepayment handling",
+        //   component: WF_Installment_Prepayment_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-4",
+        //   name: "WF_ NPA Grading",
+        //   description: "Non-performing asset classification system",
+        //   component: WF_NPA_Grading_Use_Case,
+        //   type: "system",
+        // },
         // {
         //   id: "fms-5",
         //   name: "WF_ NPA Provisioning",
@@ -566,197 +566,197 @@ const UseCases: React.FC = () => {
         //   component: WF_NPA_Provisioning_Use_Case,
         //   type: "system",
         // },
-        {
-          id: "fms-6",
-          name: "WF_ Settlements - Knock Off",
-          description: "Efficient settlement knock-off process",
-          component: WF_Settlements_Knock_Off_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-7",
-          name: "WF_ Settlements_Cheque(Receipt_Payment) Processing",
-          description: "Streamlined cheque processing workflow",
-          component: WF_Settlements_Cheque_Processing_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-8",
-          name: "WF_ Settlements_Manual Advise",
-          description: "Manual settlement advisory system",
-          component: WF_Settlements_Manual_Advice_Use_Case,
-          type: "system",
-        },
+        // {
+        //   id: "fms-6",
+        //   name: "WF_ Settlements - Knock Off",
+        //   description: "Efficient settlement knock-off process",
+        //   component: WF_Settlements_Knock_Off_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-7",
+        //   name: "WF_ Settlements_Cheque(Receipt_Payment) Processing",
+        //   description: "Streamlined cheque processing workflow",
+        //   component: WF_Settlements_Cheque_Processing_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-8",
+        //   name: "WF_ Settlements_Manual Advise",
+        //   description: "Manual settlement advisory system",
+        //   component: WF_Settlements_Manual_Advice_Use_Case,
+        //   type: "system",
+        // },
 
-        {
-          id: "fms-9",
-          name: "WF_ Termination - Foreclosure - Closure",
-          description: "Structured account termination process",
-          component: WF_Termination_Foreclosure_Closure_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-10",
-          name: "WF_FMS_ Finance Viewer",
-          description: "Interactive financial data visualization",
-          component: WF_FMS_Finance_Viewer_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-11",
-          name: "WF_FMS_ Floating Review Process",
-          description: "Dynamic financial review workflow",
-          component: WF_FMS_Floating_Review_Process_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-12",
-          name: "WF_FMS_ Settlements - Receipts",
-          description: "Automated receipt settlement processing",
-          component: WF_FMS_Settlements_Receipts_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-13",
-          name: "WF_FMS_ Settlements_Payment",
-          description: "Streamlined payment settlement system",
-          component: WF_FMS_Settlements_Payments_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-14",
-          name: "WF_FMS_ Settlements_Waive Off",
-          description: "Flexible settlement waive-off process",
-          component: WF_FMS_Settlements_Waive_Off_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-15",
-          name: "WF_FMS_EOD_ BOD",
-          description: "End-of-day and beginning-of-day processing",
-          component: WF_FMS_EOD_BOD_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-15",
-          name: "WF_FMS_EOD_ BOD",
-          description: "End-of-day and beginning-of-day processing",
-          component: EodBodDisplay,
-          type: "business",
-        },
-        {
-          id: "fms-16",
-          name: "Work Flow Closure_Account Closure",
-          description: "Structured account closure workflow",
-          component: System_Use_Case_Closure_Account,
-          type: "system",
-        },
-        {
-          id: "fms-16",
-          name: "Work Flow Closure_Account Closure",
-          description: "Structured account closure workflow",
-          component: AccountClosureDisplay,
-          type: "business",
-        },
+        // {
+        //   id: "fms-9",
+        //   name: "WF_ Termination - Foreclosure - Closure",
+        //   description: "Structured account termination process",
+        //   component: WF_Termination_Foreclosure_Closure_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-10",
+        //   name: "WF_FMS_ Finance Viewer",
+        //   description: "Interactive financial data visualization",
+        //   component: WF_FMS_Finance_Viewer_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-11",
+        //   name: "WF_FMS_ Floating Review Process",
+        //   description: "Dynamic financial review workflow",
+        //   component: WF_FMS_Floating_Review_Process_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-12",
+        //   name: "WF_FMS_ Settlements - Receipts",
+        //   description: "Automated receipt settlement processing",
+        //   component: WF_FMS_Settlements_Receipts_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-13",
+        //   name: "WF_FMS_ Settlements_Payment",
+        //   description: "Streamlined payment settlement system",
+        //   component: WF_FMS_Settlements_Payments_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-14",
+        //   name: "WF_FMS_ Settlements_Waive Off",
+        //   description: "Flexible settlement waive-off process",
+        //   component: WF_FMS_Settlements_Waive_Off_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-15",
+        //   name: "WF_FMS_EOD_ BOD",
+        //   description: "End-of-day and beginning-of-day processing",
+        //   component: WF_FMS_EOD_BOD_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-15",
+        //   name: "WF_FMS_EOD_ BOD",
+        //   description: "End-of-day and beginning-of-day processing",
+        //   component: EodBodDisplay,
+        //   type: "business",
+        // },
+        // {
+        //   id: "fms-16",
+        //   name: "Work Flow Closure_Account Closure",
+        //   description: "Structured account closure workflow",
+        //   component: System_Use_Case_Closure_Account,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-16",
+        //   name: "Work Flow Closure_Account Closure",
+        //   description: "Structured account closure workflow",
+        //   component: AccountClosureDisplay,
+        //   type: "business",
+        // },
 
-        {
-          id: "fms-17",
-          name: "Work Flow Closure_View Account Status",
-          description: "Real-time account status monitoring",
-          component: WF_Closure_View_Account_Status_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-17",
-          name: "Work Flow Closure_View Account Status",
-          description: "Real-time account status monitoring",
-          component: ViewAccountStatusDisplay,
-          type: "business",
-        },
-        {
-          id: "fms-18",
-          name: "Work Flow_Document Master",
-          description: "Centralized document management system",
-          component: WF_Document_Master_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-18",
-          name: "Work Flow_Document Master",
-          description: "Centralized document management system",
-          component: DocumentMasterDisplay,
-          type: "business",
-        },
-        {
-          id: "fms-19",
-          name: "Work Flow_Finance Rescheduling_Bulk Prepayment",
-          description: "Bulk prepayment rescheduling process",
-          component: WF_Finance_Rescheduling_Bulk_Prepayment_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-19",
-          name: "Work Flow_Finance Rescheduling_Bulk Prepayment",
-          description: "Bulk prepayment rescheduling process",
-          component: FinanceReschedulingDisplay,
-          type: "business",
-        },
-        {
-          id: "fms-20",
-          name: "Work Flow_Finance Rescheduling_Due Date Change",
-          description: "Flexible due date modification system",
-          component: WF_Finance_Rescheduling_Due_Date_Change_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-20",
-          name: "Work Flow_Finance Rescheduling_Due Date Change",
-          description: "Flexible due date modification system",
-          component: FinanceReschedulingDueDateDisplay,
-          type: "business",
-        },
-        {
-          id: "fms-21",
-          name: "Work Flow_Finance Rescheduling_Profit Rate Change",
-          description: "Dynamic profit rate adjustment process",
-          component: WF_Finance_Rescheduling_Profit_Rate_Change_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-22",
-          name: "Work Flow_Finance Rescheduling_Tenure Change",
-          description: "Flexible tenure modification workflow",
-          component: WF_Finance_Rescheduling_Tenure_Change_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-23",
-          name: "Work Flow_Post Disbursal Edit",
-          description: "Post-disbursal data modification system",
-          component: WF_Post_Disbursal_Edit_Use_Case_Updated,
-          type: "system",
-        },
-        {
-          id: "fms-24",
-          name: "Work Flow_Repayment Deferral_Constitution Wise Deferral",
-          description: "Constitution-based repayment deferral",
-          component: WF_Repayment_Deferral_Constitution_Wise_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-25",
-          name: "Work Flow_Repayment Deferral_Finance Wise Deferral",
-          description: "Finance-specific repayment deferral process",
-          component: WF_Repayment_Deferral_Finance_Wise_Use_Case,
-          type: "system",
-        },
-        {
-          id: "fms-26",
-          name: "Work Flow_Repayment Deferral_Portfolio Wise Deferral",
-          description: "Portfolio-based repayment deferral system",
-          component: WF_Repayment_Deferral_Portfolio_Wise_Use_Case,
-          type: "system",
-        },
+        // {
+        //   id: "fms-17",
+        //   name: "Work Flow Closure_View Account Status",
+        //   description: "Real-time account status monitoring",
+        //   component: WF_Closure_View_Account_Status_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-17",
+        //   name: "Work Flow Closure_View Account Status",
+        //   description: "Real-time account status monitoring",
+        //   component: ViewAccountStatusDisplay,
+        //   type: "business",
+        // },
+        // {
+        //   id: "fms-18",
+        //   name: "Work Flow_Document Master",
+        //   description: "Centralized document management system",
+        //   component: WF_Document_Master_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-18",
+        //   name: "Work Flow_Document Master",
+        //   description: "Centralized document management system",
+        //   component: DocumentMasterDisplay,
+        //   type: "business",
+        // },
+        // {
+        //   id: "fms-19",
+        //   name: "Work Flow_Finance Rescheduling_Bulk Prepayment",
+        //   description: "Bulk prepayment rescheduling process",
+        //   component: WF_Finance_Rescheduling_Bulk_Prepayment_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-19",
+        //   name: "Work Flow_Finance Rescheduling_Bulk Prepayment",
+        //   description: "Bulk prepayment rescheduling process",
+        //   component: FinanceReschedulingDisplay,
+        //   type: "business",
+        // },
+        // {
+        //   id: "fms-20",
+        //   name: "Work Flow_Finance Rescheduling_Due Date Change",
+        //   description: "Flexible due date modification system",
+        //   component: WF_Finance_Rescheduling_Due_Date_Change_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-20",
+        //   name: "Work Flow_Finance Rescheduling_Due Date Change",
+        //   description: "Flexible due date modification system",
+        //   component: FinanceReschedulingDueDateDisplay,
+        //   type: "business",
+        // },
+        // {
+        //   id: "fms-21",
+        //   name: "Work Flow_Finance Rescheduling_Profit Rate Change",
+        //   description: "Dynamic profit rate adjustment process",
+        //   component: WF_Finance_Rescheduling_Profit_Rate_Change_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-22",
+        //   name: "Work Flow_Finance Rescheduling_Tenure Change",
+        //   description: "Flexible tenure modification workflow",
+        //   component: WF_Finance_Rescheduling_Tenure_Change_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-23",
+        //   name: "Work Flow_Post Disbursal Edit",
+        //   description: "Post-disbursal data modification system",
+        //   component: WF_Post_Disbursal_Edit_Use_Case_Updated,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-24",
+        //   name: "Work Flow_Repayment Deferral_Constitution Wise Deferral",
+        //   description: "Constitution-based repayment deferral",
+        //   component: WF_Repayment_Deferral_Constitution_Wise_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-25",
+        //   name: "Work Flow_Repayment Deferral_Finance Wise Deferral",
+        //   description: "Finance-specific repayment deferral process",
+        //   component: WF_Repayment_Deferral_Finance_Wise_Use_Case,
+        //   type: "system",
+        // },
+        // {
+        //   id: "fms-26",
+        //   name: "Work Flow_Repayment Deferral_Portfolio Wise Deferral",
+        //   description: "Portfolio-based repayment deferral system",
+        //   component: WF_Repayment_Deferral_Portfolio_Wise_Use_Case,
+        //   type: "system",
+        // },
       ],
     },
   ];

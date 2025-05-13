@@ -18,62 +18,62 @@ import {
 const useCases = [
   {
     path: "allocation-hold",
-    title: "Hold Allocation",
+    title: "Allocation of Delinquent Cases_Allocation Hold",
     description: "Place delinquent cases on hold based on predefined rules.",
     icon: <Users className="text-indigo-600 w-7 h-7" />,
   },
   {
     path: "define-allocation-contract",
-    title: "Define Allocation Contract",
+    title: "Allocation of Delinquent Cases_Define Allocation contract",
     description: "Upload and manage contracts for delinquent case allocation.",
     icon: <FileText className="text-green-600 w-7 h-7" />,
   },
   {
     path: "manual-allocation",
-    title: "Manual Case Allocation",
+    title: "Allocation of Delinquent Cases_Manual Allocation",
     description: "Manually assign delinquent cases to collection agents.",
     icon: <UserCheck className="text-blue-500 w-7 h-7" />,
   },
   {
     path: "manual-reallocation",
-    title: "Reallocate Cases",
+    title: "Allocation of Delinquent Cases_Manual Reallocation",
     description:
       "Reassign cases based on collector availability and performance.",
     icon: <TrendingUp className="text-purple-500 w-7 h-7" />,
   },
   {
     path: "bod-process",
-    title: "Start-of-Day Process",
+    title: "Beginning of Day Process",
     description: "Initialize and prepare daily queue for collections.",
     icon: <Edit className="text-red-500 w-7 h-7" />,
   },
   {
     path: "define-queue",
-    title: "Queue Classification",
+    title: "Classification of Delinquent Cases - Define Queue",
     description: "Create and manage delinquent case queues.",
     icon: <FileSignature className="text-yellow-600 w-7 h-7" />,
   },
   {
     path: "contact-recording",
-    title: "Contact Logging",
+    title: "Contact Recording",
     description: "Record contact attempts and customer communication logs.",
     icon: <Upload className="text-cyan-600 w-7 h-7" />,
   },
   {
     path: "legal-collections",
-    title: "Legal Action Workflow",
+    title: "Legal Collections Workflow",
     description: "Initiate and track legal recovery processes.",
     icon: <Truck className="text-orange-500 w-7 h-7" />,
   },
   {
     path: "prioritize-queue",
-    title: "Queue Prioritization",
+    title: "Prioritizing a Queue",
     description: "Set priority for follow-up based on risk and aging.",
     icon: <Calendar className="text-teal-500 w-7 h-7" />,
   },
   {
     path: "communication-mapping",
-    title: "Queue Communications",
+    title: "Queue Communication Mapping",
     description: "Assign communication templates to specific queues.",
     icon: <AlertTriangle className="text-pink-600 w-7 h-7" />,
   },
@@ -95,15 +95,15 @@ const CMSDashboard: React.FC = () => {
 const navigate = useNavigate();
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-800">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 text-gray-800">
         📊 Collection Management System
       </h1>
-      <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+      <p className="text-sm sm:text-base text-center text-gray-600 mb-6 max-w-2xl mx-auto">
         Manage delinquent case workflows, queues, communications, and legal
         proceedings from one central dashboard.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {useCases.map((useCase) => (
           <div
             key={useCase.path}
@@ -122,13 +122,13 @@ const navigate = useNavigate();
             </div>
             <div className="mt-4 flex justify-between gap-2">
               <button
-                className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200  w-full sm:w-auto"
                 onClick={() => navigate(`/cms/${useCase.path}/business`)}
               >
                 Business Use Case
               </button>
               <button
-                className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200  w-full sm:w-auto "
                 onClick={() => navigate(`/cms/${useCase.path}/system`)}
               >
                 System Use Case
