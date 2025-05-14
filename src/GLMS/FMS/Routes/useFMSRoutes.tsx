@@ -31,6 +31,12 @@ import WFPostDisbursalEditUseCaseUpdated from "../Components/System/WF_Post_Disb
 import WFRepaymentDeferralConstitutionWiseUseCase from "../Components/System/WF_Repayment_Deferral_Constitution_Wise_Use_Case";
 import WFRepaymentDeferralFinanceWiseUseCase from "../Components/System/WF_Repayment_Deferral_Finance_Wise_Use_Case";
 import WfRepaymentDeferralPortfolioWiseUseCase from "../Components/System/WF_Repayment_Deferral_Portfolio_Wise_Use_Case";
+import FinanceReschedulingProfitRateChange from "../Components/Business/FinanceReschedulingProfitRateChange";
+import FinanceReschedulingTenureChange from "../Components/Business/FinanceReschedulingTenureChange";
+import PostDisbursalEdit from "../Components/Business/PostDisbursalEdit";
+import RepaymentDeferralConstitutionBased from "../Components/Business/RepaymentDeferralConstitutionBased";
+import RepaymentDeferralFinanceWise from "../Components/Business/RepaymentDeferralFinanceWise";
+import RepaymentDeferralBatchWise from "../Components/Business/RepaymentDeferralBatchWise";
 const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
   <div className="p-4 bg-gray-100 text-center">{title} Component</div>
 );
@@ -143,32 +149,32 @@ export const useFMSRoutes: Record<
   },
   "profit-rate-change": {
     title: "Profit Rate Change",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <FinanceReschedulingProfitRateChange />,
     system: <WFFinanceReschedulingProfitRateChangeUseCase />,
   },
   "tenure-change": {
     title: "Tenure Change",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <FinanceReschedulingTenureChange />,
     system: <WFFinanceReschedulingTenureChangeUseCase />,
   },
   "post-disbursal-edit": {
     title: "Post Disbursal Edit",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <PostDisbursalEdit />,
     system: <WFPostDisbursalEditUseCaseUpdated />,
   },
   "deferral-constitution": {
     title: "Deferral - Constitution Wise",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <RepaymentDeferralConstitutionBased />,
     system: <WFRepaymentDeferralConstitutionWiseUseCase />,
   },
   "deferral-financewise": {
     title: "Deferral - Finance Wise",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <RepaymentDeferralFinanceWise />,
     system: <WFRepaymentDeferralFinanceWiseUseCase />,
   },
   "deferral-portfolio": {
     title: "Deferral - Portfolio Wise",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <RepaymentDeferralBatchWise />,
     system: <WfRepaymentDeferralPortfolioWiseUseCase />,
   },
 };
