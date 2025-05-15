@@ -29,6 +29,7 @@ import Home from "./Dashboard/Home";
 import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
 import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
 import ForgotPasswordPage from "./Pages/Auth/Forgotpage";
+import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 
 import ScrollToTop from "./components/ScrollToTop";
 import TicketHistory from "./components/TicketHistory";
@@ -143,8 +144,13 @@ import CMSDashboard from "./GLMS/CMS/Pages/CMSDashboard";
 import FMSDashboard from "./GLMS/FMS/Pages/FMSDashboard";
 import FMSRouteRenderer from "./GLMS/FMS/Pages/FMSRoutes";
 import JobStreet from "./GLMS/JobStreet/JobStreet";
+
+
+
 const App: React.FC = () => {
   const location = useLocation();
+  // Use the Google Analytics tracking hook
+  useGtagPageView();
 
   useEffect(() => {
     const validEntryPoints = [
