@@ -132,6 +132,9 @@ const CheckoutPage: React.FC = () => {
   const [showOtherOptions, setShowOtherOptions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  //Exchange policy
+  const [exchangePolicyAccepted, setExchangePolicyAccepted] = useState(false);
+
   const context = useContext(CartContext);
   if (!context) {
     throw new Error("CartDisplay must be used within a CartProvider");
@@ -655,6 +658,17 @@ const CheckoutPage: React.FC = () => {
   ]);
 
   const handlePayment = async () => {
+    console.log("Exchange policy accepted:", exchangePolicyAccepted);
+
+    if (!exchangePolicyAccepted) {
+      Modal.warning({
+        title: "Confirmation Required",
+        content:
+          "Please confirm that the exchange can be taken within 10 days after delivery.",
+      });
+      return;
+    }
+
     try {
       const hasStockIssues = cartData.some(
         (item) =>
@@ -1412,6 +1426,26 @@ const CheckoutPage: React.FC = () => {
                           </motion.button>
                         )}
                       </div>
+                    </div>
+
+                    {/* checkbox for confirming the exchange of the items within 10 days of order*/}
+                    <div className="flex items-start space-x-2 mt-4">
+                      <input
+                        type="checkbox"
+                        id="exchangePolicy"
+                        checked={exchangePolicyAccepted}
+                        onChange={(e) =>
+                          setExchangePolicyAccepted(e.target.checked)
+                        }
+                        className="mt-1"
+                      />
+                      <label
+                        htmlFor="exchangePolicy"
+                        className="text-sm text-gray-700"
+                      >
+                        You can request an exchange within 10 Days from your
+                        order being delivered.
+                      </label>
                     </div>
 
                     {walletAmount > 0 && (
