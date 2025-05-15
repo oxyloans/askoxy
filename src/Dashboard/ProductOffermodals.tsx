@@ -261,149 +261,149 @@ const ProductOfferModals = ({
     showOnePlusOneModal(eligibleBag);
   };
 
-  // 5Kg Rice Bag: Movie Ticket Offer
-  const checkMovieOfferStatus = async (): Promise<boolean> => {
-    const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
-    console.log("Movie ticket offer claimed (localStorage):", offerClaimed);
-    return offerClaimed;
-  };
+  // // 5Kg Rice Bag: Movie Ticket Offer
+  // const checkMovieOfferStatus = async (): Promise<boolean> => {
+  //   const offerClaimed = localStorage.getItem("movieOfferClaimed") === "true";
+  //   console.log("Movie ticket offer claimed (localStorage):", offerClaimed);
+  //   return offerClaimed;
+  // };
 
-  const findFiveKgBag = (item: ProductItem): ProductItem | null => {
-    const weight = parseWeight(item.weight);
-    if (weight === 5) {
-      return item;
-    }
-    return null;
-  };
+  // const findFiveKgBag = (item: ProductItem): ProductItem | null => {
+  //   const weight = parseWeight(item.weight);
+  //   if (weight === 5) {
+  //     return item;
+  //   }
+  //   return null;
+  // };
 
-  const showMovieOfferModal = (item: ProductItem) => {
-    if (movieOfferModalOpenRef.current) return;
+  // const showMovieOfferModal = (item: ProductItem) => {
+  //   if (movieOfferModalOpenRef.current) return;
     
-    // Set movie modal open flag to true
-    movieOfferModalOpenRef.current = true;
+  //   // Set movie modal open flag to true
+  //   movieOfferModalOpenRef.current = true;
 
-    Modal.confirm({
-      title: (
-        <div className="flex items-center text-purple-700">
-          <Ticket className="mr-2 text-purple-600" size={22} />
-          <span className="text-xl font-bold">Free Movie Ticket!</span>
-        </div>
-      ),
-      icon: null,
-      content: (
-        <div className="py-3">
-          <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 rounded-lg mb-4 text-white relative overflow-hidden">
-            <div className="absolute right-0 top-0 opacity-10">
-              <Ticket size={100} />
-            </div>
-            <h3 className="text-xl font-bold mb-2">PVR Cinema Ticket</h3>
-            <p className="text-white text-opacity-90 font-medium">
-              HIT: The Third Case
-            </p>
-            <div className="mt-3 flex items-center">
-              <Tag className="bg-white text-purple-700 border-0 font-bold mr-2">FREE</Tag>
-              <span className="text-sm text-white text-opacity-80">with your 5KG rice purchase</span>
-            </div>
-          </div>
+  //   Modal.confirm({
+  //     title: (
+  //       <div className="flex items-center text-purple-700">
+  //         <Ticket className="mr-2 text-purple-600" size={22} />
+  //         <span className="text-xl font-bold">Free Movie Ticket!</span>
+  //       </div>
+  //     ),
+  //     icon: null,
+  //     content: (
+  //       <div className="py-3">
+  //         <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 rounded-lg mb-4 text-white relative overflow-hidden">
+  //           <div className="absolute right-0 top-0 opacity-10">
+  //             <Ticket size={100} />
+  //           </div>
+  //           <h3 className="text-xl font-bold mb-2">PVR Cinema Ticket</h3>
+  //           <p className="text-white text-opacity-90 font-medium">
+  //             HIT: The Third Case
+  //           </p>
+  //           <div className="mt-3 flex items-center">
+  //             <Tag className="bg-white text-purple-700 border-0 font-bold mr-2">FREE</Tag>
+  //             <span className="text-sm text-white text-opacity-80">with your 5KG rice purchase</span>
+  //           </div>
+  //         </div>
           
-          <p className="mb-4">
-            Enjoy a free PVR Movie Ticket to watch <strong>HIT: The Third Case</strong> on us!
-          </p>
+  //         <p className="mb-4">
+  //           Enjoy a free PVR Movie Ticket to watch <strong>HIT: The Third Case</strong> on us!
+  //         </p>
           
-          <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <h4 className="font-semibold text-blue-700 flex items-center mb-2">
-              <Info size={16} className="mr-1" /> Offer Details
-            </h4>
-            <ul className="text-sm text-gray-700 space-y-1">
-              <li className="flex items-start">
-                <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
-                <span>Valid only once per user</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
-                <span>Applicable exclusively on 5KG rice bags</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
-                <span>Redeemable on your first successful delivery</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
-                <span>Cannot be combined with other offers</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      ),
-      okText: (
-        <div className="flex items-center">
-          <Ticket size={16} className="mr-1" />
-          Claim Movie Ticket
-        </div>
-      ),
-      okButtonProps: { 
-        style: { background: '#8B5CF6', borderColor: '#7C3AED' },
-      },
-      cancelText: "No Thanks",
-      width: 480,
-      className: "movie-offer-modal",
-      onOk: async () => {
-        try {
-          // Simulate offer claim by updating localStorage
-          localStorage.setItem("movieOfferClaimed", "true");
-          setHasShownMovieOffer(true);
-          setMovieOfferModalShown(true);
+  //         <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
+  //           <h4 className="font-semibold text-blue-700 flex items-center mb-2">
+  //             <Info size={16} className="mr-1" /> Offer Details
+  //           </h4>
+  //           <ul className="text-sm text-gray-700 space-y-1">
+  //             <li className="flex items-start">
+  //               <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
+  //               <span>Valid only once per user</span>
+  //             </li>
+  //             <li className="flex items-start">
+  //               <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
+  //               <span>Applicable exclusively on 5KG rice bags</span>
+  //             </li>
+  //             <li className="flex items-start">
+  //               <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
+  //               <span>Redeemable on your first successful delivery</span>
+  //             </li>
+  //             <li className="flex items-start">
+  //               <CheckCircle size={14} className="text-green-500 mt-1 mr-1 flex-shrink-0" />
+  //               <span>Cannot be combined with other offers</span>
+  //             </li>
+  //           </ul>
+  //         </div>
+  //       </div>
+  //     ),
+  //     okText: (
+  //       <div className="flex items-center">
+  //         <Ticket size={16} className="mr-1" />
+  //         Claim Movie Ticket
+  //       </div>
+  //     ),
+  //     okButtonProps: { 
+  //       style: { background: '#8B5CF6', borderColor: '#7C3AED' },
+  //     },
+  //     cancelText: "No Thanks",
+  //     width: 480,
+  //     className: "movie-offer-modal",
+  //     onOk: async () => {
+  //       try {
+  //         // Simulate offer claim by updating localStorage
+  //         localStorage.setItem("movieOfferClaimed", "true");
+  //         setHasShownMovieOffer(true);
+  //         setMovieOfferModalShown(true);
 
-          if (item.itemId) {
-            setMovieOfferMap((prev) => ({
-              ...prev,
-              [item.itemId as string]: true,
-            }));
-          }
+  //         if (item.itemId) {
+  //           setMovieOfferMap((prev) => ({
+  //             ...prev,
+  //             [item.itemId as string]: true,
+  //           }));
+  //         }
 
-          message.success({
-            content: (
-              <div className="flex items-center">
-                <Ticket size={16} className="mr-2 text-green-500" />
-                <span>Movie ticket offer claimed! Details will be shared upon delivery.</span>
-              </div>
-            ),
-            icon: null,
-            duration: 5,
-          });
+  //         message.success({
+  //           content: (
+  //             <div className="flex items-center">
+  //               <Ticket size={16} className="mr-2 text-green-500" />
+  //               <span>Movie ticket offer claimed! Details will be shared upon delivery.</span>
+  //             </div>
+  //           ),
+  //           icon: null,
+  //           duration: 5,
+  //         });
           
-          if (item.itemId) {
-            await fetchCartData(item.itemId);
-          }
-        } catch (err) {
-          console.error("Movie ticket offer claim failed:", err);
-          message.error("Unable to claim the movie ticket offer. Please try again.");
-        } finally {
-          // Reset the movie modal open flag
-          movieOfferModalOpenRef.current = false;
-        }
-      },
-      onCancel: () => {
-        // Reset modal flags when canceled
-        movieOfferModalOpenRef.current = false;
-        setMovieOfferModalShown(true);
-      }
-    });
-  };
+  //         if (item.itemId) {
+  //           await fetchCartData(item.itemId);
+  //         }
+  //       } catch (err) {
+  //         console.error("Movie ticket offer claim failed:", err);
+  //         message.error("Unable to claim the movie ticket offer. Please try again.");
+  //       } finally {
+  //         // Reset the movie modal open flag
+  //         movieOfferModalOpenRef.current = false;
+  //       }
+  //     },
+  //     onCancel: () => {
+  //       // Reset modal flags when canceled
+  //       movieOfferModalOpenRef.current = false;
+  //       setMovieOfferModalShown(true);
+  //     }
+  //   });
+  // };
 
-  const maybeShowMovieOfferModal = async (item: ProductItem) => {
-    // If modal is already shown in this session, don't show again
-    if (movieOfferModalShown || movieOfferModalOpenRef.current) return;
+  // const maybeShowMovieOfferModal = async (item: ProductItem) => {
+  //   // If modal is already shown in this session, don't show again
+  //   if (movieOfferModalShown || movieOfferModalOpenRef.current) return;
 
-    const eligibleBag = findFiveKgBag(item);
-    if (!eligibleBag) return;
+  //   const eligibleBag = findFiveKgBag(item);
+  //   if (!eligibleBag) return;
 
-    const isOfferClaimed = await checkMovieOfferStatus();
-    if (isOfferClaimed) return;
+  //   const isOfferClaimed = await checkMovieOfferStatus();
+  //   if (isOfferClaimed) return;
 
-    // Show the modal
-    showMovieOfferModal(eligibleBag);
-  };
+  //   // Show the modal
+  //   showMovieOfferModal(eligibleBag);
+  // };
 
   // Helper function to parse weight
   const parseWeight = (weight: unknown): number => {
@@ -439,13 +439,13 @@ const ProductOfferModals = ({
         return; // Exit early to not show other modals
       }
 
-      // 5kg movie ticket offer
-      if (weight === 5 && !movieOfferModalShown && !hasShownMovieOffer) {
-        await maybeShowMovieOfferModal(item);
-        return; // Exit early to not show other modals
-      }
+      // // 5kg movie ticket offer
+      // if (weight === 5 && !movieOfferModalShown && !hasShownMovieOffer) {
+      //   await maybeShowMovieOfferModal(item);
+      //   return; // Exit early to not show other modals
+      // }
     },
-    [onePlusOneModalShown, movieOfferModalShown, hasShownOnePlusOne, hasShownMovieOffer]
+    [onePlusOneModalShown,  hasShownOnePlusOne]
   );
 
   return {
