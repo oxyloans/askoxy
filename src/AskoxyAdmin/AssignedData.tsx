@@ -31,6 +31,7 @@ import axios from "axios";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
+import { useNavigate } from "react-router-dom";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -155,6 +156,7 @@ const AssignedDataPage: React.FC = () => {
   const [uniqueId, setUniqueId] = useState<string>("");
   //orderModal
   const [loader, setLoader] = useState<boolean>(false);
+  const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [orderDetailsVisible, setOrderDetailsVisible] =
     useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
@@ -164,6 +166,7 @@ const AssignedDataPage: React.FC = () => {
   // Comments state
   const [commentsModalVisible, setCommentsModalVisible] =
     useState<boolean>(false);
+  const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [newComment, setNewComment] = useState<string>("");
@@ -206,6 +209,7 @@ const AssignedDataPage: React.FC = () => {
       setUniqueId(storedUniqueId);
     } else {
       message.error("User ID not found. Please login again.");
+      navigate("/admin");
     }
 
     fetchData();
@@ -478,18 +482,6 @@ const AssignedDataPage: React.FC = () => {
         key: "grandTotal",
         render: (text: number) => `₹${text.toFixed(2)}`,
       },
-      // {
-      //   title: "Expected Delivery",
-      //   dataIndex: "expectedDeliveryDate",
-      //   key: "expectedDeliveryDate",
-      //   render: (expectedDeliveryDate: string, record: OrderData) => (
-      //     <div>
-      //       <p>{expectedDeliveryDate}</p>
-      //       <p>{record.timeSlot}</p>
-      //       <p>{record.dayOfWeek}</p>
-      //     </div>
-      //   ),
-      // },
       {
         title: "Status",
         dataIndex: "orderStatus",
@@ -527,7 +519,7 @@ const AssignedDataPage: React.FC = () => {
       },
     ];
 
-    if (["1", "2", "3","PickedUp"].includes(userOrders[0]?.orderStatus)) {
+    if (["1", "2", "3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
       columns.splice(3, 0, {
         title: "Expected Delivery",
         dataIndex: "expectedDeliveryDate",
@@ -577,7 +569,6 @@ const AssignedDataPage: React.FC = () => {
             const entry = history.find((h) => h.status === status);
             if (!entry) return null;
 
-            // Determine which date field to use based on status
             if (status === "1") return entry.placedDate;
             if (status === "2") return entry.acceptedDate;
             if (status === "3") return entry.assignedDate;
@@ -722,79 +713,101 @@ const AssignedDataPage: React.FC = () => {
       },
     },
     {
-      title: "Name",
+      title: "Name & Email",
       dataIndex: "firstName",
       key: "name",
-      width: 90,
+      width: 100,
       render: (_text, record) => {
         const fullName = `${record.firstName || ""} ${
           record.lastName || ""
         }`.trim();
         return (
-          <Tooltip title={fullName || "No Name"}>
-            <span className="flex items-center">
-              {/* <UserOutlined className="mr-2 text-gray-500" /> */}
-              {fullName ? (
-                fullName
-              ) : (
-                <span className="text-gray-400">No Name</span>
-              )}
-            </span>
-          </Tooltip>
+          <div className="flex flex-col">
+            <Tooltip title={fullName || "No Name"}>
+              <span className="flex items-center">
+                {fullName ? (
+                  fullName
+                ) : (
+                  <span className="text-gray-400">No Name</span>
+                )}
+              </span>
+            </Tooltip>
+            <Tooltip title={record.email || "No Email"}>
+              <span
+                className="flex items-center text-sm text-gray-600"
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  display: "inline-block",
+                  width: "100%", // stay within the cell
+                }}
+              >
+                {record.email ? (
+                  record.email
+                ) : (
+                  <span className="text-gray-400">No Email</span>
+                )}
+              </span>
+            </Tooltip>
+          </div>
         );
       },
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-      width: 120,
-      ellipsis: true,
-      render: (text: string) => (
-        <Tooltip title={text || "No Email"}>
-          <span className="flex items-center">
-            {/* <MailOutlined className="mr-2 text-gray-500" /> */}
-            {text ? (
-              text.length > 25 ? (
-                `${text.substring(0, 25)}...`
-              ) : (
-                text
-              )
-            ) : (
-              <span className="text-gray-400">No Email</span>
-            )}
-          </span>
-        </Tooltip>
+      title: "Actions",
+      key: "actions",
+      width: 100,
+      render: (_text, record) => (
+        <div className="flex gap-2">
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              setRecord(record);
+              showCommentsModal(record);
+            }}
+            className="rounded-md border border-blue-400 text-blue-600 hover:bg-blue-100"
+          >
+            Comments
+          </Button>
+          <Button
+            type="default"
+            size="small"
+            onClick={() => viewOrderDetails(record)}
+            className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
+          >
+            Orders
+          </Button>
+        </div>
       ),
     },
     {
       title: "Registration Date",
       dataIndex: "userRegisterCreatedDate",
       key: "userRegisterCreatedDate",
-      width: 90,
-      render: (date: string) => (
-        <span className="flex items-center">
-          {/* <CalendarOutlined className="mr-2 text-gray-500" /> */}
-          {new Date(date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      ),
-    },
-    {
-      title: "Assigned To",
-      dataIndex: "assignedTo",
-      key: "assignedTo",
-      width: 90,
-      render: (assignedTo: string) => {
-        const helpDeskName = getHelpDeskName(assignedTo);
+      width: 90, // unchanged
+      render: (date: string, record: UserData) => {
+        const helpDeskName = getHelpDeskName(record.assignedTo);
+
         return (
-          <Tag color="cyan" className="capitalize">
-            <UserOutlined className="mr-1" />
-            {helpDeskName}
-          </Tag>
+          <div className="flex flex-col">
+            <span className="flex items-center">
+              {/* <CalendarOutlined className="mr-2 text-gray-500" /> */}
+              {new Date(date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <Tag
+              color="cyan"
+              className="capitalize mt-1 w-fit flex items-center"
+            >
+              <UserOutlined className="mr-1" />
+              {helpDeskName || "Unassigned"}
+            </Tag>
+          </div>
         );
       },
     },
@@ -833,34 +846,6 @@ const AssignedDataPage: React.FC = () => {
             )}
           </span>
         </Tooltip>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 120,
-      render: (_text, record) => (
-        <div className="flex gap-2">
-          <Button
-            type="default"
-            size="small"
-            onClick={() => {
-              setRecord(record);
-              showCommentsModal(record);
-            }}
-            className="rounded-md border border-blue-400 text-blue-600 hover:bg-blue-100"
-          >
-            Comments
-          </Button>
-          <Button
-            type="default"
-            size="small"
-            onClick={() => viewOrderDetails(record)}
-            className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
-          >
-            Orders
-          </Button>
-        </div>
       ),
     },
   ];
@@ -947,20 +932,32 @@ const AssignedDataPage: React.FC = () => {
         </div>
       ) : filteredData.length > 0 ? (
         <>
-          <div className="overflow-x-auto">
-            <Table
-              columns={columns}
-              dataSource={filteredData}
-              rowKey={(record, index) => `${record.userId}-${index ?? 0}`}
-              pagination={false}
-              className="border border-gray-200 rounded-lg"
-              scroll={{ x: 1200 }}
-              size="middle"
-              rowClassName={(record, index) =>
-                index % 2 === 0 ? "bg-gray-50" : ""
-              }
-            />
-          </div>
+          <Table
+            columns={columns}
+            dataSource={filteredData}
+            rowKey={(record, index) => {
+              const key = `${record.userId}-${index ?? 0}`;
+              return key;
+            }}
+            pagination={false}
+            className="border border-gray-200 rounded-lg"
+            scroll={{ x: 1200 }}
+            size="middle"
+            onRow={(record, index) => {
+              const key = `${record.userId}-${index ?? 0}`;
+              return {
+                onClick: () => setSelectedRowKey(key),
+              };
+            }}
+            rowClassName={(record, index) => {
+              const key = `${record.userId}-${index ?? 0}`;
+              const isSelected = key === selectedRowKey;
+              const isEven = index % 2 === 0;
+              return `${isSelected ? "bg-yellow-200" : ""} ${
+                !isSelected && isEven ? "bg-blue-20" : ""
+              }`;
+            }}
+          />
 
           <div className="mt-4 flex justify-end">
             <Pagination
@@ -982,7 +979,6 @@ const AssignedDataPage: React.FC = () => {
         />
       )}
 
-      {/* Comments Modal */}
       <Modal
         zIndex={150}
         title="HelpDesk Comments"
@@ -1089,6 +1085,12 @@ const AssignedDataPage: React.FC = () => {
                 placeholder="Type your comment here..."
                 autoSize={{ minRows: 3, maxRows: 5 }}
                 className="text-sm rounded-lg border-gray-300"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitComment();  
+                  }
+                }}
               />
 
               <div className="flex justify-end gap-3 pt-2">

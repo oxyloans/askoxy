@@ -169,7 +169,7 @@ const DataAssigned: React.FC = () => {
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [orderDetailsVisible, setOrderDetailsVisible] =
-     useState<boolean>(false);
+    useState<boolean>(false);
   const [loader, setLoader] = useState<boolean>(false);
   const [userOrders, setUserOrders] = useState<OrderData[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -180,23 +180,23 @@ const DataAssigned: React.FC = () => {
   const userStatus = hasOrders
     ? "Logged in, placed order"
     : "Not logged in, not placed order";
-     const sixMonthsAgo = moment().subtract(6, "months");
-     const latestOrder =
-        userOrders.length > 0
-          ? userOrders.reduce((latest, order) =>
-              moment(order.orderDate).isAfter(moment(latest.orderDate))
-                ? order
-                : latest
-            )
-          : null;
-      const isActiveUser =
-        latestOrder && moment(latestOrder.orderDate).isAfter(sixMonthsAgo);
-      const activityStatus = isActiveUser ? "Active" : "Inactive";
-      const activityMessage = latestOrder
-        ? isActiveUser
-          ? "User placed order within last six months"
-          : "User has not placed order in last six months"
-        : "User not placed any order";
+  const sixMonthsAgo = moment().subtract(6, "months");
+  const latestOrder =
+    userOrders.length > 0
+      ? userOrders.reduce((latest, order) =>
+          moment(order.orderDate).isAfter(moment(latest.orderDate))
+            ? order
+            : latest
+        )
+      : null;
+  const isActiveUser =
+    latestOrder && moment(latestOrder.orderDate).isAfter(sixMonthsAgo);
+  const activityStatus = isActiveUser ? "Active" : "Inactive";
+  const activityMessage = latestOrder
+    ? isActiveUser
+      ? "User placed order within last six months"
+      : "User has not placed order in last six months"
+    : "User not placed any order";
 
   useEffect(() => {
     if (storedUniqueId) {
@@ -358,28 +358,28 @@ const DataAssigned: React.FC = () => {
     fetchOrderDetails(record.userId);
   };
 
-    const fetchOrderDetails = async (userId: string) => {
-      setLoader(true);
-      try {
-        const response = await axios.post(
-          BASE_URL + "/order-service/getAllOrders_customerId1",
-          { userId },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              accept: "*/*",
-            },
-          }
-        );
-  
-        setUserOrders(response.data);
-        setLoader(false);
-      } catch (error) {
-        console.error("Error fetching order details:", error);
-        message.error("Failed to load order details");
-        setLoader(false);
-      }
-    };
+  const fetchOrderDetails = async (userId: string) => {
+    setLoader(true);
+    try {
+      const response = await axios.post(
+        BASE_URL + "/order-service/getAllOrders_customerId1",
+        { userId },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            accept: "*/*",
+          },
+        }
+      );
+
+      setUserOrders(response.data);
+      setLoader(false);
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      message.error("Failed to load order details");
+      setLoader(false);
+    }
+  };
 
   const getHelpDeskName = (assignedToId: string): string => {
     const helpDeskUser = helpDeskUsers.find(
@@ -387,7 +387,6 @@ const DataAssigned: React.FC = () => {
     );
     return helpDeskUser ? helpDeskUser.name : "Unknown";
   };
-
 
   const columns: ColumnsType<UserData> = [
     {
@@ -405,7 +404,7 @@ const DataAssigned: React.FC = () => {
       title: "Mobile",
       dataIndex: "mobileNumber",
       key: "mobileNumber",
-      width: 90,
+      width: 100,
       render: (_: string, record: UserData) => {
         const mobile = record.mobileNumber;
         const whatsapp = record.whastappNumber;
@@ -439,78 +438,103 @@ const DataAssigned: React.FC = () => {
       },
     },
     {
-      title: "Name",
+      title: "Name & Email",
       dataIndex: "firstName",
       key: "name",
-      width: 90,
+      width: 100,
       render: (_text, record) => {
         const fullName = `${record.firstName || ""} ${
           record.lastName || ""
         }`.trim();
         return (
-          <Tooltip title={fullName || "No Name Provided"}>
-            <span className="flex items-center">
-              {fullName ? (
-                fullName
-              ) : (
-                <span className="text-gray-400">No Name</span>
-              )}
-            </span>
-          </Tooltip>
+          <div className="flex flex-col">
+            <Tooltip title={fullName || "No Name"}>
+              <span className="flex items-center">
+                {fullName ? (
+                  fullName
+                ) : (
+                  <span className="text-gray-400">No Name</span>
+                )}
+              </span>
+            </Tooltip>
+            <Tooltip title={record.email || "No Email"}>
+              <span
+                className="flex items-center text-sm text-gray-600"
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  display: "inline-block",
+                  width: "100%", // stay within the cell
+                }}
+              >
+                {record.email ? (
+                  record.email
+                ) : (
+                  <span className="text-gray-400">No Email</span>
+                )}
+              </span>
+            </Tooltip>
+          </div>
         );
       },
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-      width: 120,
-      ellipsis: true,
-      render: (text: string) => (
-        <Tooltip title={text || "No Email"}>
-          <span className="flex items-center">
-            {text ? (
-              text.length > 25 ? (
-                `${text.substring(0, 25)}...`
-              ) : (
-                text
-              )
-            ) : (
-              <span className="text-gray-400">No Email</span>
-            )}
-          </span>
-        </Tooltip>
+      title: "Actions",
+      key: "actions",
+      width: 100,
+      render: (_text, record) => (
+        <div className="flex gap-2">
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              setRecord(record);
+              showCommentsModal(record);
+            }}
+            className="w-full rounded-md  border-blue-400 text-blue-600 hover:bg-blue-100"
+          >
+            Comments
+          </Button>
+          <Button
+            type="default"
+            size="small"
+            onClick={() => viewOrderDetails(record)}
+            className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
+          >
+            Orders
+          </Button>
+        </div>
       ),
-    },
-    {
-      title: "Assigned To",
-      dataIndex: "assignedTo",
-      key: "assignedTo",
-      width: 90,
-      render: (assignedTo: string) => {
-        const helpDeskName = getHelpDeskName(assignedTo);
-        return (
-          <Tag color="cyan" className="capitalize">
-            <UserOutlined className="mr-1" />
-            {helpDeskName}
-          </Tag>
-        );
-      },
     },
     {
       title: "Registration Date",
       dataIndex: "userRegisterCreatedDate",
       key: "userRegisterCreatedDate",
-      width: 90,
-      render: (date: string) => (
-        <span className="flex items-center">
-          {new Date(date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      ),
+      width: 90, // unchanged
+      render: (date: string, record: UserData) => {
+        const helpDeskName = getHelpDeskName(record.assignedTo);
+
+        return (
+          <div className="flex flex-col">
+            <span className="flex items-center">
+              {/* <CalendarOutlined className="mr-2 text-gray-500" /> */}
+              {new Date(date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <Tag
+              color="cyan"
+              className="capitalize mt-1 w-fit flex items-center"
+            >
+              <UserOutlined className="mr-1" />
+              {helpDeskName || "Unassigned"}
+            </Tag>
+          </div>
+        );
+      },
     },
     {
       title: "Registered From",
@@ -546,34 +570,6 @@ const DataAssigned: React.FC = () => {
             )}
           </span>
         </Tooltip>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 80,
-      render: (_text, record) => (
-        <div className="flex gap-2">
-        <Button
-          type="default"
-          size="small"
-          onClick={() => {
-            setRecord(record);
-            showCommentsModal(record);
-          }}
-          className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
-        >
-          Comments
-        </Button>
-        <Button
-                    type="default"
-                    size="small"
-                    onClick={() => viewOrderDetails(record)}
-                    className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
-                  >
-                    Orders
-                  </Button>
-        </div>
       ),
     },
   ];
@@ -613,13 +609,13 @@ const DataAssigned: React.FC = () => {
   const searchApi = async (whatsappNumber: string) => {
     setLoading(true);
     try {
-      const payload = { number:whatsappNumber };
+      const payload = { number: whatsappNumber };
       const { data } = await axios.post<ApiResponse>(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         payload,
         { headers: { "Content-Type": "application/json" } }
       );
-      console.log({data})
+      console.log({ data });
       // setUserData(data.activeUsersResponse);
       setFilteredData(data.activeUsersResponse);
       setLoading(false);
@@ -683,199 +679,199 @@ const DataAssigned: React.FC = () => {
     }
   };
 
-    const getColumnsForAllOrders = (orders: OrderData[]) => {
-      const columns = [
-        {
-          title: "Order ID",
-          dataIndex: "newOrderId",
-          key: "newOrderId",
-          render: (text: string, record: OrderData) => (
-            <strong className="text-bold">{record.newOrderId}</strong>
-          ),
+  const getColumnsForAllOrders = (orders: OrderData[]) => {
+    const columns = [
+      {
+        title: "Order ID",
+        dataIndex: "newOrderId",
+        key: "newOrderId",
+        render: (text: string, record: OrderData) => (
+          <strong className="text-bold">{record.newOrderId}</strong>
+        ),
+      },
+      {
+        title: "Date",
+        dataIndex: "orderDate",
+        key: "orderDate",
+        render: (text: string) => {
+          return new Date(text).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+          });
         },
-        {
-          title: "Date",
-          dataIndex: "orderDate",
-          key: "orderDate",
-          render: (text: string) => {
-            return new Date(text).toLocaleDateString("en-GB", {
+      },
+      {
+        title: "Order Items",
+        dataIndex: "orderItem",
+        key: "orderItems",
+        width: 150,
+        render: (_text: any, record: OrderData) => {
+          const items = record.orderItem || [];
+          return (
+            <div className="text-xs">
+              {items.map((item, index) => (
+                <div
+                  key={item.itemId}
+                  className={index !== 0 ? "mt-2 pt-2 border-t" : ""}
+                >
+                  <p>
+                    <strong>{item.productName}</strong>
+                  </p>
+                  {item.containerStatus && (
+                    <p className="text-green-500 text-bold text-sm ">
+                      <strong>{item.containerStatus}</strong>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
+        title: "Amount",
+        dataIndex: "grandTotal",
+        key: "grandTotal",
+        render: (text: number) => `₹${text.toFixed(2)}`,
+      },
+      {
+        title: "Status",
+        dataIndex: "orderStatus",
+        key: "orderStatus",
+        render: (_text: any, record: OrderData) => (
+          <div className="flex flex-col gap-2 items-center">
+            <Tag color={getStatusColor(record.orderStatus)}>
+              {getStatusText(record.orderStatus)}
+            </Tag>
+            <Tag color="green">{getPaymentTypeText(record.paymentType)}</Tag>
+          </div>
+        ),
+      },
+      {
+        title: "Actions",
+        key: "orderId",
+        width: 120,
+        align: "center" as const,
+        render: (record: OrderData) => (
+          <Space direction="vertical" size="small">
+            <Button
+              type="default"
+              size="small"
+              onClick={() => {
+                setRecord(selectedUser);
+                showCommentsModal(selectedUser);
+                setOrderId(record.orderId);
+              }}
+              className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
+            >
+              Comments
+            </Button>
+          </Space>
+        ),
+      },
+    ];
+
+    if (["1", "2", "3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
+      columns.splice(3, 0, {
+        title: "Expected Delivery",
+        dataIndex: "expectedDeliveryDate",
+        key: "expectedDeliveryDate",
+        render: (expectedDeliveryDate: string, record: OrderData) => (
+          <div>
+            <p>{expectedDeliveryDate}</p>
+            <p>{record.timeSlot}</p>
+            <p>{record.dayOfWeek}</p>
+          </div>
+        ),
+      });
+    }
+
+    // if (["3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
+    //   columns.splice(columns.length - 1, 0, {
+    //     title: "Delivery Boy Details",
+    //     dataIndex: "deliveryBoyName", // Add dataIndex to fix type error
+    //     key: "deliveryBoyDetails",
+    //     render: (text: string, record: OrderData) => (
+    //       <div>
+    //         <p>
+    //           <strong>Name:</strong> {record.deliveryBoyName || "N/A"}
+    //         </p>
+    //         <p>
+    //           <strong>Mobile:</strong> {record.deliveryBoyMobile || "N/A"}
+    //         </p>
+    //       </div>
+    //     ),
+    //   });
+    // }
+
+    if (
+      ["1", "2", "3", "4", "PickedUp"].includes(userOrders[0]?.orderStatus) &&
+      userOrders[0]?.orderHistory?.length
+    ) {
+      columns.splice(columns.length - 1, 0, {
+        title: "Order Timeline",
+        dataIndex: "orderHistory", // Add dataIndex to fix type error
+        key: "orderTimeline",
+        width: 130,
+        render: (_text: any, record: OrderData) => {
+          const history = record.orderHistory || [];
+
+          // Find the relevant dates from order history
+          const findDate = (status: string) => {
+            const entry = history.find((h) => h.status === status);
+            if (!entry) return null;
+
+            // Determine which date field to use based on status
+            if (status === "1") return entry.placedDate;
+            if (status === "2") return entry.acceptedDate;
+            if (status === "3") return entry.assignedDate;
+            if (status === "PickedUp") return entry.pickUpDate;
+            if (status === "4") return entry.deliveredDate;
+            return null;
+          };
+
+          // Format date to show only time if it's today
+          const formatDate = (dateStr: string | null) => {
+            if (!dateStr) return "N/A";
+            const date = new Date(dateStr);
+            return date.toLocaleString("en-GB", {
               day: "2-digit",
               month: "2-digit",
               year: "2-digit",
             });
-          },
-        },
-        {
-          title: "Order Items",
-          dataIndex: "orderItem",
-          key: "orderItems",
-          width: 150,
-          render: (_text: any, record: OrderData) => {
-            const items = record.orderItem || [];
-            return (
-              <div className="text-xs">
-                {items.map((item, index) => (
-                  <div
-                    key={item.itemId}
-                    className={index !== 0 ? "mt-2 pt-2 border-t" : ""}
-                  >
-                    <p>
-                      <strong>{item.productName}</strong>
-                    </p>
-                    {item.containerStatus && (
-                      <p className="text-green-500 text-bold text-sm ">
-                        <strong>{item.containerStatus}</strong>
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          },
-        },
-        {
-          title: "Amount",
-          dataIndex: "grandTotal",
-          key: "grandTotal",
-          render: (text: number) => `₹${text.toFixed(2)}`,
-        },
-        {
-          title: "Status",
-          dataIndex: "orderStatus",
-          key: "orderStatus",
-          render: (_text: any, record: OrderData) => (
-            <div className="flex flex-col gap-2 items-center">
-              <Tag color={getStatusColor(record.orderStatus)}>
-                {getStatusText(record.orderStatus)}
-              </Tag>
-              <Tag color="green">{getPaymentTypeText(record.paymentType)}</Tag>
+          };
+
+          return (
+            <div className="text-xs">
+              <p>
+                <strong>Placed:</strong> {formatDate(findDate("1"))}
+              </p>
+              <p>
+                <strong>Accepted:</strong> {formatDate(findDate("2"))}
+              </p>
+              <p>
+                <strong>Assigned:</strong> {formatDate(findDate("3"))}
+              </p>
+              {record.orderStatus === "PickedUp" ||
+              record.orderStatus === "4" ? (
+                <p>
+                  <strong>Picked Up:</strong> {formatDate(findDate("PickedUp"))}
+                </p>
+              ) : null}
+              {record.orderStatus === "4" ? (
+                <p>
+                  <strong>Delivered:</strong> {formatDate(findDate("4"))}
+                </p>
+              ) : null}
             </div>
-          ),
+          );
         },
-        {
-          title: "Actions",
-          key: "orderId",
-          width: 120,
-          align: "center" as const,
-          render: (record: OrderData) => (
-            <Space direction="vertical" size="small">
-              <Button
-                type="default"
-                size="small"
-                onClick={() => {
-                  setRecord(selectedUser);
-                  showCommentsModal(selectedUser);
-                  setOrderId(record.orderId);
-                }}
-                className="w-full rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
-              >
-                Comments
-              </Button>
-            </Space>
-          ),
-        },
-      ];
-  
-      if (["1", "2", "3","PickedUp"].includes(userOrders[0]?.orderStatus)) {
-        columns.splice(3, 0, {
-          title: "Expected Delivery",
-          dataIndex: "expectedDeliveryDate",
-          key: "expectedDeliveryDate",
-          render: (expectedDeliveryDate: string, record: OrderData) => (
-            <div>
-              <p>{expectedDeliveryDate}</p>
-              <p>{record.timeSlot}</p>
-              <p>{record.dayOfWeek}</p>
-            </div>
-          ),
-        });
-      }
-  
-      // if (["3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
-      //   columns.splice(columns.length - 1, 0, {
-      //     title: "Delivery Boy Details",
-      //     dataIndex: "deliveryBoyName", // Add dataIndex to fix type error
-      //     key: "deliveryBoyDetails",
-      //     render: (text: string, record: OrderData) => (
-      //       <div>
-      //         <p>
-      //           <strong>Name:</strong> {record.deliveryBoyName || "N/A"}
-      //         </p>
-      //         <p>
-      //           <strong>Mobile:</strong> {record.deliveryBoyMobile || "N/A"}
-      //         </p>
-      //       </div>
-      //     ),
-      //   });
-      // }
-  
-      if (
-        ["1", "2", "3", "4", "PickedUp"].includes(userOrders[0]?.orderStatus) &&
-        userOrders[0]?.orderHistory?.length
-      ) {
-        columns.splice(columns.length - 1, 0, {
-          title: "Order Timeline",
-          dataIndex: "orderHistory", // Add dataIndex to fix type error
-          key: "orderTimeline",
-          width: 130,
-          render: (_text: any, record: OrderData) => {
-            const history = record.orderHistory || [];
-  
-            // Find the relevant dates from order history
-            const findDate = (status: string) => {
-              const entry = history.find((h) => h.status === status);
-              if (!entry) return null;
-  
-              // Determine which date field to use based on status
-              if (status === "1") return entry.placedDate;
-              if (status === "2") return entry.acceptedDate;
-              if (status === "3") return entry.assignedDate;
-              if (status === "PickedUp") return entry.pickUpDate;
-              if (status === "4") return entry.deliveredDate;
-              return null;
-            };
-  
-            // Format date to show only time if it's today
-            const formatDate = (dateStr: string | null) => {
-              if (!dateStr) return "N/A";
-              const date = new Date(dateStr);
-              return date.toLocaleString("en-GB", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "2-digit",
-              });
-            };
-  
-            return (
-              <div className="text-xs">
-                <p>
-                  <strong>Placed:</strong> {formatDate(findDate("1"))}
-                </p>
-                <p>
-                  <strong>Accepted:</strong> {formatDate(findDate("2"))}
-                </p>
-                <p>
-                  <strong>Assigned:</strong> {formatDate(findDate("3"))}
-                </p>
-                {record.orderStatus === "PickedUp" ||
-                record.orderStatus === "4" ? (
-                  <p>
-                    <strong>Picked Up:</strong> {formatDate(findDate("PickedUp"))}
-                  </p>
-                ) : null}
-                {record.orderStatus === "4" ? (
-                  <p>
-                    <strong>Delivered:</strong> {formatDate(findDate("4"))}
-                  </p>
-                ) : null}
-              </div>
-            );
-          },
-        });
-      }
-  
-      return columns;
-    };
+      });
+    }
+
+    return columns;
+  };
 
   return (
     <Card className="shadow-lg rounded-lg border-0">
@@ -901,7 +897,7 @@ const DataAssigned: React.FC = () => {
         <div className="flex justify-center items-center h-64">
           <Spin size="large" tip="Loading your assigned users..." />
         </div>
-      ) : filteredData!=null? (
+      ) : filteredData != null ? (
         <>
           <div className="overflow-x-auto">
             <Table
@@ -1071,183 +1067,183 @@ const DataAssigned: React.FC = () => {
           </div>
         </div>
       </Modal>
-       <Modal
-              zIndex={100}
-              title={
-                <span className="text-blue-500 text-xl font-semibold">
-                  Order Details
-                </span>
-              }
-              open={orderDetailsVisible}
-              onCancel={() => {
-                setOrderDetailsVisible(false);
-                setSelectedUser(null);
-                setUserOrders([]);
-                setSelectedOrderId(null);
-              }}
-              footer={[
-                <Button
-                  key="close"
-                  onClick={() => {
-                    setOrderDetailsVisible(false);
-                    setSelectedUser(null);
-                  }}
-                  className="bg-red-500 text-white border-none hover:bg-red-600"
-                >
-                  Close
-                </Button>,
-              ]}
-              width={800}
-              className="rounded-lg overflow-hidden"
-            >
-              {loader ? (
-                <div className="text-center p-8 bg-gray-100 rounded-lg">
-                  <Spin size="large" className="text-blue-500" />
-                  <p className="text-gray-600 mt-2">Loading order details...</p>
-                </div>
-              ) : (
-                <>
-                  {selectedUser && (
+      <Modal
+        zIndex={100}
+        title={
+          <span className="text-blue-500 text-xl font-semibold">
+            Order Details
+          </span>
+        }
+        open={orderDetailsVisible}
+        onCancel={() => {
+          setOrderDetailsVisible(false);
+          setSelectedUser(null);
+          setUserOrders([]);
+          setSelectedOrderId(null);
+        }}
+        footer={[
+          <Button
+            key="close"
+            onClick={() => {
+              setOrderDetailsVisible(false);
+              setSelectedUser(null);
+            }}
+            className="bg-red-500 text-white border-none hover:bg-red-600"
+          >
+            Close
+          </Button>,
+        ]}
+        width={800}
+        className="rounded-lg overflow-hidden"
+      >
+        {loader ? (
+          <div className="text-center p-8 bg-gray-100 rounded-lg">
+            <Spin size="large" className="text-blue-500" />
+            <p className="text-gray-600 mt-2">Loading order details...</p>
+          </div>
+        ) : (
+          <>
+            {selectedUser && (
+              <Row gutter={[16, 16]}>
+                <Col span={24}>
+                  <Card
+                    title={
+                      <span className="text-coldblue font-semibold">
+                        Customer Information
+                      </span>
+                    }
+                    className="rounded-lg shadow-md bg-white"
+                  >
                     <Row gutter={[16, 16]}>
-                      <Col span={24}>
-                        <Card
-                          title={
-                            <span className="text-coldblue font-semibold">
-                              Customer Information
-                            </span>
-                          }
-                          className="rounded-lg shadow-md bg-white"
-                        >
-                          <Row gutter={[16, 16]}>
-                            <Col span={12}>
-                              <p className="text-gray-600">
-                                <strong className="text-indigo-700">Name:</strong>{" "}
-                                {selectedUser.userName || "N/A"}
-                              </p>
-                              <p className="text-gray-600">
-                                <strong className="text-indigo-700">Email:</strong>{" "}
-                                {selectedUser.email || "N/A"}
-                              </p>
-                              <p className="text-gray-600">
-                                <strong className="text-indigo-700">Phone:</strong>{" "}
-                                {selectedUser.whastappNumber ||
-                                  selectedUser.mobileNumber ||
-                                  "N/A"}
-                              </p>
-                              <p className="text-gray-600">
-                                <strong className="text-indigo-700">User ID:</strong>{" "}
-                                {selectedUser.id || "N/A"}
-                              </p>
-                              <p className="text-gray-600">
-                                <strong className="text-indigo-700">Address:</strong>{" "}
-                                {selectedUser.address || "N/A"}
-                              </p>
-                            </Col>
-                            <Col span={12}>
-                              <div className="bg-blue-50 p-4 rounded-lg h-full flex flex-col justify-center">
-                                <p className="text-gray-600 mb-3">
-                                  <strong className="text-indigo-700">
-                                    User Status:
-                                  </strong>{" "}
-                                  <span
-                                    className={`font-bold ${
-                                      hasOrders ? "text-green-500" : "text-red-500"
-                                    }`}
-                                  >
-                                    {userStatus}
-                                  </span>
-                                </p>
-                                <p className="text-gray-600 mb-3">
-                                  <strong className="text-indigo-700">
-                                    Total Orders:
-                                  </strong>{" "}
-                                  <span className="font-bold text-blue-600">
-                                    {userOrders.length}
-                                  </span>
-                                </p>
-                                <p className="text-gray-600 mb-3">
-                                  <strong className="text-indigo-700">
-                                    Delivered Orders:
-                                  </strong>{" "}
-                                  <span className="font-bold text-blue-600">
-                                    {deliveredOrdersCount}
-                                  </span>
-                                </p>
-                                <p className="text-gray-600 mb-3">
-                                  <strong className="text-indigo-700">
-                                    User Type:
-                                  </strong>{" "}
-                                  <span className="font-bold text-blue-600">
-                                    {selectedUser.userType || "N/A"}
-                                  </span>
-                                </p>
-                                <p className="text-gray-600 mb-2">
-                                  <strong className="text-indigo-700">
-                                    Activity Status:
-                                  </strong>{" "}
-                                  <span
-                                    className={`font-bold ${
-                                      isActiveUser ? "text-green-500" : "text-red-500"
-                                    }`}
-                                  >
-                                    {activityStatus}
-                                  </span>
-                                </p>
-                                <p
-                                  className={`text-xs ${
-                                    activityMessage ===
-                                    "User placed order within last six months"
-                                      ? "text-gray-500"
-                                      : "text-red-500"
-                                  }`}
-                                >
-                                  {activityMessage}
-                                </p>
-                              </div>
-                            </Col>
-                          </Row>
-                        </Card>
+                      <Col span={12}>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Name:</strong>{" "}
+                          {selectedUser.userName || "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Email:</strong>{" "}
+                          {selectedUser.email || "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Phone:</strong>{" "}
+                          {selectedUser.whastappNumber ||
+                            selectedUser.mobileNumber ||
+                            "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">User ID:</strong>{" "}
+                          {selectedUser.id || "N/A"}
+                        </p>
+                        <p className="text-gray-600">
+                          <strong className="text-indigo-700">Address:</strong>{" "}
+                          {selectedUser.address || "N/A"}
+                        </p>
                       </Col>
-      
-                      <Col span={24}>
-                        <Card
-                          title={
-                            <span className="text-blue-600 font-semibold">
-                              Orders History
+                      <Col span={12}>
+                        <div className="bg-blue-50 p-4 rounded-lg h-full flex flex-col justify-center">
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              User Status:
+                            </strong>{" "}
+                            <span
+                              className={`font-bold ${
+                                hasOrders ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {userStatus}
                             </span>
-                          }
-                          extra={
-                            <Text type="secondary" className="text-purple-500">
-                              {userOrders.length} orders found
-                            </Text>
-                          }
-                          className="rounded-lg shadow-md bg-white"
-                        >
-                          <Table
-                            dataSource={userOrders}
-                            columns={getColumnsForAllOrders(userOrders)}
-                            rowKey="orderId"
-                            pagination={false}
-                            size="small"
-                            scroll={{ x: "max-content" }}
-                            rowClassName={(_, index) =>
-                              index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            }
-                            locale={{
-                              emptyText: (
-                                <span className="text-gray-500">
-                                  No orders found for this user.
-                                </span>
-                              ),
-                            }}
-                          />
-                        </Card>
+                          </p>
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              Total Orders:
+                            </strong>{" "}
+                            <span className="font-bold text-blue-600">
+                              {userOrders.length}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              Delivered Orders:
+                            </strong>{" "}
+                            <span className="font-bold text-blue-600">
+                              {deliveredOrdersCount}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-3">
+                            <strong className="text-indigo-700">
+                              User Type:
+                            </strong>{" "}
+                            <span className="font-bold text-blue-600">
+                              {selectedUser.userType || "N/A"}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mb-2">
+                            <strong className="text-indigo-700">
+                              Activity Status:
+                            </strong>{" "}
+                            <span
+                              className={`font-bold ${
+                                isActiveUser ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {activityStatus}
+                            </span>
+                          </p>
+                          <p
+                            className={`text-xs ${
+                              activityMessage ===
+                              "User placed order within last six months"
+                                ? "text-gray-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {activityMessage}
+                          </p>
+                        </div>
                       </Col>
                     </Row>
-                  )}
-                </>
-              )}
-            </Modal>
+                  </Card>
+                </Col>
+
+                <Col span={24}>
+                  <Card
+                    title={
+                      <span className="text-blue-600 font-semibold">
+                        Orders History
+                      </span>
+                    }
+                    extra={
+                      <Text type="secondary" className="text-purple-500">
+                        {userOrders.length} orders found
+                      </Text>
+                    }
+                    className="rounded-lg shadow-md bg-white"
+                  >
+                    <Table
+                      dataSource={userOrders}
+                      columns={getColumnsForAllOrders(userOrders)}
+                      rowKey="orderId"
+                      pagination={false}
+                      size="small"
+                      scroll={{ x: "max-content" }}
+                      rowClassName={(_, index) =>
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      }
+                      locale={{
+                        emptyText: (
+                          <span className="text-gray-500">
+                            No orders found for this user.
+                          </span>
+                        ),
+                      }}
+                    />
+                  </Card>
+                </Col>
+              </Row>
+            )}
+          </>
+        )}
+      </Modal>
     </Card>
   );
 };

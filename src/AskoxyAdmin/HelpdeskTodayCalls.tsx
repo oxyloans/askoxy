@@ -129,7 +129,7 @@ const CallerHistoryPage: React.FC = () => {
         const transformed: UserData = {
           userId: user.userId,
           fullName: `${user.userName || ""} ${user.lastName || ""}`.trim(),
-          mobileNumber: user.mobileNumber || "",
+          mobileNumber: user.mobileNumber || user.whastappNumber || "",
           userType: user.userType || "N/A",
           address: fullAddress === ", ," ? "No" : fullAddress,
         };
@@ -154,7 +154,6 @@ const CallerHistoryPage: React.FC = () => {
       render: (userId: string) => {
         const isLoading = loadingRows[userId];
         const details = userDetails[userId];
-
         return (
           <div>
             <div className="flex items-center">

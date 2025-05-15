@@ -78,7 +78,7 @@ const Login: React.FC = () => {
           icon: <LoginOutlined />,
           className: "custom-message-success",
         });
-        if (primaryType === "SELLER") {
+        if (primaryType === "HELPDESKSUPERADMIN") {
           navigate("/admn/helpdashboard");
         } else if (primaryType === "HELPDESKADMIN") {
           navigate("/admn/dashboard");
@@ -89,7 +89,6 @@ const Login: React.FC = () => {
         setError(response.data.errorMessage || "Invalid email or password");
       }
     } catch (error: any) {
-      // Handle network or server errors
       setError(
         error.response?.data?.message ||
           "Failed to login. Please check your connection and try again."

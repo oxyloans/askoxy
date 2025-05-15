@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { DatePicker, message, Select, Table } from "antd";
+import { DatePicker, message, Select, Table, Typography } from "antd";
 import {
   ShoppingBag,
   ClipboardList,
@@ -12,6 +12,7 @@ import {
   Calendar,
   BarChart3,
   ArrowUpDown,
+  Download,
 } from "lucide-react";
 import BASE_URL from "../Config";
 import dayjs from "dayjs";
@@ -24,8 +25,25 @@ interface OrderCountData {
   orderDeliveredCount: number;
 }
 
-interface WeeklyDeliveryData {
-  orderDeliveredCount: number;
+interface OrderItem {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  itemQty: number;
+  price: number;
+  weight: number;
+}
+
+interface WeeklyDeliveryItem {
+  orderId: string;
+  paymentType: number;
+  orderStatus: string;
+  grandTotal: number;
+  customerName: string;
+  mobileNumber: string;
+  whatsappNumber: string;
+  orderItems: OrderItem[];
+  deliveryDate: string;
 }
 
 interface MonthlySalesItem {
@@ -39,8 +57,9 @@ const { Option } = Select;
 
 const OrderReport: React.FC = () => {
   const [orderData, setOrderData] = useState<OrderCountData | null>(null);
-  const [weeklyDeliveryData, setWeeklyDeliveryData] =
-    useState<WeeklyDeliveryData | null>(null);
+  const [weeklyDeliveryData, setWeeklyDeliveryData] = useState<
+    WeeklyDeliveryItem[]
+  >([]);
   const [monthlySalesData, setMonthlySalesData] = useState<MonthlySalesItem[]>(
     []
   );
@@ -51,6 +70,10 @@ const OrderReport: React.FC = () => {
   const [weightFilter, setWeightFilter] = useState("all");
   const [startDate, setStartDate] = useState(dayjs().startOf("month"));
   const [endDate, setEndDate] = useState(dayjs());
+  const [weeklyStartDate, setWeeklyStartDate] = useState(
+    dayjs().subtract(7, "day")
+  );
+  const [weeklyEndDate, setWeeklyEndDate] = useState(dayjs());
 
   const fetchOrderData = async () => {
     setLoading(true);
@@ -74,14 +97,16 @@ const OrderReport: React.FC = () => {
   const fetchWeeklyDeliveryData = async () => {
     try {
       setWeeklyLoading(true);
+      const formattedStartDate = weeklyStartDate.format("YYYY-MM-DD");
+      const formattedEndDate = weeklyEndDate.format("YYYY-MM-DD");
       const response = await axios.get(
-        `${BASE_URL}/order-service/notification_to_dev_team_weekly`
+        `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${formattedEndDate}&startDate=${formattedStartDate}`
       );
       setWeeklyDeliveryData(response.data);
     } catch (err) {
       console.error("Error fetching weekly data:", err);
       message.error("Failed to load weekly delivery data.");
-      setWeeklyDeliveryData(null);
+      setWeeklyDeliveryData([]);
     } finally {
       setWeeklyLoading(false);
     }
@@ -218,6 +243,109 @@ const OrderReport: React.FC = () => {
       ),
     },
   ];
+  const weeklyColumns = [
+    {
+      title: "Order ID",
+      dataIndex: "orderId",
+      key: "orderId",
+      width: 120,
+      render: (text: string, record: WeeklyDeliveryItem) => (
+        <div className="flex flex-col">
+          <span className="text-base font-medium text-gray-900">
+            #{text.slice(-4)}
+          </span>
+          <span
+            className={` w-fit text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
+              record.paymentType === 1
+                ? "bg-green-100 text-green-700"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {record.paymentType === 2 ? "Online" : "COD"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Customer",
+      dataIndex: "customerName",
+      key: "customerName",
+      width: 180, // Fixed width for laptop view
+      render: (name: string, record: WeeklyDeliveryItem) => (
+        <div className="text-sm">
+          <div
+            className={`font-medium ${
+              name.trim() ? "text-gray-900" : "text-gray-400"
+            }`}
+          >
+            {name.trim() || "No name"}
+          </div>
+
+          <div className="text-gray-500">
+            {record.mobileNumber || record.whatsappNumber || "No phone"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Order Items",
+      dataIndex: "orderItems",
+      key: "orderItems",
+      width: 300, // Fixed width for laptop view
+      render: (items: OrderItem[]) => (
+        <div>
+          {items.map((item, index) => (
+            <div key={index} className="flex flex-col mb-2 last:mb-0">
+              <span
+                className="text-green-700 font-semibold text-sm truncate max-w-xs"
+                title={item.itemName}
+              >
+                {item.itemName || "Unnamed Item"}
+              </span>
+              <div className="flex gap-2 text-xs text-gray-700">
+                {item.price && (
+                  <span className="text-red-600 font-medium">
+                    ₹{item.price}
+                  </span>
+                )}
+                {item.quantity && <span>Qty: {item.quantity}</span>}
+                {item.weight && <span>Weight: {item.weight}kgs</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Total",
+      dataIndex: "grandTotal",
+      key: "grandTotal",
+      width: 100, // Fixed width for laptop view
+      render: (total: number) => (
+        <span className="text-base font-bold text-gray-900">
+          ₹{Math.ceil(total)}
+        </span>
+      ),
+    },
+    {
+      title: "Delivery Date",
+      dataIndex: "deliveryDate",
+      key: "deliveryDate",
+      width: 140, // Fixed width for laptop view
+      render: (date: string) => {
+        const formattedDate = new Date(date).toLocaleDateString("en-IN", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+        return (
+          <span className="text-sm font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded">
+            {formattedDate}
+          </span>
+        );
+      },
+    },
+  ];
 
   if (loading && !orderData) {
     return (
@@ -269,7 +397,8 @@ const OrderReport: React.FC = () => {
       borderColor: "border-blue-200",
     },
   ];
-  const downloadCSV = (): void => {
+
+  const downloadMonthlyCSV = (): void => {
     if (!sortedFilteredData || sortedFilteredData.length === 0) return;
 
     const header = ["Rank", "Item Name", "Weight (kg)", "Quantity Sold"];
@@ -296,9 +425,54 @@ const OrderReport: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  const downloadWeeklyCSV = (): void => {
+    if (!weeklyDeliveryData || weeklyDeliveryData.length === 0) return;
+
+    const header = [
+      "Order ID",
+      "Payment Type",
+      "Customer Name",
+      "Phone Number",
+      "Item Name",
+      "Quantity",
+      "Price",
+      "Weight (kg)",
+      "Grand Total",
+      "Delivery Date",
+    ];
+
+    const rows = weeklyDeliveryData.flatMap((order) =>
+      order.orderItems.map((item) => [
+        `#${order.orderId.slice(-4)}`,
+        order.paymentType === 2 ? "Online" : "Cash on Delivery",
+        order.customerName.trim() || "No name",
+        order.mobileNumber || order.whatsappNumber || "N/A",
+        item.itemName,
+        item.quantity,
+        item.price,
+        `${item.weight} kg`,
+        Math.ceil(order.grandTotal),
+        new Date(order.deliveryDate).toLocaleDateString("en-IN"),
+      ])
+    );
+
+    const csvContent = [header, ...rows]
+      .map((row) => row.map((field) => `"${field}"`).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Weekly_Delivery_Report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-800">
             Today Orders Report
@@ -331,11 +505,58 @@ const OrderReport: React.FC = () => {
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
-              Weekly Delivery Report
+              Delivered Orders Report
             </h2>
             <div className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-blue-600" />
-              <span className="text-gray-600">Last 7 days</span>
+              <span className="text-gray-600">Delivered Orders</span>
+            </div>
+          </div>
+
+          {/* Weekly Report Date Range Selector */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
+            {/* Start Date */}
+            <DatePicker
+              value={weeklyStartDate}
+              format="DD/MM/YYYY"
+              onChange={(date) => setWeeklyStartDate(date)}
+              allowClear={false}
+              placeholder="Start Date"
+              className="w-full sm:w-auto"
+            />
+
+            {/* End Date */}
+            <DatePicker
+              value={weeklyEndDate}
+              format="DD/MM/YYYY"
+              onChange={(date) => setWeeklyEndDate(date)}
+              allowClear={false}
+              placeholder="End Date"
+              className="w-full sm:w-auto"
+            />
+
+            {/* Get Data Button */}
+            <button
+              onClick={fetchWeeklyDeliveryData}
+              className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            >
+              Get Data
+            </button>
+
+            {/* Push Download CSV to far right */}
+            <div className="flex-grow flex justify-end">
+              <button
+                onClick={downloadWeeklyCSV}
+                disabled={weeklyDeliveryData.length === 0}
+                className={`flex items-center py-2 px-4 rounded-md ${
+                  weeklyDeliveryData.length === 0
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700"
+                } transition`}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download CSV
+              </button>
             </div>
           </div>
 
@@ -343,21 +564,51 @@ const OrderReport: React.FC = () => {
             <div className="flex items-center justify-center p-12">
               <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-blue-600"></div>
             </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-md border border-blue-200 p-6 hover:shadow-lg transition-all duration-300">
-              <div className="flex items-center">
-                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mr-6">
-                  <PackageCheck className="w-8 h-8 text-blue-600" />
+          ) : weeklyDeliveryData.length > 0 ? (
+            <div className="bg-white rounded-lg shadow-md border border-blue-200 overflow-x-auto">
+              <div className="p-4 bg-blue-50 border-t border-blue-100 flex justify-between items-center">
+                <div className="text-sm text-blue-800">
+                  <span className="font-bold">{weeklyDeliveryData.length}</span>{" "}
+                  orders delivered between{" "}
+                  <span className="font-medium">
+                    {weeklyStartDate.format("MMM D, YYYY")}
+                  </span>{" "}
+                  and{" "}
+                  <span className="font-medium">
+                    {weeklyEndDate.format("MMM D, YYYY")}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-lg font-medium text-blue-800 mb-1">
-                    Total Weekly Deliveries
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900">
-                    {weeklyDeliveryData?.orderDeliveredCount || 0}
-                  </p>
+                <div className="text-sm text-green-800">
+                  Total value:{" "}
+                  <span className="text-lg font-bold">
+                    ₹
+                    {Math.ceil(
+                      weeklyDeliveryData.reduce(
+                        (sum, order) => sum + order.grandTotal,
+                        0
+                      )
+                    ).toLocaleString("en-IN")}
+                  </span>
                 </div>
               </div>
+              <Table
+                dataSource={weeklyDeliveryData}
+                columns={weeklyColumns}
+                pagination={{ pageSize: 50, showSizeChanger: false }}
+                className="w-full"
+                rowKey="orderId"
+                scroll={{ x: "max-content" }}
+              />
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-md border border-blue-200 p-12 text-center">
+              <PackageCheck className="w-16 h-16 text-blue-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">
+                No delivery data available for the selected date range.
+              </p>
+              <p className="text-gray-400">
+                Try selecting a different date range or check back later.
+              </p>
             </div>
           )}
         </div>
@@ -440,9 +691,10 @@ const OrderReport: React.FC = () => {
             {/* Push Download CSV to far right */}
             <div className="flex-grow flex justify-end">
               <button
-                onClick={downloadCSV}
-                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+                onClick={downloadMonthlyCSV}
+                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center"
               >
+                <Download className="w-4 h-4 mr-2" />
                 Download CSV
               </button>
             </div>

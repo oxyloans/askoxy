@@ -16,6 +16,7 @@ import {
   FaComments,
   FaConciergeBell,
   FaPhone,
+  FaRegAddressCard,
 } from "react-icons/fa";
 import { RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
@@ -36,6 +37,7 @@ const Sidebar: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const primaryType = localStorage.getItem("primaryType");
 
   const handleLogout = () => {
     localStorage.removeItem("primaryType");
@@ -45,37 +47,40 @@ const Sidebar: React.FC = () => {
     navigate("/admin");
   };
 
+  const title =
+    primaryType === "HELPDESKSUPERADMIN" ? "Interested Users" : "Dashboard";
+
   const allSidebarItems: SidebarItem[] = [
     {
       title: "HelpDesk Dashboard",
       icon: <FaHeadset className="text-green-400" />,
       link: "/admn/helpdashboard",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN"],
     },
     {
       title: "HelpDesk Team",
       icon: <FaConciergeBell className="text-pink-400" />,
       link: "/admn/helpDeskUsers",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN"],
     },
     {
       title: "Orders Report",
       icon: <FaFileAlt className="text-blue-400" />,
       link: "/admn/orderReport",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN"],
     },
     {
-      title: "Interested Users",
+      title: title,
       icon: <FaTachometerAlt className="text-blue-400" />,
       link: "/admn/dashboard",
-      roles: ["SELLER", "HELPDESKADMIN"],
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
 
     {
       title: "Registered Users",
       icon: <FaUser className="text-purple-400" />,
       link: "/admn/registeredUsers",
-      roles: ["SELLER", "HELPDESKADMIN"],
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
     {
       title: "Assigned Data",
@@ -84,10 +89,10 @@ const Sidebar: React.FC = () => {
       roles: ["HELPDESKADMIN"],
     },
     {
-      title: "All Assigned Users",
-      icon: <FaClipboardList className="text-yellow-400" />,
+      title: "All AskOxy Users",
+      icon: <FaRegAddressCard className="text-green-400" />,
       link: "/admn/dataAssigned",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
     {
       title: "Referred Data",
@@ -100,25 +105,25 @@ const Sidebar: React.FC = () => {
       title: "Add Service / Product",
       icon: <FaPlusCircle className="text-green-400" />,
       link: "/admn/campaignsadd",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN"],
     },
     {
       title: "All Service Details",
       icon: <RiListUnordered className="text-purple-400" />,
       link: "/admn/allcampaignsdetails",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN"],
     },
     {
       title: "User Feedback",
       icon: <FaComments className="text-green-400" />,
       link: "/admn/feedback",
-      roles: ["SELLER"],
+      roles: ["HELPDESKSUPERADMIN"],
     },
     {
       title: "All Queries",
       icon: <FaDatabase className="text-yellow-400" />,
       link: "/admn/allqueries",
-      roles: ["SELLER", "HELPDESKADMIN"],
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
     {
       title: "My Calls",
@@ -130,18 +135,16 @@ const Sidebar: React.FC = () => {
       title: "Logout",
       icon: <FaSignOutAlt className="text-red-400" />,
       link: "/admin",
-      roles: ["SELLER", "HELPDESKADMIN"],
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
       onClick: handleLogout,
     },
   ];
 
   useEffect(() => {
-    const primaryType = localStorage.getItem("primaryType");
-
     if (
       !primaryType ||
       primaryType === undefined ||
-      (primaryType !== "SELLER" && primaryType !== "HELPDESKADMIN")
+      (primaryType !== "HELPDESKSUPERADMIN" && primaryType !== "HELPDESKADMIN")
     ) {
       message.info("Your not Supposed to Login to the SuperAdmin");
       navigate("/admin");
@@ -151,7 +154,26 @@ const Sidebar: React.FC = () => {
     setUserRole(primaryType);
   }, [navigate]);
 
-  // Force reset collapsed state when screen size changes
+  useEffect(() => {
+    const checkAccessToken = () => {
+      const uniquId = localStorage.getItem("uniquId");
+
+      if (!uniquId) {
+        message.info("Your session has expired. Please log in again.");
+        navigate("/admin");
+        localStorage.clear();
+      }
+    };
+
+    checkAccessToken();
+
+    window.addEventListener("focus", checkAccessToken);
+
+    return () => {
+      window.removeEventListener("focus", checkAccessToken);
+    };
+  }, [navigate]);
+
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -220,9 +242,8 @@ const Sidebar: React.FC = () => {
           boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
         }}
       >
-        {/* Logo Area */}
         <div className="flex flex-col items-center justify-center h-16 border-b border-gray-700 bg-gray-900">
-          {/* ASKOXY.AI text that adapts to collapsed state */}
+         
           <div className="text-center font-bold">
             <span className="text-gray-50 text-xl">
               {collapsed && !isMobileOpen ? "OXY" : "ASKOXY.AI"}
@@ -251,9 +272,13 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="mt-2 px-2">
-          <ul className="space-y-0.5">
+          <ul
+            className="space-y-0.5 overflow-y-auto pr-1 overflow-x-hidden
+               max-h-[calc(100vh-100px)] 
+               sm:max-h-[calc(100vh-120px)] 
+               md:max-h-[calc(100vh-140px)]"
+          >
             {visibleItems.map((item, index) => (
               <li key={index}>
                 <Link
@@ -261,8 +286,8 @@ const Sidebar: React.FC = () => {
                   className={`flex items-center px-3 py-2 rounded-lg transition-colors relative group text-sm
             ${
               isActive(item.link)
-                ? "bg-gray-900 text-white"
-                : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                ? "bg-blue-700 text-white"
+                : "text-gray-300 hover:bg-gray-50 hover:text-gray-800"
             }`}
                   onClick={(e) => {
                     if (item.onClick) {
@@ -273,7 +298,7 @@ const Sidebar: React.FC = () => {
                     }
                   }}
                 >
-                  <span className="text-lg">{item.icon}</span>
+                  <span className={`text-lg ${collapsed?"ml-2":"ml-0"}`}>{item.icon}</span>
                   {collapsed && !isMobileOpen ? (
                     <span className="absolute left-full ml-2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 pointer-events-none">
                       {item.title}
@@ -289,9 +314,8 @@ const Sidebar: React.FC = () => {
           </ul>
         </nav>
 
-        {/* Footer */}
         {(!collapsed || isMobileOpen) && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white">
+          <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-white bg-gray-800 z-50">
             <div className="flex items-center px-2 py-2 text-sm text-white">
               <FaUserCircle className="mr-2" />
               {/* <span>{userRole === "SELLER" ? "Admin" : "Helpdesk"} User</span> */}

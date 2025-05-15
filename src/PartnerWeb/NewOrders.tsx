@@ -17,6 +17,7 @@ import {
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  EnvironmentOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
   FileSearchOutlined,
@@ -53,6 +54,7 @@ interface Address {
   address?: string;
   landMark?: string;
   pincode?: string;
+  googleMapLink: string;
 }
 type DeliveryBoy = {
   userId: string;
@@ -356,17 +358,34 @@ const NewOrders: React.FC = () => {
                 bordered={false}
               >
                 <div className="flex flex-col space-y-4">
-                  <div className="flex justify-between items-center">
-                    <Typography.Text strong>
-                      OrderId : #
-                      <span className="text-purple-900 text-xl">
-                        {order.uniqueId}
-                      </span>
-                      <Tag color="blue" className="w-fit ml-2 text-xs">
-                        {order.userType}
-                      </Tag>
-                    </Typography.Text>
+                  <div className="flex justify-between items-start">
+                    {/* Left side: Order ID and User Type */}
+                    <div>
+                      <Typography.Text strong>
+                        OrderId : #
+                        <span className="text-purple-900 text-xl">
+                          {order.uniqueId}
+                        </span>
+                        <Tag color="blue" className="w-fit ml-2 text-xs">
+                          {order.userType}
+                        </Tag>
+                      </Typography.Text>
+                    </div>
+
+                    {/* Right side: Location button */}
+                    {order?.orderAddress?.googleMapLink && (
+                      <a
+                        href={order.orderAddress.googleMapLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
+                        title="View Location"
+                      >
+                        <EnvironmentOutlined style={{ fontSize: "20px" }} />
+                      </a>
+                    )}
                   </div>
+
                   <div className="flex flex-row justify-between">
                     {(status === "1" || status === "2") && (
                       <button
@@ -416,11 +435,10 @@ const NewOrders: React.FC = () => {
                       {new Intl.NumberFormat("en-IN", {
                         style: "currency",
                         currency: "INR",
-                      }).format(order.subTotal)}
+                      }).format(order.grandTotal)}
                     </Typography.Text>
                   </div>
 
-                  {/* Delivery Address */}
                   <div className="flex flex-col space-y-2">
                     <Typography.Text strong>Delivery Address</Typography.Text>
                     <div className="bg-gray-50 p-3 rounded-md h-[90px] overflow-y-auto break-words scrollbar-hide">

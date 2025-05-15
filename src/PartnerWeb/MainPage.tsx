@@ -29,6 +29,7 @@ import {
 } from "antd";
 import { ColumnsType } from "antd/es/table";
 import {
+  EnvironmentOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
   LoadingOutlined,
@@ -85,6 +86,7 @@ type Address = {
   landMark: string;
   pincode: number;
   customerId: string;
+  googleMapLink?: string;
 };
 
 type SummaryData = {
@@ -564,13 +566,25 @@ const MainPage: React.FC = () => {
       sorter: (a, b) =>
         (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
       render: (record: OrderData) => (
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-1 flex-col ">
           {record.orderAddress?.pincode ? (
-            <Typography.Text>{record.orderAddress.pincode}</Typography.Text>
+            <Typography.Text className="text-sm">
+              {record.orderAddress.pincode}
+            </Typography.Text>
           ) : (
             <Typography.Text className="text-gray-500">
               Not provided
             </Typography.Text>
+          )}
+          {record.orderAddress?.googleMapLink && (
+            <a
+              href={record.orderAddress?.googleMapLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
+            >
+              <EnvironmentOutlined style={{ fontSize: "20px" }} />
+            </a>
           )}
         </div>
       ),

@@ -32,6 +32,7 @@ import {
   PhoneOutlined,
   WhatsAppOutlined,
   CalendarOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import { Column } from "@ant-design/plots";
 import BASE_URL from "../Config";
@@ -137,6 +138,7 @@ interface HelpDeskUser {
   emailVerified: string;
   name: string;
   lastFourDigitsUserId: string;
+  testUserStatus: boolean;
 }
 
 const timeOptions = [
@@ -190,7 +192,7 @@ const RegisteredUser: React.FC = () => {
     total: 10,
     showSizeChanger: false,
   });
-
+  const [selectedStaff, setSelectedStaff] = useState("");
   const [orderDetailsVisible, setOrderDetailsVisible] =
     useState<boolean>(false);
   const [staticMetrics, setStaticMetrics] = useState({
@@ -326,9 +328,6 @@ const RegisteredUser: React.FC = () => {
       setLoader(false);
     }
   };
-  const viewSpecificOrder = (orderId: string) => {
-    setSelectedOrderId(orderId);
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -399,6 +398,10 @@ const RegisteredUser: React.FC = () => {
     fetchUserData();
     fetchHelpDeskUsers();
   }, [selectedTimeFrame, pagination.current]);
+
+  useEffect(() => {
+    handleStaffChange(selectedStaff);
+  }, [userData]);
 
   const fetchCounts = async () => {
     try {
@@ -553,7 +556,7 @@ const RegisteredUser: React.FC = () => {
       render: (_: string, record: UserData) => (
         <>
           <Tag className="mb-1" color="green">
-            {record.userType }
+            {record.userType}
           </Tag>
           {record.registerFrom && (
             <Tag color="geekblue">{record.registerFrom}</Tag>
@@ -567,12 +570,14 @@ const RegisteredUser: React.FC = () => {
       width: 90,
       align: "center" as const,
       render: (record: UserData) => {
-        const helpDeskName = getHelpDeskName(record.helpdeskuserId || record.assignedTo);
+        const helpDeskName = getHelpDeskName(
+          record.helpdeskuserId || record.assignedTo
+        );
         return (
           <div className="flex flex-col items-center justify-center text-center">
             <span className=" font-bold">{formatDate(record.created_at)}</span>
 
-            {(record.helpdeskuserId || record.assignedTo ) && (
+            {(record.helpdeskuserId || record.assignedTo) && (
               <div className="flex flex-row items-center justify-center mt-2">
                 <span className="mr-2 text-gray-400">to:</span>
                 <Tag
@@ -580,7 +585,7 @@ const RegisteredUser: React.FC = () => {
                   className="w-fit flex items-center justify-center"
                 >
                   <UserOutlined className="mr-1" />
-                  {helpDeskName}  
+                  {helpDeskName}
                 </Tag>
               </div>
             )}
@@ -778,7 +783,7 @@ const RegisteredUser: React.FC = () => {
       },
     ];
 
-    if (["1", "2", "3","PickedUp"].includes(userOrders[0]?.orderStatus)) {
+    if (["1", "2", "3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
       columns.splice(3, 0, {
         title: "Expected Delivery",
         dataIndex: "expectedDeliveryDate",
@@ -1054,7 +1059,7 @@ const RegisteredUser: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post( 
+      const response = await axios.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         {
           number: mobileNumber1 || null,
@@ -1084,7 +1089,7 @@ const RegisteredUser: React.FC = () => {
         addressType: user.addressType || null,
         userType: user.userType || null,
         registerFrom: user.registeredFrom || null,
-        assignedTo:user.assignedTo || null
+        assignedTo: user.assignedTo || null,
       }));
 
       setFilteredUserData(transformed);
@@ -1099,12 +1104,38 @@ const RegisteredUser: React.FC = () => {
     }
   };
 
+  const handleStaffChange = (staffUserId: string) => {
+    setSelectedStaff(staffUserId);
+
+    if (staffUserId === "") {
+      setFilteredUserData(userData);
+    } else {
+      const filtered = userData.filter(
+        (user) => user.helpdeskuserId === staffUserId
+      );
+      setFilteredUserData(filtered);
+    }
+  };
+
+  const getStaffOptions = () => {
+    const options = [{ name: "All", value: "" }];
+
+    helpDeskUsers.forEach((user) => {
+        options.push({
+          name: user.name, 
+          value: user.userId, 
+        });
+    });
+
+    return options;
+  };
+
   const items = [
     {
       key: "date",
       label: "Search by Date",
       children: (
-        <div className="mt-4">
+        <div className="mt-4 flex justify-between flex-wrap gap-2 items-center">
           <div className="flex flex-wrap gap-2">
             <Input
               type="date"
@@ -1129,6 +1160,23 @@ const RegisteredUser: React.FC = () => {
               Get Data
             </Button>
           </div>
+
+          <div>
+            <Select
+              value={selectedStaff}
+              onChange={handleStaffChange}
+              style={{ width: 150 }}
+              disabled={loading}
+              suffixIcon={<TeamOutlined />}
+              loading={helpDeskUsers.length === 0}
+            >
+              {getStaffOptions().map((staff) => (
+                <Option key={staff.value} value={staff.value}>
+                  {staff.name}
+                </Option>
+              ))}
+            </Select>
+          </div>
         </div>
       ),
     },
@@ -1136,24 +1184,25 @@ const RegisteredUser: React.FC = () => {
       key: "user",
       label: "Search by Mobile Number",
       children: (
-        <div className="mt-4">
-          <div className="flex gap-2">
+        <div className="mt-4 flex justify-between flex-wrap gap-2 items-center">
+          <div className="flex flex-wrap gap-2">
             <Input
               placeholder="Enter mobile/whatsapp Number"
               value={mobileNumber1}
               onChange={(e) => setMobileNumber1(e.target.value)}
               prefix={<PhoneOutlined />}
               allowClear
-              className="w-[220px] m-0" // Added m-0 to remove margin
+              className="w-[220px] m-0"
             />
-            {/* <Input
-              placeholder="WhatsApp Number"
-              value={whatsappNumber1}
-              onChange={(e) => setWhatsappNumber1(e.target.value)}
-              prefix={<WhatsAppOutlined style={{ color: "#25D366" }} />}
-              allowClear
-              className="w-[180px] m-0"
-            /> */}
+            {/* Uncomment if needed
+          <Input
+            placeholder="WhatsApp Number"
+            value={whatsappNumber1}
+            onChange={(e) => setWhatsappNumber1(e.target.value)}
+            prefix={<WhatsAppOutlined style={{ color: '#25D366' }} />}
+            allowClear
+            className="w-[180px] m-0"
+          /> */}
             <Input
               placeholder="User ID"
               value={userId1}
@@ -1177,22 +1226,6 @@ const RegisteredUser: React.FC = () => {
       ),
     },
   ];
-
-  const getAvatarColor = (name: string) => {
-    const colors = [
-      "bg-red-200 text-red-800",
-      "bg-green-200 text-green-800",
-      "bg-blue-200 text-blue-800",
-      "bg-yellow-200 text-yellow-800",
-      "bg-purple-200 text-purple-800",
-      "bg-pink-200 text-pink-800",
-    ];
-
-    const hash = name
-      .split("")
-      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -1762,6 +1795,12 @@ const RegisteredUser: React.FC = () => {
                 placeholder="Type your comment here..."
                 autoSize={{ minRows: 3, maxRows: 5 }}
                 className="text-sm rounded-lg border-gray-300"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitComment();
+                  }
+                }}
               />
 
               <div className="flex justify-end gap-3 pt-2">

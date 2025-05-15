@@ -33,6 +33,7 @@ import {
 import type { TabsProps } from "antd";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
+import { ColumnsType } from "antd/es/table";
 
 const { Title, Text } = Typography;
 
@@ -118,6 +119,29 @@ const DeliveryBoyOrders: React.FC = () => {
           { deliveryBoyId, orderStatus: 4 }
         );
         deliveredData = deliveredResponse.data || [];
+        const enrichedDeliveredData = await Promise.all(
+          deliveredData.map(async (order: any) => {
+            try {
+              const res = await axios.get(
+                `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`
+              );
+              return {
+                ...order,
+                deliveryTime: res.data?.deliveryTime || "N/A"
+              };
+            } catch {
+              return {
+                ...order,
+                deliveryTime: "N/A"
+              };
+            }
+          })
+        );
+    
+        deliveredData = enrichedDeliveredData.sort((a, b) => {
+          const dateA = new Date(a.orderDate).getTime();
+          const dateB = new Date(b.orderDate).getTime();
+          return dateB - dateA;});
       } catch (err: any) {
         if (err.response?.status === 404) {
           message.success("No delivered orders found.");
@@ -126,7 +150,6 @@ const DeliveryBoyOrders: React.FC = () => {
         }
       }
 
-      // Picked Up Orders
       try {
         const pickedUpResponse = await axios.get(
           `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`
@@ -176,7 +199,6 @@ const DeliveryBoyOrders: React.FC = () => {
     }
   }, []);
 
-  // Function to determine if order is from PickedUp response
   const isPickedUpOrder = (order: Order): order is PickedUpOrder => {
     return "totalAmount" in order && order.orderStatus === "PickedUp";
   };
@@ -186,20 +208,17 @@ const DeliveryBoyOrders: React.FC = () => {
       return <Empty description="No orders found" />;
     }
 
-    // Sort orders by orderDate (latest first)
     const sortedOrders = [...orders].sort(
       (a, b) =>
         new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
     );
-
-    const columns = [
+    const columns: ColumnsType<Order> = [
       {
-        title: (
-          <span className="font-bold text-black text-[1.05em]">Order ID</span>
-        ),
+        title: <span className="font-bold text-black text-[1.05em]">Order ID</span>,
         dataIndex: "orderId",
         key: "orderId",
-        width: 120,
+        width: 90,
+        ellipsis: true,
         render: (_: any, order: Order) => (
           <div className="flex flex-col">
             <Typography.Text
@@ -220,23 +239,22 @@ const DeliveryBoyOrders: React.FC = () => {
         ),
       },
       {
-        title: (
-          <span className="font-bold text-black text-[1.05em]">Items</span>
-        ),
+        title: <span className="font-bold text-black text-[1.05em]">Items</span>,
         key: "items",
         width: 200,
+        // ellipsis: true,
         render: (_: any, order: Order) => (
           <div className="space-y-1">
             {order.orderItems && order.orderItems.length > 0 ? (
               <>
-                {order.orderItems.slice(0, 2).map((item, index) => (
+                {order.orderItems.map((item, index) => (
                   <Typography.Text
                     key={index}
                     className="block text-gray-800"
-                    ellipsis={{
-                      tooltip:
-                        item.itemName || item.itemBarCode || "Unnamed Item",
-                    }}
+                    // ellipsis={{
+                    //   tooltip:
+                    //     item.itemName || item.itemBarCode || "Unnamed Item",
+                    // }}
                   >
                     {item.itemName || item.itemBarCode || "Unnamed Item"}
                     {item.price && (
@@ -255,17 +273,7 @@ const DeliveryBoyOrders: React.FC = () => {
                 No items
               </Typography.Text>
             )}
-          </div>
-        ),
-      },
-      {
-        title: (
-          <span className="font-bold text-black text-[1.05em]">Amount</span>
-        ),
-        key: "amount",
-        width: 120,
-        render: (_: any, order: Order) => (
-          <Typography.Text strong className="text-green-600 whitespace-nowrap">
+            <Typography.Text strong className="text-green-600 whitespace-nowrap">
             {new Intl.NumberFormat("en-IN", {
               style: "currency",
               currency: "INR",
@@ -276,29 +284,73 @@ const DeliveryBoyOrders: React.FC = () => {
                 : order.subTotal || order.grandTotal || 0
             )}
           </Typography.Text>
+          </div>
         ),
       },
+      // {
+      //   title: <span className="font-bold text-black text-[1.05em]">Amount</span>,
+      //   key: "amount",
+      //   width: 120,
+      //   ellipsis: true,
+      //   render: (_: any, order: Order) => (
+      //     <Typography.Text strong className="text-green-600 whitespace-nowrap">
+      //       {new Intl.NumberFormat("en-IN", {
+      //         style: "currency",
+      //         currency: "INR",
+      //         minimumFractionDigits: 2,
+      //       }).format(
+      //         isPickedUpOrder(order)
+      //           ? order.totalAmount || 0
+      //           : order.subTotal || order.grandTotal || 0
+      //       )}
+      //     </Typography.Text>
+      //   ),
+      // },
       {
         title: <span className="font-bold text-black text-[1.05em]">Date</span>,
         dataIndex: "orderDate",
         key: "orderDate",
-        width: 120,
-        render: (date: string) => (
-          <Typography.Text className="text-gray-800 whitespace-nowrap">
-            {new Date(date).toLocaleDateString("en-US", {
-              day: "numeric",
-              month: "numeric",
-              year: "numeric",
-            })}
-          </Typography.Text>
-        ),
-      },
+        width: 110,
+        ellipsis: true,
+        render: (_: string, record: any) => {
+          const formatDeliveryTime = (timeStr: string) => {
+            if (!timeStr) return "N/A";
+            const [h, m, s] = timeStr.split(":").map(Number);
+            const parts = [];
+            if (h > 0) parts.push(`${h} hr${h > 1 ? "s" : ""}`);
+            if (m > 0) parts.push(`${m} min${m > 1 ? "s" : ""}`);
+            if (s > 0) parts.push(`${s} sec${s > 1 ? "s" : ""}`);
+            return parts.join(" ");
+          };
+      
+          return (
+            <div className="text-gray-800">
+              <Text className="text-gray-700">
+                {new Date(record.orderDate).toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "numeric",
+                  year: "numeric",
+                })}
+              </Text>
+              <br />
+              {type === "delivered" && record.deliveryTime?.trim() && (
+  <div className="text-sm text-gray-500 mt-1 leading-tight">
+    Delivered in
+    <div className="font-medium text-gray-700">
+      {formatDeliveryTime(record.deliveryTime)}
+    </div>
+  </div>
+)}
+
+            </div>
+          );
+        },
+      },           
       {
-        title: (
-          <span className="font-bold text-black text-[1.05em]">Address</span>
-        ),
+        title: <span className="font-bold text-black text-[1.05em]">Address</span>,
         key: "address",
         width: 250,
+        // ellipsis: true,
         render: (_: any, order: Order) =>
           order.orderAddress ? (
             <div
@@ -337,11 +389,10 @@ const DeliveryBoyOrders: React.FC = () => {
           ),
       },
       {
-        title: (
-          <span className="font-bold text-black text-[1.05em]">Action</span>
-        ),
+        title: <span className="font-bold text-black text-[1.05em]">Action</span>,
         key: "action",
-        width: 120,
+        width: 100,
+        ellipsis: true,
         render: (_: any, order: Order) => (
           <Button
             type="primary"
@@ -361,14 +412,14 @@ const DeliveryBoyOrders: React.FC = () => {
         dataSource={sortedOrders}
         rowKey="orderId"
         pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "50"],
+          pageSize: 50,
+          showSizeChanger: false,
+     
         }}
         className="w-full shadow-sm rounded-lg"
         rowClassName="hover:bg-gray-50"
         bordered
-        scroll={{ x: 1000 }}
+        scroll={{ x: 'max-content' }}
       />
     );
   };
