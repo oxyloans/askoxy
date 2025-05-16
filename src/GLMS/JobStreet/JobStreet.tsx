@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect }from "react";
 import { Menu, X } from "lucide-react";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
 import GlmsImage from "../../assets/img/WhatsApp Image 2025-05-12 at 17.52.26_2af06bba.png";
@@ -9,6 +9,18 @@ const JobStreet: React.FC = () => {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+
+  // Initialize GA4 tracking on component mount
+  useEffect(() => {
+    // Track page view
+    if (window.gtag) {
+      window.gtag('event', 'js_page_view', {
+        page_title: 'JobStreet Page',
+        page_location: window.location.href,
+        page_path: window.location.pathname
+      });
+    }
+  }, []);
 
   const handleLogoClick = () => {
     window.location.href = "/";
