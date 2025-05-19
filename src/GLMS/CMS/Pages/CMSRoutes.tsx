@@ -1,11 +1,13 @@
 // pages/CASRouteRenderer.tsx
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCMSRoutes } from "../Routes/useCmsRoutes";
+import { message } from "antd";
 
 const CMSRouteRenderer: React.FC = () => {
   const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
   const useCase = useCMSRoutes[useCaseId || ""];
+  const navigate=useNavigate();
 
   if (!useCase || (type !== "business" && type !== "system")) {
     return (
@@ -14,15 +16,32 @@ const CMSRouteRenderer: React.FC = () => {
       </div>
     );
   }
+  const handleInterest =()=>{
+     message.warning("Please login to submit your interest.");
+       sessionStorage.setItem("submitclicks", "true");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/services/campaign/a6b5`
+      );
+  }
 
   const SelectedComponent = useCase[type];
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold text-blue-700 mb-4">
+      <div className="flex items-center justify-between mb-4">
+      <h2 className="text-2xl font-bold text-blue-700">
         {useCase.title} -{" "}
         {type === "business" ? "Business Use Case" : "System Use Case"}
       </h2>
+      <button
+        onClick={handleInterest}
+        className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition hover:scale-105"
+      >
+        I'm Interested
+      </button>
+      </div>
       {SelectedComponent}
     </div>
   );

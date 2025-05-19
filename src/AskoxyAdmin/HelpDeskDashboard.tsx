@@ -14,6 +14,7 @@ import { PhoneOutlined, UserOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
 import axios from "axios";
+import TextArea from "antd/es/input/TextArea";
 
 interface CallerItem {
   userId: string;
@@ -21,6 +22,7 @@ interface CallerItem {
   comments: string;
   createdDate: string;
   caller: string;
+  id: string;
 }
 
 interface UserData {
@@ -53,6 +55,8 @@ const HelpDeskDashboard: React.FC = () => {
   const [loadingRows, setLoadingRows] = useState<{ [key: string]: boolean }>(
     {}
   );
+ const [comments, setComments] = useState<Record<string, string>>({});;
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [userDetails, setUserDetails] = useState<{
     [key: string]: UserData | null;
   }>({});
@@ -148,6 +152,60 @@ const HelpDeskDashboard: React.FC = () => {
       setLoadingRows((prev) => ({ ...prev, [userId]: false }));
     }
   };
+
+const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>, recordId: string) => {
+  setComments(prev => ({
+    ...prev,
+    [recordId]: e.target.value,
+  }));
+};
+
+  const handleSubmit = async (record: CallerItem) => {
+  const commentText = comments[record.id]?.trim();
+
+  if (!commentText) {
+    message.error("Please enter comments before submitting");
+    return;
+  }
+
+  setIsSubmitting(true);
+  const uniqueId = localStorage.getItem("uniquId");
+
+  const requestData = {
+    adminCommentsId: record.id,
+    superAdminComments: commentText,
+    superAdminUserId: uniqueId,
+  };
+
+  try {
+    const response = await fetch(`${BASE_URL}/user-service/adminRespondedComments`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (response.ok) {
+      message.success("Comments submitted successfully");
+
+      // Clear the submitted comment only
+      setComments(prev => ({
+        ...prev,
+        [record.id]: "",
+      }));
+    } else {
+      message.error("Failed to submit comments");
+    }
+  } catch (error) {
+    message.error("An error occurred while submitting comments");
+    console.error("Error submitting comments:", error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
   const helpdeskColumns: ColumnsType<CallerItem> = [
     {
       title: "User ID",
@@ -213,6 +271,33 @@ const HelpDeskDashboard: React.FC = () => {
       render: (text: string) => (
         <div className="max-h-16 overflow-y-auto">
           <strong className="text-sm">{text}</strong>
+        </div>
+      ),
+    },
+    {
+      title: "SuperAdmin Comments",
+      dataIndex: "comments",
+      key: "comments",
+      width: 200,
+      render: (text: string, record) => (
+        <div className="w-full relative">
+          <TextArea
+         value={comments[record.id] || ""} 
+        onChange={(e) => handleCommentChange(e, record.id)}
+            placeholder="Enter superAdmin comments here"
+            className="w-full text-sm pr-10 p-1 h-14" 
+            rows={4}
+            style={{ resize: "none" }}
+          />
+          <Button
+            type="primary"
+            onClick={() => handleSubmit(record)}
+            loading={isSubmitting}
+            className="absolute right-2 bottom-2 bg-blue-500 text-white hover:bg-blue-600"
+            size="small"
+          >
+            Submit
+          </Button>
         </div>
       ),
     },

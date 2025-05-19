@@ -519,7 +519,30 @@ const CampaignDetails: React.FC = () => {
                 <div className="prose max-w-none">
                   {campaign.campaignDescription
                     .split("\n")
-                    .map((paragraph, index) => {
+                    .map((paragraph: string, index: number) => {
+                      const renderTextWithLinks = (
+                        text: string
+                      ): React.ReactNode[] => {
+                        const urlRegex = /(https?:\/\/[^\s]+)/g;
+                        const parts = text.split(urlRegex);
+                        return parts.map((part: string, i: number) => {
+                          if (urlRegex.test(part)) {
+                            return (
+                              <a
+                                key={i}
+                                href={part}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline break-words"
+                              >
+                                {part}
+                              </a>
+                            );
+                          }
+                          return <span key={i}>{part}</span>;
+                        });
+                      };
+
                       if (paragraph.startsWith("###")) {
                         return (
                           <h2
@@ -533,7 +556,9 @@ const CampaignDetails: React.FC = () => {
                         return (
                           <ul key={index} className="list-disc pl-6 mb-4">
                             <li className="text-gray-600">
-                              {paragraph.replace("-", "").trim()}
+                              {renderTextWithLinks(
+                                paragraph.replace("-", "").trim()
+                              )}
                             </li>
                           </ul>
                         );
@@ -543,13 +568,15 @@ const CampaignDetails: React.FC = () => {
                             key={index}
                             className="font-bold text-gray-800 mb-4"
                           >
-                            {paragraph.replace(/\*\*/g, "").trim()}
+                            {renderTextWithLinks(
+                              paragraph.replace(/\*\*/g, "").trim()
+                            )}
                           </p>
                         );
                       } else {
                         return (
                           <p key={index} className="text-gray-600 mb-4">
-                            {paragraph.trim()}
+                            {renderTextWithLinks(paragraph.trim())}
                           </p>
                         );
                       }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogostatic.png";
+import { message } from "antd";
 
 interface HeaderProps {
   // Modified to match the more specific type in LandingPage
@@ -69,6 +70,16 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
   const handleLogo = () => {
     navigate("/");
   };
+  
+  const handleInterest =()=>{
+     message.warning("Please login to submit your interest.");
+       sessionStorage.setItem("submitclicks", "true");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/services/campaign/a6b5`
+      );
+  }
 
   return (
     <header
@@ -117,6 +128,12 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
 
           {/* Right: Sign In */}
           <div className="hidden md:flex items-center gap-3">
+              <button
+              onClick={handleInterest}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
+            >
+              I'm Interested
+            </button>
             {/* Job Street Button */}
             <button
               onClick={handleJobStreet}

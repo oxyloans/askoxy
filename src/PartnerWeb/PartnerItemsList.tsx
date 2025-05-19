@@ -15,6 +15,7 @@ interface Item {
   weight: number;
   itemPrice?: number;
   active: boolean;
+  itemBuyingPrice?: number;
 }
 const { Option } = Select;
 
@@ -42,6 +43,7 @@ const PartnerItemsList: React.FC = () => {
     form.setFieldsValue({
       mrp: item.itemMrp,
       price: item.itemPrice,
+      buyingPrice: item.itemBuyingPrice,
     });
   };
 
@@ -100,7 +102,7 @@ const PartnerItemsList: React.FC = () => {
 
   const handlePriceUpdate = async (values: any) => {
     if (!priceUpdateModal.item) return;
-    const { mrp, price } = values;
+    const { mrp, price ,buyingPrice} = values;
     if (price > mrp) {
       message.error("Selling price cannot be higher than MRP");
       return;
@@ -112,8 +114,12 @@ const PartnerItemsList: React.FC = () => {
         active: priceUpdateModal.item.active,
         itemId: priceUpdateModal.item.itemId,
         itemPrice: parseFloat(price),
+        itemBuyingPrice: parseFloat(buyingPrice),
       };
+     
 
+      console.log("Data to be sent:", data);
+      
       await axios.patch(
         `${BASE_URL}/product-service/sellerItemPriceFix`,
         data,
@@ -246,10 +252,16 @@ const PartnerItemsList: React.FC = () => {
                   <span className="text-sm text-red-500 line-through">
                     ₹{item.itemMrp || ""}
                   </span>
+                  
                 </div>
               )}
-            </div>
-
+            
+               {/* <p className="text-sm text-gray-500">
+                Buying Price: <strong className="text-sm text-gray-500">{item.itemBuyingPrice}</strong> 
+              </p> */}
+              
+          </div>
+        
             <div className="p-1 flex flex-col space-y-2 mt-auto">
               <Button
                 onClick={() => openPriceUpdateModal(item)}
@@ -294,6 +306,7 @@ const PartnerItemsList: React.FC = () => {
             initialValues={{
               mrp: priceUpdateModal.item.itemMrp,
               price: priceUpdateModal.item.itemPrice,
+              buyingPrice: priceUpdateModal.item.itemBuyingPrice,
             }}
             onFinish={handlePriceUpdate}
           >
@@ -324,6 +337,16 @@ const PartnerItemsList: React.FC = () => {
                     return Promise.resolve();
                   },
                 }),
+              ]}
+            >
+              <Input type="number" />
+            </Form.Item>
+           <Form.Item
+              name="buyingPrice"
+              label="Buying Price"
+              rules={[
+                { required: false, message: "Please input Buying price" },
+                // { type: "number", min: 0, message: "MRP must be positive" },
               ]}
             >
               <Input type="number" />

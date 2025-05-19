@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.3d5215ba.css",
-    "main.js": "/static/js/main.0d4489e0.js",
+    "main.css": "/static/css/main.c188f470.css",
+    "main.js": "/static/js/main.b263cf61.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
     "static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.png": "/static/media/3ef05659-d79c-42e9-b3dc-ebc61b63f430.f22986a86ab61897cfab.png",
@@ -17,7 +17,6 @@
     "static/media/Univ1.png": "/static/media/Univ1.4dfed95b4a7616b6e7d6.png",
     "static/media/1.5.png": "/static/media/1.5.73d762a074624caa7183.png",
     "static/media/ricecard2.png": "/static/media/ricecard2.24e1eb2c6228131298e6.png",
-    "static/media/WhatsApp Image 2025-05-12 at 17.52.26_2af06bba.png": "/static/media/WhatsApp Image 2025-05-12 at 17.52.26_2af06bba.64b0d32c99a0d02b56d4.png",
     "static/media/1.1.png": "/static/media/1.1.f8635ffd0e2c82d3f448.png",
     "static/media/ricecard1.png": "/static/media/ricecard1.24e05541236f1f34aafa.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
@@ -69,6 +68,7 @@
     "static/media/proudlender6.png": "/static/media/proudlender6.6bf2d27333289b4ca8c4.png",
     "static/media/proudlender10.png": "/static/media/proudlender10.05b1babc5b7b7b7a3991.png",
     "static/media/proudlender2.png": "/static/media/proudlender2.9b584e7b32ba47a9b198.png",
+    "static/media/Job_Street_Image.jpeg.jpg": "/static/media/Job_Street_Image.jpeg.65f7db08acecf28f3c93.jpg",
     "static/media/proudlender5.png": "/static/media/proudlender5.e27bef2fa80e3b9bf00a.png",
     "static/media/proudlender4.png": "/static/media/proudlender4.a6dc236dbc1c04c10a64.png",
     "static/media/proudlender3.png": "/static/media/proudlender3.59de2acee2bd0d4f2893.png",
@@ -186,11 +186,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.3d5215ba.css.map": "/static/css/main.3d5215ba.css.map",
-    "main.0d4489e0.js.map": "/static/js/main.0d4489e0.js.map"
+    "main.c188f470.css.map": "/static/css/main.c188f470.css.map",
+    "main.b263cf61.js.map": "/static/js/main.b263cf61.js.map"
   },
   "entrypoints": [
-    "static/css/main.3d5215ba.css",
-    "static/js/main.0d4489e0.js"
+    "static/css/main.c188f470.css",
+    "static/js/main.b263cf61.js"
   ]
 }

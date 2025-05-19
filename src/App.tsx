@@ -82,6 +82,7 @@ import CampaignDetails from "./components/campaignDetails";
 import FreeChatGPTnormal from "./Dashboard/Freechatgptnormal";
 import WomensDay from "./components/WomensDay";
 import HiddenLogin from "./Pages/Auth/HiddenLogin";
+import SuperAdminComments from "./AskoxyAdmin/SuperAdminComments";
 import TestimonialsPage from "./Dashboard/TestimoinalsOXY";
 import RiceComparison from "./components/SteanRiceVsRawRice";
 import RegisteredUser from "./AskoxyAdmin/RegisteredUser";
@@ -535,6 +536,7 @@ const App: React.FC = () => {
               <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="helpdashboard" element={<HelpDeskDashboard />} />
               <Route path="todaycalls" element={<CallerHistoryPage />} />
+              <Route path="superAdminComments" element={<SuperAdminComments/>}/>
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

@@ -127,21 +127,22 @@ const DeliveryBoyOrders: React.FC = () => {
               );
               return {
                 ...order,
-                deliveryTime: res.data?.deliveryTime || "N/A"
+                deliveryTime: res.data?.deliveryTime || "N/A",
               };
             } catch {
               return {
                 ...order,
-                deliveryTime: "N/A"
+                deliveryTime: "N/A",
               };
             }
           })
         );
-    
+
         deliveredData = enrichedDeliveredData.sort((a, b) => {
           const dateA = new Date(a.orderDate).getTime();
           const dateB = new Date(b.orderDate).getTime();
-          return dateB - dateA;});
+          return dateB - dateA;
+        });
       } catch (err: any) {
         if (err.response?.status === 404) {
           message.success("No delivered orders found.");
@@ -214,7 +215,9 @@ const DeliveryBoyOrders: React.FC = () => {
     );
     const columns: ColumnsType<Order> = [
       {
-        title: <span className="font-bold text-black text-[1.05em]">Order ID</span>,
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Order ID</span>
+        ),
         dataIndex: "orderId",
         key: "orderId",
         width: 90,
@@ -228,7 +231,7 @@ const DeliveryBoyOrders: React.FC = () => {
             >
               #{"uniqueId" in order ? order.uniqueId : order.orderId.slice(-4)}
             </Typography.Text>
-            <Tag color="blue" className="mt-1 w-fit">
+            <Tag color="blue" className="mt-1 w-fit rounded-full">
               {type === "assigned"
                 ? "placed"
                 : type === "picked"
@@ -239,7 +242,9 @@ const DeliveryBoyOrders: React.FC = () => {
         ),
       },
       {
-        title: <span className="font-bold text-black text-[1.05em]">Items</span>,
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Items</span>
+        ),
         key: "items",
         width: 200,
         // ellipsis: true,
@@ -273,17 +278,20 @@ const DeliveryBoyOrders: React.FC = () => {
                 No items
               </Typography.Text>
             )}
-            <Typography.Text strong className="text-green-600 whitespace-nowrap">
-            {new Intl.NumberFormat("en-IN", {
-              style: "currency",
-              currency: "INR",
-              minimumFractionDigits: 2,
-            }).format(
-              isPickedUpOrder(order)
-                ? order.totalAmount || 0
-                : order.subTotal || order.grandTotal || 0
-            )}
-          </Typography.Text>
+            <Typography.Text
+              strong
+              className="text-green-600 whitespace-nowrap"
+            >
+              {new Intl.NumberFormat("en-IN", {
+                style: "currency",
+                currency: "INR",
+                minimumFractionDigits: 2,
+              }).format(
+                isPickedUpOrder(order)
+                  ? order.totalAmount || 0
+                  : order.subTotal || order.grandTotal || 0
+              )}
+            </Typography.Text>
           </div>
         ),
       },
@@ -307,7 +315,7 @@ const DeliveryBoyOrders: React.FC = () => {
       //   ),
       // },
       {
-        title: <span className="font-bold text-black text-[1.05em]">Date</span>,
+        title: <span className="font-bold text-black text-[1.05em]">Date & Time</span>,
         dataIndex: "orderDate",
         key: "orderDate",
         width: 110,
@@ -315,14 +323,56 @@ const DeliveryBoyOrders: React.FC = () => {
         render: (_: string, record: any) => {
           const formatDeliveryTime = (timeStr: string) => {
             if (!timeStr) return "N/A";
-            const [h, m, s] = timeStr.split(":").map(Number);
-            const parts = [];
-            if (h > 0) parts.push(`${h} hr${h > 1 ? "s" : ""}`);
-            if (m > 0) parts.push(`${m} min${m > 1 ? "s" : ""}`);
-            if (s > 0) parts.push(`${s} sec${s > 1 ? "s" : ""}`);
-            return parts.join(" ");
+
+            const [days = 0, hours = 0, minutes = 0] = timeStr
+              .split(":")
+              .map(Number);
+
+            const parts: React.ReactNode[] = [];
+
+            if (days > 0)
+              parts.push(
+                <React.Fragment key="days">
+                  <span className="text-green-600 font-semibold">{days}</span>{" "}day
+                  {days > 1 ? "s" : ""}
+                </React.Fragment>
+              );
+
+            if (hours > 0)
+              parts.push(
+                <React.Fragment key="hours">
+                  <span className="text-green-600 font-semibold">{hours}</span>{" "}
+                  hr{hours > 1 ? "s" : ""}
+                </React.Fragment>
+              );
+            if (minutes > 0)
+              parts.push(
+                <React.Fragment key="minutes">
+                  <span className="text-green-600 font-semibold">{minutes}</span>{" "}
+                  min{minutes > 1 ? "s" : ""}
+                </React.Fragment>
+              );
+
+            if (parts.length === 0)
+              return (
+                <>
+                  <span className="text-green-600 font-semibold">0</span> min
+                </>
+              );
+
+            // Join the parts with spaces using a proper React fragment approach
+            return (
+              <>
+                {parts.map((part, index) => (
+                  <React.Fragment key={index}>
+                    {index > 0 && " "}
+                    {part}
+                  </React.Fragment>
+                ))}
+              </>
+            );
           };
-      
+
           return (
             <div className="text-gray-800">
               <Text className="text-gray-700">
@@ -334,20 +384,21 @@ const DeliveryBoyOrders: React.FC = () => {
               </Text>
               <br />
               {type === "delivered" && record.deliveryTime?.trim() && (
-  <div className="text-sm text-gray-500 mt-1 leading-tight">
-    Delivered in
-    <div className="font-medium text-gray-700">
-      {formatDeliveryTime(record.deliveryTime)}
-    </div>
-  </div>
-)}
-
+                <div className="text-sm text-gray-500 mt-1 leading-tight">
+                  Delivered in
+                  <div className="font-medium text-gray-700">
+                    {formatDeliveryTime(record.deliveryTime)}
+                  </div>
+                </div>
+              )}
             </div>
           );
         },
-      },           
+      },
       {
-        title: <span className="font-bold text-black text-[1.05em]">Address</span>,
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Address</span>
+        ),
         key: "address",
         width: 250,
         // ellipsis: true,
@@ -389,7 +440,9 @@ const DeliveryBoyOrders: React.FC = () => {
           ),
       },
       {
-        title: <span className="font-bold text-black text-[1.05em]">Action</span>,
+        title: (
+          <span className="font-bold text-black text-[1.05em]">Action</span>
+        ),
         key: "action",
         width: 100,
         ellipsis: true,
@@ -414,12 +467,11 @@ const DeliveryBoyOrders: React.FC = () => {
         pagination={{
           pageSize: 50,
           showSizeChanger: false,
-     
         }}
         className="w-full shadow-sm rounded-lg"
         rowClassName="hover:bg-gray-50"
         bordered
-        scroll={{ x: 'max-content' }}
+        scroll={{ x: "max-content" }}
       />
     );
   };

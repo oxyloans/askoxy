@@ -17,10 +17,12 @@ import {
   FaConciergeBell,
   FaPhone,
   FaRegAddressCard,
+  FaTags,
 } from "react-icons/fa";
-import { RiListUnordered } from "react-icons/ri";
+import { RiAdminLine, RiListUnordered } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { message } from "antd";
+import { MdPayment } from "react-icons/md";
 
 interface SidebarItem {
   title: string;
@@ -75,7 +77,6 @@ const Sidebar: React.FC = () => {
       link: "/admn/dashboard",
       roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
-
     {
       title: "Registered Users",
       icon: <FaUser className="text-purple-400" />,
@@ -112,6 +113,12 @@ const Sidebar: React.FC = () => {
       icon: <RiListUnordered className="text-purple-400" />,
       link: "/admn/allcampaignsdetails",
       roles: ["HELPDESKSUPERADMIN"],
+    },
+    {
+      title: "Super Admin Comments",
+      icon: <RiAdminLine className="text-purple-400" />, // New icon
+      link: "/admn/superAdminComments",
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
     {
       title: "User Feedback",
@@ -243,7 +250,6 @@ const Sidebar: React.FC = () => {
         }}
       >
         <div className="flex flex-col items-center justify-center h-16 border-b border-gray-700 bg-gray-900">
-         
           <div className="text-center font-bold">
             <span className="text-gray-50 text-xl">
               {collapsed && !isMobileOpen ? "OXY" : "ASKOXY.AI"}
@@ -298,7 +304,9 @@ const Sidebar: React.FC = () => {
                     }
                   }}
                 >
-                  <span className={`text-lg ${collapsed?"ml-2":"ml-0"}`}>{item.icon}</span>
+                  <span className={`text-lg ${collapsed ? "ml-2" : "ml-0"}`}>
+                    {item.icon}
+                  </span>
                   {collapsed && !isMobileOpen ? (
                     <span className="absolute left-full ml-2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 pointer-events-none">
                       {item.title}

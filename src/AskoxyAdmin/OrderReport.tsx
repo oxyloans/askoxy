@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { DatePicker, message, Select, Table, Typography } from "antd";
+import { Button, DatePicker, message, Select, Table, Typography } from "antd";
 import {
   ShoppingBag,
   ClipboardList,
@@ -15,7 +15,7 @@ import {
   Download,
 } from "lucide-react";
 import BASE_URL from "../Config";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 
 interface OrderCountData {
   orderPlacedCount: number;
@@ -52,6 +52,7 @@ interface MonthlySalesItem {
   totalItemQuantity: number;
   weigth: number;
   totalItemsCount: number;
+  grandTotal: number;
 }
 const { Option } = Select;
 
@@ -73,6 +74,7 @@ const OrderReport: React.FC = () => {
   const [weeklyStartDate, setWeeklyStartDate] = useState(
     dayjs().subtract(7, "day")
   );
+  const [csvLoader, setCsvLoader] = useState<boolean>(false);
   const [weeklyEndDate, setWeeklyEndDate] = useState(dayjs());
 
   const fetchOrderData = async () => {
@@ -239,6 +241,16 @@ const OrderReport: React.FC = () => {
           }`}
         >
           {text}
+        </span>
+      ),
+    },
+    {
+      title: "Amount",
+      dataIndex: "grandTotal",
+      key: "grandTotal",
+      render: (text: number) => (
+        <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+          ₹ {Math.ceil(text)}
         </span>
       ),
     },
@@ -425,49 +437,39 @@ const OrderReport: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const downloadWeeklyCSV = (): void => {
-    if (!weeklyDeliveryData || weeklyDeliveryData.length === 0) return;
+  const downloadWeeklyCSV = async (): Promise<void> => {
+    setCsvLoader(true);
+    try {
+      const startDate = weeklyStartDate.format("YYYY-MM-DD");
+      const endDate = weeklyEndDate.format("YYYY-MM-DD");
+      const response = await fetch(
+        `${BASE_URL}/order-service/download_orderDetails_in_range?endingDate=${endDate}&startingDate=${startDate}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "*/*",
+          },
+        }
+      );
 
-    const header = [
-      "Order ID",
-      "Payment Type",
-      "Customer Name",
-      "Phone Number",
-      "Item Name",
-      "Quantity",
-      "Price",
-      "Weight (kg)",
-      "Grand Total",
-      "Delivery Date",
-    ];
+      if (!response.ok) {
+        throw new Error("Failed to download CSV");
+      }
 
-    const rows = weeklyDeliveryData.flatMap((order) =>
-      order.orderItems.map((item) => [
-        `#${order.orderId.slice(-4)}`,
-        order.paymentType === 2 ? "Online" : "Cash on Delivery",
-        order.customerName.trim() || "No name",
-        order.mobileNumber || order.whatsappNumber || "N/A",
-        item.itemName,
-        item.quantity,
-        item.price,
-        `${item.weight} kg`,
-        Math.ceil(order.grandTotal),
-        new Date(order.deliveryDate).toLocaleDateString("en-IN"),
-      ])
-    );
-
-    const csvContent = [header, ...rows]
-      .map((row) => row.map((field) => `"${field}"`).join(","))
-      .join("\r\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "Weekly_Delivery_Report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "orders_report.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+    } finally {
+      setCsvLoader(false);
+    }
   };
 
   return (
@@ -545,18 +547,22 @@ const OrderReport: React.FC = () => {
 
             {/* Push Download CSV to far right */}
             <div className="flex-grow flex justify-end">
-              <button
-                onClick={downloadWeeklyCSV}
+              <Button
+                icon={<Download size={16} />}
+                loading={csvLoader}
                 disabled={weeklyDeliveryData.length === 0}
-                className={`flex items-center py-2 px-4 rounded-md ${
-                  weeklyDeliveryData.length === 0
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-green-600 text-white hover:bg-green-700"
-                } transition`}
+                onClick={downloadWeeklyCSV}
+                className={`
+                    flex items-center
+                  bg-green-600 text-white
+                  hover:bg-green-700
+                  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed
+                    border-none
+                    px-4 py-2 rounded-md transition
+                  `}
               >
-                <Download className="w-4 h-4 mr-2" />
                 Download CSV
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -706,6 +712,20 @@ const OrderReport: React.FC = () => {
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-md border border-gray-200 ">
+              <div className="p-4 bg-blue-50 border-t border-blue-100 flex justify-end items-center">
+                <div className="text-sm text-green-800">
+                  Grand Total:{" "}
+                  <span className="text-lg font-bold">
+                    ₹
+                    {Math.ceil(
+                      monthlySalesData.reduce(
+                        (sum, order) => sum + order.grandTotal,
+                        0
+                      )
+                    ).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </div>
               <Table
                 dataSource={sortedFilteredData}
                 columns={columns}

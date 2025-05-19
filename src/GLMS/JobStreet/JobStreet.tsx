@@ -1,7 +1,7 @@
 import React, { useEffect }from "react";
 import { Menu, X } from "lucide-react";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
-import GlmsImage from "../../assets/img/WhatsApp Image 2025-05-12 at 17.52.26_2af06bba.png";
+import GlmsImage from "../../assets/Job_Street_Image.jpeg.jpg";
 
 const JobStreet: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);

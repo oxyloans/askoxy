@@ -14,6 +14,7 @@ import {
   Headphones,
   XCircle,
 } from "lucide-react";
+import { message } from "antd";
 
 const useCases = [
   {
@@ -101,14 +102,31 @@ const useCases = [
 
 const CASDashboard: React.FC = () => {
   const navigate = useNavigate();
+    const handleInterest =()=>{
+       message.warning("Please login to submit your interest.");
+         sessionStorage.setItem("submitclicks", "true");
+        navigate("/whatsappregister");
+        sessionStorage.setItem(
+          "redirectPath",
+          `/main/services/campaign/a6b5`
+        );
+    }
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-10 text-gray-800">
-        Customer Acquisition System - Use Cases
-      </h1>
+      <div className="relative mb-10">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800">
+          Customer Acquisition System - Use Cases
+        </h1>
+        <button
+          onClick={handleInterest}
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition hover:scale-105"
+        >
+          I'm Interested
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6">
         {useCases.map((useCase) => (
           <div
             key={useCase.path}

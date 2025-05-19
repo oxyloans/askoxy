@@ -1,5 +1,5 @@
 import React from "react";
-import { Link ,useNavigate} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Users,
   FileText,
@@ -14,6 +14,7 @@ import {
   Headphones,
   XCircle,
 } from "lucide-react";
+import { message } from "antd";
 
 const useCases = [
   {
@@ -174,13 +175,32 @@ const useCases = [
   },
 ];
 
+ 
 const FMSDashboard: React.FC = () => {
-  const navigate = useNavigate()
+    const navigate = useNavigate();
+   const handleInterest =()=>{
+     message.warning("Please login to submit your interest.");
+       sessionStorage.setItem("submitclicks", "true");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/services/campaign/a6b5`
+      );
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-800">
-        📊 Financial Management System
-      </h1>
+      <div className="relative mb-6">
+        <h1 className="text-4xl font-bold text-center mb-10 text-gray-800">
+          📊 Financial Management System
+        </h1>
+        <button
+          onClick={handleInterest}
+          className="absolute right-0 top-0 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition hover:scale-105"
+        >
+          I'm Interested
+        </button>
+      </div>
       <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
         Manage delinquent case workflows, queues, communications, and legal
         proceedings from one central dashboard.
