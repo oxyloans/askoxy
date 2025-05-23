@@ -37,6 +37,20 @@ import PostDisbursalEdit from "../Components/Business/PostDisbursalEdit";
 import RepaymentDeferralConstitutionBased from "../Components/Business/RepaymentDeferralConstitutionBased";
 import RepaymentDeferralFinanceWise from "../Components/Business/RepaymentDeferralFinanceWise";
 import RepaymentDeferralBatchWise from "../Components/Business/RepaymentDeferralBatchWise";
+import MaintainAssetDetails from "../Components/Business/MaintainAssetDetails";
+import PDCPrinting from "../Components/Business/PDCPrinting";
+import InstallmentPrepayment from "../Components/Business/InstallmentPrepayment";
+import NPAGrading from "../Components/Business/NPAGrading";
+import NPAProvisioning from "../Components/Business/NPAProvisioning";
+import SettlementsKnockOff from "../Components/Business/SettlementsKnockOff";
+import SettlementsChequeProcessing from "../Components/Business/SettlementsChequeProcessing";
+import SettlementsManualAdvise from "../Components/Business/SettlementsManualAdvise";
+import TerminationForeclosureClosure from "../Components/Business/TerminationForeclosureClosure";
+import FinanceDetailsViewer from "../Components/Business/FinanceDetailsViewer";
+import FloatingReviewProcess from "../Components/Business/FloatingReviewProcess"
+import SettlementsReceipts from "../Components/Business/SettlementsReceipts";
+import SettlementsPayments from "../Components/Business/SettlementsPayments";
+import SettlementsWaiveOff from "../Components/Business/SettlementsWaiveOff";
 const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
   <div className="p-4 bg-gray-100 text-center">{title} Component</div>
 );
@@ -49,72 +63,72 @@ export const useFMSRoutes: Record<
   // New routes from FMSDashboard
   "asset-details": {
     title: "Asset Details",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <MaintainAssetDetails />,
     system: <AssetDetailsUseCase />,
   },
   "allocation-contract": {
     title: "Allocation Contract",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <PDCPrinting />,
     system: <PdcPrintingUseCase />,
   },
   "installment-prepayment": {
     title: "Installment Prepayment",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <InstallmentPrepayment />,
     system: <WfInstallmentPrepaymentUseCase />,
   },
   "case-reallocation": {
     title: "Case Reallocation",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <NPAGrading />,
     system: <WfNpaGradingUseCase />,
   },
   "npa-provisioning": {
     title: "NPA Provisioning",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <NPAProvisioning />,
     system: <WfNpaProvisioningUseCase />,
   },
   "settlement-knockoff": {
     title: "Settlements - Knock Off",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <SettlementsKnockOff />,
     system: <WfSettlementsKnockOffUseCase />,
   },
   "cheque-processing": {
     title: "Cheque Processing",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <SettlementsChequeProcessing />,
     system: <WfSettlementsChequeProcessingUseCase />,
   },
   "settlement-advisory": {
     title: "Settlement Advisory",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <SettlementsManualAdvise />,
     system: <WfSettlementsManualAdviceUseCase />,
   },
   "foreclosure-management": {
     title: "Foreclosure Management",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <TerminationForeclosureClosure />,
     system: <WFTerminationForeclosureClosureUseCase />,
   },
   "finance-viewer": {
     title: "Finance Viewer",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <FinanceDetailsViewer />,
     system: <WfFmsFinanceViewerUseCase />,
   },
   "floating-review": {
     title: "Floating Review Process",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <FloatingReviewProcess />,
     system: <WfFmsFloatingReviewProcessUseCase />,
   },
   "daily-workplan": {
     title: "Agent Work Plan",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <SettlementsReceipts />,
     system: <WfFmsSettlementsReceiptsUseCase />,
   },
   "settlements-payment": {
     title: "Settlements - Payment",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <SettlementsPayments />,
     system: <WfFmsSettlementsPaymentsUseCase />,
   },
   "settlements-waiveoff": {
     title: "Settlements - Waive Off",
-    business: <DummyComponent title="Business View of Loan Linking" />,
+    business: <SettlementsWaiveOff />,
     system: <WfFmsSettlementsWaiveOffUseCase />,
   },
   "eod-bod-process": {
