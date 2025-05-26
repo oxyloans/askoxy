@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.ae5f1232.css",
-    "main.js": "/static/js/main.de77dc9e.js",
+    "main.css": "/static/css/main.4be03ad8.css",
+    "main.js": "/static/js/main.855c58f6.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/Usecase.png": "/static/media/Usecase.3ad7b7978fa08b7944c9.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
@@ -19,7 +19,9 @@
     "static/media/Videothumb.png": "/static/media/Videothumb.a49e20d3c57b46887b2c.png",
     "static/media/Usecase9.png": "/static/media/Usecase9.1e71660a1b0ff66e1ffe.png",
     "static/media/1.2.png": "/static/media/1.2.318fd79a3f16ce59b77b.png",
+    "static/media/0.png": "/static/media/0.05b91a8b9768d3cec000.png",
     "static/media/WhatsApp Image 2025-03-17 at 13.02.44.png": "/static/media/WhatsApp Image 2025-03-17 at 13.02.44.76f372a09056843dfa58.png",
+    "static/media/white green minimalist body lotion Product Promotion Instagram post.png": "/static/media/white green minimalist body lotion Product Promotion Instagram post.3a5fc0d5d31ad3a53561.png",
     "static/media/Univ1.png": "/static/media/Univ1.4dfed95b4a7616b6e7d6.png",
     "static/media/1.5.png": "/static/media/1.5.73d762a074624caa7183.png",
     "static/media/Usecase10.png": "/static/media/Usecase10.2af6b949cdf470d225f0.png",
@@ -37,7 +39,6 @@
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
     "static/media/bmvcoin.png": "/static/media/bmvcoin.d4b8d7a173edac896cdc.png",
     "static/media/myrotray (1).png": "/static/media/myrotray (1).14d5675c56b16bdb7bd2.png",
-    "static/media/RICEU1.png": "/static/media/RICEU1.edf64b4f457e2173b6eb.png",
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
@@ -114,9 +115,6 @@
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
     "static/media/o4.png": "/static/media/o4.c975abe297e7244034cb.png",
     "static/media/o3.png": "/static/media/o3.972404343a87c58de7a4.png",
-    "static/media/RICEU2.png": "/static/media/RICEU2.b48fda011239e4a3c653.png",
-    "static/media/RICEU3.png": "/static/media/RICEU3.01c968b059d979bcf431.png",
-    "static/media/RICEU4.png": "/static/media/RICEU4.192b045edf45d7d30859.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/realestate gpt (1).png": "/static/media/realestate gpt (1).5655cc684ac7d693d031.png",
     "static/media/Influencers gpt (1).png": "/static/media/Influencers gpt (1).566a5a80041f778c5e8c.png",
@@ -124,7 +122,6 @@
     "static/media/testimonial17.png": "/static/media/testimonial17.fb648ac71a729958a005.png",
     "static/media/Management service gpt (1).png": "/static/media/Management service gpt (1).30c191740325608d8659.png",
     "static/media/testimonial9.png": "/static/media/testimonial9.f386453652d69c54a59d.png",
-    "static/media/BUY 1 GET 1 2.png": "/static/media/BUY 1 GET 1 2.cb3cf37d9caf1f3f2a8a.png",
     "static/media/Automotive.png": "/static/media/Automotive.04d3a447511d1b50e4d9.png",
     "static/media/Shopping.png": "/static/media/Shopping.0a66eee4bfa3c59e34df.png",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.1815e00441357e01619e.ttf",
@@ -148,15 +145,17 @@
     "static/media/IMAGE 16.png": "/static/media/IMAGE 16.e2c205dbc69cbfa0b18a.png",
     "static/media/loan services.png": "/static/media/loan services.d1ec8a6c9d10588e8412.png",
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.5993d0be5c2d681d469f.png",
-    "static/media/BUY 1 GET 1.png": "/static/media/BUY 1 GET 1.350a5a19662ae252efbb.png",
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
     "static/media/IMAGE 3.png": "/static/media/IMAGE 3.5588a13795e17eb3e259.png",
     "static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.png": "/static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.3b40f8ed166a3fd17253.png",
     "static/media/image 13.png": "/static/media/image 13.cc8aa13738305ef13342.png",
     "static/media/rama mam.png": "/static/media/rama mam.e093d87cf380e97bca53.png",
+    "static/media/IMAGE 17.png": "/static/media/IMAGE 17.4aa5aed636318304d260.png",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.c210719e60948b211a12.woff2",
+    "static/media/IMAGE 14.png": "/static/media/IMAGE 14.be9fe8789b5f767b4192.png",
     "static/media/IMAGE 7.png": "/static/media/IMAGE 7.cd2c24a14807fc732996.png",
     "static/media/Health & Wellness.png": "/static/media/Health & Wellness.385fc6099205725af8d1.png",
+    "static/media/IMAGE 15.png": "/static/media/IMAGE 15.0bde7a028a5e6615b27c.png",
     "static/media/image 20.png": "/static/media/image 20.918fc989cbf902a34387.png",
     "static/media/srinivas.png": "/static/media/srinivas.2e47d9a4b9f5add2c541.png",
     "static/media/narendra.png": "/static/media/narendra.9682dafd2be5db791a67.png",
@@ -196,11 +195,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.ae5f1232.css.map": "/static/css/main.ae5f1232.css.map",
-    "main.de77dc9e.js.map": "/static/js/main.de77dc9e.js.map"
+    "main.4be03ad8.css.map": "/static/css/main.4be03ad8.css.map",
+    "main.855c58f6.js.map": "/static/js/main.855c58f6.js.map"
   },
   "entrypoints": [
-    "static/css/main.ae5f1232.css",
-    "static/js/main.de77dc9e.js"
+    "static/css/main.4be03ad8.css",
+    "static/js/main.855c58f6.js"
   ]
 }

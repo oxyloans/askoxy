@@ -9,13 +9,18 @@ import {
 } from "lucide-react";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
-import Rice1 from "../assets/img/o3.png";
-import Rice2 from "../assets/img/RICEU7.png";
-import Rice3 from "../assets/img/35kg1.png";
-import Rice4 from "../assets/img/26kg.png";
+// import Rice1 from "../assets/img/o3.png";
+// import Rice2 from "../assets/img/RICEU7.png";
+// import Rice3 from "../assets/img/35kg1.png";
+// import Rice4 from "../assets/img/26kg.png";
 import AskOxyLogo from "../assets/img/askoxylogostatic.png";
-import Retro from "../assets/img/retro.png";
-import O5 from "../assets/img/tb1.png";
+// import Retro from "../assets/img/retro.png";
+// import O5 from "../assets/img/tb1.png";
+
+import Rice4 from "../assets/img/3 (4).png";
+import Rice2 from "../assets/img/3 (2).png";
+import Rice3 from "../assets/img/3 (1).png";
+import Rice1 from "../assets/img/3 (3).png";
 
 // Campaign Base URL - ensure this is correct
 const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/freerice";
@@ -90,38 +95,24 @@ const FreeRiceBlog: React.FC = () => {
   };
 
   // Rice product data with weights, titles and descriptions
-  const riceProducts: RiceProduct[] = [
+const riceProducts: RiceProduct[] = [
     {
       id: 1,
       imageUrl: Rice1,
-      title: "Buy 1KG Rice Get 1KG FREE",
+      title: "Buy 2 KG Rice Get 1 KG FREE",
       description:
-        "Enjoy premium quality rice with our limited-time Buy 1 Get 1 Free offer — ideal for small families looking for great value and taste.",
+        "Premium quality rice with a Buy 2 Get 1 Free offer, perfect for small families.",
       weight: 1.0,
     },
-    // {
-    //   id: 2,
-    //   imageUrl: Rice2,
-    //   title: "5KG Premium Rice Bag",
-    //   description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
-    //   weight: 5.0,
-    // },
-    // {
-    //   id: 3,
-    //   imageUrl: Retro,
-    //   title: "5KG Premium Rice Bag",
-    //   description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
-    //   weight: 5.0,
-    // },
-    // {
-    //   id: 4,
-    //   imageUrl: O5,
-    //   title: "5KG Premium Rice Bag",
-    //   description: "Buy Any 5KG Rice Bag and Get a FREE PVR Movie Ticket!",
-    //   weight: 5.0,
-    // },
     {
-      id: 5,
+      id: 2,
+      imageUrl: Rice2,
+      title: "5 KG Premium Rice Bag and Get 2 KG Rice Free",
+      description: "Buy a 5 KG Rice Bag and Get 2 KG Rice Free",
+      weight: 5.0,
+    },
+    {
+      id: 3,
       imageUrl: Rice4,
       title: "10KG Premium Rice Bag",
       description:
@@ -129,14 +120,15 @@ const FreeRiceBlog: React.FC = () => {
       weight: 10.0,
     },
     {
-      id: 6,
+      id: 4,
       imageUrl: Rice3,
       title: "26KG Premium Rice Bag",
       description:
-        "Buy a 26KG Rice Bag and Get an 35+ KG Steel Container Worth ₹2300 free!",
+        "Buy a 26KG Rice Bag and Get a 35+ KG Steel Container Worth ₹2300 free!",
       weight: 26.0,
     },
   ];
+
 
   useEffect(() => {
     // Close mobile menu when resizing to desktop
@@ -397,7 +389,7 @@ const FreeRiceBlog: React.FC = () => {
           </div>
 
           {/* Impact Message */}
-          <div className="mt-12 sm:mt-16 text-center">
+          {/* <div className="mt-12 sm:mt-16 text-center">
             <div className="p-6 sm:p-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl shadow-md max-w-4xl mx-auto">
               <h3 className="font-semibold text-xl text-indigo-700 mb-3">
                 Your Purchase Makes a Difference
@@ -407,7 +399,7 @@ const FreeRiceBlog: React.FC = () => {
                 community of conscious shoppers creating positive impact.
               </p>
             </div>
-          </div>
+          </div> */}
         </section>
       </main>
 

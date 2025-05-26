@@ -530,21 +530,21 @@ const WhatsappLogin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 row">
       <div
-        className={`max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${
+        className={`max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
         {/* Header */}
-        <div className="bg-purple-600 p-4 relative">
+        <div className="bg-purple-600 p-4 sm:p-4 lg:p-6 relative">
           <button
             onClick={handleClose}
-            className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
+            className="absolute right-2 sm:right-4 top-2 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 sm:w-5 sm:h-5" />
           </button>
           <div className="flex flex-col items-center gap-3">
             <h2 className="text-2xl font-bold text-white text-center">
-              Welcome to ASKOXY.AI
+              Welcome to Askoxy.AI
             </h2>
             <div className="flex gap-4">
               <button
@@ -662,7 +662,7 @@ const WhatsappLogin = () => {
             </div>
 
             <div className="relative w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
                 {otpMethod === "whatsapp" ? "WhatsApp Number" : "Mobile Number"}{" "}
                 <span className="text-red-500">*</span>
               </label>
@@ -677,7 +677,7 @@ const WhatsappLogin = () => {
                   disabled={isPhoneDisabled}
                   international={otpMethod === "whatsapp"}
                   countrySelectProps={{ disabled: otpMethod === "mobile" }}
-                  className="w-full p-3 bg-white shadow-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-800 placeholder-gray-400 [&>*]:outline-none [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:border-none PhoneInput"
+                  className="w-full px-3 py-2 sm:p-2 bg-white shadow-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-800 placeholder-gray-400 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] [&>*]:outline-none [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:border-none [&_.PhoneInputInput]:min-h-[40px] [&_.PhoneInputInput]:py-0 PhoneInput"
                   maxLength={20}
                   placeholder="Enter your number"
                   style={
@@ -687,9 +687,9 @@ const WhatsappLogin = () => {
                   }
                 />
                 {otpMethod === "whatsapp" ? (
-                  <FaWhatsapp className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <FaWhatsapp className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
                 ) : (
-                  <PhoneCall className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <PhoneCall className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
                 )}
               </div>
 
@@ -700,6 +700,7 @@ const WhatsappLogin = () => {
                 </p>
               )}
             </div>
+
 
             {/* OTP Input */}
             {showOtp && (
@@ -818,6 +819,8 @@ const WhatsappLogin = () => {
       </div>
     </div>
   );
+
+
 };
 
 export default WhatsappLogin;

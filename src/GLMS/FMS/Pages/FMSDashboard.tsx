@@ -178,15 +178,19 @@ const useCases = [
  
 const FMSDashboard: React.FC = () => {
     const navigate = useNavigate();
-   const handleInterest =()=>{
-     message.warning("Please login to submit your interest.");
-       sessionStorage.setItem("submitclicks", "true");
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/services/campaign/a6b5`
-      );
-  }
+    const handleInterest = () => {
+       const userId = localStorage.getItem("userId");
+       if (userId) {
+         sessionStorage.setItem("submitclicks", "true");
+         navigate("/main/services/campaign/a6b5");
+       } else {
+         message.warning("Please login to submit your interest.");
+         sessionStorage.setItem("submitclicks", "true");
+         navigate("/whatsappregister");
+         sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
+       }
+     };
+ 
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

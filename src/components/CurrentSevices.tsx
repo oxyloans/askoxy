@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import HM1 from "../assets/img/BUY 1 GET 1.png";
-import HM2 from "../assets/img/BUY 1 GET 1 2.png";
+import HM1 from "../assets/img/0.png";
+import HM2 from "../assets/img/white green minimalist body lotion Product Promotion Instagram post.png";
 import HM3 from "../assets/img/IMAGE 3.png";
 import HM4 from "../assets/img/Manchester.png";
 import HM5 from "../assets/img/orderriceonline.png";
-import HM6 from "../assets/img/RICEU4.png";
+import HM6 from "../assets/img/jsr.png";
 import HM7 from "../assets/img/IMAGE 7.png";
 import HM8 from "../assets/img/IMAGE 8.png";
 import HM9 from "../assets/img/image 9.png";
@@ -14,10 +14,10 @@ import HM10 from "../assets/img/IMAGE 10.png";
 import HM11 from "../assets/img/IMAGE 11.png";
 import HM12 from "../assets/img/IMAGE 12.png";
 import HM13 from "../assets/img/image 13.png";
-import HM14 from "../assets/img/RICEU3.png";
-import HM15 from "../assets/img/RICEU1.png";
+import HM14 from "../assets/img/IMAGE 17.png";
+import HM15 from "../assets/img/IMAGE 14.png";
 import HM16 from "../assets/img/IMAGE 16.png";
-import HM17 from "../assets/img/RICEU2.png";
+import HM17 from "../assets/img/IMAGE 15.png";
 import HM18 from "../assets/img/IMAGE 18.png";
 import HM19 from "../assets/img/image 19.png";
 import HM20 from "../assets/img/image 20.png";
@@ -32,8 +32,8 @@ const ResponsiveGallery = () => {
 
   const images = [
     {
-      id: 1,
-      src: HM1,
+      id: 5,
+      src: HM5,
       alt: "Buy 1 Kg Rice Get 1 Kg Free",
       category: "BUY 1 KG RICE GET 1 KG RICE FREE",
       link: "/main/dashboard/products",
@@ -41,19 +41,45 @@ const ResponsiveGallery = () => {
     },
     {
       id: 2,
-      src: HM2,
-      alt: "Buy 1 Kg Rice Get 1 Kg Free",
-      category: "BUY 1 KG RICE GET 1 KG RICE FREE",
+      src: HM1,
+      alt: "Buy 10 Kgs Rice Bag & Get 18 Kgs Steel Container",
+      category: "Buy 10 Kgs Rice Bag & Get 18 Kgs Steel Container",
       link: "/main/dashboard/products",
-      weight: 1.0, // Adding weight parameter
+      weight: 10.0, // Adding weight parameter
+    },
+
+    {
+      id: 1,
+      src: HM2,
+      alt: "Buy 26 Kgs Rice Bag & Get 35 Kgs Steel Container",
+      category: "Buy 26 Kgs Rice Bag & Get 35 Kgs Steel Container",
+      link: "/main/dashboard/products",
+      weight: 26.0, // Adding weight parameter
+    },
+
+    {
+      id: 16,
+      src: HM16,
+      alt: "Bawarchi brown rice",
+      category: "BAWARCHI BROWN RICE",
+      link: "/main/dashboard/products",
+      weight: 26.0, // Adding weight parameter
     },
     {
-      id: 5,
-      src: HM5,
-      alt: "Buy 1 Kg Rice Get 1 Kg Free",
-      category: "BUY 1 KG RICE GET 1 KG RICE FREE",
+      id: 18,
+      src: HM18,
+      alt: "Surya Teja's Joker Brand",
+      category: "SURYA TEJA'S JOKER BRAND",
       link: "/main/dashboard/products",
-      weight: 1.0, // Adding weight parameter
+      weight: 26.0, // Adding weight parameter
+    },
+    {
+      id: 19,
+      src: HM13,
+      alt: "Kisan Rice",
+      category: "KISAN RICE",
+      link: "/main/dashboard/products",
+      weight: 26.0, // Adding weight parameter
     },
     {
       id: 20,
@@ -82,8 +108,8 @@ const ResponsiveGallery = () => {
     {
       id: 7,
       src: HM6,
-      alt: "Maateja",
-      category: "MAATEJA",
+      alt: "Jai Sri Ram",
+      category: "JAI SRI RAM",
       link: "/main/dashboard/products",
       weigtht: 26.0, // Adding weight parameter
     },
@@ -95,12 +121,27 @@ const ResponsiveGallery = () => {
       link: "/main/services/studyabroad",
     },
     {
+      id: 8,
+      src: HM8,
+      alt: "Study Abroad",
+      category:"STUDY ABROAD",
+      link: "/main/services/studyabroad",
+    },
+    {
       id: 3,
       src: HM3,
       alt: "Middlesex University",
       category: "MIDDLESSEX UNIVERSITY",
       link: "/main/services/studyabroad",
     },
+    {
+      id: 9,
+      src: HM9,
+      alt: "Study Abroad",
+      category:"STUDY ABROAD",
+      link: "/main/services/studyabroad",
+    },
+
     {
       id: 6,
       src: HM7,
@@ -110,34 +151,16 @@ const ResponsiveGallery = () => {
     },
 
     {
-      id: 8,
-      src: HM8,
-      alt: "Study Abroad",
-      link: "/main/services/studyabroad",
-    },
-    {
-      id: 9,
-      src: HM9,
-      alt: "Study Abroad",
-      link: "/main/services/studyabroad",
-    },
-    {
       id: 10,
       src: HM10,
       alt: "Study Abroad",
+      category: "STUDY ABROAD",
       link: "/main/services/studyabroad",
     },
     {
       id: 11,
       src: HM11,
       alt: "Oxyloans",
-      category: "OXYLOANS",
-      link: "/main/service/oxyloans-service",
-    },
-    {
-      id: 12,
-      src: HM12,
-      alt: "OxyLoans",
       category: "OXYLOANS",
       link: "/main/service/oxyloans-service",
     },
@@ -149,36 +172,21 @@ const ResponsiveGallery = () => {
       link: "/main/services/freeai-genai",
     },
     {
+      id: 12,
+      src: HM12,
+      alt: "OxyLoans",
+      category: "OXYLOANS",
+      link: "/main/service/oxyloans-service",
+    },
+
+    {
       id: 14,
       src: HM20,
       alt: "Free Rudraksha",
       category: "FREE RUDRAKSHA",
       link: "/main/services/freerudraksha",
     },
-    {
-      id: 16,
-      src: HM16,
-      alt: "Bawarchi brown rice",
-      category: "BAWARCHI BROWN RICE",
-      link: "/main/dashboard/products",
-      weight: 5.0, // Adding weight parameter
-    },
-    {
-      id: 18,
-      src: HM18,
-      alt: "Surya Teja's Joker Brand",
-      category: "SURYA TEJA'S JOKER BRAND",
-      link: "/main/dashboard/products",
-      weight: 10.0, // Adding weight parameter
-    },
-    {
-      id: 19,
-      src: HM13,
-      alt: "Kisan Rice",
-      category: "KISAN RICE",
-      link: "/main/dashboard/products",
-      weight: 25.0, // Adding weight parameter
-    },
+
     {
       id: 21,
       src: HM19,

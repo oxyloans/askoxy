@@ -23,13 +23,13 @@ function HeroSection() {
         <div className="animate-fade-in space-y-6 text-center lg:text-left">
           <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Global Loan Management Systems
+              Global Lending Management Systems
             </span>
           </h1>
 
           <p className="text-gray-700 text-base md:text-lg leading-relaxed">
-            We are building <strong>Global Loan Management Systems</strong> with
-            you—powered by <strong>60+ proven BFSI use cases</strong>,{" "}
+            We are building <strong>Global Lending Management Solutions</strong>{" "}
+            with you—powered by <strong>60+ proven BFSI use cases</strong>,{" "}
             <strong>50+ expert roles</strong>, and{" "}
             <strong>AI-driven delivery models</strong>.
             <br />

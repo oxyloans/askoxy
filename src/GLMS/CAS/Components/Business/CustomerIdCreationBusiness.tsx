@@ -1,23 +1,105 @@
-import React from 'react';
+import React, { useState } from "react";
 
 const CustomerIdCreation: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalURL, setModalURL] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+  const openModal = (url: string, title: string) => {
+    setModalURL(url);
+    setModalTitle(title);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalURL("");
+    setModalTitle("");
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">LOS Workflow for Customer ID Creation</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <h1 className="text-2xl font-bold">
+          LOS Workflow for Customer ID Creation
+        </h1>
+
+        <div className="flex gap-4">
+          <button
+            onClick={() =>
+              openModal(
+                "https://docs.google.com/document/d/1F8aXmDQpwGQ-bKGZpEPBDHrzltPxJ5bM/preview",
+                "Back End Code View"
+              )
+            }
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            View Back End Code
+          </button>
+
+          <button
+            onClick={() =>
+              openModal(
+                "https://docs.google.com/document/d/1ixT9000eGGKk7GBjeW6QOEMRsmX5YGqn/preview",
+                "Front End Code View"
+              )
+            }
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          >
+            View Front End Code
+          </button>
+        </div>
+      </div>
+
+      {/* MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-4xl w-full relative shadow-xl">
+            <h3 className="text-xl font-bold mb-4">{modalTitle}</h3>
+            <iframe
+              src={modalURL}
+              title={modalTitle}
+              className="w-full h-[500px] border rounded"
+            ></iframe>
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-red-600 font-bold text-xl"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Overview</h2>
         <p>
-          Loan Origination System is a centralized web-based solution designed and developed for processing Loan Applications. It has different modules such as Retail, Corporate, etc. The main advantages of the Loan Origination system are Appraisal of Loan Proposals by adopting uniform guidelines across the Bank and Facility for electronic workflow, thereby avoiding delays attributable to exchange of correspondence between Branch and Zonal Offices.
+          Loan Origination System is a centralized web-based solution designed
+          and developed for processing Loan Applications. It has different
+          modules such as Retail, Corporate, etc. The main advantages of the
+          Loan Origination system are Appraisal of Loan Proposals by adopting
+          uniform guidelines across the Bank and Facility for electronic
+          workflow, thereby avoiding delays attributable to exchange of
+          correspondence between Branch and Zonal Offices.
         </p>
         <p>
-          User has to just key in information available in loan application. System picks up Rate of Interest, Margin, product guidelines for a specific product selected by the user, checks the discretionary powers while sanctioning. User can generate reports like Credit Score Sheet, Process note, Sanction letter, Communication of Sanction to borrower, worksheet for assessment, etc. from the system.
+          User has to just key in information available in loan application.
+          System picks up Rate of Interest, Margin, product guidelines for a
+          specific product selected by the user, checks the discretionary powers
+          while sanctioning. User can generate reports like Credit Score Sheet,
+          Process note, Sanction letter, Communication of Sanction to borrower,
+          worksheet for assessment, etc. from the system.
         </p>
         <p>
-          In LOS every Customer is given an identification number called Customer ID which is unique throughout the bank. Existence of a Customer ID is a prerequisite for any relationship with the Bank. Customer information is captured and maintained in Customer Master.
+          In LOS every Customer is given an identification number called
+          Customer ID which is unique throughout the bank. Existence of a
+          Customer ID is a prerequisite for any relationship with the Bank.
+          Customer information is captured and maintained in Customer Master.
         </p>
         <p>
-          In 'Customer Master Maintenance' creation the Bank Officer needs to capture various customer details such as Personal Details, Communication Details, and Employment Details & Income & Expenses Details Tabs.
+          In 'Customer Master Maintenance' creation the Bank Officer needs to
+          capture various customer details such as Personal Details,
+          Communication Details, and Employment Details & Income & Expenses
+          Details Tabs.
         </p>
       </section>
 
@@ -32,32 +114,64 @@ const CustomerIdCreation: React.FC = () => {
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Actions</h2>
         <p>
-          <strong>Customer:</strong> Enquires with the Bank Officer for the Loan details & submits the filled-in Application form along with the required documents.
+          <strong>Customer:</strong> Enquires with the Bank Officer for the Loan
+          details & submits the filled-in Application form along with the
+          required documents.
         </p>
         <p>
-          <strong>Bank Officer:</strong> Captures the Customer details into LOS to Create Customer.
+          <strong>Bank Officer:</strong> Captures the Customer details into LOS
+          to Create Customer.
         </p>
       </section>
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Preconditions</h2>
-        <p>Receipt of filled-in Loan Application & required documents from the Customer.</p>
+        <p>
+          Receipt of filled-in Loan Application & required documents from the
+          Customer.
+        </p>
       </section>
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Post Conditions</h2>
-        <p>Customer ID created & Bank Officer can capture the loan details as requested by the customer in the LOS.</p>
+        <p>
+          Customer ID created & Bank Officer can capture the loan details as
+          requested by the customer in the LOS.
+        </p>
       </section>
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Workflow</h2>
         <ul className="list-disc ml-6">
-          <li>Customer walks into the Bank Branch/interacts with the Bank officer & enquires about the process for obtaining the loan from the Bank.</li>
-          <li>Bank Officer enquires the purpose of the Loan, Financial details of the customer & briefs the customer about the loan product features & the required documents.</li>
-          <li>Customer submits the filled-in Loan application form along with the required documents.</li>
-          <li>Bank officer verifies the documents submitted by the customer with the checklist & if any discrepancy requests the customer for providing the details in the application/submission of the valid documents if any.</li>
-          <li>Once the Bank Officer is convinced with the application form & the documents, issues an acknowledgement to the customer & initiates the Customer Creation Process.</li>
-          <li>The Bank Officer captures the customer details such as Personal Details, Communication Details, and Employment & Income details in LOS for Customer ID Creation.</li>
+          <li>
+            Customer walks into the Bank Branch/interacts with the Bank officer
+            & enquires about the process for obtaining the loan from the Bank.
+          </li>
+          <li>
+            Bank Officer enquires the purpose of the Loan, Financial details of
+            the customer & briefs the customer about the loan product features &
+            the required documents.
+          </li>
+          <li>
+            Customer submits the filled-in Loan application form along with the
+            required documents.
+          </li>
+          <li>
+            Bank officer verifies the documents submitted by the customer with
+            the checklist & if any discrepancy requests the customer for
+            providing the details in the application/submission of the valid
+            documents if any.
+          </li>
+          <li>
+            Once the Bank Officer is convinced with the application form & the
+            documents, issues an acknowledgement to the customer & initiates the
+            Customer Creation Process.
+          </li>
+          <li>
+            The Bank Officer captures the customer details such as Personal
+            Details, Communication Details, and Employment & Income details in
+            LOS for Customer ID Creation.
+          </li>
         </ul>
 
         <h3 className="text-lg font-semibold mt-4 mb-2">Personal Details</h3>
@@ -85,7 +199,9 @@ const CustomerIdCreation: React.FC = () => {
           <li>Deposits with the Bank</li>
         </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Communication Details</h3>
+        <h3 className="text-lg font-semibold mt-4 mb-2">
+          Communication Details
+        </h3>
         <ul className="list-disc ml-6">
           <li>Current Address</li>
           <li>Current residence ownership</li>
@@ -112,7 +228,9 @@ const CustomerIdCreation: React.FC = () => {
           <li>Total length of service</li>
         </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Income & Expenses Details</h3>
+        <h3 className="text-lg font-semibold mt-4 mb-2">
+          Income & Expenses Details
+        </h3>
         <ul className="list-disc ml-6">
           <li>Monthly Income</li>
           <li>Other Income</li>
@@ -123,20 +241,24 @@ const CustomerIdCreation: React.FC = () => {
         </ul>
 
         <p>
-          Once the above details are captured, the Bank Officer saves the record for Customer ID creation.
+          Once the above details are captured, the Bank Officer saves the record
+          for Customer ID creation.
         </p>
         <p>
-          Customer ID created & Bank Officer can capture the Loan details requested by the customer in LOS to proceed further.
+          Customer ID created & Bank Officer can capture the Loan details
+          requested by the customer in LOS to proceed further.
         </p>
         <p>
-          <strong>Note:</strong> If the customer is an existing customer of the Bank, the Bank Officer can fetch the customer details from the existing Customer ID details from the CBS.
+          <strong>Note:</strong> If the customer is an existing customer of the
+          Bank, the Bank Officer can fetch the customer details from the
+          existing Customer ID details from the CBS.
         </p>
       </section>
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Flowchart</h2>
         <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-{`
+          {`
 Start
   |
   v

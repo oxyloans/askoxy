@@ -107,7 +107,7 @@ const DomainSection = () => {
       <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-            Global Loan Management Solutions
+            Global Lending Management Solutions
           </h2>
           <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Explore comprehensive systems that streamline every phase of the

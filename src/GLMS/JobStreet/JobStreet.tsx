@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Menu, X, ArrowUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
 
-// Import use case images
+// Use Case Images
 import UseCaseImage1 from "../../assets/img/Usecase2.png";
 import UseCaseImage2 from "../../assets/img/Usecase7.png";
 import UseCaseImage3 from "../../assets/img/Usecase4.png";
@@ -15,7 +15,6 @@ import UseCaseImage9 from "../../assets/img/Usecase9.png";
 import UseCaseImage10 from "../../assets/img/Usecase1.png";
 import UseCaseImage11 from "../../assets/img/Usecase.png";
 
-// Array of images
 const images = [
   UseCaseImage11,
   UseCaseImage10,
@@ -30,40 +29,33 @@ const images = [
   UseCaseImage9,
 ];
 
-// Corresponding use case names
 const useCaseNames = [
   "AI & Banking Software Specialist - Job Street",
   "Job Roles & Use Cases in Banks & Tech Companies",
   "Customer ID Creation Workflow (LOS)",
   "Link Co-Applicant/Guarantor Workflow (LOS)",
   "Link Customer ID to Loan Product (LOS)",
-  "Workflow for Loan Appraisal ",
+  "Workflow for Loan Appraisal",
   "Workflow for Loan Assessment",
-  "Workflow for Loan Sanction ",
+  "Workflow for Loan Sanction",
   "Workflow for Terms & Conditions",
   "Customer Eligibility & Loan Limit Check",
-  "Workflow for Evaluating the Net Worth ",
+  "Workflow for Evaluating the Net Worth",
 ];
-
 
 const JobStreet: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const handleLogoClick = () => (window.location.href = "/");
+  const handleGLMSClick = () => (window.location.href = "/glms");
 
-  const handleLogoClick = () => {
-    window.location.href = "/";
-  };
-
-  const handleGLMSClick = () => {
-    window.location.href = "/glms";
-  };
-
-  // GA4 Tracking
   useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+
     if (window.gtag) {
       window.gtag("event", "js_page_view", {
         page_title: "JobStreet Page",
@@ -71,125 +63,139 @@ const JobStreet: React.FC = () => {
         page_path: window.location.pathname,
       });
     }
-  }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  // Scroll to top button visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
-    window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Construct useCases array pairing each name with corresponding image
   const useCases = useCaseNames.map((name, idx) => ({
     id: idx + 1,
     title: name,
     image: images[idx],
   }));
 
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : useCases.length - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev < useCases.length - 1 ? prev + 1 : 0));
+  };
+  
+  const currentUseCase = useCases[currentIndex];
+
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white font-sans">
       {/* Header */}
-      <header className="bg-white shadow fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <img
-              src={Askoxylogo}
-              alt="AskOxy Logo"
-              className="h-10 cursor-pointer transition-transform hover:scale-105"
-              onClick={handleLogoClick}
-              tabIndex={0}
-              role="link"
-              onKeyDown={(e) => e.key === "Enter" && handleLogoClick()}
-            />
+      <header
+        className={`sticky top-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? "bg-white/95 shadow-md" : "bg-white/80"
+        } backdrop-blur-md`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            <div onClick={handleLogoClick} className="cursor-pointer">
+              <img src={Askoxylogo} alt="Askoxy.AI" className="h-14 w-auto" />
+            </div>
+
+            <div className="hidden md:flex">
+              <button
+                onClick={handleGLMSClick}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md transition"
+              >
+                Go To GLMS
+              </button>
+            </div>
+
+            <div className="md:hidden">
+              <button onClick={toggleMobileMenu} className="p-2">
+                {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              </button>
+            </div>
           </div>
 
-          <div className="hidden md:block">
-            <button
-              onClick={handleGLMSClick}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 transition"
-            >
-              GLMS
-            </button>
-          </div>
-
-          <button
-            onClick={toggleMobileMenu}
-            className="md:hidden p-2 ml-4 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label={mobileMenuOpen ? "Close Menu" : "Open Menu"}
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? (
-              <X size={24} className="text-gray-600" />
-            ) : (
-              <Menu size={24} className="text-gray-600" />
-            )}
-          </button>
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 bg-white shadow-lg rounded-b-lg px-4">
+              <button
+                onClick={handleGLMSClick}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg"
+              >
+                Go To GLMS
+              </button>
+            </div>
+          )}
         </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white shadow px-4 pb-4">
-            <button
-              onClick={handleGLMSClick}
-              className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 transition"
-            >
-              GLMS
-            </button>
-          </div>
-        )}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-grow pt-24 px-4 bg-gray-50">
-        <div className="max-w-8xl mx-auto">
-          <h2 className="text-2xl font-semibold text-center mb-6">
-            Our Use Cases
+      {/* Main */}
+      <main className="flex-grow bg-gradient-to-br from-white via-blue-50 to-purple-50 pb-10 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 my-6">
+            Explore Our Use Cases
           </h2>
-          <div className="grid gap-y-6 gap-x-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {useCases.map((useCase) => (
-              <div key={useCase.id} className="text-center w-full">
-                {/* Title outside card, just simple text */}
-                <h3 className="text-md mb-2 text-indigo-600 font-semibold">
-                  {useCase.title}
-                </h3>
 
-                {/* Image inside card-like container */}
-                <div className="bg-white p-2 rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden">
-                  <img
-                    src={useCase.image}
-                    alt={useCase.title}
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            {/* Navigation Arrows */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-4 z-10">
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className={`p-2 rounded-full transition ${
+                  currentIndex === 0
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                }`}
+                aria-label="Previous"
+              >
+                <ChevronLeft size={22} />
+              </button>
+            </div>
+
+            <div className="absolute top-1/2 -translate-y-1/2 right-4 z-10">
+              <button
+                onClick={handleNext}
+                disabled={currentIndex === useCases.length - 1}
+                className={`p-2 rounded-full transition ${
+                  currentIndex === useCases.length - 1
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                }`}
+                aria-label="Next"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </div>
+
+            {/* Use Case */}
+            <div className="px-4 sm:px-8">
+              <h3 className="text-lg sm:text-xl font-semibold text-indigo-700 mb-4">
+                {currentUseCase.title}
+              </h3>
+              <img
+                src={currentUseCase.image}
+                alt={`Use Case ${currentIndex + 1}`}
+                className="w-full max-h-[550px] sm:max-h-[600px] object-contain rounded-md"
+              />
+            </div>
+
+            {/* Dots */}
+            <div className="mt-4 flex justify-center gap-2">
+              {useCases.map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-3 h-3 rounded-full transition ${
+                    currentIndex === i ? "bg-indigo-600" : "bg-gray-300"
+                  }`}
+                ></span>
+              ))}
+            </div>
           </div>
         </div>
       </main>
 
-      {/* Scroll to Top Button
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-indigo-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out z-50"
-          aria-label="Scroll to top"
-        >
-          <ArrowUp size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
-      )} */}
-
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-6">
-        <p className="text-center text-sm">
-          &copy; {new Date().getFullYear()} Global Loans Management Systems. All
-          rights reserved.
-        </p>
+      <footer className="bg-gray-900 text-white py-4 text-center text-sm">
+        &copy; {new Date().getFullYear()} Global Loans Management Systems. All
+        rights reserved.
       </footer>
     </div>
   );

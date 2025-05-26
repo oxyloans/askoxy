@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FileText,
   Users,
@@ -11,12 +11,73 @@ import {
 interface CustomerIdCreationProps {}
 
 const CustomerIdCreation: React.FC<CustomerIdCreationProps> = () => {
+   const [isModalOpen, setIsModalOpen] = useState(false);
+   const [modalURL, setModalURL] = useState("");
+   const [modalTitle, setModalTitle] = useState("");
+   const openModal = (url: string, title: string) => {
+     setModalURL(url);
+     setModalTitle(title);
+     setIsModalOpen(true);
+   };
+ 
+   const closeModal = () => {
+     setIsModalOpen(false);
+     setModalURL("");
+     setModalTitle("");
+   };
+  
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 bg-white font-serif">
       {/* Heading */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-indigo-600 pb-4">
-        Customer ID Creation in LOS
-      </h1>
+      <h1 className="text-3xl font-bold text-gray-900">
+      Customer ID Creation in LOS
+    </h1>
+
+    <div className="flex gap-4">
+      <button
+        onClick={() =>
+          openModal(
+            "https://docs.google.com/document/d/1F8aXmDQpwGQ-bKGZpEPBDHrzltPxJ5bM/preview",
+            "Back End Code View"
+          )
+        }
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+      >
+        View Back End Code
+      </button>
+
+      <button
+        onClick={() =>
+          openModal(
+            "https://docs.google.com/document/d/1ixT9000eGGKk7GBjeW6QOEMRsmX5YGqn/preview",
+            "Front End Code View"
+          )
+        }
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+      >
+        View Front End Code
+      </button>
+      </div>
+
+      {/* MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-4xl w-full relative shadow-xl">
+            <h3 className="text-xl font-bold mb-4">{modalTitle}</h3>
+            <iframe
+              src={modalURL}
+              title={modalTitle}
+              className="w-full h-[500px] border rounded"
+            ></iframe>
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-red-600 font-bold text-xl"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       <section className="mb-8">

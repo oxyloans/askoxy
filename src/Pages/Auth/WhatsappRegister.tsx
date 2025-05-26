@@ -534,19 +534,20 @@ const WhatsappRegister = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-4">
       <div
-        className={`max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
-          }`}
+        className={`max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
+          isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
+        }`}
       >
         {/* Header */}
-        <div className="bg-purple-600 p-4 relative">
+        <div className="bg-purple-600 p-3 sm:p-4 lg:p-6 relative">
           <h2 className="text-2xl font-bold text-white text-center">
-            Register to ASKOXY.AI
+            Register to Askoxy.AI
           </h2>
           <button
             onClick={handleClose}
-            className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
+            className="absolute right-2 sm:right-4 top-2 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5  sm:w-5 sm:h-5" />
           </button>
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-4 mt-4">
@@ -601,13 +602,15 @@ const WhatsappRegister = () => {
                 <div className="flex gap-4">
                   <button
                     type="button"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${otpMethod === "whatsapp"
-                      ? "bg-green-500 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } ${isPhoneDisabled || isMethodDisabled
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      otpMethod === "whatsapp"
+                        ? "bg-green-500 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    } ${
+                      isPhoneDisabled || isMethodDisabled
                         ? "opacity-70 cursor-not-allowed"
                         : ""
-                      }`}
+                    }`}
                     onClick={() => handleMethodChange("whatsapp")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
@@ -616,13 +619,15 @@ const WhatsappRegister = () => {
                   </button>
                   <button
                     type="button"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${otpMethod === "mobile"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } ${isPhoneDisabled || isMethodDisabled
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      otpMethod === "mobile"
+                        ? "bg-purple-600 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    } ${
+                      isPhoneDisabled || isMethodDisabled
                         ? "opacity-70 cursor-not-allowed"
                         : ""
-                      }`}
+                    }`}
                     onClick={() => handleMethodChange("mobile")}
                     disabled={isPhoneDisabled || isMethodDisabled}
                   >
@@ -648,7 +653,7 @@ const WhatsappRegister = () => {
                       disabled={isPhoneDisabled} // Disable input only during OTP verification
                       international={otpMethod === "whatsapp"} // Allow country change for WhatsApp
                       countrySelectProps={{ disabled: otpMethod === "mobile" }} // Disable country selection for SMS
-                      className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-800 [&>*]:outline-none [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:border-none"
+                      className="w-full px-3 py-2 sm:p-2 bg-white shadow-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-800 placeholder-gray-400 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] [&>*]:outline-none [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:border-none [&_.PhoneInputInput]:min-h-[40px] [&_.PhoneInputInput]:py-0 PhoneInput"
                       maxLength={20}
                       placeholder="Enter your number"
                       style={
@@ -733,10 +738,11 @@ const WhatsappRegister = () => {
                   id="otpSubmitButton"
                   type="submit"
                   disabled={isLoading || (!showOtp && !isOtpButtonEnabled)}
-                  className={`w-full py-3 ${!showOtp && !isOtpButtonEnabled
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700"
-                    } text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full py-3 ${
+                    !showOtp && !isOtpButtonEnabled
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700"
+                  } text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

@@ -62,24 +62,31 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
   const handleSignin = () => {
     navigate("/whatsappregister");
   };
-  const handleJobStreet = () => {
-    window.open("/jobstreet", "_blank");
-  };
+  // const handleJobStreet = () => {
+  //   // window.open("/jobstreet", "_blank");
+    
+  // };
+
+  const handleJobStreet = () => (window.location.href = "/jobstreet");
+
+
   
 
   const handleLogo = () => {
     navigate("/");
   };
-  
-  const handleInterest =()=>{
-     message.warning("Please login to submit your interest.");
-       sessionStorage.setItem("submitclicks", "true");
+  const handleInterest = () => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      sessionStorage.setItem("submitclicks", "true");
+      navigate("/main/services/campaign/a6b5");
+    } else {
+      message.warning("Please login to submit your interest.");
+      sessionStorage.setItem("submitclicks", "true");
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/services/campaign/a6b5`
-      );
-  }
+      sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
+    }
+  };
 
   return (
     <header
