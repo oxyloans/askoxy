@@ -775,7 +775,7 @@ const Categories: React.FC<CategoriesProps> = ({
                       ? "Pc"
                       : item.weight == "1"
                       ? "Kg"
-                      : "Kgs"}
+                      : item.units}
                   </p>
                   <div className="flex items-baseline space-x-2">
                     <span className="text-lg font-semibold text-gray-900">
