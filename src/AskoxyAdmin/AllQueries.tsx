@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Layout, Select, Table, Modal, Spin } from "antd";
+import { Layout, Select, Table, Modal, Spin, Button } from "antd";
 import Sider from "./Sider";
 // import { setEmitFlags } from "typescript";
 import BASE_URL from "../Config";
@@ -29,6 +29,10 @@ interface Query {
     resolvedOn: string;
     resolvedBy: string;
   }>;
+  userQueryDocumentStatus: {
+    userDocumentId: string;
+    filePath: string;
+  };
 }
 
 const AllQueries: React.FC = () => {
@@ -43,6 +47,8 @@ const AllQueries: React.FC = () => {
   const [comments, setComments] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   // const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
@@ -226,6 +232,29 @@ const AllQueries: React.FC = () => {
       title: "User Query",
       dataIndex: "query",
       width: 220,
+      render: (_: any, record: Query) => {
+        const filePath = record.userQueryDocumentStatus?.filePath;
+
+        return (
+          <div style={{ position: "relative", paddingBottom: "2rem" }}>
+            <p>{record.query}</p>
+
+            {filePath && (
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => {
+                  setSelectedFilePath(filePath);
+                  setIsModalOpen(true);
+                }}
+                style={{ position: "absolute", bottom: 0, right: 0 }}
+              >
+                View doc
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
 
     {
@@ -314,7 +343,7 @@ const AllQueries: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen mt-4">
       <div className="flex-1 ">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
@@ -600,6 +629,22 @@ const AllQueries: React.FC = () => {
           </div>
         </div>
       )}
+      <Modal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        title="User Document"
+        width={400} // smaller width
+        bodyStyle={{ maxHeight: "400px", overflowY: "auto" }} // limit height
+      >
+        {selectedFilePath && (
+          <img
+            src={selectedFilePath}
+            alt="User Document"
+            style={{ width: "100%", borderRadius: 8 }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

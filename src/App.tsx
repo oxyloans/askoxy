@@ -505,7 +505,7 @@ const App: React.FC = () => {
               <Route path="orderDetails" element={<OrderDetailsPage />} />
               <Route path="allOrders" element={<AllOrders />} />
               <Route path="dbList" element={<DeliveryBoyList />} />
-              <Route path="queryManagement" element={<PartnerAllQueries />} />
+              <Route path="queryManagement" element={<AllQueries />} />
               <Route path="scan-qr" element={<BarcodeScanner />} />
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />

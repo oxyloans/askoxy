@@ -44,14 +44,17 @@ import GPTImg1 from "../assets/img/study abroad.png";
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 import RudrakshaImage from "../assets/img/freerudraksha.png";
 
+import offer5kg from "../assets/img/5offer.png";
+import offer2kgRice from "../assets/img/2offer.png";
+
 import O1 from "../assets/img/o1.png";
 import O2 from "../assets/img/o2.png";
 import O8 from "../assets/img/StudyAbroda.png";
-import O3 from "../assets/img/o3.png";
+import O3 from "../assets/img/2offer.png";
 import O4 from "../assets/img/o4.png";
 import O5 from "../assets/img/tb1.png";
 import O6 from "../assets/img/26kg.png";
-import O7 from "../assets/img/retro.png";
+import O7 from "../assets/img/5offer.png";
 import O9 from "../assets/img/35kg1.png";
 
 // Product Skeleton Component
@@ -298,14 +301,14 @@ const Home: React.FC = () => {
     //   id: "o2",
     //   src: O2,
     //   alt: "Products",
-    //   path: "/main/dashboard/products?weight=5.0",
+    //   path: "/main/dashboard/products?weight=.0",
     // },
-    // {
-    //   id: "o6",
-    //   src: O7,
-    //   alt: "Products",
-    //   path: "/main/dashboard/products?weight=5.0",
-    // },
+    {
+      id: "o6",
+      src: O7,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=5.0",
+    },
     {
       id: "o1",
       src: O6,
@@ -331,12 +334,12 @@ const Home: React.FC = () => {
       alt: "Study Abroad",
       path: "/main/services/studyabroad",
     },
-    {
-      id: "o4",
-      src: O4,
-      alt: "Villa @36Lakshs",
-      path: "/main/services/campaign/37b3",
-    },
+    // {
+    //   id: "o4",
+    //   src: O4,
+    //   alt: "Villa @36Lakshs",
+    //   path: "/main/services/campaign/37b3",
+    // },
   ];
 
   const sortItemsByName = (items: Item[]): Item[] => {
@@ -802,10 +805,14 @@ const Home: React.FC = () => {
             <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm hover:text-purple-600 transition-colors">
               {item.title}
             </h3>
-            <p className="text-sm text-gray-500">
-              Weight: {item.weight ?? "N/A"}
-              {parseFloat(item.weight || "0") <= 1 ? "Kg" : "Kgs"}
-            </p>
+               <p className="text-sm text-gray-500">
+                    Weight: {item.weight}{" "}
+                    {item.units == "pcs"
+                      ? "Pc"
+                      : item.weight == "1"
+                      ? "Kg"
+                      : item.units}
+                  </p>
 
             <div className="flex items-baseline space-x-2">
               <span className="text-lg font-semibold text-gray-900">

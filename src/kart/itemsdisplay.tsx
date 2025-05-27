@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { message } from "antd";
+import { message, Modal } from "antd"; // Added Modal import for Special Offers modal
 import {
   ShoppingCart,
   Home,
@@ -40,11 +40,20 @@ interface Item {
   quantity: number;
 }
 
+// interface CartItem {
+//   itemId: string;
+//   cartQuantity: number;
+//   cartId: string;
+//   status: string; // "ADD" or "FREE"
+// }
+
 interface CartItem {
   itemId: string;
   cartQuantity: number;
   cartId: string;
-  status: string; // "ADD" or "FREE"
+  status: string;
+  itemName: string;
+  weight: number;
 }
 
 interface Message {
@@ -76,6 +85,12 @@ const ItemDisplayPage = () => {
     items: {}, // Stores boolean values for each item
     status: {}, // Stores status strings for each item
   });
+  // Added state for Special Offers modal
+  const [offerModal, setOfferModal] = useState<{ visible: boolean; content: string }>({
+    visible: false,
+    content: "",
+  });
+  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(new Set());
 
   const context = useContext(CartContext);
 
@@ -86,6 +101,14 @@ const ItemDisplayPage = () => {
   const { count, setCount } = context;
 
   const apiKey = "";
+
+  // Added normalizeWeight function from categories.tsx
+  const normalizeWeight = (value: any): number | null => {
+    if (value === null || value === undefined) return null;
+    const cleanedValue = String(value).replace(/[^0-9.]/g, "");
+    const parsed = Number(cleanedValue);
+    return isNaN(parsed) ? null : parsed;
+  };
 
   const fetchItemDetails = async (id: string) => {
     try {
@@ -128,57 +151,170 @@ const ItemDisplayPage = () => {
     });
   };
 
+  // Updated fetchCartData function from categories.tsx to include Special Offers modal logic
   const fetchCartData = async (itemId: string) => {
-    if (itemId !== "") {
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!userId || !accessToken) {
+      setCartItems({});
+      setCartData([]);
+      setCount(0);
+      localStorage.setItem("cartCount", "0");
+      return;
+    }
+
+    if (itemId) {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
       }));
     }
+
     try {
       const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (response.data.customerCartResponseList) {
-        const cartItemsMap = response.data.customerCartResponseList.reduce(
-          (acc: Record<string, number>, item: CartItem) => {
-            if (item.status !== "FREE") {
-              acc[item.itemId] =
-                (acc[item.itemId] || 0) + (item.cartQuantity || 0);
-            }
-            return acc;
-          },
-          {}
+
+      const customerCart: CartItem[] = response.data?.customerCartResponseList || [];
+
+      console.log("fetchCartData API response:", response.data);
+
+      const cartItemsMap: Record<string, number> = customerCart.reduce(
+        (acc: Record<string, number>, item: CartItem) => {
+          if (item.status === "ADD") {
+            const quantity = item.cartQuantity ?? 0;
+            acc[item.itemId] = (acc[item.itemId] ?? 0) + quantity;
+            console.log(
+              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`
+            );
+          }
+          return acc;
+        },
+        {}
+      );
+
+      const totalQuantity: number = customerCart.reduce(
+        (sum: number, item: CartItem) => {
+          const quantity = item.cartQuantity ?? 0;
+          return sum + quantity;
+        },
+        0
+      );
+
+      console.log("fetchCartData: ", {
+        cartItemsMap,
+        totalQuantity,
+        customerCart,
+      });
+
+      const newDisplayedOffers = new Set(displayedOffers);
+
+      // Check for 2+1 Offer
+      const twoPlusOneItems = customerCart.filter(
+        (item) => item.status === "ADD" && item.cartQuantity >= 2
+      );
+      for (const addItem of twoPlusOneItems) {
+        const freeItem = customerCart.find(
+          (item) =>
+            item.itemId === addItem.itemId &&
+            item.status === "FREE" &&
+            item.cartQuantity === 1 &&
+            normalizeWeight(item.weight) === 1.0
         );
-        // Fix: Use cartItemsMap and correct syntax
-        const totalQuantity = Object.values(
-          cartItemsMap as Record<string, number>
-        ).reduce((sum, qty) => sum + qty, 0);
-        setCartItems(cartItemsMap);
-        setCount(totalQuantity);
+        if (
+          freeItem &&
+          normalizeWeight(addItem.weight) === 1.0 &&
+          !newDisplayedOffers.has(`2+1_${addItem.itemId}`)
+        ) {
+          setOfferModal({
+            visible: true,
+            content: `<b>2+1 Offer Is Active.</b><br><br>Buy 2 Bags of ${addItem.itemName} of ${normalizeWeight(addItem.weight)} Kg and get 1 Bag of ${freeItem.itemName} of ${normalizeWeight(freeItem.weight)} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+          });
+          newDisplayedOffers.add(`2+1_${addItem.itemId}`);
+        }
+      }
+
+      // Check for 5+2 Offer
+      const fivePlusTwoItems = customerCart.filter(
+        (item) =>
+          item.status === "ADD" &&
+          normalizeWeight(item.weight) === 5.0 &&
+          item.cartQuantity >= 1
+      );
+      for (const addItem of fivePlusTwoItems) {
+        const freeItems = customerCart.find(
+          (item) =>
+            item.status === "FREE" &&
+            normalizeWeight(item.weight) === 1.0 &&
+            item.cartQuantity === 2
+        );
+        if (
+          freeItems &&
+          !newDisplayedOffers.has(`5+2_${addItem.itemId}`)
+        ) {
+          setOfferModal({
+            visible: true,
+            content: `<b>5+2 Offer Is Active.</b><br><br>Buy 1 Bag of ${addItem.itemName} of ${normalizeWeight(addItem.weight)} Kg and get 2 Bags of ${freeItems.itemName} of ${normalizeWeight(freeItems.weight)} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+          });
+          newDisplayedOffers.add(`5+2_${addItem.itemId}`);
+        }
+      }
+
+      // Free Container Offer
+      const containerOfferItems = customerCart.filter(
+        (item) =>
+          item.status === "ADD" &&
+          (normalizeWeight(item.weight) === 10.0 || normalizeWeight(item.weight) === 26.0) &&
+          item.cartQuantity >= 1
+      );
+      for (const addItem of containerOfferItems) {
+        const freeContainer = customerCart.find(
+          (item) =>
+            item.status === "FREE" &&
+            item.cartQuantity === 1 &&
+            item.itemName.toLowerCase().includes("storage")
+        );
+        if (
+          freeContainer &&
+          !newDisplayedOffers.has(`container_${addItem.itemId}`)
+        ) {
+          setOfferModal({
+            visible: true,
+            content: `<b>Special Offer!</b><br>Free Container added to the cart successfully.`,
+          });
+          newDisplayedOffers.add(`container_${addItem.itemId}`);
+        }
+      }
+
+      setCartItems(cartItemsMap);
+      setCartData(customerCart);
+      setCount(totalQuantity);
+      localStorage.setItem("cartCount", totalQuantity.toString());
+      setDisplayedOffers(newDisplayedOffers);
+
+      if (itemId) {
         setLoadingItems((prev) => ({
           ...prev,
           items: { ...prev.items, [itemId]: false },
-        }));
-      } else {
-        setCartItems({});
-        setCount(0);
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [itemId]: false },
+          status: { ...prev.status, [itemId]: "" },
         }));
       }
-      setCartData(response.data.customerCartResponseList);
     } catch (error) {
       console.error("Error fetching cart items:", error);
       setCartItems({});
       setCartData([]);
       setCount(0);
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [itemId]: false },
-      }));
+      localStorage.setItem("cartCount", "0");
+      if (itemId) {
+        setLoadingItems((prev) => ({
+          ...prev,
+          items: { ...prev.items, [itemId]: false },
+          status: { ...prev.status, [itemId]: "" },
+        }));
+      }
+      message.error("Failed to fetch cart data.");
     }
   };
 
@@ -492,8 +628,38 @@ const ItemDisplayPage = () => {
     );
   };
 
+  // Added handler for closing Special Offers modal
+  const handleOfferModalClose = () => {
+    setOfferModal({ visible: false, content: "" });
+  };
+
   return (
     <div className="min-h-screen">
+      {/* Added Special Offers Modal from categories.tsx */}
+      <Modal
+        title="Special Offer!"
+        open={offerModal.visible}
+        onCancel={handleOfferModalClose}
+        footer={[
+          <button
+            key="close"
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900"
+            onClick={handleOfferModalClose}
+          >
+            Close
+          </button>,
+        ]}
+        centered
+        width="90%"
+        style={{ maxWidth: "600px" }}
+      >
+        <div
+          dangerouslySetInnerHTML={{
+            __html: offerModal.content,
+          }}
+        />
+      </Modal>
+
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         {/* Enhanced Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm mb-6">
@@ -529,7 +695,8 @@ const ItemDisplayPage = () => {
 
                   {/* Enhanced Discount Badge */}
                   {itemDetails && (
-                    <div className="absolute top-4 right-4 flex items-center">
+                    <div className="absolute top-4 Hackett
+                    right-4 flex items-center">
                       <span className="bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
                         {calculateDiscount(
                           Number(itemDetails.itemMrp) ||
@@ -778,7 +945,8 @@ const ItemDisplayPage = () => {
                 )}
               </div>
               {/* Related Items */}
-              <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div
+              className="bg-white rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold mb-4">Related Items</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {relatedItems.map((item, index) => (

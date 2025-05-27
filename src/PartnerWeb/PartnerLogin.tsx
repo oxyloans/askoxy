@@ -67,9 +67,15 @@ const LoginPage: React.FC = () => {
       });
 
       if (response.data) {
-        localStorage.setItem("Token", JSON.stringify(response.data));
-        message.success("Login Successful! Welcome to AskOxy.AI Partner!");
-        navigate("/home");
+        if (response.data.primaryType === "SELLER") {
+          localStorage.setItem("Token", JSON.stringify(response.data));
+          message.success("Login Successful! Welcome to AskOxy.AI Partner!");
+          navigate("/home");
+        } else {
+          message.info(
+            "The credentials are incorrect for partner login. Please verify and try again."
+          );
+        }
       } else {
         message.error(
           "Login Failed: Please check your credentials and try again."

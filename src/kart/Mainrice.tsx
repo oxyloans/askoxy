@@ -27,7 +27,7 @@ import BASE_URL from "../Config";
 interface Item {
   itemName: string;
   itemId: string;
-  itemImage: null;
+  itemImage: null | string;
   weight: string;
   itemPrice: number;
   quantity: number;

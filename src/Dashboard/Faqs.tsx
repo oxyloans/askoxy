@@ -14,7 +14,7 @@ const RiceOfferFAQs: React.FC = () => {
       question: "What are the current promotional offers?",
       answer: (
         <ul className="list-disc pl-5 space-y-2">
-          <li>🎁 <strong>Buy 1 KG Rice</strong> → Get <strong>1 KG Free</strong> (1+1 Offer)</li>
+          <li>🎁 <strong>Buy 2 KG Rice</strong> → Get <strong>1 KG Free</strong> (2+1 Offer)</li>
           {/* <li>🍿 <strong>Buy 5 KG Rice</strong> → Get <strong>1 FREE PVR Movie Ticket</strong></li> */}
           <li>🛢️ <strong>Buy 10 KG Rice</strong> → Get a <strong>FREE 18+ KG Steel Container</strong> (Worth ₹1800)</li>
           <li>🛢️ <strong>Buy 26 KG Rice</strong> → Get a <strong>FREE 35+ KG Steel Container</strong> (Worth ₹2300)</li>
@@ -53,9 +53,9 @@ const RiceOfferFAQs: React.FC = () => {
     },
     {
       id: 7,
-      question: "Are the 1+1 and container offers applicable more than once?",
+      question: "Are the 2+1 and container offers applicable more than once?",
       answer: (
-        <p>❌ <strong>No.</strong> Both the <strong>1+1 KG offer</strong> and the <strong>steel container offer</strong> can be claimed <strong>only once per address</strong>.</p>
+        <p>❌ <strong>No.</strong> Both the <strong>2+1 KG offer</strong> and the <strong>steel container offer</strong> can be claimed <strong>only once per address</strong>.</p>
       )
     },
   ];

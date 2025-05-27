@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.b234d98a.css",
-    "main.js": "/static/js/main.ce8a95d9.js",
+    "main.js": "/static/js/main.d9bb6ae0.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/Usecase.png": "/static/media/Usecase.3ad7b7978fa08b7944c9.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
@@ -113,8 +113,6 @@
     "static/media/testimonial13.png": "/static/media/testimonial13.f925cd34d6bf1bb8ccfa.png",
     "static/media/testimonial16.png": "/static/media/testimonial16.c0b4f2d3618261aae6b0.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
-    "static/media/o4.png": "/static/media/o4.c975abe297e7244034cb.png",
-    "static/media/o3.png": "/static/media/o3.972404343a87c58de7a4.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/realestate gpt (1).png": "/static/media/realestate gpt (1).5655cc684ac7d693d031.png",
     "static/media/Influencers gpt (1).png": "/static/media/Influencers gpt (1).566a5a80041f778c5e8c.png",
@@ -137,9 +135,11 @@
     "static/media/financial advisory (1).png": "/static/media/financial advisory (1).3c31cf1516a9c0f025e1.png",
     "static/media/Manchester.png": "/static/media/Manchester.900743cba77014bda51b.png",
     "static/media/Career guidance.png": "/static/media/Career guidance.fe6ea3668fa6a02f6294.png",
+    "static/media/5offer.png": "/static/media/5offer.4c09878033c20c301574.png",
     "static/media/freelancer and consulting service.png": "/static/media/freelancer and consulting service.cebe62a57cb94f08390e.png",
     "static/media/Legal knowledge hub.png": "/static/media/Legal knowledge hub.9db183177e6a1533ba16.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
+    "static/media/2offer.png": "/static/media/2offer.6b7c59e146b45fa528b9.png",
     "static/media/orderriceonline.png": "/static/media/orderriceonline.5bcd241c869669da5c8c.png",
     "static/media/Pets.png": "/static/media/Pets.ca3ab0d5bb314a9dc270.png",
     "static/media/IMAGE 16.png": "/static/media/IMAGE 16.e2c205dbc69cbfa0b18a.png",
@@ -196,10 +196,10 @@
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
     "main.b234d98a.css.map": "/static/css/main.b234d98a.css.map",
-    "main.ce8a95d9.js.map": "/static/js/main.ce8a95d9.js.map"
+    "main.d9bb6ae0.js.map": "/static/js/main.d9bb6ae0.js.map"
   },
   "entrypoints": [
     "static/css/main.b234d98a.css",
-    "static/js/main.ce8a95d9.js"
+    "static/js/main.d9bb6ae0.js"
   ]
 }

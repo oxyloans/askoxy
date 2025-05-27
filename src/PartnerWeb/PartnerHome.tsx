@@ -25,7 +25,7 @@ const PartnerHome: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    navigate("/login");
+    navigate("/partnerLogin");
   };
 
   const handleSidebarItemClick = () => {
@@ -34,7 +34,19 @@ const PartnerHome: React.FC = () => {
     }
   };
 
-  // Scroll to top on route change
+  useEffect(() => {
+    const tokenString = localStorage.getItem("Token");
+    if (!tokenString) {
+      navigate("/partnerLogin");
+      return;
+    }
+    const tokenObj = JSON.parse(tokenString);
+    if (!tokenObj || tokenObj.primaryType !== "SELLER") {
+      navigate("/partnerLogin");
+      localStorage.clear();
+    }
+  }, []);
+
   useEffect(() => {
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
