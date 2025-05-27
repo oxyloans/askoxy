@@ -1,159 +1,370 @@
-import React from 'react';
+import React, { useState } from "react";
+import {
+  FileText,
+  Users,
+  CheckCircle,
+  Info,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
-const LinkingOfCoApplicantGuarantorBusiness: React.FC = () => {
+interface LinkingOfCoApplicantGuarantorBusinessProps {}
+
+const LinkingOfCoApplicantGuarantorBusiness: React.FC<
+  LinkingOfCoApplicantGuarantorBusinessProps
+> = () => {
+  const [expandedSections, setExpandedSections] = useState<{
+    [key: string]: boolean;
+  }>({
+    overview: true,
+    actors: true,
+    actions: true,
+    preconditions: true,
+    postconditions: true,
+    workflow: true,
+    flowchart: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">LOS Workflow for Linking of Co-Applicant/Co-Obligant/Guarantor</h1>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-10">
+          <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 text-center sm:text-left">
+            LOS Workflow for Linking of Co-Applicant/Co-Obligant/Guarantor
+          </h1>
+        </div>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Overview</h2>
-        <p>
-          Loan Origination System is a centralized web-based solution designed and developed for processing Loan Applications. It has different modules such as Retail, Corporate, etc. The main advantages of the Loan Origination system are Appraisal of Loan Proposals by adopting uniform guidelines across the Bank and Facility for electronic workflow, thereby avoiding delays attributable to exchange of correspondence between Branch and Zonal Offices.
-        </p>
-        <p>
-          User has to just key in information available in loan application. System picks up Rate of Interest, Margin, product guidelines for a specific product selected by the user, checks the discretionary powers while sanctioning. User can generate reports like Credit Score Sheet, Process note, Sanction letter, Communication of Sanction to borrower, worksheet for assessment, etc. from the system.
-        </p>
-        <p>
-          Once the Customer ID is created and linked to the respective loan product, the Bank Officer links the Co-applicant/Co-obligant/Guarantors to the proposed loan of the customer before actually appraising the loan proposal.
-        </p>
-      </section>
+        {/* Content Sections */}
+        <div className="space-y-8">
+          {/* Overview */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("overview")}
+            >
+              <span className="flex items-center">
+                <Info size={20} className="mr-2 text-indigo-600" />
+                Overview
+              </span>
+              {expandedSections.overview ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.overview && (
+              <div className="text-gray-600 leading-relaxed space-y-4">
+                <p>
+                  The Loan Origination System (LOS) is a centralized web-based
+                  solution designed for processing loan applications
+                  efficiently. It includes modules such as Retail and Corporate,
+                  ensuring uniform guidelines across the bank and streamlining
+                  electronic workflows to minimize delays.
+                </p>
+                <p>
+                  Users input loan application details, and the system
+                  automatically retrieves relevant data like interest rates,
+                  margins, and product guidelines. It also generates reports
+                  such as Credit Score Sheets, Process Notes, Sanction Letters,
+                  and more.
+                </p>
+                <p>
+                  After creating and linking a Customer ID to a loan product,
+                  the Bank Officer links Co-applicants, Co-obligants, or
+                  Guarantors to the proposed loan before appraising the loan
+                  proposal.
+                </p>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actors</h2>
-        <p>User (Bank Officer)</p>
-      </section>
+          {/* Actors */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actors")}
+            >
+              <span className="flex items-center">
+                <Users size={20} className="mr-2 text-indigo-600" />
+                Actors
+              </span>
+              {expandedSections.actors ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actors && (
+              <p className="text-gray-600">User (Bank Officer)</p>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actions</h2>
-        <p>The user links Co-applicant/Co-obligant/Guarantors to the proposed loan of the customer.</p>
-      </section>
+          {/* Actions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actions")}
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Actions
+              </span>
+              {expandedSections.actions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actions && (
+              <p className="text-gray-600">
+                The user links Co-applicant/Co-obligant/Guarantors to the
+                proposed loan of the customer.
+              </p>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Preconditions</h2>
-        <ol className="list-decimal ml-6">
-          <li>Customer ID and Linking of Customer ID to Loan Product has already been done.</li>
-          <li>All the concerned documents pertaining to the proposed loan account are submitted by the customer.</li>
-        </ol>
-      </section>
+          {/* Preconditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("preconditions")}
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Preconditions
+              </span>
+              {expandedSections.preconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.preconditions && (
+              <ol className="list-decimal ml-6 text-gray-600">
+                <li>
+                  Customer ID and linking to the loan product are completed.
+                </li>
+                <li>
+                  All required documents for the proposed loan are submitted.
+                </li>
+              </ol>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Post Conditions</h2>
-        <ol className="list-decimal ml-6">
-          <li>Updation of particulars regarding the Co-applicant/Co-obligant/Guarantor for the proposed loan.</li>
-          <li>Creation of the Customer IDs for Co-applicant/Co-obligant/Guarantor is created.</li>
-        </ol>
-      </section>
+          {/* Post Conditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("postconditions")}
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Post Conditions
+              </span>
+              {expandedSections.postconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.postconditions && (
+              <ol className="list-decimal ml-6 text-gray-600">
+                <li>
+                  Co-applicant/Co-obligant/Guarantor particulars are updated.
+                </li>
+                <li>
+                  Customer IDs for Co-applicant/Co-obligant/Guarantor are
+                  created.
+                </li>
+              </ol>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Workflow</h2>
-        <ul className="list-disc ml-6">
-          <li>Customer submits the filled-in Loan application form along with the required documents.</li>
-          <li>Bank officer verifies the documents submitted by the customer with the checklist & if any discrepancy requests the customer for providing the details in the application/submission of the valid documents if any.</li>
-          <li>Once the Bank Officer is convinced with the application form & the documents, issues an acknowledgement to the customer & initiates the Customer Creation Process.</li>
-          <li>The Bank Officer captures the customer details such as Personal Details, Communication Details, and Employment, Income details and links in LOS for Customer ID Creation.</li>
-          <li>Once the details of the customer are captured, the bank officer links the Customer ID to the proposed Loan product and also the proposed asset details.</li>
-          <li>The bank officer creates the Customer IDs for Co-applicant(s)/Co-obligant(s)/Guarantor(s) for the proposed loan of the customer with the following details:</li>
-        </ul>
+          {/* Workflow */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("workflow")}
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Workflow
+              </span>
+              {expandedSections.workflow ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.workflow && (
+              <div className="space-y-4 text-gray-600">
+                <ul className="list-disc ml-6 space-y-2">
+                  <li>
+                    Customer submits the loan application with required
+                    documents.
+                  </li>
+                  <li>
+                    Bank Officer verifies documents, requesting corrections if
+                    needed.
+                  </li>
+                  <li>
+                    Upon verification, issues acknowledgment and initiates
+                    Customer Creation.
+                  </li>
+                  <li>
+                    Captures customer details (Personal, Communication,
+                    Employment, Income) and links in LOS for Customer ID
+                    creation.
+                  </li>
+                  <li>
+                    Links Customer ID to the proposed loan product and asset
+                    details.
+                  </li>
+                  <li>
+                    Creates Customer IDs for
+                    Co-applicant(s)/Co-obligant(s)/Guarantor(s).
+                  </li>
+                </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Personal Details</h3>
-        <ul className="list-disc ml-6">
-          <li>First Name</li>
-          <li>Middle Name</li>
-          <li>Last Name</li>
-          <li>Father Name</li>
-          <li>Date of Birth</li>
-          <li>Gender</li>
-          <li>Pan No</li>
-          <li>Passport Details</li>
-          <li>Marital Status</li>
-          <li>No of Dependents</li>
-          <li>Age of dependents</li>
-          <li>Nationality</li>
-          <li>Residential Status</li>
-          <li>Religion</li>
-          <li>Educational Qualification</li>
-          <li>Earning Member in the Family (If any)</li>
-          <li>Length of Relationship with the Bank</li>
-          <li>Whether Existing Borrower</li>
-          <li>Staff</li>
-          <li>Account no</li>
-          <li>Deposits with the Bank</li>
-        </ul>
+                <h3 className="text-lg font-semibold mt-4 mb-2">
+                  Personal Details
+                </h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
+                  <li>First Name</li>
+                  <li>Middle Name</li>
+                  <li>Last Name</li>
+                  <li>Father Name</li>
+                  <li>Date of Birth</li>
+                  <li>Gender</li>
+                  <li>Pan No</li>
+                  <li>Passport Details</li>
+                  <li>Marital Status</li>
+                  <li>No of Dependents</li>
+                  <li>Age of Dependents</li>
+                  <li>Nationality</li>
+                  <li>Residential Status</li>
+                  <li>Religion</li>
+                  <li>Educational Qualification</li>
+                  <li>Earning Member in Family</li>
+                  <li>Length of Relationship with Bank</li>
+                  <li>Existing Borrower</li>
+                  <li>Staff</li>
+                  <li>Account No</li>
+                  <li>Deposits with Bank</li>
+                </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Communication Details</h3>
-        <ul className="list-disc ml-6">
-          <li>Current Address</li>
-          <li>Current residence ownership</li>
-          <li>Living duration in current residence</li>
-          <li>Permanent Address</li>
-          <li>Mobile no</li>
-          <li>Landline no</li>
-          <li>Email ID</li>
-        </ul>
+                <h3 className="text-lg font-semibold mt-4 mb-2">
+                  Communication Details
+                </h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
+                  <li>Current Address</li>
+                  <li>Current Residence Ownership</li>
+                  <li>Living Duration in Current Residence</li>
+                  <li>Permanent Address</li>
+                  <li>Mobile No</li>
+                  <li>Landline No</li>
+                  <li>Email ID</li>
+                </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Employment Details</h3>
-        <ul className="list-disc ml-6">
-          <li>Occupation</li>
-          <li>Name of the Company</li>
-          <li>Address of the Company</li>
-          <li>Designation</li>
-          <li>Department</li>
-          <li>Employee No</li>
-          <li>Office Phone no</li>
-          <li>Ext</li>
-          <li>Fax</li>
-          <li>No of Years in the present Company</li>
-          <li>Previous employment history, etc.</li>
-          <li>Total length of service</li>
-        </ul>
+                <h3 className="text-lg font-semibold mt-4 mb-2">
+                  Employment Details
+                </h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
+                  <li>Occupation</li>
+                  <li>Name of the Company</li>
+                  <li>Address of the Company</li>
+                  <li>Designation</li>
+                  <li>Department</li>
+                  <li>Employee No</li>
+                  <li>Office Phone No</li>
+                  <li>Ext</li>
+                  <li>Fax</li>
+                  <li>Years in Current Company</li>
+                  <li>Previous Employment History</li>
+                  <li>Total Length of Service</li>
+                </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Income & Expenses Details</h3>
-        <ul className="list-disc ml-6">
-          <li>Monthly Income</li>
-          <li>Other Income</li>
-          <li>Monthly Expenses</li>
-          <li>Savings</li>
-          <li>EMI Payment</li>
-          <li>Stability of Income, etc.</li>
-        </ul>
+                <h3 className="text-lg font-semibold mt-4 mb-2">
+                  Income & Expenses Details
+                </h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
+                  <li>Monthly Income</li>
+                  <li>Other Income</li>
+                  <li>Monthly Expenses</li>
+                  <li>Savings</li>
+                  <li>EMI Payment</li>
+                  <li>Stability of Income</li>
+                </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Assets & Liabilities</h3>
-        <p>
-          The bank officer also captures the Assets and Liabilities position of the Co-Applicant/Co-obligant/Guarantor for arriving at the Net worth of the concerned parties.
-        </p>
+                <h3 className="text-lg font-semibold mt-4 mb-2">
+                  Assets & Liabilities
+                </h3>
+                <p>
+                  The Bank Officer captures the Assets and Liabilities position
+                  of the Co-Applicant/Co-obligant/Guarantor to determine their
+                  net worth.
+                </p>
 
-        <p>
-          Once the above details are captured, the Bank Officer saves the record for Customer IDs creation of the Co-applicant/Co-obligant/Guarantor.
-        </p>
-        <p>
-          Once the Customer IDs are created for the Co-applicant/Co-obligant/Guarantor, the Bank Officer initiates the process for linking the Co-applicant/Co-obligant/Guarantor details with the Applicant Loan Application.
-        </p>
-        <p>
-          The Bank Officer selects/enters the following details to link the Co-applicant/Co-obligant/Guarantor details with the Applicant Loan Application:
-        </p>
-        <ul className="list-disc ml-6">
-          <li>Select Applicant Type (Co-applicant/Co-obligant/Guarantor)</li>
-          <li>Customer ID</li>
-          <li>Name of the Person</li>
-          <li>Relationship with the applicant</li>
-          <li>Include income for eligibility</li>
-          <li>Remarks</li>
-        </ul>
-        <p>
-          Once the above details are selected/captured, the Bank Officer saves the record & Co-applicant/Co-obligant/Guarantor details get added to the applicant Loan application.
-        </p>
-        <p>
-          Bank Officer proceeds further for capturing the Loan details requested by the customer in LOS.
-        </p>
-        <p>
-          <strong>Note:</strong> If the Co-applicant/Co-obligant/Guarantor are existing customers of the Bank, the Bank Officer can fetch the details from the existing Customer IDs of the parties from the CBS.
-        </p>
-      </section>
+                <p className="mt-4">
+                  After capturing details, the Bank Officer saves the record to
+                  create Customer IDs for the
+                  Co-applicant/Co-obligant/Guarantor.
+                </p>
+                <p>
+                  The Bank Officer then links the
+                  Co-applicant/Co-obligant/Guarantor details to the Applicant
+                  Loan Application by selecting/entering:
+                </p>
+                <ul className="list-disc ml-6 space-y-1">
+                  <li>Applicant Type (Co-applicant/Co-obligant/Guarantor)</li>
+                  <li>Customer ID</li>
+                  <li>Name of the Person</li>
+                  <li>Relationship with the Applicant</li>
+                  <li>Include Income for Eligibility</li>
+                  <li>Remarks</li>
+                </ul>
+                <p>
+                  Once saved, the Co-applicant/Co-obligant/Guarantor details are
+                  added to the loan application.
+                </p>
+                <p>
+                  The Bank Officer proceeds to capture the requested loan
+                  details in LOS.
+                </p>
+                <p className="mt-2 italic text-red-600">
+                  <strong>Note:</strong> If the
+                  Co-applicant/Co-obligant/Guarantor are existing customers,
+                  their details can be fetched from the Core Banking System
+                  (CBS) using their Customer IDs.
+                </p>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Flowchart</h2>
-        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-{`
+          {/* Flowchart */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("flowchart")}
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Flowchart
+              </span>
+              {expandedSections.flowchart ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.flowchart && (
+              <pre className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 font-mono overflow-x-auto border border-gray-200">
+                {`
 Start
   |
   v
@@ -213,9 +424,12 @@ Proceed with Loan Details Capture
   v
 End
 `}
-        </pre>
-      </section>
-    </div>
+              </pre>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
   );
 };
 

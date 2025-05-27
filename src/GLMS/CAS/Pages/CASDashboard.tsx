@@ -102,40 +102,43 @@ const useCases = [
 
 const CASDashboard: React.FC = () => {
   const navigate = useNavigate();
-    const handleInterest = () => {
-       const userId = localStorage.getItem("userId");
-       if (userId) {
-         sessionStorage.setItem("submitclicks", "true");
-         navigate("/main/services/campaign/a6b5");
-       } else {
-         message.warning("Please login to submit your interest.");
-         sessionStorage.setItem("submitclicks", "true");
-         navigate("/whatsappregister");
-         sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
-       }
-     };
+
+  const handleInterest = () => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      sessionStorage.setItem("submitclicks", "true");
+      navigate("/main/services/campaign/a6b5");
+    } else {
+      message.warning("Please login to submit your interest.");
+      sessionStorage.setItem("submitclicks", "true");
+      sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
+      navigate("/whatsappregister");
+    }
+  };
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
-      <div className="relative mb-10">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="relative mb-10 flex flex-col sm:flex-row items-center justify-center sm:justify-between">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center sm:text-left text-gray-800">
           Customer Acquisition System - Use Cases
         </h1>
         <button
           onClick={handleInterest}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition hover:scale-105"
+          className="mt-4 sm:mt-0 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           I'm Interested
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6">
+      {/* Cards */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {useCases.map((useCase) => (
           <div
             key={useCase.path}
-            className="bg-white border border-gray-200 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-200 ease-in-out"
+            className="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-200 ease-in-out flex flex-col justify-between"
           >
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="p-3 rounded-full bg-gray-100 flex items-center justify-center">
                 {useCase.icon}
               </div>
@@ -149,15 +152,15 @@ const CASDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col sm:flex-row gap-2">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <button
-                className="text-sm px-3 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
                 onClick={() => navigate(`/cas/${useCase.path}/business`)}
               >
                 Business Use Case
               </button>
               <button
-                className="text-sm px-3 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
                 onClick={() => navigate(`/cas/${useCase.path}/system`)}
               >
                 System Use Case

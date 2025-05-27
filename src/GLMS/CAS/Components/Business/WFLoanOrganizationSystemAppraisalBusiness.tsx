@@ -1,79 +1,258 @@
-import React from 'react';
+import React, { useState } from "react";
+import {
+  FileText,
+  Users,
+  CheckCircle,
+  Info,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
-const WFLoanOrganizationSystemAppraisalBusiness: React.FC = () => {
+interface WFLoanOrganizationSystemAppraisalBusinessProps {}
+
+const WFLoanOrganizationSystemAppraisalBusiness: React.FC<
+  WFLoanOrganizationSystemAppraisalBusinessProps
+> = () => {
+  const [expandedSections, setExpandedSections] = useState<{
+    [key: string]: boolean;
+  }>({
+    overview: true,
+    actors: true,
+    actions: true,
+    preconditions: true,
+    postconditions: true,
+    workflow: true,
+    flowchart: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Work Flow for Loan Appraisal</h1>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-10">
+          <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 text-center sm:text-left">
+            Work Flow for Loan Appraisal
+          </h1>
+        </div>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Overview</h2>
-        <p>
-          Loan Origination System is a centralized web-based solution designed and developed for processing Loan Applications. It has different modules such as Retail, Corporate, etc. The main advantages of the Loan Origination system are Appraisal of Loan Proposals by adopting uniform guidelines across the Bank and Facility for electronic workflow, thereby avoiding delays attributable to exchange of correspondence between Branch and Zonal Offices.
-        </p>
-        <p>
-          User has to just key in information available in loan application. System picks up Rate of Interest, Margin, product guidelines for a specific product selected by the user, checks the discretionary powers while sanctioning. User can generate reports like Credit Score Sheet, Process note, Sanction letter, Communication of Sanction to borrower, worksheet for assessment, etc. from the system.
-        </p>
-        <p>
-          Bank Officer evaluates the Loan Details, Income & Expenses of the Customer, Experience & Services of the Customer, Customer and Bank Terms and Conditions, and Verification details and gives the appraisal for the applied loan.
-        </p>
-      </section>
+        {/* Content Sections */}
+        <div className="space-y-8">
+          {/* Overview */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("overview")}
+            >
+              <span className="flex items-center">
+                <Info size={20} className="mr-2 text-indigo-600" />
+                Overview
+              </span>
+              {expandedSections.overview ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.overview && (
+              <div className="text-gray-600 leading-relaxed space-y-4">
+                <p>
+                  The Loan Origination System (LOS) is a centralized web-based
+                  solution designed for processing loan applications
+                  efficiently. It includes modules such as Retail and Corporate,
+                  ensuring uniform guidelines across the bank and streamlining
+                  electronic workflows to minimize delays.
+                </p>
+                <p>
+                  Users input loan application details, and the system
+                  automatically retrieves relevant data like interest rates,
+                  margins, and product guidelines. It also generates reports
+                  such as Credit Score Sheets, Process Notes, Sanction Letters,
+                  and more.
+                </p>
+                <p>
+                  The Bank Officer evaluates loan details, customer income and
+                  expenses, experience and services, terms and conditions, and
+                  verification details to provide an appraisal for the applied
+                  loan.
+                </p>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actors</h2>
-        <p>Bank Officer</p>
-      </section>
+          {/* Actors */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actors")}
+            >
+              <span className="flex items-center">
+                <Users size={20} className="mr-2 text-indigo-600" />
+                Actors
+              </span>
+              {expandedSections.actors ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actors && (
+              <p className="text-gray-600">Bank Officer</p>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actions</h2>
-        <p>
-          Bank Officer evaluates the Loan Details, Income & Expenses of the Customer, Experience & Services of the Customer, External Verification details, and provides the remarks for the appraisal.
-        </p>
-      </section>
+          {/* Actions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actions")}
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Actions
+              </span>
+              {expandedSections.actions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actions && (
+              <p className="text-gray-600">
+                The Bank Officer evaluates loan details, customer income and
+                expenses, experience and services, external verification
+                details, and provides remarks for the appraisal.
+              </p>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Preconditions</h2>
-        <ul className="list-disc ml-6">
-          <li>
-            Customer ID created and linked to the loan Account & all the Customer details captured in the LOS such as Proposed Asset details, Asset & Liabilities Details, Proposed Loan Limit arrived & particulars of the Co-applicant/Guarantor/Co-Obligant.
-          </li>
-        </ul>
-      </section>
+          {/* Preconditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("preconditions")}
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Preconditions
+              </span>
+              {expandedSections.preconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.preconditions && (
+              <ul className="list-disc ml-6 text-gray-600">
+                <li>
+                  Customer ID created and linked to the loan account, with all
+                  customer details captured in LOS, including proposed asset
+                  details, asset and liabilities details, proposed loan limit,
+                  and particulars of the Co-applicant/Guarantor/Co-Obligant.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Post Conditions</h2>
-        <ul className="list-disc ml-6">
-          <li>Loan appraisal note/Process note generated & the Bank Officer can proceed further with the Risk Analysis.</li>
-        </ul>
-      </section>
+          {/* Post Conditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("postconditions")}
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Post Conditions
+              </span>
+              {expandedSections.postconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.postconditions && (
+              <ul className="list-disc ml-6 text-gray-600">
+                <li>
+                  Loan appraisal note/Process note generated, and the Bank
+                  Officer can proceed with Risk Analysis.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Workflow</h2>
-        <ul className="list-disc ml-6">
-          <li>
-            Once the Customer ID is created & linked to the loan Account & all the Customer details captured in the LOS such as Proposed Asset details, Asset & Liabilities Details, Proposed Loan Limit arrived & particulars of the Co-applicant/Guarantor/Co-Obligant, the Bank Officer initiates the appraisal process.
-          </li>
-          <li>
-            The Bank Officer requests & obtains the reports such as Legal Scrutiny Report (LSR) from the Bank's advocate, Security Valuation Report from the Engineers appointed by the Bank.
-          </li>
-          <li>
-            The Bank Officer also obtains the Verification Report regarding customer's personal & employment details from the external/internal agencies appointed by the Bank, Income Verification Report from the Employer/IT department.
-          </li>
-          <li>
-            The Bank Officer also obtains the Credit Information Report from the existing Bankers of the customer & also extracts the Credit Report from the Credit Information Bureau.
-          </li>
-          <li>
-            Once the above information/reports are obtained from the various departments/agencies, the Bank Officer captures the report details into the Appraisal process in LOS.
-          </li>
-          <li>
-            Once the details are captured, the Bank Officer saves the record for generation of Appraisal Note/Process Note.
-          </li>
-        </ul>
-      </section>
+          {/* Workflow */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("workflow")}
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Workflow
+              </span>
+              {expandedSections.workflow ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.workflow && (
+              <ul className="list-disc ml-6 text-gray-600 space-y-2">
+                <li>
+                  After the Customer ID is created, linked to the loan account,
+                  and all customer details (proposed asset, assets and
+                  liabilities, loan limit, Co-applicant/Guarantor/Co-Obligant
+                  particulars) are captured in LOS, the Bank Officer initiates
+                  the appraisal process.
+                </li>
+                <li>
+                  Requests and obtains the Legal Scrutiny Report (LSR) from the
+                  Bank's advocate and Security Valuation Report from engineers
+                  appointed by the Bank.
+                </li>
+                <li>
+                  Obtains verification reports on the customer's personal and
+                  employment details from external/internal agencies, and Income
+                  Verification Report from the employer/IT department.
+                </li>
+                <li>
+                  Obtains the Credit Information Report from the customer's
+                  existing bankers and extracts the Credit Report from the
+                  Credit Information Bureau.
+                </li>
+                <li>
+                  Captures the details of the obtained reports into the
+                  appraisal process in LOS.
+                </li>
+                <li>
+                  Saves the record to generate the Appraisal Note/Process Note.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Flowchart</h2>
-        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-{`
+          {/* Flowchart */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("flowchart")}
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Flowchart
+              </span>
+              {expandedSections.flowchart ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.flowchart && (
+              <pre className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 font-mono overflow-x-auto border border-gray-200">
+                {`
 Start
   |
   v
@@ -111,9 +290,12 @@ Proceed to Risk Analysis
   v
 End
 `}
-        </pre>
-      </section>
-    </div>
+              </pre>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
   );
 };
 

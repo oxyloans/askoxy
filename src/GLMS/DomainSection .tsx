@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  ChevronRight,
-  ArrowRight,
-  Users,
-  CreditCard,
-  DollarSign,
-} from "lucide-react";
+import { ChevronRight, Users, CreditCard, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const domains = [
@@ -15,7 +9,7 @@ const domains = [
     link: "/cas",
     description:
       "Optimized workflows for onboarding and expanding your customer base efficiently.",
-    icon: <Users size={40} className="text-blue-600" />,
+    icon: <Users size={32} className="text-blue-600" />,
     useCases: [
       {
         id: "cas-1",
@@ -45,7 +39,7 @@ const domains = [
     link: "/cms",
     description:
       "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
-    icon: <CreditCard size={40} className="text-blue-600" />,
+    icon: <CreditCard size={32} className="text-blue-600" />,
     useCases: [
       {
         id: "col-1",
@@ -75,7 +69,7 @@ const domains = [
     link: "/fms",
     description:
       "End-to-end financial tracking, processing, and reporting for loan servicing.",
-    icon: <DollarSign size={40} className="text-blue-600" />,
+    icon: <DollarSign size={32} className="text-blue-600" />,
     useCases: [
       {
         id: "fms-1",
@@ -103,41 +97,43 @@ const domains = [
 
 const DomainSection = () => {
   return (
-    <section className="py-10 sm:py-12 md:py-16 lg:py-24 bg-gradient-to-br from-blue-50 to-green-50 backdrop-blur-lg">
-      <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-green-50">
+      <div className="max-w-screen-xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Global Lending Management Solutions
           </h2>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">
-            Explore comprehensive systems that streamline every phase of the
-            loan lifecycle, from origination to servicing.
+          <p className="mt-2 text-gray-600 text-base max-w-2xl mx-auto">
+            Explore systems that streamline every phase of the loan lifecycle,
+            from origination to servicing.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {domains.map((domain) => (
             <Link
               key={domain.id}
-              to={domain.link} // Dynamically set the link based on the domain
-              className="block bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.03] p-5 sm:p-6 h-full"
+              to={domain.link}
+              className="group bg-white rounded-xl shadow hover:shadow-xl transition duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              <div className="flex flex-col justify-between h-full">
+              <div className="flex flex-col justify-between h-full p-6">
                 <div>
                   <div className="flex items-center mb-4">
-                    <div className="bg-blue-50 rounded-full p-3 mr-3">
+                    <div className="bg-blue-100 rounded-full p-2 mr-3">
                       {domain.icon}
                     </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900">
                       {domain.title}
                     </h3>
                   </div>
-                  <p className="text-gray-600 text-sm sm:text-base mb-3">
+                  <p className="text-sm text-gray-600 mb-4">
                     {domain.description}
                   </p>
 
-                  <div className="text-sm">
-                    <p className="font-medium text-gray-700 mb-2">Use Cases:</p>
+                  <div>
+                    <h4 className="font-medium text-gray-700 text-sm mb-2">
+                      Use Cases:
+                    </h4>
                     <ul className="space-y-2">
                       {domain.useCases.map((uc) => (
                         <li key={uc.id}>
@@ -151,26 +147,14 @@ const DomainSection = () => {
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <span className="text-blue-600 font-medium flex items-center group hover:text-blue-800 text-sm">
-                    Learn more
-                    <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </span>
+                <div className="mt-5 flex items-center text-blue-600 text-sm font-medium hover:text-blue-800">
+                  Learn more
+                  <ChevronRight className="ml-1 w-4 h-4 transition-transform transform group-hover:translate-x-1" />
                 </div>
               </div>
             </Link>
           ))}
         </div>
-
-        {/* <div className="mt-10 text-center">
-          <Link
-            to="/glmshome"
-            className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-full font-medium inline-flex items-center text-sm sm:text-base transition-all duration-300"
-          >
-            View All Solutions
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
-        </div> */}
       </div>
     </section>
   );

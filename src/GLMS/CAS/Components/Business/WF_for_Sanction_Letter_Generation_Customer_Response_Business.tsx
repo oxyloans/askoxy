@@ -1,101 +1,324 @@
-import React from 'react';
+import React, { useState } from "react";
+import {
+  FileText,
+  Users,
+  CheckCircle,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  Check,
+} from "lucide-react";
 
-const WF_for_Sanction_Letter_Generation_Customer_Response_Business: React.FC = () => {
+interface WF_for_Sanction_Letter_Generation_Customer_Response_BusinessProps {}
+
+const WF_for_Sanction_Letter_Generation_Customer_Response_Business: React.FC<
+  WF_for_Sanction_Letter_Generation_Customer_Response_BusinessProps
+> = () => {
+  const [expandedSections, setExpandedSections] = useState<{
+    [key: string]: boolean;
+  }>({
+    overview: true,
+    actors: true,
+    actions: true,
+    preconditions: true,
+    postconditions: true,
+    workflow: true,
+    flowchart: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Work Flow for Sanction Letter Generation & Customer Response</h1>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-10">
+          <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 text-center sm:text-left">
+            Work Flow for Sanction Letter Generation & Customer Response
+          </h1>
+        </div>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Overview</h2>
-        <p>
-          Loan Origination System is a centralized web-based solution designed and developed for processing Loan Applications. It has different modules such as Retail, Corporate, etc. The main advantages of the Loan Origination system are Appraisal of Loan Proposals by adopting uniform guidelines across the Bank and Facility for electronic workflow, thereby avoiding delays attributable to exchange of correspondence between Branch and Zonal Offices.
-        </p>
-        <p>
-          User has to just key in information available in loan application. System picks up Rate of Interest, Margin, product guidelines for a specific product selected by the user, checks the discretionary powers while sanctioning. User can generate reports like Credit Score Sheet, Process note, Sanction letter, Communication of Sanction to borrower, worksheet for assessment, etc. from the system.
-        </p>
-        <p>
-          Once the Loan Proposal is generated & forwarded to the Sanctioning authorities & approved/rejected by the sanctioning authorities, the Bank Officer generates the Sanction/Rejection letter to communicate the Loan status to the customer & obtains the response from the Customer & updates the same in LOS.
-        </p>
-      </section>
+        {/* Content Sections */}
+        <div className="space-y-8">
+          {/* Overview */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("overview")}
+              aria-expanded={expandedSections.overview}
+              aria-controls="overview-section"
+            >
+              <span className="flex items-center">
+                <Info size={20} className="mr-2 text-indigo-600" />
+                Overview
+              </span>
+              {expandedSections.overview ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.overview && (
+              <div
+                id="overview-section"
+                className="text-gray-600 leading-relaxed space-y-4 text-base"
+              >
+                <p>
+                  The Loan Origination System (LOS) is a centralized web-based
+                  solution designed for processing loan applications
+                  efficiently. It includes modules such as Retail and Corporate,
+                  ensuring uniform guidelines across the bank and streamlining
+                  electronic workflows to minimize delays.
+                </p>
+                <p>
+                  Users input loan application details, and the system
+                  automatically retrieves relevant data like interest rates,
+                  margins, and product guidelines. It also generates reports
+                  such as Credit Score Sheets, Process Notes, Sanction Letters,
+                  and more.
+                </p>
+                <p>
+                  Once the Loan Proposal is generated, forwarded to the
+                  Sanctioning Authorities, and approved or rejected, the Bank
+                  Officer generates a Sanction/Rejection letter to communicate
+                  the loan status to the customer, obtains their response, and
+                  updates it in the LOS.
+                </p>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actors</h2>
-        <ul className="list-disc ml-6">
-          <li>Customer</li>
-          <li>Bank Officer</li>
-        </ul>
-      </section>
+          {/* Actors */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actors")}
+              aria-expanded={expandedSections.actors}
+              aria-controls="actors-section"
+            >
+              <span className="flex items-center">
+                <Users size={20} className="mr-2 text-indigo-600" />
+                Actors
+              </span>
+              {expandedSections.actors ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actors && (
+              <ul
+                id="actors-section"
+                className="list-disc ml-6 text-gray-600 text-base"
+              >
+                <li>Customer</li>
+                <li>Bank Officer</li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actions</h2>
-        <ul className="list-disc ml-6">
-          <li>Customer: Receives the Loan offer & Acknowledges the Offer in case of acceptance.</li>
-          <li>Bank Officer: Generates the Sanction/Rejection letter to communicate the Loan status to the customer & Obtains the response from the customer, updates the same in LOS.</li>
-        </ul>
-      </section>
+          {/* Actions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actions")}
+              aria-expanded={expandedSections.actions}
+              aria-controls="actions-section"
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Actions
+              </span>
+              {expandedSections.actions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actions && (
+              <ul
+                id="actions-section"
+                className="list-disc ml-6 text-gray-600 text-base"
+              >
+                <li>
+                  <strong>Customer:</strong> Receives the Loan offer and
+                  acknowledges the offer in case of acceptance.
+                </li>
+                <li>
+                  <strong>Bank Officer:</strong> Generates the
+                  Sanction/Rejection letter to communicate the loan status to
+                  the customer, obtains the response, and updates it in LOS.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Preconditions</h2>
-        <ul className="list-disc ml-6">
-          <li>Loan Proposal has already been Approved/Rejected by the Sanctioning Authorities.</li>
-        </ul>
-      </section>
+          {/* Preconditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("preconditions")}
+              aria-expanded={expandedSections.preconditions}
+              aria-controls="preconditions-section"
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Preconditions
+              </span>
+              {expandedSections.preconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.preconditions && (
+              <ul
+                id="preconditions-section"
+                className="list-disc ml-6 text-gray-600 text-base"
+              >
+                <li>
+                  Loan Proposal has been approved or rejected by the Sanctioning
+                  Authorities.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Post Conditions</h2>
-        <ul className="list-disc ml-6">
-          <li>Loan Offer Accepted by the customer & the Bank Officer initiates the process for Opening Loan Account in CBS.</li>
-        </ul>
-      </section>
+          {/* Post Conditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("postconditions")}
+              aria-expanded={expandedSections.postconditions}
+              aria-controls="postconditions-section"
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Post Conditions
+              </span>
+              {expandedSections.postconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.postconditions && (
+              <ul
+                id="postconditions-section"
+                className="list-disc ml-6 text-gray-600 text-base"
+              >
+                <li>
+                  Loan Offer accepted by the customer, and the Bank Officer
+                  initiates the process for opening a Loan Account in CBS.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Workflow</h2>
-        <ul className="list-disc ml-6">
-          <li>
-            Once the Loan Proposal is generated & forwarded to the Sanctioning authorities & the sanctioning authority approves/rejects the Loan Proposal.
-          </li>
-          <li>
-            Based on the decision of Sanctioning Authority, the Bank Officer generates the Sanction/Rejection letter to communicate the Loan status to the customer which consists of the following details:
-            <ul className="list-disc ml-6 mt-2">
-              <li>Name of the customer</li>
-              <li>Name of Co-applicant</li>
-              <li>Address of the Applicant/Co-applicant</li>
-              <li>Type of Loan</li>
-              <li>Loan Status</li>
-              <li>Loan Amount</li>
-              <li>Rate of Interest</li>
-              <li>Loan Tenure</li>
-              <li>EMI</li>
-              <li>Repayment Schedule</li>
-              <li>Holiday Period (if any)</li>
-              <li>Guarantor details</li>
-              <li>Terms & Conditions</li>
-              <li>Time clause for availment of Loan</li>
-              <li>Remarks</li>
-            </ul>
-          </li>
-          <li>
-            Once the Loan Sanction/Rejection letter is generated, the Bank Officer forwards the same to the customer to communicate the Loan status & to obtain the acceptance.
-          </li>
-          <li>
-            The Customer receives the Sanction/Rejection letter & gives his Acceptance by acknowledging the Offer & returns the same to the Bank Officer.
-          </li>
-          <li>
-            In case of Loan Offer rejection by the Customer, intimates the same to the Bank Officer.
-          </li>
-          <li>
-            Based upon the response from the customer, the Bank Officer updates the customer's response in the LOS.
-          </li>
-          <li>
-            Once the customer's acceptance is received by the Bank Officer, initiates the process for Opening of Loan Account in CBS by capturing the Loan details from the LOS.
-          </li>
-        </ul>
-      </section>
+          {/* Workflow */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("workflow")}
+              aria-expanded={expandedSections.workflow}
+              aria-controls="workflow-section"
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Workflow
+              </span>
+              {expandedSections.workflow ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.workflow && (
+              <div
+                id="workflow-section"
+                className="space-y-4 text-gray-600 text-base"
+              >
+                <ul className="list-disc ml-6 space-y-2">
+                  <li>
+                    Once the Loan Proposal is generated, forwarded to the
+                    Sanctioning Authorities, and approved or rejected.
+                  </li>
+                  <li>
+                    Based on the Sanctioning Authority’s decision, the Bank
+                    Officer generates the Sanction/Rejection letter containing:
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                      <ul className="list-disc ml-6">
+                        <li>Name of the customer</li>
+                        <li>Name of Co-applicant</li>
+                        <li>Address of Applicant/Co-applicant</li>
+                        <li>Type of Loan</li>
+                        <li>Loan Status</li>
+                      </ul>
+                      <ul className="list-disc ml-6">
+                        <li>Loan Amount</li>
+                        <li>Rate of Interest</li>
+                        <li>Loan Tenure</li>
+                        <li>EMI</li>
+                        <li>Repayment Schedule</li>
+                      </ul>
+                      <ul className="list-disc ml-6">
+                        <li>Holiday Period (if any)</li>
+                        <li>Guarantor details</li>
+                        <li>Terms & Conditions</li>
+                        <li>Time clause for availment of Loan</li>
+                        <li>Remarks</li>
+                      </ul>
+                    </div>
+                  </li>
+                  <li>
+                    The Bank Officer forwards the Sanction/Rejection letter to
+                    the customer to communicate the loan status and obtain
+                    acceptance.
+                  </li>
+                  <li>
+                    The Customer receives the letter and acknowledges acceptance
+                    or communicates rejection to the Bank Officer.
+                  </li>
+                  <li>
+                    The Bank Officer updates the customer’s response in the LOS.
+                  </li>
+                  <li>
+                    If the customer accepts the offer, the Bank Officer
+                    initiates the process for opening a Loan Account in CBS
+                    using the loan details from LOS.
+                  </li>
+                </ul>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Flowchart</h2>
-        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-{`
+          {/* Flowchart */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("flowchart")}
+              aria-expanded={expandedSections.flowchart}
+              aria-controls="flowchart-section"
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Flowchart
+              </span>
+              {expandedSections.flowchart ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.flowchart && (
+              <pre
+                id="flowchart-section"
+                className="bg-gray-100 p-4 rounded-lg text-base text-gray-700 font-mono overflow-x-auto border border-gray-200"
+              >
+                {`
 Start
   |
   v
@@ -153,9 +376,12 @@ End
   v
 End
 `}
-        </pre>
-      </section>
-    </div>
+              </pre>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
   );
 };
 

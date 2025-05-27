@@ -1,14 +1,40 @@
-import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useContext,
+} from "react";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Bot, ShoppingBag, Briefcase, Loader2, Droplet, Star, TrendingUp, ArrowRight, Search, ChevronRight, Settings, HandCoins, Gem, Globe, Package, Gift, Ticket, Info } from "lucide-react";
+import {
+  Coins,
+  Bot,
+  ShoppingBag,
+  Briefcase,
+  Loader2,
+  Droplet,
+  Star,
+  TrendingUp,
+  ArrowRight,
+  Search,
+  ChevronRight,
+  Settings,
+  HandCoins,
+  Gem,
+  Globe,
+  Package,
+  Gift,
+  Ticket,
+  Info,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import BASE_URL from "../Config";
 import checkProfileCompletion from "../until/ProfileCheck";
 import { CartContext } from "../until/CartContext";
-import ProductOfferModals from "./ProductOffermodals"; 
+import ProductOfferModals from "./ProductOffermodals";
 import RiceOfferFAQs from "./Faqs"; // Import the FAQs component
 import ProductImg1 from "../assets/img/ricecard1.png";
 import ProductImg2 from "../assets/img/ricecard2.png";
@@ -61,7 +87,7 @@ interface CartItem {
 
 interface HeaderImage {
   id: string | number;
-  src: string; 
+  src: string;
   alt?: string;
   path: string;
 }
@@ -101,7 +127,6 @@ interface Category {
   subCategories: any[];
 }
 
-
 const Home: React.FC = () => {
   // Move this to the top of the component
   const context = useContext(CartContext);
@@ -118,12 +143,17 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
-  const [hoveredImage, setHoveredImage] = useState<string | number | null>(null);
+  const [hoveredImage, setHoveredImage] = useState<string | number | null>(
+    null
+  );
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
-  const [loadingItems, setLoadingItems] = useState<{ items: { [key: string]: boolean }, status: { [key: string]: string } }>({
+  const [loadingItems, setLoadingItems] = useState<{
+    items: { [key: string]: boolean };
+    status: { [key: string]: string };
+  }>({
     items: {},
-    status: {}
+    status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState("All Items");
@@ -134,82 +164,94 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const categoriesFetched = useRef(false);
   const initialDataFetched = useRef(false);
-  
+
   // Add state for promotional offers modal
   const [showOffersModal, setShowOffersModal] = useState(false);
 
-  const updateCartCount = useCallback((count: number) => {
-    setCartCount(count);  // Update local state
-    setCount(count);      // Update context state
-  }, [setCount]);
-  
+  const updateCartCount = useCallback(
+    (count: number) => {
+      setCartCount(count); // Update local state
+      setCount(count); // Update context state
+    },
+    [setCount]
+  );
+
   // Define fetchCartData first before using it in ProductOfferModals
-  const fetchCartData = useCallback(async (itemId: string = "") => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) return;
+  const fetchCartData = useCallback(
+    async (itemId: string = "") => {
+      const userId = localStorage.getItem("userId");
+      if (!userId) return;
 
-    if (itemId !== "") {
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [itemId]: true },
-      }));
-    }
-
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
-      );
-
-      const cartList = response.data?.customerCartResponseList || [];
-
-      if (cartList.length > 0) {
-        const cartItemsMap = cartList.reduce((acc: Record<string, number>, item: CartItem) => {
-          acc[item.itemId] = Number(item.cartQuantity) || 0;
-          return acc;
-        }, {});
-
-        // Use type assertion and additional type guard
-        const totalQuantity = Object.values(cartItemsMap).reduce((sum: number, qty: unknown) => {
-          return sum + (typeof qty === 'number' ? qty : 0);
-        }, 0);
-
-        // Update both local state and context
-        const roundedTotal = Math.round(totalQuantity);
-        setCartItems(cartItemsMap);
-        setCartData(cartList);
-        localStorage.setItem("cartCount", cartList.length.toString());
-        setCartCount(roundedTotal);  // Local state
-        setCount(roundedTotal);      // Context state
-      } else {
-        setCartItems({});
-        setCartData([]);
-        localStorage.setItem("cartCount", "0");
-        setCartCount(0);  // Local state
-        setCount(0);      // Context state
-      }
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-    } finally {
       if (itemId !== "") {
         setLoadingItems((prev) => ({
           ...prev,
-          items: { ...prev.items, [itemId]: false },
+          items: { ...prev.items, [itemId]: true },
         }));
       }
-    }
-  }, [updateCartCount, setCount]); // Add setCount to the dependency array
-  
+
+      try {
+        const response = await axios.get(
+          `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
+        );
+
+        const cartList = response.data?.customerCartResponseList || [];
+
+        if (cartList.length > 0) {
+          const cartItemsMap = cartList.reduce(
+            (acc: Record<string, number>, item: CartItem) => {
+              acc[item.itemId] = Number(item.cartQuantity) || 0;
+              return acc;
+            },
+            {}
+          );
+
+          // Use type assertion and additional type guard
+          const totalQuantity = Object.values(cartItemsMap).reduce(
+            (sum: number, qty: unknown) => {
+              return sum + (typeof qty === "number" ? qty : 0);
+            },
+            0
+          );
+
+          // Update both local state and context
+          const roundedTotal = Math.round(totalQuantity);
+          setCartItems(cartItemsMap);
+          setCartData(cartList);
+          localStorage.setItem("cartCount", cartList.length.toString());
+          setCartCount(roundedTotal); // Local state
+          setCount(roundedTotal); // Context state
+        } else {
+          setCartItems({});
+          setCartData([]);
+          localStorage.setItem("cartCount", "0");
+          setCartCount(0); // Local state
+          setCount(0); // Context state
+        }
+      } catch (error) {
+        console.error("Error fetching cart items:", error);
+      } finally {
+        if (itemId !== "") {
+          setLoadingItems((prev) => ({
+            ...prev,
+            items: { ...prev.items, [itemId]: false },
+          }));
+        }
+      }
+    },
+    [updateCartCount, setCount]
+  ); // Add setCount to the dependency array
+
   // Now initialize ProductOfferModals hooks after fetchCartData is defined
-  const { 
-    handleItemAddedToCart, 
-    freeItemsMap, 
-    movieOfferMap, 
-    setFreeItemsMap, 
-    setMovieOfferMap 
+  const {
+    handleItemAddedToCart,
+    freeItemsMap,
+    movieOfferMap,
+    setFreeItemsMap,
+    setMovieOfferMap,
   } = ProductOfferModals({
     fetchCartData,
     cartData,
-    cartItems
+    cartItems,
   });
 
   // Handle responsive behavior
@@ -217,23 +259,22 @@ const Home: React.FC = () => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
-    
+
     // Initial check
     handleResize();
-    
+
     // Add event listener
-    window.addEventListener('resize', handleResize);
-    
+    window.addEventListener("resize", handleResize);
+
     // Clean up
-    return () => window.removeEventListener('resize', handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
-  
 
   // Variants for header image hover effect
   const headerImageVariants = {
     initial: {
       scale: 1,
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
     },
     hover: {
       scale: 1.05,
@@ -241,9 +282,9 @@ const Home: React.FC = () => {
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 20
-      }
-    }
+        damping: 20,
+      },
+    },
   };
 
   const headerImages: HeaderImage[] = [
@@ -300,7 +341,7 @@ const Home: React.FC = () => {
 
   const sortItemsByName = (items: Item[]): Item[] => {
     return [...items]
-      .filter(item => item.quantity > 0)
+      .filter((item) => item.quantity > 0)
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
   };
 
@@ -309,7 +350,9 @@ const Home: React.FC = () => {
 
     setProductsLoading(true);
     try {
-      const response = await axios.get(`${BASE_URL}/product-service/showItemsForCustomrs`);
+      const response = await axios.get(
+        `${BASE_URL}/product-service/showItemsForCustomrs`
+      );
       const data: Category[] = response.data;
 
       const uniqueItemsMap = new Map();
@@ -317,8 +360,12 @@ const Home: React.FC = () => {
         category.itemsResponseDtoList.forEach((item) => {
           if (item.quantity > 0) {
             const normalizedName = item.itemName.trim().toLowerCase();
-            if (!Array.from(uniqueItemsMap.values()).some(existing =>
-              existing.itemName.trim().toLowerCase() === normalizedName)) {
+            if (
+              !Array.from(uniqueItemsMap.values()).some(
+                (existing) =>
+                  existing.itemName.trim().toLowerCase() === normalizedName
+              )
+            ) {
               uniqueItemsMap.set(item.itemId, item);
             }
           }
@@ -377,7 +424,7 @@ const Home: React.FC = () => {
   }, [fetchCartData, fetchCategories]);
 
   const handleItemClick = (item: Item | DashboardItem) => {
-    if ('itemId' in item && item.itemId) {
+    if ("itemId" in item && item.itemId) {
       navigate(`/main/itemsdisplay/${item.itemId}`, {
         state: {
           itemId: item.itemId,
@@ -394,7 +441,7 @@ const Home: React.FC = () => {
         image: ServiceImg1,
         description: "Earn up to 24% P.A. on your investments",
         path: "/main/service/oxyloans-service",
-        icon: <HandCoins className="text-purple-600" size={24} />
+        icon: <HandCoins className="text-purple-600" size={24} />,
       },
       {
         id: "2",
@@ -402,7 +449,7 @@ const Home: React.FC = () => {
         image: ServiceImg2,
         description: "Complete guidance for international education",
         path: "/main/services/studyabroad",
-        icon: <Globe className="text-purple-600" size={24} />
+        icon: <Globe className="text-purple-600" size={24} />,
       },
       {
         id: "3",
@@ -410,7 +457,7 @@ const Home: React.FC = () => {
         image: RudrakshaImage,
         description: "Receive a sacred Rudraksha bead",
         path: "/main/services/freerudraksha",
-        icon: <Gem className="text-purple-600" size={24} />
+        icon: <Gem className="text-purple-600" size={24} />,
       },
     ];
   };
@@ -423,8 +470,8 @@ const Home: React.FC = () => {
         image: GPTImg1,
         description: "AI-powered guidance for studying abroad",
         path: "/main/dashboard/freegpts",
-        icon: <Bot className="text-white" size={24} />
-      }
+        icon: <Bot className="text-white" size={24} />,
+      },
     ];
   };
 
@@ -436,8 +483,8 @@ const Home: React.FC = () => {
         image: CryptoImg1,
         description: "Track and manage your BMV cryptocurrency",
         path: "/main/dashboard/bmvcoin",
-        icon: <Coins className="text-white" size={24} />
-      }
+        icon: <Coins className="text-white" size={24} />,
+      },
     ];
   };
 
@@ -447,10 +494,10 @@ const Home: React.FC = () => {
 
   const handleAddToCart = async (item: DashboardItem) => {
     if (!item.itemId) return;
-    
+
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-    
+
     if (!accessToken || !userId) {
       message.warning("Please login to add items to the cart.");
       setTimeout(() => {
@@ -458,7 +505,7 @@ const Home: React.FC = () => {
       }, 2000);
       return;
     }
-    
+
     if (!checkProfileCompletion()) {
       Modal.error({
         title: "Profile Incomplete",
@@ -470,22 +517,22 @@ const Home: React.FC = () => {
       }, 4000);
       return;
     }
-    
+
     try {
-      setLoadingItems(prev => ({
+      setLoadingItems((prev) => ({
         ...prev,
-        items: { ...prev.items, [item.itemId as string]: true }
+        items: { ...prev.items, [item.itemId as string]: true },
       }));
-      
+
       const response = await axios.post(
         `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
         { customerId: userId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      
+
       await fetchCartData(item.itemId);
       message.success(response.data.errorMessage);
-      
+
       // Track the event with Google Analytics
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "add_to_cart", {
@@ -502,7 +549,7 @@ const Home: React.FC = () => {
           ],
         });
       }
-      
+
       // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
       // so use setTimeout to give the cart update time to complete
       setTimeout(async () => {
@@ -512,26 +559,33 @@ const Home: React.FC = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       message.error("Error adding to cart.");
-      setLoadingItems(prev => ({
+      setLoadingItems((prev) => ({
         ...prev,
-        items: { ...prev.items, [item.itemId as string]: false }
+        items: { ...prev.items, [item.itemId as string]: false },
       }));
     }
   };
-  const handleQuantityChange = async (item: DashboardItem, increment: boolean) => {
+  const handleQuantityChange = async (
+    item: DashboardItem,
+    increment: boolean
+  ) => {
     if (!item.itemId) return;
-  
+
     const userId = localStorage.getItem("userId");
     if (!userId) {
       message.warning("Please login to update cart");
       return;
     }
-  
-    if (item.quantity !== undefined && cartItems[item.itemId] === item.quantity && increment) {
+
+    if (
+      item.quantity !== undefined &&
+      cartItems[item.itemId] === item.quantity &&
+      increment
+    ) {
       message.warning("Sorry, Maximum quantity reached.");
       return;
     }
-  
+
     if (!checkProfileCompletion()) {
       Modal.error({
         title: "Profile Incomplete",
@@ -543,28 +597,28 @@ const Home: React.FC = () => {
       }, 4000);
       return;
     }
-  
+
     const status = increment ? "add" : "remove";
-  
+
     try {
-      setLoadingItems(prev => ({
+      setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId as string]: true },
-        status: { ...prev.status, [item.itemId as string]: status }
+        status: { ...prev.status, [item.itemId as string]: status },
       }));
-  
+
       if (!increment && cartItems[item.itemId] <= 1) {
         const targetCartId = cartData.find(
           (cart) => cart.itemId === item.itemId
         )?.cartId;
-  
+
         const response = await axios.delete(
           `${BASE_URL}/cart-service/cart/remove`,
           {
             data: { id: targetCartId },
           }
         );
-  
+
         if (response) {
           message.success("Item removed from cart successfully.");
         } else {
@@ -574,19 +628,19 @@ const Home: React.FC = () => {
         const endpoint = increment
           ? `${BASE_URL}/cart-service/cart/incrementCartData`
           : `${BASE_URL}/cart-service/cart/decrementCartData`;
-  
+
         const response = await axios.patch(endpoint, {
           customerId: userId,
           itemId: item.itemId,
         });
-  
+
         if (!response) {
           message.error("Sorry, Please try again");
         }
       }
-  
+
       await fetchCartData(item.itemId);
-      
+
       // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
       // so use setTimeout to give the cart update time to complete
       if (increment) {
@@ -598,10 +652,10 @@ const Home: React.FC = () => {
     } catch (error) {
       console.error("Error updating quantity:", error);
       message.error("Error updating item quantity");
-      setLoadingItems(prev => ({
+      setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId as string]: false },
-        status: { ...prev.status, [item.itemId as string]: "" }
+        status: { ...prev.status, [item.itemId as string]: "" },
       }));
     }
   };
@@ -614,8 +668,8 @@ const Home: React.FC = () => {
       transition: {
         delay: i * 0.03,
         duration: 0.3,
-        ease: "easeOut"
-      }
+        ease: "easeOut",
+      },
     }),
     hover: {
       scale: 1.02,
@@ -623,42 +677,35 @@ const Home: React.FC = () => {
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 20
-      }
+        damping: 20,
+      },
     },
     exit: {
       opacity: 0,
       scale: 0.98,
       transition: {
-        duration: 0.2
-      }
-    }
+        duration: 0.2,
+      },
+    },
   };
 
   // Helper function to check for special offers based on weight
-  const getOfferBadge = (item: DashboardItem) => {
-    const weight = parseFloat(item.weight || "0");
-    
-    if (weight === 1) {
-      return (
-        <div className="absolute top-1 right-1 z-10">
-          <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-            <Gift size={10} className="mr-1" /> Buy 1 Get 1 Free
-          </span>
-        </div>
-      );
-    } else if (weight === 5) {
-      return (
-        <div className="absolute top-1 right-1 z-10">
-          <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-            <Ticket size={10} className="mr-1" /> Free Movie Ticket
-          </span>
-        </div>
-      );
-    }
-    
-    return null;
-  };
+  // const getOfferBadge = (item: DashboardItem) => {
+  //   const weight = parseFloat(item.weight || "0");
+
+  //   if (weight === 1) {
+  //     return (
+  //       <div className="absolute top-1 right-1 z-10">
+  //         <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+  //           <Gift size={10} className="mr-1" /> Buy 1 Get 1 Free
+  //         </span>
+  //       </div>
+  //     );
+  //   }
+  //   }
+
+  //   return null;
+  // };
 
   const renderProductItem = (item: DashboardItem, index: number) => {
     // Skip rendering if quantity is 0 (out of stock)
@@ -668,7 +715,7 @@ const Home: React.FC = () => {
 
     const weight = parseFloat(item.weight || "0");
     const hasOffer = weight === 1 || weight === 5;
-    const offerBadge = getOfferBadge(item);
+    // const offerBadge = getOfferBadge(item);
 
     return (
       <motion.div
@@ -688,14 +735,16 @@ const Home: React.FC = () => {
           <div className="absolute left-0 top-0 z-10 w-auto">
             <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white text-[10px] xs:text-xs sm:text-sm font-bold px-2 py-1 flex items-center">
               {calculateDiscount(item.itemMrp, item.itemPrice)}%
-              <span className="ml-1 text-[8px] xs:text-[10px] sm:text-xs">Off</span>
+              <span className="ml-1 text-[8px] xs:text-[10px] sm:text-xs">
+                Off
+              </span>
             </div>
             <div className="absolute bottom-0 right-0 transform translate-y border-t-4 border-r-4 sm:border-t-8 sm:border-r-8 border-t-purple-600 border-r-transparent"></div>
           </div>
         )}
 
         {/* Render offer badge or quantity indicator */}
-        {hasOffer && hoveredProduct === (item.itemId ?? item.id) ? (
+        {/* {hasOffer && hoveredProduct === (item.itemId ?? item.id) ? (
           offerBadge
         ) : item.quantity && item.quantity < 6 ? (
           <div className="absolute top-1 right-1 z-10">
@@ -715,7 +764,7 @@ const Home: React.FC = () => {
               </span>
             </motion.div>
           )
-        )}
+        )} */}
 
         <div
           className="p-3 cursor-pointer"
@@ -741,29 +790,34 @@ const Home: React.FC = () => {
                   animate={{ scale: 1 }}
                   className="bg-white bg-opacity-90 px-3 py-2 rounded-full shadow-sm"
                 >
-                  <span className="text-purple-700 font-medium text-sm">Quick View</span>
+                  <span className="text-purple-700 font-medium text-sm">
+                    Quick View
+                  </span>
                 </motion.div>
               </motion.div>
             )}
           </div>
 
           <div className="space-y-1">
-            <h3
-              className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm hover:text-purple-600 transition-colors"
-            >
+            <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm hover:text-purple-600 transition-colors">
               {item.title}
             </h3>
-            <p className="text-sm text-gray-500">Weight: {item.weight ?? "N/A"}{item.units == "pcs"
-                      ? "Pc"
-                      : item.weight == "1"
-                      ? "Kg"
-                      : item.units}</p>
+            <p className="text-sm text-gray-500">
+              Weight: {item.weight ?? "N/A"}
+              {parseFloat(item.weight || "0") <= 1 ? "Kg" : "Kgs"}
+            </p>
 
             <div className="flex items-baseline space-x-2">
-              <span className="text-lg font-semibold text-gray-900">₹{item.itemPrice ?? 0}</span>
-              {item.itemMrp && item.itemPrice && item.itemMrp > item.itemPrice && (
-                <span className="text-sm text-gray-500 line-through">₹{item.itemMrp}</span>
-              )}
+              <span className="text-lg font-semibold text-gray-900">
+                ₹{item.itemPrice ?? 0}
+              </span>
+              {item.itemMrp &&
+                item.itemPrice &&
+                item.itemMrp > item.itemPrice && (
+                  <span className="text-sm text-gray-500 line-through">
+                    ₹{item.itemMrp}
+                  </span>
+                )}
             </div>
 
             {item.itemId && cartItems[item.itemId] > 0 ? (
@@ -781,9 +835,13 @@ const Home: React.FC = () => {
                     e.stopPropagation();
                     handleQuantityChange(item, false);
                   }}
-                  disabled={item.itemId ? loadingItems.items[item.itemId] : false}
+                  disabled={
+                    item.itemId ? loadingItems.items[item.itemId] : false
+                  }
                 >
-                  {item.itemId && loadingItems.items[item.itemId] && loadingItems.status[item.itemId] === "remove" ? (
+                  {item.itemId &&
+                  loadingItems.items[item.itemId] &&
+                  loadingItems.status[item.itemId] === "remove" ? (
                     <Loader2 className="animate-spin" size={16} />
                   ) : (
                     "-"
@@ -800,29 +858,42 @@ const Home: React.FC = () => {
                   {item.itemId ? cartItems[item.itemId] : 0}
                   {/* Show "free" indicator for 1kg offer if applicable */}
                   {item.itemId && freeItemsMap[item.itemId] && weight === 1 && (
-                    <span className="bg-green-100 text-green-600 text-xs ml-1 px-1 rounded">+1 Free</span>
+                    <span className="bg-green-100 text-green-600 text-xs ml-1 px-1 rounded">
+                      +1 Free
+                    </span>
                   )}
                 </motion.span>
 
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${item.itemId && item.quantity && cartItems[item.itemId] >= item.quantity ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                  className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
+                    item.itemId &&
+                    item.quantity &&
+                    cartItems[item.itemId] >= item.quantity
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (item.itemId && item.quantity && cartItems[item.itemId] < item.quantity) {
+                    if (
+                      item.itemId &&
+                      item.quantity &&
+                      cartItems[item.itemId] < item.quantity
+                    ) {
                       handleQuantityChange(item, true);
                     }
                   }}
                   disabled={
                     item.itemId && item.quantity
                       ? cartItems[item.itemId] >= item.quantity ||
-                      loadingItems.items[item.itemId] ||
-                      (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
+                        loadingItems.items[item.itemId] ||
+                        (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
                       : true
                   }
                 >
-                  {item.itemId && loadingItems.items[item.itemId] && loadingItems.status[item.itemId] === "add" ? (
+                  {item.itemId &&
+                  loadingItems.items[item.itemId] &&
+                  loadingItems.status[item.itemId] === "add" ? (
                     <Loader2 className="animate-spin" size={16} />
                   ) : (
                     "+"
@@ -841,7 +912,10 @@ const Home: React.FC = () => {
                 disabled={item.itemId ? loadingItems.items[item.itemId] : false}
               >
                 {item.itemId && loadingItems.items[item.itemId] ? (
-                  <Loader2 className="mr-2 animate-spin inline-block" size={16} />
+                  <Loader2
+                    className="mr-2 animate-spin inline-block"
+                    size={16}
+                  />
                 ) : (
                   "Add to Cart"
                 )}
@@ -855,7 +929,7 @@ const Home: React.FC = () => {
 
   // Update displayed products based on search term
   useEffect(() => {
-    const validProducts = products.filter(product => {
+    const validProducts = products.filter((product) => {
       if (product.quantity === undefined || product.quantity <= 0) return false;
 
       // Apply search filter if there's a search term
@@ -866,15 +940,17 @@ const Home: React.FC = () => {
       return true;
     });
 
-    setDisplayProducts(validProducts.slice(0, Math.min(displayCount, validProducts.length)));
+    setDisplayProducts(
+      validProducts.slice(0, Math.min(displayCount, validProducts.length))
+    );
   }, [products, displayCount, searchTerm]);
 
   const updateProducts = (items: Item[]) => {
     setProductsLoading(true);
     // Filter out items with quantity 0
     const productItems = items
-      .filter(item => item.quantity > 0)
-      .map(item => ({
+      .filter((item) => item.quantity > 0)
+      .map((item) => ({
         itemId: item.itemId,
         title: item.itemName,
         image: item.itemImage || ProductImg1,
@@ -887,7 +963,7 @@ const Home: React.FC = () => {
         weight: item.weight,
         units: item.units,
         itemName: item.itemName,
-        itemImage: item.itemImage
+        itemImage: item.itemImage,
       }));
 
     setProducts(productItems);
@@ -910,12 +986,14 @@ const Home: React.FC = () => {
     setActiveCategory(categoryName);
     setProductsLoading(true);
 
-    const category = categories.find(cat => cat.categoryName === categoryName);
+    const category = categories.find(
+      (cat) => cat.categoryName === categoryName
+    );
 
     if (category) {
       const productItems = category.itemsResponseDtoList
-        .filter(item => item.quantity > 0)
-        .map(item => ({
+        .filter((item) => item.quantity > 0)
+        .map((item) => ({
           itemId: item.itemId,
           title: item.itemName,
           image: item.itemImage || ProductImg1,
@@ -928,7 +1006,7 @@ const Home: React.FC = () => {
           weight: item.weight,
           units: item.units,
           itemName: item.itemName,
-          itemImage: item.itemImage
+          itemImage: item.itemImage,
         }));
 
       setProducts(productItems);
@@ -949,14 +1027,14 @@ const Home: React.FC = () => {
       color: "#6B7280",
       backgroundColor: "#F9FAFB",
       border: "1px solid #E5E7EB",
-      boxShadow: "none"
+      boxShadow: "none",
     },
     active: {
       color: "#FFFFFF",
       backgroundColor: "#8B5CF6",
       border: "1px solid #7C3AED",
-      boxShadow: "0 4px 6px -1px rgba(139, 92, 246, 0.3)"
-    }
+      boxShadow: "0 4px 6px -1px rgba(139, 92, 246, 0.3)",
+    },
   };
 
   const serviceCardVariants = {
@@ -997,15 +1075,21 @@ const Home: React.FC = () => {
     },
   };
 
-  const renderDigitalServiceCard = (item: DashboardItem, index: number, type: 'gpt' | 'crypto') => {
-    const bgGradient = type === 'gpt'
-      ? 'from-blue-600 to-indigo-700'
-      : 'from-yellow-500 to-amber-600';
-    const iconBg = type === 'gpt'
-      ? 'from-blue-600 to-indigo-700'
-      : 'from-yellow-500 to-amber-600';
+  const renderDigitalServiceCard = (
+    item: DashboardItem,
+    index: number,
+    type: "gpt" | "crypto"
+  ) => {
+    const bgGradient =
+      type === "gpt"
+        ? "from-blue-600 to-indigo-700"
+        : "from-yellow-500 to-amber-600";
+    const iconBg =
+      type === "gpt"
+        ? "from-blue-600 to-indigo-700"
+        : "from-yellow-500 to-amber-600";
 
-    const iconColor = type === 'gpt' ? 'text-blue-200' : 'text-amber-200';
+    const iconColor = type === "gpt" ? "text-blue-200" : "text-amber-200";
 
     return (
       <motion.div
@@ -1021,18 +1105,24 @@ const Home: React.FC = () => {
         <div className={`bg-gradient-to-r ${bgGradient} p-4 h-full`}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-white font-semibold text-lg mb-1">{item.title}</h3>
-              <p className="text-white text-opacity-80 text-sm">{item.description}</p>
+              <h3 className="text-white font-semibold text-lg mb-1">
+                {item.title}
+              </h3>
+              <p className="text-white text-opacity-80 text-sm">
+                {item.description}
+              </p>
 
               <button className="mt-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg px-3 py-1.5 text-sm flex items-center">
                 Explore <ChevronRight size={16} className="ml-1" />
               </button>
             </div>
 
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-b ${iconBg}`}>
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-b ${iconBg}`}
+            >
               {React.cloneElement(item.icon as React.ReactElement, {
                 className: iconColor,
-                size: 22
+                size: 22,
               })}
             </div>
           </div>
@@ -1042,7 +1132,7 @@ const Home: React.FC = () => {
   };
 
   const loadMoreProducts = () => {
-    setDisplayCount(prevCount => prevCount + 5);
+    setDisplayCount((prevCount) => prevCount + 5);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1055,7 +1145,7 @@ const Home: React.FC = () => {
       <div className="w-full bg-white border-b border-gray-100 py-3 md:py-6">
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
           {/* Responsive grid with better sizing for all devices */}
-          <div className="grid grid-cols-2 sm:grid-cols3- md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-4"> 
+          <div className="grid grid-cols-2 sm:grid-cols3- md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
             {headerImages.map((image) => (
               <motion.div
                 key={image.id}
@@ -1085,36 +1175,40 @@ const Home: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Special Offers Banner Section with Button to open modal */}
         <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
-      <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
-        <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-center justify-between">
-          <div className="w-full md:w-3/5 mb-6 md:mb-0 text-center md:text-left">
-            <h2 className="text-white text-xl md:text-2xl font-bold mb-3">Exclusive Rice Offers!</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
-                <Package size={isMobile ? 12 : 16} className="mr-2" /> Buy 10kg Get 18KG+ Steel Container
+          <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
+            <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-center justify-between">
+              <div className="w-full md:w-3/5 mb-6 md:mb-0 text-center md:text-left">
+                <h2 className="text-white text-xl md:text-2xl font-bold mb-3">
+                  Exclusive Rice Offers!
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
+                    <Package size={isMobile ? 12 : 16} className="mr-2" /> Buy
+                    10kg Get 18KG+ Steel Container
+                  </div>
+                  <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
+                    <ShoppingBag size={isMobile ? 12 : 16} className="mr-2" />{" "}
+                    Buy 26kg Get 35KG+ Steel Container
+                  </div>
+                </div>
               </div>
-              <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
-                <ShoppingBag size={isMobile ? 12 : 16} className="mr-2" /> Buy 26kg Get 35KG+ Steel Container
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <button
+                  onClick={() => setShowOffersModal(true)}
+                  className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
+                >
+                  <Info size={16} className="mr-2" /> FAQS
+                </button>
+                <button
+                  onClick={viewAllProducts}
+                  className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
+                >
+                  Shop Now <ArrowRight size={16} className="ml-2" />
+                </button>
               </div>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <button
-              onClick={() => setShowOffersModal(true)}
-              className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
-            >
-              <Info size={16} className="mr-2" /> FAQS
-            </button>
-            <button
-              onClick={viewAllProducts}
-              className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
-            >
-              Shop Now <ArrowRight size={16} className="ml-2" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+        </section>
         {/* Products Section */}
         <section ref={productsRef} className="mb-12">
           <div className="flex items-center mb-4 gap-10">
@@ -1227,53 +1321,53 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {loading
               ? Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={`skeleton-service-${index}`}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
-                >
-                  <div className="h-40 bg-gray-200"></div>
-                  <div className="p-4">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                </div>
-              ))
-              : services.map((service, index) => (
-                <motion.div
-                  key={service.id}
-                  custom={index}
-                  initial="hidden"
-                  animate="visible"
-                  whileHover="hover"
-                  variants={serviceCardVariants}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                  onClick={() => navigate(service.path)}
-                >
-                  <div className="aspect-video relative overflow-hidden bg-gray-100">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-40"></div>
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <h3 className="text-white font-bold text-lg drop-shadow-md">
-                        {service.title}
-                      </h3>
+                  <div
+                    key={`skeleton-service-${index}`}
+                    className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
+                  >
+                    <div className="h-40 bg-gray-200"></div>
+                    <div className="p-4">
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                     </div>
                   </div>
-                  <div className="p-4">
-                    <p className="text-gray-700 text-sm">
-                      {service.description}
-                    </p>
-                    <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
-                      Learn More
-                      <ChevronRight size={16} className="ml-1" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+                ))
+              : services.map((service, index) => (
+                  <motion.div
+                    key={service.id}
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="hover"
+                    variants={serviceCardVariants}
+                    className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                    onClick={() => navigate(service.path)}
+                  >
+                    <div className="aspect-video relative overflow-hidden bg-gray-100">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-40"></div>
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <h3 className="text-white font-bold text-lg drop-shadow-md">
+                          {service.title}
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-gray-700 text-sm">
+                        {service.description}
+                      </p>
+                      <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
+                        Learn More
+                        <ChevronRight size={16} className="ml-1" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
           </div>
         </section>
 
@@ -1298,22 +1392,22 @@ const Home: React.FC = () => {
             <div className="grid grid-cols-1 gap-5">
               {loading
                 ? Array(3)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg animate-pulse h-24 flex items-center px-4"
-                    >
-                      <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4"></div>
-                        <div className="h-3 bg-blue-200 rounded animate-pulse w-1/2"></div>
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg animate-pulse h-24 flex items-center px-4"
+                      >
+                        <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4"></div>
+                          <div className="h-3 bg-blue-200 rounded animate-pulse w-1/2"></div>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                 : freeGPTs.map((item, index) =>
-                  renderDigitalServiceCard(item, index, "gpt")
-                )}
+                    renderDigitalServiceCard(item, index, "gpt")
+                  )}
             </div>
 
             {!loading && freeGPTs.length === 0 && (
@@ -1343,22 +1437,22 @@ const Home: React.FC = () => {
             <div className="grid grid-cols-1 gap-5">
               {loading
                 ? Array(3)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-lg animate-pulse h-24 flex items-center px-4"
-                    >
-                      <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4"></div>
-                        <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-lg animate-pulse h-24 flex items-center px-4"
+                      >
+                        <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4"></div>
+                          <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                 : cryptocurrency.map((item, index) =>
-                  renderDigitalServiceCard(item, index, "crypto")
-                )}
+                    renderDigitalServiceCard(item, index, "crypto")
+                  )}
             </div>
 
             {!loading && cryptocurrency.length === 0 && (

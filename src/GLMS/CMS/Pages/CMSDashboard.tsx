@@ -107,32 +107,29 @@ const CMSDashboard: React.FC = () => {
     }
   };
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="relative mb-6">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-800">
-          📊 Collection Management System
+    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto">
+      <div className="relative mb-10 flex flex-col sm:flex-row items-center justify-center sm:justify-between">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center sm:text-left text-gray-800">
+          Collection Management System - Use Cases
         </h1>
         <button
           onClick={handleInterest}
-          className="absolute right-0 top-0 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition hover:scale-105"
+          className="mt-4 sm:mt-0 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           I'm Interested
         </button>
       </div>
 
-      <p className="text-sm sm:text-base text-center text-gray-600 mb-6 max-w-2xl mx-auto">
-        Manage delinquent case workflows, queues, communications, and legal
-        proceedings from one central dashboard.
-      </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {useCases.map((useCase) => (
           <div
             key={useCase.path}
-            className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg hover:border-indigo-400 transition duration-200 ease-in-out"
+            className="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-200 ease-in-out flex flex-col justify-between"
           >
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-full bg-gray-100">{useCase.icon}</div>
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-gray-100 flex items-center justify-center">
+                {useCase.icon}
+              </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">
                   {useCase.title}
@@ -142,15 +139,15 @@ const CMSDashboard: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex justify-between gap-2">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <button
-                className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200  w-full sm:w-auto"
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
                 onClick={() => navigate(`/cms/${useCase.path}/business`)}
               >
                 Business Use Case
               </button>
               <button
-                className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200  w-full sm:w-auto "
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
                 onClick={() => navigate(`/cms/${useCase.path}/system`)}
               >
                 System Use Case
@@ -162,5 +159,7 @@ const CMSDashboard: React.FC = () => {
     </div>
   );
 };
+
+
 
 export default CMSDashboard;

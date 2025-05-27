@@ -210,6 +210,14 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
                   Sign In
                 </button>
               </li>
+              <li className="px-4 pt-2">
+              <button
+              onClick={handleInterest}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
+            >
+              I'm Interested
+                </button>
+                </li>
             </ul>
           </div>
         )}

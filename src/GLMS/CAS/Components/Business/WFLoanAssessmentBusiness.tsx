@@ -1,84 +1,299 @@
-import React from 'react';
+import React, { useState } from "react";
+import {
+  FileText,
+  Users,
+  CheckCircle,
+  Info,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
-const WFLoanAssessmentBusiness: React.FC = () => {
+interface WFLoanAssessmentBusinessProps {}
+
+const WFLoanAssessmentBusiness: React.FC<
+  WFLoanAssessmentBusinessProps
+> = () => {
+  const [expandedSections, setExpandedSections] = useState<{
+    [key: string]: boolean;
+  }>({
+    overview: true,
+    actors: true,
+    actions: true,
+    preconditions: true,
+    postconditions: true,
+    workflow: true,
+    flowchart: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Work Flow for Loan Assessment</h1>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-10">
+          <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 text-center sm:text-left">
+            Work Flow for Loan Assessment
+          </h1>
+        </div>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Overview</h2>
-        <p>
-          Loan Origination System is a centralized web-based solution designed and developed for processing Loan Applications. It has different modules such as Retail, Corporate, etc. The main advantages of the Loan Origination system are Appraisal of Loan Proposals by adopting uniform guidelines across the Bank and Facility for electronic workflow, thereby avoiding delays attributable to exchange of correspondence between Branch and Zonal Offices.
-        </p>
-        <p>
-          User has to just key in information available in loan application. System picks up Rate of Interest, Margin, product guidelines for a specific product selected by the user, checks the discretionary powers while sanctioning. User can generate reports like Credit Score Sheet, Process note, Sanction letter, Communication of Sanction to borrower, worksheet for assessment, etc. from the system.
-        </p>
-        <p>
-          Once the Customer ID is created and linked to the loan Account & all the Customer details captured in the LOS such as Proposed Asset details, Asset & Liabilities Details, Proposed Loan Limit arrived, particulars of the Co-applicant/Guarantor/Co-Obligant & Appraisal note/Process note generated & Risk Analysis completed, the Bank Officer initiates the process for Loan Assessment to arrive at the Maximum Loan that can be extended.
-        </p>
-      </section>
+        {/* Content Sections */}
+        <div className="space-y-8">
+          {/* Overview */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("overview")}
+              aria-expanded={expandedSections.overview}
+              aria-controls="overview-section"
+            >
+              <span className="flex items-center">
+                <Info size={20} className="mr-2 text-indigo-600" />
+                Overview
+              </span>
+              {expandedSections.overview ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.overview && (
+              <div
+                id="overview-section"
+                className="text-gray-600 leading-relaxed space-y-4 text-base"
+              >
+                <p>
+                  The Loan Origination System (LOS) is a centralized web-based
+                  solution designed for processing loan applications
+                  efficiently. It includes modules such as Retail and Corporate,
+                  ensuring uniform guidelines across the bank and streamlining
+                  electronic workflows to minimize delays.
+                </p>
+                <p>
+                  Users input loan application details, and the system
+                  automatically retrieves relevant data like interest rates,
+                  margins, and product guidelines. It also generates reports
+                  such as Credit Score Sheets, Process Notes, Sanction Letters,
+                  and more.
+                </p>
+                <p>
+                  Once the Customer ID is created, linked to the loan account,
+                  and all customer details (proposed asset, assets and
+                  liabilities, loan limit, Co-applicant/Guarantor/Co-Obligant
+                  particulars, appraisal note, and risk analysis) are captured
+                  in LOS, the Bank Officer initiates the Loan Assessment process
+                  to determine the maximum loan amount that can be extended.
+                </p>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actors</h2>
-        <p>Bank Officer</p>
-      </section>
+          {/* Actors */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actors")}
+              aria-expanded={expandedSections.actors}
+              aria-controls="actors-section"
+            >
+              <span className="flex items-center">
+                <Users size={20} className="mr-2 text-indigo-600" />
+                Actors
+              </span>
+              {expandedSections.actors ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actors && (
+              <p id="actors-section" className="text-gray-600 text-base">
+                Bank Officer
+              </p>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Actions</h2>
-        <p>Bank Officer initiates the Loan Assessment process to arrive at the Maximum Loan Amount.</p>
-      </section>
+          {/* Actions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("actions")}
+              aria-expanded={expandedSections.actions}
+              aria-controls="actions-section"
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Actions
+              </span>
+              {expandedSections.actions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.actions && (
+              <p id="actions-section" className="text-gray-600 text-base">
+                The Bank Officer initiates the Loan Assessment process to
+                determine the maximum loan amount.
+              </p>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Preconditions</h2>
-        <ul className="list-disc ml-6">
-          <li>
-            Customer ID created and linked to the loan Account & all the Customer details captured in the LOS such as Proposed Asset details, Asset & Liabilities Details, Proposed Loan Limit arrived, particulars of the Co-applicant/Guarantor/Co-Obligant & Appraisal note/Process note generated & Risk Analysis completed.
-          </li>
-        </ul>
-      </section>
+          {/* Preconditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("preconditions")}
+              aria-expanded={expandedSections.preconditions}
+              aria-controls="preconditions-section"
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Preconditions
+              </span>
+              {expandedSections.preconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.preconditions && (
+              <ul
+                id="preconditions-section"
+                className="list-disc ml-6 text-gray-600 text-base"
+              >
+                <li>
+                  Customer ID created and linked to the loan account, with all
+                  customer details captured in LOS, including proposed asset
+                  details, assets and liabilities, proposed loan limit,
+                  particulars of the Co-applicant/Guarantor/Co-Obligant,
+                  appraisal note generated, and risk analysis completed.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Post Conditions</h2>
-        <ul className="list-disc ml-6">
-          <li>Assessment process of Proposed Loan is completed & the Bank Officer proceeds further with Terms & Conditions to be specified.</li>
-        </ul>
-      </section>
+          {/* Post Conditions */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("postconditions")}
+              aria-expanded={expandedSections.postconditions}
+              aria-controls="postconditions-section"
+            >
+              <span className="flex items-center">
+                <CheckCircle size={20} className="mr-2 text-green-600" />
+                Post Conditions
+              </span>
+              {expandedSections.postconditions ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.postconditions && (
+              <ul
+                id="postconditions-section"
+                className="list-disc ml-6 text-gray-600 text-base"
+              >
+                <li>
+                  Assessment process of the proposed loan is completed, and the
+                  Bank Officer proceeds with specifying Terms & Conditions.
+                </li>
+              </ul>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Workflow</h2>
-        <ul className="list-disc ml-6">
-          <li>
-            Once the Customer ID is created and linked to the loan Account & all the Customer details captured in the LOS such as Proposed Asset details, Asset & Liabilities Details, Proposed Loan Limit arrived, particulars of the Co-applicant/Guarantor/Co-Obligant & Appraisal note/Process note generated & Risk Analysis completed, the Bank Officer initiates the process for Loan Assessment to arrive at the Maximum Loan that can be extended.
-          </li>
-          <li>
-            The Bank Officer ensures that the above said processes are completed & required information is captured in LOS, calculates to arrive at the Maximum loan amount that can be extended to the customer on the basis of the project cost, after deducting margin & other maximum & minimum cap limits of the product.
-          </li>
-          <li>
-            The Assessment sheet should contain the following fields:
-            <ul className="list-disc ml-6 mt-2">
-              <li>Loan Amount requested by the customer</li>
-              <li>Present Income of the customer</li>
-              <li>Present value of the security</li>
-              <li>Rate of Interest</li>
-              <li>Loan Tenure</li>
-              <li>Future period of service</li>
-              <li>Repayment capacity of the customer</li>
-              <li>Assessed Loan Amount</li>
-            </ul>
-          </li>
-          <li>
-            Once the above details are arrived in LOS, the Bank Officer verifies the same & adds his remarks for the change in assessment amount, if any.
-          </li>
-          <li>
-            Once the Assessment process of Proposed Loan is completed, the Bank Officer proceeds further with Terms & Conditions to be specified.
-          </li>
-        </ul>
-      </section>
+          {/* Workflow */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("workflow")}
+              aria-expanded={expandedSections.workflow}
+              aria-controls="workflow-section"
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Workflow
+              </span>
+              {expandedSections.workflow ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.workflow && (
+              <div
+                id="workflow-section"
+                className="space-y-4 text-gray-600 text-base"
+              >
+                <ul className="list-disc ml-6 space-y-2">
+                  <li>
+                    After the Customer ID is created, linked to the loan
+                    account, and all customer details (proposed asset, assets
+                    and liabilities, loan limit,
+                    Co-applicant/Guarantor/Co-Obligant particulars, appraisal
+                    note, and risk analysis) are captured in LOS, the Bank
+                    Officer initiates the Loan Assessment process to determine
+                    the maximum loan amount.
+                  </li>
+                  <li>
+                    The Bank Officer ensures all required processes are
+                    completed and calculates the maximum loan amount based on
+                    project cost, margin, and product max/min cap limits.
+                  </li>
+                  <li>
+                    The Assessment Sheet includes the following fields:
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6 mt-2">
+                      <li>Loan Amount Requested</li>
+                      <li>Present Income</li>
+                      <li>Present Value of Security</li>
+                      <li>Rate of Interest</li>
+                      <li>Loan Tenure</li>
+                      <li>Future Period of Service</li>
+                      <li>Repayment Capacity</li>
+                      <li>Assessed Loan Amount</li>
+                    </ul>
+                  </li>
+                  <li>
+                    The Bank Officer verifies the details and adds remarks for
+                    any changes in the assessment amount.
+                  </li>
+                  <li>
+                    Upon completion of the assessment process, the Bank Officer
+                    proceeds with specifying Terms & Conditions.
+                  </li>
+                </ul>
+              </div>
+            )}
+          </section>
 
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Flowchart</h2>
-        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-{`
+          {/* Flowchart */}
+          <section className="bg-white p-6 rounded-xl shadow-md">
+            <button
+              className="w-full flex items-center justify-between text-2xl font-semibold text-gray-900 mb-4 hover:text-indigo-600 transition-colors duration-200"
+              onClick={() => toggleSection("flowchart")}
+              aria-expanded={expandedSections.flowchart}
+              aria-controls="flowchart-section"
+            >
+              <span className="flex items-center">
+                <FileText size={20} className="mr-2 text-indigo-600" />
+                Flowchart
+              </span>
+              {expandedSections.flowchart ? (
+                <ChevronUp size={20} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-600" />
+              )}
+            </button>
+            {expandedSections.flowchart && (
+              <pre
+                id="flowchart-section"
+                className="bg-gray-100 p-4 rounded-lg text-base text-gray-700 font-mono overflow-x-auto border border-gray-200"
+              >
+                {`
 Start
   |
   v
@@ -134,9 +349,12 @@ Proceed to Terms & Conditions
   v
 End
 `}
-        </pre>
-      </section>
-    </div>
+              </pre>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
   );
 };
 

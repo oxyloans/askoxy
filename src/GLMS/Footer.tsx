@@ -3,52 +3,55 @@ import { Facebook, Twitter, Linkedin, Instagram, ArrowUp } from "lucide-react";
 
 const Footer = () => {
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <footer className="bg-gray-900 text-white pt-12 pb-8">
+    <footer className="bg-gray-900 text-white pt-14 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+        {/* Grid: 4 Columns on large screens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
           {/* Company Info */}
           <div>
             <h4 className="text-2xl font-bold mb-4">
               Global Loans Management Systems
             </h4>
-            <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+            <p className="text-gray-400 text-sm leading-relaxed mb-6">
               Modernizing loan management systems globally through domain
               expertise and innovative technology solutions.
             </p>
-            <div className="flex gap-4">
+            <div className="flex space-x-4">
               <a
                 href="https://www.facebook.com/ASKOXYAI"
                 aria-label="Facebook"
-                className="text-blue-600 hover:text-white transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-white transition"
               >
                 <Facebook size={20} />
               </a>
               <a
                 href="#"
                 aria-label="Twitter"
-                className="text-sky-400 hover:text-white transition-colors"
+                className="text-sky-400 hover:text-white transition"
               >
                 <Twitter size={20} />
               </a>
               <a
                 href="https://www.linkedin.com/company/82577404/admin/dashboard/"
                 aria-label="LinkedIn"
-                className="text-blue-500 hover:text-white transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-white transition"
               >
                 <Linkedin size={20} />
               </a>
               <a
                 href="https://www.instagram.com/askoxy.ai_oxyrice/"
                 aria-label="Instagram"
-                className="text-pink-500 hover:text-white transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-pink-500 hover:text-white transition"
               >
                 <Instagram size={20} />
               </a>
@@ -59,63 +62,40 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-3 text-sm">
-              {["Home", "Videos", "Use Cases", "Contact"].map((text) => (
-                <li key={text}>
+              {["Home", "Videos", "Use Cases", "Contact"].map((link) => (
+                <li key={link}>
                   <a
-                    href={`#${text.toLowerCase()}`}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    href={`#${link.toLowerCase()}`}
+                    className="text-gray-400 hover:text-white transition"
                   >
-                    {text}
+                    {link}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Services with Links */}
+          {/* Services */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Our Services</h3>
             <ul className="space-y-3 text-sm">
-              <li>
-                <a
-                  href="https://oxyloans.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  OXYLOANS
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.oxybricks.world/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  OXYBRICKS
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.askoxy.ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  ASK OXY.AI
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.askoxy.ai/glms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  GLMS
-                </a>
-              </li>
+              {[
+                { name: "OXYLOANS", url: "https://oxyloans.com/" },
+                { name: "OXYBRICKS", url: "https://www.oxybricks.world/" },
+                { name: "ASK OXY.AI", url: "https://www.askoxy.ai/" },
+                { name: "GLMS", url: "https://www.askoxy.ai/glms" },
+              ].map((service) => (
+                <li key={service.name}>
+                  <a
+                    href={service.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition"
+                  >
+                    {service.name}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -133,7 +113,7 @@ const Footer = () => {
               <p>
                 <a
                   href="mailto:support@globalloans.com"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition"
                 >
                   support@globalloans.com
                 </a>
@@ -141,7 +121,7 @@ const Footer = () => {
               <p>
                 <a
                   href="tel:+916300873713"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition"
                 >
                   +91 6300873713
                 </a>
@@ -154,14 +134,14 @@ const Footer = () => {
         <div className="border-t border-gray-800 my-6"></div>
 
         {/* Bottom Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+        <div className="flex flex-col sm:flex-row justify-between items-center text-gray-400 text-sm gap-4">
           <p className="text-center sm:text-left">
-            &copy; {new Date().getFullYear()} Global Loans Management Systems.
+            &copy; {new Date().getFullYear()} Global Lending Management Solutions.
             All rights reserved.
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center hover:text-white transition-colors"
+            className="flex items-center hover:text-white transition"
             aria-label="Scroll to top"
           >
             <span className="mr-2">Back to top</span>

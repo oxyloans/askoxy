@@ -74,13 +74,13 @@ const JobStreet: React.FC = () => {
   }));
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : useCases.length - 1));
+    setCurrentIndex((prev) => (prev === 0 ? useCases.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev < useCases.length - 1 ? prev + 1 : 0));
+    setCurrentIndex((prev) => (prev === useCases.length - 1 ? 0 : prev + 1));
   };
-  
+
   const currentUseCase = useCases[currentIndex];
 
   return (
@@ -127,45 +127,45 @@ const JobStreet: React.FC = () => {
       </header>
 
       {/* Main */}
-      <main className="flex-grow bg-gradient-to-br from-white via-blue-50 to-purple-50 pb-10 px-4">
+      <main className="flex-grow bg-gradient-to-br from-white via-blue-50 to-purple-50 pb-4 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 my-6">
             Explore Our Use Cases
           </h2>
 
           <div className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6">
-            {/* Navigation Arrows */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-4 z-10">
+            {/* Arrows */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-2 sm:left-4 z-10">
               <button
                 onClick={handlePrev}
-                disabled={currentIndex === 0}
-                className={`p-2 rounded-full transition ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-full shadow-md text-sm transition-all duration-200 ${
                   currentIndex === 0
-                    ? "bg-gray-300 cursor-not-allowed"
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                     : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
-                aria-label="Previous"
+                aria-label="Previous Use Case"
               >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={20} />
+                <span className="hidden sm:inline">Previous</span>
               </button>
             </div>
 
-            <div className="absolute top-1/2 -translate-y-1/2 right-4 z-10">
+            <div className="absolute top-1/2 -translate-y-1/2 right-2 sm:right-4 z-10">
               <button
                 onClick={handleNext}
-                disabled={currentIndex === useCases.length - 1}
-                className={`p-2 rounded-full transition ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-full shadow-md text-sm transition-all duration-200 ${
                   currentIndex === useCases.length - 1
-                    ? "bg-gray-300 cursor-not-allowed"
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                     : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
-                aria-label="Next"
+                aria-label="Next Use Case"
               >
-                <ChevronRight size={22} />
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight size={20} />
               </button>
             </div>
 
-            {/* Use Case */}
+            {/* Use Case Content */}
             <div className="px-4 sm:px-8">
               <h3 className="text-lg sm:text-xl font-semibold text-indigo-700 mb-4">
                 {currentUseCase.title}
@@ -177,15 +177,20 @@ const JobStreet: React.FC = () => {
               />
             </div>
 
-            {/* Dots */}
-            <div className="mt-4 flex justify-center gap-2">
-              {useCases.map((_, i) => (
-                <span
+            {/* Navigation Dots */}
+            <div className="mt-6 flex justify-center flex-wrap gap-2">
+              {useCases.map((useCase, i) => (
+                <button
                   key={i}
-                  className={`w-3 h-3 rounded-full transition ${
-                    currentIndex === i ? "bg-indigo-600" : "bg-gray-300"
+                  onClick={() => setCurrentIndex(i)}
+                  title={useCase.title}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentIndex === i
+                      ? "bg-indigo-600 scale-125 shadow-md"
+                      : "bg-gray-300 hover:bg-indigo-400"
                   }`}
-                ></span>
+                  aria-label={`Jump to ${useCase.title}`}
+                ></button>
               ))}
             </div>
           </div>

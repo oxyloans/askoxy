@@ -55,7 +55,6 @@ const videos = [
 const VideoSection = () => {
   const [modalVideo, setModalVideo] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-
   const displayedVideos = showAll ? videos : videos.slice(0, 3);
 
   useEffect(() => {
@@ -63,40 +62,40 @@ const VideoSection = () => {
   }, [modalVideo]);
 
   return (
-    <section className="py-10 md:py-16 bg-gradient-to-br from-purple-50 to-yellow-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+    <section className="py-12 md:py-20 bg-gradient-to-br from-purple-50 to-yellow-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
             See Our Platform in Action
           </h2>
-          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
             Watch these videos to learn how our Global Loan Management System
             can transform your business operations.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {displayedVideos.map((video) => (
             <div
               key={video.id}
               onClick={() => setModalVideo(video.embedUrl)}
-              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group"
+              className="bg-white rounded-xl shadow hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden"
             >
-              <div className="relative aspect-video overflow-hidden rounded-t-xl">
+              <div className="relative aspect-video">
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                  className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                  <PlayCircle className="text-white w-12 h-12" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <PlayCircle className="w-12 h-12 text-white" />
                 </div>
               </div>
-              <div className="p-4">
+              <div className="p-5">
                 <h3 className="text-lg font-semibold text-gray-800">
                   {video.title}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 mt-2 line-clamp-3">
                   {video.description}
                 </p>
               </div>
@@ -108,24 +107,19 @@ const VideoSection = () => {
           <div className="text-center mt-10">
             <button
               onClick={() => setShowAll(true)}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition font-medium text-sm sm:text-base"
             >
               View All Videos
             </button>
           </div>
         )}
 
-        {/* Video Modal */}
         {modalVideo && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="relative bg-white rounded-xl max-w-4xl w-full shadow-xl overflow-hidden">
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden animate-fadeIn">
               <button
                 onClick={() => setModalVideo(null)}
-                className="absolute top-3 right-3 text-gray-700 hover:text-red-600 z-10"
+                className="absolute top-4 right-4 text-gray-700 hover:text-red-600 z-10"
                 aria-label="Close video"
               >
                 <X className="w-6 h-6" />
