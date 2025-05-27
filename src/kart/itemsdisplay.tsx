@@ -1,14 +1,13 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { message, Modal } from "antd";
+import { message } from "antd";
 import {
   ShoppingCart,
   Home,
   ChevronRight,
   Minus,
   Plus,
-  Tag,
   Package2,
   Star,
   Bot,
@@ -16,12 +15,11 @@ import {
   MessageCircle,
   AlertCircle,
   Loader2,
+  Trash2,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import ValidationPopup from "./ValidationPopup";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
-
+import { AxiosError } from "axios";
 import BASE_URL from "../Config";
 
 interface Item {
@@ -46,6 +44,7 @@ interface CartItem {
   itemId: string;
   cartQuantity: number;
   cartId: string;
+  status: string; // "ADD" or "FREE"
 }
 
 interface Message {
@@ -64,7 +63,6 @@ const ItemDisplayPage = () => {
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
-  const [showValidationPopup, setShowValidationPopup] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -75,11 +73,9 @@ const ItemDisplayPage = () => {
     items: { [key: string]: boolean };
     status: { [key: string]: string };
   }>({
-    items: {},
-    status: {},
+    items: {}, // Stores boolean values for each item
+    status: {}, // Stores status strings for each item
   });
-
-  const [chatFeatureComingSoon, setChatFeatureComingSoon] = useState(true);
 
   const context = useContext(CartContext);
 
@@ -120,12 +116,12 @@ const ItemDisplayPage = () => {
         setItemDetails(state.item);
       }
       fetchCartData("");
-      fetchRelatedItems();
     }
   }, [itemId, state]);
 
+  // Updated navigation handler for related items
   const handleRelatedItemClick = (item: Item) => {
-    setItemDetails(item);
+    setItemDetails(item); // Update item details immediately
     navigate(`/main/itemsdisplay/${item.itemId}`, {
       state: { item },
       replace: true,
@@ -141,17 +137,21 @@ const ItemDisplayPage = () => {
     }
     try {
       const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${customerId}`,
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.customerCartResponseList) {
         const cartItemsMap = response.data.customerCartResponseList.reduce(
           (acc: Record<string, number>, item: CartItem) => {
-            acc[item.itemId] = item.cartQuantity || 0;
+            if (item.status !== "FREE") {
+              acc[item.itemId] =
+                (acc[item.itemId] || 0) + (item.cartQuantity || 0);
+            }
             return acc;
           },
           {}
         );
+        // Fix: Use cartItemsMap and correct syntax
         const totalQuantity = Object.values(
           cartItemsMap as Record<string, number>
         ).reduce((sum, qty) => sum + qty, 0);
@@ -172,16 +172,14 @@ const ItemDisplayPage = () => {
       setCartData(response.data.customerCartResponseList);
     } catch (error) {
       console.error("Error fetching cart items:", error);
+      setCartItems({});
+      setCartData([]);
+      setCount(0);
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: false },
       }));
     }
-  };
-
-  const handleProfileRedirect = () => {
-    setShowValidationPopup(false);
-    handleNavigation("/main/profile");
   };
 
   const fetchRelatedItems = async () => {
@@ -192,10 +190,11 @@ const ItemDisplayPage = () => {
 
       console.log("Fetched Categories:", response.data);
 
+      // Find the category that contains the selected item
       const matchingCategory = response.data.find(
         (category: any) =>
           category.itemsResponseDtoList &&
-          Array.isArray(category.itemsResponseDtoList) &&
+          Array.isArray(category.itemsResponseDtoList) && // Ensure it's an array
           category.itemsResponseDtoList.some(
             (item: any) =>
               item.itemId === itemDetails?.itemId ||
@@ -207,13 +206,14 @@ const ItemDisplayPage = () => {
         matchingCategory &&
         Array.isArray(matchingCategory.itemsResponseDtoList)
       ) {
+        // Extract related items, excluding the selected one
         const categoryItems = matchingCategory.itemsResponseDtoList
           .filter(
             (item: any) =>
               item.itemId !== itemDetails?.itemId &&
-              item.itemId !== itemDetails?.itemId
+              item.itemId !== itemDetails?.itemId // Corrected logical condition
           )
-          .slice(0, 4);
+          .slice(0, 4); // Limit to 4 items
 
         console.log("Related Items:", categoryItems);
         setRelatedItems(categoryItems);
@@ -226,63 +226,26 @@ const ItemDisplayPage = () => {
     }
   };
 
-  const checkProfileCompletion = () => {
-    const profileData = localStorage.getItem("profileData");
-    console.log("profileData", profileData);
-
-    if (profileData) {
-      const parsedData = JSON.parse(profileData);
-      console.log("parsedData", parsedData);
-      return !!(
-        parsedData.userFirstName &&
-        parsedData.userFirstName != ""
-      );
-    }
-    return false;
-  };
-
   const handleAddToCart = async (item: Item) => {
-    if (!token || !customerId) {
-      message.warning("Please login to add items to the cart.");
-      setTimeout(() => navigate("/whatsapplogin"), 2000);
-      return;
-    }
-    if (!checkProfileCompletion()) {
-      setShowValidationPopup(true);
-      return;
-    }
-
     setLoadingItems((prev) => ({
       ...prev,
       items: { ...prev.items, [item.itemId]: true },
     }));
 
+    if (!token || !customerId) {
+      message.warning("Please login to add items to the cart.");
+      setTimeout(() => navigate("/whatsapplogin"), 2000);
+      return;
+    }
+
     try {
       await axios.post(
-        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         { customerId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "add_to_cart", {
-          currency: "INR",
-          value: item.itemPrice,
-          items: [
-            {
-              item_id: item.itemId,
-              item_name: item.itemName,
-              price: item.itemPrice,
-              quantity: 1,
-              item_category: item.category || "Rice",
-            },
-          ],
-        });
-      }
-
       await fetchCartData("");
       message.success("Item added to cart successfully.");
-
       setTimeout(() => {
         setLoadingItems((prev) => ({
           ...prev,
@@ -299,14 +262,39 @@ const ItemDisplayPage = () => {
     }
   };
 
-  const handleQuantityChange = async (item: Item, increment: boolean) => {
-    if (!checkProfileCompletion()) {
-      setShowValidationPopup(true);
-      return;
+  // Function to handle removing an item completely from the cart
+  const handleRemoveItem = async (itemId: string) => {
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [itemId]: true },
+    }));
+
+    try {
+      // Use the minusCartItem endpoint with PATCH
+      await axios.patch(
+        `${BASE_URL}/cart-service/cart/minusCartItem`,
+        { customerId, itemId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      message.success("Item removed from cart successfully.");
+      await fetchCartData("");
+    } catch (error) {
+      console.error("Error removing item:", error);
+      message.error("Error removing item from cart");
+    } finally {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [itemId]: false },
+      }));
     }
+  };
+
+  // Modified handleQuantityChange function
+  const handleQuantityChange = async (item: Item, increment: boolean) => {
     const endpoint = increment
-      ? `${BASE_URL}/cart-service/cart/incrementCartData`
-      : `${BASE_URL}/cart-service/cart/decrementCartData`;
+      ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+      : `${BASE_URL}/cart-service/cart/minusCartItem`;
 
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
@@ -320,67 +308,62 @@ const ItemDisplayPage = () => {
 
     try {
       if (!increment && cartItems[item.itemId] <= 1) {
-        const targetCartId = cartData.find(
-          (cart) => cart.itemId === item.itemId
-        )?.cartId;
-        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
-          data: { id: targetCartId },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (typeof window !== "undefined" && window.gtag) {
-          window.gtag("event", "remove_from_cart", {
-            currency: "INR",
-            value: item.itemPrice * (cartItems[item.itemId] || 0),
-            items: [
-              {
-                item_id: item.itemId,
-                item_name: item.itemName,
-                price: item.itemPrice,
-                quantity: cartItems[item.itemId] || 0,
-                item_category: item.category || "Rice",
-              },
-            ],
-          });
-        }
-
-        message.success("Item removed from cart successfully.");
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [item.itemId]: false },
-        }));
-      } else {
+        // Instead of using the DELETE endpoint, use minusCartItem
+        // to remove the last item
         await axios.patch(
-          endpoint,
+          `${BASE_URL}/cart-service/cart/minusCartItem`,
           { customerId, itemId: item.itemId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        message.success("Item removed from cart successfully.");
+      } else {
+        const requestConfig = {
+          headers: { Authorization: `Bearer ${token}` },
+        };
+        const requestData = { customerId, itemId: item.itemId };
 
-        if (typeof window !== "undefined" && window.gtag) {
-          const eventName = increment ? "add_to_cart" : "remove_from_cart";
-          window.gtag("event", eventName, {
-            currency: "INR",
-            value: item.itemPrice,
-            items: [
-              {
-                item_id: item.itemId,
-                item_name: item.itemName,
-                price: item.itemPrice,
-                quantity: 1,
-                item_category: item.category || "Rice",
-              },
-            ],
-          });
+        if (increment) {
+          await axios.post(endpoint, requestData, requestConfig);
+        } else {
+          try {
+            const patchRes = await axios.patch(
+              endpoint,
+              requestData,
+              requestConfig
+            );
+            console.log("PATCH success:", patchRes.status, patchRes.data);
+          } catch (error) {
+            // Check if the error is an AxiosError using 'instanceof'
+            if (error instanceof AxiosError && error.response) {
+              const { status, data } = error.response;
+              console.warn("PATCH error response:", status, data);
+              if (status === 200 || status === 204) {
+                console.log("PATCH treated as error but actually succeeded.");
+              } else {
+                throw error; // Rethrow if the error is not handled
+              }
+            } else {
+              console.error("Network or unknown PATCH error:", error);
+              throw error; // Rethrow non-Axios errors
+            }
+          }
         }
       }
+
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
       }));
-      fetchCartData(item.itemId);
+
+      try {
+        await fetchCartData(item.itemId);
+      } catch (err) {
+        console.error("Error fetching updated cart data:", err);
+        message.error("Cart updated, but failed to refresh view.");
+      }
     } catch (error) {
       console.error("Error updating quantity:", error);
-      message.error("Error updating item quantity");
+      message.error("Error updating item quantity.");
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -399,24 +382,83 @@ const ItemDisplayPage = () => {
     setMessages((prev) => [...prev, newMessage]);
     setInputMessage("");
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: messages.length + 2,
-        text: "Our product assistant feature is coming soon! We appreciate your interest. Check back later for personalized product assistance.",
-        type: "system" as const,
-      },
-    ]);
+    const mapTypeToRole = (type: any) => {
+      if (type === "sent") return "user";
+      if (type === "received") return "assistant";
+      return "system";
+    };
+
+    const previousMessages = messages.map((msg) => ({
+      role: mapTypeToRole(msg.type),
+      content: msg.text,
+    }));
+
+    // Add new user message to the conversation
+    previousMessages.push({
+      role: "user",
+      content: newMessage.text,
+    });
+
+    // Function to get the last assistant's response safely
+    const getLastAssistantMessage = (msgs: Message[]) => {
+      return (
+        [...msgs].reverse().find((msg) => msg.type === "received")?.text || ""
+      );
+    };
+
+    // Include last assistant response
+    const lastAssistantMessage = getLastAssistantMessage(messages);
+    if (lastAssistantMessage) {
+      previousMessages.push({
+        role: "assistant",
+        content: lastAssistantMessage,
+      });
+    }
+
+    try {
+      const response = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: "gpt-4-turbo",
+          messages: previousMessages,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: messages.length + 2,
+          text: response.data.choices[0].message.content,
+          type: "system" as const,
+        },
+      ]);
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: messages.length + 2,
+          text: "Sorry, I couldn't process your request at the moment.",
+          type: "system" as const,
+        },
+      ]);
+    }
   };
 
   const handleChatView = (value: any) => {
     setShowChatSection(!showChatSection);
-    if (messages.length === 0 && showChatSection === false) {
+    if (messages.length == 0) {
       setMessages((prev) => [
         ...prev,
         {
           id: messages.length + 1,
-          text: `Our intelligent product assistant feature is coming soon! You'll be able to ask questions about ${value} and get helpful answers.`,
+          text: `What would you like to know about ${value} this product?`,
           type: "system" as const,
         },
       ]);
@@ -442,9 +484,18 @@ const ItemDisplayPage = () => {
     return cartItems[item.itemId] >= item.quantity;
   };
 
+  // Helper function to check if the item is explicitly added by the user
+  const isItemUserAdded = (itemId: string): boolean => {
+    // Check if there is at least one cart entry for this item with status "ADD"
+    return cartData.some(
+      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
+    );
+  };
+
   return (
     <div className="min-h-screen">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
+        {/* Enhanced Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm mb-6">
           <button
             onClick={() => navigate("/main/dashboard/products")}
@@ -462,9 +513,11 @@ const ItemDisplayPage = () => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column - Product Details */}
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                {/* Product Image Section */}
                 <div className="relative">
                   <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                     <img
@@ -473,18 +526,22 @@ const ItemDisplayPage = () => {
                       className="w-full h-full object-contain transform transition-transform hover:scale-105"
                     />
                   </div>
+
+                  {/* Enhanced Discount Badge */}
                   {itemDetails && (
                     <div className="absolute top-4 right-4 flex items-center">
                       <span className="bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
                         {calculateDiscount(
                           Number(itemDetails.itemMrp) ||
-                          Number(itemDetails.priceMrp),
+                            Number(itemDetails.priceMrp),
                           Number(itemDetails.itemPrice)
                         )}
                         % OFF
                       </span>
                     </div>
                   )}
+
+                  {/* Stock Status Badge */}
                   {itemDetails && (
                     <div className="absolute top-4 left-4">
                       <div
@@ -500,6 +557,8 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Product Info Section */}
                 <div className="space-y-6">
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
@@ -515,6 +574,8 @@ const ItemDisplayPage = () => {
                       <span className="text-sm text-gray-600">(4.8/5)</span>
                     </div>
                   </div>
+
+                  {/* Price Section */}
                   <div className="flex items-baseline gap-4">
                     <span className="text-3xl font-bold text-purple-600">
                       ₹{itemDetails?.itemPrice}
@@ -523,14 +584,14 @@ const ItemDisplayPage = () => {
                       ₹{itemDetails?.itemMrp || itemDetails?.priceMrp}
                     </span>
                   </div>
+
+                  {/* Enhanced Add to Cart Section */}
                   <div className="space-y-4">
                     {itemDetails?.quantity !== 0 ? (
-                      itemDetails && cartItems[itemDetails.itemId] ? (
+                      itemDetails && isItemUserAdded(itemDetails.itemId) ? (
                         <div className="flex flex-col gap-3">
                           <div className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                            <button
                               className={`p-2 rounded-lg transition-all ${
                                 cartItems[itemDetails.itemId] <= 1
                                   ? "bg-red-100 text-red-600 hover:bg-red-200"
@@ -543,7 +604,7 @@ const ItemDisplayPage = () => {
                               disabled={loadingItems.items[itemDetails.itemId]}
                             >
                               <Minus className="w-5 h-5" />
-                            </motion.button>
+                            </button>
                             {loadingItems.items[itemDetails.itemId] ? (
                               <Loader2 className="animate-spin text-purple-600" />
                             ) : (
@@ -551,9 +612,7 @@ const ItemDisplayPage = () => {
                                 {cartItems[itemDetails.itemId]}
                               </span>
                             )}
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                            <button
                               className={`p-2 rounded-lg transition-all ${
                                 isMaxStockReached(itemDetails)
                                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -565,14 +624,26 @@ const ItemDisplayPage = () => {
                               }
                               disabled={
                                 cartItems[itemDetails.itemId] >=
-                                itemDetails.quantity ||
+                                  itemDetails.quantity ||
                                 loadingItems.items[itemDetails.itemId] ||
                                 (itemDetails.itemPrice === 1 &&
                                   cartItems[itemDetails.itemId] >= 1)
                               }
                             >
                               <Plus className="w-5 h-5" />
-                            </motion.button>
+                            </button>
+                            {/* Delete Button */}
+                            <button
+                              className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-all ml-2"
+                              onClick={() => {
+                                if (itemDetails) {
+                                  handleRemoveItem(itemDetails.itemId);
+                                }
+                              }}
+                              disabled={loadingItems.items[itemDetails.itemId]}
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
                           </div>
                           {isMaxStockReached(itemDetails) && (
                             <p className="text-yellow-600 text-sm flex items-center gap-1.5">
@@ -582,15 +653,14 @@ const ItemDisplayPage = () => {
                           )}
                         </div>
                       ) : (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                        <button
                           onClick={() =>
                             itemDetails &&
                             !loadingItems.items[itemDetails.itemId] &&
                             handleAddToCart(itemDetails)
                           }
-                          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transform transition-all flex items-center justify-center gap-2"
+                          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 
+          transform transition-all hover:scale-105 flex items-center justify-center gap-2"
                         >
                           {itemDetails &&
                           loadingItems.items[itemDetails.itemId] ? (
@@ -601,12 +671,13 @@ const ItemDisplayPage = () => {
                               Add to Cart
                             </>
                           )}
-                        </motion.button>
+                        </button>
                       )
                     ) : (
                       <button
                         disabled
-                        className="w-full py-3 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
+                        className="w-full py-3 bg-gray-200 text-gray-600 rounded-lg 
+        flex items-center justify-center gap-2 cursor-not-allowed"
                       >
                         <ShoppingCart className="w-5 h-5" />
                         Out of Stock
@@ -617,6 +688,7 @@ const ItemDisplayPage = () => {
               </div>
             </div>
 
+            {/* Product Details Section - Enhanced */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-4">Product Details</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -629,14 +701,17 @@ const ItemDisplayPage = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-purple-50 p-3 rounded-lg">
                   <span className="font-medium">
-                    {itemDetails?.itemDescription || "No description available."}
+                    {itemDetails?.itemDescription}
                   </span>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Right Column - Chat/Related Items */}
           <div className="lg:col-span-4">
-            <div className="sticky top-8 space-y-6">
+            <div className="sticky top-8 space-y-8">
+              {/* Chat Section Toggle */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">
@@ -653,33 +728,30 @@ const ItemDisplayPage = () => {
                     )}
                   </button>
                 </div>
+
                 {showChatSection && (
                   <div className="h-[400px] flex flex-col">
-                    <div className="flex-1 overflow-y-auto space-y-4 p-2 mb-4">
-                      {messages.map((msg) => (
+                    <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+                      {messages.map((msg, idx) => (
                         <div
-                          key={msg.id}
+                          key={idx}
                           className={`flex ${
-                            msg.type === "sent" ? "justify-end" : "justify-start"
+                            msg.type === "sent"
+                              ? "justify-end"
+                              : "justify-start"
                           }`}
                         >
                           <div
-                            className={`${
+                            className={`max-w-[75%] p-3 rounded-lg ${
                               msg.type === "sent"
                                 ? "bg-purple-600 text-white"
-                                : msg.type === "system"
-                                ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                                : "bg-gray-100 text-gray-800"
-                            } rounded-lg p-3 max-w-[80%]`}
+                                : "bg-purple-50 border border-purple-100"
+                            }`}
                           >
-                            {msg.type === "system" ? (
-                              <div className="flex items-start gap-2">
-                                <Bot className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                                <div>{msg.text}</div>
-                              </div>
-                            ) : (
-                              msg.text
+                            {msg.type === "system" && (
+                              <Bot className="w-4 h-4 text-purple-600 mb-1" />
                             )}
+                            <span className="text-sm">{msg.text}</span>
                           </div>
                         </div>
                       ))}
@@ -688,141 +760,156 @@ const ItemDisplayPage = () => {
                       <input
                         type="text"
                         value={inputMessage}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setInputMessage(e.target.value)
-                        }
-                        placeholder="Ask about this product..."
-                        className="flex-1 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                        onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={(e) =>
                           e.key === "Enter" && handleSendMessage()
                         }
+                        className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        placeholder="Ask about this product..."
                       />
                       <button
                         onClick={handleSendMessage}
-                        className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                       >
-                        <MessageCircle className="w-5 h-5" />
+                        Send
                       </button>
                     </div>
                   </div>
                 )}
-                {!showChatSection && chatFeatureComingSoon && (
-                  <div className="space-y-4">
-                    <p className="text-gray-600">
-                      Have questions about this product? Our AI assistant can help
-                      you with product information, recommendations, and more.
-                    </p>
-                    <button
-                      onClick={() => handleChatView(itemDetails?.itemName)}
-                      className="w-full py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 flex items-center justify-center gap-2"
-                    >
-                      <Bot className="w-5 h-5" />
-                      Chat with Product Assistant
-                    </button>
-                  </div>
-                )}
               </div>
+              {/* Related Items */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h2 className="text-xl font-bold mb-4">Related Items</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {relatedItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className="relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all"
+                      onClick={() => handleRelatedItemClick(item)}
+                    >
+                      {/* Discount badge */}
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                        {calculateDiscount(item.itemMrp, item.itemPrice)}% OFF
+                      </div>
 
-              {relatedItems.length > 0 && (
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                  <h2 className="text-xl font-bold mb-4">You May Also Like</h2>
-                  <div className="space-y-4">
-                    {relatedItems.slice(0, 3).map((item) => (
-                      <div
-                        key={item.itemId}
-                        className="flex items-center gap-3 p-2 hover:bg-purple-50 rounded-lg cursor-pointer transition-colors"
-                        onClick={() => handleRelatedItemClick(item)}
-                      >
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
-                          <img
-                            src={item.itemImage || item.image}
-                            alt={item.itemName}
-                            className="w-full h-full object-contain"
-                          />
+                      {/* Item image and details */}
+                      <div className="p-3">
+                        <div className="h-32 bg-gray-100 rounded-md mb-3"></div>
+                        <h3 className="font-medium text-gray-800 line-clamp-2 mb-1">
+                          {item.itemName}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">
+                            ₹{item.itemPrice}
+                          </span>
+                          <span className="text-gray-500 text-sm line-through">
+                            ₹{item.itemMrp}
+                          </span>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900 line-clamp-1">
-                            {item.itemName}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <span className="text-purple-600 font-medium">
-                              ₹{item.itemPrice}
-                            </span>
-                            <span className="text-sm text-gray-500 line-through">
-                              ₹{item.itemMrp || item.priceMrp}
-                            </span>
-                          </div>
-                        </div>
-                        {item.quantity > 0 ? (
-                          cartItems[item.itemId] ? (
-                            <div className="flex items-center gap-1">
+
+                        {/* Related item cart controls */}
+                        <div className="mt-3">
+                          {item.quantity !== 0 ? (
+                            isItemUserAdded(item.itemId) ? (
+                              <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
+                                <button
+                                  className={`p-1.5 rounded-lg transition-all ${
+                                    cartItems[item.itemId] <= 1
+                                      ? "bg-red-100 text-red-600 hover:bg-red-200"
+                                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleQuantityChange(item, false);
+                                  }}
+                                  disabled={loadingItems.items[item.itemId]}
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+
+                                {loadingItems.items[item.itemId] ? (
+                                  <Loader2 className="animate-spin text-purple-600 w-4 h-4" />
+                                ) : (
+                                  <span className="font-medium text-purple-700">
+                                    {cartItems[item.itemId]}
+                                  </span>
+                                )}
+
+                                <button
+                                  className={`p-1.5 rounded-lg transition-all ${
+                                    cartItems[item.itemId] >= item.quantity
+                                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (
+                                      cartItems[item.itemId] < item.quantity
+                                    ) {
+                                      handleQuantityChange(item, true);
+                                    }
+                                  }}
+                                  disabled={
+                                    cartItems[item.itemId] >= item.quantity ||
+                                    loadingItems.items[item.itemId]
+                                  }
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+
+                                {/* Delete Button for related items */}
+                                <button
+                                  className="p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-all ml-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveItem(item.itemId);
+                                  }}
+                                  disabled={loadingItems.items[item.itemId]}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
                               <button
-                                className="p-1 bg-purple-100 text-purple-600 rounded-md hover:bg-purple-200"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleQuantityChange(item, false);
+                                  if (!loadingItems.items[item.itemId]) {
+                                    handleAddToCart(item);
+                                  }
                                 }}
+                                className="w-full py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 
+transform transition-all flex items-center justify-center gap-1.5"
                               >
-                                <Minus className="w-4 h-4" />
+                                {loadingItems.items[item.itemId] ? (
+                                  <Loader2 className="animate-spin w-4 h-4" />
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Add to Cart
+                                  </>
+                                )}
                               </button>
-                              <span className="font-medium w-6 text-center">
-                                {cartItems[item.itemId]}
-                              </span>
-                              <button
-                                className={`p-1 rounded-md ${
-                                  cartItems[item.itemId] >= item.quantity
-                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  !isMaxStockReached(item) && handleQuantityChange(item, true);
-                                }}
-                                disabled={cartItems[item.itemId] >= item.quantity}
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
-                            </div>
+                            )
                           ) : (
                             <button
-                              className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddToCart(item);
-                              }}
+                              disabled
+                              className="w-full py-2 bg-gray-200 text-gray-600 text-sm rounded-lg 
+flex items-center justify-center gap-1.5 cursor-not-allowed"
                             >
-                             <ShoppingCart className="w-4 h-4" />
+                              <ShoppingCart className="w-4 h-4" />
+                              Out of Stock
                             </button>
-                          )
-                        ) : (
-                          <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
-                            Out of stock
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    ))}
-                    <button
-                      onClick={() => navigate("/main/dashboard/products")}
-                      className="w-full py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2"
-                    >
-                      View More Products
-                    </button>
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {showValidationPopup && (
-        <ValidationPopup
-          isOpen={showValidationPopup}
-          onClose={() => setShowValidationPopup(false)}
-          onAction={handleProfileRedirect}
-        />
-      )}
-
       <Footer />
     </div>
   );

@@ -1,54 +1,54 @@
-import React, { useContext, useState } from "react";
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
+  ShoppingCart,
+  Minus,
+  Plus,
   Loader2,
+  Trash2,
   Home,
   ChevronRight,
 } from "lucide-react";
 import axios from "axios";
-import { message } from "antd";
+import { message, Popconfirm } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Footer from "../components/Footer";
-import BASE_URL from "../Config";
-import { CartContext } from "../until/CartContext";
 
+// Define the SearchItem interface (same as in your SearchBar component)
 interface SearchItem {
-  itemId: string;   
+  itemId: string;
   itemName: string;
   itemMrp: number;
-  units: string | null;
+  units: string;
   itemImage: string;
   weight: number;
   saveAmount: number;
   itemDescription: string;
-  savePercentage: number | null;
+  savePercentage: number;
   itemPrice: number;
   quantity: number;
   categoryName: string;
 }
 
+// Define the CartItem interface to include status
 interface CartItem {
   itemId: string;
-  cartQuantity: number;
   cartId: string;
-}
-
-interface LocationState {
-  searchResults: SearchItem[];
-  categoryName?: string;
+  cartQuantity: number;
+  status: string; // "ADD" or "FREE"
 }
 
 const SearchMain: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showValidationPopup, setShowValidationPopup] = useState(false);
-  const { searchResults, categoryName } = (location.state as LocationState) || {
-    searchResults: [],
-    categoryName: undefined,
-  };
-  console.log("SearchMain received:", { searchResults, categoryName });
 
+  // Extract searchResults from the location state, default to an empty array if not present
+  const searchResults: SearchItem[] =
+    (location.state as { searchResults?: SearchItem[] })?.searchResults || [];
+
+  // State for cart items, loading, and cart data
   const [cartItems, setCartItems] = React.useState<Record<string, number>>({});
   const [cartData, setCartData] = React.useState<CartItem[]>([]);
   const [loadingItems, setLoadingItems] = React.useState<{
@@ -62,92 +62,57 @@ const SearchMain: React.FC = () => {
     Record<string, boolean>
   >({});
 
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("CartDisplay must be used within a CartProvider");
-  }
-  const { setCount } = context;
-
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
 
-  const filteredSearchResults = searchResults
-    .filter((item) => item.itemMrp > 0 && item.categoryName !== "Sample Rice") // Exclude items with itemMrp of 0 and sample rice
-    .sort((a, b) => {
-      const weightOrder = [1, 5, 10, 25, 26]; // Define the preferred weight order
-      const aIndex = weightOrder.indexOf(a.weight);
-      const bIndex = weightOrder.indexOf(b.weight);
-
-      // If both weights are in the preferred order, sort by their index
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-      // If only 'a' is in the preferred order, it comes first
-      if (aIndex !== -1) {
-        return -1;
-      }
-      // If only 'b' is in the preferred order, it comes first
-      if (bIndex !== -1) {
-        return 1;
-      }
-      // If neither is in the preferred order, sort by weight numerically (e.g., 26 kg comes last)
-      return a.weight - b.weight;
-    });
-
-  const fetchCartData = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.data.customerCartResponseList) {
-        const cartItemsMap = response.data.customerCartResponseList.reduce(
-          (acc: Record<string, number>, item: any) => {
-            acc[item.itemId] = item.cartQuantity || 0;
-            return acc;
-          },
-          {}
-        );
-        const totalQuantity = Object.values(
-          cartItemsMap as Record<string, number>
-        ).reduce((sum, qty) => sum + qty, 0);
-        setCount(totalQuantity);
-        setCartItems(cartItemsMap);
-        setCartData(response.data.customerCartResponseList);
-      } else {
-        setCartItems({});
-      }
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-    }
-  };
-
+  // Fetch cart data to display quantities
   React.useEffect(() => {
+    const fetchCartData = async () => {
+      try {
+        const response = await axios.get(
+          `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data.customerCartResponseList) {
+          const cartItemsMap = response.data.customerCartResponseList.reduce(
+            (acc: Record<string, number>, item: CartItem) => {
+              if (item.status !== "FREE") {
+                acc[item.itemId] =
+                  (acc[item.itemId] || 0) + (item.cartQuantity || 0);
+              }
+              return acc;
+            },
+            {}
+          );
+          setCartItems(cartItemsMap);
+          setCartData(response.data.customerCartResponseList);
+        } else {
+          setCartItems({});
+          setCartData([]);
+        }
+      } catch (error) {
+        console.error("Error fetching cart items:", error);
+        setCartItems({});
+        setCartData([]);
+      }
+    };
+
     if (customerId && token) {
       fetchCartData();
     }
   }, [customerId, token]);
 
+  // Calculate discount percentage
   const calculateDiscount = (mrp: number, price: number) => {
     return Math.round(((mrp - price) / mrp) * 100);
   };
 
+  // Handle back navigation
   const handleBack = () => {
     navigate(-1);
   };
 
-  const checkProfileCompletion = () => {
-    const profileData = localStorage.getItem("profileData");
-    console.log("profileData", profileData);
-
-    if (profileData) {
-      const parsedData = JSON.parse(profileData);
-      console.log("parsedData", parsedData);
-      return !!(parsedData.userFirstName && parsedData.userFirstName !== "");
-    }
-    return false;
-  };
-
+  // Handle Add to Cart
   const handleAddToCart = async (item: SearchItem) => {
     setLoadingItems((prev) => ({
       ...prev,
@@ -159,28 +124,28 @@ const SearchMain: React.FC = () => {
       setTimeout(() => navigate("/whatsapplogin"), 2000);
       return;
     }
+
     try {
       await axios.post(
-        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
+        `https://meta.oxyglobal.tech/api/cart-service/cart/add_Items_ToCart`,
         { customerId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success("Item added to cart successfully.");
       const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${customerId}`,
+        `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const cartItemsMap = response.data.customerCartResponseList.reduce(
-        (acc: Record<string, number>, cartItem: any) => {
-          acc[cartItem.itemId] = cartItem.cartQuantity || 0;
+        (acc: Record<string, number>, cartItem: CartItem) => {
+          if (cartItem.status !== "FREE") {
+            acc[cartItem.itemId] =
+              (acc[cartItem.itemId] || 0) + (cartItem.cartQuantity || 0);
+          }
           return acc;
         },
         {}
       );
-      const totalQuantity = Object.values(
-        cartItemsMap as Record<string, number>
-      ).reduce((sum, qty) => sum + qty, 0);
-      setCount(totalQuantity);
       setCartItems(cartItemsMap);
       setCartData(response.data.customerCartResponseList);
       setLoadingItems((prev) => ({
@@ -197,14 +162,11 @@ const SearchMain: React.FC = () => {
     }
   };
 
+  // Handle quantity change (increment/decrement)
   const handleQuantityChange = async (item: SearchItem, increment: boolean) => {
-    if (!checkProfileCompletion()) {
-      setShowValidationPopup(true);
-      return;
-    }
     const endpoint = increment
-      ? `${BASE_URL}/cart-service/cart/incrementCartData`
-      : `${BASE_URL}/cart-service/cart/decrementCartData`;
+      ? `https://meta.oxyglobal.tech/api/cart-service/cart/incrementCartData`
+      : `https://meta.oxyglobal.tech/api/cart-service/cart/decrementCartData`;
 
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
@@ -221,15 +183,14 @@ const SearchMain: React.FC = () => {
         const targetCartId = cartData.find(
           (cart) => cart.itemId === item.itemId
         )?.cartId;
-        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
-          data: { id: targetCartId },
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.delete(
+          `https://meta.oxyglobal.tech/api/cart-service/cart/remove`,
+          {
+            data: { id: targetCartId },
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         message.success("Item removed from cart successfully.");
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [item.itemId]: false },
-        }));
       } else {
         await axios.patch(
           endpoint,
@@ -237,11 +198,26 @@ const SearchMain: React.FC = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
+      const response = await axios.get(
+        `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const cartItemsMap = response.data.customerCartResponseList.reduce(
+        (acc: Record<string, number>, cartItem: CartItem) => {
+          if (cartItem.status !== "FREE") {
+            acc[cartItem.itemId] =
+              (acc[cartItem.itemId] || 0) + (cartItem.cartQuantity || 0);
+          }
+          return acc;
+        },
+        {}
+      );
+      setCartItems(cartItemsMap);
+      setCartData(response.data.customerCartResponseList);
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
       }));
-      fetchCartData();
     } catch (error) {
       console.error("Error updating quantity:", error);
       message.error("Error updating item quantity");
@@ -252,11 +228,66 @@ const SearchMain: React.FC = () => {
     }
   };
 
+  // Handle item click to navigate to ItemDisplayPage
   const handleItemClick = (item: SearchItem) => {
-    console.log(item);
     navigate(`/main/itemsdisplay/${item.itemId}`, {
       state: { item },
     });
+  };
+
+  // Handle remove item from cart
+  const handleDeleteFromCart = async (item: SearchItem) => {
+    const targetCartId = cartData.find(
+      (cart) => cart.itemId === item.itemId
+    )?.cartId;
+    if (targetCartId) {
+      setDeleteLoading((prev) => ({
+        ...prev,
+        [item.itemId]: true,
+      }));
+      try {
+        await axios.delete(
+          `https://meta.oxyglobal.tech/api/cart-service/cart/remove`,
+          {
+            data: { id: targetCartId },
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        message.success("Item removed from cart successfully.");
+        const response = await axios.get(
+          `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const cartItemsMap = response.data.customerCartResponseList.reduce(
+          (acc: Record<string, number>, cartItem: CartItem) => {
+            if (cartItem.status !== "FREE") {
+              acc[cartItem.itemId] =
+                (acc[cartItem.itemId] || 0) + (cartItem.cartQuantity || 0);
+            }
+            return acc;
+          },
+          {}
+        );
+        setCartItems(cartItemsMap);
+        setCartData(response.data.customerCartResponseList);
+      } catch (error) {
+        console.error("Error removing item:", error);
+        message.error("Error removing item from cart");
+      } finally {
+        setDeleteLoading((prev) => ({
+          ...prev,
+          [item.itemId]: false,
+        }));
+      }
+    }
+  };
+
+  // Helper function to check if the item is explicitly added by the user
+  const isItemUserAdded = (itemId: string): boolean => {
+    // Check if there is at least one cart entry for this item with status "ADD"
+    return cartData.some(
+      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
+    );
   };
 
   return (
@@ -278,7 +309,8 @@ const SearchMain: React.FC = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column - Search Results (Full Width) */}
-          <div className="lg:col-span-12 space-y-4">
+          <div className="lg:col-span-12 space-y-">
+            {/* Search Results Section */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-start mb-4">
                 <button
@@ -289,7 +321,7 @@ const SearchMain: React.FC = () => {
                   <ArrowLeft className="w-6 h-6 mb-2" />
                 </button>
                 <h2 className="text-xl font-bold flex items-center mb-2">
-                  {categoryName ? `${categoryName} Products` : "Search Results"}
+                  Search Results
                 </h2>
               </div>
               <AnimatePresence mode="wait">
@@ -300,8 +332,8 @@ const SearchMain: React.FC = () => {
                   exit={{ opacity: 0, y: -20 }}
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
                 >
-                  {filteredSearchResults.length > 0 ? (
-                    filteredSearchResults.map((item, index) => (
+                  {searchResults.length > 0 ? (
+                    searchResults.map((item, index) => (
                       <motion.div
                         key={item.itemId}
                         initial={{ opacity: 0 }}
@@ -309,15 +341,16 @@ const SearchMain: React.FC = () => {
                         transition={{ delay: index * 0.05 }}
                         className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden"
                       >
+                        {/* Discount Label with custom design */}
                         {item.itemMrp &&
                           item.itemPrice &&
                           item.itemMrp > item.itemPrice && (
                             <div className="absolute left-0 top-0 z-10 w-auto">
                               <div
                                 className="bg-purple-600 text-white text-[10px] xs:text-xs sm:text-sm font-bold 
-            px-1.5 xs:px-2 sm:px-3 lg:px-4 
-            py-0.5 xs:py-0.5 sm:py-1 
-            flex items-center"
+                              px-1.5 xs:px-2 sm:px-3 lg:px-4 
+                              py-0.5 xs:py-0.5 sm:py-1 
+                              flex items-center"
                               >
                                 {calculateDiscount(
                                   item.itemMrp,
@@ -328,35 +361,41 @@ const SearchMain: React.FC = () => {
                                   Off
                                 </span>
                               </div>
+                              {/* Custom shape for bottom edge */}
                               <div
                                 className="absolute bottom-0 right-0 transform translate-y 
-            border-t-4 border-r-4 
-            xs:border-t-6 xs:border-r-6 
-            sm:border-t-8 sm:border-r-8 
-            border-t-purple-600 border-r-transparent"
+                              border-t-4 border-r-4 
+                              xs:border-t-6 xs:border-r-6 
+                              sm:border-t-8 sm:border-r-8 
+                              border-t-purple-600 border-r-transparent"
                               ></div>
                             </div>
                           )}
-                        {item.quantity &&
-                          item.quantity < 6 &&
-                          item.quantity > 0 && (
-                            <div className="absolute top-0.5 xs:top-1 sm:top-2 right-0.5 xs:right-1 sm:right-2 z-10">
-                              <span
-                                className="bg-yellow-500 text-white 
-            text-[8px] xs:text-[10px] sm:text-xs 
-            font-medium 
-            px-1.5 xs:px-2 sm:px-3 
-            py-0.5 xs:py-0.5 sm:py-1 
-            rounded-full whitespace-nowrap"
-                              >
-                                Only {item.quantity} left
-                              </span>
-                            </div>
-                          )}
+
+                        {/* Stock Status Badge */}
+                        {item.quantity < 6 && item.quantity > 0 && (
+                          <div
+                            className="absolute top-0.5 xs:top-1 sm:top-2 
+                            right-0.5 xs:right-1 sm:right-2 z-10"
+                          >
+                            <span
+                              className="bg-yellow-500 text-white 
+                              text-[8px] xs:text-[10px] sm:text-xs 
+                              font-medium 
+                              px-1.5 xs:px-2 sm:px-3 
+                              py-0.5 xs:py-0.5 sm:py-1 
+                              rounded-full whitespace-nowrap"
+                            >
+                              Only {item.quantity} left
+                            </span>
+                          </div>
+                        )}
+
                         <div
                           className="p-4 cursor-pointer"
                           onClick={() => handleItemClick(item)}
                         >
+                          {/* Image Container */}
                           <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
                             <img
                               src={item.itemImage}
@@ -371,14 +410,18 @@ const SearchMain: React.FC = () => {
                               </div>
                             )}
                           </div>
+
+                          {/* Product Details */}
                           <div className="space-y-2">
                             <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm">
                               {item.itemName}
                             </h3>
                             <p className="text-sm text-gray-500">
                               Weight: {item.weight}
-                              {item.units || ""}
+                              {item.units}
                             </p>
+
+                            {/* Price Section */}
                             <div className="flex items-baseline space-x-2">
                               <span className="text-lg font-semibold text-gray-900">
                                 ₹{item.itemPrice}
@@ -390,8 +433,10 @@ const SearchMain: React.FC = () => {
                                   </span>
                                 )}
                             </div>
+
+                            {/* Add to Cart Button Section */}
                             {item.quantity !== 0 ? (
-                              cartItems[item.itemId] > 0 ? (
+                              isItemUserAdded(item.itemId) ? (
                                 <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2">
                                   <motion.button
                                     whileTap={{ scale: 0.9 }}
@@ -414,23 +459,20 @@ const SearchMain: React.FC = () => {
                                   <motion.button
                                     whileTap={{ scale: 0.9 }}
                                     className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                                      cartItems[item.itemId] >=
-                                      (item.quantity || Infinity)
+                                      cartItems[item.itemId] >= item.quantity
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
                                     }`}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if (
-                                        cartItems[item.itemId] <
-                                        (item.quantity || Infinity)
+                                        cartItems[item.itemId] < item.quantity
                                       ) {
                                         handleQuantityChange(item, true);
                                       }
                                     }}
                                     disabled={
-                                      cartItems[item.itemId] >=
-                                        (item.quantity || Infinity) ||
+                                      cartItems[item.itemId] >= item.quantity ||
                                       loadingItems.items[item.itemId]
                                     }
                                   >

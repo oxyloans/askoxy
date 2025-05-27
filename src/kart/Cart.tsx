@@ -1,18 +1,13 @@
-import React, {
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Loader2, X, Trash2 } from "lucide-react";
+import { Loader2, X, Trash2, Info, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
-import { Button, message, Modal } from "antd";
+import { Button, message, Modal, Input, Tag } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
+import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 
 interface Address {
@@ -32,10 +27,13 @@ interface CartItem {
   image: string;
   itemDescription: string;
   units: string;
-  weight: string | number | null;
+  weight: string;
   cartQuantity: number;
   cartId: string;
+  status: string;
   quantity: number;
+  freeQuantity?: number;
+  promotionType?: string;
 }
 
 interface AddressFormData {
@@ -54,10 +52,41 @@ interface ApiError {
   };
 }
 
+interface ContainerEligibility {
+  eligible: boolean;
+  reason?: string;
+  containerType?: "HEAVY_BAG" | "LIGHT_BAG";
+  containerId?: string;
+}
+
 const CartPage: React.FC = () => {
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<{ [key: string]: number }>({});
   const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [error, setError] = useState<string>("");
+  const [checkoutError, setCheckoutError] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string>("");
+  const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
+  const mobileNumberRaw = localStorage.getItem("mobileNumber") || "";
+  const rawNumber = mobileNumberRaw || whatsappNumber;
+  const [selectedPlan, setSelectedPlan] = useState<string[]>([]);
+  const [isPlanModalVisible, setIsPlanModalVisible] = useState(false);
+  const [forcePlanModalDisplay, setForcePlanModalDisplay] = useState(false);
+  const isFreeItem = (item: any) => item.status === "FREE";
+  const modalDisplayedRef = useRef<boolean>(false);
+
+  const [regularCartItems, setRegularCartItems] = useState<{
+    [key: string]: number;
+  }>({});
+  const [freeCartItems, setFreeCartItems] = useState<{ [key: string]: number }>(
     {}
   );
 
@@ -66,14 +95,21 @@ const CartPage: React.FC = () => {
   const [currentPlanDetails, setCurrentPlanDetails] = useState<
     "planA" | "planB" | null
   >(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [error, setError] = useState<string>("");
-  const [checkoutError, setCheckoutError] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string>("");
+  const [containerPreference, setContainerPreference] = useState<string | null>(
+    null
+  );
+  const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
+  const [isReferralModalVisible, setIsReferralModalVisible] =
+    useState<boolean>(false);
+  const [mobileNumbers, setMobileNumbers] = useState<string[]>([]);
+  const [currentNumber, setCurrentNumber] = useState<string>("");
+  const containerExistsRef = useRef<boolean>(false);
+
+  const CONTAINER_ITEM_IDS = {
+    HEAVY_BAG: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
+    LIGHT_BAG: "53d7f68c-f770-4a70-ad67-ee2726a1f8f3",
+  };
+
   const [addressFormData, setAddressFormData] = useState<AddressFormData>({
     flatNo: "",
     landMark: "",
@@ -81,119 +117,17 @@ const CartPage: React.FC = () => {
     pincode: "",
     addressType: "Home",
   });
-  const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
-  const modalDisplayedRef = useRef<boolean>(false);
+
   const [addressFormErrors, setAddressFormErrors] = useState({
     flatNo: "",
     landmark: "",
     address: "",
     pincode: "",
   });
-  const CONTAINER_ITEM_IDS = {
-    HEAVY_BAG: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61", // 26kg container
-    LIGHT_BAG: "53d7f68c-f770-4a70-ad67-ee2726a1f8f3", // 10kg container
-  };
 
   const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
-  const [containerPreference, setContainerPreference] = useState<string | null>(
-    null
-  );
-  const [hasShownOnePlusOne, setHasShownOnePlusOne] = useState(false);
-  const onePlusOneConfirmedRef = useRef<boolean>(false);
-  const containerModalCompletedRef = useRef<boolean>(false);
-  const onePlusOneModalShownRef = useRef(false);
-  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
-    {}
-  );
-  const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-  const mobileNumberRaw = localStorage.getItem("mobileNumber") || "";
-  const rawNumber = mobileNumberRaw || whatsappNumber;
-  const [isReferralModalVisible, setIsReferralModalVisible] = useState(false);
-  const [mobileNumbers, setMobileNumbers] = useState<string[]>([]);
-  const [currentNumber, setCurrentNumber] = useState<string>("");
-  const [selectedPlan, setSelectedPlan] = useState<string[]>([]);
-  const [isPlanModalVisible, setIsPlanModalVisible] = useState(false);
-
-  const checkOnePlusOneStatus = async (): Promise<boolean> => {
-    const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
-    onePlusOneConfirmedRef.current = claimed;
-
-    let offeravail = 0;
-
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      offeravail = response.data?.cartQuantity || 0;
-      console.log("1+1 Offer available quantity:", offeravail);
-    } catch (error) {
-      console.error("Failed to fetch 1+1 offer availability:", error);
-    }
-
-    return claimed || offeravail > 2;
-  };
-
-  // const setOnePlusOneClaimed = async () => {
-  //   localStorage.setItem("onePlusOneClaimed", "true");
-  //   onePlusOneConfirmedRef.current = true;
-  // };
-
-  // const maybeShowOnePlusOneModal = async () => {
-  //   if (onePlusOneModalShownRef.current) return;
-
-  //   try {
-  //     const hasClaimed = await checkOnePlusOneStatus();
-  //     if (hasClaimed || hasShownOnePlusOne) return;
-
-  //     const eligibleBag = findOneKgBag();
-  //     if (!eligibleBag) return;
-
-  //     onePlusOneModalShownRef.current = true;
-  //     setHasShownOnePlusOne(true);
-
-  //     setTimeout(() => showOnePlusOneModal(eligibleBag), 300);
-  //   } catch (error) {
-  //     console.error("Error in maybeShowOnePlusOneModal:", error);
-  //   }
-  // };
-
-  const findOneKgBag = (): CartItem | null => {
-    const oneKgBags = cartData.filter((item) => {
-      const weight = parseWeight(item.weight);
-      return weight === 1 && item.units?.toLowerCase().includes("kg");
-    });
-
-    if (oneKgBags.length === 0) return null;
-    return oneKgBags.reduce((minItem, currentItem) =>
-      parseFloat(currentItem.itemPrice) < parseFloat(minItem.itemPrice)
-        ? currentItem
-        : minItem
-    );
-  };
-
-  const parseWeight = (weight: unknown): number => {
-    console.log("Parsing weight:", weight);
-    if (typeof weight === "number") {
-      console.log(`Weight is a number: ${weight}`);
-      return weight;
-    }
-    if (typeof weight !== "string" || !weight) {
-      console.warn(`Invalid weight value: ${weight}, defaulting to 0`);
-      return 0;
-    }
-    const cleanedWeight = weight.replace(/[^0-9.]/g, "");
-    const result = parseFloat(cleanedWeight) || 0;
-    console.log(`Parsed string ${weight} to ${result}`);
-    return result;
-  };
 
   const context = useContext(CartContext);
 
@@ -211,329 +145,10 @@ const CartPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("Fetched addresses:", response.data);
-      setAddresses(response.data || []);
+      setAddresses(response.data);
       setSelectedAddress(response.data[0] || null);
     } catch (error) {
       console.error("Error fetching addresses:", error);
-    }
-  };
-
-  useEffect(() => {
-    const initializeCartPage = async () => {
-      setIsLoading(true);
-      try {
-        const [cartResponse, preference] = await Promise.all([
-          fetchCartData(),
-          fetchContainerPreference(),
-        ]);
-        console.log("Initialization complete - preference:", preference);
-        setContainerPreference(preference);
-      } catch (error) {
-        console.error("Error initializing cart page:", error);
-        message.error("Failed to load cart data. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeCartPage();
-  }, [customerId, token]);
-
-  useEffect(() => {
-    const checkAndShowFallbackOnePlusOne = async () => {
-      if (onePlusOneModalShownRef.current) return;
-
-      try {
-        const hasClaimed = await checkOnePlusOneStatus();
-        const eligibleBag = findOneKgBag();
-
-        if (
-          cartData.length > 0 &&
-          !hasClaimed &&
-          !modalDisplayedRef.current &&
-          eligibleBag
-        ) {
-          onePlusOneModalShownRef.current = true;
-          setHasShownOnePlusOne(true);
-        }
-      } catch (error) {
-        console.error("Error in checkAndShowFallbackOnePlusOne:", error);
-      }
-    };
-
-    checkAndShowFallbackOnePlusOne();
-  }, [cartData]);
-
-  // const showContainerModal = useCallback(() => {
-  //   console.log("showContainerModal called with:", {
-  //     containerPreference,
-  //     modalDisplayed: modalDisplayedRef.current,
-  //     cartData,
-  //   });
-
-  //   if (
-  //     containerPreference?.toLowerCase() === "interested" ||
-  //     modalDisplayedRef.current
-  //   ) {
-  //     console.log("Modal not shown - already interested or displayed");
-  //     return;
-  //   }
-
-  //   const hasContainer = cartData.some((item) =>
-  //     [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-  //       item.itemId
-  //     )
-  //   );
-  //   if (hasContainer) {
-  //     console.log("Modal not shown - cart already has container");
-  //     modalDisplayedRef.current = true;
-  //     return;
-  //   }
-
-  //   const hasHeavyBag = cartData.some((item) => parseWeight(item.weight) > 10);
-  //   const hasValidLightBag = cartData.some((item) => {
-  //     const weight = parseWeight(item.weight);
-  //     return weight <= 10 && weight !== 1 && weight !== 5;
-  //   });
-
-  //   console.log("Container eligibility:", { hasHeavyBag, hasValidLightBag });
-
-  //   if (!hasHeavyBag && !hasValidLightBag) {
-  //     console.log("Modal not shown - no eligible items");
-  //     return;
-  //   }
-
-  //   modalDisplayedRef.current = true;
-
-  //   // Create a ref to track the selected plan inside the modal
-  //   const modalSelectedPlanRef = { current: null as "planA" | "planB" | null };
-
-  //   const PlanModalContent = () => {
-  //     const [tempPlan, setTempPlan] = useState<"planA" | "planB" | null>(selectedPlan);
-
-  //     // Update both the state and the ref when a plan is selected
-  //     const handlePlanSelect = (planKey: "planA" | "planB") => {
-  //       setTempPlan(planKey);
-  //       setSelectedPlan(planKey);
-  //       modalSelectedPlanRef.current = planKey; // This is the key change - store selection in ref
-  //     };
-
-  //     return (
-  //       <div className="text-center">
-  //         <p className="mt-2">
-  //           Get a free steel container! Buy 9 bags of 26 kgs / 10 kgs in 3 years
-  //           or refer 9 friends and when they buy their first bag, the container
-  //           is yours forever.
-  //         </p>
-  //         <p className="mt-2 text-sm text-gray-600 font-semibold">
-  //           * No purchase in 90 days or gap of 90 days between purchases =
-  //           Container will be taken back
-  //         </p>
-  //         <p className="mt-1 text-sm text-gray-700 italic">
-  //           Choose the plan that best suits your needs and enjoy exclusive
-  //           benefits.
-  //         </p>
-
-  //         <div className="mt-4 space-y-4">
-  //           {["planA", "planB"].map((planKey) => (
-  //             <div className="flex items-center" key={planKey}>
-  //               <input
-  //                 type="radio"
-  //                 name="planSelection"
-  //                 checked={tempPlan === planKey}
-  //                 onChange={() => handlePlanSelect(planKey as "planA" | "planB")}
-  //                 className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
-  //               />
-  //               <button
-  //                 type="button"
-  //                 onClick={() => {
-  //                   setCurrentPlanDetails(planKey as "planA" | "planB");
-  //                   setIsPlanDetailsModalOpen(true);
-  //                 }}
-  //                 className={`w-full py-2 px-4 rounded-lg text-left transition-colors ${tempPlan === planKey
-  //                     ? "bg-purple-600 text-white"
-  //                     : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-  //                   }`}
-  //               >
-  //                 {planKey === "planA"
-  //                   ? "Plan A: Free Steel Container Policy"
-  //                   : "Plan B: Referral Program"}
-  //               </button>
-  //             </div>
-  //           ))}
-  //         </div>
-  //       </div>
-  //     );
-  //   };
-
-  //   try {
-  //     Modal.confirm({
-  //       title: "Special Offer!",
-  //       content: <PlanModalContent />,
-  //       okText: "Confirm Selection",
-  //       cancelText: "Cancel",
-  //       onOk: async () => {
-  //         try {
-  //           // Check the ref instead of the state
-  //           if (!modalSelectedPlanRef.current) {
-  //             message.info("Please select a plan before confirming.");
-  //             return Promise.reject(new Error("No plan selected"));
-  //           }
-  //           // Just to ensure state is also set
-  //           setSelectedPlan(modalSelectedPlanRef.current);
-
-  //           await handleInterested();
-  //           containerModalCompletedRef.current = true;
-  //         } catch (error) {
-  //           console.error("Error in Modal onOk:", error);
-  //           message.error("Failed to process container selection.");
-  //           throw error;
-  //         }
-  //       },
-  //       onCancel: async () => {
-  //         try {
-  //           setSelectedPlan(null);
-  //           containerModalCompletedRef.current = true;
-
-  //         } catch (error) {
-  //           console.error("Error in Modal onCancel:", error);
-  //           message.error("Failed to cancel container selection.");
-  //           throw error;
-  //         }
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Error displaying container modal:", error);
-  //   }
-  // }, [cartData, containerPreference, customerId, token, selectedPlan]);
-
-  useEffect(() => {
-    if (
-      cartData.length > 0 &&
-      (containerPreference === null ||
-        containerPreference?.toLowerCase() !== "interested") &&
-      !modalDisplayedRef.current
-    ) {
-      showContainerModal();
-    }
-  }, [cartData]);
-
-  useEffect(() => {
-    if (isPlanDetailsModalOpen && currentPlanDetails) {
-      try {
-        Modal.info({
-          title:
-            currentPlanDetails === "planA"
-              ? "Free Steel Container Policy"
-              : "Referral Program",
-          content: (
-            <div className="space-y-4 text-left">
-              {currentPlanDetails === "planA" ? (
-                <>
-                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
-                    <li>
-                      Buy 9 bags of rice in 3 years to keep the container
-                      forever
-                    </li>
-                    <li>
-                      Refer 9 friends who make a purchase – keep the container
-                    </li>
-                    <li>Gap of 90 days = container is taken back</li>
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
-                    <li>Refer friends using your unique link</li>
-                    <li>They must sign up and buy rice</li>
-                    <li>You get a free container + ₹50 cashback</li>
-                  </ul>
-                </>
-              )}
-            </div>
-          ),
-          onOk: () => setIsPlanDetailsModalOpen(false),
-          okText: "Close",
-          cancelButtonProps: { style: { display: "none" } },
-        });
-      } catch (error) {
-        console.error("Error displaying plan details modal:", error);
-      }
-    }
-  }, [isPlanDetailsModalOpen, currentPlanDetails]);
-
-  const fetchCartData = async () => {
-    try {
-      console.log("Fetching cart data for customerId:", customerId);
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Cart API response:", response.data);
-      if (response.data?.customerCartResponseList) {
-        const cartItemsMap: { [key: string]: number } =
-          response.data.customerCartResponseList.reduce(
-            (acc: { [key: string]: number }, item: CartItem) => {
-              acc[item.itemId] = item.cartQuantity || 0;
-              return acc;
-            },
-            {}
-          );
-        setCartItems(cartItemsMap);
-        const totalQuantity = Object.values(cartItemsMap).reduce(
-          (sum: number, qty: number) => sum + qty,
-          0
-        );
-        setCount(totalQuantity);
-      } else {
-        setCartItems({});
-        setCount(0);
-      }
-      const updatedCart = response.data?.customerCartResponseList || [];
-      const outOfStockItems = updatedCart.filter(
-        (item: CartItem) => item.cartQuantity > item.quantity
-      );
-      if (outOfStockItems.length > 0) {
-        setCheckoutError(true);
-        message.warning(
-          `Please decrease the quantity for: ${outOfStockItems
-            .map((item: CartItem) => item.itemName)
-            .join(", ")} before proceeding to checkout.`
-        );
-      }
-      setCartData(updatedCart);
-      console.log("Updated cart data:", updatedCart);
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-      message.error("Failed to fetch cart items.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchContainerPreference = async (): Promise<string | null> => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const status = response.data.freeContainerStatus
-        ? response.data.freeContainerStatus.toLowerCase()
-        : null;
-      console.log("Fetched container preference:", status);
-      return status;
-    } catch (error) {
-      console.error("Error fetching container preference:", error);
-      return null;
     }
   };
 
@@ -576,13 +191,41 @@ const CartPage: React.FC = () => {
         }
       );
 
+      console.log(
+        "updateContainerPreference response:",
+        response.status,
+        response.data
+      );
+
       if (response.status === 400) {
+        const errorMessage = response.data.message || "";
+        // Check for variations of the error message
         if (
-          preferenceTypes.includes("planA") ||
-          preferenceTypes.includes("planB")
+          errorMessage.toLowerCase().includes("reference offer already exists")
         ) {
-          message.error(response.data.message || "Something went wrong.", 5);
+          Modal.info({
+            title: "Plan Already Selected",
+            content: (
+              <p>
+                You have already opted for a plan. Please proceed to checkout to
+                avail the free container offer.
+              </p>
+            ),
+            okText: "Proceed to Checkout",
+            onOk: () => {
+              if (selectedAddress) {
+                navigate("/main/checkout", { state: { selectedAddress } });
+              } else {
+                message.error(
+                  "Please select an address before proceeding to checkout."
+                );
+              }
+            },
+            cancelButtonProps: { style: { display: "none" } },
+          });
+          return false;
         }
+        message.error(errorMessage || "Something went wrong.", 5);
         return false;
       }
 
@@ -622,7 +265,7 @@ const CartPage: React.FC = () => {
         } else if (isPlanB) {
           if (alreadySaved.length > 0 && newlySaved.length === 0) {
             messages.push(
-              `These numbers are referred successfully : ${alreadySaved.join(
+              `These numbers are referred successfully: ${alreadySaved.join(
                 ", "
               )}`
             );
@@ -653,128 +296,85 @@ const CartPage: React.FC = () => {
       }
 
       message.error("Unexpected response from the server.");
+      return false;
     } catch (error) {
       console.error("Error submitting reference offer:", error);
-      return true;
-    }
-  };
-
-  const checkEligibilityForContainer = (cartItems: CartItem[]) => {
-    const hasContainer = cartItems.some((item) =>
-      [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-        item.itemId
-      )
-    );
-
-    if (hasContainer) {
-      return { eligible: false, reason: "already_has_container" };
-    }
-
-    const hasHeavyBag = cartItems.some((item) => parseWeight(item.weight) > 10);
-    const hasValidLightBag = cartItems.some((item) => {
-      const weight = parseWeight(item.weight);
-      return weight <= 10 && weight !== 1 && weight !== 5;
-    });
-
-    if (hasHeavyBag) {
-      return { eligible: true, containerType: CONTAINER_ITEM_IDS.HEAVY_BAG };
-    } else if (hasValidLightBag) {
-      return { eligible: true, containerType: CONTAINER_ITEM_IDS.LIGHT_BAG };
-    }
-
-    return { eligible: false, reason: "no_eligible_items" };
-  };
-
-  const addContainerToCart = async (containerItemId: string | undefined) => {
-    try {
-      const containerItemData = {
-        itemId: containerItemId,
-        customerId: customerId,
-        cartQuantity: 1,
-        itemPrice: 0,
-      };
-
-      await axios.post(
-        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
-        containerItemData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      message.success("Free container added to your cart at ₹0.");
-      await fetchCartData();
-      return true;
-    } catch (error) {
-      console.error("Error adding container to cart:", error);
-      message.error("Failed to add free container. Please try again.");
+      message.error("Failed to submit reference offer.");
       return false;
     }
   };
-  const handleInterested = async (selectedPlanTypes: string[]) => {
-    const eligibility = checkEligibilityForContainer(cartData);
-    setSelectedPlans(selectedPlanTypes);
-    if (!eligibility.eligible) {
-      if (eligibility.reason === "already_has_container") {
-        message.info("You have already opted for a container.");
-      } else {
-        message.info("No eligible items for a free container.");
-      }
-      return false;
-    }
 
-    if (selectedPlanTypes.includes("planB") && mobileNumbers.length === 0) {
-      setMobileNumbers([]);
-      setCurrentNumber("");
-      setIsReferralModalVisible(true);
-      return false;
-    }
-
-    const res = await updateContainerPreference(
-      selectedPlanTypes,
-      mobileNumbers
-    );
-    return res === true
-      ? await addContainerToCart(eligibility.containerType)
-      : null;
-  };
-
-  const handleReferralOk = () => {
+  const handleReferralOk = async () => {
     if (mobileNumbers.length === 0) {
       message.error("Please enter at least one mobile number.");
       return;
     }
 
-    handleInterested(selectedPlan);
+    const prefUpdated = await updateContainerPreference(
+      selectedPlans,
+      mobileNumbers
+    );
+
+    if (prefUpdated) {
+      try {
+        await axios.post(
+          `${BASE_URL}/cart-service/cart/updateContainerStatus`,
+          {
+            customerId,
+            status: "interested",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error updating container status:", error);
+      }
+
+      const eligibility = checkEligibilityForContainer(cartData);
+      if (eligibility.eligible && eligibility.containerType) {
+        await addContainerToCart(
+          eligibility.containerType as "HEAVY_BAG" | "LIGHT_BAG"
+        );
+      }
+    }
+
     setIsReferralModalVisible(false);
   };
 
   const handleReferralCancel = async () => {
-    if (mobileNumbers.length === 0) {
-      Modal.confirm({
-        title: "No Mobile Numbers Entered",
-        content:
-          "Are you sure you want to skip? Without adding atleast one mobile number, the container will not be added to your cart and the offer will not be applied.",
-        okText: "Yes, Skip",
-        cancelText: "Go Back",
-        onOk() {
+    Modal.confirm({
+      title: "Decline Referral Offer?",
+      content:
+        "Are you sure you want to cancel? This will remove the free container from your cart and you will not be able to avail the referral offer.",
+      okText: "Yes, Cancel",
+      cancelText: "Go Back",
+      onOk: async () => {
+        try {
+          // Remove free container from cart
+          await removeContainerFromCart();
           setIsReferralModalVisible(false);
-        },
-      });
-    } else {
-      handleInterested(selectedPlan);
-      setIsReferralModalVisible(false);
-    }
+          setSelectedPlans([]); // Clear selected plans to prevent any further processing
+          message.info(
+            "Referral offer cancelled and free container removed from cart."
+          );
+        } catch (error) {
+          console.error("Error cancelling referral offer:", error);
+          message.error("Failed to cancel referral offer");
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   const handleModalClose = () => {
     Modal.confirm({
       title: "Are you sure you want to close?",
       content:
-        "Are you sure you want to close? Without adding atleast one mobile numbers, the container will not be added to your cart and the offer will not be applied.",
+        "Are you sure you want to close? Without adding at least one mobile number, the container will not be added to your cart and the offer will not be applied.",
       okText: "Yes, Close",
       cancelText: "Stay",
       onOk() {
@@ -809,110 +409,478 @@ const CartPage: React.FC = () => {
     const newNumbers = [...mobileNumbers];
     newNumbers.splice(index, 1);
     setMobileNumbers(newNumbers);
-    console.log("After removal, mobile numbers:", newNumbers); // Log to verify
   };
 
-  const showContainerModal = async () => {
-    const containerPreference = await fetchContainerPreference();
-    if (containerPreference === "interested") {
-      return;
-    }
+  // const showContainerModal = async () => {
+  //   console.log("Attempting to show container modal");
 
-    const eligibility = checkEligibilityForContainer(cartData);
-    if (!eligibility.eligible) {
-      return;
-    }
+  //   const freeContainer = cartData.find(
+  //     (item) =>
+  //       [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(item.itemId) &&
+  //       item.status === "FREE"
+  //   );
 
-    setIsPlanModalVisible(true);
-    setSelectedPlan([]);
-  };
-
-  const handlePlanOk = async () => {
-    if (selectedPlan.length === 0) {
-      message.info("Please select at least one plan before confirming.");
-      return;
-    }
-
-    setIsPlanModalVisible(false);
-
-    // We'll collect referral numbers if Plan B is selected
-    const success = await handleInterested(selectedPlan);
-
-    // if (success && typeof maybeShowOnePlusOneModal === "function") {
-    //   await maybeShowOnePlusOneModal();
-    // }
-  };
-
-  const handlePlanCancel = async () => {
-    Modal.confirm({
-      title: "Please confirm",
-      content:
-        "Are you sure you want to close? If Yes, the container will not be added to your cart and the offer will not be applied.",
-      okText: "Yes, Go Back",
-      cancelText: "Stay",
-      onOk: async () => {
-        setIsPlanModalVisible(false);
-        // if (typeof maybeShowOnePlusOneModal === "function") {
-        //   await maybeShowOnePlusOneModal();
-        // }
-      },
-      onCancel: () => {},
-    });
-  };
-
-  // const showOnePlusOneModal = (item: CartItem) => {
-  //   try {
-  //     Modal.confirm({
-  //       title: "🎁 1+1 Offer on 1kg Rice!",
-  //       content: (
-  //         <p>
-  //           You're eligible for our <strong>1+1 offer</strong>! Get another{" "}
-  //           <strong>{item.itemName}</strong> absolutely free.
-  //         </p>
-  //       ),
-  //       okText: "Add Free Bag",
-  //       cancelText: "No Thanks",
-  //       onOk: async () => {
-  //         try {
-  //           const currentQuantity = cartItems[item.itemId] || 0;
-
-  //           await axios.patch(
-  //             `${BASE_URL}/cart-service/cart/incrementCartData`,
-  //             {
-  //               cartQuantity: currentQuantity + 1,
-  //               customerId,
-  //               itemId: item.itemId,
-  //             },
-  //             {
-  //               headers: {
-  //                 Authorization: `Bearer ${token}`,
-  //                 "Content-Type": "application/json",
-  //               },
-  //             }
-  //           );
-
-  //           setFreeItemsMap((prev) => ({
-  //             ...prev,
-  //             [item.itemId]: 1,
-  //           }));
-
-  //           await setOnePlusOneClaimed();
-  //           message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
-  //           await fetchCartData();
-  //         } catch (error) {
-  //           console.error("Error applying 1+1 offer:", error);
-  //           message.error("Unable to apply the 1+1 offer. Please try again.");
-  //           throw error;
-  //         }
-  //       },
-  //       onCancel: () => {
-  //         console.log("1+1 offer modal cancelled");
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Error displaying 1+1 modal:", error);
+  //   if (freeContainer) {
+  //     console.log("Free container found in cart, showing plans modal directly");
+  //     setIsPlanModalVisible(true);
+  //     modalDisplayedRef.current = true;
+  //     return;
   //   }
+
+  //   if (!forcePlanModalDisplay) {
+  //     const containerPref = await fetchContainerPreference();
+  //     console.log("Current container preference:", containerPref);
+
+  //     if (containerPref === "interested" || containerPref === "completed" || containerPref === "declined") {
+  //       console.log("User already has container preference, not showing modal");
+  //       return;
+  //     }
+  //   }
+
+  //   const eligibility = checkEligibilityForContainer(cartData);
+  //   console.log("Eligibility check result:", eligibility);
+
+  //   if (!eligibility.eligible) {
+  //     console.log("Not eligible for container, not showing modal");
+  //     return;
+  //   }
+
+  //   console.log("Showing container modal");
+  //   setIsPlanModalVisible(true);
+  //   setSelectedPlan([]);
   // };
+
+  const showContainerModal = () => {
+    console.log("Showing container modal");
+    setIsPlanModalVisible(true);
+    modalDisplayedRef.current = true;
+  };
+
+  useEffect(() => {
+    if (cartData.length === 0) {
+      modalDisplayedRef.current = false;
+      containerExistsRef.current = false;
+    }
+  }, [cartData.length]);
+
+  // useEffect(() => {
+  //   const checkAndShowModal = async () => {
+  //     if (cartData.length > 0) {
+  //       const freeContainer = cartData.find(
+  //         (item) =>
+  //           [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(item.itemId) &&
+  //           item.status === "FREE"
+  //       );
+
+  //       if (freeContainer && !modalDisplayedRef.current) {
+  //         console.log("Free container found in cart, showing container plans modal");
+  //         setIsPlanModalVisible(true);
+  //         modalDisplayedRef.current = true;
+  //         containerExistsRef.current = true;
+  //         return;
+  //       }
+
+  //       if (!modalDisplayedRef.current && !containerExistsRef.current) {
+  //         const hasContainer = cartData.some((item) =>
+  //           [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(item.itemId)
+  //         );
+
+  //         containerExistsRef.current = hasContainer;
+
+  //         if (!hasContainer) {
+  //           const eligibility = checkEligibilityForContainer(cartData);
+  //           console.log("Container eligibility check result:", eligibility);
+
+  //           if (eligibility.eligible) {
+  //             const containerPref = await fetchContainerPreference();
+  //             if (
+  //               containerPref !== "interested" &&
+  //               containerPref !== "completed" &&
+  //               containerPref !== "declined"
+  //             ) {
+  //               showContainerModal();
+  //               modalDisplayedRef.current = true;
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   };
+
+  //   checkAndShowModal();
+  // }, [cartData]);
+
+  useEffect(() => {
+    const checkAndShowModal = async () => {
+      if (cartData.length > 0 && !modalDisplayedRef.current) {
+        const freeContainer = cartData.find(
+          (item) =>
+            [
+              CONTAINER_ITEM_IDS.HEAVY_BAG,
+              CONTAINER_ITEM_IDS.LIGHT_BAG,
+            ].includes(item.itemId) && item.status === "FREE"
+        );
+
+        if (freeContainer) {
+          console.log(
+            "Free container found in cart, showing container plans modal"
+          );
+          showContainerModal();
+          containerExistsRef.current = true;
+        }
+      }
+    };
+
+    checkAndShowModal();
+  }, [cartData]);
+
+  const fetchContainerPreference = async (): Promise<string | null> => {
+    try {
+      console.log(
+        `Fetching container preference for customer ID: ${customerId}`
+      );
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response && response.data) {
+        const status = response.data.freeContainerStatus
+          ? response.data.freeContainerStatus.toLowerCase()
+          : null;
+        console.log("Fetched container preference:", status);
+        return status;
+      }
+      console.log("No container preference found, returning null");
+      return null;
+    } catch (error) {
+      console.error("Error fetching container preference:", error);
+      return null;
+    }
+  };
+
+  const parseWeight = (weight: unknown): number => {
+    if (typeof weight === "number") {
+      return weight;
+    }
+    if (typeof weight !== "string" || !weight) {
+      console.warn(`Invalid weight value: ${weight}, defaulting to 0`);
+      return 0;
+    }
+    const cleanedWeight = weight.replace(/[^0-9.]/g, "");
+    const result = parseFloat(cleanedWeight) || 0;
+    console.log(`Parsed weight ${weight} to ${result}`);
+    return result;
+  };
+
+  const checkEligibilityForContainer = (
+    cartItems: CartItem[]
+  ): ContainerEligibility => {
+    console.log("Checking eligibility with items:", cartItems);
+
+    if (!cartItems || cartItems.length === 0) {
+      return { eligible: false, reason: "empty_cart" };
+    }
+
+    // Check for existing containers, but allow free containers
+    const hasContainer = cartItems.some(
+      (item) =>
+        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+          item.itemId
+        ) && item.status !== "FREE"
+    );
+
+    if (hasContainer) {
+      console.log("Non-free container already in cart");
+      return { eligible: false, reason: "already_has_container" };
+    }
+
+    // Check if a free container is already in the cart
+    const freeContainer = cartItems.find(
+      (item) =>
+        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+          item.itemId
+        ) && item.status === "FREE"
+    );
+
+    if (freeContainer) {
+      console.log("Free container found in cart, allowing eligibility");
+      return {
+        eligible: true,
+        containerType:
+          freeContainer.itemId === CONTAINER_ITEM_IDS.HEAVY_BAG
+            ? "HEAVY_BAG"
+            : "LIGHT_BAG",
+        containerId: freeContainer.itemId,
+      };
+    }
+
+    const hasHeavyRice = cartItems.some((item) => {
+      const weight = parseWeight(item.weight);
+      const isHeavyRice =
+        item.itemName.toLowerCase().includes("rice") &&
+        weight >= 25 &&
+        weight <= 27 &&
+        item.status !== "FREE";
+
+      if (isHeavyRice) {
+        console.log(`Found 26kg rice: ${item.itemName}, weight: ${weight}kg`);
+      }
+      return isHeavyRice;
+    });
+
+    const hasLightRice = cartItems.some((item) => {
+      const weight = parseWeight(item.weight);
+      const isLightRice =
+        item.itemName.toLowerCase().includes("rice") &&
+        weight >= 9 &&
+        weight <= 11 &&
+        item.status !== "FREE";
+
+      if (isLightRice) {
+        console.log(`Found 10kg rice: ${item.itemName}, weight: ${weight}kg`);
+      }
+      return isLightRice;
+    });
+
+    if (hasHeavyRice) {
+      return {
+        eligible: true,
+        containerType: "HEAVY_BAG",
+        containerId: CONTAINER_ITEM_IDS.HEAVY_BAG,
+      };
+    } else if (hasLightRice) {
+      return {
+        eligible: true,
+        containerType: "LIGHT_BAG",
+        containerId: CONTAINER_ITEM_IDS.LIGHT_BAG,
+      };
+    }
+
+    console.log("No eligible rice items found for container");
+    return { eligible: false, reason: "no_eligible_items" };
+  };
+
+  const addContainerToCart = async (
+    containerType: "HEAVY_BAG" | "LIGHT_BAG"
+  ) => {
+    try {
+      const containerId = CONTAINER_ITEM_IDS[containerType];
+      console.log(
+        `Adding container to cart: ${containerType}, ID: ${containerId}`
+      );
+
+      await axios.post(
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+        {
+          cartQuantity: 1,
+          customerId,
+          itemId: containerId,
+          status: "FREE",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      message.success("Free container added to your cart!");
+      await fetchCartData();
+      containerExistsRef.current = true;
+      return true;
+    } catch (error) {
+      console.error("Failed to add container to cart:", error);
+      message.error("Failed to add container to your cart");
+      return false;
+    }
+  };
+
+  const removeContainerFromCart = async () => {
+    try {
+      const containerItem = cartData.find(
+        (item) =>
+          [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+            item.itemId
+          ) && item.status === "FREE"
+      );
+
+      if (containerItem) {
+        console.log(
+          `Removing free container from cart: ID ${containerItem.itemId}, cartId ${containerItem.cartId}`
+        );
+
+        await axios.delete(
+          `${BASE_URL}/cart-service/cart/removeFreeContainer`,
+          {
+            data: {
+              id: containerItem.cartId,
+              customerId,
+              itemId: containerItem.itemId,
+              status: "FREE",
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // message.info("Free Container removed from your cart");
+        await fetchCartData();
+        containerExistsRef.current = false;
+        return true;
+      } else {
+        console.log("No container found in cart to remove");
+        return false;
+      }
+    } catch (error) {
+      console.error("Failed to remove container from cart:", error);
+      message.error("Failed to remove container from cart");
+      return false;
+    }
+  };
+
+  const fetchCartData = async () => {
+    try {
+      console.log("Fetching cart data for customer ID:", customerId);
+
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.customerCartResponseList) {
+        const cartItems = response.data.customerCartResponseList;
+        console.log(`Fetched ${cartItems.length} items in cart`);
+
+        const hasContainer = cartItems.some((item: CartItem) =>
+          [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+            item.itemId
+          )
+        );
+
+        containerExistsRef.current = hasContainer;
+        console.log(`Container exists in cart: ${hasContainer}`);
+
+        // Separate regular and free items
+        const regularItemsMap = cartItems
+          .filter((item: CartItem) => item.status !== "FREE")
+          .reduce((acc: { [key: string]: number }, item: CartItem) => {
+            acc[item.itemId] = item.cartQuantity || 0;
+            return acc;
+          }, {});
+
+        const freeItemsMap = cartItems
+          .filter((item: CartItem) => item.status === "FREE")
+          .reduce((acc: { [key: string]: number }, item: CartItem) => {
+            acc[item.itemId] = item.cartQuantity || 0;
+            return acc;
+          }, {});
+
+        setRegularCartItems(regularItemsMap);
+        setFreeCartItems(freeItemsMap);
+
+        // Calculate total quantity including both regular and free items
+        const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
+          return sum + (item.cartQuantity || 0); // Include all items (FREE and non-FREE)
+        }, 0);
+        setCount(totalQuantity);
+
+        const cartWithFreeItems = response.data?.customerCartResponseList || [];
+
+        cartWithFreeItems.forEach((item: CartItem) => {
+          if (
+            item.itemName.toLowerCase().includes("rice") &&
+            item.weight &&
+            parseFloat(item.weight) >= 5
+          ) {
+            const freeItems = Math.floor(item.cartQuantity / 5) * 2;
+            item.freeQuantity = freeItems;
+          } else if (
+            item.itemName.toLowerCase().includes("rice") &&
+            item.weight &&
+            parseFloat(item.weight) === 1 &&
+            item.status === "FREE"
+          ) {
+            item.freeQuantity = 1;
+          }
+        });
+
+        const outOfStockItems = cartWithFreeItems.filter(
+          (item: CartItem) => item.cartQuantity > item.quantity
+        );
+
+        if (outOfStockItems.length > 0) {
+          setCheckoutError(true);
+          message.warning(
+            `Please decrease the quantity for: ${outOfStockItems
+              .map((item: CartItem) => item.itemName)
+              .join(", ")} before proceeding to checkout.`,
+            5
+          );
+        }
+
+        setCartData(cartWithFreeItems);
+        return cartWithFreeItems;
+      } else {
+        setRegularCartItems({});
+        setFreeCartItems({});
+        setCount(0);
+      }
+
+      const cartWithFreeItems = response.data?.customerCartResponseList || [];
+
+      cartWithFreeItems.forEach((item: CartItem) => {
+        if (
+          item.itemName.toLowerCase().includes("rice") &&
+          item.weight &&
+          parseFloat(item.weight) >= 5
+        ) {
+          const freeItems = Math.floor(item.cartQuantity / 5) * 2;
+          item.freeQuantity = freeItems;
+        } else if (
+          item.itemName.toLowerCase().includes("rice") &&
+          item.weight &&
+          parseFloat(item.weight) === 1 &&
+          item.status === "FREE"
+        ) {
+          item.freeQuantity = 1;
+        }
+      });
+
+      const outOfStockItems = cartWithFreeItems.filter(
+        (item: CartItem) => item.cartQuantity > item.quantity
+      );
+
+      if (outOfStockItems.length > 0) {
+        setCheckoutError(true);
+        message.warning(
+          `Please decrease the quantity for: ${outOfStockItems
+            .map((item: CartItem) => item.itemName)
+            .join(", ")} before proceeding to checkout.`,
+          5
+        );
+      }
+
+      setCartData(cartWithFreeItems);
+      return cartWithFreeItems;
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getCoordinates = async (address: string) => {
     try {
@@ -921,9 +889,8 @@ const CartPage: React.FC = () => {
         address
       )}&key=${API_KEY}`;
       const response = await axios.get(url);
-      return response.data.results[0]?.geometry.location || null;
+      return response.data.results[0]?.geometry.location;
     } catch (error) {
-      console.error("Error fetching coordinates:", error);
       return null;
     }
   };
@@ -1048,7 +1015,6 @@ const CartPage: React.FC = () => {
       await fetchAddresses();
       setTimeout(resetAddressForm, 3000);
     } catch (err) {
-      console.error("Error saving address:", err);
       setSuccessMessage("");
       const apiError = err as ApiError;
       setError(apiError.response?.data?.message || "Failed to save address");
@@ -1060,38 +1026,30 @@ const CartPage: React.FC = () => {
     }
   };
 
-  const isContainer = (itemId: string): boolean => {
-    return [
-      CONTAINER_ITEM_IDS.HEAVY_BAG,
-      CONTAINER_ITEM_IDS.LIGHT_BAG,
-    ].includes(itemId);
-  };
-
   const handleIncrease = async (item: CartItem) => {
-    if (isContainer(item.itemId)) {
-      message.info(
-        "This is a free promotional container. Quantity cannot be changed."
-      );
-      return;
-    }
-
     setLoadingItems((prev) => ({ ...prev, [item.itemId]: true }));
+
     try {
-      const currentQuantity = cartItems[item.itemId] || 0;
+      const isFreeItem = item.status === "FREE";
+      const currentQuantity = isFreeItem
+        ? freeCartItems[item.itemId] || 0
+        : regularCartItems[item.itemId] || 0;
 
       if (currentQuantity >= item.quantity) {
         message.warning(`Only ${item.quantity} units available in stock`);
+        setLoadingItems((prev) => ({ ...prev, [item.itemId]: false }));
         return;
       }
 
       const newQuantity = currentQuantity + 1;
 
-      await axios.patch(
-        `${BASE_URL}/cart-service/cart/incrementCartData`,
+      await axios.post(
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         {
           cartQuantity: newQuantity,
           customerId,
           itemId: item.itemId,
+          status: isFreeItem ? "FREE" : undefined,
         },
         {
           headers: {
@@ -1101,20 +1059,20 @@ const CartPage: React.FC = () => {
         }
       );
 
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "add_to_cart", {
-          currency: "INR",
-          value: parseFloat(item.itemPrice),
-          items: [
-            {
-              item_id: item.itemId,
-              item_name: item.itemName,
-              price: parseFloat(item.itemPrice),
-              quantity: 1,
-              item_category: "Rice",
-            },
-          ],
-        });
+      // Update the appropriate cart items state
+      if (isFreeItem) {
+        setFreeCartItems((prev) => ({
+          ...prev,
+          [item.itemId]: newQuantity,
+        }));
+      } else {
+        setRegularCartItems((prev) => ({
+          ...prev,
+          [item.itemId]: newQuantity,
+        }));
+        // Update count for regular items only
+        const currentCount = context.count || 0;
+        setCount(currentCount + 1);
       }
 
       await fetchCartData();
@@ -1127,21 +1085,19 @@ const CartPage: React.FC = () => {
   };
 
   const handleDecrease = async (item: CartItem) => {
-    if (isContainer(item.itemId)) {
-      message.info(
-        "This is a free promotional container. Quantity cannot be changed."
-      );
-      return;
-    }
-
     setLoadingItems((prev) => ({ ...prev, [item.itemId]: true }));
+
     try {
-      const currentQuantity = cartItems[item.itemId];
+      const isFreeItem = item.status === "FREE";
+      const currentQuantity = isFreeItem
+        ? freeCartItems[item.itemId]
+        : regularCartItems[item.itemId];
+
       if (currentQuantity > 1) {
         const newQuantity = currentQuantity - 1;
 
         await axios.patch(
-          `${BASE_URL}/cart-service/cart/decrementCartData`,
+          `${BASE_URL}/cart-service/cart/minusCartItem`,
           {
             cartQuantity: newQuantity,
             customerId,
@@ -1155,32 +1111,24 @@ const CartPage: React.FC = () => {
           }
         );
 
-        // Fire analytics event for decreasing quantity
-        if (typeof window !== "undefined" && window.gtag) {
-          window.gtag("event", "remove_from_cart", {
-            currency: "INR",
-            value: parseFloat(item.itemPrice),
-            items: [
-              {
-                item_id: item.itemId,
-                item_name: item.itemName,
-                price: parseFloat(item.itemPrice),
-                quantity: 1,
-                item_category: "Rice",
-              },
-            ],
-          });
+        // Update the appropriate cart items state
+        if (isFreeItem) {
+          setFreeCartItems((prev) => ({
+            ...prev,
+            [item.itemId]: newQuantity,
+          }));
+        } else {
+          setRegularCartItems((prev) => ({
+            ...prev,
+            [item.itemId]: newQuantity,
+          }));
+          // Update count for regular items only
+          const currentCount = context.count || 0;
+          setCount(Math.max(0, currentCount - 1));
         }
-
-        setCartItems((prev) => ({
-          ...prev,
-          [item.itemId]: newQuantity,
-        }));
 
         await fetchCartData();
       } else {
-        // For quantity = 1, we'll remove the item, but handle analytics in removeCartItem only
-        // Don't fire any analytics event here to avoid duplication
         await removeCartItem(item);
       }
     } catch (error) {
@@ -1193,53 +1141,115 @@ const CartPage: React.FC = () => {
 
   const removeCartItem = async (item: CartItem) => {
     try {
-      await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
-        data: {
-          id: item.cartId,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      setLoadingItems((prev) => ({ ...prev, [item.itemId]: true }));
 
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "remove_from_cart", {
-          currency: "INR",
-          value: parseFloat(item.itemPrice) * (cartItems[item.itemId] || 0),
-          items: [
-            {
-              item_id: item.itemId,
-              item_name: item.itemName,
-              price: parseFloat(item.itemPrice),
-              quantity: cartItems[item.itemId] || 0,
-              item_category: "Rice",
+      const itemIdToRemove = item.itemId;
+      const cartIdToRemove = item.cartId;
+
+      const isFreeItem = item.status === "FREE";
+      const isEligibleRice =
+        item.itemName.toLowerCase().includes("rice") &&
+        (parseWeight(item.weight) === 10 || parseWeight(item.weight) === 26);
+      const isContainer = [
+        CONTAINER_ITEM_IDS.HEAVY_BAG,
+        CONTAINER_ITEM_IDS.LIGHT_BAG,
+      ].includes(itemIdToRemove);
+
+      console.log(
+        `Removing item: ${item.itemName}, ID: ${itemIdToRemove}, cartId: ${cartIdToRemove}, ` +
+          `isFreeItem: ${isFreeItem}, isEligibleRice: ${isEligibleRice}, isContainer: ${isContainer}`
+      );
+
+      if (isFreeItem) {
+        // Remove free items using removeFreeContainer API
+        await axios.delete(
+          `${BASE_URL}/cart-service/cart/removeFreeContainer`,
+          {
+            data: {
+              id: cartIdToRemove,
+              customerId,
+              itemId: itemIdToRemove,
+              status: "FREE",
             },
-          ],
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        // Remove non-free items using the standard remove API
+        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
+          data: {
+            id: cartIdToRemove,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
       }
 
-      setCartData((prev) =>
-        prev.filter((cartItem) => cartItem.cartId !== item.cartId)
-      );
-      setCartItems((prev) => {
-        const updated = { ...prev };
-        delete updated[item.itemId];
-        return updated;
-      });
+      // Handle eligible rice removal and container cleanup
+      if (isEligibleRice && containerExistsRef.current) {
+        const remainingRiceItems = cartData.filter(
+          (ci) =>
+            ci.itemId !== itemIdToRemove &&
+            ci.itemName.toLowerCase().includes("rice") &&
+            (parseWeight(ci.weight) === 10 || parseWeight(ci.weight) === 26)
+        );
 
-      const updatedCount = Object.entries(cartItems)
-        .filter(([key]) => key !== String(item.itemId))
-        .reduce((sum, [, qty]) => sum + qty, 0);
+        if (remainingRiceItems.length === 0) {
+          console.log("Removing container after rice removal");
+          await removeContainerFromCart();
+        }
+      }
 
-      if (Object.keys(cartItems).length === 1) {
+      if (isContainer) {
+        console.log("Container removed from cart, updating preference");
+        containerExistsRef.current = false;
+      }
+
+      setCartData((prev) => prev.filter((ci) => ci.cartId !== cartIdToRemove));
+
+      // Update the appropriate cart items state
+      if (isFreeItem) {
+        setFreeCartItems((prev) => {
+          const updated = { ...prev };
+          delete updated[itemIdToRemove];
+          return updated;
+        });
+      } else {
+        setRegularCartItems((prev) => {
+          const updated = { ...prev };
+          delete updated[itemIdToRemove];
+          return updated;
+        });
+        const currentCount = context.count || 0;
+        setCount(Math.max(0, currentCount - (item.cartQuantity || 0)));
+      }
+
+      const updatedCartData = await fetchCartData();
+
+      if (!updatedCartData || updatedCartData.length === 0) {
         window.location.reload();
       }
 
       message.success("Item removed from cart successfully.", 5);
     } catch (error) {
       console.error("Failed to remove cart item:", error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error(
+          "Error response:",
+          error.response.status,
+          error.response.data
+        );
+      }
       message.error("Failed to remove item");
+
+      await fetchCartData();
+    } finally {
+      setLoadingItems((prev) => ({ ...prev, [item.itemId]: false }));
     }
   };
 
@@ -1258,6 +1268,7 @@ const CartPage: React.FC = () => {
       pincode: "",
     });
     setEditingAddressId(null);
+    setShowAddressForm(false);
   };
 
   const handleToProcess = async () => {
@@ -1280,32 +1291,9 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    try {
-      const isAddressValid = await handleAddressChange(selectedAddress);
-      if (isAddressValid?.isWithin) {
-        if (typeof window !== "undefined" && window.gtag) {
-          window.gtag("event", "begin Sykes_checkout", {
-            currency: "INR",
-            value: cartData.reduce(
-              (acc, item) =>
-                acc + parseFloat(item.itemPrice) * item.cartQuantity,
-              0
-            ),
-            items: cartData.map((item) => ({
-              item_id: item.itemId,
-              item_name: item.itemName,
-              price: parseFloat(item.itemPrice),
-              quantity: item.cartQuantity,
-              item_category: "Rice",
-            })),
-          });
-        }
-
-        navigate("/main/checkout", { state: { selectedAddress } });
-      }
-    } catch (error) {
-      console.error("Error processing checkout:", error);
-      message.error("Failed to validate address for checkout.");
+    const isAddressValid = await handleAddressChange(selectedAddress);
+    if (isAddressValid?.isWithin) {
+      navigate("/main/checkout", { state: { selectedAddress } });
     }
   };
 
@@ -1323,14 +1311,165 @@ const CartPage: React.FC = () => {
     });
   };
 
+  const handleInterested = async (selectedPlanTypes: string[]) => {
+    modalDisplayedRef.current = true;
+
+    if (selectedPlanTypes.length === 0) {
+      console.log("User declined container offer");
+      if (containerExistsRef.current) {
+        await removeContainerFromCart();
+      }
+      try {
+        await axios.post(
+          `${BASE_URL}/cart-service/cart/updateContainerStatus`,
+          {
+            customerId,
+            status: "declined",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        message.info("Container preference updated");
+      } catch (error) {
+        console.error("Error updating container preference:", error);
+      }
+      return false;
+    }
+
+    const eligibility = checkEligibilityForContainer(cartData);
+    setSelectedPlans(selectedPlanTypes);
+
+    if (!eligibility.eligible) {
+      if (eligibility.reason === "already_has_container") {
+        message.info("You have already opted for a container.");
+      } else {
+        message.info("No eligible items for a free container.");
+      }
+      return false;
+    }
+
+    if (selectedPlanTypes.includes("planB") && mobileNumbers.length === 0) {
+      setMobileNumbers([]);
+      setCurrentNumber("");
+      setIsReferralModalVisible(true);
+      return false;
+    }
+
+    const prefUpdated = await updateContainerPreference(
+      selectedPlanTypes,
+      mobileNumbers
+    );
+
+    if (prefUpdated === true) {
+      try {
+        await axios.post(
+          `${BASE_URL}/cart-service/cart/updateContainerStatus`,
+          {
+            customerId,
+            status: "interested",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error updating container status:", error);
+      }
+
+      const success = await addContainerToCart(
+        eligibility.containerType as "HEAVY_BAG" | "LIGHT_BAG"
+      );
+      return success;
+    }
+    return false;
+  };
+
+  const forceShowContainerModal = () => {
+    setForcePlanModalDisplay(true);
+    modalDisplayedRef.current = false;
+  };
+
   useEffect(() => {
-    fetchCartData();
-    fetchAddresses();
-  }, [customerId, token]);
+    if (isPlanDetailsModalOpen && currentPlanDetails) {
+      try {
+        Modal.info({
+          title:
+            currentPlanDetails === "planA"
+              ? "Free Steel Container Policy"
+              : "Referral Program",
+          content: (
+            <div className="space-y-4 text-left">
+              {currentPlanDetails === "planA" ? (
+                <>
+                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>
+                      Buy 9 bags of rice in 3 years to keep the container
+                      forever
+                    </li>
+                    <li>
+                      Refer 9 friends who make a purchase – keep the container
+                    </li>
+                    <li>Gap of 90 days = container is taken back</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <ul className="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Refer friends using your unique link</li>
+                    <li>They must sign up and buy rice</li>
+                    <li>You get a free container + ₹50 cashback</li>
+                  </ul>
+                </>
+              )}
+            </div>
+          ),
+          onOk: () => setIsPlanDetailsModalOpen(false),
+          okText: "Close",
+          cancelButtonProps: { style: { display: "none" } },
+        });
+      } catch (error) {
+        console.error("Error displaying plan details modal:", error);
+      }
+    }
+  }, [isPlanDetailsModalOpen, currentPlanDetails]);
+
+  useEffect(() => {
+    const initializeCartPage = async () => {
+      setIsLoading(true);
+      try {
+        console.log("Initializing cart page...");
+        await fetchAddresses();
+        const [cartResponse, preference] = await Promise.all([
+          fetchCartData(),
+          fetchContainerPreference(),
+        ]);
+        console.log("Initialization complete - preference:", preference);
+        setContainerPreference(preference);
+
+        modalDisplayedRef.current = false;
+        // Skip showing the container modal
+        console.log("Free container modal is disabled");
+      } catch (error) {
+        console.error("Error initializing cart page:", error);
+        message.error("Failed to load cart data. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeCartPage();
+  }, []);
 
   useEffect(() => {
     const hasStockIssues = cartData.some(
-      (item) => item.quantity === 0 || item.cartQuantity > item.quantity
+      (item) => item.quantity === 0 || -0 || item.cartQuantity > item.quantity
     );
     setCheckoutError(hasStockIssues);
   }, [cartData]);
@@ -1346,57 +1485,54 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    try {
-      const withinRadius = await isWithinRadius(coordinates);
-      console.log({ withinRadius });
+    const withinRadius = await isWithinRadius(coordinates);
+    console.log({ withinRadius });
 
-      if (!withinRadius.isWithin) {
-        Modal.error({
-          title: "Delivery Unavailable",
-          content: (
-            <>
-              <p>
-                Sorry! We're unable to deliver to this address as it is{" "}
-                {withinRadius.distanceInKm} km away, beyond our 20 km delivery
-                radius. Please select another saved address within the radius or
-                add a new one to proceed. We appreciate your understanding!
-              </p>
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button type="default" onClick={() => Modal.destroyAll()}>
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    Modal.destroyAll();
-                    setIsAddressModalOpen(true);
-                  }}
-                >
-                  Add New Address
-                </Button>
-              </div>
-            </>
-          ),
-          footer: null,
-        });
+    if (!withinRadius.isWithin) {
+      Modal.error({
+        title: "Delivery Unavailable",
+        content: (
+          <>
+            <p>
+              Sorry! We're unable to deliver to this address as it is{" "}
+              {withinRadius.distanceInKm} km away, beyond our 20 km delivery
+              radius. Please select another saved address within the radius or
+              add a new one to proceed. We appreciate your understanding!
+            </p>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button type="default" onClick={() => Modal.destroyAll()}>
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => {
+                  Modal.destroyAll();
+                  setIsAddressModalOpen(true);
+                }}
+              >
+                Add New Address
+              </Button>
+            </div>
+          </>
+        ),
+        footer: null,
+      });
 
-        const updatedWithinRadius = {
-          ...withinRadius,
-          isWithin: false,
-        };
+      const updatedWithinRadius = {
+        ...withinRadius,
+        isWithin: false,
+      };
 
-        return updatedWithinRadius;
-      }
-      setSelectedAddress(selectedAddress);
-      return withinRadius;
-    } catch (error) {
-      console.error("Error checking address radius:", error);
-      message.error("Failed to validate address.");
-      return null;
+      return updatedWithinRadius;
     }
+    setSelectedAddress(selectedAddress);
+    return withinRadius;
   };
 
   const isCheckoutDisabled = (): boolean => {
+    if (!selectedAddress) {
+      return true;
+    }
     if (!cartData || cartData.length === 0) {
       return true;
     }
@@ -1406,9 +1542,13 @@ const CartPage: React.FC = () => {
       return true;
     }
 
-    const hasExceededStockItems = cartData.some(
-      (item) => item.cartQuantity > item.quantity
-    );
+    const hasExceededStockItems = cartData.some((item) => {
+      const quantity =
+        item.status === "FREE"
+          ? freeCartItems[item.itemId] || 0
+          : regularCartItems[item.itemId] || 0;
+      return quantity > item.quantity;
+    });
     if (hasExceededStockItems) {
       return true;
     }
@@ -1418,44 +1558,201 @@ const CartPage: React.FC = () => {
 
   const removeOutOfStockItems = async () => {
     try {
-      const updatedCart = cartData.filter((item) => item.quantity > 0);
-      setCartData(updatedCart);
-
-      const updatedCartItems = updatedCart.reduce((acc, item) => {
-        acc[item.itemId] = item.cartQuantity;
-        return acc;
-      }, {} as { [key: string]: number });
-
-      setCartItems(updatedCartItems);
-
-      const totalQuantity = Object.values(updatedCartItems).reduce(
-        (sum, qty) => sum + qty,
-        0
-      );
-      setCount(totalQuantity);
-
       const outOfStockItems = cartData.filter((item) => item.quantity === 0);
+
       for (const item of outOfStockItems) {
-        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
-          data: {
-            id: item.cartId,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        await removeCartItem(item);
       }
 
       message.success("Out-of-stock items removed successfully.");
+      await fetchCartData();
     } catch (error) {
       console.error("Failed to remove out-of-stock items:", error);
       message.error("Failed to remove out-of-stock items");
+      await fetchCartData();
     }
+  };
+
+  const handleConfirmReferrals = async () => {
+    if (selectedPlans.includes("planB") && mobileNumbers.length === 0) {
+      message.error("Please add at least one referral mobile number");
+      return;
+    }
+
+    setIsReferralModalVisible(false);
+
+    const eligibility = checkEligibilityForContainer(cartData);
+    if (!eligibility.eligible || !eligibility.containerType) {
+      message.error("Something went wrong. Please try again.");
+      return;
+    }
+
+    const res = await updateContainerPreference(selectedPlans, mobileNumbers);
+    if (res) {
+      try {
+        await axios.post(
+          `${BASE_URL}/cart-service/cart/updateContainerStatus`,
+          {
+            customerId,
+            status: "interested",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error updating container status:", error);
+      }
+
+      await addContainerToCart(
+        eligibility.containerType as "HEAVY_BAG" | "LIGHT_BAG"
+      );
+    }
+  };
+
+  const handlePlanOk = async () => {
+    // Check if a free container exists in the cart
+    const freeContainer = cartData.find(
+      (item) =>
+        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+          item.itemId
+        ) && item.status === "FREE"
+    );
+
+    if (selectedPlan.length === 0) {
+      Modal.confirm({
+        title: "Decline Free Container?",
+        content:
+          "You haven't selected any plan. Are you sure you want to decline the free container offer?",
+        okText: "Yes, Decline",
+        cancelText: "Go Back",
+        onOk: async () => {
+          try {
+            // Remove free container from cart using the specified API
+            await removeContainerFromCart();
+            setIsPlanModalVisible(false);
+            modalDisplayedRef.current = true; // Prevent modal from reopening
+          } catch (error) {
+            console.error("Error declining container offer:", error);
+            message.error("Failed to decline container offer");
+          }
+        },
+      });
+      return;
+    }
+
+    // Prepare success message based on selected plan(s)
+    let successMessage = "";
+    if (selectedPlan.includes("planA") && selectedPlan.includes("planB")) {
+      successMessage = "Both Plan A and Plan B have been selected successfully";
+    } else if (selectedPlan.includes("planA")) {
+      successMessage = "Plan A has been selected successfully";
+    } else if (selectedPlan.includes("planB")) {
+      successMessage = "Plan B has been selected successfully";
+    }
+
+    // Show success alert with selected plan details
+    message.success({
+      content: successMessage,
+      duration: 5,
+    });
+
+    setIsPlanModalVisible(false);
+    modalDisplayedRef.current = true; // Prevent modal from reopening
+
+    // If a free container is already in the cart, use its type and skip eligibility check
+    if (freeContainer) {
+      const containerType =
+        freeContainer.itemId === CONTAINER_ITEM_IDS.HEAVY_BAG
+          ? "HEAVY_BAG"
+          : "LIGHT_BAG";
+
+      if (selectedPlan.includes("planB")) {
+        setMobileNumbers([]);
+        setCurrentNumber("");
+        setIsReferralModalVisible(true);
+      } else {
+        const success = await handleInterested(selectedPlan);
+        if (success) {
+          message.info("Free container is already in your cart.");
+        }
+      }
+      return;
+    }
+
+    // If no free container, check eligibility
+    const eligibility = checkEligibilityForContainer(cartData);
+    if (!eligibility.eligible || !eligibility.containerType) {
+      message.error("Something went wrong. No eligible container found.");
+      return;
+    }
+
+    if (selectedPlan.includes("planB")) {
+      setMobileNumbers([]);
+      setCurrentNumber("");
+      setIsReferralModalVisible(true);
+    } else {
+      const success = await handleInterested(selectedPlan);
+      if (success) {
+        message.info("Free container added to your cart.");
+      }
+    }
+  };
+
+  const handlePlanCancel = async () => {
+    Modal.confirm({
+      title: "Decline Container Offer?",
+      content:
+        "Are you sure you want to decline the free container offer? You can always select this offer later from your cart.",
+      okText: "Yes, Decline",
+      cancelText: "Stay",
+      onOk: async () => {
+        try {
+          // Remove free container from cart if it exists
+          await removeContainerFromCart();
+
+          // message.info("Container offer declined");
+        } catch (error) {
+          console.error("Error declining container offer:", error);
+          message.error("Failed to decline container offer");
+        }
+
+        setIsPlanModalVisible(false);
+      },
+      onCancel: () => {},
+    });
   };
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Custom Styles for Visible Scrollbar */}
+      <style>
+        {`
+    .container-scroll-container {
+      max-height: 60vh;
+      overflow-y: auto;
+      scrollbar-width: auto; /* Firefox */
+      scrollbar-color: #888 #f1f1f1; /* Scrollbar thumb and track */
+    }
+    .container-scroll-container::-webkit-scrollbar {
+      width: 8px; /* Scrollbar width for Chrome, Safari, Edge */
+    }
+    .container-scroll-container::-webkit-scrollbar-track {
+      background: #f1f1f1; /* Track color */
+    }
+    .container-scroll-container::-webkit-scrollbar-thumb {
+      background: #888; /* Thumb color */
+      border-radius: 4px;
+    }
+    .container-scroll-container::-webkit-scrollbar-thumb:hover {
+      background: #555; /* Thumb hover color */
+    }
+  `}
+      </style>
+
       <div className="flex-1 p-4 lg:p-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <main className="flex-1">
@@ -1469,7 +1766,7 @@ const CartPage: React.FC = () => {
                   <h2 className="text-xl font-bold mb-4">Your cart is empty</h2>
                   <button
                     onClick={() => navigate("/main/dashboard/products")}
-                    className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-2 rounded-md hover:bg-purple-700"
+                    className=" bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-2 rounded-md hover:bg-purple-700"
                   >
                     Browse items
                   </button>
@@ -1503,149 +1800,152 @@ const CartPage: React.FC = () => {
                             {item.quantity === 1 ? "item" : "items"} left
                           </p>
                         )}
-                        <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
+                        <h3 className="text-smc md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
                           {item.itemName}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Weight: {item.weight}{" "}
-                          {item.units === "pcs"
-                            ? "Pc"
-                            : parseWeight(item.weight) === 1
-                            ? "Kg"
-                            : "Kgs"}
+                          Weight: {item.weight} {item.units}
                         </p>
                         <div className="flex items-center mt-1">
                           <p className="text-sm line-through text-gray-400 mr-2">
                             ₹{item.priceMrp}
                           </p>
-                          {parseFloat(item.itemPrice) === 0 ? (
-                            <p className="text-green-600 font-bold">Free 🎉</p>
-                          ) : (
-                            <p className="text-green-600 font-bold">
-                              ₹{item.itemPrice}
-                            </p>
-                          )}
-                          {freeItemsMap[item.itemId] && (
-                            <p className="text-sm text-green-600 font-medium mt-1">
-                              🎁 1 Free bag (1+1 Offer Applied)
-                            </p>
-                          )}
+                          <p className="text-green-600 font-bold">
+                            ₹{item.itemPrice}
+                          </p>
                         </div>
                       </div>
                     </div>
 
                     {item.quantity !== 0 ? (
-                      <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-                        <div className="flex items-center justify-between md:justify-end w-full">
-                          <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-                            <motion.button
-                              whileHover={{
-                                scale: isContainer(item.itemId) ? 1 : 1.02,
-                              }}
-                              whileTap={{
-                                scale: isContainer(item.itemId) ? 1 : 0.98,
-                              }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                                isContainer(item.itemId)
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
-                              onClick={() => handleDecrease(item)}
-                              disabled={
-                                loadingItems[item.itemId] ||
-                                isContainer(item.itemId)
-                              }
-                              aria-label="Decrease quantity"
-                            >
-                              <span className="font-medium">-</span>
-                            </motion.button>
+                      isFreeItem(item) ? (
+                        <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+                          <p className="text-green-600 font-bold text-base mb-2">
+                            FREE Item
+                          </p>
+                          <div className="flex items-center justify-between md:justify-end w-full">
+                            <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
+                                disabled={true}
+                                aria-label="Decrease quantity (disabled)"
+                              >
+                                <span className="font-medium">-</span>
+                              </motion.button>
 
-                            <div className="px-4">
-                              {loadingItems[item.itemId] ? (
-                                <Loader2 className="animate-spin text-purple-600" />
-                              ) : (
+                              <div className="px-4">
                                 <span className="font-medium text-purple-700">
-                                  {cartItems[item.itemId]}
+                                  {freeCartItems[item.itemId] || 0}
                                 </span>
-                              )}
+                              </div>
+
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
+                                disabled={true}
+                                aria-label="Increase quantity (disabled)"
+                              >
+                                <span className="font-medium">+</span>
+                              </motion.button>
                             </div>
 
                             <motion.button
-                              whileHover={{
-                                scale:
-                                  isContainer(item.itemId) ||
-                                  cartItems[item.itemId] >= item.quantity
-                                    ? 1
-                                    : 1.02,
+                              whileTap={{ scale: 0.95 }}
+                              className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
+                              onClick={async () => {
+                                await removeCartItem(item);
                               }}
-                              whileTap={{
-                                scale:
-                                  isContainer(item.itemId) ||
-                                  cartItems[item.itemId] >= item.quantity
-                                    ? 1
-                                    : 0.98,
-                              }}
-                              className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                                cartItems[item.itemId] >= item.quantity ||
-                                isContainer(item.itemId)
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
-                              onClick={() => {
-                                if (
-                                  cartItems[item.itemId] < item.quantity &&
-                                  !isContainer(item.itemId)
-                                ) {
-                                  handleIncrease(item);
-                                }
-                              }}
-                              disabled={
-                                cartItems[item.itemId] >= item.quantity ||
-                                loadingItems[item.itemId] ||
-                                isContainer(item.itemId)
-                              }
-                              aria-label="Increase quantity"
+                              aria-label="Delete item from cart"
                             >
-                              <span className="font-medium">+</span>
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                          <div className="w-full flex justify-end">
+                            <p className="text-green-600 font-semibold">
+                              Total: ₹0.00
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+                          <div className="flex items-center justify-between md:justify-end w-full">
+                            <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
+                                onClick={() => handleDecrease(item)}
+                                disabled={loadingItems[item.itemId]}
+                                aria-label="Decrease quantity"
+                              >
+                                <span className="font-medium">-</span>
+                              </motion.button>
+
+                              <div className="px-4">
+                                {loadingItems[item.itemId] ? (
+                                  <Loader2 className="animate-spin text-purple-600" />
+                                ) : (
+                                  <span className="font-medium text-purple-700">
+                                    {regularCartItems[item.itemId] || 0}
+                                  </span>
+                                )}
+                              </div>
+
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+                                  regularCartItems[item.itemId] >= item.quantity
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                onClick={() => {
+                                  if (
+                                    regularCartItems[item.itemId] <
+                                    item.quantity
+                                  ) {
+                                    handleIncrease(item);
+                                  }
+                                }}
+                                disabled={
+                                  regularCartItems[item.itemId] >=
+                                    item.quantity || loadingItems[item.itemId]
+                                }
+                                aria-label="Increase quantity"
+                              >
+                                <span className="font-medium">+</span>
+                              </motion.button>
+                            </div>
+
+                            <motion.button
+                              whileTap={{ scale: 0.95 }}
+                              className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
+                              onClick={async () => {
+                                await removeCartItem(item);
+                              }}
+                              aria-label="Delete item from cart"
+                            >
+                              <Trash2 size={16} />
                             </motion.button>
                           </div>
 
-                          {isContainer(item.itemId) && (
-                            <div className="ml-2 bg-purple-100 text-purple-800 text-xs rounded-full px-2 py-1 flex items-center">
-                              <span>Free</span>
-                            </div>
-                          )}
-
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
-                            onClick={async () => {
-                              await removeCartItem(item);
-                            }}
-                            aria-label="Delete item from cart"
-                          >
-                            <Trash2 size={16} />
-                          </motion.button>
+                          <div className="w-full flex justify-end">
+                            <p className="text-purple-700 font-bold text-base">
+                              Total: ₹
+                              {(
+                                parseFloat(item.itemPrice) *
+                                (regularCartItems[item.itemId] || 0)
+                              ).toFixed(2)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="w-full flex justify-end">
-                          <p className="text-purple-700 font-bold text-base">
-                            Total: ₹
-                            {(
-                              parseFloat(item.itemPrice) *
-                              (cartItems[item.itemId] || 0)
-                            ).toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
+                      )
                     ) : (
                       <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
                         <p className="text-red-600 font-bold text-base mb-2">
                           Out of Stock
                         </p>
                         <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileTap={{ scale: 0.95 }}
                           className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
                           onClick={async () => {
                             await removeCartItem(item);
@@ -1664,7 +1964,7 @@ const CartPage: React.FC = () => {
           </main>
 
           <div className="w-full lg:w-1/4">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-500">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border broder-black-500">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold">Delivery Address</h2>
                 <button
@@ -1683,7 +1983,7 @@ const CartPage: React.FC = () => {
                 </span>
               )}
               <div className="mb-4">
-                <label className="block font-bold text-gray-700 mb-1">
+                <label className="block font-bold text-gray-700  mb-1">
                   Select Address
                 </label>
                 <select
@@ -1715,11 +2015,12 @@ const CartPage: React.FC = () => {
                     <span className="font-semibold">
                       ₹
                       {cartData
-                        ?.filter((item) => parseFloat(item.itemPrice) > 0)
+                        ?.filter((item) => item.status !== "FREE")
                         .reduce(
                           (acc, item) =>
                             acc +
-                            parseFloat(item.itemPrice) * item.cartQuantity,
+                            parseFloat(item.itemPrice) *
+                              (regularCartItems[item.itemId] || 0),
                           0
                         )
                         .toFixed(2) || "0.00"}
@@ -1734,10 +2035,12 @@ const CartPage: React.FC = () => {
                     <span>
                       ₹
                       {cartData
-                        ?.reduce(
+                        ?.filter((item) => item.status !== "FREE")
+                        .reduce(
                           (acc, item) =>
                             acc +
-                            parseFloat(item.itemPrice) * item.cartQuantity,
+                            parseFloat(item.itemPrice) *
+                              (regularCartItems[item.itemId] || 0),
                           0
                         )
                         .toFixed(2) || "0.00"}
@@ -1761,6 +2064,12 @@ const CartPage: React.FC = () => {
                       <p className="mt-2 text-sm">
                         Please remove these items to proceed with checkout.
                       </p>
+                      <button
+                        onClick={removeOutOfStockItems}
+                        className="mt-2 w-full bg-red-600 text-white text-sm py-1 px-3 rounded"
+                      >
+                        Remove all out-of-stock items
+                      </button>
                     </div>
                   )}
 
@@ -1788,22 +2097,23 @@ const CartPage: React.FC = () => {
                       </ul>
                     </div>
                   )}
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-md ${
+                  <button
+                    className={`w-full py-3 px-6 rounded-lg transition ${
                       isCheckoutDisabled()
                         ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-purple-700 to-purple-500 text-white"
+                        : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
                     }`}
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled()}
                   >
                     {isCheckoutDisabled()
-                      ? "Cannot Checkout - Stock Issues"
+                      ? !selectedAddress
+                        ? "Select an Address to Proceed"
+                        : !cartData || cartData.length === 0
+                        ? "Cart is Empty"
+                        : "Cannot Checkout - Stock Issues"
                       : "Proceed to Checkout"}
-                  </motion.button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1934,164 +2244,191 @@ const CartPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-        <Modal
-          title=""
-          visible={isReferralModalVisible}
-          onOk={handleReferralOk}
-          onCancel={handleModalClose}
-          okText="Submit"
-          cancelText="Skip"
-          closable={true}
-          footer={[
-            <Button key="skip" onClick={handleReferralCancel}>
-              Skip
-            </Button>,
-            <Button key="submit" type="primary" onClick={handleReferralOk}>
-              Submit
-            </Button>,
-          ]}
-        >
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">
-              Enter Referral Mobile Numbers:
-            </h3>
-            <p className="text-sm text-gray-600">
-              You can add up to 9 mobile numbers for your referrals.
-            </p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {mobileNumbers.map((number, index) => (
-                <div
-                  key={index}
-                  className="bg-purple-100 px-3 py-1 rounded-full flex items-center"
-                >
-                  <span className="text-sm">{number}</span>
+
+          {isReferralModalVisible && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">Refer Friends</h2>
                   <button
-                    className="ml-2 text-red-500 font-bold"
-                    onClick={() => handleRemoveNumber(index)}
+                    onClick={handleReferralCancel}
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    ×
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
-              ))}
+
+                <p className="text-sm text-gray-600 mb-4">
+                  Add mobile numbers of friends you want to refer. They'll
+                  receive a special offer and you'll get rewards!
+                </p>
+
+                <div className="mb-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter mobile number"
+                      value={currentNumber}
+                      onChange={(e) => {
+                        const input = e.target.value.replace(/\D/g, "");
+                        if (input.length <= 10) {
+                          setCurrentNumber(input);
+                        }
+                      }}
+                      maxLength={10}
+                      className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <button
+                      onClick={handleAddNumber}
+                      className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                {mobileNumbers.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold mb-2">Added numbers:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {mobileNumbers.map((number, index) => (
+                        <div
+                          key={number}
+                          className="flex items-center bg-purple-50 px-3 py-1 rounded-md"
+                        >
+                          <span className="text-sm text-gray-700">
+                            {number}
+                          </span>
+                          <button
+                            onClick={() => handleRemoveNumber(index)}
+                            className="ml-2 text-red-500 hover:text-red-700"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-4 mt-4">
+                  <button
+                    onClick={handleReferralCancel}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmReferrals}
+                    disabled={mobileNumbers.length === 0}
+                    className={`px-4 py-2 rounded-md ${
+                      mobileNumbers.length === 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-purple-500 text-white hover:bg-purple-600"
+                    }`}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex space-x-2 items-center border rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-purple-400">
-              <span className="text-gray-500">📱</span>
-              <input
-                type="text"
-                className="flex-1 outline-none"
-                placeholder="Enter 10-digit mobile number"
-                value={currentNumber}
-                onChange={(e) => {
-                  const input = e.target.value.replace(/\D/g, "");
-                  if (input.length <= 10) {
-                    setCurrentNumber(input);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleAddNumber();
-                  }
-                }}
-                maxLength={10}
-                pattern="\d{10}"
-              />
-              <button
-                className="bg-purple-600 text-white px-4 py-1 rounded-lg disabled:opacity-50"
-                onClick={handleAddNumber}
-                disabled={
-                  mobileNumbers.length >= 9 || currentNumber.length !== 10
-                }
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </Modal>
+          )}
+        </div>
 
         <Modal
           title="🎁 Special Offer: Free Rice Container!"
-          visible={isPlanModalVisible}
+          open={isPlanModalVisible}
           onOk={handlePlanOk}
           onCancel={handlePlanCancel}
           okText="Continue"
           cancelText="Cancel"
+          centered
+          width="90%"
+          style={{ maxWidth: "600px" }}
+          bodyStyle={{ maxHeight: "60vh", padding: "16px" }}
         >
-          <div className="text-center text-gray-800">
-            <p className="text-lg font-medium mt-1">
-              Buy a 26kg or 10kg rice bag and get a{" "}
-              <strong>FREE rice container</strong>!
-            </p>
-            <p className="text-sm text-gray-600 italic">
-              (Note: Container remains Oxy Group asset until ownership is
-              earned.)
-            </p>
+          <div
+            className="container-scroll-container"
+            style={{ maxHeight: "60vh", overflowY: "auto" }}
+          >
+            <div className="text-center text-gray-800">
+              <p className="text-lg font-medium mt-1">
+                Buy a 26kg or 10kg rice bag and get a{" "}
+                <strong>FREE rice container</strong>!
+              </p>
+              <p className="text-sm text-gray-600 italic">
+                (Note: Container remains Oxy Group asset until ownership is
+                earned.)
+              </p>
 
-            <div className="mt-4 text-left">
-              <h3 className="text-md font-semibold mb-2">
-                📋 How to Earn Ownership:
-              </h3>
-              <ul className="list-disc pl-5 space-y-2">
-                <li>
-                  <strong>Plan A:</strong> Purchase 9 bags within the next 3
-                  years and the container is yours forever.
-                </li>
-                <li className="list-none text-center text-gray-500">AND/OR</li>
-                <li>
-                  <strong>Plan B:</strong> Refer 9 people. Once each of them
-                  buys their first bag, the container is yours.
-                </li>
-              </ul>
-            </div>
+              <div className="mt-4 text-left">
+                <h3 className="text-md font-semibold mb-2">
+                  📋 How to Earn Ownership:
+                </h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>
+                    <strong>Plan A:</strong> Purchase 9 bags within the next 3
+                    years and the container is yours forever.
+                  </li>
+                  <li className="list-none text-center text-gray-500">
+                    AND/OR
+                  </li>
+                  <li>
+                    <strong>Plan B:</strong> Refer 9 people. Once each of them
+                    buys their first bag, the container is yours.
+                  </li>
+                </ul>
+              </div>
 
-            <p className="mt-4 text-sm font-semibold">
-              ⚠️ Note: If there's no purchase within 90 days or a 90+ day gap
-              between purchases, the container will be taken back.
-            </p>
+              <p className="mt-4 text-sm font-semibold">
+                ⚠️ Note: If there's no purchase within 90 days or a 90+ day gap
+                between purchases, the container will be taken back.
+              </p>
 
-            <div className="mt-4">
-              <h4 className="font-semibold mb-3">Choose Plan(s):</h4>
-              <div className="space-y-4">
-                {["planA", "planB"].map((planKey) => (
-                  <div key={planKey}>
-                    <label
-                      htmlFor={planKey}
-                      className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors shadow-sm ${
-                        selectedPlan.includes(planKey)
-                          ? "bg-purple-600 text-white border-purple-600"
-                          : "bg-white text-gray-800 hover:bg-gray-100 border-gray-300"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        id={planKey}
-                        name="planSelection"
-                        checked={selectedPlan.includes(planKey)}
-                        onChange={() => {
-                          if (selectedPlan.includes(planKey)) {
-                            setSelectedPlan(
-                              selectedPlan.filter((p) => p !== planKey)
-                            );
-                          } else {
-                            setSelectedPlan([...selectedPlan, planKey]);
-                          }
-                        }}
-                        className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300"
-                      />
-                      <span className="text-sm font-medium">
-                        {planKey === "planA"
-                          ? "Plan A: Free Steel Container Policy"
-                          : "Plan B: Referral 9 members"}
-                      </span>
-                    </label>
-                  </div>
-                ))}
+              <div className="mt-4">
+                <h4 className="font-semibold mb-3">Choose Plan(s):</h4>
+                <div className="space-y-4">
+                  {["planA", "planB"].map((planKey) => (
+                    <div key={planKey}>
+                      <label
+                        htmlFor={planKey}
+                        className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors shadow-sm ${
+                          selectedPlan.includes(planKey)
+                            ? "bg-purple-600 text-white border-purple-600"
+                            : "bg-white text-gray-800 hover:bg-gray-100 border-gray-300"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          id={planKey}
+                          name="planSelection"
+                          checked={selectedPlan.includes(planKey)}
+                          onChange={() => {
+                            if (selectedPlan.includes(planKey)) {
+                              setSelectedPlan(
+                                selectedPlan.filter((p) => p !== planKey)
+                              );
+                            } else {
+                              setSelectedPlan([...selectedPlan, planKey]);
+                            }
+                          }}
+                          className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300"
+                        />
+                        <span className="text-sm font-medium">
+                          {planKey === "planA"
+                            ? "Plan A: Free Steel Container Policy"
+                            : "Plan B: Referral 9 members"}
+                        </span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </Modal>
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 };

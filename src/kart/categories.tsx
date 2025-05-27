@@ -1,15 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ShoppingCart,
-  Package,
-  AlertCircle,
-  Loader2,
-  Italic,
-} from "lucide-react";
+import { ShoppingCart, Package, AlertCircle, Loader2 } from "lucide-react";
 import checkProfileCompletion from "../until/ProfileCheck";
 import BASE_URL from "../Config";
 
@@ -37,6 +31,26 @@ interface Category {
   subCategories?: SubCategory[];
 }
 
+interface Offer {
+  id: string;
+  offerName: string;
+  minQtyKg: number;
+  minQty: number;
+  freeItemName: string;
+  freeItemId: string;
+  freeGivenItemId: string;
+  freeQty: number;
+  freeOnce: boolean;
+  active: boolean;
+  offerCreatedAt: number;
+}
+
+interface UserEligibleOffer {
+  offerName: string;
+  eligible: boolean;
+  weight: number;
+}
+
 interface CategoriesProps {
   categories: Category[];
   activeCategory: string | null;
@@ -54,6 +68,7 @@ interface CartItem {
   itemId: string;
   cartQuantity: number;
   cartId: string;
+  status: string; // "ADD" or "FREE"
 }
 
 const Categories: React.FC<CategoriesProps> = ({
@@ -69,13 +84,11 @@ const Categories: React.FC<CategoriesProps> = ({
 }) => {
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
-  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
-    null
-  );
-  const [disabledFilters, setDisabledFilters] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const location = useLocation();
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [userEligibleOffers, setUserEligibleOffers] = useState<UserEligibleOffer[]>([]);
+  const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
+  const [isFetchingOffers, setIsFetchingOffers] = useState(false);
   const navigate = useNavigate();
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
@@ -84,41 +97,20 @@ const Categories: React.FC<CategoriesProps> = ({
     items: {},
     status: {},
   });
-  const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
-  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
-    "0"
-  );
-  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
-    null
-  );
-  //1+1 free rice bag
-  const [hasShownOnePlusOne, setHasShownOnePlusOne] = useState(false);
-  const onePlusOneModalShownRef = useRef(false);
-  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
-    {}
-  );
 
-  const weightFilters = [
-    { label: "1 KG", value: "1.0" },
-    { label: "5 KG", value: "5.0" },
-    { label: "10 KG", value: "10.0" },
-    { label: "26 KG", value: "26.0" },
-  ];
+  const fetchCartData = async (itemId: string = "") => {
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
 
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const weight = queryParams.get("weight");
-    if (weight && weightFilters.some((filter) => filter.value === weight)) {
-      setActiveWeightFilter(weight);
-    } else {
-      setActiveWeightFilter(null);
+    if (!userId || !accessToken) {
+      setCartItems({});
+      setCartData([]);
+      updateCartCount(0);
+      localStorage.setItem("cartCount", "0");
+      return;
     }
-  }, [location.search]);
 
-  const fetchCartData = async (itemId: string) => {
-    const Id = localStorage.getItem("userId");
-
-    if (itemId !== "") {
+    if (itemId) {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
@@ -127,54 +119,198 @@ const Categories: React.FC<CategoriesProps> = ({
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${Id}`
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      if (response.data.customerCartResponseList) {
-        const cartItemsMap = response.data?.customerCartResponseList.reduce(
-          (acc: Record<string, number>, item: CartItem) => {
-            acc[item.itemId] = item.cartQuantity || 0;
-            return acc;
-          },
-          {}
-        );
+      const customerCart: CartItem[] = response.data?.customerCartResponseList || [];
 
-        localStorage.setItem(
-          "cartCount",
-          response.data?.customerCartResponseList.length.toString()
-        );
-        const totalQuantity = Object.values(
-          cartItemsMap as Record<string, number>
-        ).reduce((sum, qty) => sum + qty, 0);
-        setCartItems(cartItemsMap);
-        updateCartCount(totalQuantity);
+      // Log raw API response for debugging
+      console.log("fetchCartData API response:", response.data);
 
+      // Create cart items map for non-free items only (for UI display)
+      const cartItemsMap: Record<string, number> = customerCart.reduce(
+        (acc: Record<string, number>, item: CartItem) => {
+          if (item.status === "ADD") {
+            const quantity = item.cartQuantity ?? 0;
+            acc[item.itemId] = (acc[item.itemId] ?? 0) + quantity;
+            console.log(
+              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`
+            );
+          }
+          return acc;
+        },
+        {}
+      );
+
+      // Calculate total quantity, including both free and non-free items
+      const totalQuantity: number = customerCart.reduce(
+        (sum: number, item: CartItem) => {
+          const quantity = item.cartQuantity ?? 0;
+          return sum + quantity; // Include all items (FREE and ADD)
+        },
+        0
+      );
+
+      // Log for debugging
+      console.log("fetchCartData: ", {
+        cartItemsMap,
+        totalQuantity,
+        customerCart,
+      });
+
+      // Update states
+      setCartItems(cartItemsMap);
+      setCartData(customerCart); // Keep all items (including FREE) in cartData
+      updateCart(cartItemsMap);
+      updateCartCount(totalQuantity);
+      localStorage.setItem("cartCount", totalQuantity.toString());
+
+      if (itemId) {
         setLoadingItems((prev) => ({
           ...prev,
           items: { ...prev.items, [itemId]: false },
+          status: { ...prev.status, [itemId]: "" },
         }));
-      } else {
-        setCartItems({});
-        localStorage.setItem("cartCount", "0");
-        updateCartCount(0);
       }
-      setCartData(response.data.customerCartResponseList);
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [itemId]: false },
-      }));
     } catch (error) {
       console.error("Error fetching cart items:", error);
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [itemId]: false },
-      }));
+      setCartItems({});
+      setCartData([]);
+      updateCart({});
+      updateCartCount(0);
+      localStorage.setItem("cartCount", "0");
+      if (itemId) {
+        setLoadingItems((prev) => ({
+          ...prev,
+          items: { ...prev.items, [itemId]: false },
+          status: { ...prev.status, [itemId]: "" },
+        }));
+      }
+      message.error("Failed to fetch cart data.");
     }
   };
 
+  // Function to normalize weight values (remove units, convert to number)
+  const normalizeWeight = (value: any): number | null => {
+    if (value === null || value === undefined) return null;
+    const cleanedValue = String(value).replace(/[^0-9.]/g, "");
+    const parsed = Number(cleanedValue);
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  // Function to fetch user-eligible offers
+  const fetchUserEligibleOffers = async (userId: string) => {
+    const accessToken = localStorage.getItem("accessToken");
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const normalizedOffers = (response.data || []).map(
+        (offer: UserEligibleOffer) => ({
+          ...offer,
+          weight: normalizeWeight(offer.weight),
+        })
+      );
+      setUserEligibleOffers(normalizedOffers);
+      console.log("User eligible offers:", normalizedOffers);
+    } catch (error) {
+      console.error("Error fetching user-eligible offers:", error);
+      message.error("Failed to load user-eligible offers.");
+      setUserEligibleOffers([]);
+    }
+  };
+
+  // Function to fetch and filter active offers
+  const fetchOffers = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    setIsFetchingOffers(true);
+    try {
+      const offersResponse = await axios.get(
+        `${BASE_URL}/cart-service/cart/activeOffers`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const activeOffers = offersResponse.data || [];
+
+      const filteredOffers = activeOffers.filter((offer: Offer) => {
+        const offerMinQtyKg = normalizeWeight(offer.minQtyKg);
+        if (offerMinQtyKg === null) {
+          console.warn(
+            `Offer ${offer.offerName} has invalid minQtyKg: ${offer.minQtyKg}`
+          );
+          return true;
+        }
+
+        const isExcluded = userEligibleOffers.some((eligibleOffer) => {
+          const eligibleWeight = normalizeWeight(eligibleOffer.weight);
+          if (eligibleWeight === null) {
+            console.warn(
+              `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`
+            );
+            return false;
+          }
+
+          const isEligible = eligibleOffer.eligible === true;
+          const isWeightMatch =
+            Math.abs(eligibleWeight - offerMinQtyKg) < 0.0001;
+
+          return isEligible && isWeightMatch;
+        });
+
+        return !isExcluded;
+      });
+
+      setOffers(filteredOffers);
+      setIsFetchingOffers(false);
+      console.log("Filtered offers:", filteredOffers);
+
+      // Re-fetch cart data to ensure free items from offers are included
+      if (filteredOffers.length > 0) {
+        await fetchCartData();
+      }
+    } catch (error) {
+      console.error("Error fetching offers:", error);
+      message.error("Failed to load offers.");
+      setOffers([]);
+      setIsFetchingOffers(false);
+    }
+  };
+
+  // Fetch user-eligible offers and cart data on mount
   useEffect(() => {
-    fetchCartData("");
+    const hasShownOffers = localStorage.getItem("hasShownOffers");
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (userId && accessToken) {
+      fetchCartData();
+      if (!hasShownOffers) {
+        fetchUserEligibleOffers(userId);
+      }
+    }
   }, []);
+
+  // Fetch offers only after userEligibleOffers is updated
+  useEffect(() => {
+    const hasShownOffers = localStorage.getItem("hasShownOffers");
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (
+      userId &&
+      accessToken &&
+      !hasShownOffers &&
+      userEligibleOffers.length >= 0
+    ) {
+      fetchOffers().then(() => {
+        if (offers.length > 0) {
+          setIsOffersModalVisible(true);
+          localStorage.setItem("hasShownOffers", "true");
+        }
+      });
+    }
+  }, [userEligibleOffers]);
 
   useEffect(() => {
     setActiveSubCategory(null);
@@ -210,35 +346,12 @@ const Categories: React.FC<CategoriesProps> = ({
         items: { ...prev.items, [item.itemId]: true },
       }));
       await axios.post(
-        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         { customerId: userId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-
-      // GA4 Add to Cart Event Tracking
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "add_to_cart", {
-          currency: "INR",
-          value: item.itemPrice,
-          items: [
-            {
-              item_id: item.itemId,
-              item_name: item.itemName,
-              price: item.itemPrice,
-              quantity: 1,
-              item_category: activeCategory || "General",
-            },
-          ],
-        });
-      }
-
-      await maybeShowOnePlusOneModal(item);
       await fetchCartData(item.itemId);
       message.success("Item added to cart successfully.");
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: false },
-      }));
     } catch (error) {
       console.error("Error adding to cart:", error);
       message.error("Error adding to cart.");
@@ -264,120 +377,50 @@ const Categories: React.FC<CategoriesProps> = ({
       return;
     }
 
-    if (!checkProfileCompletion()) {
-      Modal.error({
-        title: "Profile Incomplete",
-        content: "Please complete your profile to add items to the cart.",
-        onOk: () => navigate("/main/profile"),
-      });
-      setTimeout(() => {
-        navigate("/main/profile");
-      }, 4000);
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!userId || !accessToken) {
+      message.error("Please login to update cart.");
       return;
     }
+
     try {
       const endpoint = increment
-        ? `${BASE_URL}/cart-service/cart/incrementCartData`
-        : `${BASE_URL}/cart-service/cart/decrementCartData`;
+        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+        : `${BASE_URL}/cart-service/cart/minusCartItem`;
 
-      if (!increment && cartItems[item.itemId] <= 1) {
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [item.itemId]: true },
-          status: { ...prev.status, [item.itemId]: status },
-        }));
-        const targetCartId = cartData.find(
-          (cart) => cart.itemId === item.itemId
-        )?.cartId;
-        const response = await axios.delete(
-          `${BASE_URL}/cart-service/cart/remove`,
-          {
-            data: { id: targetCartId },
-          }
-        );
-        if (response) {
-          setLoadingItems((prev) => ({
-            ...prev,
-            items: { ...prev.items, [item.itemId]: false },
-            status: { ...prev.status, [item.itemId]: "" },
-          }));
-          message.success("Item removed from cart successfully.");
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId]: true },
+        status: { ...prev.status, [item.itemId]: status },
+      }));
 
-          if (typeof window !== "undefined" && window.gtag) {
-            window.gtag(
-              "event",
-              increment ? "add_to_cart" : "remove_from_cart",
-              {
-                currency: "INR",
-                value: item.itemPrice,
-                items: [
-                  {
-                    item_id: item.itemId,
-                    item_name: item.itemName,
-                    price: item.itemPrice,
-                    quantity: 1,
-                    item_category: activeCategory || "General",
-                    action: increment ? "increment" : "decrement",
-                  },
-                ],
-              }
-            );
-          }
-        } else {
-          setLoadingItems((prev) => ({
-            ...prev,
-            items: { ...prev.items, [item.itemId]: false },
-            status: { ...prev.status, [item.itemId]: "" },
-          }));
-          message.error("Sorry, Please try again");
-        }
-      } else {
-        setLoadingItems((prev) => ({
-          ...prev,
-          items: { ...prev.items, [item.itemId]: true },
-          status: { ...prev.status, [item.itemId]: status },
-        }));
-        const response = await axios.patch(endpoint, {
-          customerId,
-          itemId: item.itemId,
-        });
-        if (response) {
-          setLoadingItems((prev) => ({
-            ...prev,
-            items: { ...prev.items, [item.itemId]: false },
-            status: { ...prev.status, [item.itemId]: "" },
-          }));
+      const payload = {
+        customerId: userId,
+        itemId: item.itemId,
+      };
 
-          if (typeof window !== "undefined" && window.gtag) {
-            window.gtag(
-              "event",
-              increment ? "add_to_cart" : "remove_from_cart",
-              {
-                currency: "INR",
-                value: item.itemPrice,
-                items: [
-                  {
-                    item_id: item.itemId,
-                    item_name: item.itemName,
-                    price: item.itemPrice,
-                    quantity: 1,
-                    item_category: activeCategory || "General",
-                    action: increment ? "increment" : "decrement",
-                  },
-                ],
-              }
-            );
-          }
-        } else {
-          setLoadingItems((prev) => ({
-            ...prev,
-            items: { ...prev.items, [item.itemId]: false },
-            status: { ...prev.status, [item.itemId]: "" },
-          }));
-          message.error("Sorry, Please try again");
-        }
-      }
+      await axios[increment ? "post" : "patch"](endpoint, payload, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
       await fetchCartData(item.itemId);
+
+      console.log(
+        `handleQuantityChange: Item ${item.itemId}, increment: ${increment}, new cartItems: `,
+        cartItems
+      );
+
+      if (!increment) {
+        message.success(
+          cartItems[item.itemId] <= 1
+            ? "Item removed from cart successfully."
+            : "Item quantity decreased"
+        );
+      } else {
+        message.success("Item quantity increased");
+      }
     } catch (error) {
       console.error("Error updating quantity:", error);
       message.error("Error updating item quantity");
@@ -394,17 +437,7 @@ const Categories: React.FC<CategoriesProps> = ({
       categories.find((cat) => cat.categoryName === activeCategory) ||
       categories[0];
     if (!currentCategory) return [];
-
-    let items = currentCategory.itemsResponseDtoList;
-
-    if (activeWeightFilter) {
-      items = items.filter((item) => {
-        const itemWeight = parseFloat(item.weight).toFixed(1);
-        return itemWeight === activeWeightFilter;
-      });
-    }
-
-    return items;
+    return currentCategory.itemsResponseDtoList;
   };
 
   const getCurrentSubCategories = () => {
@@ -415,147 +448,85 @@ const Categories: React.FC<CategoriesProps> = ({
     return category?.subCategories || [];
   };
 
-  const handleWeightFilterClick = (value: string) => {
-    if (activeWeightFilter === value) {
-      setActiveWeightFilter(null);
-    } else {
-      setActiveWeightFilter(value);
-    }
-
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "toggle_weight_filter", {
-        filter_value: value,
-        new_state: activeWeightFilter === value ? "off" : "on",
-      });
-    }
-
-    setSelectedFilterKey("0");
-    setSelectedFilter("ALL");
+  const handleOffersModalClose = () => {
+    setIsOffersModalVisible(false);
   };
 
-  const checkOnePlusOneStatus = async (): Promise<boolean> => {
-    const accessToken = localStorage.getItem("accessToken");
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const offeravail = response.data?.cartQuantity || 0;
-      console.log("1+1 Offer available quantity:", offeravail);
-      return offeravail >= 2;
-    } catch (error) {
-      console.error("Failed to fetch 1+1 offer availability:", error);
-      return true;
-    }
-  };
-
-  const findOneKgBag = (item: Item): Item | null => {
-    const weight = parseFloat(item.weight?.toString() || "0");
-    if (weight === 1 && item.units?.toLowerCase().includes("kg")) {
-      return item;
-    }
-    return null;
-  };
-
-  const showOnePlusOneModal = (item: Item) => {
-    const accessToken = localStorage.getItem("accessToken");
-    Modal.confirm({
-      title: "🎁 1 + 1 Offer on 1kg Rice Bag!",
-      content: (
-        <p>
-          You're eligible for our exclusive <strong>1Kg + 1Kg offer</strong>!
-          Get another <strong>{item.itemName}</strong> absolutely free.
-          <br />
-          <br />
-          <strong>Please Note:</strong> The 1kg + 1kg Free Offer is valid only
-          once per user and applies exclusively to 1kg rice bags. This offer can
-          only be redeemed once per address and is applicable on the first
-          successful delivery only. Once claimed, it cannot be reused. Grab it
-          while it lasts!
-        </p>
-      ),
-      okText: "Add Free Bag",
-      cancelText: "No Thanks",
-      onOk: async () => {
-        try {
-          const currentQuantity = cartItems[item.itemId] || 1;
-
-          await axios.patch(
-            `${BASE_URL}/cart-service/cart/incrementCartData`,
-            {
-              cartQuantity: currentQuantity + 1,
-              customerId,
-              itemId: item.itemId,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          setFreeItemsMap((prev) => ({
-            ...prev,
-            [item.itemId]: 1,
-          }));
-
-          message.success(`1+1 offer applied! 1 free ${item.itemName} added.`);
-          await fetchCartData(item.itemId);
-        } catch (err) {
-          console.error("1+1 offer failed:", err);
-          message.error("Unable to apply the 1+1 offer. Please try again.");
-        }
-      },
-      onCancel: async () => {
-        // No action needed; item is already added
-      },
-    });
-  };
-
-  const maybeShowOnePlusOneModal = async (item: Item) => {
-    if (onePlusOneModalShownRef.current) return;
-
-    const eligibleBag = findOneKgBag(item);
-    if (!eligibleBag) return;
-
-    const isOfferClaimed = await checkOnePlusOneStatus();
-    if (isOfferClaimed || hasShownOnePlusOne) return;
-
-    onePlusOneModalShownRef.current = true;
-    setHasShownOnePlusOne(true);
-
-    showOnePlusOneModal(eligibleBag);
+  // Helper function to check if the item is explicitly added by the user
+  const isItemUserAdded = (itemId: string): boolean => {
+    // Check if there is at least one cart entry for this item with status "ADD"
+    return cartData.some(
+      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
+    );
   };
 
   return (
-    <div className="bg-white shadow-lg px-4 sm:px-6 lg:px-8 py-4">
-      {/* Category Tabs */}
+    <div className="bg-white shadow-lg px-3 sm:px-6 lg:px-6 py-3">
+      <style>
+        {`
+          .offers-scroll-container::-webkit-scrollbar {
+            display: none;
+          }
+          .offers-scroll-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
+
+      <Modal
+        title="Available Offers"
+        open={isOffersModalVisible}
+        onCancel={handleOffersModalClose}
+        footer={[
+          <button
+            key="close"
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900"
+            onClick={handleOffersModalClose}
+          >
+            Close
+          </button>,
+        ]}
+        centered
+        width="90%"
+        style={{ maxWidth: "600px" }}
+        bodyStyle={{ maxHeight: "60vh", padding: "16px" }}
+      >
+        {isFetchingOffers ? (
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin text-purple-600" />
+          </div>
+        ) : offers.length > 0 ? (
+          <div
+            className="space-y-4 offers-scroll-container"
+            style={{ maxHeight: "50vh", overflowY: "auto" }}
+          >
+            {offers.map((offer) => (
+              <div key={offer.id} className="p-4 bg-gray-100 rounded-lg">
+                <h3 className="font-semibold text-purple-800">
+                  {offer.offerName}
+                </h3>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No offers available at the moment.</p>
+        )}
+      </Modal>
+
       <div className="mb-4 overflow-x-auto scrollbar-hide">
-        <div className="flex space-x-3 pb-4">
+        <div className="flex space-x-4 pb-4">
           {categories.map((category, index) => (
             <motion.button
               key={index}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
                 activeCategory === category.categoryName
                   ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
                   : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100"
               }`}
-              onClick={() => {
-                onCategoryClick(category.categoryName);
-                if (typeof window !== "undefined" && window.gtag) {
-                  window.gtag("event", "select_content", {
-                    content_type: "category",
-                    content_id: category.categoryName,
-                  });
-                }
-              }}
+              onClick={() => onCategoryClick(category.categoryName)}
             >
               <div className="flex items-center space-x-2">
                 {category.categoryImage && (
@@ -572,51 +543,6 @@ const Categories: React.FC<CategoriesProps> = ({
         </div>
       </div>
 
-      {/* Weight Filter Section */}
-      <div className="mb-4 overflow-x-auto scrollbar-hide">
-        <div className="flex items-center space-x-3 pb-2">
-          {weightFilters.map((filter, index) => (
-            <motion.button
-              key={index}
-              whileHover={{
-                scale:
-                  filter.value === "1.0" && disabledFilters[filter.value]
-                    ? 1
-                    : 1.02,
-              }}
-              whileTap={{
-                scale:
-                  filter.value === "1.0" && disabledFilters[filter.value]
-                    ? 1
-                    : 0.98,
-              }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                filter.value === "1.0" && disabledFilters[filter.value]
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                  : filter.value === activeWeightFilter
-                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md"
-                  : "bg-gray-50 text-gray-700 hover:bg-purple-50 border border-purple-100"
-              }`}
-              onClick={() => handleWeightFilterClick(filter.value)}
-              disabled={filter.value === "1.0" && disabledFilters[filter.value]}
-              title={
-                filter.value === "1.0" && disabledFilters[filter.value]
-                  ? "Disabled. Click Reset to enable."
-                  : ""
-              }
-            >
-              {filter.label}
-              {filter.value === "1.0" && (
-                <span className="ml-1 text-xs">
-                  {disabledFilters[filter.value] ? "(Disabled)" : ""}
-                </span>
-              )}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      {/* Subcategories */}
       {getCurrentSubCategories().length > 0 && (
         <div className="mb-6 overflow-x-auto scrollbar whitespace-nowrap">
           <div className="flex space-x-3 pb-2 w-max">
@@ -628,16 +554,7 @@ const Categories: React.FC<CategoriesProps> = ({
                   ? "bg-purple-100 text-purple-700"
                   : "bg-gray-50 text-gray-600 hover:bg-gray-100"
               }`}
-              onClick={() => {
-                setActiveSubCategory(null);
-                if (typeof window !== "undefined" && window.gtag) {
-                  window.gtag("event", "select_content", {
-                    content_type: "subcategory",
-                    content_id: "all",
-                    parent_category: activeCategory,
-                  });
-                }
-              }}
+              onClick={() => setActiveSubCategory(null)}
             >
               All
             </motion.button>
@@ -651,17 +568,7 @@ const Categories: React.FC<CategoriesProps> = ({
                     ? "bg-purple-100 text-purple-700"
                     : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                 }`}
-                onClick={() => {
-                  setActiveSubCategory(subCategory.id);
-                  if (typeof window !== "undefined" && window.gtag) {
-                    window.gtag("event", "select_content", {
-                      content_type: "subcategory",
-                      content_id: subCategory.id,
-                      content_name: subCategory.name,
-                      parent_category: activeCategory,
-                    });
-                  }
-                }}
+                onClick={() => setActiveSubCategory(subCategory.id)}
               >
                 <div className="flex items-center space-x-2">
                   {subCategory.image && (
@@ -693,36 +600,50 @@ const Categories: React.FC<CategoriesProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col"
+              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden"
             >
               {item.itemMrp &&
                 item.itemPrice &&
                 item.itemMrp > item.itemPrice && (
                   <div className="absolute left-0 top-0 z-10 w-auto">
                     <div
-                      className="bg-purple-600 text-white text-[10px] sm:text-xs font-bold 
-                    px-2 sm:px-3 py-0.5 sm:py-1 flex items-center"
+                      className="bg-purple-600 text-white text-[10px] xs:text-xs sm:text-sm font-bold 
+                    px-1.5 xs:px-2 sm:px-3 lg:px-4 
+                    py-0.5 xs:py-0.5 sm:py-1 
+                    flex items-center"
                     >
                       {calculateDiscount(item.itemMrp, item.itemPrice)}%
-                      <span className="ml-1 text-[8px] sm:text-[10px]">
+                      <span className="ml-0.5 xs:ml-1 text-[8px] xs:text-[10px] sm:text-xs">
                         Off
                       </span>
                     </div>
                     <div
                       className="absolute bottom-0 right-0 transform translate-y 
-                    border-t-4 sm:border-t-6 border-r-4 sm:border-r-6 
+                    border-t-4 border-r-4 
+                    xs:border-t-6 xs:border-r-6 
+                    sm:border-t-8 sm:border-r-8 
                     border-t-purple-600 border-r-transparent"
                     ></div>
                   </div>
                 )}
 
               {item.quantity === 0 ? (
-                <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10"></div>
+                <div
+                  className="absolute top-0.5 xs:top-1 sm:top-2 
+                  right-0.5 xs:right-1 sm:right-2 z-10"
+                ></div>
               ) : item.quantity < 6 ? (
-                <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10">
+                <div
+                  className="absolute top-0.5 xs:top-1 sm:top-2 
+                  right-0.5 xs:right-1 sm:right-2 z-10"
+                >
                   <span
-                    className="bg-yellow-500 text-white text-[8px] sm:text-xs 
-                    font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
+                    className="bg-yellow-500 text-white 
+                    text-[8px] xs:text-[10px] sm:text-xs 
+                    font-medium 
+                    px-1.5 xs:px-2 sm:px-3 
+                    py-0.5 xs:py-0.5 sm:py-1 
+                    rounded-full whitespace-nowrap"
                   >
                     Only {item.quantity} left
                   </span>
@@ -730,25 +651,8 @@ const Categories: React.FC<CategoriesProps> = ({
               ) : null}
 
               <div
-                className="p-4 cursor-pointer flex-grow"
-                onClick={() => {
-                  onItemClick(item);
-                  if (typeof window !== "undefined" && window.gtag) {
-                    window.gtag("event", "select_item", {
-                      currency: "INR",
-                      value: item.itemPrice,
-                      items: [
-                        {
-                          item_id: item.itemId,
-                          item_name: item.itemName,
-                          price: item.itemPrice,
-                          item_category: activeCategory || "General",
-                          item_variant: activeSubCategory || "default",
-                        },
-                      ],
-                    });
-                  }
-                }}
+                className="p-4 cursor-pointer"
+                onClick={() => onItemClick(item)}
               >
                 <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
                   <img
@@ -766,17 +670,14 @@ const Categories: React.FC<CategoriesProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="font-medium text-gray-800 line-clamp-3 min-h-[2.5rem] text-sm">
+                  <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm">
                     {item.itemName}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Weight: {item.weight}{" "}
-                    {item.units == "pcs"
-                      ? "Pc"
-                      : item.weight == "1"
-                      ? "Kg"
-                      : item.units}
+                    Weight: {item.weight}
+                    {item.units}
                   </p>
+
                   <div className="flex items-baseline space-x-2">
                     <span className="text-lg font-semibold text-gray-900">
                       ₹{item.itemPrice}
@@ -787,15 +688,10 @@ const Categories: React.FC<CategoriesProps> = ({
                       </span>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Add to Cart Button Section */}
-              <div className="px-4 pb-4">
-                {item.quantity !== 0 ? (
-                  cartItems[item.itemId] > 0 ? (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 h-10">
+                  {item.quantity !== 0 ? (
+                    isItemUserAdded(item.itemId) ? (
+                      <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2">
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
@@ -808,10 +704,10 @@ const Categories: React.FC<CategoriesProps> = ({
                           -
                         </motion.button>
                         {loadingItems.items[item.itemId] ? (
-                          <Loader2 className="animate-spin text-purple-600 w-5 h-5" />
+                          <Loader2 className="animate-spin text-purple-600" />
                         ) : (
-                          <span className="text-purple-600 font-medium">
-                            {cartItems[item.itemId]}
+                          <span className="font-medium text-purple-700">
+                            {cartItems[item.itemId] || 0}
                           </span>
                         )}
                         <motion.button
@@ -837,48 +733,33 @@ const Categories: React.FC<CategoriesProps> = ({
                           +
                         </motion.button>
                       </div>
-                      {freeItemsMap[item.itemId] && (
-                        <p className="text-sm text-green-600 font-medium">
-                          🎁 1 Free bag (1+1 Offer Applied)
-                        </p>
-                      )}
-                    </div>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-2 mt-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg transition-all duration-300 hover:shadow-md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(item);
+                        }}
+                        disabled={loadingItems.items[item.itemId]}
+                      >
+                        {loadingItems.items[item.itemId] ? (
+                          <Loader2 className="mr-2 animate-spin inline-block" />
+                        ) : (
+                          "Add to Cart"
+                        )}
+                      </motion.button>
+                    )
                   ) : (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full h-10 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg transition-all duration-300 hover:shadow-md flex items-center justify-center"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(item);
-                      }}
-                      disabled={loadingItems.items[item.itemId]}
+                    <button
+                      className="w-full py-2 mt-2 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed"
+                      disabled
                     >
-                      {loadingItems.items[item.itemId] ? (
-                        <Loader2 className="mr-2 animate-spin inline-block" />
-                      ) : (
-                        "Add to Cart"
-                      )}
-                    </motion.button>
-                  )
-                ) : (
-                  <button
-                    className="w-full h-10 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed flex items-center justify-center"
-                    disabled
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (typeof window !== "undefined" && window.gtag) {
-                        window.gtag("event", "view_item_unavailable", {
-                          item_id: item.itemId,
-                          item_name: item.itemName,
-                          item_category: activeCategory || "General",
-                        });
-                      }
-                    }}
-                  >
-                    Out of Stock
-                  </button>
-                )}
+                      Out of Stock
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
