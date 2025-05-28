@@ -13,7 +13,8 @@ interface HeaderProps {
 function Header({ onNavClick, activeLink }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -59,9 +60,35 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
 
   const navigate = useNavigate();
 
-  const handleSignin = () => {
-    navigate("/whatsappregister");
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
+      // Set the default redirect path to the dashboard products page
+      const redirectPath = "/main/services/campaign/a6b5";
+
+      // Store the redirect path in multiple storage locations
+      localStorage.setItem("redirectPath", redirectPath);
+      sessionStorage.setItem("redirectPath", redirectPath);
+      localStorage.setItem("returnUrl", redirectPath);
+      sessionStorage.setItem("returnUrl", redirectPath);
+      localStorage.setItem("next", redirectPath);
+      sessionStorage.setItem("next", redirectPath);
+
+      // Redirect to WhatsApp login with the redirect parameter
+      const loginUrl = `${LOGIN_URL}?redirect=${encodeURIComponent(
+        redirectPath
+      )}`;
+
+      // Force a full page reload for authentication
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error("Sign in error:", error);
+      // Handle error appropriately
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   // const handleJobStreet = () => {
   //   // window.open("/jobstreet", "_blank");
     
@@ -101,7 +128,7 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
           {/* Left: Logo */}
           <div
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={handleLogo}
+            onClick={handleSignIn}
           >
             <img
               src={Askoxy}
@@ -135,7 +162,7 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
 
           {/* Right: Sign In */}
           <div className="hidden md:flex items-center gap-3">
-              <button
+            <button
               onClick={handleInterest}
               className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
             >
@@ -151,7 +178,7 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
 
             {/* Sign In Button */}
             <button
-              onClick={handleSignin}
+              onClick={handleSignIn}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
             >
               Sign In
@@ -204,20 +231,20 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
               {/* Sign In Button */}
               <li className="px-4 pt-2 pb-2">
                 <button
-                  onClick={handleSignin}
+                  onClick={handleSignIn}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-sm flex items-center justify-center"
                 >
                   Sign In
                 </button>
               </li>
               <li className="px-4 pt-2">
-              <button
-              onClick={handleInterest}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
-            >
-              I'm Interested
+                <button
+                  onClick={handleInterest}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition transform hover:scale-105"
+                >
+                  I'm Interested
                 </button>
-                </li>
+              </li>
             </ul>
           </div>
         )}
