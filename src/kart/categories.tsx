@@ -86,13 +86,22 @@ const Categories: React.FC<CategoriesProps> = ({
 }) => {
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
-  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
+    null
+  );
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [userEligibleOffers, setUserEligibleOffers] = useState<UserEligibleOffer[]>([]);
+  const [userEligibleOffers, setUserEligibleOffers] = useState<
+    UserEligibleOffer[]
+  >([]);
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
   const [isFetchingOffers, setIsFetchingOffers] = useState(false);
-  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(new Set());
-  const [offerModal, setOfferModal] = useState<{ visible: boolean; content: string }>({
+  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(
+    new Set()
+  );
+  const [offerModal, setOfferModal] = useState<{
+    visible: boolean;
+    content: string;
+  }>({
     visible: false,
     content: "",
   });
@@ -112,21 +121,21 @@ const Categories: React.FC<CategoriesProps> = ({
     "0"
   );
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
-    null
-  );
+    null
+  );
 
-const [disabledFilters, setDisabledFilters] = useState<{
+  const [disabledFilters, setDisabledFilters] = useState<{
     [key: string]: boolean;
-  }>({});
+  }>({});
 
   const weightFilters = [
     { label: "1 KG", value: "1.0" },
     { label: "5 KG", value: "5.0" },
     { label: "10 KG", value: "10.0" },
-    { label: "26 KG", value: "26.0" },
-  ];
+    { label: "26 KG", value: "26.0" },
+  ];
 
-useEffect(() => {
+  useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const weight = queryParams.get("weight");
     if (weight && weightFilters.some((filter) => filter.value === weight)) {
@@ -152,7 +161,7 @@ useEffect(() => {
 
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
-  };
+  };
 
   const fetchCartData = async (itemId: string = "") => {
     const userId = localStorage.getItem("userId");
@@ -179,7 +188,8 @@ useEffect(() => {
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      const customerCart: CartItem[] = response.data?.customerCartResponseList || [];
+      const customerCart: CartItem[] =
+        response.data?.customerCartResponseList || [];
 
       console.log("fetchCartData API response:", response.data);
 
@@ -232,7 +242,13 @@ useEffect(() => {
         ) {
           setOfferModal({
             visible: true,
-            content: `<b>2+1 Offer Is Active.</b><br><br>Buy 2 Bags of ${addItem.itemName} of ${normalizeWeight(addItem.weight)} Kg and get 1 Bag of ${freeItem.itemName} of ${normalizeWeight(freeItem.weight)} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+            content: `<b>2+1 Offer Is Active.</b><br><br>Buy Two Bags of ${
+              addItem.itemName
+            } of ${normalizeWeight(addItem.weight)} Kg and get One Bag of ${
+              freeItem.itemName
+            } of ${normalizeWeight(
+              freeItem.weight
+            )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`2+1_${addItem.itemId}`);
         }
@@ -252,13 +268,16 @@ useEffect(() => {
             normalizeWeight(item.weight) === 1.0 &&
             item.cartQuantity === 2
         );
-        if (
-          freeItems &&
-          !newDisplayedOffers.has(`5+2_${addItem.itemId}`)
-        ) {
+        if (freeItems && !newDisplayedOffers.has(`5+2_${addItem.itemId}`)) {
           setOfferModal({
             visible: true,
-            content: `<b>5+2 Offer Is Active.</b><br><br>Buy 1 Bag of ${addItem.itemName} of ${normalizeWeight(addItem.weight)} Kg and get 2 Bags of ${freeItems.itemName} of ${normalizeWeight(freeItems.weight)} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+            content: `<b>5+2 Offer Is Active.</b><br><br>Buy One Bag of ${
+              addItem.itemName
+            } of ${normalizeWeight(addItem.weight)} Kg and get Two Bags of ${
+              freeItems.itemName
+            } of ${normalizeWeight(
+              freeItems.weight
+            )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`5+2_${addItem.itemId}`);
         }
@@ -268,7 +287,8 @@ useEffect(() => {
       const containerOfferItems = customerCart.filter(
         (item) =>
           item.status === "ADD" &&
-          (normalizeWeight(item.weight) === 10.0 || normalizeWeight(item.weight) === 26.0) &&
+          (normalizeWeight(item.weight) === 10.0 ||
+            normalizeWeight(item.weight) === 26.0) &&
           item.cartQuantity >= 1
       );
       for (const addItem of containerOfferItems) {
@@ -284,7 +304,7 @@ useEffect(() => {
         ) {
           setOfferModal({
             visible: true,
-            content: `<b>Special Offer!</b><br>Free Container added to the cart successfully.`,
+            content: `<br>Free Container added to the cart successfully.`,
           });
           newDisplayedOffers.add(`container_${addItem.itemId}`);
         }
@@ -507,8 +527,8 @@ useEffect(() => {
       });
     }
 
-    return items;
-  };
+    return items;
+  };
 
   const handleQuantityChange = async (
     item: Item,
@@ -884,7 +904,7 @@ useEffect(() => {
                   <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm">
                     {item.itemName}
                   </h3>
-                     <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500">
                     Weight: {item.weight}{" "}
                     {item.units == "pcs"
                       ? "Pc"

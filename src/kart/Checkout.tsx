@@ -6,12 +6,13 @@ import Footer from "../components/Footer";
 import {
   ArrowLeft,
   CreditCard,
+  Plus,
   Truck,
   Tag,
   ShoppingBag,
   Clock,
 } from "lucide-react";
-import { FaBars, FaTimes } from "react-icons/fa";
+import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { Loader2, X } from "lucide-react";
@@ -38,6 +39,8 @@ interface Address {
   address: string;
   pincode: string;
   addressType: "Home" | "Work" | "Others";
+  latitude?: number;
+  longitude?: number;
 }
 
 interface ProfileData {
@@ -47,6 +50,7 @@ interface ProfileData {
   whatsappNumber: string;
 }
 
+// Update the TimeSlot interface to include the status properties
 interface TimeSlot {
   id: string;
   dayOfWeek: string;
@@ -58,6 +62,23 @@ interface TimeSlot {
   date: string;
   isToday: boolean;
   isAvailable: boolean;
+  // Add these new properties as optional to maintain compatibility
+  slot1Status?: boolean;
+  slot2Status?: boolean;
+  slot3Status?: boolean;
+  slot4Status?: boolean;
+}
+
+// Type definitions
+interface DayInfo {
+  dayOfWeek: string;
+  date: string;
+  formattedDay: string;
+}
+
+// Extend the original TimeSlot interface to include formattedDay
+interface ExtendedTimeSlot extends TimeSlot {
+  formattedDay?: string;
 }
 
 const CheckoutPage: React.FC = () => {
@@ -86,6 +107,8 @@ const CheckoutPage: React.FC = () => {
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [afterWallet, setAfterWallet] = useState<number>(0);
   const [usedWalletAmount, setUsedWalletAmount] = useState<number>(0);
+  const [isDeliveryTimelineModalVisible, setIsDeliveryTimelineModalVisible] =
+    useState(false);
   const [orderId, setOrderId] = useState<string>();
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
@@ -94,18 +117,24 @@ const CheckoutPage: React.FC = () => {
     whatsappNumber: "",
   });
   const [merchantTransactionId, setMerchantTransactionId] = useState();
+  const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] =
+    useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<string>("");
+  const [language, setLanguage] = useState<"english" | "telugu">("english");
   const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
   const userData = localStorage.getItem("profileData");
   const [isButtonDisabled, setisButtonDisabled] = useState(false);
+  const [showOtherOptions, setShowOtherOptions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  //Exchange policy
+  const [exchangePolicyAccepted, setExchangePolicyAccepted] = useState(false);
   const isFreeItem = (item: CartItem) => item.status === "FREE";
 
   const context = useContext(CartContext);
@@ -115,13 +144,14 @@ const CheckoutPage: React.FC = () => {
   const { count, setCount } = context;
 
   useEffect(() => {
-    fetchInitialData();
-
+    fetchCartData();
+    // totalCart();
+    getWalletAmount();
+    fetchTimeSlots();
     const queryParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(queryParams.entries());
     const order = params.trans;
     setOrderId(order);
-
     if (userData) {
       setProfileData(JSON.parse(userData));
     }
@@ -135,113 +165,253 @@ const CheckoutPage: React.FC = () => {
     }
   }, [orderId]);
 
-  const formatDate = (date: Date, isToday: boolean = false): string => {
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    const today = new Date();
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-
-    if (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    ) {
-      return "Today";
+  useEffect(() => {
+    if (selectedTimeSlot && !isDeliveryTimelineModalVisible) {
+      setIsDeliveryTimelineModalVisible(true);
     }
-    return `${day}-${month}-${year}`;
+  }, [selectedTimeSlot]);
+
+  // Type-safe time slot selection handler
+  const handleSelectTimeSlot = (
+    date: string,
+    timeSlot: string,
+    day: string
+  ): void => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(timeSlot);
+    setSelectedDay(day);
+    setShowTimeSlotModal(false);
+    message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
+    setIsDeliveryTimelineModalVisible(true);
   };
 
-  const isOrderPlacedToday = (orderDate?: string | null) => {
-    if (!orderDate) return false;
-    const today = new Date();
-    const orderDateObj = new Date(orderDate);
+  // Type definition for time slot object used in rendering
+  interface TimeSlotObj {
+    key: string;
+    value: string | null;
+  }
+
+  const handleShowDeliveryTimeline = () => {
+    setShowDeliveryTimelineModal(true);
+  };
+  // Replace the old renderDeliveryTimelineModal function with this one
+  const renderDeliveryTimelineModal = () => {
     return (
-      orderDateObj.getDate() === today.getDate() &&
-      orderDateObj.getMonth() === today.getMonth() &&
-      orderDateObj.getFullYear() === today.getFullYear()
+      <Modal
+        title="Delivery Information"
+        open={isDeliveryTimelineModalVisible}
+        onCancel={() => setIsDeliveryTimelineModalVisible(false)}
+        footer={null}
+        centered
+        width={500}
+        closeIcon={<X className="w-5 h-5" />}
+      >
+        <div className="text-center">
+          <div className="mb-4 flex justify-center">
+            <button
+              onClick={() => setLanguage("english")}
+              className={`px-4 py-2 rounded-l-md transition-colors ${
+                language === "english"
+                  ? "bg-purple-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setLanguage("telugu")}
+              className={`px-4 py-2 rounded-r-md transition-colors ${
+                language === "telugu"
+                  ? "bg-purple-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              తెలుగు
+            </button>
+          </div>
+
+          <div>
+            <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
+            <h3 className="text-xl font-bold mb-4">
+              {language === "english"
+                ? "Delivery Information"
+                : "డెలివరీ సమాచారం"}
+            </h3>
+            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
+              {language === "english" ? (
+                <>
+                  <p className="mb-3">
+                    📦 <strong>Delivery Timeline:</strong> Your order will be
+                    delivered within 4 hours to 4 days, depending on the volume
+                    of orders and location. We're doing our best to group nearby
+                    orders together so we can deliver more efficiently and
+                    sustainably. 🚚
+                  </p>
+                  <p className="mb-3">
+                    With your support, we'll be able to grow and serve you even
+                    better. 🙏
+                  </p>
+                  <p>
+                    Please support us by spreading the word to friends and
+                    family nearby! More orders = faster and more efficient
+                    deliveries for everyone! Thank you again!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-3">
+                    📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి
+                    4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ
+                    ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి
+                    సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚
+                  </p>
+                  <p className="mb-3">
+                    మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు
+                    మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత
+                    మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
+                  </p>
+                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsDeliveryTimelineModalVisible(false)}
+            className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+          >
+            {language === "english" ? "Close" : "మూసివేయి"}
+          </button>
+        </div>
+      </Modal>
     );
   };
 
-  const fetchTimeSlots = async () => {
+  // Updated function to get next available days, not just the next 3 calendar days
+  const getAvailableDays = (maxDays: number = 14): DayInfo[] => {
+    const today = new Date();
+
+    // Start from tomorrow
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const startDate = tomorrow;
+    const daysOfWeek = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const months = [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+    ];
+
+    // Generate information for the next maxDays days
+    const nextDays: DayInfo[] = [];
+    for (let offset = 0; offset < maxDays; offset++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + offset);
+
+      nextDays.push({
+        dayOfWeek: daysOfWeek[date.getDay()].toUpperCase(),
+        date: `${String(date.getDate()).padStart(2, "0")}-${
+          months[date.getMonth()]
+        }-${date.getFullYear()}`,
+        formattedDay: daysOfWeek[date.getDay()],
+      });
+    }
+
+    return nextDays;
+  };
+
+  const fetchTimeSlots = async (): Promise<void> => {
     try {
+      setLoading(true);
+
       const response = await axios.get(
         `${BASE_URL}/order-service/fetchTimeSlotlist`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data && Array.isArray(response.data)) {
-        const currentDate = new Date();
-        const currentDay = currentDate.getDay();
-        const orderDate = null;
-        const orderPlacedToday = orderDate
-          ? isOrderPlacedToday(orderDate)
-          : false;
-        const dayNames = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ];
-        const startDayOffset = 1;
+        // Get information for the next 14 days (or adjust as needed)
+        const nextDays = getAvailableDays(14);
 
-        const formattedTimeSlots = Array.from({ length: 3 }).map((_, index) => {
-          const dayOffset = startDayOffset + index;
-          const slotDate = new Date(currentDate);
-          slotDate.setDate(currentDate.getDate() + dayOffset);
-          const isToday = false;
-          const dayIndex = (currentDay + dayOffset) % 7;
-          const dayOfWeek = dayNames[dayIndex].toUpperCase();
-          const formattedDate = `${String(slotDate.getDate()).padStart(
-            2,
-            "0"
-          )}-${String(slotDate.getMonth() + 1).padStart(
-            2,
-            "0"
-          )}-${slotDate.getFullYear()}`;
+        // Define a type for the API response slots
+        interface ApiTimeSlot {
+          id: string;
+          dayOfWeek: string;
+          timeSlot1: string | null;
+          timeSlot2: string | null;
+          timeSlot3: string | null;
+          timeSlot4: string | null;
+          isAvailable: boolean;
+        }
 
-          const slotData = response.data[index] || {
-            id: `day-${dayOffset}`,
-            timeSlot1: "08:00 AM-12:00 PM",
-            timeSlot2: "12:00 PM-04:00 PM",
-            timeSlot3: "04:00 PM-08:00 PM",
-            timeSlot4: "08:00 PM-10:00 PM",
-            isAvailable: true,
-          };
+        // Process and format time slots
+        const formattedTimeSlots: ExtendedTimeSlot[] = [];
 
-          return {
-            ...slotData,
-            dayOfWeek,
-            expectedDeliveryDate: formattedDate,
-            timeSlot1: slotData.timeSlot1 || "",
-            timeSlot2: slotData.timeSlot2 || "",
-            timeSlot3: slotData.timeSlot3 || "",
-            timeSlot4: slotData.timeSlot4 || "",
-            date: formatDate(slotDate, isToday),
-          };
-        });
+        // Iterate through days until we find 3 available days or reach the end
+        for (const dayInfo of nextDays) {
+          // Find matching slot for this day
+          const matchingSlot = response.data.find(
+            (slot: ApiTimeSlot) =>
+              slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
+          );
 
+          // If we find an available slot for this day, add it to our formatted slots
+          if (matchingSlot) {
+            // Check if at least one time slot is available
+            const hasTimeSlot =
+              matchingSlot.timeSlot1 ||
+              matchingSlot.timeSlot2 ||
+              matchingSlot.timeSlot3 ||
+              matchingSlot.timeSlot4;
+
+            if (hasTimeSlot) {
+              formattedTimeSlots.push({
+                id: matchingSlot.id,
+                dayOfWeek: dayInfo.dayOfWeek,
+                expectedDeliveryDate: dayInfo.date,
+                timeSlot1: matchingSlot.timeSlot1,
+                timeSlot2: matchingSlot.timeSlot2,
+                timeSlot3: matchingSlot.timeSlot3,
+                timeSlot4: matchingSlot.timeSlot4,
+                isAvailable: false, // isAvailable=false means slots are available for selection
+                isToday: false,
+                date: dayInfo.date,
+                formattedDay: dayInfo.formattedDay,
+              });
+            }
+          }
+
+          // If we've found 3 available days, we can stop
+          if (formattedTimeSlots.length >= 3) {
+            break;
+          }
+        }
+
+        // Set the time slots state with what we found (might be fewer than 3)
         setTimeSlots(formattedTimeSlots);
       }
     } catch (error) {
       console.error("Error fetching time slots:", error);
       message.error("Failed to fetch delivery time slots");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -299,158 +469,152 @@ const CheckoutPage: React.FC = () => {
     setShowTimeSlotModal(true);
   };
 
-  const handleSelectTimeSlot = (
-    date: string,
-    timeSlot: string,
-    day: string
-  ) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(timeSlot);
-    setSelectedDay(day);
-    setShowTimeSlotModal(false);
-    message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
-  };
-
   const fetchCartData = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      if (response.data.customerCartResponseList) {
-        const cartItems = response.data.customerCartResponseList;
-        setCartData(cartItems || []);
+    if (response.data.customerCartResponseList) {
+      const cartItems = response.data.customerCartResponseList;
+      setCartData(cartItems || []);
 
-        // Calculate total quantity including both regular and free items
-        const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
-          return sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0);
+      // Calculate total quantity including both regular and free items for display
+      const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
+        return sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0);
+      }, 0);
+      setCount(totalQuantity);
+
+      // Calculate price data for items with status "ADD" only
+      const amountToPay = cartItems
+        .filter((item: CartItem) => item.status === "ADD")
+        .reduce((sum: number, item: CartItem) => {
+          return sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity);
         }, 0);
-        setCount(totalQuantity);
 
-        // Update price data
-        setSubGst(parseFloat(response.data.totalGstAmountToPay || "0"));
-        const totalDeliveryFee = cartItems.reduce(
-          (sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0),
-          0
-        );
-        setDeliveryBoyFee(totalDeliveryFee);
-        setTotalAmount(parseFloat(response.data.totalCartValue || "0"));
-        setGrandTotal(parseFloat(response.data.amountToPay || "0"));
+      const totalDeliveryFee = cartItems
+        .filter((item: CartItem) => item.status === "ADD")
+        .reduce((sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0), 0);
 
-        // Trigger total recalculation
-        setTimeout(() => {
-          grandTotalfunc();
-        }, 100);
-      } else {
-        setCartData([]);
-        setCount(0);
-      }
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-      message.error("Failed to fetch cart items");
+      // Get GST from API response
+      const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
+
+      // Update price-related states
+      setSubGst(gstAmount);
+      setDeliveryBoyFee(totalDeliveryFee);
+      setTotalAmount(amountToPay);
+      setGrandTotal(amountToPay);
+
+      // Calculate grand total including GST and delivery fee
+      const totalWithGst = amountToPay + gstAmount;
+      const totalWithDelivery = totalWithGst + totalDeliveryFee;
+      setGrandTotalAmount(totalWithDelivery);
+    } else {
+      setCartData([]);
+      setCount(0);
+      setSubGst(0);
+      setDeliveryBoyFee(0);
+      setTotalAmount(0);
+      setGrandTotal(0);
+      setGrandTotalAmount(0);
     }
-  };
-
-  const formatPrice = (price: number, fallbackMessage = "Loading...") => {
-    if (pricesLoading) return fallbackMessage;
-    if (price === 0 && !pricesLoading) return "₹0.00";
-    return `₹${price.toFixed(2)}`;
-  };
+  } catch (error) {
+    console.error("Error fetching cart items:", error);
+    message.error("Failed to fetch cart items");
+  }
+};
 
   // 2. Make the fetchInitialData function more reliable
   const fetchInitialData = async () => {
-    try {
-      setPricesLoading(true);
+  try {
+    setPricesLoading(true);
 
-      // Fetch cart data
-      const cartResponse = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    // Fetch cart data
+    const cartResponse = await axios.get(
+      `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      if (cartResponse.data && cartResponse.data.customerCartResponseList) {
-        const cartItems = cartResponse.data.customerCartResponseList;
-        setCartData(cartItems || []);
+    if (cartResponse.data && cartResponse.data.customerCartResponseList) {
+      const cartItems = cartResponse.data.customerCartResponseList;
+      setCartData(cartItems || []);
 
-        // Calculate total quantity including both regular and free items
-        const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
-          return sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0);
+      // Calculate total quantity including both regular and free items for display
+      const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
+        return sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0);
+      }, 0);
+      setCount(totalQuantity);
+
+      // Calculate price data for items with status "ADD" only
+      const amountToPay = cartItems
+        .filter((item: CartItem) => item.status === "ADD")
+        .reduce((sum: number, item: CartItem) => {
+          return sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity);
         }, 0);
-        setCount(totalQuantity);
 
-        // Calculate price data for non-free items
-        const amountToPay = cartItems
-          .filter((item: CartItem) => item.status !== "FREE")
-          .reduce((sum: number, item: CartItem) => {
-            return (
-              sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity)
-            );
-          }, 0);
+      const gstAmount = parseFloat(cartResponse.data.totalGstAmountToPay || "0");
 
-        const gstAmount = parseFloat(
-          cartResponse.data.totalGstAmountToPay || "0"
+      const cartValue = cartItems
+        .filter((item: CartItem) => item.status === "ADD")
+        .reduce((sum: number, item: CartItem) => {
+          return sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity);
+        }, 0);
+
+      const totalDeliveryFee = cartItems
+        .filter((item: CartItem) => item.status === "ADD")
+        .reduce((sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0), 0);
+
+      // Set price state variables
+      setGrandTotal(amountToPay);
+      setSubGst(gstAmount);
+      setDeliveryBoyFee(totalDeliveryFee);
+      setTotalAmount(cartValue);
+
+      // Calculate grand total including GST and delivery fee
+      const totalWithGst = amountToPay + gstAmount;
+      const totalWithDelivery = totalWithGst + totalDeliveryFee;
+      setGrandTotalAmount(totalWithDelivery);
+
+      // Fetch wallet data
+      try {
+        const walletResponse = await axios.post(
+          `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
+          { customerId },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        const cartValue = cartItems
-          .filter((item: CartItem) => item.status !== "FREE")
-          .reduce((sum: number, item: CartItem) => {
-            return (
-              sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity)
-            );
-          }, 0);
 
-        const totalDeliveryFee = cartItems.reduce(
-          (sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0),
-          0
-        );
-
-        // Set price state variables
-        setGrandTotal(amountToPay);
-        setSubGst(gstAmount);
-        setDeliveryBoyFee(totalDeliveryFee);
-        setTotalAmount(cartValue);
-
-        // Calculate grand total
-        const totalWithGst = amountToPay + gstAmount;
-        const totalWithDelivery = totalWithGst + totalDeliveryFee;
-        setGrandTotalAmount(totalWithDelivery);
-
-        // Fetch wallet data
-        try {
-          const walletResponse = await axios.post(
-            `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
-            { customerId },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          const usableAmount =
-            walletResponse.data.usableWalletAmountForOrder || 0;
-          setWalletAmount(usableAmount);
-          setAfterWallet(usableAmount);
-          setWalletMessage(walletResponse.data.message || "");
-        } catch (walletError) {
-          console.error("Error fetching wallet data:", walletError);
-        }
-
-        // Fetch time slots
-        fetchTimeSlots();
-
-        // Recalculate grand total after all data is loaded
-        requestAnimationFrame(() => {
-          grandTotalfunc();
-          setPricesLoading(false);
-        });
-      } else {
-        setCartData([]);
-        setCount(0);
-        setPricesLoading(false);
+        const usableAmount = walletResponse.data.usableWalletAmountForOrder || 0;
+        setWalletAmount(usableAmount);
+        setAfterWallet(usableAmount);
+        setWalletMessage(walletResponse.data.message || "");
+      } catch (walletError) {
+        console.error("Error fetching wallet data:", walletError);
       }
-    } catch (error) {
-      console.error("Error fetching initial data:", error);
-      message.error("Failed to load checkout data");
+
+      // Fetch time slots
+      fetchTimeSlots();
+
+      // Recalculate grand total after all data is loaded
+      requestAnimationFrame(() => {
+        setPricesLoading(false);
+      });
+    } else {
+      setCartData([]);
+      setCount(0);
+      setGrandTotal(0);
+      setSubGst(0);
+      setDeliveryBoyFee(0);
+      setTotalAmount(0);
+      setGrandTotalAmount(0);
       setPricesLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching initial data:", error);
+    message.error("Failed to load checkout data");
+    setPricesLoading(false);
+  }
+};
 
   const handleInterested = async () => {
     try {
@@ -492,42 +656,6 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const showSampleModal = () => {
-    Modal.confirm({
-      title: "Special Offer!",
-      content: (
-        <div className="text-center">
-          <p className="text-lg font-bold text-green-600">
-            Free Rice Container with Your Order!
-          </p>
-          <p className="mt-2">
-            Buy 9 bags of 26 kg’s / 10 kg’s in 3 years or refer 9 friends and
-            when they buy their first bag the container is yours forever.
-          </p>
-          <p className="mt-2 text-sm text-black-600">
-            <b>
-              * No purchase in 45 days or gap of 45 days between purchases =
-              Container will be taken back
-            </b>
-          </p>
-        </div>
-      ),
-      okText: isSubmitting ? "Submitting..." : "I’m Interested",
-      cancelText: "Not Interested",
-      okButtonProps: { disabled: isSubmitting },
-      onOk: async () => {
-        if (isSubmitting) return;
-        setIsSubmitting(true);
-        try {
-          await handleInterested();
-        } finally {
-          setIsSubmitting(false);
-        }
-      },
-      onCancel: () => navigate("/main/myorders"),
-    });
-  };
-
   const handleApplyCoupon = () => {
     const data = {
       couponCode: couponCode,
@@ -543,10 +671,9 @@ const CheckoutPage: React.FC = () => {
       .then((response) => {
         const { discount, grandTotal } = response.data;
         message.info(response.data.message);
-        setCoupenDetails(discount);
+        setCoupenDetails(discount || 0);
         setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
-        grandTotalfunc();
       })
       .catch((error) => {
         console.error("Error in applying coupon:", error);
@@ -558,91 +685,74 @@ const CheckoutPage: React.FC = () => {
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
-    setCoupenDetails(null);
+    setCoupenDetails(0);
+    setUseWallet(false);
+    setUsedWalletAmount(0);
+    setAfterWallet(walletAmount);
     message.info("Coupon removed successfully");
-    grandTotalfunc();
   };
 
-  const grandTotalfunc = () => {
+  const getWalletAmount = async () => {
     try {
-      // Check if we have valid data to work with
-      if (pricesLoading) return;
+      const response = await axios.post(
+        `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
+        { customerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      // Get base amount, with fallback to avoid zero issues
-      const baseAmount = grandTotal || 0;
+      const usableAmount = response.data.usableWalletAmountForOrder || 0;
+      setWalletAmount(usableAmount);
+      setAfterWallet(usableAmount); // Initially, after wallet = available wallet
+      setWalletMessage(response.data.message || "");
+      setUsedWalletAmount(0); // Initially no wallet amount is used
 
-      // Skip calculating if we don't have data yet and aren't loading
-      if (baseAmount === 0 && !pricesLoading) {
-        console.log("Skipping calculation - no base amount available");
-        return;
-      }
-
-      // Calculate with appropriate fallbacks for each value
-      const totalWithGst = baseAmount + (subGst || 0);
-      const totalWithDelivery = totalWithGst + (deliveryBoyFee || 0);
-
-      const afterCoupon =
-        coupenApplied && coupenDetails
-          ? Math.max(0, totalWithDelivery - coupenDetails)
-          : totalWithDelivery;
-
-      let finalUsedWallet = 0;
-      let finalTotal = afterCoupon;
-
-      if (useWallet && walletAmount > 0) {
-        finalUsedWallet = Math.min(walletAmount, afterCoupon);
-        finalTotal = Math.max(0, afterCoupon - finalUsedWallet);
-      }
-
-      // Log the calculation for debugging
-      console.log("Grand total calculation:", {
-        baseAmount,
-        subGst,
-        deliveryBoyFee,
-        totalWithGst,
-        totalWithDelivery,
-        afterCoupon,
-        finalUsedWallet,
-        finalTotal,
-      });
-
-      // Update state with calculated values
-      setUsedWalletAmount(finalUsedWallet);
-      setAfterWallet(walletAmount - finalUsedWallet);
-      setGrandTotalAmount(finalTotal);
-
-      if (finalTotal === 0 && finalUsedWallet > 0) {
-        setSelectedPayment("COD");
-      }
-    } catch (error) {
-      console.error("Error calculating grand total:", error);
-      message.error("Error calculating total");
+      // Make sure to reset these states when getting new wallet information
+      setUseWallet(false);
+    } catch (error: unknown) {
+      console.error("Error fetching wallet amount:", error);
+      message.error("Failed to fetch wallet balance");
+      setWalletAmount(0);
+      setAfterWallet(0);
+      setUsedWalletAmount(0);
+      setUseWallet(false);
     }
   };
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (
-        document.visibilityState === "visible" &&
-        grandTotal === 0 &&
-        !pricesLoading
-      ) {
-        console.log("Page became visible, recalculating grand total");
-        fetchInitialData();
-      }
-    };
+  function grandTotalfunc() {
+  // Start with base total including subtotal, delivery fee, and GST
+  const baseTotal = totalAmount + deliveryBoyFee + subGst;
+  let discountedTotal = baseTotal;
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+  // Apply coupon discount if applicable
+  if (coupenApplied && coupenDetails > 0) {
+    discountedTotal = Math.max(0, discountedTotal - coupenDetails);
+  }
 
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [grandTotal, pricesLoading]);
+  // Calculate wallet usage
+  let newUsedWalletAmount = 0;
+  if (useWallet && walletAmount > 0) {
+    // Only use what's needed from wallet, up to available amount
+    newUsedWalletAmount = Math.min(walletAmount, discountedTotal);
+    discountedTotal = Math.max(0, discountedTotal - newUsedWalletAmount);
+  }
+
+  // Update states correctly
+  setUsedWalletAmount(newUsedWalletAmount);
+  setAfterWallet(walletAmount - newUsedWalletAmount);
+  setGrandTotalAmount(discountedTotal);
+};
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
+
+    // Calculate the current total after any coupon discounts
+    let currentTotal = totalAmount + deliveryBoyFee;
+    if (coupenApplied && coupenDetails > 0) {
+      currentTotal = Math.max(0, currentTotal - coupenDetails);
+    }
+
     const potentialUsedAmount = newValue
-      ? Math.min(walletAmount, grandTotalAmount || grandTotal)
+      ? Math.min(walletAmount, currentTotal)
       : 0;
 
     Modal.confirm({
@@ -654,9 +764,19 @@ const CheckoutPage: React.FC = () => {
         : `Stop using ₹${usedWalletAmount.toFixed(2)} from your wallet?`,
       onOk: () => {
         setUseWallet(newValue);
-        setUsedWalletAmount(potentialUsedAmount);
-        setAfterWallet(walletAmount - potentialUsedAmount);
-        grandTotalfunc();
+
+        if (newValue) {
+          // If enabling wallet, calculate proper amount to use
+          setUsedWalletAmount(potentialUsedAmount);
+          setAfterWallet(walletAmount - potentialUsedAmount);
+          setGrandTotalAmount(currentTotal - potentialUsedAmount);
+        } else {
+          // If disabling wallet, reset wallet usage and recalculate total
+          setUsedWalletAmount(0);
+          setAfterWallet(walletAmount);
+          setGrandTotalAmount(currentTotal);
+        }
+
         message.success(newValue ? "Wallet applied" : "Wallet removed");
       },
       onCancel: () => {
@@ -668,17 +788,26 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     grandTotalfunc();
   }, [
-    grandTotal,
-    subGst,
+    totalAmount,
     deliveryBoyFee,
     coupenApplied,
     coupenDetails,
     useWallet,
     walletAmount,
-    totalAmount,
   ]);
 
   const handlePayment = async () => {
+    console.log("Exchange policy accepted:", exchangePolicyAccepted);
+
+    if (!exchangePolicyAccepted) {
+      Modal.warning({
+        title: "Confirmation Required",
+        content:
+          "Please confirm that the exchange can be taken within 10 days after delivery.",
+      });
+      return;
+    }
+
     try {
       const hasStockIssues = cartData.some(
         (item) =>
@@ -701,7 +830,8 @@ const CheckoutPage: React.FC = () => {
         return;
       }
 
-      if (useWallet && walletAmount < usedWalletAmount) {
+      // Validate that wallet usage doesn't exceed available amount
+      if (useWallet && usedWalletAmount > walletAmount) {
         Modal.error({
           title: "Wallet Error",
           content: "Insufficient wallet balance",
@@ -711,6 +841,9 @@ const CheckoutPage: React.FC = () => {
 
       setLoading(true);
 
+      // Make sure we're passing the correct wallet amount
+      const finalWalletAmount = useWallet ? usedWalletAmount : 0;
+
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
@@ -718,9 +851,9 @@ const CheckoutPage: React.FC = () => {
           customerId,
           flatNo: selectedAddress.flatNo,
           landMark: selectedAddress.landMark,
-          orderStatus: selectedPayment,
+          orderStatus: selectedPayment, // Use the selected payment method
           pincode: selectedAddress.pincode,
-          walletAmount: usedWalletAmount,
+          walletAmount: finalWalletAmount, // Use the correct wallet amount
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
           couponValue: coupenApplied ? coupenDetails : 0,
           deliveryBoyFee,
@@ -730,49 +863,80 @@ const CheckoutPage: React.FC = () => {
           dayOfWeek: selectedDay,
           expectedDeliveryDate: selectedDate,
           timeSlot: selectedTimeSlot,
+          latitude: selectedAddress.latitude,
+          longitude: selectedAddress.longitude,
+          orderFrom: "WEB",
+          paymentType: selectedPayment === "COD" ? 0 : 1, // Add payment type: 0 for COD, 1 for ONLINE
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Handle different payment flows based on selected method
       if (response.status === 200 && response.data) {
         await fetchCartData();
 
-        if (selectedPayment === "COD" && !response.data.paymentId) {
-          if (response.data) {
-            showSampleModal();
-            return;
-          }
-          Modal.success({
-            content: "Order placed Successfully",
-            onOk: () => navigate("/main/myorders"),
-          });
-        } else if (selectedPayment === "ONLINE" && response.data.paymentId) {
-          const number = localStorage.getItem("whatsappNumber");
-          const withoutCountryCode = number?.replace("+91", "");
-          sessionStorage.setItem("address", JSON.stringify(selectedAddress));
-
-          const paymentData = {
-            mid: "1152305",
-            amount: 1,
-            merchantTransactionId: response.data.paymentId,
-            transactionDate: new Date(),
-            terminalId: "getepay.merchant128638@icici",
-            udf1: withoutCountryCode,
-            udf2: `${profileData.firstName} ${profileData.lastName}`,
-            udf3: profileData.email,
-            ru: `https://sandbox.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-            callbackUrl: `https://sandbox.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+        // GA4 Purchase Event Tracking
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "purchase", {
+            transaction_id:
+              response.data.paymentId ||
+              `${selectedPayment}_${new Date().getTime()}`,
+            value: grandTotalAmount,
             currency: "INR",
-            paymentMode: "ALL",
-            txnType: "single",
-            productType: "IPG",
-            txnNote: "Rice Order In Live",
-            vpa: "getepay.merchant128638@icici",
-          };
+            tax: subGst,
+            shipping: deliveryBoyFee,
+            coupon: coupenApplied ? couponCode.toUpperCase() : "",
+            payment_type: selectedPayment,
+            items: cartData.map((item) => ({
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: parseFloat(item.itemPrice),
+              quantity: parseInt(item.cartQuantity),
+              item_category: "Rice",
+            })),
+          });
+        }
 
-          getepayPortal(paymentData);
+        // Handle COD orders differently than online payments
+        if (selectedPayment === "COD") {
+          // For COD, just show success and redirect
+          Modal.success({
+            content: "Order placed successfully! You'll pay on delivery.",
+            onOk: () => {
+              navigate("/main/myorders");
+              fetchCartData();
+            },
+          });
         } else {
-          message.error("Order failed");
+          // For online payment, proceed with payment gateway
+          if (response.data.paymentId) {
+            const number = localStorage.getItem("whatsappNumber");
+            const withoutCountryCode = number?.replace("+91", "");
+            sessionStorage.setItem("address", JSON.stringify(selectedAddress));
+
+            const paymentData = {
+              mid: "1152305",
+              amount: grandTotalAmount,
+              merchantTransactionId: response.data.paymentId,
+              transactionDate: new Date(),
+              terminalId: "getepay.merchant128638@icici",
+              udf1: withoutCountryCode,
+              udf2: `${profileData.firstName} ${profileData.lastName}`,
+              udf3: profileData.email,
+              ru: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              callbackUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              currency: "INR",
+              paymentMode: "ALL",
+              txnType: "single",
+              productType: "IPG",
+              txnNote: "Rice Order In Live",
+              vpa: "getepay.merchant128638@icici",
+            };
+
+            getepayPortal(paymentData);
+          } else {
+            message.error("Order failed");
+          }
         }
       }
     } catch (error) {
@@ -781,6 +945,71 @@ const CheckoutPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderPaymentMethods = () => {
+    return (
+      <div className="space-y-3">
+        <div
+          className={`p-3 border rounded-md ${
+            selectedPayment === "ONLINE"
+              ? "border-purple-500 bg-purple-50"
+              : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
+          } flex items-center cursor-pointer transition-colors`}
+          onClick={() => setSelectedPayment("ONLINE")}
+        >
+          <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                selectedPayment === "ONLINE" ? "bg-purple-500" : ""
+              } m-0.5`}
+            ></div>
+          </div>
+          <label className="ml-2 flex-grow cursor-pointer">
+            Online Payment
+          </label>
+        </div>
+
+        {!showOtherOptions ? (
+          <button
+            onClick={() => setShowOtherOptions(true)}
+            className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Other Options
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div
+              className={`p-3 border rounded-md ${
+                selectedPayment === "COD"
+                  ? "border-purple-500 bg-purple-50"
+                  : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
+              } flex items-center cursor-pointer transition-colors`}
+              onClick={() => setSelectedPayment("COD")}
+            >
+              <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    selectedPayment === "COD" ? "bg-purple-500" : ""
+                  } m-0.5`}
+                ></div>
+              </div>
+              <label className="ml-2 flex-grow cursor-pointer">
+                Cash on Delivery (COD)
+              </label>
+            </div>
+            <button
+              onClick={() => setShowOtherOptions(false)}
+              className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Close Options
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const getepayPortal = async (data: any) => {
@@ -816,19 +1045,12 @@ const CheckoutPage: React.FC = () => {
         localStorage.setItem("paymentId", data.paymentId);
         localStorage.setItem("merchantTransactionId", mer);
         const paymentUrl = data.paymentUrl;
-
-        Modal.confirm({
-          title: "Proceed to Payment?",
-          content: "Click on Yes to continue to the payment gateway.",
-          okText: "Yes",
-          cancelText: "No",
-          onOk() {
-            window.location.href = paymentUrl;
-          },
-        });
+        window.location.href = paymentUrl;
       })
-      .catch((error) => console.log("getepayPortal", error.response));
-    setLoading(false);
+      .catch((error) => {
+        console.log("getepayPortal", error.response);
+        message.error("Failed to generate payment invoice");
+      });
   };
 
   function Requery(paymentId: any) {
@@ -936,31 +1158,15 @@ const CheckoutPage: React.FC = () => {
                   localStorage.removeItem("paymentId");
                   localStorage.removeItem("merchantTransactionId");
                   fetchCartData();
-                  if (secondResponse.data.status === null) {
-                    if (secondResponse.data.status) {
-                      showSampleModal();
-                      return;
-                    }
-                    Modal.success({
-                      content: "Order placed Successfully",
-                      onOk: () => {
-                        navigate("/main/myorders");
-                        fetchCartData();
-                      },
-                    });
-                  } else {
-                    if (secondResponse.data.status) {
-                      showSampleModal();
-                      return;
-                    }
-                    Modal.success({
-                      content: secondResponse.data.status,
-                      onOk: () => {
-                        navigate("/main/myorders");
-                        fetchCartData();
-                      },
-                    });
-                  }
+                  Modal.success({
+                    content: secondResponse.data.status
+                      ? secondResponse.data.status
+                      : "Order placed Successfully",
+                    onOk: () => {
+                      navigate("/main/myorders");
+                      fetchCartData();
+                    },
+                  });
                 })
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
@@ -972,129 +1178,228 @@ const CheckoutPage: React.FC = () => {
     }
   }
 
-  const renderTimeSlotModal = () => {
+  const renderTimeSlotModal = (): JSX.Element => {
     return (
       <Modal
-        title="Select Delivery Time Slot"
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-purple-500" />
+              Select Delivery Time
+            </div>
+            <X
+              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={() => setShowTimeSlotModal(false)}
+            />
+          </div>
+        }
         open={showTimeSlotModal}
         onCancel={() => setShowTimeSlotModal(false)}
-        footer={null}
+        footer={[
+          <button
+            key="delivery-info"
+            onClick={() => {
+              setShowTimeSlotModal(false);
+              setTimeout(() => {
+                setIsDeliveryTimelineModalVisible(true);
+              }, 100);
+            }}
+            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 flex items-center transition-colors"
+          >
+            <Truck className="w-5 h-5 mr-2" /> Delivery Info
+          </button>,
+          <button
+            key="close"
+            onClick={() => setShowTimeSlotModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Close
+          </button>,
+        ]}
         centered
-        width={500}
-        closeIcon={<X className="w-5 h-5" />}
+        width={600}
+        closeIcon={null}
+        className="time-slot-modal"
       >
-        <div className="max-h-[70vh] overflow-y-auto">
-          {timeSlots.slice(0, 3).map((slot, index) => (
-            <div key={slot.id || index} className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-lg font-medium">
-                  {slot.dayOfWeek || `Day ${index + 1}`}
-                </div>
-                <div className="text-right text-gray-700">{slot.date}</div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {slot.timeSlot1 && (
-                  <div
-                    className={`py-3 px-4 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition ${
-                      selectedTimeSlot === slot.timeSlot1 &&
-                      selectedDate === slot.date
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                    onClick={() =>
-                      handleSelectTimeSlot(
-                        slot.date || "",
-                        slot.timeSlot1 || "",
-                        slot.dayOfWeek || ""
-                      )
-                    }
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{slot.timeSlot1}</span>
-                      <span className="text-xs text-green-600">Available</span>
-                    </div>
-                  </div>
-                )}
-                {slot.timeSlot2 && (
-                  <div
-                    className={`py-3 px-4 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition ${
-                      selectedTimeSlot === slot.timeSlot2 &&
-                      selectedDate === slot.date
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                    onClick={() =>
-                      handleSelectTimeSlot(
-                        slot.date || "",
-                        slot.timeSlot2 || "",
-                        slot.dayOfWeek || ""
-                      )
-                    }
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{slot.timeSlot2}</span>
-                      <span className="text-xs text-green-600">Available</span>
-                    </div>
-                  </div>
-                )}
-                {slot.timeSlot3 && (
-                  <div
-                    className={`py-3 px-4 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition ${
-                      selectedTimeSlot === slot.timeSlot3 &&
-                      selectedDate === slot.date
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                    onClick={() =>
-                      handleSelectTimeSlot(
-                        slot.date || "",
-                        slot.timeSlot3 || "",
-                        slot.dayOfWeek || ""
-                      )
-                    }
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{slot.timeSlot3}</span>
-                      <span className="text-xs text-green-600">Available</span>
-                    </div>
-                  </div>
-                )}
-                {slot.timeSlot4 && (
-                  <div
-                    className={`py-3 px-4 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition ${
-                      selectedTimeSlot === slot.timeSlot4 &&
-                      selectedDate === slot.date
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                    onClick={() =>
-                      handleSelectTimeSlot(
-                        slot.date || "",
-                        slot.timeSlot4 || "",
-                        slot.dayOfWeek || ""
-                      )
-                    }
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{slot.timeSlot4}</span>
-                      <span className="text-xs text-green-600">Available</span>
-                    </div>
-                  </div>
-                )}
-                {!slot.timeSlot1 &&
-                  !slot.timeSlot2 &&
-                  !slot.timeSlot3 &&
-                  !slot.timeSlot4 && (
-                    <div className="py-3 px-4 border rounded-md border-gray-200 bg-gray-50 text-gray-500 col-span-full">
-                      No available time slots for this day
-                    </div>
-                  )}
-              </div>
-              {index < 2 && (
-                <div className="border-b border-gray-100 mt-4"></div>
-              )}
+        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
+          {timeSlots.length === 0 ? (
+            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
+              <Clock className="w-16 h-16 text-purple-200 mb-4" />
+              <p className="text-lg font-medium mb-2">
+                No available delivery slots
+              </p>
+              <p className="text-sm text-gray-400">Please try again later</p>
             </div>
-          ))}
+          ) : (
+            <div className="space-y-6">
+              {timeSlots.map((slot, index) => {
+                // Create a formatted day name from dayOfWeek if formattedDay is not available
+                const displayDay =
+                  (slot as ExtendedTimeSlot).formattedDay ||
+                  slot.dayOfWeek.charAt(0) +
+                    slot.dayOfWeek.slice(1).toLowerCase();
+
+                // Check if all timeslots have the same timing
+                const uniqueTimeSlots = new Set(
+                  [
+                    slot.timeSlot1,
+                    slot.timeSlot2,
+                    slot.timeSlot3,
+                    slot.timeSlot4,
+                  ].filter(Boolean)
+                );
+                const allSameTimings = uniqueTimeSlots.size === 1;
+
+                // Create time slot objects - handle cases where status properties might not exist
+                const timeSlotObjects = [
+                  {
+                    key: "slot1",
+                    value: slot.timeSlot1,
+                    status: (slot as any).slot1Status === true,
+                  },
+                  {
+                    key: "slot2",
+                    value: slot.timeSlot2,
+                    status: (slot as any).slot2Status === true,
+                  },
+                  {
+                    key: "slot3",
+                    value: slot.timeSlot3,
+                    status: (slot as any).slot3Status === true,
+                  },
+                  {
+                    key: "slot4",
+                    value: slot.timeSlot4,
+                    status: (slot as any).slot4Status === true,
+                  },
+                ];
+
+                // If all timings are the same, only keep the first available one
+                const filteredTimeSlots = allSameTimings
+                  ? [
+                      timeSlotObjects.find(
+                        (slot) => slot.value && !slot.status
+                      ) || timeSlotObjects[0],
+                    ]
+                  : timeSlotObjects.filter(
+                      (slot) => slot.value && !slot.status
+                    );
+
+                return (
+                  <div
+                    key={slot.id || index}
+                    className={`rounded-lg ${
+                      index < timeSlots.length - 1 ? "border-b pb-6" : ""
+                    }`}
+                  >
+                    <div className="flex items-center mb-4">
+                      <div
+                        className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 shadow-sm"
+                        aria-hidden="true"
+                      >
+                        <span className="font-semibold">{index + 1}</span>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-gray-800">
+                          {displayDay}
+                        </div>
+                        <div className="text-sm text-gray-500">{slot.date}</div>
+                      </div>
+                    </div>
+
+                    {filteredTimeSlots.length === 0 ? (
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg text-center text-gray-500">
+                        No time slots available for this day
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4 pl-6 border-l-2 border-purple-100">
+                        {filteredTimeSlots.map(
+                          (timeSlotObj) =>
+                            timeSlotObj.value && (
+                              <div
+                                key={`${slot.id}-${timeSlotObj.key}`}
+                                onClick={() =>
+                                  timeSlotObj.value &&
+                                  handleSelectTimeSlot(
+                                    slot.date,
+                                    timeSlotObj.value,
+                                    slot.dayOfWeek
+                                  )
+                                }
+                                className={`
+                                relative p-3 rounded-lg cursor-pointer transition-all duration-200
+                                ${
+                                  selectedTimeSlot === timeSlotObj.value &&
+                                  selectedDate === slot.date
+                                    ? "bg-green-50 border border-green-500 shadow-md"
+                                    : "bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                                }
+                              `}
+                                role="button"
+                                aria-selected={
+                                  selectedTimeSlot === timeSlotObj.value &&
+                                  selectedDate === slot.date
+                                }
+                                aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
+                                tabIndex={0}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <Clock
+                                      className={`w-4 h-4 mr-2 flex-shrink-0 ${
+                                        selectedTimeSlot ===
+                                          timeSlotObj.value &&
+                                        selectedDate === slot.date
+                                          ? "text-green-600"
+                                          : "text-purple-500"
+                                      }`}
+                                    />
+                                    <span
+                                      className={`font-medium ${
+                                        selectedTimeSlot ===
+                                          timeSlotObj.value &&
+                                        selectedDate === slot.date
+                                          ? "text-green-800"
+                                          : "text-gray-700"
+                                      }`}
+                                    >
+                                      {timeSlotObj.value}
+                                    </span>
+                                  </div>
+                                  {selectedTimeSlot === timeSlotObj.value &&
+                                  selectedDate === slot.date ? (
+                                    <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="h-4 w-4 text-white"
+                                          viewBox="0 0 20 20"
+                                          fill="currentColor"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                      </div>
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
+                                      Available
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </Modal>
     );
@@ -1186,50 +1491,7 @@ const CheckoutPage: React.FC = () => {
                       <CreditCard className="w-5 h-5 mr-2 text-purple-500" />
                       <h3 className="font-medium">Payment Method</h3>
                     </div>
-                    <div className="space-y-3">
-                      <div
-                        className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                          selectedPayment === "ONLINE"
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200"
-                        }`}
-                        onClick={() => setSelectedPayment("ONLINE")}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded-full border ${
-                            selectedPayment === "ONLINE"
-                              ? "border-purple-500 bg-white"
-                              : "border-gray-400"
-                          }`}
-                        >
-                          {selectedPayment === "ONLINE" && (
-                            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-                          )}
-                        </div>
-                        <span className="ml-2">Online Payment</span>
-                      </div>
-                      <div
-                        className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                          selectedPayment === "COD"
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200"
-                        }`}
-                        onClick={() => setSelectedPayment("COD")}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded-full border ${
-                            selectedPayment === "COD"
-                              ? "border-purple-500 bg-white"
-                              : "border-gray-400"
-                          }`}
-                        >
-                          {selectedPayment === "COD" && (
-                            <div className="w-2 h-2 rounded-full bg-purple-500 m-0.5"></div>
-                          )}
-                        </div>
-                        <span className="ml-2">Cash on Delivery</span>
-                      </div>
-                    </div>
+                    {renderPaymentMethods()}
                   </div>
                 </div>
 
@@ -1237,52 +1499,36 @@ const CheckoutPage: React.FC = () => {
                   <div className="bg-white border rounded-lg p-4 sticky top-4">
                     <h3 className="font-medium mb-4">Order Summary</h3>
                     <div className="space-y-3">
-                      {pricesLoading ? (
-                        <div className="flex justify-center py-4">
-                          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                          <span className="ml-2 text-purple-500">
-                            Loading prices...
-                          </span>
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-600">Subtotal</span>
+                        <span>₹{grandTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-600">GST</span>
+                        <span>₹{subGst.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-600">Delivery Fee</span>
+                        <span>₹{deliveryBoyFee.toFixed(2)}</span>
+                      </div>
+                      {coupenApplied && coupenDetails > 0 && (
+                        <div className="flex justify-between py-2 text-green-600">
+                          <span>Coupon Discount</span>
+                          <span>-₹{coupenDetails.toFixed(2)}</span>
                         </div>
-                      ) : (
-                        <>
-                          <div className="flex justify-between py-2">
-                            <span className="text-gray-600">Subtotal</span>
-                            <span>{formatPrice(grandTotal)}</span>
-                          </div>
-                          <div className="flex justify-between py-2">
-                            <span className="text-gray-600">GST</span>
-                            <span>{formatPrice(subGst)}</span>
-                          </div>
-                          <div className="flex justify-between py-2">
-                            <span className="text-gray-600">Delivery Fee</span>
-                            <span>{formatPrice(deliveryBoyFee)}</span>
-                          </div>
-                          {coupenApplied && coupenDetails > 0 && (
-                            <div className="flex justify-between py-2 text-green-600">
-                              <span>Coupon Discount</span>
-                              <span>-{formatPrice(coupenDetails)}</span>
-                            </div>
-                          )}
-                          {useWallet && usedWalletAmount > 0 && (
-                            <div className="flex justify-between py-2 text-green-600">
-                              <span>Wallet Amount</span>
-                              <span>-{formatPrice(usedWalletAmount)}</span>
-                            </div>
-                          )}
-                          <div className="border-t pt-2 mt-2">
-                            <div className="flex justify-between font-medium text-lg">
-                              <span>Total</span>
-                              <span>
-                                {formatPrice(
-                                  grandTotalAmount,
-                                  "Calculating..."
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </>
                       )}
+                      {useWallet && usedWalletAmount > 0 && (
+                        <div className="flex justify-between py-2 text-green-600">
+                          <span>Wallet Amount</span>
+                          <span>-₹{usedWalletAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between font-medium text-lg">
+                          <span>Total</span>
+                          <span>₹{grandTotalAmount.toFixed(2)}</span>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="w-full mt-4 px-2 sm:px-0">
@@ -1300,14 +1546,18 @@ const CheckoutPage: React.FC = () => {
                           disabled={coupenApplied}
                         />
                         {coupenApplied ? (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={deleteCoupen}
                             className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-md sm:rounded-l-none hover:bg-red-600 transition-colors"
                           >
                             Remove
-                          </button>
+                          </motion.button>
                         ) : (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={handleApplyCoupon}
                             disabled={!couponCode || coupenLoading}
                             className="w-full sm:w-auto px-4 py-2 bg-purple-500 text-white rounded-md sm:rounded-l-none hover:bg-purple-600 disabled:bg-purple-300 transition-colors"
@@ -1317,9 +1567,28 @@ const CheckoutPage: React.FC = () => {
                             ) : (
                               "Apply"
                             )}
-                          </button>
+                          </motion.button>
                         )}
                       </div>
+                    </div>
+
+                    <div className="flex items-start space-x-2 mt-4">
+                      <input
+                        type="checkbox"
+                        id="exchangePolicy"
+                        checked={exchangePolicyAccepted}
+                        onChange={(e) =>
+                          setExchangePolicyAccepted(e.target.checked)
+                        }
+                        className="mt-1"
+                      />
+                      <label
+                        htmlFor="exchangePolicy"
+                        className="text-sm text-gray-700"
+                      >
+                        You can request an exchange within 10 Days from your
+                        order being delivered.
+                      </label>
                     </div>
 
                     {walletAmount > 0 && (
@@ -1352,17 +1621,16 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     )}
 
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={handlePayment}
                       disabled={
-                        loading ||
-                        !selectedAddress ||
-                        !selectedTimeSlot ||
-                        pricesLoading
+                        loading || !selectedAddress || !selectedTimeSlot
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >
-                      {loading || pricesLoading ? (
+                      {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
                       ) : (
                         <>
@@ -1374,16 +1642,17 @@ const CheckoutPage: React.FC = () => {
                           </span>
                         </>
                       )}
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               </div>
             </div>
           </main>
         </div>
+        <Footer />
+        {renderTimeSlotModal()}
+        {renderDeliveryTimelineModal()}
       </div>
-      <Footer />
-      {renderTimeSlotModal()}
     </div>
   );
 };

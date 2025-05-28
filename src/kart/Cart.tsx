@@ -411,45 +411,6 @@ const CartPage: React.FC = () => {
     setMobileNumbers(newNumbers);
   };
 
-  // const showContainerModal = async () => {
-  //   console.log("Attempting to show container modal");
-
-  //   const freeContainer = cartData.find(
-  //     (item) =>
-  //       [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(item.itemId) &&
-  //       item.status === "FREE"
-  //   );
-
-  //   if (freeContainer) {
-  //     console.log("Free container found in cart, showing plans modal directly");
-  //     setIsPlanModalVisible(true);
-  //     modalDisplayedRef.current = true;
-  //     return;
-  //   }
-
-  //   if (!forcePlanModalDisplay) {
-  //     const containerPref = await fetchContainerPreference();
-  //     console.log("Current container preference:", containerPref);
-
-  //     if (containerPref === "interested" || containerPref === "completed" || containerPref === "declined") {
-  //       console.log("User already has container preference, not showing modal");
-  //       return;
-  //     }
-  //   }
-
-  //   const eligibility = checkEligibilityForContainer(cartData);
-  //   console.log("Eligibility check result:", eligibility);
-
-  //   if (!eligibility.eligible) {
-  //     console.log("Not eligible for container, not showing modal");
-  //     return;
-  //   }
-
-  //   console.log("Showing container modal");
-  //   setIsPlanModalVisible(true);
-  //   setSelectedPlan([]);
-  // };
-
   const showContainerModal = () => {
     console.log("Showing container modal");
     setIsPlanModalVisible(true);
@@ -462,53 +423,6 @@ const CartPage: React.FC = () => {
       containerExistsRef.current = false;
     }
   }, [cartData.length]);
-
-  // useEffect(() => {
-  //   const checkAndShowModal = async () => {
-  //     if (cartData.length > 0) {
-  //       const freeContainer = cartData.find(
-  //         (item) =>
-  //           [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(item.itemId) &&
-  //           item.status === "FREE"
-  //       );
-
-  //       if (freeContainer && !modalDisplayedRef.current) {
-  //         console.log("Free container found in cart, showing container plans modal");
-  //         setIsPlanModalVisible(true);
-  //         modalDisplayedRef.current = true;
-  //         containerExistsRef.current = true;
-  //         return;
-  //       }
-
-  //       if (!modalDisplayedRef.current && !containerExistsRef.current) {
-  //         const hasContainer = cartData.some((item) =>
-  //           [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(item.itemId)
-  //         );
-
-  //         containerExistsRef.current = hasContainer;
-
-  //         if (!hasContainer) {
-  //           const eligibility = checkEligibilityForContainer(cartData);
-  //           console.log("Container eligibility check result:", eligibility);
-
-  //           if (eligibility.eligible) {
-  //             const containerPref = await fetchContainerPreference();
-  //             if (
-  //               containerPref !== "interested" &&
-  //               containerPref !== "completed" &&
-  //               containerPref !== "declined"
-  //             ) {
-  //               showContainerModal();
-  //               modalDisplayedRef.current = true;
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   };
-
-  //   checkAndShowModal();
-  // }, [cartData]);
 
   useEffect(() => {
     const checkAndShowModal = async () => {
@@ -674,22 +588,6 @@ const CartPage: React.FC = () => {
         `Adding container to cart: ${containerType}, ID: ${containerId}`
       );
 
-      await axios.post(
-        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
-        {
-          cartQuantity: 1,
-          customerId,
-          itemId: containerId,
-          status: "FREE",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
       message.success("Free container added to your cart!");
       await fetchCartData();
       containerExistsRef.current = true;
@@ -791,9 +689,12 @@ const CartPage: React.FC = () => {
         setFreeCartItems(freeItemsMap);
 
         // Calculate total quantity including both regular and free items
-        const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
-          return sum + (item.cartQuantity || 0); // Include all items (FREE and non-FREE)
-        }, 0);
+        const totalQuantity = cartItems.reduce(
+          (sum: number, item: CartItem) => {
+            return sum + (item.cartQuantity || 0); // Include all items (FREE and non-FREE)
+          },
+          0
+        );
         setCount(totalQuantity);
 
         const cartWithFreeItems = response.data?.customerCartResponseList || [];
@@ -1627,7 +1528,7 @@ const CartPage: React.FC = () => {
         title: "Decline Free Container?",
         content:
           "You haven't selected any plan. Are you sure you want to decline the free container offer?",
-        okText: "Yes, Decline",
+        okText: "Yes, Cancel",
         cancelText: "Go Back",
         onOk: async () => {
           try {
@@ -1707,7 +1608,7 @@ const CartPage: React.FC = () => {
       title: "Decline Container Offer?",
       content:
         "Are you sure you want to decline the free container offer? You can always select this offer later from your cart.",
-      okText: "Yes, Decline",
+      okText: "Yes, Cancel",
       cancelText: "Stay",
       onOk: async () => {
         try {
@@ -1728,27 +1629,40 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Custom Styles for Visible Scrollbar */}
+      {/* Custom for the free container modal*/}
       <style>
         {`
-    .container-scroll-container {
-      max-height: 60vh;
-      overflow-y: auto;
-      scrollbar-width: auto; /* Firefox */
-      scrollbar-color: #888 #f1f1f1; /* Scrollbar thumb and track */
+    .container-modal-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px;
     }
-    .container-scroll-container::-webkit-scrollbar {
-      width: 8px; /* Scrollbar width for Chrome, Safari, Edge */
+    .container-modal-content h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
     }
-    .container-scroll-container::-webkit-scrollbar-track {
-      background: #f1f1f1; /* Track color */
+    .container-modal-content p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0;
     }
-    .container-scroll-container::-webkit-scrollbar-thumb {
-      background: #888; /* Thumb color */
-      border-radius: 4px;
+    .container-modal-content ul {
+      padding-left: 20px;
+      margin: 8px 0;
     }
-    .container-scroll-container::-webkit-scrollbar-thumb:hover {
-      background: #555; /* Thumb hover color */
+    .container-modal-content li {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .container-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px;
+      border-top: 1px solid #e8e8e8;
+      margin-top: 16px;
     }
   `}
       </style>
@@ -2338,19 +2252,13 @@ const CartPage: React.FC = () => {
         <Modal
           title="🎁 Special Offer: Free Rice Container!"
           open={isPlanModalVisible}
-          onOk={handlePlanOk}
           onCancel={handlePlanCancel}
-          okText="Continue"
-          cancelText="Cancel"
           centered
           width="90%"
           style={{ maxWidth: "600px" }}
-          bodyStyle={{ maxHeight: "60vh", padding: "16px" }}
+          footer={null} // Custom footer defined below
         >
-          <div
-            className="container-scroll-container"
-            style={{ maxHeight: "60vh", overflowY: "auto" }}
-          >
+          <div className="container-modal-content">
             <div className="text-center text-gray-800">
               <p className="text-lg font-medium mt-1">
                 Buy a 26kg or 10kg rice bag and get a{" "}
@@ -2425,6 +2333,34 @@ const CartPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="container-modal-footer">
+            <button
+              onClick={handlePlanCancel}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (selectedPlan.length === 0) {
+                  Modal.warning({
+                    title: "Confirmation Required",
+                    content:
+                      "Please select any of the plans to avail the free container offer.",
+                    okText: "OK",
+                    onOk: () => {},
+                    cancelButtonProps: { style: { display: "none" } },
+                  });
+                } else {
+                  handlePlanOk();
+                }
+              }}
+              className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 ml-2"
+            >
+              Continue
+            </button>
           </div>
         </Modal>
       </div>
