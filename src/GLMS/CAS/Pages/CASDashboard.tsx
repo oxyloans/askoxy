@@ -1,20 +1,8 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Users,
-  FileText,
-  UserCheck,
-  TrendingUp,
-  Edit,
-  FileSignature,
-  Upload,
-  Truck,
-  Calendar,
-  AlertTriangle,
-  Headphones,
-  XCircle,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
+import Askoxylogo from "../../../assets/img/askoxylogostatic.png";
+import { Menu, X } from "react-feather";
 
 const useCases = [
   {
@@ -22,85 +10,87 @@ const useCases = [
     title: "Customer ID Creation",
     description:
       "Generate unique customer ID and link it to the Core Banking System (CBS)",
-    icon: <Users className="text-indigo-600 w-6 h-6" />,
+    // icon: <Users className="text-indigo-600 w-6 h-6" />,
   },
   {
     path: "co-applicant-linking",
     title: "Co-applicant & Guarantor Linking",
     description:
       "Upload and link KYC/supporting documents for co-applicants or guarantors",
-    icon: <FileText className="text-green-600 w-6 h-6" />,
+    // icon: <FileText className="text-green-600 w-6 h-6" />,
   },
   {
     path: "customer-id-loan-link",
     title: "Customer ID to Loan Linking",
     description:
       "Map customer ID to the loan application for tracking and verification",
-    icon: <UserCheck className="text-blue-500 w-6 h-6" />,
+    // icon: <UserCheck className="text-blue-500 w-6 h-6" />,
   },
   {
     path: "loan-appraisal",
     title: "Loan Appraisal System",
     description: "Perform customer credit scoring and financial appraisal",
-    icon: <TrendingUp className="text-purple-500 w-6 h-6" />,
+    // icon: <TrendingUp className="text-purple-500 w-6 h-6" />,
   },
   {
     path: "loan-assessment",
     title: "Loan Assessment Workflow",
     description: "Capture loan application and perform preliminary checks",
-    icon: <Edit className="text-red-500 w-6 h-6" />,
+    // icon: <Edit className="text-red-500 w-6 h-6" />,
   },
   {
     path: "recommendation-workflow",
     title: "Recommendation & Sanction Letter",
     description: "Review loan details and generate sanction recommendations",
-    icon: <FileSignature className="text-yellow-600 w-6 h-6" />,
+    // icon: <FileSignature className="text-yellow-600 w-6 h-6" />,
   },
   {
     path: "risk-analysis-upload",
     title: "Risk Analysis Documentation",
     description: "Upload signed agreements and perform risk validation",
-    icon: <Upload className="text-cyan-600 w-6 h-6" />,
+    // icon: <Upload className="text-cyan-600 w-6 h-6" />,
   },
   {
     path: "sanction-disbursement",
     title: "Sanction & Customer Response Tracking",
     description: "Track sanction status and customer acknowledgments",
-    icon: <Truck className="text-orange-500 w-6 h-6" />,
+    // icon: <Truck className="text-orange-500 w-6 h-6" />,
   },
   {
     path: "loan-repayment-schedule",
     title: "Repayment Schedule Generation",
     description: "Generate EMI schedule and repayment tracking data",
-    icon: <Calendar className="text-teal-500 w-6 h-6" />,
+    // icon: <Calendar className="text-teal-500 w-6 h-6" />,
   },
   {
     path: "terms-conditions-workflow",
     title: "Terms & Conditions Approval",
     description: "Approve and manage loan terms and condition agreements",
-    icon: <AlertTriangle className="text-pink-600 w-6 h-6" />,
+    // icon: <AlertTriangle className="text-pink-600 w-6 h-6" />,
   },
   {
     path: "asset-details-capture",
     title: "Asset Details Capture",
     description: "Record asset details offered as collateral or security",
-    icon: <Headphones className="text-lime-500 w-6 h-6" />,
+    // icon: <Headphones className="text-lime-500 w-6 h-6" />,
   },
   {
     path: "limit-check-profile-update",
     title: "Profile Update & Limit Check",
     description: "Update customer info and check applicable credit limits",
-    icon: <XCircle className="text-rose-500 w-6 h-6" />,
+    // icon: <XCircle className="text-rose-500 w-6 h-6" />,
   },
   {
     path: "account-closure-process",
     title: "Account Closure & Net Worth Analysis",
     description: "Initiate account closure and analyze party's net worth",
-    icon: <XCircle className="text-gray-600 w-6 h-6" />,
+    // icon: <XCircle className="text-gray-600 w-6 h-6" />,
   },
 ];
 
 const CASDashboard: React.FC = () => {
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
 
   const handleInterest = () => {
@@ -116,59 +106,111 @@ const CASDashboard: React.FC = () => {
     }
   };
 
+   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  
+    const handleLogoClick = () => (window.location.href = "/");
+  
+    useEffect(() => {
+      const handleScroll = () => setIsScrolled(window.scrollY > 10);
+      window.addEventListener("scroll", handleScroll);
+  
+      // Google Analytics page view event
+      if (window.gtag) {
+        window.gtag("event", "js_page_view", {
+          page_title: "CAS Use Case Page",
+          page_location: window.location.href,
+          page_path: window.location.pathname,
+        });
+      }
+  
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+  
+
   return (
-    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="relative mb-10 flex flex-col sm:flex-row items-center justify-center sm:justify-between">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center sm:text-left text-gray-800">
-          Customer Acquisition System - Use Cases
-        </h1>
-        <button
-          onClick={handleInterest}
-          className="mt-4 sm:mt-0 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-lg transition duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          I'm Interested
-        </button>
-      </div>
-
-      {/* Cards */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {useCases.map((useCase) => (
-          <div
-            key={useCase.path}
-            className="bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-200 ease-in-out flex flex-col justify-between"
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-full bg-gray-100 flex items-center justify-center">
-                {useCase.icon}
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">
-                  {useCase.title}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {useCase.description}
-                </p>
-              </div>
+    <div className="flex flex-col min-h-screen">
+      <header
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+          isScrolled ? "bg-white/90 shadow-md" : "bg-white/80"
+        } backdrop-blur-lg`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 md:h-20">
+            <div onClick={handleInterest} className="cursor-pointer">
+              <img src={Askoxylogo} alt="Logo" className="h-12" />
             </div>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="hidden md:flex">
               <button
-                className="w-full sm:w-auto px-4 py-2 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
-                onClick={() => navigate(`/cas/${useCase.path}/business`)}
+                onClick={handleInterest}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-medium transition hover:scale-105"
               >
-                Business Use Case
+                I'm Interested
               </button>
-              <button
-                className="w-full sm:w-auto px-4 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
-                onClick={() => navigate(`/cas/${useCase.path}/system`)}
-              >
-                System Use Case
+            </div>
+            <div className="md:hidden">
+              <button onClick={toggleMobileMenu}>
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
           </div>
-        ))}
-      </div>
+
+          {mobileMenuOpen && (
+            <div className="md:hidden pb-4 pt-2">
+              <button
+                onClick={handleInterest}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md font-medium transition"
+              >
+                I'm Interested
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-10">
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
+            Customer Acquisition System - Use Cases
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {useCases.map((useCase) => (
+            <div
+              key={useCase.path}
+              className="p-6 bg-white border rounded-xl shadow hover:shadow-lg transition transform hover:-translate-y-1"
+            >
+              <h2 className="text-xl font-semibold text-gray-800">
+                {useCase.title}
+              </h2>
+              <p className="text-sm text-gray-600 mt-2">
+                {useCase.description}
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => navigate(`/cas/${useCase.path}/business`)}
+                  className="flex-1 px-4 py-2 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                >
+                  Business Use Case
+                </button>
+                <button
+                  onClick={() => navigate(`/cas/${useCase.path}/system`)}
+                  className="flex-1 px-4 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+                >
+                  System Use Case
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-4 text-center text-sm">
+        &copy; {new Date().getFullYear()} Global Lending Management Solutions. All
+        rights reserved.
+      </footer>
     </div>
   );
 };

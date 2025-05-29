@@ -76,6 +76,9 @@ const OrderReport: React.FC = () => {
   );
   const [csvLoader, setCsvLoader] = useState<boolean>(false);
   const [weeklyEndDate, setWeeklyEndDate] = useState(dayjs());
+  const [paymentType, setPaymentType] = useState<number | "All">("All");
+  const [filteredSales, setFilteredSales] =
+    useState<WeeklyDeliveryItem[]>(weeklyDeliveryData);
 
   const fetchOrderData = async () => {
     setLoading(true);
@@ -122,7 +125,11 @@ const OrderReport: React.FC = () => {
       const response = await axios.get(
         `${BASE_URL}/order-service/notification_to_dev_team_monthly?endDate=${formattedEndDate}&startDate=${formattedStartDate}`
       );
-      setMonthlySalesData(response.data);
+      const filteredData = response.data.filter(
+        (item: MonthlySalesItem) => item.weigth !== 35 && item.weigth !== 20
+      );
+
+      setMonthlySalesData(filteredData);
     } catch (err) {
       console.error("Error fetching monthly data:", err);
       message.error("Failed to load monthly sales data.");
@@ -131,6 +138,19 @@ const OrderReport: React.FC = () => {
       setMonthlyLoading(false);
     }
   };
+
+  useEffect(() => {
+    // console.log(paymentType);
+
+    if (paymentType === "All") {
+      setFilteredSales(weeklyDeliveryData);
+    } else {
+      const filtered = weeklyDeliveryData.filter(
+        (item) => item.paymentType === paymentType
+      );
+      setFilteredSales(filtered);
+    }
+  }, [paymentType, weeklyDeliveryData]);
 
   useEffect(() => {
     fetchOrderData();
@@ -545,7 +565,19 @@ const OrderReport: React.FC = () => {
               Get Data
             </button>
 
-            {/* Push Download CSV to far right */}
+            <div className="mb-4 flex items-center gap-4">
+              <Select
+                value={paymentType}
+                onChange={(val) => setPaymentType(val)}
+                style={{ width: 160 }}
+                options={[
+                  { value: "All", label: "All" },
+                  { value: 2, label: "Online" },
+                  { value: 1, label: "COD" },
+                ]}
+              />
+            </div>
+
             <div className="flex-grow flex justify-end">
               <Button
                 icon={<Download size={16} />}
@@ -573,19 +605,38 @@ const OrderReport: React.FC = () => {
           ) : weeklyDeliveryData.length > 0 ? (
             <div className="bg-white rounded-lg shadow-md border border-blue-200 overflow-x-auto">
               <div className="p-4 bg-blue-50 border-t border-blue-100 flex justify-between items-center">
-                <div className="text-sm text-blue-800">
-                  <span className="font-bold">{weeklyDeliveryData.length}</span>{" "}
-                  orders delivered between{" "}
-                  <span className="font-medium">
-                    {weeklyStartDate.format("MMM D, YYYY")}
-                  </span>{" "}
-                  and{" "}
-                  <span className="font-medium">
-                    {weeklyEndDate.format("MMM D, YYYY")}
-                  </span>
+                {/* Left: COD and ONLINE totals */}
+                <div className="text-sm text-green-800 flex gap-4">
+                  {/* COD Total */}
+                  <div>
+                    COD:{" "}
+                    <span className="text-lg font-bold">
+                      ₹
+                      {Math.ceil(
+                        weeklyDeliveryData
+                          .filter((order) => order.paymentType === 1)
+                          .reduce((sum, order) => sum + order.grandTotal, 0)
+                      ).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  {/* ONLINE Total */}
+                  <div>
+                    Online:{" "}
+                    <span className="text-lg font-bold">
+                      ₹
+                      {Math.ceil(
+                        weeklyDeliveryData
+                          .filter((order) => order.paymentType === 2)
+                          .reduce((sum, order) => sum + order.grandTotal, 0)
+                      ).toLocaleString("en-IN")}
+                    </span>
+                  </div>
                 </div>
+
+                {/* Right: Total Amount */}
                 <div className="text-sm text-green-800">
-                  Total value:{" "}
+                  Total:{" "}
                   <span className="text-lg font-bold">
                     ₹
                     {Math.ceil(
@@ -597,12 +648,13 @@ const OrderReport: React.FC = () => {
                   </span>
                 </div>
               </div>
+
               <Table
-                dataSource={weeklyDeliveryData}
+                dataSource={filteredSales}
                 columns={weeklyColumns}
                 pagination={{ pageSize: 50, showSizeChanger: false }}
                 className="w-full"
-                rowKey="orderId"
+               rowKey={(record, index) => `${record.orderId}-${index}`}
                 scroll={{ x: "max-content" }}
               />
             </div>
@@ -730,6 +782,7 @@ const OrderReport: React.FC = () => {
                 dataSource={sortedFilteredData}
                 columns={columns}
                 pagination={false}
+                
                 className="w-full"
                 scroll={{ x: "max-content" }}
                 rowClassName={(record, index) => {

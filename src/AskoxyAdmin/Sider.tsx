@@ -19,7 +19,7 @@ import {
   FaRegAddressCard,
   FaTags,
 } from "react-icons/fa";
-import { RiAdminLine, RiListUnordered } from "react-icons/ri";
+import { RiAdminLine, RiListUnordered, RiMapPin2Line } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { message } from "antd";
 import { MdPayment } from "react-icons/md";
@@ -118,6 +118,12 @@ const Sidebar: React.FC = () => {
       title: "Super Admin Comments",
       icon: <RiAdminLine className="text-purple-400" />, // New icon
       link: "/admn/superAdminComments",
+      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+    },
+    {
+      title: "Orders by Pincode",
+      icon: <RiMapPin2Line className="text-purple-400" />,
+      link: "/admn/pincodeorders",
       roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
     },
     {

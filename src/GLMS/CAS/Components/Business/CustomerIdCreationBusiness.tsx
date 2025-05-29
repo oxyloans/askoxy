@@ -80,6 +80,7 @@ const CustomerIdCreation: React.FC = () => {
 
         {/* Content Sections */}
         <div className="space-y-12">
+          {/* Overview */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Overview
@@ -106,6 +107,7 @@ const CustomerIdCreation: React.FC = () => {
             </div>
           </section>
 
+          {/* Actors */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Actors
@@ -116,6 +118,7 @@ const CustomerIdCreation: React.FC = () => {
             </ul>
           </section>
 
+          {/* Actions */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Actions
@@ -132,6 +135,7 @@ const CustomerIdCreation: React.FC = () => {
             </div>
           </section>
 
+          {/* Preconditions */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Preconditions
@@ -142,6 +146,7 @@ const CustomerIdCreation: React.FC = () => {
             </p>
           </section>
 
+          {/* Postconditions */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Post Conditions
@@ -152,6 +157,7 @@ const CustomerIdCreation: React.FC = () => {
             </p>
           </section>
 
+          {/* Workflow */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Workflow
@@ -256,11 +262,12 @@ const CustomerIdCreation: React.FC = () => {
             </p>
           </section>
 
+          {/* Flowchart */}
           <section className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Flowchart
             </h2>
-            <pre className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 overflow-x-auto">
+            <pre className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 overflow-x-auto whitespace-pre-wrap">
               {`
 Start
   |
@@ -275,34 +282,25 @@ Customer submits application + documents
   |
   v
 Bank Officer verifies documents
-  |                           Yes
-  v----------------------------> Any discrepancies?
-  |                                   |
-  | No                                v
-  v                             Request customer for corrections
-Issue acknowledgement                |
-  |                                   v
-  v                             Documents corrected
-Initiate Customer Creation           |
-  |                                   |
-  v                                   |
-Capture Customer Details:
-- Personal (Name, DOB, PAN, etc.)
-- Communication (Address, Phone, etc.)
-- Employment (Company, Designation, etc.)
-- Income & Expenses (Income, Savings, etc.)
+  |
+  v
+Any discrepancies?
+  |---Yes---> Request corrections from customer
+  |
+  v
+Issue acknowledgement
+  |
+  v
+Initiate Customer ID Creation
+  |
+  v
+Capture Personal, Communication, Employment, Income/Expenses
   |
   v
 Save Customer Details
   |
   v
 Customer ID Created
-  |
-  v
-Proceed with Loan Details Capture
-  |
-  v
-End
 `}
             </pre>
           </section>

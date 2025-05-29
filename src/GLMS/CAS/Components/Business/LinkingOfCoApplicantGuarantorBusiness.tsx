@@ -240,53 +240,37 @@ const LinkingOfCoApplicantGuarantorBusiness: React.FC<
                   <li>Last Name</li>
                   <li>Father Name</li>
                   <li>Date of Birth</li>
+                  <li>Age</li>
                   <li>Gender</li>
-                  <li>Pan No</li>
-                  <li>Passport Details</li>
                   <li>Marital Status</li>
-                  <li>No of Dependents</li>
-                  <li>Age of Dependents</li>
-                  <li>Nationality</li>
-                  <li>Residential Status</li>
-                  <li>Religion</li>
-                  <li>Educational Qualification</li>
-                  <li>Earning Member in Family</li>
-                  <li>Length of Relationship with Bank</li>
-                  <li>Existing Borrower</li>
-                  <li>Staff</li>
-                  <li>Account No</li>
-                  <li>Deposits with Bank</li>
+                  <li>Nominee Name</li>
+                  <li>Nominee Relation</li>
                 </ul>
 
                 <h3 className="text-lg font-semibold mt-4 mb-2">
                   Communication Details
                 </h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
-                  <li>Current Address</li>
-                  <li>Current Residence Ownership</li>
-                  <li>Living Duration in Current Residence</li>
-                  <li>Permanent Address</li>
-                  <li>Mobile No</li>
-                  <li>Landline No</li>
+                  <li>Phone Number</li>
+                  <li>Mobile Number</li>
                   <li>Email ID</li>
+                  <li>Residence Address</li>
+                  <li>Office Address</li>
+                  <li>Permanent Address</li>
+                  <li>District</li>
+                  <li>State</li>
                 </ul>
 
                 <h3 className="text-lg font-semibold mt-4 mb-2">
                   Employment Details
                 </h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
-                  <li>Occupation</li>
-                  <li>Name of the Company</li>
-                  <li>Address of the Company</li>
+                  <li>Employment Type</li>
+                  <li>Company Name</li>
                   <li>Designation</li>
-                  <li>Department</li>
-                  <li>Employee No</li>
-                  <li>Office Phone No</li>
-                  <li>Ext</li>
-                  <li>Fax</li>
-                  <li>Years in Current Company</li>
-                  <li>Previous Employment History</li>
-                  <li>Total Length of Service</li>
+                  <li>Office Address</li>
+                  <li>Experience Years</li>
+                  <li>Experience Months</li>
                 </ul>
 
                 <h3 className="text-lg font-semibold mt-4 mb-2">
@@ -294,54 +278,9 @@ const LinkingOfCoApplicantGuarantorBusiness: React.FC<
                 </h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc ml-6">
                   <li>Monthly Income</li>
-                  <li>Other Income</li>
                   <li>Monthly Expenses</li>
-                  <li>Savings</li>
                   <li>EMI Payment</li>
-                  <li>Stability of Income</li>
                 </ul>
-
-                <h3 className="text-lg font-semibold mt-4 mb-2">
-                  Assets & Liabilities
-                </h3>
-                <p>
-                  The Bank Officer captures the Assets and Liabilities position
-                  of the Co-Applicant/Co-obligant/Guarantor to determine their
-                  net worth.
-                </p>
-
-                <p className="mt-4">
-                  After capturing details, the Bank Officer saves the record to
-                  create Customer IDs for the
-                  Co-applicant/Co-obligant/Guarantor.
-                </p>
-                <p>
-                  The Bank Officer then links the
-                  Co-applicant/Co-obligant/Guarantor details to the Applicant
-                  Loan Application by selecting/entering:
-                </p>
-                <ul className="list-disc ml-6 space-y-1">
-                  <li>Applicant Type (Co-applicant/Co-obligant/Guarantor)</li>
-                  <li>Customer ID</li>
-                  <li>Name of the Person</li>
-                  <li>Relationship with the Applicant</li>
-                  <li>Include Income for Eligibility</li>
-                  <li>Remarks</li>
-                </ul>
-                <p>
-                  Once saved, the Co-applicant/Co-obligant/Guarantor details are
-                  added to the loan application.
-                </p>
-                <p>
-                  The Bank Officer proceeds to capture the requested loan
-                  details in LOS.
-                </p>
-                <p className="mt-2 italic text-red-600">
-                  <strong>Note:</strong> If the
-                  Co-applicant/Co-obligant/Guarantor are existing customers,
-                  their details can be fetched from the Core Banking System
-                  (CBS) using their Customer IDs.
-                </p>
               </div>
             )}
           </section>
@@ -363,8 +302,9 @@ const LinkingOfCoApplicantGuarantorBusiness: React.FC<
               )}
             </button>
             {expandedSections.flowchart && (
-              <pre className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 font-mono overflow-x-auto border border-gray-200">
-                {`
+              <div className="text-gray-600">
+                <pre className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 font-mono overflow-x-auto border border-gray-200 whitespace-pre-wrap">
+                  {`
 Start
   |
   v
@@ -377,12 +317,12 @@ Bank Officer verifies documents
   |                                   |
   | No                                v
   v                             Request customer for details/documents
-Issue acknowledgement                |
+Issue acknowledgement                 |
   |                                   v
   v                             Documents corrected
-Initiate Customer Creation           |
-  |                                   |
-  v                                   |
+Initiate Customer Creation           
+  |                                   
+  v                                 
 Capture Customer Details:
 - Personal (Name, DOB, PAN, etc.)
 - Communication (Address, Phone, Email)
@@ -423,8 +363,9 @@ Proceed with Loan Details Capture
   |
   v
 End
-`}
-              </pre>
+  `}
+                </pre>
+              </div>
             )}
           </section>
         </div>

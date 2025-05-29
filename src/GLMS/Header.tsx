@@ -60,34 +60,34 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
 
   const navigate = useNavigate();
 
-  const handleSignIn = () => {
-    try {
-      setIsLoading(true);
-      // Set the default redirect path to the dashboard products page
-      const redirectPath = "/main/services/campaign/a6b5";
+  // const handleSignIn = () => {
+  //   try {
+  //     setIsLoading(true);
+  //     // Set the default redirect path to the dashboard products page
+  //     const redirectPath = "/main/services/campaign/a6b5";
 
-      // Store the redirect path in multiple storage locations
-      localStorage.setItem("redirectPath", redirectPath);
-      sessionStorage.setItem("redirectPath", redirectPath);
-      localStorage.setItem("returnUrl", redirectPath);
-      sessionStorage.setItem("returnUrl", redirectPath);
-      localStorage.setItem("next", redirectPath);
-      sessionStorage.setItem("next", redirectPath);
+  //     // Store the redirect path in multiple storage locations
+  //     localStorage.setItem("redirectPath", redirectPath);
+  //     sessionStorage.setItem("redirectPath", redirectPath);
+  //     localStorage.setItem("returnUrl", redirectPath);
+  //     sessionStorage.setItem("returnUrl", redirectPath);
+  //     localStorage.setItem("next", redirectPath);
+  //     sessionStorage.setItem("next", redirectPath);
 
-      // Redirect to WhatsApp login with the redirect parameter
-      const loginUrl = `${LOGIN_URL}?redirect=${encodeURIComponent(
-        redirectPath
-      )}`;
+  //     // Redirect to WhatsApp login with the redirect parameter
+  //     const loginUrl = `${LOGIN_URL}?redirect=${encodeURIComponent(
+  //       redirectPath
+  //     )}`;
 
-      // Force a full page reload for authentication
-      window.location.href = loginUrl;
-    } catch (error) {
-      console.error("Sign in error:", error);
-      // Handle error appropriately
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     // Force a full page reload for authentication
+  //     window.location.href = loginUrl;
+  //   } catch (error) {
+  //     console.error("Sign in error:", error);
+  //     // Handle error appropriately
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // const handleJobStreet = () => {
   //   // window.open("/jobstreet", "_blank");
@@ -95,13 +95,30 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
   // };
 
   const handleJobStreet = () => (window.location.href = "/jobstreet");
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   
 
-  const handleLogo = () => {
-    navigate("/");
-  };
+ 
   const handleInterest = () => {
     const userId = localStorage.getItem("userId");
     if (userId) {
