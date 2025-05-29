@@ -13,6 +13,7 @@ import {
   Select,
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
+import BASE_URL from "../Config";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -116,15 +117,34 @@ const OrdersByPincode: React.FC = () => {
       const endDateStr = endDate.format("YYYY-MM-DD");
 
       const response = await fetch(
-        `http://65.0.147.157:9029/api/order-service/report_all_pinCode_data?startDate=${startDateStr}&endDate=${endDateStr}`
+        `${BASE_URL}/order-service/report_all_pinCode_data?startDate=${startDateStr}&endDate=${endDateStr}`
       );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result: ApiResponse = await response.json();
-      setData(result);
+      const rawResult: ApiResponse = await response.json();
+
+      const filteredResult: ApiResponse = Object.entries(rawResult).reduce(
+        (acc, [pincode, value]) => {
+          const filteredDetails = value.details.filter(
+            (detail) => !detail.includes("Status: 5")
+          );
+
+          if (filteredDetails.length > 0) {
+            acc[pincode] = {
+              count: filteredDetails.length,
+              details: filteredDetails,
+            };
+          }
+
+          return acc;
+        },
+        {} as ApiResponse
+      );
+
+      setData(filteredResult);
     } catch (err) {
       setError(
         err instanceof Error
@@ -140,10 +160,8 @@ const OrdersByPincode: React.FC = () => {
     fetchData();
   }, []);
 
-  // Get sorted pincodes
   const sortedPincodes = Object.keys(data).sort((a, b) => a.localeCompare(b));
 
-  // Flatten all orders for table view with pincode filtering
   const allOrders = Object.entries(data)
     .filter(
       ([pinCode]) => selectedPincode === "all" || pinCode === selectedPincode

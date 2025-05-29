@@ -17,6 +17,9 @@ import {
   Col,
   Divider,
   message,
+  DatePicker,
+  Space,
+  Input,
 } from "antd";
 import {
   LoadingOutlined,
@@ -29,13 +32,16 @@ import {
   ShoppingOutlined,
   CalendarOutlined,
   DollarOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
+import dayjs, { Dayjs } from "dayjs";
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 // Interface for assigned and delivered orders
 interface OrderAddress {
@@ -74,19 +80,43 @@ interface PickedUpOrder {
   orderAddress?: OrderAddress;
 }
 
+// New interface for delivered orders from the new API
+interface DeliveredOrderResponse {
+  orderId: string;
+  paymentType?: number;
+  uniqueId: string;
+  orderStatus: string;
+  grandTotal: number | null;
+  subTotal: number | null;
+  orderDate: string;
+  deliveryBoyName: string | null;
+  orderItems: OrderItem[];
+  orderAddress?: OrderAddress;
+  deliveryTime?: string;
+}
+
 type Order = AssignedOrder | PickedUpOrder;
 
 const DeliveryBoyOrders: React.FC = () => {
   const navigate = useNavigate();
   const [assignedOrders, setAssignedOrders] = useState<AssignedOrder[]>([]);
   const [pickedUpOrders, setPickedUpOrders] = useState<PickedUpOrder[]>([]);
-  const [deliveredOrders, setDeliveredOrders] = useState<AssignedOrder[]>([]);
+  const [deliveredOrders, setDeliveredOrders] = useState<
+    DeliveredOrderResponse[]
+  >([]);
   const [loading, setLoading] = useState(false);
+  const [deliveredLoading, setDeliveredLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("assigned");
   const [deliveryBoyName, setDeliveryBoyName] = useState<string>("Loading...");
   const [deliveryBoyId, setdeliveryBoyId] = useState<string>("");
-
-  // const deliveryBoyId = localStorage.getItem("dbId") || "";
+  const [messages, setMessage] = useState<string | null>("");
+  // Date picker states
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
+  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
+  const [orderIdSearch, setOrderIdSearch] = useState<string>("");
+  const [filteredDeliveredOrders, setFilteredDeliveredOrders] = useState<
+    typeof deliveredOrders
+  >([]);
 
   const fetchOrders = async (deliveryBoyId: string) => {
     setdeliveryBoyId(deliveryBoyId);
@@ -94,7 +124,6 @@ const DeliveryBoyOrders: React.FC = () => {
     setLoading(true);
 
     let assignedData: any[] = [];
-    let deliveredData: any[] = [];
     let pickedUpData: any[] = [];
 
     try {
@@ -114,44 +143,6 @@ const DeliveryBoyOrders: React.FC = () => {
       }
 
       try {
-        const deliveredResponse = await axios.post(
-          `${BASE_URL}/order-service/getAssignedOrdersToDeliveryBoy`,
-          { deliveryBoyId, orderStatus: 4 }
-        );
-        deliveredData = deliveredResponse.data || [];
-        const enrichedDeliveredData = await Promise.all(
-          deliveredData.map(async (order: any) => {
-            try {
-              const res = await axios.get(
-                `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`
-              );
-              return {
-                ...order,
-                deliveryTime: res.data?.deliveryTime || "N/A",
-              };
-            } catch {
-              return {
-                ...order,
-                deliveryTime: "N/A",
-              };
-            }
-          })
-        );
-
-        deliveredData = enrichedDeliveredData.sort((a, b) => {
-          const dateA = new Date(a.orderDate).getTime();
-          const dateB = new Date(b.orderDate).getTime();
-          return dateB - dateA;
-        });
-      } catch (err: any) {
-        if (err.response?.status === 404) {
-          message.success("No delivered orders found.");
-        } else {
-          message.warning("Failed to fetch assigned orders.");
-        }
-      }
-
-      try {
         const pickedUpResponse = await axios.get(
           `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`
         );
@@ -162,17 +153,22 @@ const DeliveryBoyOrders: React.FC = () => {
 
       // Set state
       setAssignedOrders(assignedData);
-      setDeliveredOrders(deliveredData);
       setPickedUpOrders(pickedUpData);
 
       // Set delivery boy name from any available order
       const name =
         assignedData[0]?.deliveryBoyName ||
-        deliveredData[0]?.deliveryBoyName ||
         localStorage.getItem("dbName") ||
         "Delivery Partner";
 
       setDeliveryBoyName(name);
+
+      // Fetch delivered orders with today's date initially
+      await fetchDeliveredOrders(
+        deliveryBoyId,
+        dayjs().format("YYYY-MM-DD"),
+        dayjs().format("YYYY-MM-DD")
+      );
     } catch (err) {
       message.error("Unexpected error occurred.");
     } finally {
@@ -180,17 +176,105 @@ const DeliveryBoyOrders: React.FC = () => {
     }
   };
 
-  const handleOrderDetails = (order: Order) => {
-    // notification.info({
-    //   message: "Order Details",
-    //   description: `Viewing details for order ${
-    //     "uniqueId" in order ? order.uniqueId : order.orderId.slice(-4)
-    //   }`,
-    // });
+  const fetchDeliveredOrders = async (
+    deliveryBoyId: string,
+    startDate: string,
+    endDate: string
+  ) => {
+    setDeliveredLoading(true);
+    try {
+      const deliveredResponse = await axios.get(
+        `${BASE_URL}/order-service/get_DeliverdDetails_By_DeliveryBoyId?deliveryBoyId=${deliveryBoyId}&EndData=${endDate}&StartDate=${startDate}`
+      );
 
+      const deliveredData = deliveredResponse.data?.orderResponseList || [];
+      setMessage(deliveredResponse.data?.message);
+      // Enrich delivered data with delivery time
+      const enrichedDeliveredData = await Promise.all(
+        deliveredData.map(async (order: any) => {
+          try {
+            const res = await axios.get(
+              `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`
+            );
+            return {
+              ...order,
+              deliveryTime: res.data?.deliveryTime || "N/A",
+            };
+          } catch {
+            return {
+              ...order,
+              deliveryTime: "N/A",
+            };
+          }
+        })
+      );
+
+      // Sort by order date (newest first)
+      const sortedDeliveredData = enrichedDeliveredData.sort(
+        (a: any, b: any) => {
+          const dateA = new Date(a.orderDate).getTime();
+          const dateB = new Date(b.orderDate).getTime();
+          return dateB - dateA;
+        }
+      );
+
+      setDeliveredOrders(sortedDeliveredData);
+
+      if (deliveredData.length === 0) {
+        message.info("No delivered orders found for the selected date range.");
+      }
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        message.info("No delivered orders found for the selected date range.");
+        setDeliveredOrders([]);
+      } else {
+        message.error("Failed to fetch delivered orders.");
+      }
+    } finally {
+      setDeliveredLoading(false);
+    }
+  };
+
+  const handleGetDeliveredData = () => {
+    if (!startDate || !endDate) {
+      message.error("Please select both start date and end date.");
+      return;
+    }
+
+    if (startDate.isAfter(endDate)) {
+      message.error("Start date cannot be after end date.");
+      return;
+    }
+
+    const deliveryBoyId = localStorage.getItem("dbId");
+    if (deliveryBoyId) {
+      fetchDeliveredOrders(
+        deliveryBoyId,
+        startDate.format("YYYY-MM-DD"),
+        endDate.format("YYYY-MM-DD")
+      );
+    }
+  };
+
+  const handleOrderDetails = (order: Order | DeliveredOrderResponse) => {
     localStorage.setItem("orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
+  const handleSearchOrderId = (value: string) => {
+    setOrderIdSearch(value);
+    if (!value.trim()) {
+      setFilteredDeliveredOrders(deliveredOrders);
+      return;
+    }
+
+    const filtered = deliveredOrders.filter((order) =>
+      order.orderId?.slice(-4).toString().includes(value)
+    );
+    setFilteredDeliveredOrders(filtered);
+  };
+  useEffect(() => {
+    setFilteredDeliveredOrders(deliveredOrders);
+  }, [deliveredOrders]);
 
   useEffect(() => {
     const deliveryBoyId = localStorage.getItem("dbId");
@@ -204,7 +288,10 @@ const DeliveryBoyOrders: React.FC = () => {
     return "totalAmount" in order && order.orderStatus === "PickedUp";
   };
 
-  const renderOrderTable = (orders: Order[], type: string) => {
+  const renderOrderTable = (
+    orders: Order[] | DeliveredOrderResponse[],
+    type: string
+  ) => {
     if (orders.length === 0) {
       return <Empty description="No orders found" />;
     }
@@ -213,7 +300,8 @@ const DeliveryBoyOrders: React.FC = () => {
       (a, b) =>
         new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
     );
-    const columns: ColumnsType<Order> = [
+
+    const columns: ColumnsType<any> = [
       {
         title: (
           <span className="font-bold text-black text-[1.05em]">Order ID</span>
@@ -222,14 +310,14 @@ const DeliveryBoyOrders: React.FC = () => {
         key: "orderId",
         width: 90,
         ellipsis: true,
-        render: (_: any, order: Order) => (
+        render: (_: any, order: any) => (
           <div className="flex flex-col">
             <Typography.Text
               strong
               className="text-blue-600 cursor-pointer hover:underline"
               onClick={() => handleOrderDetails(order)}
             >
-              #{"uniqueId" in order ? order.uniqueId : order.orderId.slice(-4)}
+              #{order.uniqueId || order.orderId.slice(-4)}
             </Typography.Text>
             <Tag color="blue" className="mt-1 w-fit rounded-full">
               {type === "assigned"
@@ -237,6 +325,13 @@ const DeliveryBoyOrders: React.FC = () => {
                 : type === "picked"
                 ? "Picked Up"
                 : "Delivered"}
+            </Tag>
+            <Tag color="green" className="mt-1 w-fit rounded-full">
+              {order?.paymentType === 1
+                ? "COD"
+                : order?.paymentType === 2
+                ? "Online"
+                : "COD"}
             </Tag>
           </div>
         ),
@@ -247,20 +342,12 @@ const DeliveryBoyOrders: React.FC = () => {
         ),
         key: "items",
         width: 200,
-        // ellipsis: true,
-        render: (_: any, order: Order) => (
+        render: (_: any, order: any) => (
           <div className="space-y-1">
             {order.orderItems && order.orderItems.length > 0 ? (
               <>
-                {order.orderItems.map((item, index) => (
-                  <Typography.Text
-                    key={index}
-                    className="block text-gray-800"
-                    // ellipsis={{
-                    //   tooltip:
-                    //     item.itemName || item.itemBarCode || "Unnamed Item",
-                    // }}
-                  >
+                {order.orderItems.map((item: any, index: number) => (
+                  <Typography.Text key={index} className="block text-gray-800">
                     {item.itemName || item.itemBarCode || "Unnamed Item"}
                     {item.price && (
                       <span className="text-gray-500 ml-2">₹{item.price}</span>
@@ -295,27 +382,12 @@ const DeliveryBoyOrders: React.FC = () => {
           </div>
         ),
       },
-      // {
-      //   title: <span className="font-bold text-black text-[1.05em]">Amount</span>,
-      //   key: "amount",
-      //   width: 120,
-      //   ellipsis: true,
-      //   render: (_: any, order: Order) => (
-      //     <Typography.Text strong className="text-green-600 whitespace-nowrap">
-      //       {new Intl.NumberFormat("en-IN", {
-      //         style: "currency",
-      //         currency: "INR",
-      //         minimumFractionDigits: 2,
-      //       }).format(
-      //         isPickedUpOrder(order)
-      //           ? order.totalAmount || 0
-      //           : order.subTotal || order.grandTotal || 0
-      //       )}
-      //     </Typography.Text>
-      //   ),
-      // },
       {
-        title: <span className="font-bold text-black text-[1.05em]">Date & Time</span>,
+        title: (
+          <span className="font-bold text-black text-[1.05em]">
+            Date & Time
+          </span>
+        ),
         dataIndex: "orderDate",
         key: "orderDate",
         width: 110,
@@ -333,7 +405,8 @@ const DeliveryBoyOrders: React.FC = () => {
             if (days > 0)
               parts.push(
                 <React.Fragment key="days">
-                  <span className="text-green-600 font-semibold">{days}</span>{" "}day
+                  <span className="text-green-600 font-semibold">{days}</span>{" "}
+                  day
                   {days > 1 ? "s" : ""}
                 </React.Fragment>
               );
@@ -348,7 +421,9 @@ const DeliveryBoyOrders: React.FC = () => {
             if (minutes > 0)
               parts.push(
                 <React.Fragment key="minutes">
-                  <span className="text-green-600 font-semibold">{minutes}</span>{" "}
+                  <span className="text-green-600 font-semibold">
+                    {minutes}
+                  </span>{" "}
                   min{minutes > 1 ? "s" : ""}
                 </React.Fragment>
               );
@@ -360,7 +435,6 @@ const DeliveryBoyOrders: React.FC = () => {
                 </>
               );
 
-            // Join the parts with spaces using a proper React fragment approach
             return (
               <>
                 {parts.map((part, index) => (
@@ -401,20 +475,19 @@ const DeliveryBoyOrders: React.FC = () => {
         ),
         key: "address",
         width: 250,
-        // ellipsis: true,
-        render: (_: any, order: Order) =>
+        render: (_: any, order: any) =>
           order.orderAddress ? (
             <div
               className="max-h-[60px] overflow-y-auto"
               style={{
-                scrollbarWidth: "none", // Firefox
-                msOverflowStyle: "none", // IE and Edge
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
               }}
             >
               <style>
                 {`
                   div::-webkit-scrollbar {
-                    display: none; // Chrome, Safari, and Opera
+                    display: none;
                   }
                 `}
               </style>
@@ -446,7 +519,7 @@ const DeliveryBoyOrders: React.FC = () => {
         key: "action",
         width: 100,
         ellipsis: true,
-        render: (_: any, order: Order) => (
+        render: (_: any, order: any) => (
           <Button
             type="primary"
             size="small"
@@ -472,7 +545,120 @@ const DeliveryBoyOrders: React.FC = () => {
         rowClassName="hover:bg-gray-50"
         bordered
         scroll={{ x: "max-content" }}
+        loading={type === "delivered" ? deliveredLoading : false}
       />
+    );
+  };
+
+  const renderDeliveredOrdersWithFilters = () => {
+    return (
+      <div>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-4 gap-3">
+            {/* Start Date */}
+            <div className="flex flex-col">
+              <Typography.Text className="text-sm text-gray-700">
+                Start Date
+              </Typography.Text>
+              <DatePicker
+                className="w-[150px] text-sm"
+                value={startDate}
+                onChange={(date) => setStartDate(date)}
+                placeholder="Select Start Date"
+                disabledDate={(current) => current && current > dayjs()}
+              />
+            </div>
+
+            {/* End Date */}
+            <div className="flex flex-col">
+              <Typography.Text className="text-sm text-gray-700">
+                End Date
+              </Typography.Text>
+              <DatePicker
+                className="w-[150px] text-sm"
+                value={endDate}
+                onChange={(date) => setEndDate(date)}
+                placeholder="Select End Date"
+              />
+            </div>
+
+            {/* Button */}
+            <div className="sm:pt-[22px]">
+              <Button
+                type="primary"
+                onClick={handleGetDeliveredData}
+                loading={deliveredLoading}
+                className="h-[32px] px-4 text-sm bg-[rgb(0,_140,_186)] w-full sm:w-auto"
+              >
+                Get Data
+              </Button>
+            </div>
+          </div>
+
+          {/* Search Input on top right */}
+          <div className="sm:pt-[22px] w-[200px]">
+            <Input
+              className="h-[32px] text-sm"
+              placeholder="Search by Order ID"
+              value={orderIdSearch}
+              onChange={(e) => handleSearchOrderId(e.target.value)}
+              allowClear
+            />
+          </div>  
+        </div>
+
+        {messages && (
+          <div className="flex flex-wrap gap-4 mb-4">
+            {/* COD Summary */}
+            <div className="flex-1 min-w-[250px] p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-sm text-sm text-gray-800">
+              {messages
+                .split("\n\n")[1]
+                ?.split("\n")
+                .map((line, idx) => (
+                  <div key={idx} className="mb-1">
+                    {line.split(/(₹[\d.]+|\b\d+\b)/g).map((part, i) =>
+                      /₹[\d.]+|\b\d+\b/.test(part) ? (
+                        <span
+                          key={i}
+                          className="text-lg font-bold text-blue-700"
+                        >
+                          {part}
+                        </span>
+                      ) : (
+                        <span key={i}>{part}</span>
+                      )
+                    )}
+                  </div>
+                ))}
+            </div>
+
+            {/* Online Summary */}
+            <div className="flex-1 min-w-[250px] p-3 bg-green-50 border border-green-200 rounded-lg shadow-sm text-sm text-gray-800">
+              {messages
+                .split("\n\n")[2]
+                ?.split("\n")
+                .map((line, idx) => (
+                  <div key={idx} className="mb-1">
+                    {line.split(/(₹[\d.]+|\b\d+\b)/g).map((part, i) =>
+                      /₹[\d.]+|\b\d+\b/.test(part) ? (
+                        <span
+                          key={i}
+                          className="text-lg font-bold text-green-700"
+                        >
+                          {part}
+                        </span>
+                      ) : (
+                        <span key={i}>{part}</span>
+                      )
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {renderOrderTable(filteredDeliveredOrders, "delivered")}
+      </div>
     );
   };
 
@@ -506,7 +692,7 @@ const DeliveryBoyOrders: React.FC = () => {
           {deliveredOrders.length > 0 && `(${deliveredOrders.length})`}
         </div>
       ),
-      children: renderOrderTable(deliveredOrders, "delivered"),
+      children: renderDeliveredOrdersWithFilters(),
     },
   ];
 
@@ -523,7 +709,6 @@ const DeliveryBoyOrders: React.FC = () => {
                 {deliveryBoyName}
               </Title>
               <div className="mt-1">
-                {/* <Tag color="green">Online</Tag> */}
                 <Tag color="blue" className="text-s">
                   ID: {deliveryBoyId.slice(-4)}
                 </Tag>

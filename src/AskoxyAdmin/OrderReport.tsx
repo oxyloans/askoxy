@@ -579,18 +579,25 @@ const OrderReport: React.FC = () => {
             </div>
 
             <div className="flex-grow flex justify-end">
+              {/* <button
+                onClick={downloadWeeklyCSV}
+                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download CSV
+              </button> */}
               <Button
-                icon={<Download size={16} />}
+                icon={<Download className="w-4 h-4 mr-2" />}
                 loading={csvLoader}
                 disabled={weeklyDeliveryData.length === 0}
                 onClick={downloadWeeklyCSV}
                 className={`
-                    flex items-center
+                  flex items-center
+                  py-2 px-4
                   bg-green-600 text-white
                   hover:bg-green-700
-                  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed
-                    border-none
-                    px-4 py-2 rounded-md transition
+                  disabled:bg-gray-500 disabled:text-gray-500 disabled:cursor-not-allowed
+                  border-none rounded-md transition
                   `}
               >
                 Download CSV
@@ -654,7 +661,7 @@ const OrderReport: React.FC = () => {
                 columns={weeklyColumns}
                 pagination={{ pageSize: 50, showSizeChanger: false }}
                 className="w-full"
-               rowKey={(record, index) => `${record.orderId}-${index}`}
+                rowKey={(record, index) => `${record.orderId}-${index}`}
                 scroll={{ x: "max-content" }}
               />
             </div>
@@ -782,7 +789,6 @@ const OrderReport: React.FC = () => {
                 dataSource={sortedFilteredData}
                 columns={columns}
                 pagination={false}
-                
                 className="w-full"
                 scroll={{ x: "max-content" }}
                 rowClassName={(record, index) => {

@@ -516,6 +516,7 @@ const App: React.FC = () => {
               <Route path="dbOrderList" element={<DbOrderDetails />} />
               <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
+              <Route path="orderReport" element={<OrderReport />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}

@@ -15,6 +15,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   RetweetOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { FaComments } from "react-icons/fa";
 
@@ -59,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "/home/exchangeorders",
       icon: <RetweetOutlined />,
       label: "Exchange Orders",
-    },
+    },
     {
       key: "/home/allOrders",
       icon: <UnorderedListOutlined />,
@@ -74,6 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "/home/itemsList",
       icon: <InboxOutlined />,
       label: "Items List",
+    },
+    {
+      key: "/home/orderReport",
+      icon: <FileTextOutlined />,
+      label: "Orders Report",
     },
     {
       key: "/home/queryManagement",
