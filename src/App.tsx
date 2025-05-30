@@ -146,6 +146,7 @@ import FMSDashboard from "./GLMS/FMS/Pages/FMSDashboard";
 import FMSRouteRenderer from "./GLMS/FMS/Pages/FMSRoutes";
 import JobStreet from "./GLMS/JobStreet/JobStreet";
 import OrdersByPincode from "./AskoxyAdmin/Pincodewiseorders";
+import Feedback from "./components/Feedback";
 
 
 
@@ -210,6 +211,7 @@ const App: React.FC = () => {
               path="/usermobilenumberupdate"
               element={<MobileNumberUpdate />}
             />
+              <Route path="/userFeedback" element={<Feedback />} />
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />

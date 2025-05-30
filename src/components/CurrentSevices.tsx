@@ -31,14 +31,14 @@ const ResponsiveGallery = () => {
   const navigate = useNavigate();
 
   const images = [
-    {
-      id: 5,
-      src: HM5,
-      alt: "Buy 1 Kg Rice Get 1 Kg Free",
-      category: "BUY 1 KG RICE GET 1 KG RICE FREE",
-      link: "/main/dashboard/products",
-      weight: 1.0, // Adding weight parameter
-    },
+    // {
+    //   id: 5,
+    //   src: HM5,
+    //   alt: "Buy 1 Kg Rice Get 1 Kg Free",
+    //   category: "BUY 1 KG RICE GET 1 KG RICE FREE",
+    //   link: "/main/dashboard/products",
+    //   weight: 1.0, // Adding weight parameter
+    // },
     {
       id: 2,
       src: HM1,

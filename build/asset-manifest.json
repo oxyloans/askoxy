@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.3f410319.css",
-    "main.js": "/static/js/main.74c9ef8e.js",
+    "main.css": "/static/css/main.b6f4df5c.css",
+    "main.js": "/static/js/main.6072939a.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/Usecase.png": "/static/media/Usecase.3ad7b7978fa08b7944c9.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
@@ -140,7 +140,6 @@
     "static/media/Legal knowledge hub.png": "/static/media/Legal knowledge hub.9db183177e6a1533ba16.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
     "static/media/2offer.png": "/static/media/2offer.6b7c59e146b45fa528b9.png",
-    "static/media/orderriceonline.png": "/static/media/orderriceonline.5bcd241c869669da5c8c.png",
     "static/media/Pets.png": "/static/media/Pets.ca3ab0d5bb314a9dc270.png",
     "static/media/IMAGE 16.png": "/static/media/IMAGE 16.e2c205dbc69cbfa0b18a.png",
     "static/media/loan services.png": "/static/media/loan services.d1ec8a6c9d10588e8412.png",
@@ -195,11 +194,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.3f410319.css.map": "/static/css/main.3f410319.css.map",
-    "main.74c9ef8e.js.map": "/static/js/main.74c9ef8e.js.map"
+    "main.b6f4df5c.css.map": "/static/css/main.b6f4df5c.css.map",
+    "main.6072939a.js.map": "/static/js/main.6072939a.js.map"
   },
   "entrypoints": [
-    "static/css/main.3f410319.css",
-    "static/js/main.74c9ef8e.js"
+    "static/css/main.b6f4df5c.css",
+    "static/js/main.6072939a.js"
   ]
 }
