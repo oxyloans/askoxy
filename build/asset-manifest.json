@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.b6f4df5c.css",
-    "main.js": "/static/js/main.6072939a.js",
+    "main.css": "/static/css/main.450b8559.css",
+    "main.js": "/static/js/main.4d69d2e5.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/Usecase.png": "/static/media/Usecase.3ad7b7978fa08b7944c9.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
@@ -114,6 +114,7 @@
     "static/media/testimonial16.png": "/static/media/testimonial16.c0b4f2d3618261aae6b0.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
+    "static/media/11f.png": "/static/media/11f.cd133a3085a62e12f6bd.png",
     "static/media/realestate gpt (1).png": "/static/media/realestate gpt (1).5655cc684ac7d693d031.png",
     "static/media/Influencers gpt (1).png": "/static/media/Influencers gpt (1).566a5a80041f778c5e8c.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
@@ -122,6 +123,7 @@
     "static/media/testimonial9.png": "/static/media/testimonial9.f386453652d69c54a59d.png",
     "static/media/Automotive.png": "/static/media/Automotive.04d3a447511d1b50e4d9.png",
     "static/media/Shopping.png": "/static/media/Shopping.0a66eee4bfa3c59e34df.png",
+    "static/media/22f.png": "/static/media/22f.b04bcc85a415bfdead2f.png",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.1815e00441357e01619e.ttf",
     "static/media/testimonial15.png": "/static/media/testimonial15.4a692e3fc9549e8d31a8.png",
     "static/media/image 19.png": "/static/media/image 19.daf2480419b75fbd3b56.png",
@@ -147,7 +149,6 @@
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
     "static/media/IMAGE 3.png": "/static/media/IMAGE 3.5588a13795e17eb3e259.png",
     "static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.png": "/static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.3b40f8ed166a3fd17253.png",
-    "static/media/image 13.png": "/static/media/image 13.cc8aa13738305ef13342.png",
     "static/media/rama mam.png": "/static/media/rama mam.e093d87cf380e97bca53.png",
     "static/media/IMAGE 17.png": "/static/media/IMAGE 17.4aa5aed636318304d260.png",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.c210719e60948b211a12.woff2",
@@ -194,11 +195,11 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.b6f4df5c.css.map": "/static/css/main.b6f4df5c.css.map",
-    "main.6072939a.js.map": "/static/js/main.6072939a.js.map"
+    "main.450b8559.css.map": "/static/css/main.450b8559.css.map",
+    "main.4d69d2e5.js.map": "/static/js/main.4d69d2e5.js.map"
   },
   "entrypoints": [
-    "static/css/main.b6f4df5c.css",
-    "static/js/main.6072939a.js"
+    "static/css/main.450b8559.css",
+    "static/js/main.4d69d2e5.js"
   ]
 }

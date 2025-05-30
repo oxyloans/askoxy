@@ -129,7 +129,7 @@ const MainPage: React.FC = () => {
       return;
     }
 
-    const filtered = filteredOrders.filter((order) => {
+    const filtered = orderDetails.filter((order) => {
       return order.expectedDeliveryDate === selectedDate;
     });
 

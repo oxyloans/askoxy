@@ -5,7 +5,7 @@ import HM1 from "../assets/img/0.png";
 import HM2 from "../assets/img/white green minimalist body lotion Product Promotion Instagram post.png";
 import HM3 from "../assets/img/IMAGE 3.png";
 import HM4 from "../assets/img/Manchester.png";
-import HM5 from "../assets/img/orderriceonline.png";
+import HM5 from "../assets/img/11f.png";
 import HM6 from "../assets/img/jsr.png";
 import HM7 from "../assets/img/IMAGE 7.png";
 import HM8 from "../assets/img/IMAGE 8.png";
@@ -13,7 +13,7 @@ import HM9 from "../assets/img/image 9.png";
 import HM10 from "../assets/img/IMAGE 10.png";
 import HM11 from "../assets/img/IMAGE 11.png";
 import HM12 from "../assets/img/IMAGE 12.png";
-import HM13 from "../assets/img/image 13.png";
+import HM13 from "../assets/img/22f.png";
 import HM14 from "../assets/img/IMAGE 17.png";
 import HM15 from "../assets/img/IMAGE 14.png";
 import HM16 from "../assets/img/IMAGE 16.png";
@@ -31,14 +31,22 @@ const ResponsiveGallery = () => {
   const navigate = useNavigate();
 
   const images = [
-    // {
-    //   id: 5,
-    //   src: HM5,
-    //   alt: "Buy 1 Kg Rice Get 1 Kg Free",
-    //   category: "BUY 1 KG RICE GET 1 KG RICE FREE",
-    //   link: "/main/dashboard/products",
-    //   weight: 1.0, // Adding weight parameter
-    // },
+    {
+      id: 19,
+      src: HM13,
+      alt: "Buy 2 Kg Rice & Get 1 Kg Free",
+      category: "BUY 2 KG RICE & GET 1 KG RICE FREE",
+      link: "/main/dashboard/products",
+      weight: 1.0, // Adding weight parameter
+    },
+    {
+      id: 5,
+      src: HM5,
+      alt: "Buy 5 Kg Rice & Get 2 Kg Free",
+      category: "BUY 5 KG RICE & GET 2 KG RICE FREE",
+      link: "/main/dashboard/products",
+      weight: 5.0, // Adding weight parameter
+    },
     {
       id: 2,
       src: HM1,
@@ -73,14 +81,7 @@ const ResponsiveGallery = () => {
       link: "/main/dashboard/products",
       weight: 26.0, // Adding weight parameter
     },
-    {
-      id: 19,
-      src: HM13,
-      alt: "Kisan Rice",
-      category: "KISAN RICE",
-      link: "/main/dashboard/products",
-      weight: 26.0, // Adding weight parameter
-    },
+
     {
       id: 20,
       src: HM15,
@@ -124,7 +125,7 @@ const ResponsiveGallery = () => {
       id: 8,
       src: HM8,
       alt: "Study Abroad",
-      category:"STUDY ABROAD",
+      category: "STUDY ABROAD",
       link: "/main/services/studyabroad",
     },
     {
@@ -138,7 +139,7 @@ const ResponsiveGallery = () => {
       id: 9,
       src: HM9,
       alt: "Study Abroad",
-      category:"STUDY ABROAD",
+      category: "STUDY ABROAD",
       link: "/main/services/studyabroad",
     },
 
