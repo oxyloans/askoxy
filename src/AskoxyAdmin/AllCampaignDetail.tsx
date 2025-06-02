@@ -4,7 +4,7 @@ import Sidebar from "./Sider";
 import { message, Modal, Button, Input, Upload, Table, Tag, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IndexKind } from "typescript";
-import { imageUrls } from "../assets/images";
+
 import BASE_URL from "../Config";
 
 interface Image {

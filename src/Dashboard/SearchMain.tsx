@@ -127,7 +127,7 @@ const SearchMain: React.FC = () => {
 
     try {
       await axios.post(
-        `https://meta.oxyglobal.tech/api/cart-service/cart/add_Items_ToCart`,
+        `https://meta.oxyglobal.tech/api/cart-service/cart/addAndIncrementCart`,
         { customerId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -165,8 +165,8 @@ const SearchMain: React.FC = () => {
   // Handle quantity change (increment/decrement)
   const handleQuantityChange = async (item: SearchItem, increment: boolean) => {
     const endpoint = increment
-      ? `https://meta.oxyglobal.tech/api/cart-service/cart/incrementCartData`
-      : `https://meta.oxyglobal.tech/api/cart-service/cart/decrementCartData`;
+      ? `https://meta.oxyglobal.tech/api/cart-service/cart/addAndIncrementCart`
+      : `https://meta.oxyglobal.tech/api/cart-service/cart/minusCartItem`;
 
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");

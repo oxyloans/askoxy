@@ -114,7 +114,7 @@ const MainPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<OrderData | null>(null);
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
   const [dbModalVisible, setdbModalVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+  const [isMobile] = useState<boolean>(window.innerWidth < 768);
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
     useState<DeliveryBoy | null>();
   const [dbLoading, setdbLoading] = useState<boolean>(false);

@@ -184,7 +184,7 @@ const FMSDashboard: React.FC = () => {
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   
     const handleLogoClick = () => (window.location.href = "/");
-  
+    const handleGLMSClick = () => (window.location.href = "/glms");
     useEffect(() => {
       const handleScroll = () => setIsScrolled(window.scrollY > 10);
       window.addEventListener("scroll", handleScroll);
@@ -215,10 +215,16 @@ const FMSDashboard: React.FC = () => {
             <div onClick={handleInterest} className="cursor-pointer">
               <img src={Askoxylogo} alt="Logo" className="h-12" />
             </div>
-            <div className="hidden md:flex">
+            <div className="hidden md:flex gap-3">
+              <button
+                onClick={handleGLMSClick}
+                className="bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 px-5 py-2 rounded-md transition"
+              >
+                Go To GLMS
+              </button>
               <button
                 onClick={handleInterest}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-medium transition hover:scale-105"
+                className="bg-green-100 text-green-700 rounded hover:bg-green-200 px-5 py-2 rounded-md font-medium transition hover:scale-105"
               >
                 I'm Interested
               </button>
@@ -231,10 +237,16 @@ const FMSDashboard: React.FC = () => {
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 pt-2">
+            <div className="md:hidden pb-4 pt-2 gap-3">
+              <button
+                onClick={handleGLMSClick}
+                className="bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 px-5 py-2 rounded-md transition"
+              >
+                Go To GLMS
+              </button>
               <button
                 onClick={handleInterest}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md font-medium transition"
+                className="bg-green-100 text-green-700 rounded hover:bg-green-200 py-2 rounded-md font-medium transition"
               >
                 I'm Interested
               </button>
@@ -284,8 +296,8 @@ const FMSDashboard: React.FC = () => {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-4 text-center text-sm">
-        &copy; {new Date().getFullYear()} Global Lending Management Solutions. All
-        rights reserved.
+        &copy; {new Date().getFullYear()} Global Lending Management Solutions.
+        All rights reserved.
       </footer>
     </div>
   );

@@ -16,6 +16,8 @@ import {
   AlertCircle,
   Loader2,
   Trash2,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
@@ -40,13 +42,6 @@ interface Item {
   quantity: number;
 }
 
-// interface CartItem {
-//   itemId: string;
-//   cartQuantity: number;
-//   cartId: string;
-//   status: string; // "ADD" or "FREE"
-// }
-
 interface CartItem {
   itemId: string;
   cartQuantity: number;
@@ -62,6 +57,12 @@ interface Message {
   type: "sent" | "received" | "system";
 }
 
+interface ItemImage {
+  imageId: string;
+  imageUrl: string;
+  itemId: string;
+}
+
 const ItemDisplayPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const { state } = useLocation();
@@ -69,6 +70,8 @@ const ItemDisplayPage = () => {
   const [itemDetails, setItemDetails] = useState<Item | null>(
     state?.item || null
   );
+  const [itemImages, setItemImages] = useState<ItemImage[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
@@ -110,6 +113,21 @@ const ItemDisplayPage = () => {
     return isNaN(parsed) ? null : parsed;
   };
 
+  // New function to fetch item images
+  const fetchItemImages = async (id: string) => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/product-service/ImagesViewBasedOnItemId?itemId=${id}`
+      );
+      console.log("Item images response:", response.data);
+      setItemImages(response.data || []);
+      setCurrentImageIndex(0); // Reset to first image when new images are loaded
+    } catch (error) {
+      console.error("Error fetching item images:", error);
+      setItemImages([]);
+    }
+  };
+
   const fetchItemDetails = async (id: string) => {
     try {
       const response = await axios.get(
@@ -121,6 +139,8 @@ const ItemDisplayPage = () => {
       const item = allItems.find((item: Item) => item.itemId === id);
       if (item) {
         setItemDetails(item);
+        // Fetch images for this item
+        await fetchItemImages(id);
       }
     } catch (error) {
       console.error("Error fetching item details:", error);
@@ -137,14 +157,18 @@ const ItemDisplayPage = () => {
         fetchItemDetails(itemId);
       } else {
         setItemDetails(state.item);
+        // Fetch images even if item details are passed via state
+        fetchItemImages(itemId);
       }
       fetchCartData("");
+      fetchRelatedItems();
     }
   }, [itemId, state]);
 
   // Updated navigation handler for related items
   const handleRelatedItemClick = (item: Item) => {
     setItemDetails(item); // Update item details immediately
+    fetchItemImages(item.itemId); // Fetch images for the new item
     navigate(`/main/itemsdisplay/${item.itemId}`, {
       state: { item },
       replace: true,
@@ -319,6 +343,8 @@ const ItemDisplayPage = () => {
   };
 
   const fetchRelatedItems = async () => {
+    if (!itemDetails) return;
+    
     try {
       const response = await axios.get(
         `${BASE_URL}/product-service/showItemsForCustomrs`
@@ -330,25 +356,16 @@ const ItemDisplayPage = () => {
       const matchingCategory = response.data.find(
         (category: any) =>
           category.itemsResponseDtoList &&
-          Array.isArray(category.itemsResponseDtoList) && // Ensure it's an array
+          Array.isArray(category.itemsResponseDtoList) &&
           category.itemsResponseDtoList.some(
-            (item: any) =>
-              item.itemId === itemDetails?.itemId ||
-              item.itemId === itemDetails?.itemId
+            (item: any) => item.itemId === itemDetails.itemId
           )
       );
 
-      if (
-        matchingCategory &&
-        Array.isArray(matchingCategory.itemsResponseDtoList)
-      ) {
+      if (matchingCategory && Array.isArray(matchingCategory.itemsResponseDtoList)) {
         // Extract related items, excluding the selected one
         const categoryItems = matchingCategory.itemsResponseDtoList
-          .filter(
-            (item: any) =>
-              item.itemId !== itemDetails?.itemId &&
-              item.itemId !== itemDetails?.itemId // Corrected logical condition
-          )
+          .filter((item: any) => item.itemId !== itemDetails.itemId)
           .slice(0, 4); // Limit to 4 items
 
         console.log("Related Items:", categoryItems);
@@ -361,6 +378,13 @@ const ItemDisplayPage = () => {
       console.error("Error fetching related items:", error);
     }
   };
+
+  // Update fetchRelatedItems when itemDetails changes
+  useEffect(() => {
+    if (itemDetails) {
+      fetchRelatedItems();
+    }
+  }, [itemDetails]);
 
   const handleAddToCart = async (item: Item) => {
     setLoadingItems((prev) => ({
@@ -398,7 +422,7 @@ const ItemDisplayPage = () => {
     }
   };
 
-  // Function to handle removing an item completely from the cart
+  // Updated function to handle removing an item completely from the cart
   const handleRemoveItem = async (itemId: string) => {
     setLoadingItems((prev) => ({
       ...prev,
@@ -406,7 +430,17 @@ const ItemDisplayPage = () => {
     }));
 
     try {
-      // Use the minusCartItem endpoint with PATCH
+      // Find the cart item to remove
+      const cartItemToRemove = cartData.find(
+        (item) => item.itemId === itemId && item.status === "ADD"
+      );
+
+      if (!cartItemToRemove) {
+        message.error("Item not found in cart");
+        return;
+      }
+
+      // Use the PATCH endpoint for removing items
       await axios.patch(
         `${BASE_URL}/cart-service/cart/minusCartItem`,
         { customerId, itemId },
@@ -633,6 +667,40 @@ const ItemDisplayPage = () => {
     setOfferModal({ visible: false, content: "" });
   };
 
+  // Image navigation functions
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? getAllImages().length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === getAllImages().length - 1 ? 0 : prev + 1
+    );
+  };
+
+  // Function to get all images (existing + new from API)
+  const getAllImages = () => {
+    const images = [];
+    
+    // Add existing item image if available
+    if (itemDetails?.itemImage || itemDetails?.image) {
+      images.push({
+        imageId: 'existing',
+        imageUrl: itemDetails.itemImage || itemDetails.image,
+        itemId: itemDetails.itemId
+      });
+    }
+    
+    // Add images from API
+    if (itemImages && itemImages.length > 0) {
+      images.push(...itemImages);
+    }
+    
+    return images;
+  };
+
   return (
     <div className="min-h-screen">
       {/* Added Special Offers Modal from categories.tsx */}
@@ -683,256 +751,268 @@ const ItemDisplayPage = () => {
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                {/* Product Image Section */}
+                {/* Enhanced Product Image Section with Gallery */}
                 <div className="relative">
-                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                    <img
-                      src={itemDetails?.itemImage || itemDetails?.image}
-                      alt={itemDetails?.itemName}
-                      className="w-full h-full object-contain transform transition-transform hover:scale-105"
-                    />
+                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
+                    {getAllImages().length > 0 ? (
+                      <>
+                        <img
+                          src={getAllImages()[currentImageIndex]?.imageUrl}
+                          alt={itemDetails?.itemName}
+                          className="w-full h-full object-contain transform transition-transform hover:scale-105"
+                        />
+
+                        {/* Image Navigation Controls */}
+                        {getAllImages().length > 1 && (
+                          <>
+                            <button
+                              onClick={handlePrevImage}
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={handleNextImage}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all"
+                            >
+                              <ChevronRightIcon className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package2 className="w-16 h-16 text-gray-400" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Enhanced Discount Badge */}
-                  {itemDetails && (
-                    <div className="absolute top-4 Hackett
-                    right-4 flex items-center">
-                      <span className="bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
-                        {calculateDiscount(
-                          Number(itemDetails.itemMrp) ||
-                            Number(itemDetails.priceMrp),
-                          Number(itemDetails.itemPrice)
-                        )}
-                        % OFF
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Stock Status Badge */}
-                  {itemDetails && (
-                    <div className="absolute top-4 left-4">
-                      <div
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 ${
-                          getStockStatus(itemDetails.quantity).color
-                        }`}
-                      >
-                        {itemDetails.quantity <= 5 && (
-                          <AlertCircle className="w-4 h-4" />
-                        )}
-                        {getStockStatus(itemDetails.quantity).text}
-                      </div>
+                  {/* Image Thumbnails */}
+                  {getAllImages().length > 1 && (
+                    <div className="flex space-x-2 mt-4 overflow-x-auto">
+                      {getAllImages().map((image, index) => (
+                        <button
+                          key={image.imageId}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                            currentImageIndex === index
+                              ? "border-purple-500"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <img
+                            src={image.imageUrl}
+                            alt={`${itemDetails?.itemName} ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* Product Info Section */}
-                <div className="space-y-6">
+                {/* Product Details */}
+                <div className="space-y-4">
+                  {/* Product Name */}
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                       {itemDetails?.itemName}
                     </h1>
-                    <div className="flex items-center gap-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                        />
-                      ))}
-                      <span className="text-sm text-gray-600">(4.8/5)</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">(4.8)</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Price Section */}
-                  <div className="flex items-baseline gap-4">
-                    <span className="text-3xl font-bold text-purple-600">
-                      ₹{itemDetails?.itemPrice}
-                    </span>
-                    <span className="text-lg text-gray-500 line-through">
-                      ₹{itemDetails?.itemMrp || itemDetails?.priceMrp}
-                    </span>
+                  <div className="space-y-2">
+                    <div className="flex items-baseline space-x-3">
+                      <span className="text-3xl font-bold text-purple-600">
+                        ₹{itemDetails?.itemPrice}
+                      </span>
+                      {itemDetails?.itemMrp && itemDetails.itemMrp > itemDetails.itemPrice && (
+                        <>
+                          <span className="text-xl text-gray-500 line-through">
+                            ₹{itemDetails.itemMrp}
+                          </span>
+                          <span className="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                            {calculateDiscount(itemDetails.itemMrp, itemDetails.itemPrice)}% OFF
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Weight: {itemDetails?.itemWeight || itemDetails?.weight}
+                    {itemDetails?.weightUnit || itemDetails?.units}
+                    </p>
                   </div>
 
-                  {/* Enhanced Add to Cart Section */}
-                  <div className="space-y-4">
-                    {itemDetails?.quantity !== 0 ? (
-                      itemDetails && isItemUserAdded(itemDetails.itemId) ? (
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
-                            <button
-                              className={`p-2 rounded-lg transition-all ${
-                                cartItems[itemDetails.itemId] <= 1
-                                  ? "bg-red-100 text-red-600 hover:bg-red-200"
-                                  : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                              }`}
-                              onClick={() =>
-                                itemDetails &&
-                                handleQuantityChange(itemDetails, false)
-                              }
-                              disabled={loadingItems.items[itemDetails.itemId]}
-                            >
-                              <Minus className="w-5 h-5" />
-                            </button>
-                            {loadingItems.items[itemDetails.itemId] ? (
-                              <Loader2 className="animate-spin text-purple-600" />
-                            ) : (
-                              <span className="font-medium text-purple-700">
-                                {cartItems[itemDetails.itemId]}
+                  {/* Stock Status */}
+                  {itemDetails && (
+                    <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                      <div className={`px-3 py-1 rounded-full ${getStockStatus(itemDetails.quantity).color}`}>
+                        {getStockStatus(itemDetails.quantity).text}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Product Description */}
+                  {itemDetails?.itemDescription && (
+                    <div className="border-t pt-4">
+                      <h3 className="font-medium text-gray-900 mb-2">Description</h3>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        {itemDetails.itemDescription}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Add to Cart Section */}
+                  <div className="border-t pt-4">
+                    {itemDetails && (
+                      <div className="space-y-3">
+                        {isItemUserAdded(itemDetails.itemId) ? (
+                          <div className="flex items-center space-x-3">
+                            <div className="flex items-center bg-purple-50 rounded-lg p-1">
+                              <button
+                                onClick={() => handleQuantityChange(itemDetails, false)}
+                                disabled={loadingItems.items[itemDetails.itemId]}
+                                className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                {loadingItems.items[itemDetails.itemId] ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Minus className="w-4 h-4" />
+                                )}
+                              </button>
+                              <span className="px-4 py-2 font-medium text-purple-600">
+                                {cartItems[itemDetails.itemId] || 0}
                               </span>
-                            )}
-                            <button
-                              className={`p-2 rounded-lg transition-all ${
-                                isMaxStockReached(itemDetails)
-                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                  : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                              }`}
-                              onClick={() =>
-                                !isMaxStockReached(itemDetails) &&
-                                handleQuantityChange(itemDetails, true)
-                              }
-                              disabled={
-                                cartItems[itemDetails.itemId] >=
-                                  itemDetails.quantity ||
-                                loadingItems.items[itemDetails.itemId] ||
-                                (itemDetails.itemPrice === 1 &&
-                                  cartItems[itemDetails.itemId] >= 1)
-                              }
-                            >
-                              <Plus className="w-5 h-5" />
-                            </button>
-                            {/* Delete Button */}
-                            <button
-                              className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-all ml-2"
-                              onClick={() => {
-                                if (itemDetails) {
-                                  handleRemoveItem(itemDetails.itemId);
+                              <button
+                                onClick={() => handleQuantityChange(itemDetails, true)}
+                                disabled={
+                                  loadingItems.items[itemDetails.itemId] ||
+                                  isMaxStockReached(itemDetails)
                                 }
-                              }}
+                                className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                {loadingItems.items[itemDetails.itemId] ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Plus className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveItem(itemDetails.itemId)}
                               disabled={loadingItems.items[itemDetails.itemId]}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Remove from cart"
                             >
-                              <Trash2 className="w-5 h-5" />
+                              {loadingItems.items[itemDetails.itemId] ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
                             </button>
                           </div>
-                          {isMaxStockReached(itemDetails) && (
-                            <p className="text-yellow-600 text-sm flex items-center gap-1.5">
-                              <AlertCircle className="w-4 h-4" />
-                              Maximum available quantity reached
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            itemDetails &&
-                            !loadingItems.items[itemDetails.itemId] &&
-                            handleAddToCart(itemDetails)
-                          }
-                          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 
-          transform transition-all hover:scale-105 flex items-center justify-center gap-2"
-                        >
-                          {itemDetails &&
-                          loadingItems.items[itemDetails.itemId] ? (
-                            <Loader2 className="mr-2 animate-spin inline-block" />
-                          ) : (
-                            <>
+                        ) : (
+                          <button
+                            onClick={() => handleAddToCart(itemDetails)}
+                            disabled={
+                              loadingItems.items[itemDetails.itemId] ||
+                              itemDetails.quantity === 0
+                            }
+                            className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white py-3 px-6 rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                          >
+                            {loadingItems.items[itemDetails.itemId] ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
                               <ShoppingCart className="w-5 h-5" />
-                              Add to Cart
-                            </>
-                          )}
-                        </button>
-                      )
-                    ) : (
-                      <button
-                        disabled
-                        className="w-full py-3 bg-gray-200 text-gray-600 rounded-lg 
-        flex items-center justify-center gap-2 cursor-not-allowed"
-                      >
-                        <ShoppingCart className="w-5 h-5" />
-                        Out of Stock
-                      </button>
+                            )}
+                            <span>
+                              {itemDetails.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                            </span>
+                          </button>
+                        )}
+                        
+                        {isMaxStockReached(itemDetails) && (
+                          <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 p-3 rounded-lg">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-sm">Maximum available quantity reached</span>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Product Details Section - Enhanced */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-4">Product Details</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center gap-3 bg-purple-50 p-3 rounded-lg">
-                  <Package2 className="w-5 h-5 text-purple-600" />
-                  <span className="font-medium">
-                    {itemDetails?.itemWeight || itemDetails?.weight}
-                    {itemDetails?.weightUnit || itemDetails?.units}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 bg-purple-50 p-3 rounded-lg">
-                  <span className="font-medium">
-                    {itemDetails?.itemDescription}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Chat/Related Items */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-8 space-y-8">
-              {/* Chat Section Toggle */}
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">
-                    {showChatSection ? "Product Assistant" : "Need Help?"}
-                  </h2>
+                  {/* Chat Button */}
                   <button
                     onClick={() => handleChatView(itemDetails?.itemName)}
-                    className="p-2 bg-purple-100 text-purple-600 rounded-full hover:bg-purple-200"
+                    className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all"
                   >
-                    {showChatSection ? (
-                      <X className="w-5 h-5" />
-                    ) : (
-                      <MessageCircle className="w-5 h-5" />
-                    )}
+                    <Bot className="w-5 h-5" />
+                    <span>Ask AI about this product</span>
                   </button>
                 </div>
+              </div>
+            </div>
 
-                {showChatSection && (
-                  <div className="h-[400px] flex flex-col">
-                    <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                      {messages.map((msg, idx) => (
+            {/* Chat Section */}
+            {showChatSection && (
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center space-x-2">
+                    <MessageCircle className="w-5 h-5" />
+                    <span>Product Assistant</span>
+                  </h3>
+                  <button
+                    onClick={() => setShowChatSection(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="border rounded-lg">
+                  <div className="h-64 overflow-y-auto p-4 space-y-3">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${
+                          message.type === "sent" ? "justify-end" : "justify-start"
+                        }`}
+                      >
                         <div
-                          key={idx}
-                          className={`flex ${
-                            msg.type === "sent"
-                              ? "justify-end"
-                              : "justify-start"
+                          className={`max-w-xs px-4 py-2 rounded-lg ${
+                            message.type === "sent"
+                              ? "bg-purple-600 text-white"
+                              : message.type === "system"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          <div
-                            className={`max-w-[75%] p-3 rounded-lg ${
-                              msg.type === "sent"
-                                ? "bg-purple-600 text-white"
-                                : "bg-purple-50 border border-purple-100"
-                            }`}
-                          >
-                            {msg.type === "system" && (
-                              <Bot className="w-4 h-4 text-purple-600 mb-1" />
-                            )}
-                            <span className="text-sm">{msg.text}</span>
-                          </div>
+                          <p className="text-sm">{message.text}</p>
                         </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t p-4">
+                    <div className="flex space-x-2">
                       <input
                         type="text"
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        onKeyPress={(e) =>
-                          e.key === "Enter" && handleSendMessage()
-                        }
-                        className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                         placeholder="Ask about this product..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                       <button
                         onClick={handleSendMessage}
@@ -942,142 +1022,72 @@ const ItemDisplayPage = () => {
                       </button>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
-              {/* Related Items */}
-              <div
-              className="bg-white rounded-xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold mb-4">Related Items</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {relatedItems.map((item, index) => (
+            )}
+          </div>
+
+          {/* Right Column - Related Products */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-xl p-6 shadow-sm sticky top-4">
+              <h3 className="text-lg font-semibold mb-4">Related Products</h3>
+              
+              {relatedItems.length > 0 ? (
+                <div className="space-y-4">
+                  {relatedItems.map((item) => (
                     <div
-                      key={index}
-                      className="relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all"
+                      key={item.itemId}
+                      className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                       onClick={() => handleRelatedItemClick(item)}
                     >
-                      {/* Discount badge */}
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {calculateDiscount(item.itemMrp, item.itemPrice)}% OFF
-                      </div>
-
-                      {/* Item image and details */}
-                      <div className="p-3">
-                        <div className="h-32 bg-gray-100 rounded-md mb-3"></div>
-                        <h3 className="font-medium text-gray-800 line-clamp-2 mb-1">
-                          {item.itemName}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">
-                            ₹{item.itemPrice}
-                          </span>
-                          <span className="text-gray-500 text-sm line-through">
-                            ₹{item.itemMrp}
-                          </span>
-                        </div>
-
-                        {/* Related item cart controls */}
-                        <div className="mt-3">
-                          {item.quantity !== 0 ? (
-                            isItemUserAdded(item.itemId) ? (
-                              <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
-                                <button
-                                  className={`p-1.5 rounded-lg transition-all ${
-                                    cartItems[item.itemId] <= 1
-                                      ? "bg-red-100 text-red-600 hover:bg-red-200"
-                                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleQuantityChange(item, false);
-                                  }}
-                                  disabled={loadingItems.items[item.itemId]}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-
-                                {loadingItems.items[item.itemId] ? (
-                                  <Loader2 className="animate-spin text-purple-600 w-4 h-4" />
-                                ) : (
-                                  <span className="font-medium text-purple-700">
-                                    {cartItems[item.itemId]}
-                                  </span>
-                                )}
-
-                                <button
-                                  className={`p-1.5 rounded-lg transition-all ${
-                                    cartItems[item.itemId] >= item.quantity
-                                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (
-                                      cartItems[item.itemId] < item.quantity
-                                    ) {
-                                      handleQuantityChange(item, true);
-                                    }
-                                  }}
-                                  disabled={
-                                    cartItems[item.itemId] >= item.quantity ||
-                                    loadingItems.items[item.itemId]
-                                  }
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-
-                                {/* Delete Button for related items */}
-                                <button
-                                  className="p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-all ml-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveItem(item.itemId);
-                                  }}
-                                  disabled={loadingItems.items[item.itemId]}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!loadingItems.items[item.itemId]) {
-                                    handleAddToCart(item);
-                                  }
-                                }}
-                                className="w-full py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 
-transform transition-all flex items-center justify-center gap-1.5"
-                              >
-                                {loadingItems.items[item.itemId] ? (
-                                  <Loader2 className="animate-spin w-4 h-4" />
-                                ) : (
-                                  <>
-                                    <ShoppingCart className="w-4 h-4" />
-                                    Add to Cart
-                                  </>
-                                )}
-                              </button>
-                            )
+                      <div className="flex space-x-3">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          {item.itemImage || item.image ? (
+                            <img
+                              src={item.itemImage || item.image}
+                              alt={item.itemName}
+                              className="w-full h-full object-contain"
+                            />
                           ) : (
-                            <button
-                              disabled
-                              className="w-full py-2 bg-gray-200 text-gray-600 text-sm rounded-lg 
-flex items-center justify-center gap-1.5 cursor-not-allowed"
-                            >
-                              <ShoppingCart className="w-4 h-4" />
-                              Out of Stock
-                            </button>
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package2 className="w-6 h-6 text-gray-400" />
+                            </div>
                           )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 text-sm truncate">
+                            {item.itemName}
+                          </h4>
+                          <p className="text-xs text-gray-500 mt-1">
+  {(item.itemWeight || item.weight) + ' ' + (item.weightUnit || item.units || '')}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="font-bold text-purple-600 text-sm">
+                              ₹{item.itemPrice}
+                            </span>
+                            {item.itemMrp && item.itemMrp > item.itemPrice && (
+                              <span className="text-xs text-gray-500 line-through">
+                                ₹{item.itemMrp}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Package2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">No related products found</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+      
       <Footer />
     </div>
   );

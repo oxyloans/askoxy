@@ -2,31 +2,26 @@ import React, { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
 
-// Use Case Images
-import UseCaseImage1 from "../../assets/img/Usecase2.png";
-import UseCaseImage2 from "../../assets/img/Usecase7.png";
-import UseCaseImage3 from "../../assets/img/Usecase4.png";
-import UseCaseImage4 from "../../assets/img/Usecase10.png";
-import UseCaseImage5 from "../../assets/img/Usecase3.png";
-import UseCaseImage6 from "../../assets/img/Usecase5.png";
-import UseCaseImage7 from "../../assets/img/Usecase6.png";
-import UseCaseImage8 from "../../assets/img/Usecase8.png";
-import UseCaseImage9 from "../../assets/img/Usecase9.png";
-import UseCaseImage10 from "../../assets/img/Usecase1.png";
-import UseCaseImage11 from "../../assets/img/Usecase.png";
+
 
 const images = [
-  UseCaseImage11,
-  UseCaseImage10,
-  UseCaseImage1,
-  UseCaseImage2,
-  UseCaseImage3,
-  UseCaseImage4,
-  UseCaseImage5,
-  UseCaseImage6,
-  UseCaseImage7,
-  UseCaseImage8,
-  UseCaseImage9,
+  "https://i.ibb.co/ksGJZZtz/Usecase.png",
+
+  "https://i.ibb.co/PvkT9gXY/Usecase1.png",
+  "https://i.ibb.co/wZTqnXXC/Usecase2.png",
+  "https://i.ibb.co/S4h8zBj6/Usecase7.png",
+  "https://i.ibb.co/7xpk9fkG/Usecase4.png",
+  "https://i.ibb.co/RknWvhzt/Usecase10.png",
+  "https://i.ibb.co/RT3Lxk4n/Usecase3.png",
+  "https://i.ibb.co/LdKHx3tT/Usecase12.png",
+  "https://i.ibb.co/Q7ZhS8Ft/Usecase13.png",
+  "https://i.ibb.co/bRQ3ZDgS/Usecase5.png",
+
+  "https://i.ibb.co/C5ntVDTn/Usecase6.png",
+  "https://i.ibb.co/8DpcTcf8/Usecase11.png",
+"https://i.ibb.co/1YLXgzcP/Usecase8.png",
+  "https://i.ibb.co/sv5D1V4Q/Usecase9.png",
+
 ];
 
 const useCaseNames = [
@@ -37,8 +32,11 @@ const useCaseNames = [
   "Link Customer ID to Loan Product (LOS)",
   "Workflow for Loan Appraisal",
   "Workflow for Loan Assessment",
+  "Work Flow for Recommendations",
+  "Work Flow for Sanction Letter Generation & Customer Response",
   "Workflow for Loan Sanction",
   "Workflow for Terms & Conditions",
+  "Workflow for Capturing Proposed Asset Details",
   "Customer Eligibility & Loan Limit Check",
   "Workflow for Evaluating the Net Worth",
 ];

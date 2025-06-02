@@ -16,8 +16,7 @@ import Footer from "../Footer";
 import { message, Modal } from "antd";
 
 import Freesample from "../../assets/img/WhatsApp Image 2025-03-17 at 13.02.44.png";
-import ricesample1kgGif from "../assets/img/ricesample1kg (1).gif";
-import ricebag26kgsGif from "../assets/img/ricebag26kgsGif (1).gif";
+
 
 const FreeSample: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);

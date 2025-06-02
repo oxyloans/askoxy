@@ -194,7 +194,7 @@ const Home: React.FC = () => {
 
       try {
         const response = await axios.get(
-          `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${userId}`
+          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`
         );
 
         const cartList = response.data?.customerCartResponseList || [];
@@ -528,7 +528,7 @@ const Home: React.FC = () => {
       }));
 
       const response = await axios.post(
-        `${BASE_URL}/cart-service/cart/add_Items_ToCart`,
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         { customerId: userId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
@@ -629,8 +629,8 @@ const Home: React.FC = () => {
         }
       } else {
         const endpoint = increment
-          ? `${BASE_URL}/cart-service/cart/incrementCartData`
-          : `${BASE_URL}/cart-service/cart/decrementCartData`;
+          ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+          : `${BASE_URL}/cart-service/cart/minusCartItem`;
 
         const response = await axios.patch(endpoint, {
           customerId: userId,
@@ -805,14 +805,14 @@ const Home: React.FC = () => {
             <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm hover:text-purple-600 transition-colors">
               {item.title}
             </h3>
-               <p className="text-sm text-gray-500">
-                    Weight: {item.weight}{" "}
-                    {item.units == "pcs"
-                      ? "Pc"
-                      : item.weight == "1"
-                      ? "Kg"
-                      : item.units}
-                  </p>
+            <p className="text-sm text-gray-500">
+              Weight: {item.weight}{" "}
+              {item.units == "pcs"
+                ? "Pc"
+                : item.weight == "1"
+                ? "Kg"
+                : item.units}
+            </p>
 
             <div className="flex items-baseline space-x-2">
               <span className="text-lg font-semibold text-gray-900">

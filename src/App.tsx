@@ -10,7 +10,7 @@ import CartProvider from "./until/CartProvider";
 import UseCases from "./Finone/System/UseCases";
 import Landingpage from "./components/Landingpage";
 import Freerudraksha from "./components/Services/Freerudraksh";
-import HitMovie from "./components/Services/HitMovie";
+
 import FreeSample from "./components/Services/FreeSample";
 import FreeAiandGenAi from "./components/Services/FreeAi&GenAi";
 import StudyAbroad from "./components/Services/StudyAbroad";
@@ -34,7 +34,7 @@ import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import ScrollToTop from "./components/ScrollToTop";
 import TicketHistory from "./components/TicketHistory";
 import Greenproject from "./components/Greenproject";
-import Pushpa2GPT from "./components/Pushpa2GPT";
+
 import AccomidationGpt from "./components/GPT's/Accomadation";
 import ApplicationSupport from "./components/GPT's/ApplicationSupport";
 import AccreditationsRecognization from "./components/GPT's/AccreditationsRecognization";
@@ -51,7 +51,7 @@ import ReviewsGpt from "./components/GPT's/ReviewsGpt";
 import ScholarshipGpt from "./components/GPT's/ScholarshipGpt";
 import UniversityAgents from "./components/GPT's/UniversityAgents";
 import University from "./components/GPT's/UniversityGpt";
-import RiceSalePage from "./components/Communities";
+// import RiceSalePage from "./components/Communities";
 import Admin from "./AskoxyAdmin/Admin";
 import Climatecrisis from "./components/Climatecrisis";
 import QR from "./components/qr";
@@ -181,7 +181,7 @@ const App: React.FC = () => {
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             <Route path="services/freerudraksha" element={<Freerudraksha />} />
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
-            <Route path="services/hitmovietickets" element={<HitMovie />} />
+         
             <Route
               path="services/campaign/:type"
               element={<CampaignDetails />}
@@ -206,7 +206,7 @@ const App: React.FC = () => {
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
             <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
-            <Route path="/movietickets" element={<Pushpa2GPT />} />
+
             <Route
               path="/usermobilenumberupdate"
               element={<MobileNumberUpdate />}
@@ -248,10 +248,10 @@ const App: React.FC = () => {
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
             <Route path="/faqs" element={<RiceOfferFAQs />} />
-            <Route
+            {/* <Route
               path="/communities/maruthielite"
               element={<RiceSalePage />}
-            />
+            /> */}
             <Route path="/qrcode" element={<QR />} />
             <Route path="/oxygroup" element={<OxyGroup />} />
             <Route path="/pinkfunding" element={<PinkFunding />} />
@@ -274,7 +274,7 @@ const App: React.FC = () => {
             <Route path="/future" element={<Landingpage />} />
             <Route path="/" element={<CurrentLandingPage />} />
             {/* WhatsApp Login (Before Clicking Sign-in) */}
-            <Route path="/communities/srilakshmi" element={<RiceSalePage />} />
+            {/* <Route path="/communities/srilakshmi" element={<RiceSalePage />} /> */}
             <Route path="/womensday" element={<WomensDay />} />
             {/* Dashboard (After Login) */}
             {/* Redirect Unknown Routes to Landing Page */}
@@ -378,7 +378,7 @@ const App: React.FC = () => {
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
-              <Route path="services/hitmovietickets" element={<HitMovie />} />
+              
               <Route
                 path="services/campaign/:type"
                 element={<CampaignDetails />}

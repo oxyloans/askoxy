@@ -199,7 +199,7 @@ const OrderDetailsPage: React.FC = () => {
   const [buttonLabel, setButtonLabel] = useState<string>("");
   const [showButton, setShowButton] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [preference, setPreference] = useState<string | null>();
+  const [preference, setPreference] = useState<string | null>();
 
   const fetchContainerStatus = (ordersData: Order) => {
     axios
@@ -630,7 +630,6 @@ const OrderDetailsPage: React.FC = () => {
     });
   };
 
-
   const handleFinalReject = async () => {
     try {
       await rejectForm.validateFields();
@@ -730,7 +729,7 @@ const OrderDetailsPage: React.FC = () => {
                 </h1>
               </div>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-              {preference === null ? (
+                {preference === null ? (
                   <span className="text-blue-950 bg-blue-200 rounded-lg px-2 py-1 text-center">
                     Container not given
                   </span>
@@ -738,7 +737,7 @@ const OrderDetailsPage: React.FC = () => {
                   <span className="text-blue-950 bg-blue-200 rounded-lg px-2 py-1 text-center">
                     Container given
                   </span>
-                )}
+                )}
                 <div
                   className={`px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider text-center
           ${getStatusColor(orderDetails.orderStatus)}`}
@@ -810,9 +809,21 @@ const OrderDetailsPage: React.FC = () => {
               )}
             </div>
           )}
+          {orderDetails.orderStatus === "5" && (
+            <div className="mx-4 p-4 bg-gray-200 rounded-md shadow-sm">
+              <p className="font-semibold flex flex-wrap">
+                <span className="mr-2">Rejected Reason:</span>
+                <span className="text-red-600">
+                  {orderDetails.reason
+                    ? orderDetails.reason
+                    : "No reason is available"}
+                </span>
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-            {/* Customer Details Card */}
+       
             <Card
               title={
                 <span className="text-blue-600">
