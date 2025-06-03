@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import axios from "axios";
-import { Button, message, Modal, notification } from "antd";
+import { Button, Input, message, Modal, notification } from "antd";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import Header1 from "./Header";
+const { TextArea } = Input;
 
 interface Image {
   imageId: string;
@@ -49,6 +50,8 @@ const CampaignDetails: React.FC = () => {
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [interested, setInterested] = useState<boolean>(false);
   const submitclicks = sessionStorage.getItem("submitclicks");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [comment, setComment] = useState("");
 
   const createSimpleHash = (text: string): string => {
     let hash = 0;
@@ -69,12 +72,11 @@ const CampaignDetails: React.FC = () => {
 
         const campaignsWithIds = response.data.map((campaign) => ({
           ...campaign,
-          campaignId: campaign.campaignId.slice(-4), // Use last 4 digits
+          campaignId: campaign.campaignId.slice(-4),
         }));
 
         setCampaigns(campaignsWithIds);
 
-        // Find the campaign by ID
         const foundCampaign = campaignsWithIds.find(
           (c) => c.campaignId === campaignId
         );
@@ -101,6 +103,8 @@ const CampaignDetails: React.FC = () => {
             console.error("Error with URL decoding:", e);
           }
         } else {
+          // console.log({ foundCampaign });
+
           setCampaign(foundCampaign);
         }
       } catch (err) {
@@ -114,8 +118,8 @@ const CampaignDetails: React.FC = () => {
   }, [campaignId, location.pathname]);
 
   const handleWriteToUs = () => {
-    console.log(email);
-    console.log(finalMobileNumber);
+    // console.log(email);
+    // console.log(finalMobileNumber);
 
     if (
       !email ||
@@ -193,7 +197,7 @@ const CampaignDetails: React.FC = () => {
           (offer: any) => offer.askOxyOfers === campaign?.campaignType
         );
 
-        console.log(hasFreeRudrakshaOffer);
+        // console.log(hasFreeRudrakshaOffer);
 
         setInterested(hasFreeRudrakshaOffer);
         if (submitclicks) {
@@ -210,6 +214,9 @@ const CampaignDetails: React.FC = () => {
 
   const handleSubmit = (isAlreadyInterested: boolean) => {
     sessionStorage.setItem("submitclicks", "true");
+    if (campaign?.campaignType !== undefined) {
+      sessionStorage.setItem("campaigntype", campaign.campaignType);
+    }
 
     if (!userId) {
       message.warning("Please login to submit your interest.");
@@ -248,24 +255,32 @@ const CampaignDetails: React.FC = () => {
     // if (isButtonDisabled) return;
 
     try {
-      setIsButtonDisabled(true);
-      const campaignType = campaign?.campaignType || "";
+      // console.log({ campaign });
+      const campaignType = sessionStorage.getItem("campaigntype");
+      // const campaignType = campaign?.campaignType || "kjgjf";
+      // console.log({ campaignType });
+
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         {
           askOxyOfers: campaignType,
+          mobileNumber: finalMobileNumber,
           userId: userId,
           projectType: "ASKOXY",
         }
       );
-      console.log("API Response:", response.data);
+      // console.log("API Response:", response.data);
 
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
 
       message.success(
         `Thank you for showing interest in our *${campaign?.campaignType}* offer!`
       );
-      setInterested(true);
+      if (response.status === 200) {
+        setInterested(true);
+        setIsButtonDisabled(true);
+        sessionStorage.removeItem("campaigntype");
+      }
     } catch (error: any) {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
@@ -288,6 +303,25 @@ const CampaignDetails: React.FC = () => {
     } else {
       navigate("/main/dashboard/products");
     }
+  };
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    if (comment.trim() === "") {
+      message.error("Please enter a comment before submitting.");
+      return;
+    }
+    console.log("Submitted Comment:", comment);
+    // TODO: Handle comment submission (e.g., API call)
+    setIsModalOpen(false);
+    setComment(""); // Reset after submission
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
   };
 
   const renderNotFoundPage = () => {
@@ -367,17 +401,28 @@ const CampaignDetails: React.FC = () => {
                   Buy Now
                 </button>
               )}
-
-              <button
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => {
-                  handleSubmit(interested);
-                }}
-                aria-label="Visit our site"
-                disabled={isButtonDisabled || interested}
-              >
-                {!interested ? "I'm Interested" : "Already Participated"}
-              </button>
+              {campaign.campainInputType !== "BLOG" && (
+                <button
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => {
+                    handleSubmit(interested);
+                  }}
+                  aria-label="Visit our site"
+                  disabled={isButtonDisabled || interested}
+                >
+                  {!interested ? "I'm Interested" : "Already Participated"}
+                </button>
+              )}
+              {campaign.campainInputType === "BLOG" && (
+                <button
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={showModal}
+                  aria-label="Visit our site"
+                  // disabled={isButtonDisabled || interested}
+                >
+                  Write Comments
+                </button>
+              )}
               <button
                 className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f9b91a] transition-all"
                 aria-label="Write To Us"
@@ -721,6 +766,22 @@ const CampaignDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      <Modal
+        title="Write a Comment"
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Submit"
+        cancelText="Cancel"
+      >
+        <TextArea
+          rows={4}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Type your comment here..."
+        />
+      </Modal>
     </div>
   );
 };

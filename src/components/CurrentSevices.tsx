@@ -1,26 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import HM1 from "../assets/img/0.png";
-import HM2 from "../assets/img/white green minimalist body lotion Product Promotion Instagram post.png";
-import HM3 from "../assets/img/IMAGE 3.png";
-import HM4 from "../assets/img/Manchester.png";
-import HM5 from "../assets/img/11f.png";
-import HM6 from "../assets/img/JSRHome.png";
-import HM7 from "../assets/img/IMAGE 7.png";
-import HM8 from "../assets/img/IMAGE 8.png";
-import HM9 from "../assets/img/image 9.png";
-import HM10 from "../assets/img/IMAGE 10.png";
-import HM11 from "../assets/img/IMAGE 11.png";
-import HM12 from "../assets/img/IMAGE 12.png";
-import HM13 from "../assets/img/22f.png";
-import HM14 from "../assets/img/cowHome.png";
-import HM15 from "../assets/img/gajraj sonaHome.png";
-import HM16 from "../assets/img/bawarchiHome.png";
-import HM17 from "../assets/img/SrilalithaHome.png";
-import HM18 from "../assets/img/surya tejaHome.png";
-import HM19 from "../assets/img/image 19.png";
-import HM20 from "../assets/img/image 20.png";
+
+
+
 import HM21 from "../assets/img/Free AI and Gen ai training.png";
 
 const ResponsiveGallery = () => {
@@ -33,7 +16,7 @@ const ResponsiveGallery = () => {
   const images = [
     {
       id: 19,
-      src: HM13,
+      src: "https://i.ibb.co/rGLqbFk2/22f.png",
       alt: "Buy 2 Kg Rice & Get 1 Kg Free",
       category: "BUY 2 KG RICE & GET 1 KG RICE FREE",
       link: "/main/dashboard/products",
@@ -41,7 +24,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 5,
-      src: HM5,
+      src: "https://i.ibb.co/N6gbrWzc/11f.png",
       alt: "Buy 5 Kg Rice & Get 2 Kg Free",
       category: "BUY 5 KG RICE & GET 2 KG RICE FREE",
       link: "/main/dashboard/products",
@@ -49,7 +32,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 2,
-      src: HM1,
+      src: "https://i.ibb.co/wh5YWZTV/image.png",
       alt: "Buy 10 Kgs Rice Bag & Get 18 Kgs Steel Container",
       category: "Buy 10 Kgs Rice Bag & Get 18 Kgs Steel Container",
       link: "/main/dashboard/products",
@@ -58,7 +41,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 1,
-      src: HM2,
+      src: "https://i.ibb.co/TDShjqJM/white-green-minimalist-body-lotion-Product-Promotion-Instagram-post.png",
       alt: "Buy 26 Kgs Rice Bag & Get 35 Kgs Steel Container",
       category: "Buy 26 Kgs Rice Bag & Get 35 Kgs Steel Container",
       link: "/main/dashboard/products",
@@ -67,7 +50,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 16,
-      src: HM16,
+      src: "https://i.ibb.co/F4bH1sq8/bawarchi-Home.png",
       alt: "Bawarchi brown rice",
       category: "BAWARCHI BROWN RICE",
       link: "/main/dashboard/products",
@@ -75,7 +58,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 18,
-      src: HM18,
+      src: "https://i.ibb.co/jv5gD5Jf/surya-teja-Home.png",
       alt: "Surya Teja's Joker Brand",
       category: "SURYA TEJA'S JOKER BRAND",
       link: "/main/dashboard/products",
@@ -84,7 +67,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 20,
-      src: HM15,
+      src: "https://i.ibb.co/BVSXSWGV/gajraj-sona-Home.png",
       alt: "Gajaraj Evergreen",
       category: " GAJARAJ EVERGREEN",
       link: "/main/dashboard/products",
@@ -92,7 +75,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 15,
-      src: HM17,
+      src: "https://i.ibb.co/VY01VqC3/Srilalitha-Home.png",
       alt: "Sri Lalitha",
       category: "SRI LALITHA",
       link: "/main/dashboard/products",
@@ -100,7 +83,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 17,
-      src: HM14,
+      src: "https://i.ibb.co/WvfnPzsK/cowHome.png",
       alt: "Cow Brand",
       category: "COW BRAND",
       link: "/main/dashboard/products",
@@ -108,7 +91,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 7,
-      src: HM6,
+      src: "https://i.ibb.co/C3vsVYpr/JSRHome.png",
       alt: "Jai Sri Ram",
       category: "JAI SRI RAM",
       link: "/main/dashboard/products",
@@ -116,28 +99,28 @@ const ResponsiveGallery = () => {
     },
     {
       id: 4,
-      src: HM4,
+      src: "https://i.ibb.co/fdD1FFhf/Manchester.png",
       alt: "University of Chester",
       category: "UNIVERSITY OF CHESTER",
       link: "/main/services/studyabroad",
     },
     {
       id: 8,
-      src: HM8,
+      src: "https://i.ibb.co/8n0fNmRN/IMAGE-8.png",
       alt: "Study Abroad",
       category: "STUDY ABROAD",
       link: "/main/services/studyabroad",
     },
     {
       id: 3,
-      src: HM3,
+      src: "https://i.ibb.co/mQDXBGY/IMAGE-3.png",
       alt: "Middlesex University",
       category: "MIDDLESSEX UNIVERSITY",
       link: "/main/services/studyabroad",
     },
     {
       id: 9,
-      src: HM9,
+      src: "https://i.ibb.co/FLP3m5HQ/image-9.png",
       alt: "Study Abroad",
       category: "STUDY ABROAD",
       link: "/main/services/studyabroad",
@@ -145,7 +128,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 6,
-      src: HM7,
+      src: "https://i.ibb.co/ZRt4nRW4/IMAGE-7.png",
       alt: "BPP University",
       category: "BPP UNIVERSITY",
       link: "/main/services/studyabroad",
@@ -153,14 +136,14 @@ const ResponsiveGallery = () => {
 
     {
       id: 10,
-      src: HM10,
+      src: "https://i.ibb.co/MY9t1Yx/IMAGE-10.png",
       alt: "Study Abroad",
       category: "STUDY ABROAD",
       link: "/main/services/studyabroad",
     },
     {
       id: 11,
-      src: HM11,
+      src: "https://i.ibb.co/8nLhVGsz/IMAGE-11.png",
       alt: "Oxyloans",
       category: "OXYLOANS",
       link: "/main/service/oxyloans-service",
@@ -174,7 +157,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 12,
-      src: HM12,
+      src: "https://i.ibb.co/DDdMwQJ3/IMAGE-12.png",
       alt: "OxyLoans",
       category: "OXYLOANS",
       link: "/main/service/oxyloans-service",
@@ -182,7 +165,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 14,
-      src: HM20,
+      src: "https://i.ibb.co/mrNd7Wkk/image-20.png",
       alt: "Free Rudraksha",
       category: "FREE RUDRAKSHA",
       link: "/main/services/freerudraksha",
@@ -190,7 +173,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 21,
-      src: HM19,
+      src: "https://i.ibb.co/jP01W0Z3/image-19.png",
       alt: "Urban Springs",
       category: "URBAN SPRINGS",
       link: "/main/services/campaign/37b3",
