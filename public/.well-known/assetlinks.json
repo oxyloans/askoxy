@@ -1,0 +1,15 @@
+{
+    "links": [
+        {
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": "com.oxyrice.oxyrice_customer",
+                "sha256_cert_fingerprints": [
+                    "A1:74:26:AB:12:B3:E2:60:25:F4:A7:55:B6:93:57:75:9E:4D:36:AA:02:11:23:E9:E0:41:66:F0:F4:DA:65:64",
+                    "75:75:26:4D:78:2A:3D:1D:CA:BE:46:2B:49:80:5A:99:6A:D6:FA:0A:0F:72:58:B3:5B:88:26:9D:2D:8E:22:AD"
+                ]
+            }
+        }
+    ]
+}
