@@ -1,55 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaTimes } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import HM1 from "../assets/img/ORDER RICE ONLINE.png";
-import HM2 from "../assets/img/Groceries.png";
-import HM3 from "../assets/img/Tickets.png";
-import HM4 from "../assets/img/Transportation.png";
-import HM5 from "../assets/img/Education.png";
-import HM6 from "../assets/img/Food & Beverage.png";
-import HM7 from "../assets/img/games.png";
-import HM8 from "../assets/img/legal services.png";
-import HM9 from "../assets/img/Pets.png";
-import HM10 from "../assets/img/event-management-strategy (1).png";
-import HM11 from "../assets/img/Influencers gpt (1).png";
-import HM12 from "../assets/img/Transportation.png";
-import HM13 from "../assets/img/financial advisory (1).png";
-import HM14 from "../assets/img/loan services.png";
-import HM15 from "../assets/img/Health & Wellness.png";
-import HM16 from "../assets/img/X5.png";
-import HM17 from "../assets/img/Advertising service (2).png";
-import HM18 from "../assets/img/Marketing services (1).png";
-import HM19 from "../assets/img/X8.png";
-import HM20 from "../assets/img/creative services.png";
-import HM21 from "../assets/img/freelancer and consulting service.png";
-import HM22 from "../assets/img/X11.png";
-import HM23 from "../assets/img/freelancer and consulting service.png";
-import HM24 from "../assets/img/ca services.png";
-import HM25 from "../assets/img/whole sale service (1).png";
-import HM26 from "../assets/img/Education.png";
-import HM27 from "../assets/img/Beauty (1).png";
-import HM28 from "../assets/img/Professional Gpt service (1).png";
-import HM29 from "../assets/img/Advertising service (2).png";
-import HM30 from "../assets/img/Marketing services (1).png";
-import HM31 from "../assets/img/Management service gpt (1).png";
-import HM32 from "../assets/img/Home Services.png";
-import HM33 from "../assets/img/Automotive.png";
-import HM34 from "../assets/img/realestate gpt (1).png";
-import HM35 from "../assets/img/Technical service (1).png";
-import HM36 from "../assets/img/Street wear gpt.png";
-import HM37 from "../assets/img/travell planner ai insurai.png";
+// import HM1 from "../assets/img/ORDER RICE ONLINE.png";
+// import HM2 from "../assets/img/Groceries.png";
+// import HM3 from "../assets/img/Tickets.png";
+// import HM4 from "../assets/img/Transportation.png";
+// import HM5 from "../assets/img/Education.png";
+// import HM6 from "../assets/img/Food & Beverage.png";
+// import HM7 from "../assets/img/games.png";
+// import HM8 from "../assets/img/legal services.png";
+// import HM9 from "../assets/img/Pets.png";
+// import HM10 from "../assets/img/event-management-strategy (1).png";
+// import HM11 from "../assets/img/Influencers gpt (1).png";
+// import HM12 from "../assets/img/Transportation.png";
+// import HM13 from "../assets/img/financial advisory (1).png";
+// import HM14 from "../assets/img/loan services.png";
+// import HM15 from "../assets/img/Health & Wellness.png";
+// import HM16 from "../assets/img/X5.png";
+// import HM17 from "../assets/img/Advertising service (2).png";
+// import HM18 from "../assets/img/Marketing services (1).png";
+// import HM19 from "../assets/img/X8.png";
+// import HM20 from "../assets/img/creative services.png";
+// import HM21 from "../assets/img/freelancer and consulting service.png";
+// import HM22 from "../assets/img/X11.png";
+// import HM23 from "../assets/img/freelancer and consulting service.png";
+// import HM24 from "../assets/img/ca services.png";
+// import HM25 from "../assets/img/whole sale service (1).png";
+// import HM26 from "../assets/img/Education.png";
+// import HM27 from "../assets/img/Beauty (1).png";
+// import HM28 from "../assets/img/Professional Gpt service (1).png";
+// import HM29 from "../assets/img/Advertising service (2).png";
+// import HM30 from "../assets/img/Marketing services (1).png";
+// import HM31 from "../assets/img/Management service gpt (1).png";
+// import HM32 from "../assets/img/Home Services.png";
+// import HM33 from "../assets/img/Automotive.png";
+// import HM34 from "../assets/img/realestate gpt (1).png";
+// import HM35 from "../assets/img/Technical service (1).png";
+// import HM36 from "../assets/img/Street wear gpt.png";
+// import HM37 from "../assets/img/travell planner ai insurai.png";
 // import HM38 from "../assets/img/Influencers gpt (1).png";
 // import HM39 from "../assets/img/Influencers gpt (1).png";
-import HM40 from "../assets/img/Shopping.png";
+// import HM40 from "../assets/img/Shopping.png";
 import "./ServicesUi.css";
 
 const HorizontalScrollGallery: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [lastSubmittedQuery, setLastSubmittedQuery] = useState<string>("");
+  // const [lastSubmittedQuery, setLastSubmittedQuery] = useState<string>("");
 
   const [modalContent, setModalContent] = useState(
     "You are being transferred to the powerful ChatGPT. Please login to continue your experience."
@@ -368,16 +368,13 @@ const images = [
 
     // Cleanup on unmount
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholderTexts.length]);
   const handleLoginClick = () => {
     closeModal();
     navigate("/whatsapplogin");
   };
   const userId = localStorage.getItem("userId");
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-  };
   const handleSearch = () => {
     const trimmedQuery = query.trim();
 
@@ -405,7 +402,7 @@ const images = [
       );
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholderTexts.length]);
 
   // Debounced search function
   useEffect(() => {
@@ -433,7 +430,7 @@ const images = [
   ];
 
  return (
-   <div className="relative bg-gradient-to-br from-white via-white to-white min-h-screen overflow-hidden">
+   <div className="w-full bg-gradient-to-br from-white via-white to-white p-3">
      {/* Search Bar */}
      <motion.div
        className="search-container flex flex-col items-center justify-center py-16 px-4"

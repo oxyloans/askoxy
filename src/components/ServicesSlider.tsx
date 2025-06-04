@@ -250,20 +250,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import axios from "axios";
 
 // Import logos
-import logo1 from "../assets/img/freerudraksha.png";
-import logo3 from "../assets/img/Free AI and Gen ai training.png";
-import logo4 from "../assets/img/Legal knowledge hub.png";
-import logo2 from "../assets/img/FREE RICE SAMPLES AND FREE RICE CONTAINER.png";
-import logo5 from "../assets/img/study abroad.png";
-import logo6 from "../assets/img/MY ROTARY.png";
-import logo7 from "../assets/img/Machines manufacturing services.png";
-import logo8 from "../assets/img/Career guidance.png";
-import logo9 from  "../assets/img/oxyloasntemp (1).png";
+
 import BASE_URL from "../Config";
 
 // Define Campaign interface
@@ -290,50 +282,56 @@ const ServicesSlider: React.FC = () => {
   // Updated services with their respective paths
   const services = [
     {
-      image: logo9,
+      image:
+        "https://i.ibb.co/PzFdf43v/oxyloasntemp-1-2ec07c0cd7c7e055e4c3.png",
       title: "Invest & Earn",
       path: "/service/oxyloans-service",
     },
     {
-      image: logo5,
+      image: "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
       title: "Study Abroad",
       path: "/services/studyabroad",
     },
     {
-      image: logo2,
+      image:
+        "https://i.ibb.co/ksdzrwLT/FREE-RICE-SAMPLES-AND-FREE-RICE-CONTAINER-3b40f8ed166a3fd17253.png",
       title: "Free Rice Samples & Steel Container",
       path: "/services/freesample-steelcontainer",
     },
     {
-      image: logo1,
+      image: "https://i.ibb.co/twztBkMv/freerudraksha-eeaaca3e8a028697e182.png",
       title: "Free Rudraksha",
       path: "/services/freerudraksha",
     },
     {
-      image: logo3,
+      image:
+        "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
       title: "Free AI & GEN AI Training",
       path: "/services/freeai-genai",
     },
     {
-      image: logo4,
+      image:
+        "https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png",
       title: "Legal Knowledge Hub",
       path: "/services/legalservice",
     },
     {
-      image: logo6,
+      image: "https://i.ibb.co/SwfNXKhm/MY-ROTARY-2c24090250b109f80818.png",
       title: "My Rotary",
       path: "/services/myrotary",
     },
     {
-      image: logo7,
+      image:
+        "https://i.ibb.co/8LmmPySx/Machines-manufacturing-services-f5f7abd54ec2b3373b0c.png",
       title: "Machines Manufacturing Services",
       path: "/services/machines-manufacturing",
     },
     {
-      image: logo8,
+      image:
+        "https://i.ibb.co/cK4w00Rd/Career-guidance-fe6ea3668fa6a02f6294.png",
       title: "Career Guidance",
       path: "/services/we-are-hiring",
-    }
+    },
   ];
 
   const displayedServices = showAll ? services : services.slice(0, 3);

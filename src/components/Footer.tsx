@@ -16,17 +16,17 @@ const Footer = () => {
   const socialLinks = [
     {
       icon: <Facebook className="h-4 w-4" />,
-      href: "https://www.facebook.com/ASKOXYAI",
+      href: "https://www.facebook.com/profile.php?id=61572388385568",
       label: "Facebook",
     },
     {
       icon: <Instagram className="h-4 w-4" />,
-      href: "https://www.instagram.com/askoxy.ai_oxyrice/",
+      href: "https://www.instagram.com/askoxy.ai/",
       label: "Instagram",
     },
     {
       icon: <Linkedin className="h-4 w-4" />,
-      href: "https://www.linkedin.com/company/82577404/admin/dashboard/",
+      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
       label: "LinkedIn",
     },
   ];
@@ -54,7 +54,7 @@ const Footer = () => {
     },
     {
       icon: <Phone className="h-4 w-4" />,
-      content: ["6300873713", "9392921295", "8008310244"],
+      content: "+91 98765 43210",
       type: "phone",
     },
   ];
@@ -68,13 +68,11 @@ const Footer = () => {
             <img
               src={Logo}
               alt="AskOxy.AI Logo"
-              loading="lazy"
               className="h-12 w-auto object-contain"
             />
             <p className="text-gray-600 text-xs leading-relaxed">
-              Our OXY GROUP solves real-world problems with AI and Blockchain
-              through ASKOXY.AI, delivering goods and services while rewarding
-              users with BMVCOIN, built on Ethereum, for future value.
+              AskOxy.AI offers unlimited ChatGPT prompts, empowering innovation
+              without cost barriers.
             </p>
             <div className="flex space-x-3">
               {socialLinks.map((social) => (
@@ -83,7 +81,6 @@ const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={social.label}
                   className="text-gray-500 hover:text-purple-600 transition-colors duration-200"
                 >
                   {social.icon}
@@ -123,18 +120,6 @@ const Footer = () => {
                     <p className="text-xs text-gray-600 leading-tight">
                       {info.content}
                     </p>
-                  ) : info.type === "phone" && Array.isArray(info.content) ? (
-                    <div className="flex flex-col gap-1">
-                      {info.content.map((number, i) => (
-                        <a
-                          key={i}
-                          href={`tel:${number}`}
-                          className="text-xs text-gray-600 hover:text-purple-600 transition-colors duration-200"
-                        >
-                          {number}
-                        </a>
-                      ))}
-                    </div>
                   ) : (
                     <a
                       href={`${info.type === "email" ? "mailto:" : "tel:"}${
@@ -156,7 +141,7 @@ const Footer = () => {
               Get Our App
             </h3>
             <p className="text-xs text-gray-600">
-              Download ASKOXY.AI for a seamless experience.
+              Download AskOxy.AI for a seamless experience.
             </p>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <a
@@ -167,7 +152,6 @@ const Footer = () => {
                 <img
                   src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
                   alt="Download on the App Store"
-                  loading="lazy"
                   className="w-28 sm:w-32"
                 />
               </a>
@@ -179,7 +163,6 @@ const Footer = () => {
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
                   alt="Get it on Google Play"
-                  loading="lazy"
                   className="w-28 sm:w-32"
                 />
               </a>
@@ -195,6 +178,12 @@ const Footer = () => {
               All rights reserved.
             </span>
             <span>CIN: U72900TG2020PTC142391</span>
+            <Link
+              to="/termsandconditions"
+              className="text-gray-600 hover:text-purple-600 transition-colors duration-200"
+            >
+              Terms and Conditions
+            </Link>
             <Link
               to="/privacypolicy"
               className="text-gray-600 hover:text-purple-600 transition-colors duration-200"

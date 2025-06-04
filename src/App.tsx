@@ -1,16 +1,16 @@
 import React, { useEffect } from "react";
 import {
-  BrowserRouter as Router,
+  
   Route,
   useLocation,
   Routes,
   Navigate,
 } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
-import UseCases from "./Finone/System/UseCases";
+
 import Landingpage from "./components/Landingpage";
 import Freerudraksha from "./components/Services/Freerudraksh";
-
+import TermsAndConditions from "./kart/TermsAndConditions";
 import FreeSample from "./components/Services/FreeSample";
 import FreeAiandGenAi from "./components/Services/FreeAi&GenAi";
 import StudyAbroad from "./components/Services/StudyAbroad";
@@ -32,8 +32,6 @@ import ForgotPasswordPage from "./Pages/Auth/Forgotpage";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 
 import ScrollToTop from "./components/ScrollToTop";
-import TicketHistory from "./components/TicketHistory";
-import Greenproject from "./components/Greenproject";
 
 import AccomidationGpt from "./components/GPT's/Accomadation";
 import ApplicationSupport from "./components/GPT's/ApplicationSupport";
@@ -56,7 +54,7 @@ import Admin from "./AskoxyAdmin/Admin";
 import Climatecrisis from "./components/Climatecrisis";
 import QR from "./components/qr";
 import ThankYouPage from "./components/ThankYouPage";
-import Ravensbourns from "./components/Ravensbourns";
+
 import WhatsappLogin from "./Pages/Auth/WhatsappLogin";
 import WhatsappRegister from "./Pages/Auth/WhatsappRegister";
 import AllQueries from "./AskoxyAdmin/AllQueries";
@@ -96,7 +94,7 @@ import UniversityOffers from "./Dashboard/Offerletter";
 import PinkFunding from "./components/PinkFunding";
 import CurrentLandingPage from "./components/CurrentLandinPage";
 import PlanOfTheDay from "./Taskmanagement/PlanOfTheDay";
-import UserPanelLayout from "./Taskmanagement/UserPanelLayout";
+
 import AllStatusPage from "./Taskmanagement/AllStatus";
 import AssignedTasksPage from "./Taskmanagement/AssignedTasks";
 
@@ -111,14 +109,12 @@ import PartnerLogin from "./PartnerWeb/PartnerLogin";
 import PartnerHome from "./PartnerWeb/PartnerHome";
 import MainPage from "./PartnerWeb/MainPage";
 import NewOrders from "./PartnerWeb/NewOrders";
-import AcceptedOrders from "./PartnerWeb/AcceptedOrders";
-import AssignedOrders from "./PartnerWeb/AssignedOrders";
 import OrderDetailsPage from "./PartnerWeb/OrderDetials";
 import AllOrders from "./PartnerWeb/AllOrders";
 import DeliveryBoyList from "./PartnerWeb/DeliveryBoyList";
 import PartnerItemsList from "./PartnerWeb/PartnerItemsList";
 import DbOrderDetails from "./PartnerWeb/DbOrderList";
-import PartnerAllQueries from "./PartnerWeb/PartnerAllQueries";
+
 import Register from "./AskoxyAdmin/Register";
 import AssignedDataPage from "./AskoxyAdmin/AssignedData";
 import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
@@ -198,6 +194,7 @@ const App: React.FC = () => {
               path="services/machines-manufacturing"
               element={<MachinesManufacturingServices />}
             />
+
             <Route path="service/oxyloans-service" element={<OxyLoans />} />
             <Route path="services/legalservice" element={<LegalService />} />
             <Route path="services/we-are-hiring" element={<HiringService />} />
@@ -215,6 +212,7 @@ const App: React.FC = () => {
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />
+            <Route path = "/termsandconditions" element={<TermsAndConditions />}/>
             <Route
               path="/loanmanagement"
               element={<LoanManagementLandingPage />}

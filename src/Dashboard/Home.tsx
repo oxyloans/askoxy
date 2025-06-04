@@ -449,7 +449,8 @@ const Home: React.FC = () => {
       {
         id: "2",
         title: "Study Abroad",
-        image: ServiceImg2,
+        image:
+          "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
         description: "Complete guidance for international education",
         path: "/main/services/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,
@@ -470,7 +471,8 @@ const Home: React.FC = () => {
       {
         id: "1",
         title: "Free GPTs",
-        image: GPTImg1,
+        image:
+          "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
         description: "AI-powered guidance for studying abroad",
         path: "/main/dashboard/freegpts",
         icon: <Bot className="text-white" size={24} />,

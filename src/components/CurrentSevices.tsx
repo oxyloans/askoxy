@@ -1,18 +1,12 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
-
-
-import HM21 from "../assets/img/Free AI and Gen ai training.png";
-
+import { motion } from "framer-motion";
 const ResponsiveGallery = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState(
     "You are being transferred to the powerful ChatGPT. Please login to continue your experience."
   );
-  const navigate = useNavigate();
-
+ const navigate = useNavigate();
   const images = [
     {
       id: 19,
@@ -150,7 +144,7 @@ const ResponsiveGallery = () => {
     },
     {
       id: 13,
-      src: HM21,
+      src: "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
       alt: "Free ai and Gen ai",
       category: " FREE AI AND GEN AI",
       link: "/main/services/freeai-genai",
@@ -179,83 +173,83 @@ const ResponsiveGallery = () => {
       link: "/main/services/campaign/37b3",
     },
   ];
+ // Handle image click and set dynamic modal content
+ const handleImageClick = (image: any) => {
+  const userId = localStorage.getItem("userId");
 
-  // Handle image click and set dynamic modal content
-  const handleImageClick = (image: any) => {
-    const userId = localStorage.getItem("userId");
+  // Construct the target URL with weight parameter if applicable
+  let targetUrl = image.link;
+  if (image.weight && image.link.includes("products")) {
+    // Force the weight to be formatted with decimal point even for whole numbers
+    const formattedWeight = image.weight.toFixed(1); // This ensures 1.0 stays as "1.0" not "1"
+    targetUrl = `${image.link}?weight=${formattedWeight}`;
+  } else if (image.link.includes("/main/services/studyabroad")) {
+    // Keep the original link without modifications
+    targetUrl = image.link;
+  } else if (image.link.includes("/main/service/oxyloans-service")) {
+    // Keep the original link without modifications
+    targetUrl = image.link;
+  } else if (image.link.includes("/main/services/freeai-genai")) {
+    // Keep the original link without modifications
+    targetUrl = image.link;
+  } else if (image.link.includes("/main/services/freerudraksha")) {
+    // Keep the original link without modifications
+    targetUrl = image.link;
+  }
 
-    // Construct the target URL with weight parameter if applicable
-    let targetUrl = image.link;
-     if (image.weight && image.link.includes("products")) {
-       // Force the weight to be formatted with decimal point even for whole numbers
-       const formattedWeight = image.weight.toFixed(1); // This ensures 1.0 stays as "1.0" not "1"
-       targetUrl = `${image.link}?weight=${formattedWeight}`;
-     } else if (image.link.includes("/main/services/studyabroad")) {
-       // Keep the original link without modifications
-       targetUrl = image.link;
-     } else if (image.link.includes("/main/service/oxyloans-service")) {
-       // Keep the original link without modifications
-       targetUrl = image.link;
-     } else if (image.link.includes("/main/services/freeai-genai")) {
-       // Keep the original link without modifications
-       targetUrl = image.link;
-     } else if (image.link.includes("/main/services/freerudraksha")) {
-       // Keep the original link without modifications
-       targetUrl = image.link;
-     }
-    
-    // Store the target URL in sessionStorage to use after login/registration
-    sessionStorage.setItem("redirectPath", targetUrl);
+  // Store the target URL in sessionStorage to use after login/registration
+  sessionStorage.setItem("redirectPath", targetUrl);
 
-    if (!userId) {
-      // Set modal content based on the image link
-      let dynamicMessage = "";
+  if (!userId) {
+    // Set modal content based on the image link
+    let dynamicMessage = "";
 
-      if (image.link.includes("/main/dashboard/products")) {
-        dynamicMessage = `Order ${image.weight}kg rice online with ease! Sign in to explore our range of products and place your order.`;
-      } else {
-        switch (image.link) {
-          case "/main/services/studyabroad":
-            dynamicMessage = `Ready to explore study abroad opportunities? Sign in to get personalized assistance for your journey!`;
-            break;
-          case "/main/service/oxyloans-service":
-            dynamicMessage = `Interested in peer-to-peer lending with OxyLoans? Sign in to start lending or borrowing today!`;
-            break;
-          case "/main/services/campaign/37b3":
-            dynamicMessage = `Discover real estate opportunities with OXY GROUP! Urban Springs is one of our premium projects. Sign in to learn more and get involved!`;
-            break;
-          case "/main/services/freerudraksha":
-            dynamicMessage = `Get your free Rudraksha today! Sign in to claim this spiritual gift and explore more offerings.`;
-            break;
-          case "/main/services/freeai-genai":
-            dynamicMessage = `Unlock the power of AI with FreeAI & GenAI! Sign in to explore cutting-edge tools and services.`;
-            break;
-          default:
-            dynamicMessage = `Welcome! Sign in to access our amazing services tailored just for you!`;
-        }
-      }
-
-      setModalContent(dynamicMessage);
-      setShowModal(true);
+    if (image.link.includes("/main/dashboard/products")) {
+      dynamicMessage = `Order ${image.weight}kg rice online with ease! Sign in to explore our range of products and place your order.`;
     } else {
-      // Redirect directly if user is logged in
-      window.location.href = targetUrl;
+      switch (image.link) {
+        case "/main/services/studyabroad":
+          dynamicMessage = `Ready to explore study abroad opportunities? Sign in to get personalized assistance for your journey!`;
+          break;
+        case "/main/service/oxyloans-service":
+          dynamicMessage = `Interested in peer-to-peer lending with OxyLoans? Sign in to start lending or borrowing today!`;
+          break;
+        case "/main/services/campaign/37b3":
+          dynamicMessage = `Discover real estate opportunities with OXY GROUP! Urban Springs is one of our premium projects. Sign in to learn more and get involved!`;
+          break;
+        case "/main/services/freerudraksha":
+          dynamicMessage = `Get your free Rudraksha today! Sign in to claim this spiritual gift and explore more offerings.`;
+          break;
+        case "/main/services/freeai-genai":
+          dynamicMessage = `Unlock the power of AI with FreeAI & GenAI! Sign in to explore cutting-edge tools and services.`;
+          break;
+        default:
+          dynamicMessage = `Welcome! Sign in to access our amazing services tailored just for you!`;
+      }
     }
-  };
 
-  const closeModal = () => {
-    setShowModal(false);
-  };
+    setModalContent(dynamicMessage);
+    setShowModal(true);
+  } else {
+    // Redirect directly if user is logged in
+    window.location.href = targetUrl;
+  }
+};
 
-  const handleLoginClick = () => {
-    closeModal();
-    navigate("/whatsapplogin");
-  };
+
+const closeModal = () => {
+  setShowModal(false);
+};
+
+const handleLoginClick = () => {
+  closeModal();
+  navigate("/whatsapplogin");
+};
 
   return (
-    <div className="relative bg-gradient-to-br from-white via-white to-white min-h-screen p-2 sm:p-4 md:p-6 lg:p-8">
-      <div className="max-w-10xl mx-auto">
-        {/* Unified Responsive Grid */}
+    <div className="w-full bg-gradient-to-br from-white via-white to-white p-4">
+      <div className="w-full max-w-full px-2 sm:px-3 py-3">
+        {/* Fixed 7 Images Per Row Grid - Compact Layout */}
         <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 xs:gap-3 sm:gap-4 md:gap-5 lg:gap-6">
           {images.map((image) => (
             <motion.div
@@ -286,36 +280,51 @@ const ResponsiveGallery = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Enhanced Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black/70 z-50 px-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-4 sm:p-6 rounded-xl max-w-sm w-full shadow-2xl border border-gray-100/30 backdrop-blur-sm"
-          >
-            <p className="text-center text-base sm:text-lg text-gray-700 mb-4 sm:mb-6">
-              {modalContent}
-            </p>
-            <div className="flex justify-center gap-3 sm:gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:shadow-lg transition-all duration-300"
-                onClick={handleLoginClick}
-              >
-                Sign In
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gray-200 text-gray-700 px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-gray-300 transition-all duration-300"
-                onClick={closeModal}
-              >
-                Cancel
-              </motion.button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Sign In Required
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {modalContent}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  onClick={handleLoginClick}
+                >
+                  Sign In
+                </button>
+                <button
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>

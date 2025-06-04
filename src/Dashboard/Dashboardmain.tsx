@@ -22,21 +22,15 @@ import Header from "../kart/Header3";
 import Ricebags from "../kart/Mainrice";
 // import FreeChatGPTmain from './FreechatGPTmain';
 import axios from "axios";
-import Content1 from "./Content";
+
 import { motion, AnimatePresence } from "framer-motion";
 import Footer from "../components/Footer";
-import OxyLoansImage from "../assets/img/oxyloasntemp (1).png";
+
 
 import Header1 from "../components/Header";
 // Import your images here
 import RudrakshaImage from "../assets/img/freerudraksha.png";
-import FG from "../assets/img/Free AI and Gen ai training.png";
-import FR from "../assets/img/FREE RICE SAMPLES AND FREE RICE CONTAINER.png";
-import StudyImage from "../assets/img/study abroad.png";
-import Legalimage from "../assets/img/Legal knowledge hub.png";
-import Rotary from "../assets/img/MY ROTARY.png";
-import MMServices from "../assets/img/Machines manufacturing services.png";
-import hiring from "../assets/img/Career guidance.png";
+
 import FreeChatGPTmain from "./FreechatGPTmain";
 import VideoImage from "../assets/img/Videothumb.png";
 import BMVCOINmain from "./BMVcoinmain";
@@ -71,7 +65,7 @@ interface Image {
 
 const DashboardMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("products");
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -125,7 +119,8 @@ const DashboardMain: React.FC = () => {
     () => [
       {
         title: "OxyLoans - RBI Approved P2P NBFC",
-        image: OxyLoansImage,
+        image:
+          "https://i.ibb.co/PzFdf43v/oxyloasntemp-1-2ec07c0cd7c7e055e4c3.png",
         description:
           "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
         path: `${accessToken ? "/main" : ""}/service/oxyloans-service`,
@@ -134,7 +129,8 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "Free Rudraksha",
-        image: RudrakshaImage,
+        image:
+          "https://i.ibb.co/twztBkMv/freerudraksha-eeaaca3e8a028697e182.png",
         description:
           "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
         path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
@@ -143,7 +139,8 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "Free AI & Gen AI Training",
-        image: FG,
+        image:
+          "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
         description:
           "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
         path: `${accessToken ? "/main" : ""}/services/freeai-genai`,
@@ -161,7 +158,8 @@ const DashboardMain: React.FC = () => {
       // },
       {
         title: "Free Rice Samples",
-        image: FR,
+        image:
+          "https://i.ibb.co/ksdzrwLT/FREE-RICE-SAMPLES-AND-FREE-RICE-CONTAINER-3b40f8ed166a3fd17253.png",
         description:
           "Request free rice samples along with a high-quality steel container for storage.",
         path: `${
@@ -172,7 +170,8 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "Study Abroad",
-        image: StudyImage,
+        image:
+          "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
         description:
           "Explore opportunities to study abroad with expert guidance and support.",
         path: `${accessToken ? "/main" : ""}/services/studyabroad`,
@@ -181,7 +180,8 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "Legal Knowledge Hub",
-        image: Legalimage,
+        image:
+          "https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png",
         description:
           "Access expert legal advice and educational resources to navigate legal matters.",
         path: `${accessToken ? "/main" : ""}/services/legalservice`,
@@ -190,7 +190,7 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "My Rotary",
-        image: Rotary,
+        image: "https://i.ibb.co/SwfNXKhm/MY-ROTARY-2c24090250b109f80818.png",
         description:
           "Join a network of leaders making a difference through Rotary initiatives and programs.",
         path: `${accessToken ? "/main" : ""}/services/myrotary`,
@@ -199,7 +199,8 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "Manufacturing Services",
-        image: MMServices,
+        image:
+          "https://i.ibb.co/8LmmPySx/Machines-manufacturing-services-f5f7abd54ec2b3373b0c.png",
         description:
           "Explore advanced machinery and manufacturing services for industrial growth.",
         path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
@@ -208,7 +209,8 @@ const DashboardMain: React.FC = () => {
       },
       {
         title: "We Are Hiring",
-        image: hiring,
+        image:
+          "https://i.ibb.co/cK4w00Rd/Career-guidance-fe6ea3668fa6a02f6294.png",
         description:
           "Explore exciting job opportunities and be a part of our growing team.",
         path: `${accessToken ? "/main" : ""}/services/we-are-hiring`,

@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.645128af.css",
-    "main.js": "/static/js/main.fd813069.js",
+    "main.css": "/static/css/main.a042683f.css",
+    "main.js": "/static/js/main.074fbd52.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
     "static/media/3 (4).png": "/static/media/3 (4).bb25f69f5e1e92c84eb1.png",
@@ -56,11 +56,9 @@
     "static/media/proudlender3.png": "/static/media/proudlender3.59de2acee2bd0d4f2893.png",
     "static/media/proudlender9.png": "/static/media/proudlender9.21b4d757548bc48f9d2a.png",
     "static/media/proudlender14.png": "/static/media/proudlender14.213016ad1eecdeb5eab1.png",
-    "static/media/Machines manufacturing services.png": "/static/media/Machines manufacturing services.f5f7abd54ec2b3373b0c.png",
     "static/media/proudlender12.png": "/static/media/proudlender12.53db2d508da021efc032.png",
     "static/media/oxycard1.png": "/static/media/oxycard1.f7c4924f3149fbd678de.png",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
-    "static/media/Free AI and Gen ai training.png": "/static/media/Free AI and Gen ai training.4090c6b7d5ff1eb374bd.png",
     "static/media/testimonial2.png": "/static/media/testimonial2.dc032a3a054a9564a46e.png",
     "static/media/testimonial6.png": "/static/media/testimonial6.3c3ce71915f57569ef63.png",
     "static/media/testimonial8.png": "/static/media/testimonial8.43ce273a9bcaf451fa69.png",
@@ -83,15 +81,11 @@
     "static/media/testimonial9.png": "/static/media/testimonial9.f386453652d69c54a59d.png",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.1815e00441357e01619e.ttf",
     "static/media/testimonial15.png": "/static/media/testimonial15.4a692e3fc9549e8d31a8.png",
-    "static/media/study abroad.png": "/static/media/study abroad.b44df112b4ab2a4c2bc9.png",
-    "static/media/Career guidance.png": "/static/media/Career guidance.fe6ea3668fa6a02f6294.png",
     "static/media/5offer.png": "/static/media/5offer.4c09878033c20c301574.png",
-    "static/media/Legal knowledge hub.png": "/static/media/Legal knowledge hub.9db183177e6a1533ba16.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
     "static/media/2offer.png": "/static/media/2offer.6b7c59e146b45fa528b9.png",
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.5993d0be5c2d681d469f.png",
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
-    "static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.png": "/static/media/FREE RICE SAMPLES AND FREE RICE CONTAINER.3b40f8ed166a3fd17253.png",
     "static/media/rama mam.png": "/static/media/rama mam.e093d87cf380e97bca53.png",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.c210719e60948b211a12.woff2",
     "static/media/srinivas.png": "/static/media/srinivas.2e47d9a4b9f5add2c541.png",
@@ -100,7 +94,6 @@
     "static/media/ramesh.png": "/static/media/ramesh.d7cc563b4a7ba0b91a1c.png",
     "static/media/subbu.png": "/static/media/subbu.7362245d4e9c85b2ca98.png",
     "static/media/radha sir.png": "/static/media/radha sir.b3007a012f0fe6437f56.png",
-    "static/media/MY ROTARY.png": "/static/media/MY ROTARY.2c24090250b109f80818.png",
     "static/media/fa-regular-400.ttf": "/static/media/fa-regular-400.914997e1bdfc990d0897.ttf",
     "static/media/o1.png": "/static/media/o1.2001b8feaefd5084d5d1.png",
     "static/media/image1.png": "/static/media/image1.553556b36d15fceb7fc0.png",
@@ -114,16 +107,16 @@
     "static/media/app (1).png": "/static/media/app (1).06fce38d94a749dfd862.png",
     "static/media/fa-v4compatibility.ttf": "/static/media/fa-v4compatibility.da94ef451f4969af06e6.ttf",
     "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
+    "index.html": "/index.html",
     "static/media/slick.svg": "/static/media/slick.2630a3e3eab21c607e21.svg",
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
-    "index.html": "/index.html",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.645128af.css.map": "/static/css/main.645128af.css.map",
-    "main.fd813069.js.map": "/static/js/main.fd813069.js.map"
+    "main.a042683f.css.map": "/static/css/main.a042683f.css.map",
+    "main.074fbd52.js.map": "/static/js/main.074fbd52.js.map"
   },
   "entrypoints": [
-    "static/css/main.645128af.css",
-    "static/js/main.fd813069.js"
+    "static/css/main.a042683f.css",
+    "static/js/main.074fbd52.js"
   ]
 }
