@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
-import { message, Modal, Button, Input, Upload, Table, Tag, Spin, Tabs } from "antd";
+import {
+  message,
+  Modal,
+  Button,
+  Input,
+  Upload,
+  Table,
+  Tag,
+  Spin,
+  Tabs,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IndexKind } from "typescript";
 
@@ -198,11 +208,8 @@ const AllCampaignsDetails: React.FC = () => {
   const handleDeleteImagestatus = (imageIdToDelete: string) => {
     setFormData((prev) => ({
       ...prev,
-      imageUrls: prev.imageUrls.map(
-        (image) =>
-          image.imageId === imageIdToDelete
-            ? { ...image, status: false }
-            : image
+      imageUrls: prev.imageUrls.map((image) =>
+        image.imageId === imageIdToDelete ? { ...image, status: false } : image
       ),
     }));
   };
@@ -239,6 +246,7 @@ const AllCampaignsDetails: React.FC = () => {
           campaignId: formData.campaignId,
           campaignType: formData.campaignType,
           campaignTypeAddBy: formData.campaignTypeAddBy,
+          campainInputType: formData.campainInputType,
           images: [
             ...formData.imageUrls,
             ...fileList.map((file) => ({
@@ -294,8 +302,16 @@ const AllCampaignsDetails: React.FC = () => {
 
   // Helper function to check if URL is a video
   const isVideoUrl = (url: string): boolean => {
-    const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'];
-    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+    const videoExtensions = [
+      ".mp4",
+      ".avi",
+      ".mov",
+      ".wmv",
+      ".flv",
+      ".webm",
+      ".mkv",
+    ];
+    return videoExtensions.some((ext) => url.toLowerCase().includes(ext));
   };
 
   // Media renderer for images and videos
@@ -377,7 +393,7 @@ const AllCampaignsDetails: React.FC = () => {
         </div>
       ),
     },
-     {
+    {
       title: (
         <div className="text-center">Service Url (Without Authorization)</div>
       ),
@@ -501,10 +517,16 @@ const AllCampaignsDetails: React.FC = () => {
           </div>
         ) : (
           <Tabs defaultActiveKey="service" type="card">
-            <TabPane tab={`Services (${serviceCampaigns.length})`} key="service">
+            <TabPane
+              tab={`Services (${serviceCampaigns.length})`}
+              key="service"
+            >
               {renderTable(serviceCampaigns, "Service")}
             </TabPane>
-            <TabPane tab={`Products (${productCampaigns.length})`} key="product">
+            <TabPane
+              tab={`Products (${productCampaigns.length})`}
+              key="product"
+            >
               {renderTable(productCampaigns, "Product")}
             </TabPane>
             <TabPane tab={`Blogs (${blogCampaigns.length})`} key="blog">
@@ -514,9 +536,8 @@ const AllCampaignsDetails: React.FC = () => {
         )}
       </div>
 
-      {/* Update Campaign Modal */}
       <Modal
-        title={`Update ${currentCampaign?.campainInputType || 'Campaign'}`}
+        title={`Update ${currentCampaign?.campainInputType || "Campaign"}`}
         visible={isUpdateModalVisible}
         onCancel={handleModalCancel}
         width={800}
@@ -531,7 +552,10 @@ const AllCampaignsDetails: React.FC = () => {
       >
         {currentCampaign && (
           <div>
-            {/* Campaign Description Input */}
+            <h1 className="mb-4 bg-yellow-100 text-yellow-800 font-semibold px-3 py-1 rounded">
+              {formData.campaignType}
+            </h1>
+
             <Input.TextArea
               rows={4}
               value={formData.campaignDescription}

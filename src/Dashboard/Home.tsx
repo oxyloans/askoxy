@@ -1193,11 +1193,11 @@ const Home: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
                     <Package size={isMobile ? 12 : 16} className="mr-2" /> Buy
-                    10kg Get 18KG+ Steel Container
+                    10kg Get 20KG+ Steel Container
                   </div>
                   <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
                     <ShoppingBag size={isMobile ? 12 : 16} className="mr-2" />{" "}
-                    Buy 26kg Get 35KG+ Steel Container
+                    Buy 26kg Get 20KG+ Steel Container
                   </div>
                 </div>
               </div>

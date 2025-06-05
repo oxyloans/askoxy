@@ -146,13 +146,20 @@ const Stats: React.FC = () => {
   };
 
   // API call function
-  const fetchOrderData = async (): Promise<void> => {
+  const fetchOrderData = async (
+    startDate1: Dayjs,
+    endDate1: Dayjs
+  ) => {
     setLoading(true);
+console.log(";lkagsdjj");
+
+    console.log(startDate1,endDate1);
+    
     try {
       const response = await fetch(
-        `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${endDate.format(
+        `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${endDate1.format(
           "YYYY-MM-DD"
-        )}&startDate=${startDate.format(
+        )}&startDate=${startDate1.format(
           "YYYY-MM-DD"
         )}&status=${selectedStatus}`,
         {
@@ -196,13 +203,13 @@ const Stats: React.FC = () => {
 
   // Initial data load on component mount
   useEffect(() => {
-    fetchOrderData();
+    fetchOrderData(startDate, endDate);
   }, []);
 
   const handlePeriodChange = (period: string): void => {
     setSelectedPeriod(period);
     let newStartDate: Dayjs;
-    const newEndDate = dayjs();
+    let newEndDate = dayjs();
 
     switch (period) {
       case "today":
@@ -210,6 +217,7 @@ const Stats: React.FC = () => {
         break;
       case "yesterday":
         newStartDate = dayjs().subtract(1, "day");
+        newEndDate = dayjs().subtract(1, "day");
         break;
       case "week":
         newStartDate = dayjs().subtract(7, "days");
@@ -223,7 +231,9 @@ const Stats: React.FC = () => {
 
     setStartDate(newStartDate);
     setEndDate(newEndDate);
-    fetchOrderData();
+    setTimeout(() => {
+      fetchOrderData(newStartDate,newEndDate);
+    }, 0);
   };
 
   const handleStatusChange = (status: string): void => {
@@ -640,7 +650,7 @@ const Stats: React.FC = () => {
                   <DatePicker
                     value={startDate}
                     onChange={(date) => handleDateChange(date, "start")}
-                    format="YYYY-MM-DD"
+                    format="DD-MM-YYYY"
                     placeholder="Start Date"
                     style={{ width: "100%" }}
                   />
@@ -656,7 +666,7 @@ const Stats: React.FC = () => {
                   <DatePicker
                     value={endDate}
                     onChange={(date) => handleDateChange(date, "end")}
-                    format="YYYY-MM-DD"
+                    format="DD-MM-YYYY"
                     placeholder="End Date"
                     style={{ width: "100%" }}
                   />
@@ -707,7 +717,9 @@ const Stats: React.FC = () => {
                 <Space style={{ width: "100%", justifyContent: "flex-end" }}>
                   <Button
                     type="primary"
-                    onClick={fetchOrderData}
+                    onClick={() => {
+                      fetchOrderData(startDate, endDate);
+                    }}
                     loading={loading}
                     icon={<ReloadOutlined />}
                     className="bg-[rgb(0,_140,_186)] w-[90px] text-white"
@@ -739,7 +751,7 @@ const Stats: React.FC = () => {
                         Total Revenue
                       </span>
                     }
-                    value={stats.totalRevenue}
+                    value={Math.round(stats.totalRevenue)}
                     formatter={(value) => formatCurrency(Number(value))}
                     prefix={<DollarOutlined style={{ color: "white" }} />}
                     valueStyle={{ color: "white", fontWeight: "bold" }}
@@ -756,7 +768,7 @@ const Stats: React.FC = () => {
                         COD Revenue
                       </span>
                     }
-                    value={stats.paymentRevenue.COD}
+                    value={Math.round(stats.paymentRevenue.COD)}
                     formatter={(value) => formatCurrency(Number(value))}
                     prefix={<CreditCardOutlined style={{ color: "white" }} />}
                     valueStyle={{ color: "white", fontWeight: "bold" }}
@@ -773,7 +785,7 @@ const Stats: React.FC = () => {
                         Online Revenue
                       </span>
                     }
-                    value={stats.paymentRevenue.Online}
+                    value={Math.round(stats.paymentRevenue.Online)}
                     formatter={(value) => formatCurrency(Number(value))}
                     prefix={<CreditCardOutlined style={{ color: "white" }} />}
                     valueStyle={{ color: "white", fontWeight: "bold" }}

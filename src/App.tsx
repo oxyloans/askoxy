@@ -11,6 +11,7 @@ import CartProvider from "./until/CartProvider";
 import Landingpage from "./components/Landingpage";
 import Freerudraksha from "./components/Services/Freerudraksh";
 import TermsAndConditions from "./kart/TermsAndConditions";
+import RCSConsentForm from "./kart/RCSConsentForm";
 import FreeSample from "./components/Services/FreeSample";
 import FreeAiandGenAi from "./components/Services/FreeAi&GenAi";
 import StudyAbroad from "./components/Services/StudyAbroad";
@@ -216,6 +217,7 @@ const App: React.FC = () => {
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />
             <Route path = "/termsandconditions" element={<TermsAndConditions />}/>
+            <Route path = "/rcsconsentform" element={<RCSConsentForm />} />
             <Route
               path="/loanmanagement"
               element={<LoanManagementLandingPage />}

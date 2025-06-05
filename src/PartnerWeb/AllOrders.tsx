@@ -83,12 +83,43 @@ const AllOrders: React.FC = () => {
   const [isDataFetched, setIsDataFetched] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const fetchOrders = async () => {
-    if (!startDate || !endDate) {
+  useEffect(() => {
+    const storedParams = localStorage.getItem("orderparams");
+
+    if (storedParams) {
+      const parsedParams = new URLSearchParams(storedParams);
+      const start = parsedParams.get("startDate");
+      const end = parsedParams.get("endDate");
+      const status = parsedParams.get("status") || "All";
+
+      if (start && end) {
+        const startD = dayjs(start);
+        const endD = dayjs(end);
+
+        setStartDate(startD);
+        setEndDate(endD);
+        setSelectedStatus(status);
+
+        fetchOrders(startD, endD, status);
+      }
+    }
+  }, []);
+
+  const fetchOrders = async (
+    startD?: dayjs.Dayjs,
+    endD?: dayjs.Dayjs,
+    status?: string
+  ) => {
+    const start = startD || startDate;
+    const end = endD || endDate;
+    const currentStatus = status ?? selectedStatus;
+
+    if (!start || !end) {
       message.warning("Please select both start and end dates");
       return;
     }
-    if (endDate.isBefore(startDate)) {
+
+    if (end.isBefore(start)) {
       message.error("End date cannot be earlier than start date");
       setLoading(false);
       return;
@@ -96,14 +127,17 @@ const AllOrders: React.FC = () => {
 
     try {
       setLoading(true);
+
       const params = new URLSearchParams({
-        startDate: startDate.format("YYYY-MM-DD"),
-        endDate: endDate.format("YYYY-MM-DD"),
+        startDate: start.format("YYYY-MM-DD"),
+        endDate: end.format("YYYY-MM-DD"),
       });
 
-      if (selectedStatus && selectedStatus !== "All") {
-        params.append("status", selectedStatus);
+      if (currentStatus && currentStatus !== "All") {
+        params.append("status", currentStatus);
       }
+
+      localStorage.setItem("orderparams", params.toString());
 
       const response = await axios.get<Order[]>(
         `${BASE_URL}/order-service/date-range?${params.toString()}`
@@ -113,15 +147,15 @@ const AllOrders: React.FC = () => {
 
       setOrders(filteredOrders);
       setFilteredOrders(filteredOrders);
-      setLoading(false);
       setIsDataFetched(true);
 
       if (filteredOrders.length === 0) {
         message.info("No orders found in the selected date range");
       }
     } catch (err) {
-      setLoading(false);
       message.error("Unable to load orders. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,7 +240,7 @@ const AllOrders: React.FC = () => {
         <div className="flex flex-col justify-end">
           <Button
             type="primary"
-            onClick={fetchOrders}
+            onClick={() => fetchOrders()}
             disabled={!startDate || !endDate}
             className="bg-[rgb(0,_140,_186)] w-[90px] text-white"
           >
