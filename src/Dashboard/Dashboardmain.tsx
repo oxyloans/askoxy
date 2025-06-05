@@ -26,7 +26,6 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import Footer from "../components/Footer";
 
-
 import Header1 from "../components/Header";
 // Import your images here
 import RudrakshaImage from "../assets/img/freerudraksha.png";
@@ -55,6 +54,7 @@ interface Campaign {
   campaignDescription: string;
   campaignStatus: boolean;
   campaignId: string;
+  campainInputType: string;
 }
 
 interface Image {
@@ -65,7 +65,7 @@ interface Image {
 
 const DashboardMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("products");
-  
+
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -462,9 +462,12 @@ const DashboardMain: React.FC = () => {
               </div>
             ))}
 
-            {/* Campaign Items */}
             {campaigns
-              .filter((campaign) => campaign.campaignStatus !== false)
+              .filter(
+                (campaign) =>
+                  campaign.campaignStatus !== false &&
+                  campaign.campainInputType !== "BLOG"
+              )
               .map((campaign) => (
                 <div
                   key={campaign.campaignId}
@@ -500,7 +503,64 @@ const DashboardMain: React.FC = () => {
                   </div>
                 </div>
               ))}
+
+            
           </div>
+          <h2 className="text-3xl font-bold text-purple-700 bg-purple-50 px-4 py-3 rounded-md shadow-sm border-l-4 border-purple-600 mb-6 mt-12">
+              BLOGS
+            </h2>
+
+            {(() => {
+              const blogCampaigns = campaigns.filter(
+                (campaign) =>
+                  campaign.campaignStatus !== false &&
+                  campaign.campainInputType === "BLOG"
+              );
+
+              return blogCampaigns.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {blogCampaigns.map((campaign) => (
+                    <div
+                      key={campaign.campaignId}
+                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
+            transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                      onClick={() =>
+                        handleCampaignClick(campaign.campaignId as string)
+                      }
+                    >
+                      <div className="relative aspect-video overflow-hidden bg-gray-50">
+                        {campaign.imageUrls?.[0]?.imageUrl && (
+                          <img
+                            src={campaign.imageUrls[0].imageUrl}
+                            alt={campaign.campaignType}
+                            className="w-full h-full object-contain"
+                          />
+                        )}
+                        {campaign.campaignType && (
+                          <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
+                            <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
+                              {campaign.campaignType.slice(0, 10)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4 flex-grow flex flex-col">
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
+                          {campaign.campaignType}
+                        </h3>
+                        <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                          {campaign.campaignDescription}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 mt-6">
+                  No blogs are available.
+                </p>
+              );
+            })()}
           <Footer />
         </>
       ) : activeTab === "freegpts" ? (

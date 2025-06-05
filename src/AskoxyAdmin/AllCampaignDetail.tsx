@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
-import { message, Modal, Button, Input, Upload, Table, Tag, Spin } from "antd";
+import { message, Modal, Button, Input, Upload, Table, Tag, Spin, Tabs } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { IndexKind } from "typescript";
 
 import BASE_URL from "../Config";
+
+const { TabPane } = Tabs;
 
 interface Image {
   imageId: string;
@@ -20,6 +22,7 @@ interface Campaign {
   campaignTypeAddBy: string;
   campaignStatus: string;
   campaignId: string;
+  campainInputType: string;
 }
 
 const AllCampaignsDetails: React.FC = () => {
@@ -38,6 +41,7 @@ const AllCampaignsDetails: React.FC = () => {
     campaignTypeAddBy: "",
     campaignStatus: "",
     campaignId: "",
+    campainInputType: "",
   });
 
   const baseUrl = window.location.href.includes("sandbox")
@@ -71,8 +75,8 @@ const AllCampaignsDetails: React.FC = () => {
       );
       setCampaigns(filteredCampaigns);
     } catch (error) {
-      console.error("Error fetching services:", error);
-      message.error("Failed to load service details. Please try again.");
+      console.error("Error fetching campaigns:", error);
+      message.error("Failed to load campaign details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -106,15 +110,12 @@ const AllCampaignsDetails: React.FC = () => {
           );
 
           if (response.status === 200) {
-            // setCampaigns((prev) =>
-            //   prev.filter((campaign) => campaign.campaignType !== campaign.campaignType)
-            // );
-            message.success("Service deactivated successfully.");
+            message.success("Campaign status updated successfully.");
           } else {
-            message.error("Failed to deactivate the service.");
+            message.error("Failed to update campaign status.");
           }
         } catch (error) {
-          message.error("Error while deactivating service.");
+          message.error("Error while updating campaign status.");
           console.error(error);
         }
         fetchCampaigns();
@@ -132,9 +133,9 @@ const AllCampaignsDetails: React.FC = () => {
       campaignTypeAddBy: campaign.campaignTypeAddBy,
       campaignStatus: campaign.campaignStatus,
       campaignId: campaign.campaignId,
+      campainInputType: campaign.campainInputType,
     });
     setIsUpdateModalVisible(true);
-    // console.log(formData);
   };
 
   const handleUploadChange = async (
@@ -165,17 +166,6 @@ const AllCampaignsDetails: React.FC = () => {
         );
 
         if (response.data.uploadStatus === "UPLOADED") {
-          // setFormData((prev) => ({
-          //   ...prev,
-          //   imageUrls: [
-          //     ...prev.imageUrls,
-          //     {
-          //       imageUrl: response.data.documentPath,
-          //       status: true,
-          //       imageId: response.data.id,
-          //     },
-          //   ],
-          // }));
           setFileList((prev) => [
             ...prev,
             {
@@ -187,11 +177,11 @@ const AllCampaignsDetails: React.FC = () => {
 
           setImageErrorMessage("");
         } else {
-          setImageErrorMessage("Failed to upload the image. Please try again.");
+          setImageErrorMessage("Failed to upload the file. Please try again.");
         }
       } catch (error) {
         console.error("Error uploading file:", error);
-        setImageErrorMessage("Failed to upload the image. Please try again.");
+        setImageErrorMessage("Failed to upload the file. Please try again.");
       } finally {
         setIsUploading(false);
       }
@@ -211,8 +201,8 @@ const AllCampaignsDetails: React.FC = () => {
       imageUrls: prev.imageUrls.map(
         (image) =>
           image.imageId === imageIdToDelete
-            ? { ...image, status: false } // Update the status to false
-            : image // Keep the other images unchanged
+            ? { ...image, status: false }
+            : image
       ),
     }));
   };
@@ -246,6 +236,7 @@ const AllCampaignsDetails: React.FC = () => {
       askOxyCampaignDto: [
         {
           campaignDescription: formData.campaignDescription,
+          campaignId: formData.campaignId,
           campaignType: formData.campaignType,
           campaignTypeAddBy: formData.campaignTypeAddBy,
           images: [
@@ -281,6 +272,7 @@ const AllCampaignsDetails: React.FC = () => {
           campaignTypeAddBy: "",
           campaignStatus: "",
           campaignId: "",
+          campainInputType: "",
         });
         setIsUpdateModalVisible(false);
       } else {
@@ -299,29 +291,80 @@ const AllCampaignsDetails: React.FC = () => {
     setIsUpdateModalVisible(false);
     setFileList([]);
   };
-  const columns = [
+
+  // Helper function to check if URL is a video
+  const isVideoUrl = (url: string): boolean => {
+    const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
+  // Media renderer for images and videos
+  const renderMedia = (imageUrls: Image[]) => {
+    if (!imageUrls || imageUrls.length === 0) {
+      return <div className="text-gray-500 text-sm">No media found</div>;
+    }
+
+    if (imageUrls.length === 1) {
+      const media = imageUrls[0];
+      return isVideoUrl(media.imageUrl) ? (
+        <video
+          src={media.imageUrl}
+          controls
+          className="w-20 h-20 object-cover rounded"
+        />
+      ) : (
+        <img
+          src={media.imageUrl}
+          alt="Media"
+          className="w-20 h-20 object-cover rounded"
+        />
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {imageUrls.slice(0, 3).map((item, index) => (
+          <div key={index} className="relative">
+            {isVideoUrl(item.imageUrl) ? (
+              <video
+                src={item.imageUrl}
+                className="w-16 h-16 object-cover rounded"
+                muted
+              />
+            ) : (
+              <img
+                src={item.imageUrl}
+                alt={`Media ${index + 1}`}
+                className="w-16 h-16 object-cover rounded"
+              />
+            )}
+            {index === 2 && imageUrls.length > 3 && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">
+                  +{imageUrls.length - 3}
+                </span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const getColumns = (type: string) => [
     {
-      title: <div className="text-center">Images</div>,
+      title: <div className="text-center">Media</div>,
       dataIndex: "imageUrls",
       key: "imageUrls",
-      render: (imageUrls: Image[]) => (
-        <div className="flex flex-col gap-2">
-          {imageUrls.map((item, index) => (
-            <img
-              key={index}
-              src={item.imageUrl}
-              alt="No Images found"
-              className="w-20 h-20 object-cover"
-            />
-          ))}
-        </div>
-      ),
+      render: renderMedia,
     },
     {
-      title: <div className="text-center">Service Type</div>,
+      title: <div className="text-center">{type} Type</div>,
       dataIndex: "campaignType",
       key: "campaignType",
-      titleAlign: "center",
+      render: (text: string) => (
+        <div className="max-w-xs break-words">{text}</div>
+      ),
     },
     {
       title: <div className="text-center">Description</div>,
@@ -334,13 +377,7 @@ const AllCampaignsDetails: React.FC = () => {
         </div>
       ),
     },
-
-    // {
-    //   title: <div className="text-center">Added By</div>,
-    //   dataIndex: "campaignTypeAddBy",
-    //   key: "campaignTypeAddBy",
-    // },
-    {
+     {
       title: (
         <div className="text-center">Service Url (Without Authorization)</div>
       ),
@@ -404,7 +441,6 @@ const AllCampaignsDetails: React.FC = () => {
         );
       },
     },
-
     {
       title: <div className="text-center">Actions</div>,
       key: "actions",
@@ -428,42 +464,68 @@ const AllCampaignsDetails: React.FC = () => {
     },
   ];
 
+  // Filter campaigns by type
+  const serviceCampaigns = campaigns.filter(
+    (campaign) => campaign.campainInputType === "SERVICE"
+  );
+  const productCampaigns = campaigns.filter(
+    (campaign) => campaign.campainInputType === "PRODUCT"
+  );
+  const blogCampaigns = campaigns.filter(
+    (campaign) => campaign.campainInputType === "BLOG"
+  );
+
+  const renderTable = (data: Campaign[], type: string) => (
+    <div className="overflow-x-auto">
+      <Table
+        columns={getColumns(type)}
+        dataSource={data}
+        rowKey={(record) => record.campaignId}
+        pagination={{ pageSize: 50 }}
+        className="border border-gray-300 table-auto"
+        scroll={{ x: window.innerWidth < 768 ? 1200 : undefined }}
+      />
+    </div>
+  );
+
   return (
     <div className="flex flex-col md:flex-row">
       <div className="flex-3 pt-0 px-4 sm:px-6 lg:px-8 mx-auto w-full max-w-full">
         <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4">
-          All Service Details
+          All Campaign Details
         </h1>
 
         {loading ? (
           <div className="flex justify-center items-center">
-            <Spin tip="Loading Services..." size="large" />
+            <Spin tip="Loading Campaigns..." size="large" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table
-              columns={columns}
-              dataSource={campaigns}
-              rowKey={(record) => record.campaignType}
-              pagination={false}
-              className="border border-gray-300 table-auto"
-              scroll={{ x: window.innerWidth < 768 ? 800 : undefined }}
-            />
-          </div>
+          <Tabs defaultActiveKey="service" type="card">
+            <TabPane tab={`Services (${serviceCampaigns.length})`} key="service">
+              {renderTable(serviceCampaigns, "Service")}
+            </TabPane>
+            <TabPane tab={`Products (${productCampaigns.length})`} key="product">
+              {renderTable(productCampaigns, "Product")}
+            </TabPane>
+            <TabPane tab={`Blogs (${blogCampaigns.length})`} key="blog">
+              {renderTable(blogCampaigns, "Blog")}
+            </TabPane>
+          </Tabs>
         )}
       </div>
 
       {/* Update Campaign Modal */}
       <Modal
-        title="Update Service"
+        title={`Update ${currentCampaign?.campainInputType || 'Campaign'}`}
         visible={isUpdateModalVisible}
         onCancel={handleModalCancel}
+        width={800}
         footer={[
           <Button key="cancel" onClick={handleModalCancel}>
             Cancel
           </Button>,
           <Button key="submit" type="primary" onClick={handleUpdateSubmit}>
-            {isSubmitting ? "Submitting..." : "Update Service"}
+            {isSubmitting ? "Submitting..." : `Update`}
           </Button>,
         ]}
       >
@@ -479,11 +541,11 @@ const AllCampaignsDetails: React.FC = () => {
                   campaignDescription: e.target.value,
                 })
               }
-              placeholder="Update service description"
+              placeholder={`Update ${currentCampaign.campainInputType.toLowerCase()} description`}
               className="mb-4"
             />
 
-            {/* Image Upload Section */}
+            {/* File Upload Section */}
             <div className="flex flex-col gap-2">
               <label className="relative">
                 <div className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 cursor-pointer transition-colors w-fit">
@@ -500,13 +562,13 @@ const AllCampaignsDetails: React.FC = () => {
                       d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                     />
                   </svg>
-                  <span>Choose Images</span>
+                  <span>Choose Images/Videos</span>
                 </div>
                 <input
                   type="file"
                   onChange={(e) => handleUploadChange(e)}
                   multiple
-                  accept=".jpg,.jpeg,.png"
+                  accept=".jpg,.jpeg,.png,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv"
                   className="hidden"
                 />
               </label>
@@ -520,24 +582,32 @@ const AllCampaignsDetails: React.FC = () => {
               )}
             </div>
 
-            {/* Image Grid */}
+            {/* Media Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-              {/* Display Existing Images */}
+              {/* Display Existing Media */}
               {formData.imageUrls.map(
-                (image, index) =>
-                  image.status && (
+                (media, index) =>
+                  media.status && (
                     <div key={index} className="relative group">
                       <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
                         <div className="aspect-[4/3]">
-                          <img
-                            src={image.imageUrl}
-                            alt={`Campaign Image ${index + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
+                          {isVideoUrl(media.imageUrl) ? (
+                            <video
+                              src={media.imageUrl}
+                              controls
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={media.imageUrl}
+                              alt={`Media ${index + 1}`}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                          )}
                         </div>
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <button
-                          onClick={() => handleDeleteImagestatus(image.imageId)}
+                          onClick={() => handleDeleteImagestatus(media.imageId)}
                           className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
                           type="button"
                         >
@@ -556,27 +626,35 @@ const AllCampaignsDetails: React.FC = () => {
                           </svg>
                         </button>
                         <div className="absolute bottom-3 left-3 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-                          Image {index + 1} of {formData.imageUrls.length}
+                          Media {index + 1} of {formData.imageUrls.length}
                         </div>
                       </div>
                     </div>
                   )
               )}
 
-              {/* Display Newly Uploaded Images */}
-              {fileList.map((image, index) => (
+              {/* Display Newly Uploaded Media */}
+              {fileList.map((media, index) => (
                 <div key={index} className="relative group">
                   <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
                     <div className="aspect-[4/3]">
-                      <img
-                        src={image.imageUrl}
-                        alt={`Uploaded Image ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
+                      {isVideoUrl(media.imageUrl) ? (
+                        <video
+                          src={media.imageUrl}
+                          controls
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <img
+                          src={media.imageUrl}
+                          alt={`Uploaded Media ${index + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      )}
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <button
-                      onClick={() => handleDeleteImage(image.imageId)}
+                      onClick={() => handleDeleteImage(media.imageId)}
                       className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
                       type="button"
                     >
@@ -595,14 +673,14 @@ const AllCampaignsDetails: React.FC = () => {
                       </svg>
                     </button>
                     <div className="absolute bottom-3 left-3 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      Image {index + 1} of {fileList.length}
+                      Media {index + 1} of {fileList.length}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Error Message for Images */}
+            {/* Error Message for Media */}
             {imageErrorMessage && (
               <p className="text-red-500 mt-2">{imageErrorMessage}</p>
             )}

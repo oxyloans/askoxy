@@ -154,7 +154,7 @@ const OrderReport: React.FC = () => {
 
   useEffect(() => {
     fetchOrderData();
-    fetchWeeklyDeliveryData();
+    // fetchWeeklyDeliveryData();
     fetchMonthlySalesData();
   }, []);
 
@@ -524,7 +524,7 @@ const OrderReport: React.FC = () => {
           ))}
         </div>
 
-        <div className="mb-12">
+        {/* <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
               Delivered Orders Report
@@ -535,9 +535,9 @@ const OrderReport: React.FC = () => {
             </div>
           </div>
 
-          {/* Weekly Report Date Range Selector */}
+         
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
-            {/* Start Date */}
+        
             <DatePicker
               value={weeklyStartDate}
               format="DD/MM/YYYY"
@@ -547,7 +547,7 @@ const OrderReport: React.FC = () => {
               className="w-full sm:w-auto"
             />
 
-            {/* End Date */}
+        
             <DatePicker
               value={weeklyEndDate}
               format="DD/MM/YYYY"
@@ -557,7 +557,7 @@ const OrderReport: React.FC = () => {
               className="w-full sm:w-auto"
             />
 
-            {/* Get Data Button */}
+        
             <button
               onClick={fetchWeeklyDeliveryData}
               className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
@@ -579,13 +579,7 @@ const OrderReport: React.FC = () => {
             </div>
 
             <div className="flex-grow flex justify-end">
-              {/* <button
-                onClick={downloadWeeklyCSV}
-                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download CSV
-              </button> */}
+             
               <Button
                 icon={<Download className="w-4 h-4 mr-2" />}
                 loading={csvLoader}
@@ -612,9 +606,9 @@ const OrderReport: React.FC = () => {
           ) : weeklyDeliveryData.length > 0 ? (
             <div className="bg-white rounded-lg shadow-md border border-blue-200 overflow-x-auto">
               <div className="p-4 bg-blue-50 border-t border-blue-100 flex justify-between items-center">
-                {/* Left: COD and ONLINE totals */}
+             
                 <div className="text-sm text-green-800 flex gap-4">
-                  {/* COD Total */}
+          
                   <div>
                     COD:{" "}
                     <span className="text-lg font-bold">
@@ -627,7 +621,7 @@ const OrderReport: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* ONLINE Total */}
+                
                   <div>
                     Online:{" "}
                     <span className="text-lg font-bold">
@@ -641,7 +635,7 @@ const OrderReport: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Right: Total Amount */}
+            
                 <div className="text-sm text-green-800">
                   Total:{" "}
                   <span className="text-lg font-bold">
@@ -676,14 +670,14 @@ const OrderReport: React.FC = () => {
               </p>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Monthly Sales Report */}
         <div className="mb-8">
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
-                Monthly Sales Report
+                Sales Report
               </h2>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">

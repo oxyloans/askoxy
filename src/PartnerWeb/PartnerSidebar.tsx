@@ -16,8 +16,9 @@ import {
   MenuUnfoldOutlined,
   RetweetOutlined,
   FileTextOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
-import { FaComments } from "react-icons/fa";
+import { FaChartBar, FaComments } from "react-icons/fa";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -80,6 +81,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "/home/orderReport",
       icon: <FileTextOutlined />,
       label: "Orders Report",
+    },
+
+    {
+      key: "/home/updatestock",
+      icon: <FaChartBar className="text-blue-500" />,
+      label: "Stock Update",
+    },
+    {
+      key: "/home/orderstats",
+      icon: <LineChartOutlined />,
+      label: "Orders stats",
     },
     {
       key: "/home/queryManagement",

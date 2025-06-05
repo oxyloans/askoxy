@@ -114,6 +114,9 @@ import AllOrders from "./PartnerWeb/AllOrders";
 import DeliveryBoyList from "./PartnerWeb/DeliveryBoyList";
 import PartnerItemsList from "./PartnerWeb/PartnerItemsList";
 import DbOrderDetails from "./PartnerWeb/DbOrderList";
+import AddBlog from "./AskoxyAdmin/AddBlog";
+import OrderStatsDashboard from "./AskoxyAdmin/Stats";
+import StockUpdate from "./AskoxyAdmin/Stockupdate";
 
 import Register from "./AskoxyAdmin/Register";
 import AssignedDataPage from "./AskoxyAdmin/AssignedData";
@@ -517,6 +520,8 @@ const App: React.FC = () => {
               <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
               <Route path="orderReport" element={<OrderReport />} />
+              <Route path="orderstats" element={<OrderStatsDashboard />} />
+              <Route path="updatestock" element={<StockUpdate />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}
@@ -542,6 +547,9 @@ const App: React.FC = () => {
               <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="helpdashboard" element={<HelpDeskDashboard />} />
               <Route path="todaycalls" element={<CallerHistoryPage />} />
+               <Route path="addblogs" element={<AddBlog/>} />
+               <Route path="orderstats" element={<OrderStatsDashboard />} />
+              <Route path="updatestock" element={<StockUpdate />} />
               <Route
                 path="superAdminComments"
                 element={<SuperAdminComments />}

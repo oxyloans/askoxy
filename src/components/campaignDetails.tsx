@@ -23,7 +23,7 @@ interface Campaign {
   campaignTypeAddBy: string;
   campaignStatus: boolean;
   campainInputType: string;
-}
+} 
 
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -52,6 +52,9 @@ const CampaignDetails: React.FC = () => {
   const submitclicks = sessionStorage.getItem("submitclicks");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [likeCount, setLikeCount] = useState<number>(0);
+  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
 
   const createSimpleHash = (text: string): string => {
     let hash = 0;
@@ -103,8 +106,6 @@ const CampaignDetails: React.FC = () => {
             console.error("Error with URL decoding:", e);
           }
         } else {
-          // console.log({ foundCampaign });
-
           setCampaign(foundCampaign);
         }
       } catch (err) {
@@ -118,9 +119,6 @@ const CampaignDetails: React.FC = () => {
   }, [campaignId, location.pathname]);
 
   const handleWriteToUs = () => {
-    // console.log(email);
-    // console.log(finalMobileNumber);
-
     if (
       !email ||
       email === "null" ||
@@ -197,8 +195,6 @@ const CampaignDetails: React.FC = () => {
           (offer: any) => offer.askOxyOfers === campaign?.campaignType
         );
 
-        // console.log(hasFreeRudrakshaOffer);
-
         setInterested(hasFreeRudrakshaOffer);
         if (submitclicks) {
           handleSubmit(hasFreeRudrakshaOffer);
@@ -252,14 +248,8 @@ const CampaignDetails: React.FC = () => {
   };
 
   const submitInterest = async () => {
-    // if (isButtonDisabled) return;
-
     try {
-      // console.log({ campaign });
       const campaignType = sessionStorage.getItem("campaigntype");
-      // const campaignType = campaign?.campaignType || "kjgjf";
-      // console.log({ campaignType });
-
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         {
@@ -269,10 +259,7 @@ const CampaignDetails: React.FC = () => {
           projectType: "ASKOXY",
         }
       );
-      // console.log("API Response:", response.data);
-
       localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-
       message.success(
         `Thank you for showing interest in our *${campaign?.campaignType}* offer!`
       );
@@ -315,13 +302,83 @@ const CampaignDetails: React.FC = () => {
       return;
     }
     console.log("Submitted Comment:", comment);
-    // TODO: Handle comment submission (e.g., API call)
+
     setIsModalOpen(false);
-    setComment(""); // Reset after submission
+    setComment("");
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
+  };
+
+  const isVideoUrl = (url: string): boolean => {
+    const videoExtensions = [
+      ".mp4",
+      ".webm",
+      ".ogg",
+      ".avi",
+      ".mov",
+      ".wmv",
+      ".flv",
+      ".m4v",
+    ];
+    const lowercaseUrl = url.toLowerCase();
+    return (
+      videoExtensions.some((ext) => lowercaseUrl.includes(ext)) ||
+      lowercaseUrl.includes("video") ||
+      lowercaseUrl.includes(".mp4")
+    );
+  };
+
+  const handleLike = () => {
+    if (isLiked) {
+      setLikeCount((prev) => prev - 1);
+    } else {
+      setLikeCount((prev) => prev + 1);
+    }
+    setIsLiked(!isLiked);
+    message.success(isLiked ? "Like removed!" : "Liked!");
+  };
+
+  const handleSubscribe = () => {
+    setIsSubscribed(!isSubscribed);
+    message.success(
+      isSubscribed ? "Unsubscribed!" : "Subscribed successfully!"
+    );
+  };
+
+  const handleCopyContent = () => {
+    if (campaign?.campaignDescription) {
+      navigator.clipboard
+        .writeText(campaign.campaignDescription)
+        .then(() => {
+          message.success("Content copied to clipboard!");
+        })
+        .catch(() => {
+          message.error("Failed to copy content");
+        });
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: campaign?.campaignType,
+          text: campaign?.campaignDescription,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => {
+          message.success("Link copied to clipboard!");
+        })
+        .catch(() => {
+          message.error("Failed to copy link");
+        });
+    }
   };
 
   const renderNotFoundPage = () => {
@@ -414,14 +471,15 @@ const CampaignDetails: React.FC = () => {
                 </button>
               )}
               {campaign.campainInputType === "BLOG" && (
-                <button
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={showModal}
-                  aria-label="Visit our site"
-                  // disabled={isButtonDisabled || interested}
-                >
-                  Write Comments
-                </button>
+                <>
+                  <button
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all"
+                    onClick={showModal}
+                    aria-label="Write Comments"
+                  >
+                    💬 Write Comments
+                  </button>
+                </>
               )}
               <button
                 className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f9b91a] transition-all"
@@ -444,45 +502,67 @@ const CampaignDetails: React.FC = () => {
                     </div>
 
                     <div className="bg-gray-50 rounded-lg overflow-hidden">
-                      <img
-                        src={campaign.imageUrls[0].imageUrl}
-                        alt={campaign.campaignType}
-                        className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                        onLoad={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          const aspectRatio =
-                            img.naturalWidth / img.naturalHeight;
-                          const container = img.parentElement;
+                      {isVideoUrl(campaign.imageUrls[0].imageUrl) ? (
+                        <video
+                          controls
+                          className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                          onLoadedData={(e) => {
+                            const video = e.target as HTMLVideoElement;
+                            const container = video.parentElement;
+                            if (container) {
+                              const spinner = container.previousElementSibling;
+                              if (spinner && spinner.parentElement) {
+                                spinner.remove();
+                              }
+                            }
+                            video.style.opacity = "1";
+                          }}
+                          style={{
+                            maxHeight: "min(600px, 80vh)",
+                            opacity: "0",
+                            transition: "opacity 0.3s ease-in-out",
+                          }}
+                        >
+                          <source
+                            src={campaign.imageUrls[0].imageUrl}
+                            type="video/mp4"
+                          />
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <img
+                          src={campaign.imageUrls[0].imageUrl}
+                          alt={campaign.campaignType}
+                          className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                          onLoad={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            const aspectRatio =
+                              img.naturalWidth / img.naturalHeight;
+                            const container = img.parentElement;
 
-                          if (container) {
-                            // Instead of setting aspect ratio on container, set max-height based on orientation
-                            if (aspectRatio > 1.2) {
-                              // Horizontal image
-                              img.style.maxHeight = "min(480px, 70vh)";
-                            } else if (aspectRatio < 0.8) {
-                              // Vertical image
-                              img.style.maxHeight = "min(600px, 80vh)";
-                            } else {
-                              // Square-ish image
-                              img.style.maxHeight = "min(500px, 75vh)";
+                            if (container) {
+                              if (aspectRatio > 1.2) {
+                                img.style.maxHeight = "min(480px, 70vh)";
+                              } else if (aspectRatio < 0.8) {
+                                img.style.maxHeight = "min(600px, 80vh)";
+                              } else {
+                                img.style.maxHeight = "min(500px, 75vh)";
+                              }
+                              container.style.height = "auto";
                             }
 
-                            // Ensure container height matches image
-                            container.style.height = "auto";
-                          }
-
-                          // Remove loading spinner
-                          const spinner = container?.previousElementSibling;
-                          if (spinner && spinner.parentElement) {
-                            spinner.remove();
-                          }
-                          img.style.opacity = "1";
-                        }}
-                        style={{
-                          opacity: "0",
-                          transition: "opacity 0.3s ease-in-out",
-                        }}
-                      />
+                            const spinner = container?.previousElementSibling;
+                            if (spinner && spinner.parentElement) {
+                              spinner.remove();
+                            }
+                            img.style.opacity = "1";
+                          }}
+                          style={{
+                            opacity: "0",
+                            transition: "opacity 0.3s ease-in-out",
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -499,58 +579,80 @@ const CampaignDetails: React.FC = () => {
                       </div>
 
                       <div className="bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
-                        <img
-                          src={image.imageUrl}
-                          alt={`${campaign.campaignType} - ${index + 1}`}
-                          className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            const aspectRatio =
-                              img.naturalWidth / img.naturalHeight;
-                            const container = img.parentElement;
-
-                            if (container) {
-                              // Set image max-height based on orientation
-                              if (aspectRatio > 1.2) {
-                                // Horizontal image
-                                img.style.maxHeight = "min(320px, 50vh)";
-                              } else if (aspectRatio < 0.8) {
-                                // Vertical image
-                                img.style.maxHeight = "min(400px, 60vh)";
-                              } else {
-                                // Square-ish image
-                                img.style.maxHeight = "min(360px, 55vh)";
+                        {isVideoUrl(image.imageUrl) ? (
+                          <video
+                            controls
+                            className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                            onLoadedData={(e) => {
+                              const video = e.target as HTMLVideoElement;
+                              const container = video.parentElement;
+                              if (container) {
+                                container.style.height = "auto";
+                                const spinner =
+                                  container.previousElementSibling;
+                                if (spinner && spinner.parentElement) {
+                                  spinner.remove();
+                                }
                               }
+                              video.style.opacity = "1";
+                            }}
+                            style={{
+                              maxHeight: "min(400px, 60vh)",
+                              opacity: "0",
+                              transition: "opacity 0.3s ease-in-out",
+                            }}
+                          >
+                            <source src={image.imageUrl} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        ) : (
+                          <img
+                            src={image.imageUrl}
+                            alt={`${campaign.campaignType} - ${index + 1}`}
+                            className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                            onLoad={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              const aspectRatio =
+                                img.naturalWidth / img.naturalHeight;
+                              const container = img.parentElement;
 
-                              // Ensure container height matches image
-                              container.style.height = "auto";
+                              if (container) {
+                                if (aspectRatio > 1.2) {
+                                  img.style.maxHeight = "min(320px, 50vh)";
+                                } else if (aspectRatio < 0.8) {
+                                  img.style.maxHeight = "min(400px, 60vh)";
+                                } else {
+                                  img.style.maxHeight = "min(360px, 55vh)";
+                                }
 
-                              // Center the image if it's smaller than container
-                              if (img.naturalWidth < img.offsetWidth) {
-                                img.classList.add("mx-auto");
+                                container.style.height = "auto";
+
+                                if (img.naturalWidth < img.offsetWidth) {
+                                  img.classList.add("mx-auto");
+                                }
+
+                                const spinner =
+                                  container.previousElementSibling;
+                                if (spinner && spinner.parentElement) {
+                                  spinner.remove();
+                                }
                               }
-
-                              // Remove loading spinner
-                              const spinner = container.previousElementSibling;
-                              if (spinner && spinner.parentElement) {
-                                spinner.remove();
+                              img.style.opacity = "1";
+                            }}
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              const container = img.parentElement;
+                              if (container) {
+                                container.innerHTML =
+                                  '<div class="flex items-center justify-center h-full p-4 text-red-500">Failed to load image</div>';
                               }
-                            }
-                            img.style.opacity = "1";
-                          }}
-                          onError={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            const container = img.parentElement;
-                            if (container) {
-                              container.innerHTML =
-                                '<div class="flex items-center justify-center h-full p-4 text-red-500">Failed to load image</div>';
-                            }
-                          }}
-                          style={{
-                            opacity: "0",
-                            transition: "opacity 0.3s ease-in-out",
-                          }}
-                        />
+                            }}
+                            style={{
+                              opacity: "0",
+                              transition: "opacity 0.3s ease-in-out",
+                            }}
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -558,7 +660,6 @@ const CampaignDetails: React.FC = () => {
               )
             ) : null}
 
-            {/* Content Container */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               {campaign.campaignDescription && (
                 <div className="prose max-w-none">
@@ -628,6 +729,106 @@ const CampaignDetails: React.FC = () => {
                     })}
                 </div>
               )}
+              {/* Social Interaction Buttons */}
+              {campaign.campainInputType === "BLOG" && (
+                <div className="flex items-center gap-4 mt-4">
+                  <button
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-md transition-all duration-300 ${
+                      isLiked
+                        ? "bg-red-500 text-white hover:bg-red-600"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={handleLike}
+                    aria-label={isLiked ? "Unlike" : "Like"}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill={isLiked ? "currentColor" : "none"}
+                      stroke={isLiked ? "white" : "currentColor"}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span>
+                      {likeCount} {likeCount === 1 ? "Like" : "Likes"}
+                    </span>
+                  </button>
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-md hover:bg-gray-200 transition-all duration-300"
+                    onClick={showModal}
+                    aria-label="Comment"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                    <span>Comment</span>
+                  </button>
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-md hover:bg-gray-200 transition-all duration-300"
+                    onClick={handleShare}
+                    aria-label="Share"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="18" cy="5" r="3"></circle>
+                      <circle cx="6" cy="12" r="3"></circle>
+                      <circle cx="18" cy="19" r="3"></circle>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    <span>Share</span>
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-md transition-all duration-300 ${
+                      isSubscribed
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={handleSubscribe}
+                    aria-label={isSubscribed ? "Unsubscribe" : "Subscribe"}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                      <path d="M12 3v18"></path>
+                    </svg>
+                    <span>{isSubscribed ? "Subscribed" : "Subscribe"}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-8">
@@ -639,19 +840,14 @@ const CampaignDetails: React.FC = () => {
       {isOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
           <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-            {/* Close Button */}
             <i
               className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
               onClick={() => setIsOpen(false)}
               aria-label="Close"
             />
-
-            {/* Modal Content */}
             <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
               Write To Us
             </h2>
-
-            {/* Mobile Number Field */}
             <div className="mb-4">
               <label
                 className="block text-m text-black font-medium mb-1"
@@ -669,8 +865,6 @@ const CampaignDetails: React.FC = () => {
                 style={{ fontSize: "0.8rem" }}
               />
             </div>
-
-            {/* Email Field */}
             <div className="mb-4">
               <label
                 className="block text-m text-black font-medium mb-1"
@@ -688,8 +882,6 @@ const CampaignDetails: React.FC = () => {
                 style={{ fontSize: "0.8rem" }}
               />
             </div>
-
-            {/* Query Field */}
             <div className="mb-4">
               <label
                 className="block text-m text-black font-medium mb-1"
@@ -709,8 +901,6 @@ const CampaignDetails: React.FC = () => {
                 <p className="text-red-500 text-sm mt-1">{queryError}</p>
               )}
             </div>
-
-            {/* Submit Button */}
             <div className="flex justify-center">
               <button
                 className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
@@ -732,7 +922,7 @@ const CampaignDetails: React.FC = () => {
                 className="font-bold text-2xl text-red-500 hover:text-red-700 focus:outline-none"
                 onClick={() => setIsprofileOpen(false)}
               >
-                &times;
+                ×
               </button>
             </div>
             <p className="text-center text-black mb-6">
