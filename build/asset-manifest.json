@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.db62ef98.css",
-    "main.js": "/static/js/main.e8b798e7.js",
+    "main.js": "/static/js/main.7b3bdb47.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
     "static/media/3 (4).png": "/static/media/3 (4).bb25f69f5e1e92c84eb1.png",
@@ -29,12 +29,13 @@
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
-    "static/media/26kg.png": "/static/media/26kg.91ebbfff29c57fd47634.png",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
+    "static/media/26kg.png": "/static/media/26kg.0da29a2bfc7efcc8ae54.png",
     "static/media/35kg1.png": "/static/media/35kg1.44f6954582f704d3931d.png",
     "static/media/univ3.png": "/static/media/univ3.b56f94bd1b75fdd7f064.png",
     "static/media/template2.png": "/static/media/template2.118b82b53aafa42d728c.png",
     "static/media/univ2.png": "/static/media/univ2.636eda5c3de2c32cf818.png",
+    "static/media/RICEU10.jpg": "/static/media/RICEU10.b58065b624296b993ba8.jpg",
     "static/media/oxy group.png": "/static/media/oxy group.f89491de343811f87233.png",
     "static/media/template1.png": "/static/media/template1.5213bee79e0dd85e0b50.png",
     "static/media/ricecard3.png": "/static/media/ricecard3.2adbd7a51d54de5862b3.png",
@@ -114,10 +115,10 @@
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
     "main.db62ef98.css.map": "/static/css/main.db62ef98.css.map",
-    "main.e8b798e7.js.map": "/static/js/main.e8b798e7.js.map"
+    "main.7b3bdb47.js.map": "/static/js/main.7b3bdb47.js.map"
   },
   "entrypoints": [
     "static/css/main.db62ef98.css",
-    "static/js/main.e8b798e7.js"
+    "static/js/main.7b3bdb47.js"
   ]
 }
