@@ -277,7 +277,6 @@ const ServicesSlider: React.FC = () => {
           </div>
         )}
 
-        {/* Dynamic Non-Blog Campaigns - Only show when showAllServices is true */}
         {showAllServices && nonBlogCampaigns.length > 0 && (
           <div className="mt-24">
             <motion.div
@@ -342,7 +341,6 @@ const ServicesSlider: React.FC = () => {
         )}
       </div>
 
-      {/* BLOGS SECTION */}
       <hr className="p-2 mt-16"></hr>
       <div className="relative z-10">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-16">
@@ -377,7 +375,6 @@ const ServicesSlider: React.FC = () => {
           )}
         </div>
 
-        {/* Display Blogs */}
         {blogCampaigns.length > 0 ? (
           <>
             <motion.div
@@ -386,52 +383,72 @@ const ServicesSlider: React.FC = () => {
               initial="hidden"
               animate="visible"
             >
-              {displayedBlogs.map((campaign) => (
-                <motion.div
-                  key={campaign.campaignId}
-                  variants={itemVariants}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
-                    transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                  onClick={() =>
-                    handleCampaignClick(campaign.campaignId as string)
-                  }
-                  role="button"
-                  tabIndex={0}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" &&
-                    handleCampaignClick(campaign.campaignId as string)
-                  }
-                >
-                  <div className="relative aspect-video overflow-hidden bg-gray-50">
-                    {campaign.imageUrls && campaign.imageUrls.length > 0 && (
-                      <img
-                        src={campaign.imageUrls[0].imageUrl}
-                        alt={`${campaign.campaignType}`}
-                        className="w-full h-full object-contain"
-                        loading="lazy"
-                      />
-                    )}
-                    {campaign.campaignType && (
-                      <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
-                        <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
-                          Blog
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex-grow flex flex-col">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
-                      {campaign.campaignType}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
-                      {campaign.campaignDescription}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+              {displayedBlogs.map((campaign) => {
+                const mediaUrl = campaign.imageUrls?.[0]?.imageUrl || "";
+                const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(mediaUrl);
+                const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
+
+                return (
+                  <motion.div
+                    key={campaign.campaignId}
+                    variants={itemVariants}
+                    className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
+              transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                    onClick={() =>
+                      handleCampaignClick(campaign.campaignId as string)
+                    }
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" &&
+                      handleCampaignClick(campaign.campaignId as string)
+                    }
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-gray-50">
+                      {isImage ? (
+                        <img
+                          src={mediaUrl}
+                          alt={campaign.campaignType}
+                          className="w-full h-full object-contain"
+                          loading="lazy"
+                        />
+                      ) : isVideo ? (
+                        <video
+                          src={mediaUrl}
+                          className="w-full h-full object-contain"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">
+                          No media available
+                        </div>
+                      )}
+
+                      {campaign.campaignType && (
+                        <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
+                          <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
+                            Blog
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 flex-grow flex flex-col">
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
+                        {campaign.campaignType}
+                      </h3>
+                      <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                        {campaign.campaignDescription}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
 
-            {/* Show More Button for Blogs */}
             {!showAllBlogs && displayedBlogs.length < blogCampaigns.length && (
               <div className="mt-12 text-center">
                 <motion.button

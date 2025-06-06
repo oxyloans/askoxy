@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.db62ef98.css",
-    "main.js": "/static/js/main.7b3bdb47.js",
+    "main.css": "/static/css/main.a60f53d3.css",
+    "main.js": "/static/js/main.0c3d3ccc.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
     "static/media/3 (4).png": "/static/media/3 (4).bb25f69f5e1e92c84eb1.png",
@@ -20,6 +20,7 @@
     "static/media/ricecard1.png": "/static/media/ricecard1.24e05541236f1f34aafa.png",
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
     "static/media/rd.png": "/static/media/rd.c6cdc69514fbb8484b3f.png",
+    "static/media/heroimg3.png": "/static/media/heroimg3.9e623f6b9910c2a08a0d.9e623f6b9910c2a08a0d.png",
     "static/media/ricecard4.png": "/static/media/ricecard4.5fe58c9f9262e0a2fc77.png",
     "static/media/legal.png": "/static/media/legal.dd57ac21e6673f622ae7.png",
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
@@ -114,11 +115,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.db62ef98.css.map": "/static/css/main.db62ef98.css.map",
-    "main.7b3bdb47.js.map": "/static/js/main.7b3bdb47.js.map"
+    "main.a60f53d3.css.map": "/static/css/main.a60f53d3.css.map",
+    "main.0c3d3ccc.js.map": "/static/js/main.0c3d3ccc.js.map"
   },
   "entrypoints": [
-    "static/css/main.db62ef98.css",
-    "static/js/main.7b3bdb47.js"
+    "static/css/main.a60f53d3.css",
+    "static/js/main.0c3d3ccc.js"
   ]
 }

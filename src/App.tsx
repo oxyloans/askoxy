@@ -149,6 +149,15 @@ import OrdersByPincode from "./AskoxyAdmin/Pincodewiseorders";
 import Feedback from "./components/Feedback";
 
 
+import AIBlockchainAndItServices from "./AIBlockchainAndItSev/AIBlockchainAndItServices";
+import CACSService from "./CACSServices/CaCsServices";
+import GoldAndSilverAndDiamond from "./GoldAndSilverAndDiamonds/GoldAndSilverAndDiamonds";
+import LoansInvestmentsLandingPage from "./LoansInvestments/LoanInvestmentsLandingPage";
+import RealEstate from "./Real Estate/Real Estate/RealEstate";
+import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
+
+import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
+
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -181,7 +190,6 @@ const App: React.FC = () => {
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             <Route path="services/freerudraksha" element={<Freerudraksha />} />
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
-         
             <Route
               path="services/campaign/:type"
               element={<CampaignDetails />}
@@ -198,7 +206,6 @@ const App: React.FC = () => {
               path="services/machines-manufacturing"
               element={<MachinesManufacturingServices />}
             />
-
             <Route path="service/oxyloans-service" element={<OxyLoans />} />
             <Route path="services/legalservice" element={<LegalService />} />
             <Route path="services/we-are-hiring" element={<HiringService />} />
@@ -207,17 +214,19 @@ const App: React.FC = () => {
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
             <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
-
             <Route
               path="/usermobilenumberupdate"
               element={<MobileNumberUpdate />}
             />
-              <Route path="/userFeedback" element={<Feedback />} />
+            <Route path="/userFeedback" element={<Feedback />} />
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />
-            <Route path = "/termsandconditions" element={<TermsAndConditions />}/>
-            <Route path = "/rcsconsentform" element={<RCSConsentForm />} />
+            <Route
+              path="/termsandconditions"
+              element={<TermsAndConditions />}
+            />
+            <Route path="/rcsconsentform" element={<RCSConsentForm />} />
             <Route
               path="/loanmanagement"
               element={<LoanManagementLandingPage />}
@@ -238,6 +247,22 @@ const App: React.FC = () => {
               element={<FMSRouteRenderer />}
             />
             <Route path="/glms" element={<LandingPage />} />
+            <Route
+              path="/aiblockchainanditservices"
+              element={<AIBlockchainAndItServices />}
+            />
+            <Route path="/ca|caservices" element={<CACSService />} />
+            <Route
+              path="/goldandsilveranddiamonds"
+              element={<GoldAndSilverAndDiamond />}
+            />
+            <Route
+              path="/loansinvestments"
+              element={<LoansInvestmentsLandingPage />}
+            />
+            <Route path="/realestate" element={<RealEstate />} />
+            <Route path="/rice2orboecommers" element={<Rice2RoboEcommers />} />
+            <Route path="/nyayagpt" element={<Nyayagpt />} />
             <Route path="/gstonrice" element={<GSTRiceFAQ />} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
@@ -381,7 +406,6 @@ const App: React.FC = () => {
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
-              
               <Route
                 path="services/campaign/:type"
                 element={<CampaignDetails />}
@@ -521,7 +545,7 @@ const App: React.FC = () => {
               <Route path="dbOrderList" element={<DbOrderDetails />} />
               <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
-              <Route path="orderReport" element={<OrderReport />} />
+              <Route path="orderReport" element={<OrderReport />} />
               <Route path="orderstats" element={<OrderStatsDashboard />} />
               <Route path="updatestock" element={<StockUpdate />} />
             </Route>
@@ -549,8 +573,8 @@ const App: React.FC = () => {
               <Route path="feedback" element={<FeedbackDashboard />} />
               <Route path="helpdashboard" element={<HelpDeskDashboard />} />
               <Route path="todaycalls" element={<CallerHistoryPage />} />
-               <Route path="addblogs" element={<AddBlog/>} />
-               <Route path="orderstats" element={<OrderStatsDashboard />} />
+              <Route path="addblogs" element={<AddBlog />} />
+              <Route path="orderstats" element={<OrderStatsDashboard />} />
               <Route path="updatestock" element={<StockUpdate />} />
               <Route
                 path="superAdminComments"

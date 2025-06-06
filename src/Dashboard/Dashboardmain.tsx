@@ -503,23 +503,31 @@ const DashboardMain: React.FC = () => {
                   </div>
                 </div>
               ))}
-
-            
           </div>
           <h2 className="text-3xl font-bold text-purple-700 bg-purple-50 px-4 py-3 rounded-md shadow-sm border-l-4 border-purple-600 mb-6 mt-12">
-              BLOGS
-            </h2>
+            BLOGS
+          </h2>
 
-            {(() => {
-              const blogCampaigns = campaigns.filter(
-                (campaign) =>
-                  campaign.campaignStatus !== false &&
-                  campaign.campainInputType === "BLOG"
-              );
+          {(() => {
+            const blogCampaigns = campaigns.filter(
+              (campaign) =>
+                campaign.campaignStatus !== false &&
+                campaign.campainInputType === "BLOG"
+            );
 
-              return blogCampaigns.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {blogCampaigns.map((campaign) => (
+            const isImage = (url: string) =>
+              /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+
+            const isVideo = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
+
+            return blogCampaigns.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {blogCampaigns.map((campaign) => {
+                  const mediaUrl = campaign.imageUrls?.[0]?.imageUrl;
+                  const showImage = mediaUrl && isImage(mediaUrl);
+                  const showVideo = mediaUrl && isVideo(mediaUrl);
+
+                  return (
                     <div
                       key={campaign.campaignId}
                       className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
@@ -529,13 +537,27 @@ const DashboardMain: React.FC = () => {
                       }
                     >
                       <div className="relative aspect-video overflow-hidden bg-gray-50">
-                        {campaign.imageUrls?.[0]?.imageUrl && (
+                        {showImage ? (
                           <img
-                            src={campaign.imageUrls[0].imageUrl}
+                            src={mediaUrl}
                             alt={campaign.campaignType}
                             className="w-full h-full object-contain"
                           />
+                        ) : showVideo ? (
+                          <video
+                            src={mediaUrl}
+                            className="w-full h-full object-contain"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">
+                            No media available
+                          </div>
                         )}
+
                         {campaign.campaignType && (
                           <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
                             <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
@@ -544,6 +566,7 @@ const DashboardMain: React.FC = () => {
                           </div>
                         )}
                       </div>
+
                       <div className="p-4 flex-grow flex flex-col">
                         <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
                           {campaign.campaignType}
@@ -553,14 +576,16 @@ const DashboardMain: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-gray-500 mt-6">
-                  No blogs are available.
-                </p>
-              );
-            })()}
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500 mt-6">
+                No blogs are available.
+              </p>
+            );
+          })()}
+
           <Footer />
         </>
       ) : activeTab === "freegpts" ? (

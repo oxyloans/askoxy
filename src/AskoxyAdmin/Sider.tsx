@@ -152,7 +152,7 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
-          title: "All Service Details",
+          title: "All Service & Blogs Details",
           icon: <RiListUnordered className="text-purple-400" />,
           link: "/admn/allcampaignsdetails",
           roles: ["HELPDESKSUPERADMIN"],

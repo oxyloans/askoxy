@@ -693,7 +693,7 @@ console.log(";lkagsdjj");
                   </Select>
                 </Space>
               </Col>
-              <Col xs={24} sm={12} md={6} lg={4}>
+              {/* <Col xs={24} sm={12} md={6} lg={4}>
                 <Space
                   direction="vertical"
                   size="small"
@@ -712,7 +712,7 @@ console.log(";lkagsdjj");
                     <Option value="month">Last Month</Option>
                   </Select>
                 </Space>
-              </Col>
+              </Col> */}
               <Col xs={24} md={8} lg={8}>
                 <Space style={{ width: "100%", justifyContent: "flex-end" }}>
                   <Button
