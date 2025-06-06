@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import Buy26 from "../assets/img/RICEU9.png"
 const ResponsiveGallery = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState(
@@ -35,7 +36,7 @@ const ResponsiveGallery = () => {
 
     {
       id: 1,
-      src: "https://i.ibb.co/TDShjqJM/white-green-minimalist-body-lotion-Product-Promotion-Instagram-post.png",
+      src: Buy26,
       alt: "Buy 26 Kgs Rice Bag & Get 35 Kgs Steel Container",
       category: "Buy 26 Kgs Rice Bag & Get 35 Kgs Steel Container",
       link: "/main/dashboard/products",
