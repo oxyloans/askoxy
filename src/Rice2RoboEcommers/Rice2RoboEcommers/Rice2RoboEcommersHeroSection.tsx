@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, ShoppingCart, Package, Truck, Star, Users, Award, Zap, Shield } from "lucide-react";
 import Heroimg from "../../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import { useNavigate } from "react-router-dom";
 function Rice2RoboEcommersHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+   const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   const rotatingWords = [
     "Smart Shopping",
@@ -43,17 +47,23 @@ function Rice2RoboEcommersHeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleShopNow = () => {
-    const productsSection = document.getElementById("products");
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-  const handleContact = () => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,7 +91,6 @@ function Rice2RoboEcommersHeroSection() {
           >
             <div className="space-y-3 sm:space-y-4">
               {/* Brand Badge */}
-             
 
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
                 {fullHeadingText}
@@ -163,7 +172,7 @@ function Rice2RoboEcommersHeroSection() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mt-6 sm:mt-8">
               <button
-                onClick={handleShopNow}
+                onClick={handleSignIn}
                 className="group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2.5 sm:py-3 lg:py-4 px-5 sm:px-6 lg:px-8 rounded-full flex items-center justify-center gap-2 sm:gap-3 hover:from-blue-600 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
               >
                 <ShoppingCart className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -172,15 +181,13 @@ function Rice2RoboEcommersHeroSection() {
               </button>
 
               <button
-                onClick={handleContact}
+                onClick={handleSignIn}
                 className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-2.5 sm:py-3 lg:py-4 px-5 sm:px-6 lg:px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-2 sm:gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20 text-sm sm:text-base"
               >
                 <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
                 Get Support
               </button>
             </div>
-
-            
           </div>
 
           {/* Right Content - Hero Image */}
@@ -196,7 +203,7 @@ function Rice2RoboEcommersHeroSection() {
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
 
               <img
-                src={Heroimg}
+                src="https://i.ibb.co/GfBNqQFY/OurApp.png"
                 alt="CA CS Services Professional"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />

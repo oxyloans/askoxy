@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, Shield, Zap, TrendingUp } from "lucide-react";
 import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
-
+import { useNavigate } from "react-router-dom";
 function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
   const rotatingWords = [
     "Loans Made Simple",
     "Secure Your Future",
@@ -54,14 +56,25 @@ function HeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleExplore = () => {
-    const section = document.getElementById("collection");
-    if (section) section.scrollIntoView({ behavior: "smooth" });
-  };
+  // Handle sign-in logic
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-  const handleConsultation = () => {
-    const section = document.getElementById("contact");
-    if (section) section.scrollIntoView({ behavior: "smooth" });
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/service/oxyloans-service");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -186,7 +199,7 @@ function HeroSection() {
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mt-8">
               <button
-                onClick={handleExplore}
+                onClick={handleSignIn}
                 className="group relative bg-gradient-to-r from-cyan-500 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-sm sm:text-base flex items-center justify-center gap-3 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 overflow-hidden"
               >
                 <span className="relative z-10">Get Started Now</span>
@@ -195,7 +208,7 @@ function HeroSection() {
               </button>
 
               <button
-                onClick={handleConsultation}
+                onClick={handleSignIn}
                 className="group bg-white/5 backdrop-blur-sm border border-white/20 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-sm sm:text-base flex items-center justify-center gap-3 hover:bg-white/10 hover:border-white/30 hover:scale-105 transition-all duration-300"
               >
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform duration-300" />
@@ -215,7 +228,7 @@ function HeroSection() {
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100" />
               <img
-                src={Heroimg}
+                src="https://i.ibb.co/GfBNqQFY/OurApp.png"
                 alt="Hero"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />

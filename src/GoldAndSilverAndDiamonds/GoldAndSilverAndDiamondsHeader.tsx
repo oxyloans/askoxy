@@ -112,7 +112,7 @@ const GoldAndSilverAndDiamondHeader = memo(function CaCsHeader({
 
       if (userId) {
         // If user is logged in, go directly to the campaign page
-        navigate("/main/services/campaign/a6b5");
+        navigate("/main/services/campaign/71e3");
       } else {
         // If not logged in, redirect to WhatsApp login
         window.location.href = LOGIN_URL;

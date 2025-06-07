@@ -10,6 +10,7 @@ import {
   Input,
   Modal,
   Form,
+  Select,
 } from "antd";
 import {
   UserOutlined,
@@ -40,6 +41,7 @@ const DeliveryBoyList: React.FC = () => {
   >([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
   const [isUpdateModalVisible, setIsUpdateModalVisible] =
     useState<boolean>(false);
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
@@ -51,6 +53,10 @@ const DeliveryBoyList: React.FC = () => {
     fetchDeliveryBoys();
   }, []);
 
+  useEffect(() => {
+    applyFilters();
+  }, [deliveryBoys, searchTerm, statusFilter]);
+
   const fetchDeliveryBoys = async () => {
     try {
       setLoading(true);
@@ -61,7 +67,6 @@ const DeliveryBoyList: React.FC = () => {
       const filteredDeliveryBoys = response.data.filter((boy) => !boy.testUser);
 
       setDeliveryBoys(filteredDeliveryBoys);
-      setFilteredDeliveryBoys(filteredDeliveryBoys);
       setLoading(false);
 
       if (filteredDeliveryBoys.length === 0) {
@@ -73,22 +78,41 @@ const DeliveryBoyList: React.FC = () => {
     }
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  const applyFilters = () => {
+    let filtered = deliveryBoys;
 
-    const filtered = deliveryBoys.filter(
-      (boy) =>
-        `${boy.firstName} ${boy.lastName}`
-          .toLowerCase()
-          .includes(value.toLowerCase()) ||
-        boy.email.toLowerCase().includes(value.toLowerCase())
-    );
+    // Apply status filter
+    if (statusFilter === "active") {
+      filtered = filtered.filter((boy) => boy.isActive === "true");
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter((boy) => boy.isActive === "false");
+    }
+    // For "all", no status filtering is applied
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (boy) =>
+          `${boy.firstName} ${boy.lastName}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          boy.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
 
     setFilteredDeliveryBoys(filtered);
 
-    if (filtered.length === 0) {
-      message.info("No delivery boys match your search");
-    }
+    // if (filtered.length === 0 && (searchTerm || statusFilter !== "all")) {
+    //   message.info("No delivery boys match your search criteria");
+    // }
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
   };
 
   const confirmStatusChange = (boy: DeliveryBoy) => {
@@ -204,6 +228,16 @@ const DeliveryBoyList: React.FC = () => {
                 <Typography.Text type="secondary" className="hidden sm:inline">
                   Total: {filteredDeliveryBoys.length} delivery boys
                 </Typography.Text>
+                <Select
+                  value={statusFilter}
+                  onChange={handleStatusFilterChange}
+                  className="w-24"
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" },
+                  ]}
+                />
                 <Input
                   placeholder="Search Name or Email"
                   prefix={<SearchOutlined />}
@@ -228,7 +262,7 @@ const DeliveryBoyList: React.FC = () => {
               image={<FileSearchOutlined className="text-6xl text-gray-400" />}
               description={
                 <Typography.Text type="secondary">
-                  {searchTerm
+                  {searchTerm || statusFilter !== "all"
                     ? "No Delivery Boys Found"
                     : "No Delivery Boys Available"}
                 </Typography.Text>

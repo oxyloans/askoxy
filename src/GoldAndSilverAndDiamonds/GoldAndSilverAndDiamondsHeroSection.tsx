@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import { useNavigate } from "react-router-dom";
 function GoldSilverDiamondHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
@@ -15,6 +16,9 @@ function GoldSilverDiamondHeroSection() {
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
   const rotatingWords = [
     "Gold Jewelry",
     "Silver Ornaments",
@@ -62,17 +66,23 @@ function GoldSilverDiamondHeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleExplore = () => {
-    const servicesSection = document.getElementById("collection");
-    if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-  const handleConsultation = () => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/71e3");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -201,7 +211,7 @@ function GoldSilverDiamondHeroSection() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mt-10">
               <button
-                onClick={handleExplore}
+                onClick={handleSignIn}
                 className="group bg-gradient-to-r from-yellow-500 to-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-lg relative overflow-hidden"
               >
                 <span className="relative z-10">Explore Collection</span>
@@ -209,7 +219,7 @@ function GoldSilverDiamondHeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
               <button
-                onClick={handleConsultation}
+                onClick={handleSignIn}
                 className="group bg-white/70 backdrop-blur-sm border-2 border-yellow-300 text-yellow-700 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 hover:bg-white hover:border-yellow-400 hover:scale-105 transition-all duration-300 shadow-lg"
               >
                 <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
@@ -245,7 +255,7 @@ function GoldSilverDiamondHeroSection() {
                            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
              
                            <img
-                             src={Heroimg}
+                             src="https://i.ibb.co/GfBNqQFY/OurApp.png"
                              alt="CA CS Services Professional"
                              className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
                            />

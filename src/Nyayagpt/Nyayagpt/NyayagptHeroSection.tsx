@@ -13,11 +13,16 @@ import {
   User,
 } from "lucide-react";
 import Heroimg from "../../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import { useNavigate } from "react-router-dom";
 function NyayagptHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
 
   const rotatingWords = [
     "Dream Properties",
@@ -55,17 +60,23 @@ function NyayagptHeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleGetStarted = () => {
-    const servicesSection = document.getElementById("services");
-    if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-  const handleConsultation = () => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -154,7 +165,7 @@ function NyayagptHeroSection() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mt-8">
               <button
-                onClick={handleGetStarted}
+                onClick={handleSignIn}
                 className="group bg-gradient-to-r from-purple-600 to-yellow-500 text-white font-bold py-3 lg:py-4 px-6 lg:px-8 rounded-full flex items-center justify-center gap-3 hover:from-purple-700 hover:to-yellow-600 shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300 transform hover:scale-105 text-sm lg:text-base"
               >
                 Browse Properties
@@ -162,7 +173,7 @@ function NyayagptHeroSection() {
               </button>
 
               <button
-                onClick={handleConsultation}
+                onClick={handleSignIn}
                 className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-3 lg:py-4 px-6 lg:px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20 text-sm lg:text-base"
               >
                 Free Consultation
@@ -183,7 +194,7 @@ function NyayagptHeroSection() {
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
 
               <img
-                src={Heroimg}
+                src="https://i.ibb.co/GfBNqQFY/OurApp.png"
                 alt="CA CS Services Professional"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />

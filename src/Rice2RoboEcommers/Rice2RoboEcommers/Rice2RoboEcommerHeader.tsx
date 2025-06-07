@@ -123,9 +123,9 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
   const navLinks = useMemo(
     () =>
       [
-        { id: "home", label: "Home", icon: Home },
-        { id: "services", label: "Products", icon: ShoppingBag },
-        { id: "contact", label: "Contact", icon: Mail },
+        { id: "home", label: "Home" },
+        { id: "services", label: "Services"},
+        { id: "contact", label: "Contact" },
       ] as const,
     []
   );
@@ -200,7 +200,7 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
                         }`}
                         aria-label={`Navigate to ${link.label}`}
                       >
-                        <link.icon size={16} />
+                       
                         <span className="hidden lg:inline">{link.label}</span>
                         <span className="lg:hidden">{link.label}</span>
                       </button>
@@ -296,7 +296,7 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
                   }`}
                   aria-label={`Navigate to ${link.label}`}
                 >
-                  <link.icon size={20} />
+                  {/* <link.icon size={20} /> */}
                   <span className="font-medium">{link.label}</span>
                 </button>
               );

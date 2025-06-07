@@ -55,7 +55,7 @@ function AIBlockchainHeroSection() {
 
       if (userId) {
         // If user is logged in, go directly to the campaign page
-        navigate("/main/services/campaign/a6b5");
+        navigate("/main/services/campaign/0f02");
       } else {
         // If not logged in, redirect to WhatsApp login
         window.location.href = LOGIN_URL;
@@ -180,7 +180,7 @@ function AIBlockchainHeroSection() {
             } flex justify-center`}
           >
             <img
-              src={Heroimg}
+              src="https://i.ibb.co/GfBNqQFY/OurApp.png"
               alt="AI Blockchain Hero"
               className="rounded-3xl shadow-2xl object-cover w-full max-w-md lg:max-w-full"
             />

@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Sparkles, Home, Building, MapPin, Key, TrendingUp, Shield } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  Home,
+  Building,
+  MapPin,
+  Key,
+  TrendingUp,
+  Shield,
+} from "lucide-react";
 import Heroimg from "../../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
 function RealEstateHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -92,7 +101,10 @@ function RealEstateHeroSection() {
               </h1>
 
               <p className="text-lg sm:text-xl text-gray-300 leading-relaxed max-w-2xl mt-6 lg:mt-8 mx-auto lg:mx-0">
-                Your trusted partner in finding the perfect home, investment property, or commercial space. We provide comprehensive real estate services with expert guidance and cutting-edge technology.
+                Your trusted partner in finding the perfect home, investment
+                property, or commercial space. We provide comprehensive real
+                estate services with expert guidance and cutting-edge
+                technology.
               </p>
 
               {/* Enhanced Service Cards */}
@@ -125,10 +137,14 @@ function RealEstateHeroSection() {
                     className={`bg-white/5 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/10 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:bg-white/10 hover:scale-105 cursor-pointer group`}
                   >
                     <div className="flex flex-col items-center text-center space-y-3">
-                      <div className={`p-3 rounded-full bg-gradient-to-r from-white/10 to-white/5 ${color} group-hover:scale-110 transition-transform duration-300`}>
+                      <div
+                        className={`p-3 rounded-full bg-gradient-to-r from-white/10 to-white/5 ${color} group-hover:scale-110 transition-transform duration-300`}
+                      >
                         <Icon className="w-6 h-6 lg:w-8 lg:h-8" />
                       </div>
-                      <h3 className={`text-lg lg:text-xl font-semibold ${color}`}>
+                      <h3
+                        className={`text-lg lg:text-xl font-semibold ${color}`}
+                      >
                         {title}
                       </h3>
                       <p className="text-gray-300 text-sm lg:text-base leading-relaxed">
@@ -158,37 +174,35 @@ function RealEstateHeroSection() {
                 <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
               </button>
             </div>
-
-            
           </div>
 
           {/* Right Content - Hero Image */}
-         {/* Right Content - Hero Image */}
-                            <div
-                              className={`lg:col-span-5 transition-all duration-700 transform ${
-                                isVisible
-                                  ? "translate-x-0 opacity-100"
-                                  : "translate-x-10 opacity-0"
-                              } flex justify-center mt-8 lg:mt-0`}
-                            >
-                              <div className="relative group">
-                                {/* Image Glow Effect */}
-                                <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
-                  
-                                <img
-                                  src={Heroimg}
-                                  alt="CA CS Services Professional"
-                                  className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
-                                />
-                  
-                                {/* Floating Badge */}
-                                <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
-                                  <span className="text-xs sm:text-sm font-bold">
-                                    Trusted Experts
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
+          {/* Right Content - Hero Image */}
+          <div
+            className={`lg:col-span-5 transition-all duration-700 transform ${
+              isVisible
+                ? "translate-x-0 opacity-100"
+                : "translate-x-10 opacity-0"
+            } flex justify-center mt-8 lg:mt-0`}
+          >
+            <div className="relative group">
+              {/* Image Glow Effect */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
+
+              <img
+                src="https://i.ibb.co/q3LpsJrq/2.png"
+                alt="CA CS Services Professional"
+                className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
+              />
+
+              {/* Floating Badge */}
+              <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
+                <span className="text-xs sm:text-sm font-bold">
+                  Trusted Experts
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

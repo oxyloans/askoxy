@@ -157,6 +157,7 @@ import RealEstate from "./Real Estate/Real Estate/RealEstate";
 import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
 
 import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
+import ChatApp from "./components/OpenAi";
 
 
 const App: React.FC = () => {
@@ -175,6 +176,12 @@ const App: React.FC = () => {
       "/fms",
       "/cms",
       "/aiblockchainanditservices",
+      "/caandcaservices",
+      "/goldandsilveranddiamonds",
+      "/loansinvestments",
+      "/realestate",
+      "/rice2orboecommers",
+      "/nyayagpt",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -252,7 +259,8 @@ const App: React.FC = () => {
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
             />
-            <Route path="/ca|caservices" element={<CACSService />} />
+            <Route path="/generateimage" element={<ChatApp />} />
+            <Route path="/caandcsservices" element={<CACSService />} />
             <Route
               path="/goldandsilveranddiamonds"
               element={<GoldAndSilverAndDiamond />}

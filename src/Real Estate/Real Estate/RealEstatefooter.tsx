@@ -212,47 +212,7 @@ const RealEstateFooter = () => {
                      </ul>
                    </div>
 
-          {/* Technologies - with mobile accordion */}
-          <div>
-            <button
-              type="button"
-              aria-expanded={openSections.technologies}
-              aria-controls="technologies-content"
-              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-              onClick={() => toggleSection("technologies")}
-            >
-              <h3 className="text-lg font-semibold">Technologies</h3>
-              <ChevronDown
-                className={`h-5 w-5 md:hidden transition-transform ${
-                  openSections.technologies ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            <ul
-              id="technologies-content"
-              className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
-                openSections.technologies ? "max-h-96" : "max-h-0 md:max-h-96"
-              }`}
-            >
-              {[
-                "Artificial Intelligence",
-                "Machine Learning",
-                "Ethereum & Solidity",
-                "Hyperledger Fabric",
-                "IoT Integration",
-                "Big Data Platforms",
-              ].map((tech, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-white hover:text-cyan-600 transition-colors hover:underline"
-                  >
-                    {tech}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+         
 
           {/* Contact Info - with mobile accordion */}
           <div>

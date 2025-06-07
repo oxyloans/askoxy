@@ -13,11 +13,13 @@ import {
   Empty,
   Select,
   Form,
+  InputNumber,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, Package, User } from "lucide-react";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
+import { MdCurrencyRupee, MdScale } from "react-icons/md";
 
 // Define the type for exchange order data
 interface ExchangeOrder {
@@ -36,6 +38,7 @@ interface ExchangeOrder {
   orderAddress: string;
   exchangeId: string;
   status: string;
+  weight: string;
 }
 type DeliveryBoy = {
   userId: string;
@@ -61,19 +64,20 @@ const ExchangeOrdersPage = () => {
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
   const [dbModalVisible, setdbModalVisible] = useState(false);
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
-    useState<DeliveryBoy | null>();
+    useState<DeliveryBoy | null>(null);
   const [dbLoading, setdbLoading] = useState<boolean>(false);
   const [filteredOrders, setFilteredOrders] = useState<ExchangeOrder[]>([]);
   const [takingNewBag, setTakingNewBag] = useState<string | null>(null);
   const [newBagBarcode, setNewBagBarcode] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    newBagBarcodes:"",
+    newBagBarcodes: "",
     returnBagWeight: "",
     amountCollected: "",
     remarks: "",
+    deliveryBoyId: "",
+    amountPaid: "", // Added amountPaid to formData
   });
-  // New state for status filter
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
 
   const fetchExchangeOrders = async () => {
@@ -83,7 +87,14 @@ const ExchangeOrdersPage = () => {
         `${BASE_URL}/order-service/getAllExchangeOrder`
       );
       const data = await response.json();
-      setExchangeOrders(data);
+
+      const sortedData = data.sort(
+        (a: ExchangeOrder, b: ExchangeOrder) =>
+          new Date(b.exchangeRequestDate).getTime() -
+          new Date(a.exchangeRequestDate).getTime()
+      );
+
+      setExchangeOrders(sortedData);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching exchange orders:", error);
@@ -95,8 +106,10 @@ const ExchangeOrdersPage = () => {
     fetchExchangeOrders();
   }, []);
 
-  const fetchDeliveryBoys = async (record: ExchangeOrder) => {
-    setSelectedRecord(record);
+  const fetchDeliveryBoys = async (record?: ExchangeOrder) => {
+    if (record) {
+      setSelectedRecord(record);
+    }
     setdbLoading1(true);
     try {
       const url = `${BASE_URL}/user-service/deliveryBoyList`;
@@ -110,20 +123,28 @@ const ExchangeOrdersPage = () => {
 
       if (!response.ok) {
         message.error(
-          "Failed to get DilveryBoy list please try after sometime."
+          "Failed to get Delivery Boy list. Please try again later."
         );
       }
       const data = await response.json();
       setDeliveryBoys(data);
-      setdbModalVisible(true);
+      if (record) {
+        setdbModalVisible(true);
+      }
     } catch (error) {
       message.warning(
-        "Failed to get DilveryBoy list please try after sometime."
+        "Failed to get Delivery Boy list. Please try again later."
       );
     } finally {
       setdbLoading1(false);
     }
   };
+
+  useEffect(() => {
+    if (isModalOpen) {
+      fetchDeliveryBoys();
+    }
+  }, [isModalOpen]);
 
   const handleViewDetails = (order: ExchangeOrder) => {
     localStorage.setItem("orderId", order.orderId2);
@@ -133,25 +154,44 @@ const ExchangeOrdersPage = () => {
   useEffect(() => {
     let results = exchangeOrders;
 
-    // Apply search filter
     if (searchText !== "") {
       results = results.filter((order) =>
         order.orderId.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
-    // Apply status filter
     if (selectedStatus !== "All") {
-      results = results.filter((order) => {
-        if (selectedStatus === "Pending") return order.status === "EXCHANGEREQUESTED";
-        if (selectedStatus === "Assigned") return order.status === "ASSIGNTOCOLLECT";
-        if (selectedStatus === "Delivered") return order.status === "RECOMPLETED";
-        return true;
-      });
+      results = results.filter((order) => order.status === selectedStatus);
     }
 
     setFilteredOrders(results);
   }, [searchText, exchangeOrders, selectedStatus]);
+
+  const calculateUsedBagAmount = (
+    originalWeight: string,
+    remainingWeight: string,
+    price: number
+  ) => {
+    const originalWeightNum = parseFloat(originalWeight);
+    const remainingWeightNum = parseFloat(remainingWeight);
+
+    if (
+      originalWeightNum <= 0 ||
+      remainingWeightNum < 0 ||
+      price <= 0 ||
+      isNaN(remainingWeightNum)
+    ) {
+      return "0.00";
+    }
+
+    const usedWeight = originalWeightNum - remainingWeightNum;
+    if (usedWeight < 0) return "0.00";
+
+    const pricePerKg = price / originalWeightNum;
+    const usedBagAmount = usedWeight * pricePerKg;
+
+    return usedBagAmount.toFixed(2);
+  };
 
   const columns: ColumnsType<ExchangeOrder> = [
     {
@@ -176,11 +216,7 @@ const ExchangeOrdersPage = () => {
             )}
             {record.status && (
               <div className="px-2 py-0.5 bg-green-100 text-green-800 border border-green-200 rounded-full font-medium">
-                {{
-                  RECOMPLETED: "Delivered",
-                  EXCHANGEREQUESTED: "Pending",
-                  ASSIGNTOCOLLECT: "Assigned",
-                }[record.status] || record.status}
+                {record.status}
               </div>
             )}
           </div>
@@ -194,7 +230,18 @@ const ExchangeOrdersPage = () => {
       render: (_, record) => (
         <div className="flex flex-col">
           <span className="text-sm">{record.itemName}</span>
-          <span className="text-xs text-red-600">₹{record.itemPrice}</span>
+          <div className="flex gap-2 text-xs text-gray-700 mt-1 items-center">
+            {record.itemPrice && (
+              <span className="flex items-center text-red-600 font-medium text-xs">
+                ₹{record.itemPrice}
+              </span>
+            )}
+            {record.weight && (
+              <span className="flex items-center">
+                weight: {record.weight} kgs
+              </span>
+            )}
+          </div>
         </div>
       ),
     },
@@ -213,32 +260,38 @@ const ExchangeOrdersPage = () => {
       dataIndex: "action",
       key: "reason",
       width: 80,
-      render: (_: any, record: ExchangeOrder) => {
-        return (
-          <div className="flex flex-wrap gap-2 justify-start">
-            {record.status === "EXCHANGEREQUESTED" && (
-              <Button
-                type="primary"
-                size="small"
-                className="!bg-green-500 hover:!bg-green-600 text-white px-2 py-1 rounded-lg text-xs h-auto w-auto sm:w-auto"
-                onClick={() => fetchDeliveryBoys(record)}
-              >
-                Re-Assign
-              </Button>
-            )}
+      render: (_: any, record: ExchangeOrder) => (
+        <div className="flex flex-wrap gap-2 justify-start">
+          {record.status === "EXCHANGEREQUESTED" && (
             <Button
               type="primary"
-              className="rounded-lg text-sm h-auto sm:w-auto px-2 py-1 w-full sm:mr-2"
               size="small"
-              onClick={() => {
-                showModal(record);
-              }}
+              className="!bg-green-500 hover:!bg-green-600 text-white px-2 py-1 rounded-lg text-xs h-auto w-auto sm:w-auto"
+              onClick={() => fetchDeliveryBoys(record)}
             >
-              Details
+              Assign
             </Button>
-          </div>
-        );
-      },
+          )}
+          {record.status === "ASSIGNTOCOLLECT" && (
+            <Button
+              type="primary"
+              size="small"
+              className="!bg-green-500 hover:!bg-green-600 text-white px-2 py-1 rounded-lg text-xs h-auto w-auto sm:w-auto"
+              onClick={() => fetchDeliveryBoys(record)}
+            >
+              Re-Assign
+            </Button>
+          )}
+          <Button
+            type="primary"
+            className="rounded-lg text-sm h-auto sm:w-auto px-2 py-1 w-full sm:mr-2"
+            size="small"
+            onClick={() => showModal(record)}
+          >
+            Details
+          </Button>
+        </div>
+      ),
     },
     {
       title: "Reason",
@@ -264,7 +317,7 @@ const ExchangeOrdersPage = () => {
                 <span>{formattedDate}</span>
               </div>
               <div>
-                <strong>Diff :</strong>{" "}
+                <strong>Diff:</strong>{" "}
                 <span
                   className={
                     record.daysDifference <= 3
@@ -295,6 +348,10 @@ const ExchangeOrdersPage = () => {
       message.warning("Please select a delivery boy.");
       return;
     }
+    if (!takingNewBag) {
+      message.warning("Please select New Bag status.");
+      return;
+    }
     setdbLoading(true);
     let data = {
       collectedNewBag: takingNewBag,
@@ -305,7 +362,7 @@ const ExchangeOrdersPage = () => {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/order-service/exchangeBagCollect`,
+        `${BASE_URL}/order-service/exchangeBagCollec`,
         {
           method: "PATCH",
           headers: {
@@ -317,7 +374,7 @@ const ExchangeOrdersPage = () => {
       );
 
       if (!response.ok) {
-        message.error("Failed to assign to delveryboy");
+        message.error("Failed to assign to delivery boy");
       } else {
         message.success("Order assigned successfully!");
         setdbModalVisible(false);
@@ -334,17 +391,26 @@ const ExchangeOrdersPage = () => {
   };
 
   const showModal = (record: ExchangeOrder) => {
-    console.log({ record });
     setSelectedRecord(record);
+    setFormData({
+      newBagBarcodes: "",
+      returnBagWeight: record.weight,
+      amountCollected: "0.00",
+      remarks: "",
+      deliveryBoyId: "",
+      amountPaid: "", // Initialize amountPaid
+    });
     setIsModalOpen(true);
   };
 
   const handleCancel = () => {
     setFormData({
-      newBagBarcodes:"",
+      newBagBarcodes: "",
       returnBagWeight: "",
       amountCollected: "",
       remarks: "",
+      deliveryBoyId: "",
+      amountPaid: "",
     });
     setIsModalOpen(false);
   };
@@ -357,12 +423,63 @@ const ExchangeOrdersPage = () => {
     }));
   };
 
+  const handleDeliveryBoyChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      deliveryBoyId: value,
+    }));
+  };
+
+  const handleWeightChange = (value: number | null) => {
+    const newWeight = value?.toString() || "";
+    setFormData((prev) => ({
+      ...prev,
+      returnBagWeight: newWeight,
+    }));
+
+    if (selectedRecord && value !== null) {
+      const newAmount = calculateUsedBagAmount(
+        selectedRecord.weight,
+        newWeight,
+        selectedRecord.itemPrice
+      );
+      setFormData((prev) => ({
+        ...prev,
+        amountCollected: newAmount,
+      }));
+    }
+  };
+
+  const handleAmountChange = (value: number | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      amountCollected: value?.toFixed(2) || "",
+    }));
+  };
+
+  const handleAmountPaidChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      amountPaid: value,
+    }));
+  };
+
   const handleOk = async () => {
+    const hasAtLeastOneField = Object.values(formData).some(
+      (value) => value.trim() !== ""
+    );
+    if (!hasAtLeastOneField) {
+      message.error("Please fill at least one field before submitting.");
+      return;
+    }
+
     const requestData = {
       amountCollected: formData.amountCollected,
       exchangeId: selectedRecord?.exchangeId,
       remarks: formData.remarks,
       returnBagWeight: formData.returnBagWeight,
+      deliveryBoyId: formData.deliveryBoyId,
+      amountPaid: formData.amountPaid, // Added amountPaid to requestData
     };
 
     try {
@@ -378,7 +495,6 @@ const ExchangeOrdersPage = () => {
       );
 
       if (response.ok) {
-        const result = await response.json();
         message.success("Data submitted successfully!");
         setIsModalOpen(false);
       } else {
@@ -393,9 +509,9 @@ const ExchangeOrdersPage = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 bg-white min-h-screen">
+    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <Title level={4} className="mb-4 md:mb-0">
+        <Title level={4} className="mb-4 md:mb-0 text-gray-800">
           Exchange Orders
         </Title>
         <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
@@ -405,23 +521,29 @@ const ExchangeOrdersPage = () => {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               prefix={<Search className="text-gray-400" size={16} />}
+              className="rounded-lg"
             />
           </div>
         </div>
       </div>
 
-      {/* Status Filter Buttons */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {["All", "Pending", "Assigned", "Delivered"].map((status) => (
+        {[
+          "All",
+          "EXCHANGEREQUESTED",
+          "ASSIGNTOCOLLECT",
+          "COLLECTED",
+          "RECOMPLETED",
+        ].map((status) => (
           <Button
             key={status}
             type={selectedStatus === status ? "primary" : "default"}
             onClick={() => setSelectedStatus(status)}
             className={`${
               selectedStatus === status
-                ? "!bg-blue-500 hover:!bg-blue-600"
-                : "!bg-gray-100 hover:!bg-gray-200"
-            } !text-sm !px-4 !py-1 !rounded-full`}
+                ? "!bg-blue-600 hover:!bg-blue-700"
+                : "!bg-white hover:!bg-gray-100 !text-gray-700 !border-gray-300"
+            } !text-sm !px-4 !py-1 !rounded-full !shadow-sm`}
           >
             {status}
           </Button>
@@ -433,7 +555,7 @@ const ExchangeOrdersPage = () => {
           <Spin size="large" />
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
           <Table
             dataSource={filteredOrders}
             columns={columns}
@@ -451,7 +573,11 @@ const ExchangeOrdersPage = () => {
         open={dbModalVisible}
         onCancel={handleCancelCLick}
         footer={[
-          <Button key="cancel" onClick={handleCancelCLick}>
+          <Button
+            key="cancel"
+            onClick={handleCancelCLick}
+            className="rounded-lg"
+          >
             Cancel
           </Button>,
           <Button
@@ -473,13 +599,14 @@ const ExchangeOrdersPage = () => {
                 message.error("Please enter the new bag barcode");
                 return;
               }
-
               handleAssign(selectedRecord?.exchangeId ?? "");
             }}
+            className="!bg-blue-600 hover:!bg-blue-700 rounded-lg"
           >
             Assign
           </Button>,
         ]}
+        className="rounded-lg"
       >
         {dbLoading1 ? (
           <div className="flex justify-center items-center h-32">
@@ -488,15 +615,12 @@ const ExchangeOrdersPage = () => {
         ) : deliveryBoys.length > 0 ? (
           <div className="space-y-4">
             <div>
-              <label className="block mb-2 font-medium">
-                Select Delivery Boy <span className="text-red-500">*</span>
-              </label>
               <Radio.Group
                 onChange={(e) => {
                   const selectedBoy = deliveryBoys.find(
                     (boy) => boy.userId === e.target.value
                   );
-                  setSelectedDeliveryBoy(selectedBoy);
+                  setSelectedDeliveryBoy(selectedBoy || null);
                 }}
                 value={selectedDeliveryBoy?.userId}
               >
@@ -511,9 +635,8 @@ const ExchangeOrdersPage = () => {
                 </Space>
               </Radio.Group>
             </div>
-
             <div>
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-gray-700">
                 Taking New Bag <span className="text-red-500">*</span>
               </label>
               <Select
@@ -521,15 +644,15 @@ const ExchangeOrdersPage = () => {
                 style={{ width: "100%" }}
                 onChange={setTakingNewBag}
                 value={takingNewBag}
+                className="rounded-lg"
               >
                 <Select.Option value="yes">Yes</Select.Option>
                 <Select.Option value="no">No</Select.Option>
               </Select>
             </div>
-
             {takingNewBag === "yes" && (
               <div>
-                <label className="block mb-2 font-medium">
+                <label className="block mb-2 font-medium text-gray-700">
                   New Bag Barcode <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -537,6 +660,7 @@ const ExchangeOrdersPage = () => {
                   value={newBagBarcode}
                   onChange={(e) => setNewBagBarcode(e.target.value)}
                   maxLength={13}
+                  className="rounded-lg"
                 />
               </div>
             )}
@@ -545,55 +669,166 @@ const ExchangeOrdersPage = () => {
           <Empty description="No delivery boys available" />
         )}
       </Modal>
+
       <Modal
-        title="Update Return Details"
+        title={null}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
         okText="Submit"
         cancelText="Cancel"
+        width={600}
+        className="rounded-lg"
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleCancel}
+            className="rounded-lg border-gray-300"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleOk}
+            className="!bg-blue-600 hover:!bg-blue-700 rounded-lg"
+          >
+            Submit
+          </Button>,
+        ]}
       >
-        <Form layout="vertical" className="space-y-4">
-          <Form.Item label="Return Bag Quantity">
-            <Input
-              name="returnBagWeight"
-              value={formData.returnBagWeight}
-              onChange={handleChange}
-              placeholder="Enter quantity"
-              className="!rounded-lg"
-            />
-          </Form.Item>
-          <Form.Item label="New Bag Barcode">
-            <Input
-              name="newBagBarcodes"
-              value={formData.amountCollected}
-              onChange={handleChange}
-              placeholder="Enter barcode"
-              className="!rounded-lg"
-            />
-          </Form.Item>
+        <div className="space-y-6 p-4">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Exchange Details
+            </h2>
+            <div className="flex justify-center gap-4">
+              <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
+                <User size={18} />
+                <span className="font-semibold">
+                  {selectedRecord?.userName}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+                <Package size={18} />
+                <span className="font-semibold">
+                  {selectedRecord?.itemName}
+                </span>
+              </div>
+            </div>
+          </div>
 
-          <Form.Item label="Amount Collected">
-            <Input
-              name="amountCollected"
-              value={formData.amountCollected}
-              onChange={handleChange}
-              placeholder="Enter amount"
-              className="!rounded-lg"
-            />
-          </Form.Item>
+          <Form layout="vertical" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">
+                    Remaining Bag Weight (kg)
+                    <MdScale className="inline ml-2 text-gray-500" />
+                  </span>
+                }
+              >
+                <InputNumber
+                  value={parseFloat(formData.returnBagWeight) || 0}
+                  onChange={handleWeightChange}
+                  placeholder="Enter remaining weight in kg"
+                  className="w-full rounded-lg"
+                  suffix="kg"
+                  min={0}
+                  max={parseFloat(selectedRecord?.weight || "20")}
+                />
+              </Form.Item>
+              <Form.Item
+                label={
+                  <span className="text-gray-700 font-medium">
+                    Amount for Used Weight (₹)
+                    <MdCurrencyRupee className="inline ml-2 text-gray-500" />
+                  </span>
+                }
+              >
+                <InputNumber
+                  value={parseFloat(formData.amountCollected) || 0}
+                  onChange={handleAmountChange}
+                  placeholder="Enter amount"
+                  className="w-full rounded-lg"
+                  prefix="₹"
+                  min={0}
+                />
+              </Form.Item>
+            </div>
+            <Form.Item
+              label={
+                <span className="text-gray-700 font-medium">Amount Paid</span>
+              }
+            >
+              <Select
+                placeholder="Select option"
+                value={formData.amountPaid}
+                onChange={handleAmountPaidChange}
+                className="rounded-lg"
+              >
+                <Select.Option value="yes">Yes</Select.Option>
+                <Select.Option value="no">No</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label={
+                <span className="text-gray-700 font-medium">
+                  Select Delivery Boy
+                </span>
+              }
+            >
+              <Select
+                placeholder="Select a delivery boy"
+                value={formData.deliveryBoyId}
+                onChange={handleDeliveryBoyChange}
+                className="rounded-lg"
+                loading={dbLoading1}
+              >
+                {deliveryBoys
+                  .filter((boy) => boy.isActive === "true")
+                  .map((boy) => (
+                    <Select.Option key={boy.userId} value={boy.userId}>
+                      {`${boy.firstName} ${boy.lastName} (${boy.whatsappNumber})`}
+                    </Select.Option>
+                  ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label={
+                <span className="text-gray-700 font-medium">
+                  New Bag Barcodes
+                </span>
+              }
+            >
+              <Input
+                name="newBagBarcodes"
+                value={formData.newBagBarcodes}
+                onChange={handleChange}
+                placeholder="Enter new bag barcode"
+                className="rounded-lg"
+              />
+            </Form.Item>
+            <Form.Item
+              label={<span className="text-gray-700 font-medium">Remarks</span>}
+            >
+              <Input.TextArea
+                name="remarks"
+                value={formData.remarks}
+                onChange={handleChange}
+                placeholder="Enter remarks"
+                className="rounded-lg"
+                rows={3}
+              />
+            </Form.Item>
+          </Form>
 
-          <Form.Item label="Remarks">
-            <Input.TextArea
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
-              placeholder="Enter remarks"
-              className="!rounded-lg"
-              rows={3}
-            />
-          </Form.Item>
-        </Form>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+            <span className="text-yellow-800 text-sm font-medium">
+              Note: At least one field must be filled before submitting.
+            </span>
+          </div>
+        </div>
       </Modal>
     </div>
   );
