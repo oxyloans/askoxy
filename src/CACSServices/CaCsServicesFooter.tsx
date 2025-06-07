@@ -127,88 +127,92 @@ const CacsFooter = () => {
           </div>
 
           {/* Solutions - with mobile accordion */}
-          <div>
-            <button
-              type="button"
-              aria-expanded={openSections.solutions}
-              aria-controls="solutions-content"
-              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-              onClick={() => toggleSection("solutions")}
-            >
-              <h3 className="text-lg font-semibold">Our Solutions</h3>
-              <ChevronDown
-                className={`h-5 w-5 md:hidden transition-transform ${
-                  openSections.solutions ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            <ul
-              id="solutions-content"
-              className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
-                openSections.solutions ? "max-h-96" : "max-h-0 md:max-h-96"
-              }`}
-            >
-              {[
-                "AI Consulting",
-                "Blockchain Development",
-                "Smart Contracts",
-                "Data Analytics",
-                "Cybersecurity",
-                "Cloud Integration",
-              ].map((item, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-white hover:text-cyan-600 transition-colors hover:underline"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Technologies - with mobile accordion */}
-          <div>
-            <button
-              type="button"
-              aria-expanded={openSections.technologies}
-              aria-controls="technologies-content"
-              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-              onClick={() => toggleSection("technologies")}
-            >
-              <h3 className="text-lg font-semibold">Technologies</h3>
-              <ChevronDown
-                className={`h-5 w-5 md:hidden transition-transform ${
-                  openSections.technologies ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            <ul
-              id="technologies-content"
-              className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
-                openSections.technologies ? "max-h-96" : "max-h-0 md:max-h-96"
-              }`}
-            >
-              {[
-                "Artificial Intelligence",
-                "Machine Learning",
-                "Ethereum & Solidity",
-                "Hyperledger Fabric",
-                "IoT Integration",
-                "Big Data Platforms",
-              ].map((tech, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-white hover:text-cyan-600 transition-colors hover:underline"
-                  >
-                    {tech}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+                   <div>
+                     <button
+                       type="button"
+                       aria-expanded={openSections.solutions}
+                       aria-controls="solutions-content"
+                       className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                       onClick={() => toggleSection("solutions")}
+                     >
+                       <h3 className="text-lg font-semibold">Our Platforms</h3>
+                       <ChevronDown
+                         className={`h-5 w-5 md:hidden transition-transform ${
+                           openSections.solutions ? "rotate-180" : ""
+                         }`}
+                       />
+                     </button>
+                     <ul
+                       id="solutions-content"
+                       className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
+                         openSections.solutions ? "max-h-96" : "max-h-0 md:max-h-96"
+                       }`}
+                     >
+                       {[
+                         "AI Blockchain & IT services",
+                         "CA | CS Services",
+                         "Gold, Silver & Diamonds",
+                         "Loans & Investments",
+                         "Nyaya GPT",
+                         "Real Estate",
+                         "Rice 2 Robo Ecommerce",
+                         "Software Training - 100% job placement",
+                         "Study Abroad",
+                       ].map((item, index) => (
+                         <li key={index}>
+                           <button
+                             type="button"
+                             className="text-white decoration-none hover:text-cyan-600 transition-colors hover:underline bg-transparent border-none p-0 m-0 cursor-pointer"
+                             aria-label={item}
+                           >
+                             {item}
+                           </button>
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
+         
+                   {/* Technologies - with mobile accordion */}
+                   <div>
+                     <button
+                       type="button"
+                       aria-expanded={openSections.technologies}
+                       aria-controls="technologies-content"
+                       className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                       onClick={() => toggleSection("technologies")}
+                     >
+                       <h3 className="text-lg font-semibold">Our Services</h3>
+                       <ChevronDown
+                         className={`h-5 w-5 md:hidden transition-transform ${
+                           openSections.technologies ? "rotate-180" : ""
+                         }`}
+                       />
+                     </button>
+                     <ul
+                       id="technologies-content"
+                       className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
+                         openSections.technologies ? "max-h-96" : "max-h-0 md:max-h-96"
+                       }`}
+                     >
+                       {[
+                         "Free Rudraksha",
+                         "AI & GEN AI Training",
+                         "Legal Knowledge",
+                         "Study Abroad",
+                         "My Rotary",
+                         "We Are Hiring",
+                       ].map((tech, index) => (
+                         <li key={index}>
+                           <a
+                             href="#"
+                             className="text-white hover:text-cyan-600 transition-colors hover:underline"
+                           >
+                             {tech}
+                           </a>
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
 
           {/* Contact Info - with mobile accordion */}
           <div>

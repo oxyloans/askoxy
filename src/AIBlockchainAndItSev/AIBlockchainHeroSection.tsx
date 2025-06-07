@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
-
+import { useNavigate } from "react-router-dom";
 function AIBlockchainHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
 
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
   const rotatingWords = [
     "AI-Powered Solutions",
     "Blockchain Technology",
@@ -44,17 +47,23 @@ function AIBlockchainHeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleGetStarted = () => {
-    const servicesSection = document.getElementById("services");
-    if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-  const handleConsultation = () => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -145,7 +154,7 @@ function AIBlockchainHeroSection() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mt-8">
               <button
-                onClick={handleGetStarted}
+                onClick={handleSignIn}
                 className="group bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 px-8 rounded-full flex items-center justify-center gap-3 hover:from-cyan-600 hover:to-blue-700 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105"
               >
                 Get Started
@@ -153,7 +162,7 @@ function AIBlockchainHeroSection() {
               </button>
 
               <button
-                onClick={handleConsultation}
+                onClick={handleSignIn}
                 className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20"
               >
                 Free Consultation

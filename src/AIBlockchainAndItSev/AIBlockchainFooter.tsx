@@ -131,7 +131,7 @@ const AIBlockchainFooter = () => {
               className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               onClick={() => toggleSection("solutions")}
             >
-              <h3 className="text-lg font-semibold">Our Solutions</h3>
+              <h3 className="text-lg font-semibold">Our Platforms</h3>
               <ChevronDown
                 className={`h-5 w-5 md:hidden transition-transform ${
                   openSections.solutions ? "rotate-180" : ""
@@ -145,20 +145,24 @@ const AIBlockchainFooter = () => {
               }`}
             >
               {[
-                "AI Consulting",
-                "Blockchain Development",
-                "Smart Contracts",
-                "Data Analytics",
-                "Cybersecurity",
-                "Cloud Integration",
+                "AI Blockchain & IT services",
+                "CA | CS Services",
+                "Gold, Silver & Diamonds",
+                "Loans & Investments",
+                "Nyaya GPT",
+                "Real Estate",
+                "Rice 2 Robo Ecommerce",
+                "Software Training - 100% job placement",
+                "Study Abroad",
               ].map((item, index) => (
                 <li key={index}>
-                  <a
-                    href="#"
-                    className="text-white hover:text-cyan-600 transition-colors hover:underline"
+                  <button
+                    type="button"
+                    className="text-white decoration-none hover:text-cyan-600 transition-colors hover:underline bg-transparent border-none p-0 m-0 cursor-pointer"
+                    aria-label={item}
                   >
                     {item}
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -173,7 +177,7 @@ const AIBlockchainFooter = () => {
               className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               onClick={() => toggleSection("technologies")}
             >
-              <h3 className="text-lg font-semibold">Technologies</h3>
+              <h3 className="text-lg font-semibold">Our Services</h3>
               <ChevronDown
                 className={`h-5 w-5 md:hidden transition-transform ${
                   openSections.technologies ? "rotate-180" : ""
@@ -187,12 +191,12 @@ const AIBlockchainFooter = () => {
               }`}
             >
               {[
-                "Artificial Intelligence",
-                "Machine Learning",
-                "Ethereum & Solidity",
-                "Hyperledger Fabric",
-                "IoT Integration",
-                "Big Data Platforms",
+                "Free Rudraksha",
+                "AI & GEN AI Training",
+                "Legal Knowledge",
+                "Study Abroad",
+                "My Rotary",
+                "We Are Hiring",
               ].map((tech, index) => (
                 <li key={index}>
                   <a
@@ -208,54 +212,54 @@ const AIBlockchainFooter = () => {
 
           {/* Contact Info - with mobile accordion */}
           <div>
-                     <button
-                       type="button"
-                       aria-expanded={openSections.contact}
-                       aria-controls="contact-content"
-                       className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                       onClick={() => toggleSection("contact")}
-                     >
-                       <h3 className="text-lg text-white font-semibold">Contact Us</h3>
-                       <ChevronDown
-                         className={`h-5 w-5 md:hidden transition-transform ${
-                           openSections.contact ? "rotate-180" : ""
-                         }`}
-                       />
-                     </button>
-                     <div
-                       id="contact-content"
-                       className={`space-y-4 text-sm overflow-hidden transition-all duration-300 ease-in-out ${
-                         openSections.contact ? "max-h-96" : "max-h-0 md:max-h-96"
-                       }`}
-                     >
-                       <div className="flex items-start gap-3">
-                         <MapPin className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
-                         <address className="not-italic text-white">
-                           OXYKART TECHNOLOGIES PVT LTD, CC-02, Ground Floor, Indu
-                           Fortune Fields, KPHB Colony, Hyderabad, Telangana - 500085
-                         </address>
-                       </div>
-         
-                       <div className="flex items-center gap-3">
-                         <FaWhatsapp className="w-5 h-5 text-cyan-600" />
-                         <a
-                           href="tel:+1234567890"
-                           className="text-white hover:text-cyan-600 transition-colors"
-                         >
-                           +91 98765 43210
-                         </a>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <Mail className="w-5 h-5 text-cyan-600" />
-                         <a
-                           href="mailto:contact@aiblockchainit.com"
-                           className="text-white hover:text-cyan-600 transition-colors"
-                         >
-                           support@askoxy.ai
-                         </a>
-                       </div>
-                     </div>
-                   </div>
+            <button
+              type="button"
+              aria-expanded={openSections.contact}
+              aria-controls="contact-content"
+              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              onClick={() => toggleSection("contact")}
+            >
+              <h3 className="text-lg text-white font-semibold">Contact Us</h3>
+              <ChevronDown
+                className={`h-5 w-5 md:hidden transition-transform ${
+                  openSections.contact ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            <div
+              id="contact-content"
+              className={`space-y-4 text-sm overflow-hidden transition-all duration-300 ease-in-out ${
+                openSections.contact ? "max-h-96" : "max-h-0 md:max-h-96"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
+                <address className="not-italic text-white">
+                  OXYKART TECHNOLOGIES PVT LTD, CC-02, Ground Floor, Indu
+                  Fortune Fields, KPHB Colony, Hyderabad, Telangana - 500085
+                </address>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <FaWhatsapp className="w-5 h-5 text-cyan-600" />
+                <a
+                  href="tel:+1234567890"
+                  className="text-white hover:text-cyan-600 transition-colors"
+                >
+                  +91 98765 43210
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-cyan-600" />
+                <a
+                  href="mailto:contact@aiblockchainit.com"
+                  className="text-white hover:text-cyan-600 transition-colors"
+                >
+                  support@askoxy.ai
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Newsletter subscription - mobile only */}

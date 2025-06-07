@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { Home, X, Cpu,Building, Key, Phone } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 interface RealEstateHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
   activeLink: string;
@@ -20,6 +20,9 @@ const RealEstateHeader = memo(function RealEstateHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
+   const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   useEffect(() => {
     let ticking = false;
@@ -98,7 +101,25 @@ const RealEstateHeader = memo(function RealEstateHeader({
       };
     }
   }, [isMenuOpen]);
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const navLinks = useMemo(
     () =>
       [
@@ -149,7 +170,7 @@ const RealEstateHeader = memo(function RealEstateHeader({
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full opacity-50 blur group-hover:opacity-70 transition-opacity"></div>
                 <div className="relative bg-white rounded-full p-2 shadow-lg group-hover:shadow-xl transition-shadow">
                   <div className="relative">
-                       <Cpu className="h-7 w-7 text-blue-700" />
+                    <Cpu className="h-7 w-7 text-blue-700" />
                   </div>
                 </div>
               </div>
@@ -157,9 +178,7 @@ const RealEstateHeader = memo(function RealEstateHeader({
                 <div className="text-xl font-bold">
                   <span className="text-blue-800">Real </span>
                   <span className="text-cyan-600">Estate</span>
-              
                 </div>
-               
               </div>
             </div>
 
@@ -192,13 +211,12 @@ const RealEstateHeader = memo(function RealEstateHeader({
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               <button
-                onClick={() => handleNavClick("contact")}
+                onClick={handleSignIn}
                 className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium py-2.5 px-6 rounded-full hover:shadow-lg group transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
                 aria-label="Get started with our services"
               >
                 <span className="relative z-10 flex items-center gap-2">
-                
-                 Sign In
+                  Sign In
                 </span>
                 <span className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-400 transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
               </button>
@@ -277,30 +295,20 @@ const RealEstateHeader = memo(function RealEstateHeader({
                 </button>
               );
             })}
-            
+
             {/* Mobile CTA */}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
-                onClick={() => handleNavClick("contact")}
+                onClick={handleSignIn}
                 className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center gap-2"
                 aria-label="Get started with our services"
               >
                 <Key size={20} />
-                Get Started Today
+               Sign In
               </button>
             </div>
 
-            {/* Mobile Contact Info */}
-            <div className="pt-4 mt-4 border-t border-gray-200 text-center">
-              <p className="text-sm text-gray-600 mb-2">Ready to find your dream property?</p>
-              <a 
-                href="tel:+1555123456" 
-                className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center justify-center gap-2"
-              >
-                <Phone size={16} />
-                Call: (555) 123-4567
-              </a>
-            </div>
+           
           </div>
         </div>
       </div>

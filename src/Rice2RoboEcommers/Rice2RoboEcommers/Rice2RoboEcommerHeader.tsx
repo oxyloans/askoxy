@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { Home, X, ShoppingBag, Mail, Phone, Bot, ShoppingCart } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 interface Rice2RoboEcommersHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
   activeLink: string;
@@ -20,6 +20,9 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   useEffect(() => {
     let ticking = false;
@@ -98,7 +101,25 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
       };
     }
   }, [isMenuOpen]);
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const navLinks = useMemo(
     () =>
       [
@@ -192,7 +213,7 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               <button
-                onClick={() => handleNavClick("contact")}
+                onClick={handleSignIn}
                 className="relative overflow-hidden bg-gradient-to-r from-purple-600 to-blue-500 text-white font-medium py-2 sm:py-2.5 px-4 sm:px-6 rounded-full hover:shadow-lg group transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 text-sm sm:text-base"
                 aria-label="Start shopping with us"
               >
@@ -284,7 +305,7 @@ const Rice2RoboEcommersHeader = memo(function Rice2RoboEcommersHeader({
             {/* Mobile CTA */}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
-                onClick={() => handleNavClick("contact")}
+                onClick={handleSignIn}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 flex items-center justify-center gap-2"
                 aria-label="Start shopping with us"
               >

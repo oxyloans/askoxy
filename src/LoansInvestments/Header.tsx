@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { Cpu, X } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 
 interface CaCsHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
@@ -21,6 +21,9 @@ const Header = memo(function CaCsHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   useEffect(() => {
     let ticking = false;
@@ -99,7 +102,25 @@ const Header = memo(function CaCsHeader({
       };
     }
   }, [isMenuOpen]);
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const navLinks = useMemo(
     () =>
       [
@@ -188,7 +209,7 @@ const Header = memo(function CaCsHeader({
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               <button
-                onClick={() => handleNavClick("contact")}
+                onClick={handleSignIn}
                 className="relative overflow-hidden bg-gradient-to-r from-blue-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg group transition-all duration-300 transform hover:scale-105"
               >
                 <span className="relative z-10">Sign In</span>
@@ -250,7 +271,8 @@ const Header = memo(function CaCsHeader({
             })}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
-                onClick={() => handleNavClick("contact")}
+                onClick={handleSignIn}
+                disabled={isLoading}
                 className="w-full bg-gradient-to-r from-blue-700 to-purple-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
               >
                 Sign In

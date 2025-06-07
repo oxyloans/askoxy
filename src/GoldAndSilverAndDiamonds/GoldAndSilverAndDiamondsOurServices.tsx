@@ -74,7 +74,7 @@ const GoldAndSilverAndOurServicesCarousel = () => {
   }
 
   return (
-    <section className="min-screen bg-gradient-to-br from-purple-200 via-blue-100 to-indigo-200 py-8 lg:py-16">
+    <section className="min-screen bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-100 py-8 lg:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Header Section */}
         <div className="text-center mb-12 lg:mb-16">

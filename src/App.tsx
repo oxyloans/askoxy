@@ -173,7 +173,8 @@ const App: React.FC = () => {
       "/miyapurmetro",
       "/cas",
       "/fms",
-      "/cms"
+      "/cms",
+      "/aiblockchainanditservices",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log

@@ -75,7 +75,7 @@ const OurServicesCarousel = () => {
   
 
   return (
-    <section className="min-screen bg-gradient-to-br from-purple-200 via-gray-100 to-blue-200 py-8 lg:py-16">
+    <section className="min-screen bg-gradient-to-br from-purple-100 via-gray-100 to-blue-100 py-8 lg:py-16">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       

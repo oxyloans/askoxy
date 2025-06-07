@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { Home, X, Building, Key, Phone, Bot } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 interface NyayagptHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
   activeLink: string;
@@ -20,6 +20,9 @@ const NyayagptHeader = memo(function NyayagptHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   useEffect(() => {
     let ticking = false;
@@ -98,7 +101,25 @@ const NyayagptHeader = memo(function NyayagptHeader({
       };
     }
   }, [isMenuOpen]);
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // If user is logged in, go directly to the campaign page
+        navigate("/main/services/campaign/a6b5");
+      } else {
+        // If not logged in, redirect to WhatsApp login
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const navLinks = useMemo(
     () => [
       { id: "home", label: "Home", icon: Home },
@@ -164,7 +185,7 @@ const NyayagptHeader = memo(function NyayagptHeader({
 
           <div className="hidden md:flex items-center gap-3">
             <button
-              onClick={() => handleNavClick("contact")}
+              onClick={handleSignIn}
               className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white py-2.5 px-6 rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300"
             >
               Sign In
@@ -188,6 +209,7 @@ const NyayagptHeader = memo(function NyayagptHeader({
         </div>
       </div>
     </header>
+    
   );
 });
 
