@@ -71,12 +71,14 @@ function GoldSilverDiamondHeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/services/campaign/0f02"; // your desired path
 
       if (userId) {
-        // If user is logged in, go directly to the campaign page
-        navigate("/main/services/campaign/71e3");
+        // User is already logged in
+        navigate(redirectPath);
       } else {
-        // If not logged in, redirect to WhatsApp login
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
     } catch (error) {
@@ -85,6 +87,7 @@ function GoldSilverDiamondHeroSection() {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <section className="relative bg-gradient-to-br from-amber-50 via-rose-50 to-yellow-50 py-12 sm:py-20 lg:py-24 overflow-hidden min-h-screen flex items-center">

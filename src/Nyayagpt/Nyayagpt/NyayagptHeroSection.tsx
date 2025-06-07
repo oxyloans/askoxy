@@ -65,12 +65,14 @@ function NyayagptHeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/services/campaign/0f02"; // your desired path
 
       if (userId) {
-        // If user is logged in, go directly to the campaign page
-        navigate("/main/services/campaign/a6b5");
+        // User is already logged in
+        navigate(redirectPath);
       } else {
-        // If not logged in, redirect to WhatsApp login
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
     } catch (error) {
@@ -79,7 +81,7 @@ function NyayagptHeroSection() {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <section className="relative bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 py-8 lg:py-16 pb-20 overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">

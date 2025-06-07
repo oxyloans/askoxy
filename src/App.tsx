@@ -180,7 +180,7 @@ const App: React.FC = () => {
       "/goldandsilveranddiamonds",
       "/loansinvestments",
       "/realestate",
-      "/rice2orboecommers",
+      "/rice2roboecommers",
       "/nyayagpt",
     ];
     if (validEntryPoints.includes(location.pathname)) {
@@ -270,7 +270,7 @@ const App: React.FC = () => {
               element={<LoansInvestmentsLandingPage />}
             />
             <Route path="/realestate" element={<RealEstate />} />
-            <Route path="/rice2orboecommers" element={<Rice2RoboEcommers />} />
+            <Route path="/rice2roboecommers" element={<Rice2RoboEcommers />} />
             <Route path="/nyayagpt" element={<Nyayagpt />} />
             <Route path="/gstonrice" element={<GSTRiceFAQ />} />
             <Route path="/userlogin" element={<UserLogin />} />{" "}

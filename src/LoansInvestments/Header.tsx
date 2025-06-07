@@ -107,12 +107,14 @@ const Header = memo(function CaCsHeader({
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/services/campaign/0f02"; // your desired path
 
       if (userId) {
-        // If user is logged in, go directly to the campaign page
-        navigate("/main/service/oxyloans-service");
+        // User is already logged in
+        navigate(redirectPath);
       } else {
-        // If not logged in, redirect to WhatsApp login
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
     } catch (error) {
@@ -121,6 +123,7 @@ const Header = memo(function CaCsHeader({
       setIsLoading(false);
     }
   };
+  
   const navLinks = useMemo(
     () =>
       [
