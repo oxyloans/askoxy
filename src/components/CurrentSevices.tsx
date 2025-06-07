@@ -8,6 +8,8 @@ const ResponsiveGallery = () => {
   const [modalContent, setModalContent] = useState(
     "You are being transferred to the powerful ChatGPT. Please login to continue your experience."
   );
+
+  
  const navigate = useNavigate();
   const images = [
     {
