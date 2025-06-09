@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Package, AlertCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import checkProfileCompletion from "../until/ProfileCheck";
 import BASE_URL from "../Config";
 
@@ -47,6 +47,7 @@ interface Offer {
 
 interface UserEligibleOffer {
   offerName: string;
+
   eligible: boolean;
   weight: number;
 }
@@ -95,9 +96,10 @@ const Categories: React.FC<CategoriesProps> = ({
   >([]);
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
   const [isFetchingOffers, setIsFetchingOffers] = useState(false);
-  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(
-    new Set()
-  );
+  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem("displayedOffers");
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [offerModal, setOfferModal] = useState<{
     visible: boolean;
     content: string;
@@ -221,6 +223,11 @@ const Categories: React.FC<CategoriesProps> = ({
         customerCart,
       });
 
+      const goldBarItemIds = [
+        "619bd23a-0267-46da-88da-30977037225a",
+        "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
+      ];
+
       const newDisplayedOffers = new Set(displayedOffers);
 
       // Check for 2+1 Offer
@@ -228,6 +235,9 @@ const Categories: React.FC<CategoriesProps> = ({
         (item) => item.status === "ADD" && item.cartQuantity >= 2
       );
       for (const addItem of twoPlusOneItems) {
+        if (goldBarItemIds.includes(addItem.itemId)) {
+          continue; // Skip gold bar items
+        }
         const freeItem = customerCart.find(
           (item) =>
             item.itemId === addItem.itemId &&
@@ -262,6 +272,9 @@ const Categories: React.FC<CategoriesProps> = ({
           item.cartQuantity >= 1
       );
       for (const addItem of fivePlusTwoItems) {
+        if (goldBarItemIds.includes(addItem.itemId)) {
+          continue; // Skip gold bar items
+        }
         const freeItems = customerCart.find(
           (item) =>
             item.status === "FREE" &&
@@ -292,6 +305,9 @@ const Categories: React.FC<CategoriesProps> = ({
           item.cartQuantity >= 1
       );
       for (const addItem of containerOfferItems) {
+        if (goldBarItemIds.includes(addItem.itemId)) {
+          continue; // Skip gold bar items
+        }
         const freeContainer = customerCart.find(
           (item) =>
             item.status === "FREE" &&
@@ -315,6 +331,10 @@ const Categories: React.FC<CategoriesProps> = ({
       updateCart(cartItemsMap);
       updateCartCount(totalQuantity);
       localStorage.setItem("cartCount", totalQuantity.toString());
+      localStorage.setItem(
+        "displayedOffers",
+        JSON.stringify(Array.from(newDisplayedOffers))
+      );
       setDisplayedOffers(newDisplayedOffers);
 
       if (itemId) {
@@ -331,6 +351,7 @@ const Categories: React.FC<CategoriesProps> = ({
       updateCart({});
       updateCartCount(0);
       localStorage.setItem("cartCount", "0");
+      message.error("Failed to fetch cart data.");
       if (itemId) {
         setLoadingItems((prev) => ({
           ...prev,
@@ -338,7 +359,6 @@ const Categories: React.FC<CategoriesProps> = ({
           status: { ...prev.status, [itemId]: "" },
         }));
       }
-      message.error("Failed to fetch cart data.");
     }
   };
 
@@ -518,10 +538,20 @@ const Categories: React.FC<CategoriesProps> = ({
       categories[0];
     if (!currentCategory) return [];
 
+    const goldBarItemIds = [
+      "619bd23a-0267-46da-88da-30977037225a",
+      "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
+    ];
+
     let items = currentCategory.itemsResponseDtoList;
 
     if (activeWeightFilter) {
       items = items.filter((item) => {
+        // Exclude gold bar items when a weight filter is active
+        if (goldBarItemIds.includes(item.itemId)) {
+          return false;
+        }
+        // Apply weight filter for other items
         const itemWeight = parseFloat(item.weight).toFixed(1);
         return itemWeight === activeWeightFilter;
       });
@@ -592,14 +622,6 @@ const Categories: React.FC<CategoriesProps> = ({
       }));
     }
   };
-
-  // const getCurrentCategoryItems = () => {
-  //   const currentCategory =
-  //     categories.find((cat) => cat.categoryName === activeCategory) ||
-  //     categories[0];
-  //   if (!currentCategory) return [];
-  //   return currentCategory.itemsResponseDtoList;
-  // };
 
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
@@ -730,7 +752,6 @@ const Categories: React.FC<CategoriesProps> = ({
         </div>
       </div>
 
-      {/* Weight Filter Section */}
       <div className="mb-4 overflow-x-auto scrollbar-hide">
         <div className="flex items-center space-x-3 pb-2">
           {weightFilters.map((filter, index) => (

@@ -251,7 +251,7 @@ function GoldSilverDiamondHeroSection() {
                   <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
 
                   <img
-                    src="https://i.ibb.co/GfBNqQFY/OurApp.png"
+                    src="https://i.ibb.co/TD2JCyy7/8.png"
                     alt="CA CS Services Professional"
                     className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
                   />
