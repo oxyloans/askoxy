@@ -30,7 +30,7 @@ function GoldSilverDiamondHeroSection() {
 
   // Mouse tracking for parallax effect
   useEffect(() => {
-    const handleMouseMove = (e:any) => {
+    const handleMouseMove = (e: any) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener("mousemove", handleMouseMove);
@@ -71,7 +71,7 @@ function GoldSilverDiamondHeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/0f02"; // your desired path
+      const redirectPath = "/main/services/campaign/71e3"; // your desired path
 
       if (userId) {
         // User is already logged in
@@ -87,7 +87,6 @@ function GoldSilverDiamondHeroSection() {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <section className="relative bg-gradient-to-br from-amber-50 via-rose-50 to-yellow-50 py-12 sm:py-20 lg:py-24 overflow-hidden min-h-screen flex items-center">
@@ -133,7 +132,6 @@ function GoldSilverDiamondHeroSection() {
                 : "-translate-x-10 opacity-0"
             }`}
           >
-           
             {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight">
               {fullHeadingText}
@@ -229,8 +227,6 @@ function GoldSilverDiamondHeroSection() {
                 <span>Book Consultation</span>
               </button>
             </div>
-
-            
           </div>
 
           {/* Right Content - Hero Image */}
@@ -242,41 +238,38 @@ function GoldSilverDiamondHeroSection() {
             } flex justify-center`}
           >
             <div className="relative group">
-              
-           
+              {/* Right Content - Hero Image */}
+              <div
+                className={`lg:col-span-5 transition-all duration-700 transform ${
+                  isVisible
+                    ? "translate-x-0 opacity-100"
+                    : "translate-x-10 opacity-0"
+                } flex justify-center mt-8 lg:mt-0`}
+              >
+                <div className="relative group">
+                  {/* Image Glow Effect */}
+                  <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
 
-                       {/* Right Content - Hero Image */}
-                       <div
-                         className={`lg:col-span-5 transition-all duration-700 transform ${
-                           isVisible
-                             ? "translate-x-0 opacity-100"
-                             : "translate-x-10 opacity-0"
-                         } flex justify-center mt-8 lg:mt-0`}
-                       >
-                         <div className="relative group">
-                           {/* Image Glow Effect */}
-                           <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
-             
-                           <img
-                             src="https://i.ibb.co/GfBNqQFY/OurApp.png"
-                             alt="CA CS Services Professional"
-                             className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
-                           />
-             
-                           {/* Floating Badge */}
-                           <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
-                             <span className="text-xs sm:text-sm font-bold">
-                               Trusted Experts
-                             </span>
-                           </div>
-                         </div>
-                       </div>
+                  <img
+                    src="https://i.ibb.co/GfBNqQFY/OurApp.png"
+                    alt="CA CS Services Professional"
+                    className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
+                  />
+
+                  {/* Floating Badge */}
+                  <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
+                    <span className="text-xs sm:text-sm font-bold">
+                      Trusted Experts
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <style >{`
+      <style>{`
         @keyframes float {
           0%,
           100% {

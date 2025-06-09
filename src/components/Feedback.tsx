@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Star, AlertCircle, CheckCircle, X, MessageSquare } from "lucide-react";
-
+import BASE_URL from "../Config";
 const Feedback = () => {
   const [feedbackData, setFeedbackData] = useState({
     comments: "",
@@ -98,7 +98,7 @@ const Feedback = () => {
   const checkExistingFeedback = async (orderId: string, userId: string) => {
     try {
       const res = await fetch(
-        `https://meta.oxyglobal.tech/api/order-service/feedbackbasedonorderanduserid?orderid=${orderId}&feedbackUserId=${userId}`
+        `${BASE_URL}/order-service/feedbackbasedonorderanduserid?orderid=${orderId}&feedbackUserId=${userId}`
       );
       const data = await res.json();
       if (data.status === true) {
@@ -140,7 +140,7 @@ const Feedback = () => {
     setIsLoading(true);
     try {
       const res = await fetch(
-        "https://meta.oxyglobal.tech/api/order-service/submitfeedback",
+        `${BASE_URL}/order-service/submitfeedback`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

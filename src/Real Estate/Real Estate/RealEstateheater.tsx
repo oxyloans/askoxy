@@ -106,7 +106,7 @@ const RealEstateHeader = memo(function RealEstateHeader({
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/0f02"; // your desired path
+      const redirectPath = "/main/services/campaign/37b3"; // your desired path
 
       if (userId) {
         // User is already logged in
@@ -262,22 +262,7 @@ const RealEstateHeader = memo(function RealEstateHeader({
         >
           <div className="px-4 py-6 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
             {/* Mobile Logo */}
-            <div className="flex items-center justify-center pb-4 mb-4 border-b border-gray-200">
-              <div className="flex items-center">
-                <div className="relative">
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full p-2">
-                    <Home className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <div className="text-lg font-bold">
-                    <span className="text-blue-800">Real</span>
-                    <span className="text-cyan-600">Estate</span>
-                    <span className="text-gray-600"> Pro</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+           
 
             {/* Mobile Navigation Links */}
             {navLinks.map((link) => {

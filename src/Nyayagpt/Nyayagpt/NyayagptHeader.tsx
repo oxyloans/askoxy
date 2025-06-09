@@ -6,7 +6,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { Home, X, Building, Key, Phone, Bot } from "lucide-react";
+import { Home, X, Building, Phone, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 interface NyayagptHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
@@ -21,9 +21,8 @@ const NyayagptHeader = memo(function NyayagptHeader({
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-    const LOGIN_URL = "/whatsapplogin";
-    const navigate = useNavigate();
-
+  const LOGIN_URL = "/whatsapplogin";
+ const navigate = useNavigate();
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -100,13 +99,14 @@ const NyayagptHeader = memo(function NyayagptHeader({
         document.body.style.overflow = originalStyle;
       };
     }
-  }, [isMenuOpen]);
+  }, []);
+
   const handleSignIn = () => {
     try {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/0f02"; // your desired path
+      const redirectPath = "/main/services/campaign/37b3"; // your desired path
 
       if (userId) {
         // User is already logged in
@@ -122,13 +122,13 @@ const NyayagptHeader = memo(function NyayagptHeader({
       setIsLoading(false);
     }
   };
-  
   const navLinks = useMemo(
-    () => [
-      { id: "home", label: "Home", icon: Home },
-      { id: "services", label: "Services", icon: Building },
-      { id: "contact", label: "Contact", icon: Phone },
-    ] as const,
+    () =>
+      [
+        { id: "home", label: "Home", icon: Home },
+        { id: "services", label: "Services", icon: Building },
+        { id: "contact", label: "Contact", icon: Phone },
+      ] as const,
     []
   );
 
@@ -138,8 +138,18 @@ const NyayagptHeader = memo(function NyayagptHeader({
     notScrolled: "bg-white/90 backdrop-blur-sm",
   };
 
+  const mobileNavButtonClasses = {
+    base: "w-full text-left px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-3",
+    active:
+      "bg-gradient-to-r from-indigo-600 to-purple-500 text-white shadow-md",
+    inactive: "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50",
+  };
+
   const logo = (
-    <div className="flex items-center cursor-pointer group" onClick={() => handleNavClick("home")}> 
+    <div
+      className="flex items-center cursor-pointer group"
+      onClick={() => handleNavClick("home")}
+    >
       <div className="relative">
         <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full opacity-50 blur group-hover:opacity-70 transition-opacity"></div>
         <div className="relative bg-white rounded-full p-2 shadow-lg group-hover:shadow-xl transition-shadow">
@@ -148,72 +158,116 @@ const NyayagptHeader = memo(function NyayagptHeader({
       </div>
       <div className="ml-3">
         <div className="text-xl font-bold">
-          <span className="text-indigo-800">Nyaya {" "}</span>
+          <span className="text-indigo-800">Nyaya </span>
           <span className="text-purple-600">GPT</span>
         </div>
-       
       </div>
     </div>
   );
 
   return (
-    <header
-      className={`${headerClasses.base} ${
-        isScrolled ? headerClasses.scrolled : headerClasses.notScrolled
-      }`}
-    >
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {logo}
+    <>
+      <header
+        className={`${headerClasses.base} ${
+          isScrolled ? headerClasses.scrolled : headerClasses.notScrolled
+        }`}
+      >
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {logo}
 
-          <nav className="hidden md:flex flex-1 justify-center">
-            <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-full px-3 py-2 shadow-inner border border-gray-200/50">
-              {navLinks.map((link) => (
-                <li key={link.id}>
-                  <button
-                    onClick={() => handleNavClick(link.id)}
-                    className={`px-4 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 ${
-                      activeLink === link.id
-                        ? "text-white bg-gradient-to-r from-indigo-600 to-purple-500 shadow-md scale-105"
-                        : "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105"
-                    }`}
-                  >
-                    <link.icon size={16} />
-                    <span>{link.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+            <nav className="hidden md:flex flex-1 justify-center">
+              <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-full px-3 py-2 shadow-inner border border-gray-200/50">
+                {navLinks.map((link) => (
+                  <li key={link.id}>
+                    <button
+                      onClick={() => handleNavClick(link.id)}
+                      className={`px-4 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 ${
+                        activeLink === link.id
+                          ? "text-white bg-gradient-to-r from-indigo-600 to-purple-500 shadow-md scale-105"
+                          : "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105"
+                      }`}
+                    >
+                      <link.icon size={16} />
+                      <span>{link.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={handleSignIn}
-              className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white py-2.5 px-6 rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300"
-            >
-              Sign In
-            </button>
+            <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={handleSignIn}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white py-2.5 px-6 rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Loading..." : "Sign In"}
+              </button>
+            </div>
+
+            <div className="md:hidden">
+              <button
+                onClick={toggleMenu}
+                className="menu-button w-11 h-11 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+              >
+                {isMenuOpen ? (
+                  <X size={22} />
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="w-5 h-0.5 bg-current rounded-full" />
+                    <div className="w-5 h-0.5 bg-current rounded-full" />
+                    <div className="w-5 h-0.5 bg-current rounded-full" />
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
+        </div>
+      </header>
 
-          <div className="md:hidden">
-            <button
-              onClick={toggleMenu}
-              className="menu-button w-11 h-11 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-            >
-              {isMenuOpen ? <X size={22} /> : (
-                <div className="space-y-1.5">
-                  <div className="w-5 h-0.5 bg-current rounded-full" />
-                  <div className="w-5 h-0.5 bg-current rounded-full" />
-                  <div className="w-5 h-0.5 bg-current rounded-full" />
-                </div>
-              )}
-            </button>
+      <div
+        className={`md:hidden mobile-menu-container fixed inset-0 z-40 transition-all duration-300 ${
+          isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" />
+        <div
+          className={`absolute top-16 left-0 right-0 bg-white shadow-2xl border-t border-gray-200 transform transition-all duration-300 ${
+            isMenuOpen ? "translate-y-0" : "-translate-y-full"
+          }`}
+        >
+          <div className="px-4 py-6 space-y-2">
+            {navLinks.map((link) => {
+              const isActive = activeLink === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => handleNavClick(link.id)}
+                  className={`${mobileNavButtonClasses.base} ${
+                    isActive
+                      ? mobileNavButtonClasses.active
+                      : mobileNavButtonClasses.inactive
+                  }`}
+                >
+                  <link.icon size={20} />
+                  {link.label}
+                </button>
+              );
+            })}
+            <div className="pt-4 mt-4 border-t border-gray-200">
+              <button
+                onClick={handleSignIn}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Loading..." : "Sign In"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </header>
-    
+    </>
   );
 });
-
 export default NyayagptHeader;

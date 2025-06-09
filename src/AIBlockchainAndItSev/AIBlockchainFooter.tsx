@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   Cpu,
-  Phone,
+  
   Mail,
   MapPin,
   ArrowUp,

@@ -1,11 +1,5 @@
 import React, { useEffect } from "react";
-import {
-  
-  Route,
-  useLocation,
-  Routes,
-  Navigate,
-} from "react-router-dom";
+import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
 
 import Landingpage from "./components/Landingpage";
@@ -148,7 +142,6 @@ import JobStreet from "./GLMS/JobStreet/JobStreet";
 import OrdersByPincode from "./AskoxyAdmin/Pincodewiseorders";
 import Feedback from "./components/Feedback";
 
-
 import AIBlockchainAndItServices from "./AIBlockchainAndItSev/AIBlockchainAndItServices";
 import CACSService from "./CACSServices/CaCsServices";
 import GoldAndSilverAndDiamond from "./GoldAndSilverAndDiamonds/GoldAndSilverAndDiamonds";
@@ -159,6 +152,15 @@ import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
 import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
 import ChatApp from "./components/OpenAi";
 
+// *************************STUDY ABRAD****************************//
+import CoursesPage from "./StudyAbroad/Course";
+import UserSelectionPage from "./StudyAbroad/Homepage";
+
+import UniversityListPage from "./StudyAbroad/Universitylist";
+import AllUniversities from "./StudyAbroad/AllUniversities";
+
+import StudyAbroadLandingPage from "./StudyAbroad/StudyAbroadLandingPage";
+import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -221,12 +223,12 @@ const App: React.FC = () => {
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
+            <Route path="/userFeedback" element={<Feedback />} />
             <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
             <Route
               path="/usermobilenumberupdate"
               element={<MobileNumberUpdate />}
             />
-            <Route path="/userFeedback" element={<Feedback />} />
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />
@@ -285,6 +287,20 @@ const App: React.FC = () => {
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
             <Route path="/faqs" element={<RiceOfferFAQs />} />
+            {/* study abrad */}
+            <Route path="/studyabroad" element={<StudyAbroadLandingPage />} />
+            <Route path="/all-universities" element={<AllUniversities />} />
+            <Route
+              path="/student-dashboard"
+              element={<StudentMainDashboard />}
+            />
+            <Route path="/student-home" element={<UserSelectionPage />} />
+            {/* <Route path="/universities" element={<UniversityDetailsPage />} /> */}
+            <Route
+              path="/listofuniversities"
+              element={<UniversityListPage />}
+            />
+            <Route path="/course" element={<CoursesPage />} />
             {/* <Route
               path="/communities/maruthielite"
               element={<RiceSalePage />}

@@ -37,9 +37,6 @@ export default function AIBlockchainAndItServices() {
 
   // Track session ID
   useEffect(() => {
-    const sessionId = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 12)}`;
     if (typeof window.gtag === "function") {
       window.gtag("event", "ai_blockchain_session_start", {
         engagement_time_msec: 0,

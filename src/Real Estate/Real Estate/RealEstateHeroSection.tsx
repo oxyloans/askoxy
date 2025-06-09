@@ -10,12 +10,15 @@ import {
   Shield,
 } from "lucide-react";
 import Heroimg from "../../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import { useNavigate } from "react-router-dom";
 function RealEstateHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-
+   const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
   const rotatingWords = [
     "Dream Properties",
     "Smart Investments",
@@ -52,17 +55,25 @@ function RealEstateHeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleGetStarted = () => {
-    const servicesSection = document.getElementById("services");
-    if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-  const handleConsultation = () => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/services/campaign/37b3"; // your desired path
+
+      if (userId) {
+        // User is already logged in
+        navigate(redirectPath);
+      } else {
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -159,7 +170,7 @@ function RealEstateHeroSection() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mt-8">
               <button
-                onClick={handleGetStarted}
+                onClick={handleSignIn}
                 className="group bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-3 lg:py-4 px-6 lg:px-8 rounded-full flex items-center justify-center gap-3 hover:from-emerald-600 hover:to-teal-700 shadow-2xl hover:shadow-emerald-500/25 transition-all duration-300 transform hover:scale-105 text-sm lg:text-base"
               >
                 Browse Properties
@@ -167,7 +178,7 @@ function RealEstateHeroSection() {
               </button>
 
               <button
-                onClick={handleConsultation}
+                onClick={handleSignIn}
                 className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-3 lg:py-4 px-6 lg:px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20 text-sm lg:text-base"
               >
                 Free Consultation
@@ -176,7 +187,7 @@ function RealEstateHeroSection() {
             </div>
           </div>
 
-          {/* Right Content - Hero Image */}
+         
           {/* Right Content - Hero Image */}
           <div
             className={`lg:col-span-5 transition-all duration-700 transform ${

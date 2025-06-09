@@ -62,7 +62,7 @@ function HeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/0f02"; // your desired path
+      const redirectPath = "/main/service/oxyloans-service"; // your desired path
 
       if (userId) {
         // User is already logged in
@@ -231,7 +231,7 @@ function HeroSection() {
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100" />
               <img
-                src="https://i.ibb.co/GfBNqQFY/OurApp.png"
+                src="https://i.ibb.co/PzVKsW5X/4.png"
                 alt="Hero"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />
