@@ -9,6 +9,7 @@ import OXYGroupCompanies from "./OXYGroupCompanies";
 import Footer from "./Footer";
 import OurPeople from "./OurTeam";
 import PdfPages from "./Presentation";
+import UnicornGrid from "./SuperOurApp";
 
 const CurrentLandingPage: React.FC = () => {
   return (
@@ -16,11 +17,13 @@ const CurrentLandingPage: React.FC = () => {
       <section>
         <Header />
       </section>
-
-      <section className="mt-4">
+      {/* <section>
+        <UnicornGrid />
+      </section> */}
+      <section  className="mt-4">
         <HorizontalScrollGallery />
       </section>
-      <section >
+      <section>
         <ServicesSlider />
       </section>
       <section>

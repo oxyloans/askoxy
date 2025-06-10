@@ -184,6 +184,8 @@ const App: React.FC = () => {
       "/realestate",
       "/rice2roboecommers",
       "/nyayagpt",
+      "/student-home",
+      "/studyabroad"
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log

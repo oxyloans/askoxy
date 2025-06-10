@@ -58,7 +58,7 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
   ): void => {
     requestAnimationFrame(() => {
       // Navigate to studyabroad-web for all nav items
-      navigate('/studyabroad-web');
+      navigate('/studyabroad');
       onNavClick(id);
       setIsMenuOpen(false);
     });
@@ -130,27 +130,29 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
 
   return (
     <header
-      className={`${headerClasses.base} ${isScrolled ? headerClasses.scrolled : headerClasses.notScrolled}`}
-      style={{ transition: 'background-color 0.3s, box-shadow 0.3s' }}
+      className={`${headerClasses.base} ${
+        isScrolled ? headerClasses.scrolled : headerClasses.notScrolled
+      }`}
+      style={{ transition: "background-color 0.3s, box-shadow 0.3s" }}
     >
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Left: Logo with unique design */}
-         <Link to="/studyabroad-web">
-  <div className="flex items-center cursor-pointer hover:scale-105 transition-transform">
-    <div className="relative">
-      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
-      <div className="relative bg-white rounded-full p-2">
-        <Globe className="h-7 w-7 text-purple-700" />
-      </div>
-    </div>
-    <div className="ml-3">
-      <span className="text-xl font-bold text-purple-900">
-        Study<span className="text-purple-600">Abroad</span>
-      </span>
-    </div>
-  </div>
-</Link>
+          <Link to="/studyabroad">
+            <div className="flex items-center cursor-pointer hover:scale-105 transition-transform">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
+                <div className="relative bg-white rounded-full p-2">
+                  <Globe className="h-7 w-7 text-purple-700" />
+                </div>
+              </div>
+              <div className="ml-3">
+                <span className="text-xl font-bold text-purple-900">
+                  Study<span className="text-purple-600">Abroad</span>
+                </span>
+              </div>
+            </div>
+          </Link>
 
           {/* Center: Navigation with distinctive styling */}
           <nav className="hidden md:flex flex-1 justify-center mt-4">
@@ -162,7 +164,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                     <button
                       onClick={() => handleNavClick(link.id)}
                       className={`${navButtonClasses.base} ${
-                        isActive ? navButtonClasses.active : navButtonClasses.inactive
+                        isActive
+                          ? navButtonClasses.active
+                          : navButtonClasses.inactive
                       }`}
                     >
                       {link.label}
@@ -173,10 +177,20 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
             </ul>
           </nav>
 
-          {/* Right: Empty div to maintain layout balance */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Apply Now button removed as requested */}
-          </div>
+          {/* <div className="hidden md:flex items-center gap-3">
+           
+            <button
+              className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group"
+              style={{ transition: "box-shadow 0.2s" }}
+              onClick={handleLogout}
+            >
+              <span className="relative z-10">Log Out</span>
+              <span
+                className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
+                style={{ transition: "transform 0.3s" }}
+              ></span>
+            </button>
+          </div> */}
 
           {/* Mobile menu toggle with improved styling */}
           <div className="md:hidden">
@@ -201,9 +215,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div 
+          <div
             className="mobile-menu-container md:hidden bg-white py-4 fixed left-0 right-0 w-full border-t border-purple-100 shadow-lg rounded-b-2xl"
-            style={{ top: '4.5rem' }}
+            style={{ top: "4.5rem" }}
           >
             <ul className="flex flex-col px-2">
               {navLinks.map((link) => {
@@ -213,7 +227,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                     <button
                       onClick={() => handleNavClick(link.id)}
                       className={`${mobileNavButtonClasses.base} ${
-                        isActive ? mobileNavButtonClasses.active : mobileNavButtonClasses.inactive
+                        isActive
+                          ? mobileNavButtonClasses.active
+                          : mobileNavButtonClasses.inactive
                       }`}
                     >
                       {link.label}
@@ -222,9 +238,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                 );
               })}
               <li className="px-2 pt-4 space-y-3">
-                <button 
+                <button
                   className="w-full bg-white text-purple-700 font-medium py-3 px-4 rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-md"
-                  style={{ transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                  style={{ transition: "border-color 0.2s, box-shadow 0.2s" }}
                 >
                   <span className="flex items-center justify-center">
                     Explore
@@ -269,7 +285,12 @@ const handleAuthError = (error: any, navigate: any) => {
   }
   return false;
 };
-
+// const handleLogout = () => 
+// {
+//   localStorage.removeItem('accessToken');
+//   sessionStorage.removeItem('accessToken');
+//   window.location.href = '/student-home'; // Redirect to login page
+// }
 const UserSelectionPage = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<'student' | 'counselor' | null>(null);
@@ -286,7 +307,9 @@ const UserSelectionPage = () => {
   const [authRequired, setAuthRequired] = useState(false);
   const [activeLink, setActiveLink] = useState("home");
   const dropdownRef = useRef<HTMLDivElement>(null);
-
+ const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    
   // Check if user is authenticated on component mount
   useEffect(() => {
     const token = getAccessToken();
@@ -406,7 +429,25 @@ const UserSelectionPage = () => {
   };
 
   const handleLogin = () => {
-    navigate('/login');
+    try {
+      setIsLoading(true);
+
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/student-home"; // your desired path
+
+      if (userId) {
+        // User is already logged in
+        navigate(redirectPath);
+      } else {
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRetry = () => {

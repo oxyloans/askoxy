@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, ShoppingCart, Package, Truck, Star, Users, Award, Zap, Shield } from "lucide-react";
-import Heroimg from "../../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+
 import { useNavigate } from "react-router-dom";
 function Rice2RoboEcommersHeroSection() {
   const [isVisible, setIsVisible] = useState(false);

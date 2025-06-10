@@ -159,6 +159,7 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
