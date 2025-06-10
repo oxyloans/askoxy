@@ -7,8 +7,8 @@ import {
   MapPin,
   Phone,
   ShoppingBag,
-  CheckCircle,ArrowRight,
-  Truck,ThumbsDown,ThumbsUp,
+  CheckCircle,
+  Truck,
   CheckCheck,
   CreditCard,
   Banknote,
@@ -31,6 +31,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { message } from "antd";
+import AddressUpdateModal from "./AddressUpdate";
 
 interface OrderAddress {
   flatNo: string;
@@ -60,10 +61,6 @@ interface TimeSlot {
   timeSlot4: string;
   date?: string;
   isToday?: boolean;
-   slot1Status?: boolean; // Added
-  slot2Status?: boolean; // Added
-  slot3Status?: boolean; // Added
-  slot4Status?: boolean; // Added
 }
 
 interface Item {
@@ -162,6 +159,61 @@ const MyOrders: React.FC = () => {
 
   //state variable for the Exchange orders button
   const [showExchangeOrders, setShowExchangeOrders] = useState<boolean>(false);
+
+  //state declarations for the update address
+  const [isAddressUpdateModalOpen, setIsAddressUpdateModalOpen] =
+    useState<boolean>(false);
+  const [addressFormData, setAddressFormData] = useState<{
+    flatNo: string;
+    landMark: string;
+    address: string;
+    pincode: string;
+    latitude: number;
+    longitude: number;
+    area: string;
+    houseType: string;
+    residenceName: string;
+  }>({
+    flatNo: "",
+    landMark: "",
+    address: "",
+    pincode: "",
+    latitude: 0,
+    longitude: 0,
+    area: "",
+    houseType: "",
+    residenceName: "",
+  });
+  const [addressFormErrors, setAddressFormErrors] = useState<{
+    flatNo: string;
+    landMark: string;
+    address: string;
+    pincode: string;
+  }>({
+    flatNo: "",
+    landMark: "",
+    address: "",
+    pincode: "",
+  });
+  const [isAddressUpdating, setIsAddressUpdating] = useState<boolean>(false);
+  const [addressUpdateSuccess, setAddressUpdateSuccess] =
+    useState<boolean>(false);
+
+  //helper function to check 24 hour window
+  const isWithin24Hours = (placedDate: string | null): boolean => {
+    if (!placedDate) return false;
+    const orderDate = new Date(placedDate);
+    const currentDate = new Date();
+    const timeDiff = currentDate.getTime() - orderDate.getTime();
+    const hoursDiff = timeDiff / (1000 * 3600);
+    return hoursDiff <= 24;
+  };
+
+  //state declarations for fetching the delivery boy details
+  const [deliveryBoyDetails, setDeliveryBoyDetails] = useState<{
+    deliveryBoyName: string;
+    deliveryBoyMobile: string;
+  } | null>(null);
 
   // Helper function to check if exchange is within 10 days from delivery
   const isWithinExchangePeriod = (deliveredDate: string | null): boolean => {
@@ -740,6 +792,9 @@ const MyOrders: React.FC = () => {
         setSelectedDate(orderData.expectedDeliveryDate || "");
         setIsDetailsOpen(true);
 
+        // Fetch delivery boy details if order is in Assigned (3) or PickedUp status
+        await fetchDeliveryBoyDetails(orderId, orderData.orderStatus);
+
         // Add GA tracking for order view
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "view_order_details", {
@@ -755,85 +810,76 @@ const MyOrders: React.FC = () => {
     }
   };
 
-   const SelectedDeliveryTime: React.FC = () => {
-    if (!selectedTimeSlot || !selectedDay || !selectedDate) {
-      return null;
-    }
-
-    return (
-      <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
-        <p className="text-sm text-gray-700 font-medium mb-2">Selected Delivery Time:</p>
-        <div className="flex items-center mt-1">
-          <CalendarDays className="w-4 h-4 mr-2 text-purple-600" />
-          <span className="font-medium">
-            {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
-          </span>
-        </div>
-        <div className="flex items-center mt-1">
-          <Clock className="w-4 h-4 mr-2 text-purple-600" />
-          <span>{selectedTimeSlot}</span>
-        </div>
-      </div>
-    );
-  };
-
   const openEditDeliveryTime = async () => {
     setIsEditingDeliveryTime(true);
     setShowTimeSlotPopup(false); // Initially don't show the time slot popup until day is selected
-    await fetchAvailableTimeSlots(selectedOrder?.orderId || '');
+    await fetchAvailableTimeSlots(selectedOrder?.orderId || "");
   };
 
   const getNextAvailableDays = (): {
     dayOfWeek: string;
     formattedDay: string;
     date: string;
-    isToday: boolean
+    isToday: boolean;
   }[] => {
     const days = [];
     // Upper case format for API matching
-    const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const daysOfWeek = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
     // Formatted display version
-    const formattedDaysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
+    const formattedDaysOfWeek = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+
     // Always start from tomorrow, regardless of the current time
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     const startDate = tomorrow;
-    
-    // Get next 7 days starting from tomorrow (instead of just 3)
-    // This gives us more potential days to find 3 available ones
+
+    // Get next 7 days starting from tomorrow
     for (let i = 0; i < 7; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
-  
+
       const dayOfWeek = daysOfWeek[date.getDay()];
       const formattedDay = formattedDaysOfWeek[date.getDay()];
-  
+
       // Format date as DD-MM-YYYY for API compatibility
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
       const year = date.getFullYear();
       const formattedDate = `${day}-${month}-${year}`;
-  
+
       days.push({
         dayOfWeek,
         formattedDay,
         date: formattedDate,
-        isToday: i === 0 && date.getDate() === today.getDate()
+        isToday: i === 0 && date.getDate() === today.getDate(),
       });
     }
-  
+
     return days;
   };
-
-  
 
   const fetchAvailableTimeSlots = async (orderId: string) => {
     setIsLoading2(true);
     try {
       const token = localStorage.getItem("token");
-  
+
       const response = await axios.get(
         `${BASE_URL}/order-service/fetchTimeSlotlist`,
         {
@@ -843,122 +889,93 @@ const MyOrders: React.FC = () => {
           },
         }
       );
-  
+
       if (response.data && Array.isArray(response.data)) {
-        // Get potential delivery days (now up to 7 days)
+        // Get potential delivery days
         const potentialDays = getNextAvailableDays();
-  
+
         // Process the available time slots
         const allProcessedTimeSlots: TimeSlot[] = [];
-  
+
         // For each day of the week in our potential days
         for (const dayInfo of potentialDays) {
           // Find if this day exists in the API response
           const apiSlot = response.data.find(
             (slot: any) => slot.dayOfWeek === dayInfo.dayOfWeek
           );
-  
+
           if (apiSlot) {
-            // IMPORTANT: In the API, isAvailable=false means the day IS available (show it)
-            // We no longer need to invert this value
-            const showThisDay = !apiSlot.isAvailable;
-            
-            // Filter and deduplicate time slots
-            const uniqueTimeSlots = [];
-            
-            // Only add time slots where slotXStatus is false (meaning show it)
-            if (!apiSlot.slot1Status && apiSlot.timeSlot1?.trim()) {
-              uniqueTimeSlots.push(apiSlot.timeSlot1.trim());
-            }
-            
-            if (!apiSlot.slot2Status && apiSlot.timeSlot2?.trim() && 
-                !uniqueTimeSlots.includes(apiSlot.timeSlot2.trim())) {
-              uniqueTimeSlots.push(apiSlot.timeSlot2.trim());
-            }
-            
-            if (!apiSlot.slot3Status && apiSlot.timeSlot3?.trim() && 
-                !uniqueTimeSlots.includes(apiSlot.timeSlot3.trim())) {
-              uniqueTimeSlots.push(apiSlot.timeSlot3.trim());
-            }
-            
-            if (!apiSlot.slot4Status && apiSlot.timeSlot4?.trim() && 
-                !uniqueTimeSlots.includes(apiSlot.timeSlot4.trim())) {
-              uniqueTimeSlots.push(apiSlot.timeSlot4.trim());
-            }
-            
+            // In the API, isAvailable=false means the slot IS available
+            const isActuallyAvailable = !apiSlot.isAvailable;
+
             // Create a processed time slot with all information
             allProcessedTimeSlots.push({
               id: apiSlot.id,
               dayOfWeek: apiSlot.dayOfWeek,
-              isAvailable: showThisDay, // No longer inverting the value
-              timeSlot1: uniqueTimeSlots[0] || '',
-              timeSlot2: uniqueTimeSlots[1] || '',
-              timeSlot3: uniqueTimeSlots[2] || '',
-              timeSlot4: uniqueTimeSlots[3] || '',
-              slot1Status: apiSlot.slot1Status,
-              slot2Status: apiSlot.slot2Status,
-              slot3Status: apiSlot.slot3Status,
-              slot4Status: apiSlot.slot4Status,
+              isAvailable: isActuallyAvailable,
+              timeSlot1: apiSlot.timeSlot1?.trim() || "",
+              timeSlot2: apiSlot.timeSlot2?.trim() || "",
+              timeSlot3: apiSlot.timeSlot3?.trim() || "",
+              timeSlot4: apiSlot.timeSlot4?.trim() || "",
               date: dayInfo.date,
-              isToday: dayInfo.isToday
+              isToday: dayInfo.isToday,
             });
           } else {
             // If not in API response, add the day as unavailable
             allProcessedTimeSlots.push({
-              id: Math.random(), // Generate a random ID
+              id: Math.random(),
               dayOfWeek: dayInfo.dayOfWeek,
-              isAvailable: false, // Keep as false since day is not available
-              timeSlot1: '', 
-              timeSlot2: '',
-              timeSlot3: '',
-              timeSlot4: '',
-              slot1Status: true, // Mark all slots as hidden for unavailable days
-              slot2Status: true,
-              slot3Status: true,
-              slot4Status: true,
+              isAvailable: false,
+              timeSlot1: "",
+              timeSlot2: "",
+              timeSlot3: "",
+              timeSlot4: "",
               date: dayInfo.date,
-              isToday: dayInfo.isToday
+              isToday: dayInfo.isToday,
             });
           }
         }
-  
-        // FILTER: Only keep available days (where isAvailable is true - meaning show the day)
-        const availableTimeSlots = allProcessedTimeSlots.filter(slot => slot.isAvailable);
-        
+
+        // FILTER: Only keep available days
+        const availableTimeSlots = allProcessedTimeSlots.filter(
+          (slot) => slot.isAvailable
+        );
+
         // Take only up to 3 available days
         const timeSlotSelection = availableTimeSlots.slice(0, 3);
-  
-        // If we don't have any available slots, we'll still show the original slots but mark them as unavailable
-        const timeSlotsToShow = timeSlotSelection.length > 0 ? timeSlotSelection : allProcessedTimeSlots.slice(0, 3);
-  
+
+        // If we don't have any available slots, show original slots as unavailable
+        const timeSlotsToShow =
+          timeSlotSelection.length > 0
+            ? timeSlotSelection
+            : allProcessedTimeSlots.slice(0, 3);
+
         // Set the time slots in state
-        setAvailableTimeSlots(allProcessedTimeSlots); // Keep all slots for reference
-        setTimeSlotsForTwoDays(timeSlotsToShow); // Only show the filtered slots to user
-  
-        // Initialize slot selection if we have valid slots and there's a selected order
+        setAvailableTimeSlots(allProcessedTimeSlots);
+        setTimeSlotsForTwoDays(timeSlotsToShow);
+
+        // Initialize slot selection
         if (selectedOrder && timeSlotsToShow.length > 0) {
-          // Filter to get only available slots
-          const availableSlots = timeSlotsToShow.filter(slot => slot.isAvailable);
-  
-          // If the order already has a day selected, use that if available in our list
+          const availableSlots = timeSlotsToShow.filter(
+            (slot) => slot.isAvailable
+          );
+
           if (selectedOrder.dayOfWeek && selectedOrder.timeSlot) {
             const existingSlot = timeSlotsToShow.find(
-              slot => slot.dayOfWeek === selectedOrder.dayOfWeek
+              (slot) => slot.dayOfWeek === selectedOrder.dayOfWeek
             );
-  
+
             if (existingSlot && existingSlot.isAvailable) {
               setSelectedDay(existingSlot.dayOfWeek);
               setSelectedTimeSlot(selectedOrder.timeSlot);
               setSelectedDate(existingSlot.date || "");
             } else if (availableSlots.length > 0) {
-              // Default to first available day
               const firstAvailableSlot = availableSlots[0];
               setSelectedDay(firstAvailableSlot.dayOfWeek);
               setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
               setSelectedDate(firstAvailableSlot.date || "");
             }
           } else if (availableSlots.length > 0) {
-            // No existing selection, use first available day
             const firstAvailableSlot = availableSlots[0];
             setSelectedDay(firstAvailableSlot.dayOfWeek);
             setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
@@ -974,11 +991,33 @@ const MyOrders: React.FC = () => {
     }
   };
 
+  const SelectedDeliveryTime: React.FC = () => {
+    if (!selectedTimeSlot || !selectedDay || !selectedDate) {
+      return null;
+    }
+
+    return (
+      <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+        <p className="text-sm text-gray-700 font-medium mb-2">
+          Selected Delivery Time:
+        </p>
+        <div className="flex items-center mt-1">
+          <CalendarDays className="w-4 h-4 mr-2 text-purple-600" />
+          <span className="font-medium">
+            {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+          </span>
+        </div>
+        <div className="flex items-center mt-1">
+          <Clock className="w-4 h-4 mr-2 text-purple-600" />
+          <span>{selectedTimeSlot}</span>
+        </div>
+      </div>
+    );
+  };
 
   const formatDayOfWeek = (day: string): string => {
     if (!day || day === "NO_SLOT") return "No Slot Available";
 
-    // Convert uppercase day to proper case format
     const dayMap: Record<string, string> = {
       MONDAY: "Monday",
       TUESDAY: "Tuesday",
@@ -991,6 +1030,7 @@ const MyOrders: React.FC = () => {
 
     return dayMap[day] || day;
   };
+
   const submitFeedback = async (): Promise<void> => {
     if (!orderToRate || !selectedLabel) {
       alert("Please select a rating before submitting");
@@ -1066,25 +1106,19 @@ const MyOrders: React.FC = () => {
   };
 
   const getStatusColor = (status: string): string => {
-  const statusMap: Record<string, string> = {
-    // Enhanced purple palette with shadow effects
-    "0": "bg-purple-50 text-purple-700 shadow-sm",
-    "1": "bg-purple-100 text-purple-800 shadow",
-    "2": "bg-indigo-200 text-indigo-800 shadow-md",
-    "3": "bg-violet-300 text-violet-900 shadow-md",
-    "4":"bg-green-300 text-green-800 font-bold shadow-md ring-1 ring-green-400",
-    
-    // More vibrant colors with shadows for specific statuses
-    "5": "bg-red-200 text-red-700 shadow-md",
-    "6": "bg-amber-200 text-amber-700 shadow-md",
-    "7": "bg-sky-200 text-sky-700 shadow-md",
-    
-    // Special statuses with more distinctive styling
-    "PickedUp": "bg-emerald-200 text-emerald-700 shadow-md",
+    const statusMap: Record<string, string> = {
+      "0": "bg-purple-50 text-purple-600",
+      "1": "bg-purple-100 text-purple-700",
+      "2": "bg-purple-200 text-purple-800",
+      "3": "bg-purple-300 text-purple-900",
+      "4": "bg-purple-400 text-purple-950",
+      "5": "bg-red-100 text-red-600",
+      "6": "bg-orange-100 text-orange-600",
+      "7": "bg-blue-100 text-blue-600",
+      PickedUp: "bg-green-100 text-green-600",
+    };
+    return statusMap[status] || statusMap["0"];
   };
-  
-  return statusMap[status] || statusMap["0"];
-};
 
   const getStatusText = (status: string): string => {
     const statusMap: Record<string, string> = {
@@ -1101,7 +1135,11 @@ const MyOrders: React.FC = () => {
     return statusMap[status] || "Unknown";
   };
 
-   const handleSelectTimeSlot = (date: string, timeSlot: string, dayOfWeek: string) => {
+  const handleSelectTimeSlot = (
+    date: string,
+    timeSlot: string,
+    dayOfWeek: string
+  ) => {
     setSelectedDate(date);
     setSelectedTimeSlot(timeSlot);
     setSelectedDay(dayOfWeek);
@@ -1112,43 +1150,41 @@ const MyOrders: React.FC = () => {
       message.warning("Please select a delivery day");
       return;
     }
-  
-    // Find the selected slot to check availability
-    const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
-  
-    // Check if selected slot is available
+
+    const currentSelectedSlot = timeSlotsForTwoDays.find(
+      (slot) => slot.dayOfWeek === selectedDay
+    );
+
     if (!currentSelectedSlot || !currentSelectedSlot.isAvailable) {
       message.error("The selected day is not available for delivery");
       return;
     }
-  
-    // Check if a time slot has been selected
+
     if (!selectedTimeSlot) {
       message.warning("Please select a time slot");
       return;
     }
-  
-    // Add GA tracking for updated delivery time
+
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "update_delivery_time", {
         order_id: selectedOrder?.orderId,
         day_of_week: selectedDay,
-        time_slot: selectedTimeSlot
+        time_slot: selectedTimeSlot,
       });
     }
-  
+
     setTimeSlotUpdating(true);
     try {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
-  
+
       if (!userId) {
         message.error("User ID is missing");
         return;
       }
-  
+
       const requestUrl = `${BASE_URL}/order-service/userSelectedDiffslot`;
-  
+
       const requestBody = {
         dayOfWeek: selectedDay,
         expectedDeliveryDate: selectedDate,
@@ -1156,20 +1192,22 @@ const MyOrders: React.FC = () => {
         timeSlot: selectedTimeSlot,
         userId: userId,
       };
-  
+
       const response = await axios.patch(requestUrl, requestBody, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        timeout: 10000, // 10 second timeout to prevent hanging requests
+        timeout: 10000,
       });
-  
-      if (response.data && (response.data.error || response.data.message === "error")) {
+
+      if (
+        response.data &&
+        (response.data.error || response.data.message === "error")
+      ) {
         throw new Error(response.data.message || "Server returned an error");
       }
-  
-      // Update the selected order with the new time slot information
+
       setSelectedOrder((prev) => {
         if (!prev) return null;
         return {
@@ -1179,19 +1217,16 @@ const MyOrders: React.FC = () => {
           expectedDeliveryDate: selectedDate,
         };
       });
-  
-      // Show success message
+
       setTimeSlotUpdateSuccess(true);
       message.success("Delivery time updated successfully");
-  
-      // Close popup after 2 seconds
+
       setTimeout(() => {
         setTimeSlotUpdateSuccess(false);
         setIsEditingDeliveryTime(false);
         setShowTimeSlotPopup(false);
       }, 2000);
-  
-      // Refresh orders list
+
       if (localStorage.getItem("userId")) {
         fetchOrders(localStorage.getItem("userId") || "");
       }
@@ -1203,10 +1238,10 @@ const MyOrders: React.FC = () => {
     }
   };
 
-  // This component is the Edit Delivery Time Modal template
   const EditDeliveryTimeModal = () => {
-    // Find the selected slot for availability check
-    const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
+    const currentSelectedSlot = timeSlotsForTwoDays.find(
+      (slot) => slot.dayOfWeek === selectedDay
+    );
 
     return isEditingDeliveryTime && selectedOrder ? (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1245,7 +1280,7 @@ const MyOrders: React.FC = () => {
                 <div className="mb-6">
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-medium text-gray-900 mb-1">
-                      Update Delivery Day
+                      Select Delivery Day
                     </h3>
                     <p className="text-gray-600 text-sm">
                       Choose your preferred delivery day
@@ -1257,28 +1292,21 @@ const MyOrders: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      {/* Use the improved day selection list component */}
                       <DaySelectionList />
-
-                      {/* Render the time slot popup */}
                       <TimeSlotPopupModal />
-
-                      {/* Display selected time if any */}
                       <EnhancedDeliveryTime />
-
-                      {/* Instructions for unavailable slots */}
-                      {currentSelectedSlot && !currentSelectedSlot.isAvailable && (
-                        <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                          <div className="flex items-start">
-                            <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-0.5" />
-                            <p className="text-sm text-gray-700">
-                              This day is currently unavailable for delivery. Please select a different day.
-                            </p>
+                      {currentSelectedSlot &&
+                        !currentSelectedSlot.isAvailable && (
+                          <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                            <div className="flex items-start">
+                              <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-0.5" />
+                              <p className="text-sm text-gray-700">
+                                This day is currently unavailable for delivery.
+                                Please select a different day.
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Action buttons */}
+                        )}
                       <div className="flex space-x-3 mt-6">
                         <button
                           className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
@@ -1290,7 +1318,10 @@ const MyOrders: React.FC = () => {
                           <button
                             className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
                             onClick={updateDeliveryTimeSlot}
-                            disabled={timeSlotUpdating || !currentSelectedSlot?.isAvailable}
+                            disabled={
+                              timeSlotUpdating ||
+                              !currentSelectedSlot?.isAvailable
+                            }
                           >
                             {timeSlotUpdating ? (
                               <span className="flex items-center justify-center">
@@ -1317,7 +1348,7 @@ const MyOrders: React.FC = () => {
     ) : null;
   };
 
- const formatDate = (dateString: string | null | undefined): string => {
+  const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleString("en-IN", {
       day: "2-digit",
@@ -1328,7 +1359,6 @@ const MyOrders: React.FC = () => {
       hour12: true,
     });
   };
-
 
   const formatDateOnly = (dateString: string | null | undefined): string => {
     if (!dateString) return "N/A";
@@ -1381,21 +1411,27 @@ const MyOrders: React.FC = () => {
     if (dateString === "N/A") return "";
 
     try {
-      // Handle DD-MM-YYYY format
       if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
         const [day, month, year] = dateString.split("-").map(Number);
-
-        // Use the correct month name
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-        // Return formatted date
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
         return `${day} ${monthNames[month - 1]} ${year}`;
       }
 
-      // Handle date object format
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "";
-
       return date.toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
@@ -1449,288 +1485,285 @@ const MyOrders: React.FC = () => {
   };
 
   const handleDaySelection = (slot: TimeSlot) => {
-    // Always set the active tab regardless of availability (for UI purposes)
     setActiveTab(slot.id);
     setSelectedDay(slot.dayOfWeek);
     setSelectedDate(slot.date || "");
-  
-    // Always show the time slot popup so we can show an unavailable message if needed
     setShowTimeSlotPopup(true);
   };
 
-  const EnhancedDeliveryTime: React.FC = () => {
-  // If nothing selected, don't show anything
-  if (!selectedDay || !selectedDate) {
-    return null;
-  }
+  const TimeSlotPopupModal: React.FC = () => {
+    if (!showTimeSlotPopup) return null;
 
-  // Find the selected slot to check availability
-  const currentSelectedSlot = timeSlotsForTwoDays.find(slot => slot.dayOfWeek === selectedDay);
-
-  // Special case for unavailable slots
-  if (currentSelectedSlot && !currentSelectedSlot.isAvailable) {
-    return (
-      <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-100">
-        <p className="text-sm text-gray-700 font-medium mb-2">Selected Day (Unavailable):</p>
-        <div className="flex items-center mt-1">
-          <CalendarDays className="w-4 h-4 mr-2 text-orange-600" />
-          <span className="font-medium">
-            {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
-          </span>
-        </div>
-        <div className="flex items-center mt-3 text-orange-700">
-          <AlertCircle className="w-4 h-4 mr-2" />
-          <span className="text-sm">This day is not available for delivery</span>
-        </div>
-        <p className="text-xs text-gray-600 mt-2">
-          Please select another day from the list above.
-        </p>
-      </div>
+    const selectedSlot = timeSlotsForTwoDays.find(
+      (slot) => slot.id === activeTab
     );
-  }
 
-  // Normal case for available slots with selected time
-  if (selectedTimeSlot) {
-    return (
-      <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
-        <p className="text-sm text-gray-700 font-medium mb-2">Selected Delivery Time:</p>
-        <div className="flex items-center mt-1">
-          <CalendarDays className="w-4 h-4 mr-2 text-purple-600" />
-          <span className="font-medium">
-            {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
-          </span>
+    if (!selectedSlot) return null;
+
+    if (!selectedSlot.isAvailable) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
+            <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-4 flex justify-between items-center rounded-t-lg">
+              <h2 className="text-xl font-semibold">Unavailable Day</h2>
+              <button
+                onClick={() => setShowTimeSlotPopup(false)}
+                className="p-1 hover:bg-red-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <div className="mb-4">
+                <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  This day is unavailable for delivery
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  We're sorry, but {formatDayOfWeek(selectedSlot.dayOfWeek)} is
+                  currently not available for delivery. Please select a
+                  different day.
+                </p>
+
+                <button
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  onClick={() => setShowTimeSlotPopup(false)}
+                >
+                  Select Another Day
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center mt-1">
-          <Clock className="w-4 h-4 mr-2 text-purple-600" />
-          <span>{selectedTimeSlot}</span>
-        </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Available day selected but no time slot yet
-  return (
-    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-      <p className="text-sm text-gray-700 font-medium mb-2">Selected Day:</p>
-      <div className="flex items-center mt-1">
-        <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
-        <span className="font-medium">
-          {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
-        </span>
-      </div>
-      <div className="flex items-center mt-2 text-blue-700">
-        <Clock className="w-4 h-4 mr-2" />
-        <span className="text-sm">
-          {currentSelectedSlot?.isAvailable
-            ? "Please select a time slot"
-            : "This day is unavailable for delivery"}
-        </span>
-      </div>
-    </div>
-  );
-};
-  
+    const availableTimeSlots = [
+      selectedSlot.timeSlot1,
+      selectedSlot.timeSlot2,
+      selectedSlot.timeSlot3,
+      selectedSlot.timeSlot4,
+    ].filter(Boolean);
 
-const TimeSlotPopupModal: React.FC = () => {
-  if (!showTimeSlotPopup) return null;
-
-  const selectedSlot = timeSlotsForTwoDays.find(slot => slot.id === activeTab);
-
-  // Only proceed if we have a selected slot
-  if (!selectedSlot) return null;
-
-  // Check if this slot is available according to our updated understanding
-  if (!selectedSlot.isAvailable) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
         <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
-          <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-4 flex justify-between items-center rounded-t-lg">
-            <h2 className="text-xl font-semibold">
-              Unavailable Day
-            </h2>
+          <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
+            <h2 className="text-xl font-semibold">Select Time Slot</h2>
             <button
               onClick={() => setShowTimeSlotPopup(false)}
-              className="p-1 hover:bg-red-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
 
-          <div className="p-6 text-center">
+          <div className="p-6 overflow-y-auto">
             <div className="mb-4">
-              <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                This day is unavailable for delivery
-              </h3>
-              <p className="text-gray-600 mb-4">
-                We're sorry, but {formatDayOfWeek(selectedSlot.dayOfWeek)} is currently not available for delivery.
-                Please select a different day.
-              </p>
+              <div className="flex items-center mb-4">
+                <CalendarDays className="w-5 h-5 mr-2 text-purple-500" />
+                <span className="font-medium">
+                  {selectedSlot.isToday
+                    ? "Today"
+                    : formatDayOfWeek(selectedSlot.dayOfWeek)}{" "}
+                  - {formatDeliveryDate(selectedSlot.date || "")}
+                </span>
+              </div>
 
+              <div className="grid grid-cols-1 gap-4">
+                {availableTimeSlots.map((timeSlot, index) => (
+                  <div
+                    key={`timeSlot-${index}`}
+                    className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${
+                      selectedTimeSlot === timeSlot &&
+                      selectedDate === selectedSlot.date &&
+                      selectedDay === selectedSlot.dayOfWeek
+                        ? "border-green-500 bg-green-50 shadow-sm"
+                        : "border-gray-200 bg-white"
+                    }`}
+                    onClick={() =>
+                      handleSelectTimeSlot(
+                        selectedSlot.date || "",
+                        timeSlot,
+                        selectedSlot.dayOfWeek
+                      )
+                    }
+                  >
+                    <div className="flex items-center">
+                      <Clock className="w-5 h-5 mr-3 text-gray-500" />
+                      <span className="font-medium text-lg">{timeSlot}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+            <div className="flex space-x-3">
               <button
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
                 onClick={() => setShowTimeSlotPopup(false)}
               >
-                Select Another Day
+                Back
+              </button>
+              <button
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
+                onClick={updateDeliveryTimeSlot}
+                disabled={
+                  timeSlotUpdating ||
+                  !selectedDay ||
+                  !selectedTimeSlot ||
+                  !selectedDate
+                }
+              >
+                {timeSlotUpdating ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
+                    Updating...
+                  </span>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Confirm
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
     );
-  }
+  };
 
-  // Get non-empty and non-duplicate time slots
-  const availableTimeSlots = [
-    selectedSlot.timeSlot1,
-    selectedSlot.timeSlot2,
-    selectedSlot.timeSlot3,
-    selectedSlot.timeSlot4,
-  ]
-  .filter(Boolean) // Remove empty slots
-  .filter((slot, index, self) => self.indexOf(slot) === index); // Remove duplicates
+  const DaySelectionList: React.FC = () => {
+    return (
+      <div className="grid grid-cols-1 gap-3 mb-4">
+        {timeSlotsForTwoDays.map((slot) => {
+          const isActive = activeTab === slot.id;
+          const isAvailable = slot.isAvailable;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center rounded-t-lg">
-          <h2 className="text-xl font-semibold">
-            Select Time Slot
-          </h2>
-          <button
-            onClick={() => setShowTimeSlotPopup(false)}
-            className="p-1 hover:bg-purple-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto">
-          <div className="mb-4">
-            <div className="flex items-center mb-4">
-              <CalendarDays className="w-5 h-5 mr-2 text-purple-500" />
-              <span className="font-medium">
-                {selectedSlot.isToday
-                  ? "Today"
-                  : formatDayOfWeek(selectedSlot.dayOfWeek)
-                } - {formatDeliveryDate(selectedSlot.date || "")}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              {availableTimeSlots.map((timeSlot, index) => (
-                <div
-                  key={`timeSlot-${index}`}
-                  className={`py-4 px-5 border rounded-md cursor-pointer hover:bg-green-50 hover:border-green-500 transition-all ${selectedTimeSlot === timeSlot &&
-                      selectedDate === selectedSlot.date &&
-                      selectedDay === selectedSlot.dayOfWeek
-                      ? "border-green-500 bg-green-50 shadow-sm"
-                      : "border-gray-200 bg-white"
-                    }`}
-                  onClick={() =>
-                    handleSelectTimeSlot(
-                      selectedSlot.date || "",
-                      timeSlot,
-                      selectedSlot.dayOfWeek
-                    )
-                  }
-                >
-                  <div className="flex items-center">
-                    <Clock className="w-5 h-5 mr-3 text-gray-500" />
-                    <span className="font-medium text-lg">
-                      {timeSlot}
-                    </span>
-                  </div>
+          return (
+            <button
+              key={`day-${slot.id}`}
+              className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                isAvailable
+                  ? `hover:bg-purple-50 hover:border-purple-500 ${
+                      isActive
+                        ? "border-purple-500 bg-purple-50"
+                        : "border-gray-200"
+                    }`
+                  : "border-gray-200 bg-gray-50 opacity-80"
+              }`}
+              onClick={() => handleDaySelection(slot)}
+            >
+              <div className="flex items-center">
+                {isAvailable ? (
+                  <CalendarDays className="w-5 h-5 mr-3 text-purple-500" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 mr-3 text-orange-500" />
+                )}
+                <div className="text-left">
+                  <span
+                    className={`font-medium ${
+                      isAvailable ? "text-gray-900" : "text-gray-500"
+                    } block`}
+                  >
+                    {slot.isToday ? "Today" : formatDayOfWeek(slot.dayOfWeek)}
+                    {!isAvailable && " (Unavailable)"}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {slot.date ? formatDeliveryDate(slot.date) : ""}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
-          <div className="flex space-x-3">
-            <button
-              className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
-              onClick={() => setShowTimeSlotPopup(false)}
-            >
-              Back
-            </button>
-            <button
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:bg-purple-300 flex items-center justify-center shadow-sm"
-              onClick={updateDeliveryTimeSlot}
-              disabled={
-                timeSlotUpdating ||
-                !selectedDay ||
-                !selectedTimeSlot ||
-                !selectedDate
-              }
-            >
-              {timeSlotUpdating ? (
-                <span className="flex items-center justify-center">
-                  <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
-                  Updating...
-                </span>
+              </div>
+              {isAvailable ? (
+                <ChevronRight className="h-5 w-5 text-gray-400" />
               ) : (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Confirm
-                </>
+                <X className="h-5 w-5 text-orange-400" />
               )}
             </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const EnhancedDeliveryTime: React.FC = () => {
+    if (!selectedDay || !selectedDate) {
+      return null;
+    }
+
+    const currentSelectedSlot = timeSlotsForTwoDays.find(
+      (slot) => slot.dayOfWeek === selectedDay
+    );
+
+    if (currentSelectedSlot && !currentSelectedSlot.isAvailable) {
+      return (
+        <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-100">
+          <p className="text-sm text-gray-700 font-medium mb-2">
+            Selected Day (Unavailable):
+          </p>
+          <div className="flex items-center mt-1">
+            <CalendarDays className="w-4 h-4 mr-2 text-orange-600" />
+            <span className="font-medium">
+              {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+            </span>
           </div>
+          <div className="flex items-center mt-3 text-orange-700">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            <span className="text-sm">
+              This day is not available for delivery
+            </span>
+          </div>
+          <p className="text-xs text-gray-600 mt-2">
+            Please select another day from the list above.
+          </p>
+        </div>
+      );
+    }
+
+    if (selectedTimeSlot) {
+      return (
+        <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+          <p className="text-sm text-gray-700 font-medium mb-2">
+            Selected Delivery Time:
+          </p>
+          <div className="flex items-center mt-1">
+            <CalendarDays className="w-4 h-4 mr-2 text-purple-600" />
+            <span className="font-medium">
+              {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+            </span>
+          </div>
+          <div className="flex items-center mt-1">
+            <Clock className="w-4 h-4 mr-2 text-purple-600" />
+            <span>{selectedTimeSlot}</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <p className="text-sm text-gray-700 font-medium mb-2">Selected Day:</p>
+        <div className="flex items-center mt-1">
+          <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
+          <span className="font-medium">
+            {formatDayOfWeek(selectedDay)}, {formatDeliveryDate(selectedDate)}
+          </span>
+        </div>
+        <div className="flex items-center mt-2 text-blue-700">
+          <Clock className="w-4 h-4 mr-2" />
+          <span className="text-sm">
+            {currentSelectedSlot?.isAvailable
+              ? "Please select a time slot"
+              : "This day is unavailable for delivery"}
+          </span>
         </div>
       </div>
-    </div>
-  );
-};
-
-const DaySelectionList: React.FC = () => {
-  return (
-    <div className="grid grid-cols-1 gap-3 mb-4">
-      {timeSlotsForTwoDays.map((slot) => {
-        const isActive = activeTab === slot.id;
-        // Here we're using the direct value of isAvailable, no need to invert
-        const shouldShowDay = slot.isAvailable;
-
-        return (
-          <button
-            key={`day-${slot.id}`}
-            className={`flex items-center justify-between p-4 border rounded-lg transition-all ${shouldShowDay
-                ? `hover:bg-purple-50 hover:border-purple-500 ${isActive ? "border-purple-500 bg-purple-50" : "border-gray-200"
-                }`
-                : "border-gray-200 bg-gray-50 opacity-80"
-              }`}
-            onClick={() => handleDaySelection(slot)}
-          >
-            <div className="flex items-center">
-              {shouldShowDay ? (
-                <CalendarDays className="w-5 h-5 mr-3 text-purple-500" />
-              ) : (
-                <AlertCircle className="w-5 h-5 mr-3 text-orange-500" />
-              )}
-              <div className="text-left">
-                <span className={`font-medium ${shouldShowDay ? "text-gray-900" : "text-gray-500"} block`}>
-                  {slot.isToday ? "Today" : formatDayOfWeek(slot.dayOfWeek)}
-                  {!shouldShowDay && " (Unavailable)"}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {slot.date ? formatDeliveryDate(slot.date) : ""}
-                </span>
-              </div>
-            </div>
-            {shouldShowDay ? (
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            ) : (
-              <X className="h-5 w-5 text-orange-400" />
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
-
+    );
+  };
 
   //helper function for matching the exchanged order id's with their original order id's
   const findMatchingDeliveredOrderId = (exchangeOrderId: string) => {
@@ -1884,6 +1917,218 @@ const DaySelectionList: React.FC = () => {
     );
   };
 
+  //function to fetch co-ordinates for latitude and longitude
+  const getCoordinates = async (address: string) => {
+    try {
+      const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+      )}&key=${API_KEY}`;
+      const response = await axios.get(url);
+      return response.data.results[0]?.geometry.location;
+    } catch (error) {
+      console.error("Error fetching coordinates:", error);
+      return null;
+    }
+  };
+
+  //function to validate the address form
+  const validateAddressForm = () => {
+    const newFormErrors = {
+      flatNo: "",
+      landMark: "",
+      address: "",
+      pincode: "",
+    };
+
+    if (!addressFormData.flatNo.trim())
+      newFormErrors.flatNo = "Flat/House number is required";
+    if (!addressFormData.landMark.trim())
+      newFormErrors.landMark = "Landmark is required";
+    if (!addressFormData.address.trim())
+      newFormErrors.address = "Address is required";
+    if (!addressFormData.pincode.trim())
+      newFormErrors.pincode = "PIN code is required";
+    else if (!/^\d{6}$/.test(addressFormData.pincode))
+      newFormErrors.pincode = "Please enter a valid 6-digit PIN code";
+
+    setAddressFormErrors(newFormErrors);
+    return !Object.values(newFormErrors).some((error) => error);
+  };
+
+  //function to handle update address
+  const handleUpdateAddress = async () => {
+    if (!validateAddressForm()) return;
+    if (!selectedOrder) return;
+
+    try {
+      setIsAddressUpdating(true);
+
+      const fullAddress = `${addressFormData.flatNo}, ${addressFormData.landMark}, ${addressFormData.address}, ${addressFormData.pincode}`;
+      const coordinates = await getCoordinates(fullAddress);
+
+      if (!coordinates) {
+        message.error(
+          "Unable to find location coordinates. Please check the address."
+        );
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const requestBody = {
+        address: addressFormData.address,
+        area: addressFormData.area,
+        flatNo: addressFormData.flatNo,
+        houseType: addressFormData.houseType,
+        landMark: addressFormData.landMark,
+        latitude: coordinates.lat,
+        longitude: coordinates.lng,
+        orderId: selectedOrder.orderId,
+        pincode: parseInt(addressFormData.pincode),
+        residenceName: addressFormData.residenceName,
+      };
+
+      await axios.patch(
+        `${BASE_URL}/order-service/orderAddressUpdate`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setAddressUpdateSuccess(true);
+      message.success("Address updated successfully!");
+
+      // Update the selected order's address in the state
+      setSelectedOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              orderAddress: {
+                flatNo: addressFormData.flatNo,
+                landMark: addressFormData.landMark,
+                address: addressFormData.address,
+                pincode: parseInt(addressFormData.pincode),
+              },
+            }
+          : prev
+      );
+
+      // Update the orders list
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.orderId === selectedOrder.orderId
+            ? {
+                ...order,
+                orderAddress: {
+                  flatNo: addressFormData.flatNo,
+                  landMark: addressFormData.landMark,
+                  address: addressFormData.address,
+                  pincode: parseInt(addressFormData.pincode),
+                },
+              }
+            : order
+        )
+      );
+
+      setTimeout(() => {
+        setAddressUpdateSuccess(false);
+        setIsAddressUpdateModalOpen(false);
+        resetAddressForm();
+      }, 2000);
+    } catch (error) {
+      console.error("Error updating address:", error);
+      message.error("Failed to update address. Please try again.");
+    } finally {
+      setIsAddressUpdating(false);
+    }
+  };
+
+  //function to reset the form after submission or cancellation.
+  const resetAddressForm = () => {
+    setAddressFormData({
+      flatNo: "",
+      landMark: "",
+      address: "",
+      pincode: "",
+      latitude: 0,
+      longitude: 0,
+      area: "",
+      houseType: "",
+      residenceName: "",
+    });
+    setAddressFormErrors({
+      flatNo: "",
+      landMark: "",
+      address: "",
+      pincode: "",
+    });
+  };
+
+  //function to open modal for update address modal
+  const openAddressUpdateModal = (order: OrderDetailsResponse) => {
+    setSelectedOrder(order);
+    setAddressFormData({
+      flatNo: order.orderAddress?.flatNo || "",
+      landMark: order.orderAddress?.landMark || "",
+      address: order.orderAddress?.address || "",
+      pincode: order.orderAddress?.pincode?.toString() || "",
+      latitude: 0,
+      longitude: 0,
+      area: "",
+      houseType: "",
+      residenceName: "",
+    });
+    setIsAddressUpdateModalOpen(true);
+  };
+
+  //function for fetching the delivery boy details
+  const fetchDeliveryBoyDetails = async (
+    orderId: string,
+    orderStatus: string
+  ) => {
+    const normalizedStatus = orderStatus === "Assigned" ? "3" : orderStatus;
+    if (normalizedStatus !== "3" && normalizedStatus !== "PickedUp") {
+      setDeliveryBoyDetails(null);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const data = {
+        orderId,
+        orderStatus: normalizedStatus,
+      };
+
+      const response = await axios.post(
+        `${BASE_URL}/order-service/deliveryBoyAssigneData`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data[0]) {
+        setDeliveryBoyDetails({
+          deliveryBoyName: response.data[0].deliveryBoyName || "N/A",
+          deliveryBoyMobile: response.data[0].deliveryBoyMobile || "N/A",
+        });
+      } else {
+        setDeliveryBoyDetails(null);
+      }
+    } catch (error) {
+      console.error("Error fetching delivery boy details:", error);
+      setDeliveryBoyDetails(null);
+      message.error("Failed to fetch delivery boy details.");
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-8">
@@ -1982,6 +2227,9 @@ const DaySelectionList: React.FC = () => {
             <h3 className="mt-3 sm:mt-4 text-lg sm:text-xl font-medium text-gray-900">
               No orders found
             </h3>
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-500">
+              Try changing your search or filter criteria.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
@@ -2158,155 +2406,168 @@ const DaySelectionList: React.FC = () => {
           </div>
         )}
 
-    {isFeedbackOpen && orderToRate && (
-  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 z-[1000] transition-opacity duration-300">
-    <div 
-      className="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full shadow-xl transform transition-all duration-300 ease-out mx-auto"
-      style={{
-        animation: "scaleIn 0.3s ease-out forwards"
-      }}
-    >
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-t-lg flex justify-between items-center">
-        <h2 className="text-lg font-bold">Rate Your Experience</h2>
-        <button
-          onClick={closeFeedbackModal}
-          className="p-1 hover:bg-white/20 rounded-full transition-colors"
-          aria-label="Close feedback form"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      
-      <div className="p-4">
-        {feedbackSuccess ? (
-          <div className="text-center py-4">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3" 
-                 style={{ animation: "pulse 1.5s ease-out" }}>
-              <CheckCircle className="w-8 h-8 text-green-500 dark:text-green-400" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
-              Thank You!
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
-              Your feedback has been submitted.
-            </p>
-            <button
-              onClick={closeFeedbackModal}
-              className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-md transition-all duration-200 text-sm"
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="text-center mb-4">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                Order #{orderToRate.newOrderId || orderToRate.orderId?.slice(-4)}
-              </p>
-            </div>
-            
-            {/* Cool Rating Interface */}
-            <div className="mb-4">
-              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-                <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                  <ThumbsDown className="w-3 h-3" />
-                  <span>Poor</span>
-                </div>
-                <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                  <span>Excellent</span>
-                  <ThumbsUp className="w-3 h-3" />
-                </div>
+        {isExchangeModalOpen && selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[1000]">
+            <div className="bg-white rounded-lg max-w-lg w-full max-h-[95vh] overflow-y-auto scrollbar-hidden">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Request Exchange</h2>
+                <button
+                  onClick={closeExchangeModal}
+                  className="p-1 hover:bg-purple-700 rounded-full transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-              
-              <div className="flex justify-between items-center my-2 px-2">
-                {feedbackOptions.map((option, index) => {
-                  // Define gradient colors inline
-                  const gradients = [
-                    "#ff5f6d, #ffc371", // Poor (red-orange)
-                    "#ff9a44, #fc6076", // Below Average (orange-pink)
-                    "#f9d423, #ff4e50", // Average (yellow-red)
-                    "#00b09b, #96c93d", // Good (teal-green)
-                    "#42275a, #734b6d"  // Excellent (purple)
-                  ];
-                  const gradientColor = gradients[index] || "#6b46c1, #8b5cf6";
-                  
-                  return (
+              <div className="p-6">
+                {exchangeSuccess ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Exchange Request Submitted
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Your exchange request has been successfully submitted.
+                    </p>
                     <button
-                      key={option.label}
-                      className={`relative transform transition-all duration-200 ${
-                        selectedLabel === option.label ? "scale-125 z-10" : "hover:scale-110"
-                      }`}
-                      onClick={() => setSelectedLabel(option.label)}
-                      style={{ 
-                        transition: "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
-                      }}
+                      onClick={closeExchangeModal}
+                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
                     >
-                      <div 
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          selectedLabel === option.label 
-                            ? "animate-pulse-subtle" 
-                            : ""
-                        }`}
-                        style={{
-                          background: selectedLabel === option.label 
-                            ? `linear-gradient(45deg, ${gradientColor})` 
-                            : "transparent",
-                          boxShadow: selectedLabel === option.label 
-                            ? "0 0 15px rgba(107, 70, 193, 0.5)" 
-                            : "none"
-                        }}
-                      >
-                        <span className="text-2xl filter drop-shadow-sm">
-                          {option.emoji}
-                        </span>
-                      </div>
-                      {selectedLabel === option.label && (
-                        <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-xs font-medium text-purple-600 dark:text-purple-400 whitespace-nowrap">
-                          {option.label}
-                        </div>
-                      )}
+                      Close
                     </button>
-                  );
-                })}
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center mb-6">
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        Exchange Items for Order #
+                        {selectedOrder.newOrderId ||
+                          selectedOrder.orderId?.slice(-4)}
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Select items to exchange and provide a reason.
+                      </p>
+                    </div>
+                    {selectedOrder.orderItems &&
+                    selectedOrder.orderItems.length > 0 ? (
+                      <div className="space-y-4">
+                        {selectedOrder.orderItems.map((item, index) => (
+                          <div
+                            key={item.itemId}
+                            className="border border-gray-200 rounded-lg p-4"
+                          >
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-12 h-12 rounded-lg overflow-hidden border border-purple-100">
+                                {item.itemUrl ? (
+                                  <img
+                                    src={item.itemUrl}
+                                    alt={item.itemName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-purple-50">
+                                    <Package className="h-6 w-6 text-purple-300" />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900">
+                                  {item.itemName}
+                                </h4>
+                                <p className="text-xs text-gray-600">
+                                  {item.weight} {item.itemUnit || "KG"} • Qty
+                                  Available: {item.quantity}
+                                  {item.isExchanged && " • Already Exchanged"}
+                                </p>
+                              </div>
+                            </div>
+                            {!item.isExchanged ? (
+                              <>
+                                <div className="mb-3">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Quantity to Exchange
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max={item.quantity}
+                                    value={exchangeItems[index]?.quantity || 1}
+                                    onChange={(e) =>
+                                      handleExchangeQuantityChange(
+                                        item.itemId,
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
+                                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Reason for Exchange
+                                  </label>
+                                  <textarea
+                                    rows={2}
+                                    value={exchangeItems[index]?.reason || ""}
+                                    onChange={(e) =>
+                                      handleExchangeReasonChange(
+                                        item.itemId,
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="e.g., Did not like the quality"
+                                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                  ></textarea>
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-xs text-blue-600">
+                                This item is not eligible for further exchange.
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Package2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Items Available
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          This order has no items available for exchange.
+                        </p>
+                        <button
+                          onClick={closeExchangeModal}
+                          className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    )}
+                    {selectedOrder.orderItems &&
+                      selectedOrder.orderItems.length > 0 && (
+                        <button
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:bg-purple-300 mt-6"
+                          onClick={submitExchangeRequest}
+                          disabled={exchangeSubmitting}
+                        >
+                          {exchangeSubmitting ? (
+                            <span className="flex items-center justify-center">
+                              <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
+                              Submitting...
+                            </span>
+                          ) : (
+                            "Submit Exchange Request"
+                          )}
+                        </button>
+                      )}
+                  </>
+                )}
               </div>
-              
-              <div className="h-6"></div> {/* Spacer for selected label text */}
             </div>
-            
-            <div className="mb-4">
-              <textarea
-                rows={2}
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                placeholder="Additional comments (optional)"
-                className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              ></textarea>
-            </div>
-            
-            <button
-              className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium py-2 px-4 rounded-md transition-all duration-300 text-sm ${
-                !selectedLabel 
-                  ? "opacity-60 cursor-not-allowed" 
-                  : "hover:from-purple-700 hover:to-indigo-700"
-              }`}
-              onClick={submitFeedback}
-              disabled={feedbackSubmitting || !selectedLabel}
-            >
-              {feedbackSubmitting ? (
-                <span className="flex items-center justify-center">
-                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
-                  Submitting...
-                </span>
-              ) : (
-                "Submit"
-              )}
-            </button>
-          </>
+          </div>
         )}
-      </div>
-    </div>
-  </div>
-)}
 
         {isDetailsOpen && selectedOrder && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-1 sm:p-3 z-50 overflow-auto">
@@ -2568,15 +2829,50 @@ const DaySelectionList: React.FC = () => {
                           </span>
                         </div>
                       )}
+                    {deliveryBoyDetails &&
+                      (selectedOrder.orderStatus === "3" ||
+                        selectedOrder.orderStatus === "PickedUp") && (
+                        <div className="flex items-start gap-2 mt-2">
+                          <Truck className="h-4 w-4 text-purple-700 mt-0.5" />
+                          <div>
+                            <p className="font-medium">
+                              <strong>Delivery Boy Details</strong>
+                            </p>
+                            <p>
+                              <span className="font-medium">Name:</span>{" "}
+                              {deliveryBoyDetails.deliveryBoyName}
+                            </p>
+                            <p>
+                              <span className="font-medium">Mobile:</span>{" "}
+                              {deliveryBoyDetails.deliveryBoyMobile}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                   </div>
                   {["0", "1", "2", "3"].includes(selectedOrder.orderStatus) && (
-                    <button
-                      onClick={openEditDeliveryTime}
-                      className="mt-3 flex items-center gap-1.5 text-purple-600 hover:text-purple-800 text-xs font-medium"
-                    >
-                      <Clock className="h-4 w-4" />
-                      Change Delivery Time
-                    </button>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <button
+                        onClick={openEditDeliveryTime}
+                        className="flex items-center gap-1.5 text-purple-600 hover:text-purple-800 text-xs font-medium"
+                      >
+                        <Clock className="h-4 w-4" />
+                        Change Delivery Time
+                      </button>
+                      {isWithin24Hours(
+                        selectedOrder.orderHistory.find(
+                          (history) => history.placedDate
+                        )?.placedDate ?? null
+                      ) && (
+                        <button
+                          onClick={() => openAddressUpdateModal(selectedOrder)}
+                          className="flex items-center gap-1.5 text-purple-600 hover:text-purple-800 text-xs font-medium"
+                        >
+                          <MapPin className="h-4 w-4" />
+                          Update Address
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -2746,164 +3042,101 @@ const DaySelectionList: React.FC = () => {
             </div>
           </div>
         )}
-{isFeedbackOpen && orderToRate && (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[1000] transition-opacity duration-300">
-    <div 
-      className="bg-white dark:bg-gray-900 rounded-xl max-w-md w-full shadow-2xl transform transition-all duration-300 ease-out mx-auto overflow-hidden"
-      style={{
-        animation: "fadeInUp 0.4s ease-out forwards"
-      }}
-    >
-      {/* Header with subtle pattern background */}
-      <div 
-        className="bg-indigo-600 text-white p-4 relative overflow-hidden"
-        style={{
-          backgroundImage: "radial-gradient(circle at 20% 150%, rgba(255, 255, 255, 0.15) 0%, transparent 40%)"
-        }}
-      >
-        <div className="flex justify-between items-center relative z-10">
-          <h2 className="text-xl font-bold">How was your experience?</h2>
-          <button
-            onClick={closeFeedbackModal}
-            className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
-            aria-label="Close feedback form"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        
-        {/* Abstract decoration */}
-        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-500/30 rounded-full blur-xl"></div>
-        <div className="absolute -left-4 -top-4 w-24 h-24 bg-purple-500/20 rounded-full blur-lg"></div>
-      </div>
-      
-      <div className="p-5">
-        {feedbackSuccess ? (
-          <div className="text-center py-8">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4" 
-                 style={{ animation: "pulse 2s infinite ease-in-out" }}>
-              <CheckCircle className="w-10 h-10 text-green-500 dark:text-green-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Feedback Received
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
-              Thank you for taking the time to share your thoughts with us!
-            </p>
-            <button
-              onClick={closeFeedbackModal}
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-all duration-200 text-sm"
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="text-center mb-5">
-              <div className="inline-block bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg text-sm font-medium mb-1">
-                Order #{orderToRate.newOrderId || orderToRate.orderId?.slice(-4)}
+
+        {isFeedbackOpen && orderToRate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[1000]">
+            <div className="bg-white rounded-lg max-w-lg w-full max-h-[95vh] overflow-y-auto scrollbar-hidden">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Rate Your Experience</h2>
+                <button
+                  onClick={closeFeedbackModal}
+                  className="p-1 hover:bg-purple-700 rounded-full transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Your feedback helps us improve our service
-              </p>
-            </div>
-            
-            {/* Rating Interface */}
-            <div className="mb-6">
-              <div className="flex justify-center items-center space-x-2 mb-6">
-                {feedbackOptions.map((option, index) => {
-                  // Define vibrant complementary gradient pairs
-                  const gradients = [
-                    "from-rose-500 to-orange-400", // Poor
-                    "from-orange-400 to-amber-500", // Below Average
-                    "from-amber-400 to-yellow-300", // Average
-                    "from-teal-400 to-emerald-500", // Good
-                    "from-indigo-500 to-purple-500"  // Excellent
-                  ];
-                  
-                  return (
+              <div className="p-6">
+                {feedbackSuccess ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Thank You for Your Feedback!
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Your feedback has been successfully submitted.
+                    </p>
                     <button
-                      key={option.label}
-                      className={`group relative transform transition-all duration-300 ${
-                        selectedLabel === option.label ? "scale-110 z-10" : "hover:scale-105"
-                      }`}
-                      onClick={() => setSelectedLabel(option.label)}
+                      onClick={closeFeedbackModal}
+                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
                     >
-                      <div 
-                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          selectedLabel === option.label 
-                            ? `bg-gradient-to-br ${gradients[index]}` 
-                            : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                        }`}
-                        style={{
-                          boxShadow: selectedLabel === option.label 
-                            ? "0 5px 15px rgba(79, 70, 229, 0.4)" 
-                            : "none",
-                          transform: selectedLabel === option.label
-                            ? "translateY(-3px)"
-                            : "none"
-                        }}
-                      >
-                        <span className="text-2xl">
-                          {option.emoji}
-                        </span>
-                      </div>
-                      <div 
-                        className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs font-medium whitespace-nowrap transition-all duration-300 ${
-                          selectedLabel === option.label
-                            ? "opacity-100 text-indigo-600 dark:text-indigo-400"
-                            : "opacity-0 group-hover:opacity-75 text-gray-500 dark:text-gray-400"
-                        }`}
-                      >
-                        {option.label}
-                      </div>
+                      Close
                     </button>
-                  );
-                })}
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center mb-6">
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        How was your experience with Order #
+                        {orderToRate.newOrderId ||
+                          orderToRate.orderId?.slice(-4)}
+                        ?
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Your feedback helps us improve our services.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 mb-6">
+                      {feedbackOptions.map((option) => (
+                        <button
+                          key={option.label}
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                            selectedLabel === option.label
+                              ? "border-purple-500 bg-purple-50"
+                              : "border-gray-200 hover:bg-gray-50"
+                          }`}
+                          onClick={() => setSelectedLabel(option.label)}
+                        >
+                          <span className="text-xl">{option.emoji}</span>
+                          <span className="text-sm font-medium">
+                            {option.text}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Additional Comments (Optional)
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={comments}
+                        onChange={(e) => setComments(e.target.value)}
+                        placeholder="Share your thoughts..."
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                      ></textarea>
+                    </div>
+                    <button
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:bg-purple-300"
+                      onClick={submitFeedback}
+                      disabled={feedbackSubmitting || !selectedLabel}
+                    >
+                      {feedbackSubmitting ? (
+                        <span className="flex items-center justify-center">
+                          <span className="animate-spin h-5 w-5 border-b-2 border-white rounded-full mr-2"></span>
+                          Submitting...
+                        </span>
+                      ) : (
+                        "Submit Feedback"
+                      )}
+                    </button>
+                  </>
+                )}
               </div>
-            
             </div>
-            
-            <div className="mt-20 mb-5 relative">
-              <textarea
-                rows={3}
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                placeholder="Tell us more about your experience (optional)"
-                className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              ></textarea>
-              <div className="absolute bottom-3 right-3 text-xs text-gray-400">
-                {comments.length}/200
-              </div>
-            </div>
-            
-            <button
-              className={`w-full flex items-center justify-center bg-gradient-to-r from-indigo-600 to-violet-500 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 text-sm ${
-                !selectedLabel 
-                  ? "opacity-60 cursor-not-allowed from-gray-400 to-gray-500" 
-                  : "hover:from-indigo-700 hover:to-violet-600 hover:shadow-lg hover:shadow-indigo-500/30"
-              }`}
-              onClick={submitFeedback}
-              disabled={feedbackSubmitting || !selectedLabel}
-            >
-              {feedbackSubmitting ? (
-                <span className="flex items-center justify-center">
-                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
-                  Processing...
-                </span>
-              ) : (
-                <>
-                  <span>Submit Feedback</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </button>
-          </>
+          </div>
         )}
-      </div>
-    </div>
-  </div>
-)}
 
         {isExchangeModalOpen && selectedOrder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[1000]">
@@ -3069,6 +3302,18 @@ const DaySelectionList: React.FC = () => {
         )}
 
         <EditDeliveryTimeModal />
+        <AddressUpdateModal
+          isOpen={isAddressUpdateModalOpen}
+          selectedOrder={selectedOrder}
+          addressFormData={addressFormData}
+          addressFormErrors={addressFormErrors}
+          addressUpdateSuccess={addressUpdateSuccess}
+          isAddressUpdating={isAddressUpdating}
+          setAddressFormData={setAddressFormData}
+          setIsAddressUpdateModalOpen={setIsAddressUpdateModalOpen}
+          resetAddressForm={resetAddressForm}
+          handleUpdateAddress={handleUpdateAddress}
+        />
       </div>
       <Footer />
     </div>

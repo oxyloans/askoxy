@@ -34,6 +34,9 @@ interface CartItem {
   quantity: number;
   freeQuantity?: number;
   promotionType?: string;
+  goldMakingCost?: number;
+  goldGst?: number;
+  goldMakingCostAndGst?: number;
 }
 
 interface AddressFormData {
@@ -1944,20 +1947,110 @@ const CartPage: React.FC = () => {
                     <span>Shipping</span>
                     <span className="font-semibold">₹0.00</span>
                   </div>
+                  {cartData?.map((item) => {
+                    const quantity = regularCartItems[item.itemId] || 0;
+                    const goldMakingCost = item.goldMakingCost ?? 0;
+                    const goldGst = item.goldGst ?? 0;
+                    const goldMakingCostAndGst =
+                      item.goldMakingCostAndGst ?? goldMakingCost + goldGst;
+
+                    if (goldMakingCost <= 0) return null;
+
+                    return (
+                      <div
+                        key={item.itemId}
+                        className="mb-2 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        {/* Cost breakdown */}
+                        <div className="space-y-1.5">
+                          {/* Gold Making Cost */}
+                          <div className="flex justify-between items-center text-xs sm:text-sm">
+                            <span className="text-gray-600 font-medium">
+                              Gold Making Cost
+                            </span>
+                            <span className="text-gray-800 font-semibold">
+                              ₹
+                              {(goldMakingCost * quantity).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Gold GST */}
+                          <div className="flex justify-between items-center text-xs sm:text-sm">
+                            <span className="text-gray-600 font-medium">
+                              Gold GST
+                            </span>
+                            <span className="text-gray-800 font-semibold">
+                              ₹
+                              {(goldGst * quantity).toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+
+                          {/*                        
+                          <hr className="border-gray-300" />
+                          <div className="flex justify-between items-center text-sm sm:text-base">
+                            <span className="text-gray-900 font-semibold">
+                              Total
+                            </span>
+                            <span className="text-gray-900 font-bold">
+                              ₹
+                              {(goldMakingCostAndGst * quantity).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}
+                            </span>
+                          </div> */}
+
+                          {/* Quantity indicator */}
+                          {quantity > 1 && (
+                            <div className="text-xs text-gray-500 text-right">
+                              Qty: {quantity}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
                   <div className="flex justify-between mb-4 text-gray-800 font-bold text-lg">
-                    <span>Total</span>
+                    <span>Grand Total</span>
                     <span>
                       ₹
-                      {cartData
-                        ?.filter((item) => item.status !== "FREE")
-                        .reduce(
-                          (acc, item) =>
-                            acc +
-                            parseFloat(item.itemPrice) *
-                              (regularCartItems[item.itemId] || 0),
-                          0
-                        )
-                        .toFixed(2) || "0.00"}
+                      {(() => {
+                        // Calculate item total
+                        const itemTotal =
+                          cartData
+                            ?.filter((item) => item.status !== "FREE")
+                            .reduce(
+                              (acc, item) =>
+                                acc +
+                                parseFloat(item.itemPrice) *
+                                  (regularCartItems[item.itemId] || 0),
+                              0
+                            ) || 0;
+
+                        const goldTotal =
+                          cartData?.reduce((acc, item) => {
+                            const quantity = regularCartItems[item.itemId] || 0;
+                            const goldMakingCostAndGst =
+                              item.goldMakingCostAndGst ??
+                              (item.goldMakingCost ?? 0) + (item.goldGst ?? 0);
+                            return acc + goldMakingCostAndGst * quantity;
+                          }, 0) || 0;
+
+                        return (itemTotal + goldTotal).toFixed(2);
+                      })() || "0.00"}
                     </span>
                   </div>
 

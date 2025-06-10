@@ -396,14 +396,14 @@ const OrderReport: React.FC = () => {
       textColor: "text-teal-800",
       borderColor: "border-teal-200",
     },
-    {
-      label: "Orders Accepted",
-      value: orderData?.orderAcceptedCount || 0,
-      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
-      color: "bg-green-100",
-      textColor: "text-green-800",
-      borderColor: "border-green-200",
-    },
+    // {
+    //   label: "Orders Accepted",
+    //   value: orderData?.orderAcceptedCount || 0,
+    //   icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+    //   color: "bg-green-100",
+    //   textColor: "text-green-800",
+    //   borderColor: "border-green-200",
+    // },
     {
       label: "Orders Assigned",
       value: orderData?.orderAssignedCount || 0,
@@ -687,7 +687,7 @@ const OrderReport: React.FC = () => {
                   <span className="text-gray-600">{currentMonth}</span>
                 </div>
 
-                {/* Sort Button and Filter */}
+               
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={toggleSortOrder}

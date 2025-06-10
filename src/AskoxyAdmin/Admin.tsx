@@ -4,6 +4,7 @@ import Sidebar from "./Sider";
 import { Table, TableProps } from "antd";
 import "antd/dist/reset.css";
 import BASE_URL from "../Config";
+import dayjs from "dayjs";
 
 interface DashboardCardProps {
   title: string;
@@ -205,16 +206,44 @@ const Admin: React.FC = () => {
   const knownOfferTypes = [
     "WEAREHIRING",
     "ROTARIAN",
+    "MY ROTARY",
     "LEGALSERVICES",
     "LEGAL SERVICE",
     "STUDYABROAD",
     "FREEAI",
     "FREESAMPLE",
     "FREERUDHRAKSHA",
+    "FREE RUDHRAKSHA",
   ];
 
   const isKnownType = (offerName: string) => {
     return knownOfferTypes.some((type) => offerName === type);
+  };
+
+  const unknownOffers = allOffers.filter(
+    (offer) => !isKnownType(offer.askOxyOfers)
+  );
+
+  const labelMap: Record<string, OfferDetails[]> = {};
+
+  unknownOffers.forEach((offer) => {
+    const label = offer.askOxyOfers?.trim();
+    if (label) {
+      if (!labelMap[label]) labelMap[label] = [];
+      labelMap[label].push(offer);
+    }
+  });
+
+  const dynamicLabels = Object.keys(labelMap);
+
+  const getShortLabel = (fullLabel: string): string => {
+    const cleaned = fullLabel.trim();
+
+    if (cleaned.includes(" - ")) {
+      return cleaned.split(" - ")[1].trim().split(" ").slice(0, 3).join(" ");
+    }
+
+    return cleaned.split(" ").slice(0, 3).join(" ");
   };
 
   const handleFilter = (offerType: string) => {
@@ -244,9 +273,9 @@ const Admin: React.FC = () => {
         })),
       ];
       setOffers(allData);
-    } else if (offerType === "Other") {
+    } else if (knownOfferTypes.includes(offerType)) {
       const filteredData = allOffers.filter(
-        (offer) => !isKnownType(offer.askOxyOfers)
+        (offer) => offer.askOxyOfers === offerType
       );
 
       const formattedOffers = filteredData.map((offer) => ({
@@ -256,18 +285,17 @@ const Admin: React.FC = () => {
 
       setOffers(formattedOffers);
     } else {
-      setOffers([]);
-
       const filteredData = allOffers.filter(
-        (offer) => offer.askOxyOfers === offerType
+        (offer) =>
+          !isKnownType(offer.askOxyOfers) &&
+          offer.askOxyOfers?.trim() === offerType
       );
 
       const formattedOffers = filteredData.map((offer) => ({
         ...offer,
         createdAt: formatDate(offer.createdAt),
       }));
-      console.log({ formattedOffers });
-      setOffers([]);
+
       setOffers(formattedOffers);
     }
   };
@@ -298,6 +326,10 @@ const Admin: React.FC = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
+      render: (text: string | undefined | null) => {
+        const date = dayjs(text);
+        return date.isValid() ? date.format("MMM DD YYYY") : "No date";
+      },
     },
   ];
 
@@ -492,12 +524,17 @@ const Admin: React.FC = () => {
           >
             We Are Hiring
           </button>
-          <button
-            onClick={() => handleFilter("Other")}
-            className="bg-pink-200 hover:bg-purple-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"
-          >
-            Others
-          </button>
+
+          {dynamicLabels.map((label) => (
+            <button
+              key={label}
+              onClick={() => handleFilter(label)}
+              className="bg-pink-200 hover:bg-purple-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow"
+            >
+              {getShortLabel(label)}
+            </button>
+          ))}
+
           <button
             onClick={() => handleFilter("ALL")}
             className="bg-gray-500 hover:bg-gray-600 hover:text-white text-black font-semibold py-2 px-4 rounded shadow w-full sm:w-auto"

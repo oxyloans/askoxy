@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   PieChart,
   Pie,
@@ -10,7 +9,6 @@ import {
 } from "recharts";
 import {
   Card,
-  Select,
   Table,
   Typography,
   Tag,
@@ -29,65 +27,30 @@ import {
 } from "antd";
 import { ColumnsType } from "antd/es/table";
 import {
+  CalendarOutlined,
   EnvironmentOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
-  LoadingOutlined,
   SearchOutlined,
-  SyncOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
-import { Truck, ShoppingBag, ShoppingCart, Store } from "lucide-react";
-import BASE_URL from "../Config";
+import { Truck, ShoppingBag, ShoppingCart, Store, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
+import {
+  Order,
+  ExchangeOrder,
+  DeliveryBoy,
+  fetchOrdersByStatus,
+  fetchDeliveredOrders,
+  fetchExchangeOrders,
+  fetchDeliveryBoys,
+  rejectOrder,
+  assignOrderToDeliveryBoy,
+} from "./partnerapi";
 
-type OrderData = {
-  orderId: string;
-  uniqueId: string;
-  orderStatus: string;
-  orderDate: string;
-  timeSlot: string;
-  expectedDeliveryDate: string;
-  orderAddress: Address;
-  testUser: boolean;
-  address?: string;
-  clusterId: string;
-  distance: string;
-  distancefromMiyapur: string;
-  distancefromMythriNager: string;
-  choosedLocations: string;
-  orderItems: OrderItems[];
-  orderFrom: string;
-  userType: string;
-};
-
-type OrderItems = {
-  itemName: string;
-  quantity: string;
-  singleItemPrice: number;
-  itemMrpPrice: number;
-  price: number;
-  weight: string;
-};
-
-type DeliveryBoy = {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  whatsappNumber: string;
-  isActive: string;
-  testUser: boolean;
-};
-
-type Address = {
-  flatNo: string;
-  address: string;
-  landMark: string;
-  pincode: number;
-  customerId: string;
-  googleMapLink?: string;
-};
+import ExchangeOrdersTable from "./ExchangeOrders";
 
 type SummaryData = {
   name: string;
@@ -101,39 +64,47 @@ const { TextArea } = Input;
 const MainPage: React.FC = () => {
   const navigate = useNavigate();
   const [summaryData, setSummaryData] = useState<SummaryData[]>([]);
-  const [orderDetails, setOrderDetails] = useState<OrderData[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<OrderData[]>([]);
+  const [orderDetails, setOrderDetails] = useState<Order[]>([]);
+  const [exchangeOrders, setExchangeOrders] = useState<ExchangeOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [exchangeLoading, setExchangeLoading] = useState<boolean>(true);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 50 });
   const [searchValue, setSearchValue] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [rejectForm] = Form.useForm();
-  const accessToken = JSON.parse(localStorage.getItem("Token") || "{}");
-  const [selectedRecord, setSelectedRecord] = useState<OrderData | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<Order | null>(null);
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
-  const [dbModalVisible, setdbModalVisible] = useState(false);
+  const [dbModalVisible, setDbModalVisible] = useState(false);
   const [isMobile] = useState<boolean>(window.innerWidth < 768);
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
-    useState<DeliveryBoy | null>();
-  const [dbLoading, setdbLoading] = useState<boolean>(false);
-  const [dbLoading1, setdbLoading1] = useState<boolean>(false);
-  const handleTableChange = (pagination: any) => {
-    setPagination(pagination);
-  };
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    useState<DeliveryBoy | null>(null);
+  const [dbLoading, setDbLoading] = useState<boolean>(false);
+  const [dbLoading1, setDbLoading1] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [filterDate, setfilterDate] = useState<Dayjs | null>(null);
 
+  const handleDateChange = (date: Dayjs) => {
+    setfilterDate(date);
+  };
   const handleFilterByDate = () => {
-    if (!selectedDate) {
+    if (!filterDate) {
+      message.warning("Please select a date first.");
       return;
     }
 
-    const filtered = orderDetails.filter((order) => {
-      return order.expectedDeliveryDate === selectedDate;
-    });
+    const filtered = orderDetails.filter((order) =>
+      dayjs(order.expectedDeliveryDate, "DD-MM-YYYY").isSame(filterDate, "day")
+    );
 
-    setFilteredOrders(filtered.length > 0 ? filtered : filteredOrders);
+    setFilteredOrders(filtered);
+  };
+
+  const handleTableChange = (pagination: any) => {
+    setPagination(pagination);
   };
 
   const STATUS_COLORS = {
@@ -141,83 +112,98 @@ const MainPage: React.FC = () => {
       gradient: "from-sky-300 to-sky-400",
       background: "linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)",
       borderColor: "#38bdf8",
-      icon: <ShoppingBag className="text-xl text-white" />,
-      label: "New Orders",
-    },
-    "2": {
-      gradient: "from-green-300 to-green-400",
-      background: "linear-gradient(135deg, #86efac 0%, #34d399 100%)",
-      borderColor: "#34d399",
-      icon: <ShoppingCart className="text-xl text-white" />,
-      label: "Accepted Orders",
+      icon: <ShoppingBag className="text-xl" style={{ color: "#38bdf8" }} />,
+      label: "New Placed Orders",
     },
     "3": {
       gradient: "from-rose-200 to-rose-300",
       background: "linear-gradient(135deg, #fecdd3 0%, #fda4b8 100%)",
       borderColor: "#fda4b8",
-      icon: <Truck className="text-xl text-white" />,
+      icon: <Truck className="text-xl" style={{ color: "#fda4b8" }} />,
       label: "Assigned Orders",
     },
     PickedUp: {
       gradient: "from-indigo-300 to-indigo-400",
       background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)",
       borderColor: "#6366f1",
-      icon: <Store className="text-xl text-white" />,
+      icon: <Store className="text-xl" style={{ color: "#6366f1" }} />,
       label: "PickedUp Orders",
+    },
+    "4": {
+      gradient: "from-green-300 to-green-400",
+      background: "linear-gradient(135deg, #86efac 0%, #34d399 100%)",
+      borderColor: "#34d399",
+      icon: <ShoppingCart className="text-xl" style={{ color: "#34d399" }} />,
+      label: "Delivered Orders",
+    },
+    Exchange: {
+      gradient: "from-yellow-300 to-yellow-400",
+      background: "linear-gradient(135deg, #fef08a 0%, #facc15 100%)",
+      borderColor: "#eab308",
+      icon: <Package className="text-xl" style={{ color: "#eab308" }} />,
+      label: "Exchange Orders",
     },
   };
 
-  const fetchOrders = async (status: string): Promise<OrderData[]> => {
-    try {
-      const response = await axios.get<OrderData[]>(
-        `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=${status}`
-      );
-      return response.data
-        .filter((order) => !order.testUser)
-        .map((order) => ({
-          ...order,
-          address: order.orderAddress
-            ? `${order.orderAddress.flatNo}, ${order.orderAddress.address}, ${order.orderAddress.landMark}, ${order.orderAddress.pincode}`
-            : "No Address Available",
-        }));
-    } catch (error) {
-      console.error(`Error fetching orders with status ${status}:`, error);
-      return [];
-    }
-  };
   const fetchData = async () => {
     setLoading(true);
-    const newOrders = await fetchOrders("1");
-    const acceptedOrders = await fetchOrders("2");
-    const assignedOrders = await fetchOrders("3");
-    const pickedUpOrders = await fetchOrders("PickedUp");
-    const summaryData = [
-      { name: "New Orders", count: newOrders.length, status: "1" },
-      { name: "Accepted Orders", count: acceptedOrders.length, status: "2" },
-      { name: "Assigned Orders", count: assignedOrders.length, status: "3" },
-      {
-        name: "PickedUp Orders",
-        count: pickedUpOrders.length,
-        status: "PickedUp",
-      },
-    ];
+    setExchangeLoading(true);
+    try {
+      const newOrders = await fetchOrdersByStatus("1");
+      const assignedOrders = await fetchOrdersByStatus("3");
+      const pickedUpOrders = await fetchOrdersByStatus("PickedUp");
+      const today = dayjs();
+      const startDate1 = today;
+      const endDate1 = today;
+      const deliveredOrders = await fetchDeliveredOrders(
+        startDate1.format("YYYY-MM-DD"),
+        endDate1.format("YYYY-MM-DD")
+      );
+      const exchangeOrdersData = await fetchExchangeOrders();
 
-    setSummaryData(summaryData);
-    setOrderDetails([
-      ...newOrders,
-      ...acceptedOrders,
-      ...assignedOrders,
-      ...pickedUpOrders,
-    ]);
-    setFilteredOrders([
-      ...newOrders,
-      ...acceptedOrders,
-      ...assignedOrders,
-      ...pickedUpOrders,
-    ]);
-    setLoading(false);
+      const summaryData = [
+        { name: "New Orders", count: newOrders.length, status: "1" },
+
+        { name: "Assigned Orders", count: assignedOrders.length, status: "3" },
+        {
+          name: "PickedUp Orders",
+          count: pickedUpOrders.length,
+          status: "PickedUp",
+        },
+        {
+          name: "Exchange Orders",
+          count: exchangeOrdersData.length,
+          status: "Exchange",
+        },
+        {
+          name: "Delivered Orders",
+          count: deliveredOrders.length,
+          status: "4",
+        },
+      ];
+
+      setSummaryData(summaryData);
+      setOrderDetails([
+        ...newOrders,
+        ...assignedOrders,
+        ...pickedUpOrders,
+        ...deliveredOrders,
+      ]);
+      setFilteredOrders([
+        ...newOrders,
+        ...assignedOrders,
+        ...pickedUpOrders,
+        ...deliveredOrders,
+      ]);
+      setExchangeOrders(exchangeOrdersData);
+    } catch (error: any) {
+      message.error(error.message || "Failed to fetch orders.");
+    } finally {
+      setLoading(false);
+      setExchangeLoading(false);
+    }
   };
-  // Data Fetching Effect
+
   useEffect(() => {
     fetchData();
     handleLogin();
@@ -234,6 +220,10 @@ const MainPage: React.FC = () => {
     setSelectedStatus(value);
     if (value === null) {
       setFilteredOrders(orderDetails);
+    } else if (value === "4" && startDate && endDate) {
+      fetchDeliveredOrdersWithDates();
+    } else if (value === "Exchange") {
+      // Exchange orders are handled by ExchangeOrdersTable
     } else {
       const filtered = orderDetails.filter(
         (order) => order.orderStatus === value
@@ -241,11 +231,43 @@ const MainPage: React.FC = () => {
       setFilteredOrders(filtered);
     }
   };
+
+  const fetchDeliveredOrdersWithDates = async () => {
+    if (!startDate || !endDate) {
+      message.warning("Please select both start and end dates.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const deliveredOrders = await fetchDeliveredOrders(
+        startDate.format("YYYY-MM-DD"),
+        endDate.format("YYYY-MM-DD")
+      );
+      setFilteredOrders(deliveredOrders);
+      setOrderDetails((prev) =>
+        prev
+          .filter((order) => order.orderStatus !== "4")
+          .concat(deliveredOrders)
+      );
+      setSummaryData((prev) =>
+        prev.map((item) =>
+          item.status === "4"
+            ? { ...item, count: deliveredOrders.length }
+            : item
+        )
+      );
+    } catch (error: any) {
+      message.error(error.message || "Failed to fetch delivered orders.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "1":
         return "processing";
-      case "2":
+      case "4":
         return "green";
       case "3":
         return "purple";
@@ -259,11 +281,11 @@ const MainPage: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "1":
-        return "placed";
-      case "2":
-        return "Accepted";
+        return "Placed";
+      case "4":
+        return "Delivered";
       case "3":
-        return "assigned";
+        return "Assigned";
       case "PickedUp":
         return "Picked Up";
       default:
@@ -271,16 +293,15 @@ const MainPage: React.FC = () => {
     }
   };
 
-  const handleViewDetails = (order: OrderData) => {
+  const handleViewDetails = (order: Order) => {
     localStorage.setItem("orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 
-  const showRejectConfirmation = (record: OrderData) => {
+  const showRejectConfirmation = (record: Order) => {
     Modal.confirm({
       title: "Are you sure you want to reject this order?",
       icon: <ExclamationCircleOutlined />,
-      // content: "This action cannot be undone.",
       okText: "Yes, Reject",
       okButtonProps: { danger: true },
       cancelText: "No, Cancel",
@@ -291,41 +312,35 @@ const MainPage: React.FC = () => {
     });
   };
 
-  // Handle final rejection submission
   const handleFinalReject = async () => {
     try {
       await rejectForm.validateFields();
       const rejectReason = rejectForm.getFieldValue("rejectReason");
-      const userId = selectedRecord?.orderAddress?.customerId;
       setConfirmLoading(true);
-      const response = await axios.post(
-        `${BASE_URL}/order-service/reject_orders`,
-        {
-          orderId: selectedRecord?.orderId,
-          cancelReason: rejectReason,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken.token}`,
-          },
-        }
-      );
-
-      if (response.data.status) {
-        message.success("Order rejected successfully");
-        setIsModalVisible(false);
-        fetchData();
-      } else {
-        message.error(response.data.message);
-      }
-    } catch (error) {
-      // Handle API or validation errors
-      console.error("Rejection error:", error);
-      message.error("Failed to reject order. Please try again.");
+      await rejectOrder(selectedRecord?.orderId || "", rejectReason);
+      message.success("Order rejected successfully");
+      setIsModalVisible(false);
+      fetchData();
+    } catch (error: any) {
+      message.error(error.message || "Failed to reject order.");
     } finally {
       setConfirmLoading(false);
       setIsModalVisible(false);
       rejectForm.resetFields();
+    }
+  };
+
+  const fetchDeliveryBoysList = async (record: Order) => {
+    setSelectedRecord(record);
+    setDbLoading1(true);
+    try {
+      const data = await fetchDeliveryBoys();
+      setDeliveryBoys(data);
+      setDbModalVisible(true);
+    } catch (error: any) {
+      message.error(error.message || "Failed to fetch delivery boys.");
+    } finally {
+      setDbLoading1(false);
     }
   };
 
@@ -334,40 +349,21 @@ const MainPage: React.FC = () => {
       message.warning("Please select a delivery boy.");
       return;
     }
-    setdbLoading(true);
-    let data =
-      orderStatus === "2" || orderStatus === "1"
-        ? { orderId: orderId, deliveryBoyId: selectedDeliveryBoy.userId }
-        : { orderId: orderId, deliverBoyId: selectedDeliveryBoy.userId };
-
-    let apiUrl =
-      orderStatus === "2" || orderStatus === "1"
-        ? `${BASE_URL}/order-service/orderIdAndDbId`
-        : `${BASE_URL}/order-service/reassignOrderToDb`;
-
+    setDbLoading(true);
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        message.error("Failed to assign to delveryboy");
-      } else {
-        message.success("Order assigned successfully!");
-        setdbModalVisible(false);
-        fetchData();
-      }
-    } catch (error) {
-      // console.error("Error assigning order:", error);
-      message.error("Failed to assign order.");
+      await assignOrderToDeliveryBoy(
+        orderId,
+        selectedDeliveryBoy.userId,
+        orderStatus
+      );
+      message.success("Order assigned successfully!");
+      setDbModalVisible(false);
+      fetchData();
+    } catch (error: any) {
+      message.error(error.message || "Failed to assign order.");
     } finally {
-      setdbLoading(false);
-      setdbModalVisible(false);
+      setDbLoading(false);
+      setDbModalVisible(false);
       setSelectedDeliveryBoy(null);
     }
   };
@@ -389,10 +385,7 @@ const MainPage: React.FC = () => {
               required: true,
               message: "Please provide a reason for rejection",
             },
-            {
-              min: 6,
-              message: "Reason must be at least 6 characters long",
-            },
+            { min: 6, message: "Reason must be at least 6 characters long" },
           ]}
         >
           <TextArea
@@ -404,50 +397,36 @@ const MainPage: React.FC = () => {
     </Modal>
   );
 
-  const fetchDeliveryBoys = async (record: OrderData) => {
-    setSelectedRecord(record);
-    setdbLoading1(true);
-    try {
-      const url = `${BASE_URL}/user-service/deliveryBoyList`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken.token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        message.error(
-          "Failed to get DilveryBoy list please try after sometime."
-        );
-      }
-      const data = await response.json();
-      setDeliveryBoys(data);
-      setdbModalVisible(true);
-    } catch (error) {
-      message.warning(
-        "Failed to get DilveryBoy list please try after sometime."
-      );
-    } finally {
-      setdbLoading1(false);
-    }
-  };
-
-  const getActionButtons = (status: string, record: OrderData) => {
+  const getActionButtons = (status: string, record: Order) => {
     const buttonClasses =
       "relative overflow-hidden transition-all duration-300 ease-in-out w-10 md:w-auto px-2 flex justify-center items-center";
 
+    // if (status === "4") {
+    //   return (
+    //     <div className="group relative">
+    //       <Button
+    //         type="primary"
+    //         className="w-full md:w-auto px-2 bg-purple-500 hover:bg-gray-700 transition-all duration-300 flex items-center justify-center"
+    //         onClick={() => handleViewDetails(record)}
+    //       >
+    //         <div className="flex items-center">
+    //           <span className="group-hover:hidden">View</span>
+    //           <span className="hidden group-hover:block">ViewDetails</span>
+    //         </div>
+    //       </Button>
+    //     </div>
+    //   );
+    // }
+
     switch (status) {
       case "1":
-      case "2":
         return (
           <div className="flex flex-col md:flex-row gap-2">
             <div className="group relative">
               <Button
                 type="primary"
                 className={`bg-blue-500 hover:bg-blue-600 ${buttonClasses}`}
-                onClick={() => fetchDeliveryBoys(record)}
+                onClick={() => fetchDeliveryBoysList(record)}
               >
                 <div className="flex items-center">
                   <span className="group-hover:hidden">A</span>
@@ -455,7 +434,6 @@ const MainPage: React.FC = () => {
                 </div>
               </Button>
             </div>
-
             <div className="group relative">
               <Button
                 danger
@@ -470,7 +448,6 @@ const MainPage: React.FC = () => {
             </div>
           </div>
         );
-
       case "3":
       case "PickedUp":
         return (
@@ -479,7 +456,7 @@ const MainPage: React.FC = () => {
               <Button
                 type="primary"
                 className={`bg-green-500 hover:bg-green-600 ${buttonClasses}`}
-                onClick={() => fetchDeliveryBoys(record)}
+                onClick={() => fetchDeliveryBoysList(record)}
               >
                 <div className="flex items-center">
                   <span className="group-hover:hidden">RA</span>
@@ -487,7 +464,6 @@ const MainPage: React.FC = () => {
                 </div>
               </Button>
             </div>
-
             <div className="group relative">
               <Button
                 danger
@@ -502,20 +478,19 @@ const MainPage: React.FC = () => {
             </div>
           </div>
         );
-
       default:
         return null;
     }
   };
 
-  const columns: ColumnsType<OrderData> = [
+  const columns: ColumnsType<Order> = [
     {
       title: "Order ID",
       dataIndex: "uniqueId",
       key: "uniqueId",
       width: 100,
       sorter: (a, b) => a.uniqueId.localeCompare(b.uniqueId),
-      render: (text: string, record: OrderData) => (
+      render: (text: string, record: Order) => (
         <div className="flex flex-col gap-1">
           <Typography.Text
             className="text-xl font-bold cursor-pointer hover:text-blue-500"
@@ -534,68 +509,93 @@ const MainPage: React.FC = () => {
               {record.orderFrom}
             </Tag>
           )}
-          <Tag color="purple" className="w-fit text-xs">
-            {record.userType}
-          </Tag>
+          {record.userType && (
+            <Tag color="purple" className="w-fit text-xs">
+              {record.userType}
+            </Tag>
+          )}
         </div>
       ),
     },
     {
       title: "Order Address",
-      dataIndex: "orderAddress",
       key: "orderAddress",
-      width: 190,
+      width: 250,
       sorter: (a, b) =>
-        (a.orderAddress?.address || "").localeCompare(
-          b.orderAddress?.address || ""
+        String(a.orderAddress?.pincode || "").localeCompare(
+          String(b.orderAddress?.pincode || "")
         ),
-      render: (_: any, record: any) => {
-        return (
-          <div className="w-[200px] h-[120px] overflow-y-auto overflow-x-hidden scrollbar-hide">
-            {record.orderAddress
-              ? `${record.orderAddress.flatNo}, ${record.orderAddress.address}, ${record.orderAddress.landMark}, ${record.orderAddress.pincode}`
-              : "No Address Available"}
+      render: (_: any, record: Order) => {
+        const address = record.orderAddress;
+        return address ? (
+          <div className="w-[240px] h-[120px] overflow-y-auto overflow-x-hidden scrollbar-hide text-sm flex flex-col gap-2">
+            <div>
+              {[
+                address.flatNo,
+                address.address,
+                address.landMark,
+                address.pincode,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            </div>
+            {address.googleMapLink && (
+              <a
+                href={address.googleMapLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                View Location
+              </a>
+            )}
           </div>
+        ) : (
+          <div className="text-gray-500">N/A</div>
         );
       },
     },
-    {
-      title: "Order Pincode",
-      key: "orderPincode",
-      width: 80,
-      sorter: (a, b) =>
-        (a.orderAddress?.pincode || 0) - (b.orderAddress?.pincode || 0),
-      render: (record: OrderData) => (
-        <div className="flex items-center gap-2 mt-1 flex-col ">
-          {record.orderAddress?.pincode ? (
-            <Typography.Text className="text-sm">
-              {record.orderAddress.pincode}
-            </Typography.Text>
-          ) : (
-            <Typography.Text className="text-gray-500">
-              Not provided
-            </Typography.Text>
-          )}
-          {record.orderAddress?.googleMapLink && (
-            <a
-              href={record.orderAddress?.googleMapLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
-            >
-              <EnvironmentOutlined style={{ fontSize: "20px" }} />
-            </a>
-          )}
-        </div>
-      ),
-    },
+    // {
+    //   title: "Order Pincode",
+    //   key: "orderPincode",
+    //   width: 80,
+    //   sorter: (a, b) =>
+    //     String(a.orderAddress?.pincode || "").localeCompare(
+    //       String(b.orderAddress?.pincode || "")
+    //     ),
+
+    //   render: (record: Order) => (
+    //     <div className="flex items-center gap-2 mt-1 flex-col">
+    //       {record.orderAddress?.pincode ? (
+    //         <Typography.Text className="text-sm">
+    //           {record.orderAddress.pincode}
+    //         </Typography.Text>
+    //       ) : (
+    //         <Typography.Text className="text-gray-500">
+    //           Not provided
+    //         </Typography.Text>
+    //       )}
+    //       {record.orderAddress?.googleMapLink && (
+    //         <a
+    //           href={record.orderAddress.googleMapLink}
+    //           target="_blank"
+    //           rel="noopener noreferrer"
+    //           className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
+    //         >
+    //           <EnvironmentOutlined style={{ fontSize: "20px" }} />
+    //         </a>
+    //       )}
+    //     </div>
+    //   ),
+    // },
     {
       title: "Date & Items",
       key: "datetime",
       width: 90,
-      sorter: (a: OrderData, b: OrderData) =>
-        new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime(),
-      render: (record: OrderData) => (
+      sorter: (a, b) =>
+        new Date(a.orderDate || "").getTime() -
+        new Date(b.orderDate || "").getTime(),
+      render: (record: Order) => (
         <div className="whitespace-nowrap">
           <Typography.Text>
             <div>
@@ -608,28 +608,28 @@ const MainPage: React.FC = () => {
                   })
                 : "Not provided"}
             </div>
-            <div>
-              <strong>Expected:</strong>{" "}
-              {record.expectedDeliveryDate
-                ? (() => {
-                    const [day, month, year] =
-                      record.expectedDeliveryDate.split("-");
-                    const correctedDate = new Date(`${month}-${day}-${year}`);
-                    return correctedDate.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "2-digit",
-                    });
-                  })()
-                : "Not provided"}
-            </div>
+            {record.expectedDeliveryDate && (
+              <div>
+                <strong>Expected date:</strong>{" "}
+                {record.expectedDeliveryDate
+                  ? dayjs(record.expectedDeliveryDate, "DD-MM-YYYY").format(
+                      "MMM DD, YYYY"
+                    )
+                  : "Not provided"}
+              </div>
+            )}
+            {record.deliveryDate && (
+              <div>
+                <strong>Delivered date:</strong>{" "}
+                {dayjs(record.deliveryDate).format("MMM DD, YYYY")}
+              </div>
+            )}
           </Typography.Text>
           <div className="bg-blue-50 p-2 rounded-md max-h-[100px] overflow-y-auto scrollbar-hide w-[220px]">
             {record.orderItems && record.orderItems.length > 0 ? (
               <div className="space-y-2">
                 {record.orderItems.map((item, index) => (
                   <div key={index} className="flex flex-col">
-                    {/* Item Name */}
                     <Typography.Text
                       strong
                       className="text-green-700 font-semibold text-sm"
@@ -637,14 +637,12 @@ const MainPage: React.FC = () => {
                     >
                       {item.itemName || "Unnamed Item"}
                     </Typography.Text>
-
                     <div className="flex gap-2 text-xs text-gray-700">
                       {item.price && (
                         <Typography.Text className="text-red-600 font-medium text-xs">
                           ₹{item.price}
                         </Typography.Text>
                       )}
-
                       {item.quantity && <span>Qty: {item.quantity}</span>}
                       {item.weight && <span>Weight: {item.weight}kgs</span>}
                     </div>
@@ -660,126 +658,177 @@ const MainPage: React.FC = () => {
         </div>
       ),
     },
-
     {
       title: "Actions",
       dataIndex: "orderStatus",
       key: "orderStatus",
       width: 160,
       sorter: (a, b) => a.orderStatus.localeCompare(b.orderStatus),
-      render: (text: string, record: OrderData) => {
+      render: (text: string, record: Order) => {
         return (
-          <div className="flex flex-col md:flex-row items-center gap-2">
-            {getActionButtons(text, record)}
+          <div className="flex flex-col items-center gap-2">
+           
+            <div className="flex flex-col md:flex-row items-center gap-2">
+              {getActionButtons(text, record)}
 
-            <div className="group relative">
-              <Button
-                type="primary"
-                className="w-full md:w-auto px-2 bg-purple-500 hover:bg-gray-700 transition-all duration-300 flex items-center justify-center"
-                onClick={() => handleViewDetails(record)}
-              >
-                <div className="flex items-center">
-                  <span className="group-hover:hidden">View</span>
-                  <span className="hidden group-hover:block">ViewDetails</span>
+              <div className="group relative">
+                <Button
+                  type="primary"
+                  className="w-full md:w-auto px-2 bg-purple-500 hover:bg-gray-700 transition-all duration-300 flex items-center justify-center"
+                  onClick={() => handleViewDetails(record)}
+                >
+                  <div className="flex items-center">
+                    <span className="group-hover:hidden">View</span>
+                    <span className="hidden group-hover:block">
+                      ViewDetails
+                    </span>
+                  </div>
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              {record.deliveryBoyName && (
+                <div className="flex justify-between w-full gap-1 text-sm">
+                  <strong>asgn : </strong>{" "}
+                  <span>
+                    {record.deliveryBoyName}
+                  </span>
                 </div>
-              </Button>
+              )}
+              {record.deliveryBoyMobile && (
+                <div className="flex justify-between w-full text-sm">
+                  <strong>mbl:</strong>
+                  <span>
+                    {record.deliveryBoyMobile}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         );
       },
     },
+
     {
       title: "Distance",
       key: "distance",
       width: 100,
-      render: (record: OrderData) => (
+      render: (record: Order) => (
         <div className="flex flex-col space-y-0.5 text-sm text-gray-600">
           <div className="flex justify-between">
             <span>Miyapur:</span>
-            <span>{record.distancefromMiyapur || "N/A"}</span>
+            <span>{record.distancefromMiyapur}</span>
           </div>
           <div className="flex justify-between">
             <span>MythriNagar:</span>
-            <span>{record.distancefromMythriNager || "N/A"}</span>
+            <span>{record.distancefromMythriNager}</span>
           </div>
           <div className="flex justify-between">
             <span>Selected:</span>
-            <span className="text-green-500">
-              {record.choosedLocations || "N/A"}
-            </span>
+            <span className="text-green-500">{record.choosedLocations}</span>
           </div>
         </div>
       ),
-      sorter: (a: OrderData, b: OrderData) => {
-        const getNumericDistance = (distance: string) => {
-          if (!distance) return 0;
-          const numVal = parseFloat(distance.replace(/[^\d.]/g, ""));
-          return isNaN(numVal) ? 0 : numVal;
-        };
-
-        const distA = getNumericDistance(a.distancefromMiyapur);
-        const distB = getNumericDistance(b.distancefromMiyapur);
-        return distA - distB;
-      },
+      sorter: (a: Order, b: Order) => 0,
     },
   ];
 
-  const handleCancelCLick = () => {
-    setdbModalVisible(false);
+  const handleCancelClick = () => {
+    setDbModalVisible(false);
     setSelectedDeliveryBoy(null);
   };
-
-  const handleDateChange = (date: any, dateString: string | string[]) => {
-    if (Array.isArray(dateString)) {
-      setSelectedDate(dateString[0] || null);
-    } else {
-      setSelectedDate(dateString);
-    }
-  };
+  const todayOrdersCount = orderDetails.filter((item) =>
+    dayjs(item.orderDate, ["DD-MM-YYYY", "YYYY-MM-DD"]).isSame(dayjs(), "day")
+  );
 
   return (
     <div className="pt-4">
       <Row gutter={[16, 16]}>
-        {/* Total Orders and Pie Chart Section */}
         <Col xs={24} md={24} lg={24} className="flex flex-col md:flex-row">
-          {/* Total Orders Card */}
-          <div className="w-full md:w-2/5 md:pr-4 mb-4 md:mb-0">
-            <Card
-              bodyStyle={{
-                background: "linear-gradient(135deg, #67297c 0%, #0d9488 100%)",
-                borderLeft: "3px solid #6366f1",
-                color: "white",
-              }}
-              className="h-full"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <Text
-                    strong
-                    className="text-lg tracking-wide"
-                    style={{ color: "rgba(255,255,255,0.8)" }}
-                  >
-                    Total Orders(Pending)
-                  </Text>
-                  <div
-                    className="text-3xl font-bold"
-                    style={{ color: "white" }}
-                  >
-                    {summaryData.reduce((sum, item) => sum + item.count, 0)}
+          <div className="w-full md:w-2/5 md:pr-4 mb-4 md:mb-0 flex flex-col gap-4">
+            <div className="w-full">
+              <Card
+                bodyStyle={{
+                  background: "white",
+                  border: "1px solid #8b5cf640",
+                  borderRadius: "12px",
+                  boxShadow: "0 2px 8px rgba(139, 92, 246, 0.15)",
+                }}
+                className="h-full transform hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl"
+                onClick={() => {
+                  setFilteredOrders(orderDetails);
+                  setSelectedStatus(null);
+                  setStartDate(null);
+                  setEndDate(null);
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <Text
+                      strong
+                      className="text-lg tracking-wide"
+                      style={{ color: "#6b7280" }}
+                    >
+                      Total Orders
+                    </Text>
+                    <div
+                      className="text-3xl font-bold mt-2"
+                      style={{ color: "#8b5cf6cc" }}
+                    >
+                      {summaryData.reduce((sum, item) => sum + item.count, 0)}
+                    </div>
                   </div>
+                  <ShoppingCartOutlined
+                    className="text-4xl opacity-50 hover:opacity-80 transition-opacity duration-300"
+                    style={{ color: "#8b5cf699" }}
+                  />
                 </div>
-                <FileTextOutlined className="text-3xl text-white opacity-50" />
-              </div>
-            </Card>
+              </Card>
+            </div>
+
+            <div className="w-full">
+              <Card
+                bodyStyle={{
+                  background: "white",
+                  border: "1px solid #0ea5e940",
+                  borderRadius: "12px",
+                  boxShadow: "0 2px 8px rgba(14, 165, 233, 0.15)",
+                }}
+                className="h-full transform hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl"
+                onClick={() => {
+                  setFilteredOrders(todayOrdersCount);
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <Text
+                      strong
+                      className="text-lg tracking-wide"
+                      style={{ color: "#6b7280" }}
+                    >
+                      Today Orders
+                    </Text>
+                    <div
+                      className="text-3xl font-bold mt-2"
+                      style={{ color: "#0ea5e9cc" }}
+                    >
+                      {todayOrdersCount.length}
+                    </div>
+                  </div>
+                  <CalendarOutlined
+                    className="text-4xl opacity-50 hover:opacity-80 transition-opacity duration-300"
+                    style={{ color: "#0ea5e999" }}
+                  />
+                </div>
+              </Card>
+            </div>
           </div>
           <div className="w-full md:w-3/5">
             <Card title="Order Status Distribution">
-              {loading ? (
+              {loading || exchangeLoading ? (
                 <div className="flex justify-center items-center h-52">
                   <Spin size="large" />
-                  {/* <Spin
-                    indicator={<SyncOutlined style={{ fontSize: 24 }} spin />}
-                  /> */}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
@@ -814,7 +863,6 @@ const MainPage: React.FC = () => {
             </Card>
           </div>
         </Col>
-
         <Col
           xs={24}
           md={24}
@@ -833,29 +881,32 @@ const MainPage: React.FC = () => {
               >
                 <Card
                   bodyStyle={{
-                    background: statusConfig.background,
-                    borderLeft: `3px solid ${statusConfig.borderColor}`,
-                    color: "white",
+                    background: "white",
+                    border: `1px solid ${statusConfig.borderColor}40`,
+                    borderRadius: "12px",
+                    boxShadow: `0 2px 8px ${statusConfig.borderColor}15`,
                   }}
-                  className="h-full hover:brightness-110 transition duration-200"
+                  className="h-full transform hover:scale-105 transition-all duration-300 rounded-xl"
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <Text
                         strong
                         className="text-md tracking-wide"
-                        style={{ color: "black" }}
+                        style={{ color: "#6b7280" }}
                       >
                         {statusConfig.label}
                       </Text>
                       <div
-                        className="text-2xl font-bold"
-                        style={{ color: "white" }}
+                        className="text-2xl font-bold mt-1"
+                        style={{ color: `${statusConfig.borderColor}cc` }}
                       >
                         {item.count}
                       </div>
                     </div>
-                    {statusConfig.icon}
+                    <div className="opacity-70 hover:opacity-100 transition-opacity duration-300 w-6 h-6">
+                      {statusConfig.icon}
+                    </div>
                   </div>
                 </Card>
               </div>
@@ -864,110 +915,142 @@ const MainPage: React.FC = () => {
         </Col>
 
         <Col xs={24} sm={24} md={24} lg={24} xl={24}>
-          <Card
-            extra={
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <h1 className="text-2xl font-bold text-purple-600 mb-2 sm:mb-0 sm:absolute sm:top-2 sm:left-2">
-                  Order Details
-                </h1>
-                <Input
-                  prefix={<SearchOutlined />}
-                  placeholder="Search by Order ID"
-                  allowClear
-                  value={searchValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setSearchValue(value);
-                    if (value) {
-                      const filtered = orderDetails.filter((order) =>
-                        order.uniqueId
-                          .toLowerCase()
-                          .includes(value.toLowerCase())
-                      );
-                      setFilteredOrders(filtered);
-                    } else {
-                      if (selectedStatus) {
-                        const filtered = orderDetails.filter(
-                          (order) => order.orderStatus === selectedStatus
+          {selectedStatus === "Exchange" ? (
+            <ExchangeOrdersTable />
+          ) : (
+            <Card
+              extra={
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <h1 className="text-2xl font-bold text-purple-600 mb-2 sm:mb-0 sm:absolute sm:top-2 sm:left-2">
+                    Order Details
+                  </h1>
+                  <Input
+                    prefix={<SearchOutlined />}
+                    placeholder="Search by Order ID"
+                    allowClear
+                    value={searchValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchValue(value);
+                      if (value) {
+                        const filtered = orderDetails.filter((order) =>
+                          order.uniqueId
+                            .toLowerCase()
+                            .includes(value.toLowerCase())
                         );
                         setFilteredOrders(filtered);
                       } else {
-                        setFilteredOrders(orderDetails);
+                        if (selectedStatus) {
+                          const filtered = orderDetails.filter(
+                            (order) => order.orderStatus === selectedStatus
+                          );
+                          setFilteredOrders(filtered);
+                        } else {
+                          setFilteredOrders(orderDetails);
+                        }
                       }
-                    }
-                  }}
-                  className="w-full sm:max-w-[250px]"
-                />
+                    }}
+                    className="w-full sm:max-w-[250px]"
+                  />
+                </div>
+              }
+              bodyStyle={{ padding: 0 }}
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 p-2 w-full">
+                {selectedStatus === "4" && (
+                  <>
+                    <DatePicker
+                      format="YYYY-MM-DD"
+                      onChange={(date) => setStartDate(date)}
+                      placeholder="Select Start Date"
+                      className="w-full sm:w-[200px]"
+                    />
+                    <DatePicker
+                      format="YYYY-MM-DD"
+                      onChange={(date) => setEndDate(date)}
+                      placeholder="Select End Date"
+                      className="w-full sm:w-[200px]"
+                    />
+                    <Button
+                      style={{
+                        backgroundColor: "rgb(0, 140, 186)",
+                        borderColor: "rgb(0, 140, 186)",
+                      }}
+                      type="primary"
+                      onClick={fetchDeliveredOrdersWithDates}
+                      className="w-full sm:w-auto"
+                    >
+                      Get Data
+                    </Button>
+                  </>
+                )}
+                {selectedStatus !== "4" && selectedStatus !== "Exchange" && (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 p-2 w-full">
+                    <DatePicker
+                      format="DD-MM-YYYY"
+                      onChange={handleDateChange}
+                      placeholder="Expected delivery date"
+                      allowClear
+                      className="!w-40 !text-sm !py-1"
+                    />
+                    <Button
+                      style={{
+                        backgroundColor: "rgb(0, 140, 186)",
+                        borderColor: "rgb(0, 140, 186)",
+                      }}
+                      type="primary"
+                      onClick={handleFilterByDate}
+                      className="w-full sm:w-auto"
+                    >
+                      Get Data
+                    </Button>
+                  </div>
+                )}
+
+                {/* <div className="flex justify-end w-full p-2">
+                  <Button
+                    onClick={() => {
+                      setFilteredOrders(orderDetails);
+                      setSelectedStatus(null);
+                      setStartDate(null);
+                      setEndDate(null);
+                    }}
+                    className="bg-blue-400 sm:w-auto"
+                  >
+                    Get All Orders
+                  </Button>
+                </div> */}
               </div>
-            }
-            bodyStyle={{ padding: 0 }}
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 p-2 w-full">
-              <DatePicker
-                format="DD-MM-YYYY"
-                onChange={handleDateChange}
-                placeholder="Select Expected delivery date"
-                allowClear
-                className="w-full sm:w-[320px]"
-              />
-              <Button
-                style={{
-                  backgroundColor: "rgb(0, 140, 186)",
-                  borderColor: "rgb(0, 140, 186)",
+
+              <Table
+                columns={columns}
+                className="p-2"
+                dataSource={filteredOrders}
+                rowKey="orderId"
+                pagination={{
+                  current: pagination.current,
+                  pageSize: pagination.pageSize,
+                  responsive: true,
+                  showSizeChanger: false,
+                  onChange: (page, pageSize) =>
+                    setPagination({ current: page, pageSize }),
                 }}
-                type="primary"
-                onClick={handleFilterByDate}
-                className="w-full sm:w-auto"
-              >
-                Get Data
-              </Button>
-
-              <div className="flex justify-end w-full p-2">
-                <Button
-                  onClick={() => {
-                    setFilteredOrders(orderDetails);
-                    setSelectedDate(null);
-                  }}
-                  className="bg-blue-400 sm:w-auto"
-                >
-                  Get All Orders
-                </Button>
-              </div>
-            </div>
-
-            <Table
-              columns={columns}
-              className="p-4"
-              dataSource={filteredOrders}
-              rowKey="orderId"
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                responsive: true,
-                showSizeChanger: false,
-                onChange: (page, pageSize) =>
-                  setPagination({ current: page, pageSize }),
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{ x: "max-content" }}
-              size={isMobile ? "small" : "middle"}
-            />
-          </Card>
+                loading={loading}
+                onChange={handleTableChange}
+                scroll={{ x: "max-content" }}
+                size={isMobile ? "small" : "middle"}
+              />
+            </Card>
+          )}
         </Col>
       </Row>
       {isModalVisible && <RejectionReasonModal visible={isModalVisible} />}
       <Modal
         title="Select Delivery Boy"
         open={dbModalVisible}
-        onCancel={() => setdbModalVisible(false)}
+        onCancel={handleCancelClick}
         footer={[
-          <Button
-            key="cancel"
-            onClick={() => {
-              handleCancelCLick();
-            }}
-          >
+          <Button key="cancel" onClick={handleCancelClick}>
             Cancel
           </Button>,
           <Button
@@ -976,8 +1059,8 @@ const MainPage: React.FC = () => {
             loading={dbLoading}
             onClick={() =>
               handleAssign(
-                selectedRecord?.orderId ?? "",
-                selectedRecord?.orderStatus ?? ""
+                selectedRecord?.orderId || "",
+                selectedRecord?.orderStatus || ""
               )
             }
           >
@@ -985,7 +1068,7 @@ const MainPage: React.FC = () => {
           </Button>,
         ]}
       >
-        {dbLoading1 ? ( // Show loader when data is fetching
+        {dbLoading1 ? (
           <div className="flex justify-center items-center h-32">
             <Spin size="large" />
           </div>
@@ -995,7 +1078,7 @@ const MainPage: React.FC = () => {
               const selectedBoy = deliveryBoys.find(
                 (boy) => boy.userId === e.target.value
               );
-              setSelectedDeliveryBoy(selectedBoy); // Store the entire object
+              setSelectedDeliveryBoy(selectedBoy || null);
             }}
             value={selectedDeliveryBoy?.userId}
           >

@@ -47,11 +47,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <ShoppingCartOutlined />,
       label: "New Orders",
     },
-    {
-      key: "/home/acceptedOrders/2",
-      icon: <CheckOutlined />,
-      label: "Accepted Orders",
-    },
+    // {
+    //   key: "/home/acceptedOrders/2",
+    //   icon: <CheckOutlined />,
+    //   label: "Accepted Orders",
+    // },
     {
       key: "/home/AssignedOrders/3",
       icon: <TruckOutlined />,

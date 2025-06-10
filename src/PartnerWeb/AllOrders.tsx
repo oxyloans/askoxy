@@ -232,7 +232,7 @@ const AllOrders: React.FC = () => {
             <Select.Option value="3">Assigned</Select.Option>
             <Select.Option value="4">Delivered</Select.Option>
             <Select.Option value="5">Rejected</Select.Option>
-            <Select.Option value="6">Cancelled</Select.Option>
+            {/* <Select.Option value="6">Cancelled</Select.Option> */}
             <Select.Option value="PickedUp">Picked Up</Select.Option>
           </Select>
         </div>

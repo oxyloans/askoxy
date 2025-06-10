@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Tag,
@@ -17,55 +17,30 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { Search, Package, User } from "lucide-react";
-import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
 import { MdCurrencyRupee, MdScale } from "react-icons/md";
-
-// Define the type for exchange order data
-interface ExchangeOrder {
-  orderId: string;
-  orderId2: string;
-  userId: string | null;
-  itemId: string | null;
-  itemName: string;
-  itemPrice: number;
-  userName: string;
-  orderType: string | null;
-  reason: string;
-  exchangeRequestDate: string;
-  daysDifference: number;
-  mobileNumber: string;
-  orderAddress: string;
-  exchangeId: string;
-  status: string;
-  weight: string;
-}
-type DeliveryBoy = {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  whatsappNumber: string;
-  isActive: string;
-  testUser: boolean;
-};
+import { 
+  ExchangeOrder, 
+  DeliveryBoy, 
+  fetchExchangeOrders,
+  fetchDeliveryBoys, 
+  assignExchangeOrder, 
+  reassignExchangeOrder 
+} from "./partnerapi";
 
 const { Title } = Typography;
 
-const ExchangeOrdersPage = () => {
+const ExchangeOrdersTable: React.FC = () => {
   const navigate = useNavigate();
   const [exchangeOrders, setExchangeOrders] = useState<ExchangeOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchText, setSearchText] = useState<string>("");
-  const [selectedRecord, setSelectedRecord] = useState<ExchangeOrder | null>(
-    null
-  );
-  const [dbLoading1, setdbLoading1] = useState<boolean>(false);
-  const accessToken = JSON.parse(localStorage.getItem("Token") || "{}");
+  const [selectedRecord, setSelectedRecord] = useState<ExchangeOrder | null>(null);
+  const [dbLoading1, setDbLoading1] = useState<boolean>(false);
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
-  const [dbModalVisible, setdbModalVisible] = useState(false);
-  const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
-    useState<DeliveryBoy | null>(null);
-  const [dbLoading, setdbLoading] = useState<boolean>(false);
+  const [dbModalVisible, setDbModalVisible] = useState(false);
+  const [selectedDeliveryBoy, setSelectedDeliveryBoy] = useState<DeliveryBoy | null>(null);
+  const [dbLoading, setDbLoading] = useState<boolean>(false);
   const [filteredOrders, setFilteredOrders] = useState<ExchangeOrder[]>([]);
   const [takingNewBag, setTakingNewBag] = useState<string | null>(null);
   const [newBagBarcode, setNewBagBarcode] = useState<string>("");
@@ -76,79 +51,29 @@ const ExchangeOrdersPage = () => {
     amountCollected: "",
     remarks: "",
     deliveryBoyId: "",
-    amountPaid: "", // Added amountPaid to formData
+    amountPaid: "",
   });
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
 
-  const fetchExchangeOrders = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `${BASE_URL}/order-service/getAllExchangeOrder`
-      );
-      const data = await response.json();
-
-      const sortedData = data.sort(
-        (a: ExchangeOrder, b: ExchangeOrder) =>
-          new Date(b.exchangeRequestDate).getTime() -
-          new Date(a.exchangeRequestDate).getTime()
-      );
-
-      setExchangeOrders(sortedData);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching exchange orders:", error);
-      setLoading(false);
-    }
-  };
-
+  // Fetch exchange orders on component mount
   useEffect(() => {
-    fetchExchangeOrders();
+    loadExchangeOrders();
   }, []);
 
-  const fetchDeliveryBoys = async (record?: ExchangeOrder) => {
-    if (record) {
-      setSelectedRecord(record);
-    }
-    setdbLoading1(true);
+  const loadExchangeOrders = async () => {
+    setLoading(true);
     try {
-      const url = `${BASE_URL}/user-service/deliveryBoyList`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken.token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        message.error(
-          "Failed to get Delivery Boy list. Please try again later."
-        );
-      }
-      const data = await response.json();
-      setDeliveryBoys(data);
-      if (record) {
-        setdbModalVisible(true);
-      }
-    } catch (error) {
-      message.warning(
-        "Failed to get Delivery Boy list. Please try again later."
-      );
+      const data = await fetchExchangeOrders();
+      setExchangeOrders(data);
+    } catch (error: any) {
+      message.error(error.message || "Failed to fetch exchange orders.");
     } finally {
-      setdbLoading1(false);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (isModalOpen) {
-      fetchDeliveryBoys();
-    }
-  }, [isModalOpen]);
-
-  const handleViewDetails = (order: ExchangeOrder) => {
-    localStorage.setItem("orderId", order.orderId2);
-    navigate(`/home/orderDetails`);
+  const onRefresh = () => {
+    loadExchangeOrders();
   };
 
   useEffect(() => {
@@ -167,20 +92,40 @@ const ExchangeOrdersPage = () => {
     setFilteredOrders(results);
   }, [searchText, exchangeOrders, selectedStatus]);
 
-  const calculateUsedBagAmount = (
-    originalWeight: string,
-    remainingWeight: string,
-    price: number
-  ) => {
+  const fetchDeliveryBoysList = async (record?: ExchangeOrder) => {
+    if (record) {
+      setSelectedRecord(record);
+    }
+    setDbLoading1(true);
+    try {
+      const data = await fetchDeliveryBoys();
+      setDeliveryBoys(data);
+      if (record) {
+        setDbModalVisible(true);
+      }
+    } catch (error: any) {
+      message.error(error.message || "Failed to fetch delivery boys.");
+    } finally {
+      setDbLoading1(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isModalOpen) {
+      fetchDeliveryBoysList();
+    }
+  }, [isModalOpen]);
+
+  const handleViewDetails = (order: ExchangeOrder) => {
+    localStorage.setItem("orderId", order.orderId2);
+    navigate(`/home/orderDetails`);
+  };
+
+  const calculateUsedBagAmount = (originalWeight: string, remainingWeight: string, price: number) => {
     const originalWeightNum = parseFloat(originalWeight);
     const remainingWeightNum = parseFloat(remainingWeight);
 
-    if (
-      originalWeightNum <= 0 ||
-      remainingWeightNum < 0 ||
-      price <= 0 ||
-      isNaN(remainingWeightNum)
-    ) {
+    if (originalWeightNum <= 0 || remainingWeightNum < 0 || price <= 0 || isNaN(remainingWeightNum)) {
       return "0.00";
     }
 
@@ -258,7 +203,7 @@ const ExchangeOrdersPage = () => {
     {
       title: "Actions",
       dataIndex: "action",
-      key: "reason",
+      key: "action",
       width: 80,
       render: (_: any, record: ExchangeOrder) => (
         <div className="flex flex-wrap gap-2 justify-start">
@@ -267,7 +212,7 @@ const ExchangeOrdersPage = () => {
               type="primary"
               size="small"
               className="!bg-green-500 hover:!bg-green-600 text-white px-2 py-1 rounded-lg text-xs h-auto w-auto sm:w-auto"
-              onClick={() => fetchDeliveryBoys(record)}
+              onClick={() => fetchDeliveryBoysList(record)}
             >
               Assign
             </Button>
@@ -277,7 +222,7 @@ const ExchangeOrdersPage = () => {
               type="primary"
               size="small"
               className="!bg-green-500 hover:!bg-green-600 text-white px-2 py-1 rounded-lg text-xs h-auto w-auto sm:w-auto"
-              onClick={() => fetchDeliveryBoys(record)}
+              onClick={() => fetchDeliveryBoysList(record)}
             >
               Re-Assign
             </Button>
@@ -319,11 +264,7 @@ const ExchangeOrdersPage = () => {
               <div>
                 <strong>Diff:</strong>{" "}
                 <span
-                  className={
-                    record.daysDifference <= 3
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }
+                  className={record.daysDifference <= 3 ? "text-green-500" : "text-red-500"}
                 >
                   {record.daysDifference}
                 </span>
@@ -336,10 +277,10 @@ const ExchangeOrdersPage = () => {
     },
   ];
 
-  const handleCancelCLick = () => {
+  const handleCancelClick = () => {
     setTakingNewBag(null);
     setNewBagBarcode("");
-    setdbModalVisible(false);
+    setDbModalVisible(false);
     setSelectedDeliveryBoy(null);
   };
 
@@ -352,38 +293,17 @@ const ExchangeOrdersPage = () => {
       message.warning("Please select New Bag status.");
       return;
     }
-    setdbLoading(true);
-    let data = {
-      collectedNewBag: takingNewBag,
-      exchangeId: exchangeId,
-      deliveryBoyId: selectedDeliveryBoy.userId,
-      newBagBarCode: newBagBarcode === "" ? null : newBagBarcode,
-    };
-
+    setDbLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/order-service/exchangeBagCollec`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${accessToken.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!response.ok) {
-        message.error("Failed to assign to delivery boy");
-      } else {
-        message.success("Order assigned successfully!");
-        setdbModalVisible(false);
-      }
-    } catch (error) {
-      message.error("Failed to assign order.");
+      await assignExchangeOrder(exchangeId, selectedDeliveryBoy.userId, takingNewBag, newBagBarcode || null);
+      message.success("Order assigned successfully!");
+      setDbModalVisible(false);
+      onRefresh();
+    } catch (error: any) {
+      message.error(error.message || "Failed to assign order.");
     } finally {
-      setdbLoading(false);
-      setdbModalVisible(false);
+      setDbLoading(false);
+      setDbModalVisible(false);
       setSelectedDeliveryBoy(null);
       setTakingNewBag(null);
       setNewBagBarcode("");
@@ -398,7 +318,7 @@ const ExchangeOrdersPage = () => {
       amountCollected: "0.00",
       remarks: "",
       deliveryBoyId: "",
-      amountPaid: "", // Initialize amountPaid
+      amountPaid: "",
     });
     setIsModalOpen(true);
   };
@@ -438,11 +358,7 @@ const ExchangeOrdersPage = () => {
     }));
 
     if (selectedRecord && value !== null) {
-      const newAmount = calculateUsedBagAmount(
-        selectedRecord.weight,
-        newWeight,
-        selectedRecord.itemPrice
-      );
+      const newAmount = calculateUsedBagAmount(selectedRecord.weight, newWeight, selectedRecord.itemPrice);
       setFormData((prev) => ({
         ...prev,
         amountCollected: newAmount,
@@ -465,51 +381,26 @@ const ExchangeOrdersPage = () => {
   };
 
   const handleOk = async () => {
-    const hasAtLeastOneField = Object.values(formData).some(
-      (value) => value.trim() !== ""
-    );
+    const hasAtLeastOneField = Object.values(formData).some((value) => value.trim() !== "");
     if (!hasAtLeastOneField) {
       message.error("Please fill at least one field before submitting.");
       return;
     }
 
-    const requestData = {
-      amountCollected: formData.amountCollected,
-      exchangeId: selectedRecord?.exchangeId,
-      remarks: formData.remarks,
-      returnBagWeight: formData.returnBagWeight,
-      deliveryBoyId: formData.deliveryBoyId,
-      amountPaid: formData.amountPaid, // Added amountPaid to requestData
-    };
-
     try {
-      const response = await fetch(
-        `${BASE_URL}/order-service/exchangeOrderReassign`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
-        }
-      );
-
-      if (response.ok) {
-        message.success("Data submitted successfully!");
-        setIsModalOpen(false);
-      } else {
-        throw new Error("Failed to submit data");
-      }
-    } catch (error) {
-      console.error("Error submitting data:", error);
-      message.error("Something went wrong!");
+      await reassignExchangeOrder(selectedRecord?.exchangeId || "", formData);
+      message.success("Data submitted successfully!");
+      setIsModalOpen(false);
+      onRefresh();
+    } catch (error: any) {
+      message.error(error.message || "Something went wrong!");
     } finally {
       handleCancel();
     }
   };
 
   return (
-    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-6 bg-gray-50">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <Title level={4} className="mb-4 md:mb-0 text-gray-800">
           Exchange Orders
@@ -524,17 +415,18 @@ const ExchangeOrdersPage = () => {
               className="rounded-lg"
             />
           </div>
+          {/* <Button
+            type="primary"
+            onClick={onRefresh}
+            className="!bg-blue-600 hover:!bg-blue-700 rounded-lg"
+          >
+            Refresh
+          </Button> */}
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {[
-          "All",
-          "EXCHANGEREQUESTED",
-          "ASSIGNTOCOLLECT",
-          "COLLECTED",
-          "RECOMPLETED",
-        ].map((status) => (
+        {["All", "EXCHANGEREQUESTED", "ASSIGNTOCOLLECT", "COLLECTED", "RECOMPLETED"].map((status) => (
           <Button
             key={status}
             type={selectedStatus === status ? "primary" : "default"}
@@ -571,13 +463,9 @@ const ExchangeOrdersPage = () => {
       <Modal
         title="Select Delivery Boy"
         open={dbModalVisible}
-        onCancel={handleCancelCLick}
+        onCancel={handleCancelClick}
         footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancelCLick}
-            className="rounded-lg"
-          >
+          <Button key="cancel" onClick={handleCancelClick} className="rounded-lg">
             Cancel
           </Button>,
           <Button
@@ -589,10 +477,8 @@ const ExchangeOrdersPage = () => {
                 message.error("Please select a delivery boy");
                 return;
               }
-              if (takingNewBag === undefined) {
-                message.error(
-                  "Please select if delivery boy is taking a new bag"
-                );
+              if (takingNewBag === null) {
+                message.error("Please select if delivery boy is taking a new bag");
                 return;
               }
               if (takingNewBag === "yes" && !newBagBarcode) {
@@ -617,9 +503,7 @@ const ExchangeOrdersPage = () => {
             <div>
               <Radio.Group
                 onChange={(e) => {
-                  const selectedBoy = deliveryBoys.find(
-                    (boy) => boy.userId === e.target.value
-                  );
+                  const selectedBoy = deliveryBoys.find((boy) => boy.userId === e.target.value);
                   setSelectedDeliveryBoy(selectedBoy || null);
                 }}
                 value={selectedDeliveryBoy?.userId}
@@ -680,11 +564,7 @@ const ExchangeOrdersPage = () => {
         width={600}
         className="rounded-lg"
         footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancel}
-            className="rounded-lg border-gray-300"
-          >
+          <Button key="cancel" onClick={handleCancel} className="rounded-lg border-gray-300">
             Cancel
           </Button>,
           <Button
@@ -705,15 +585,11 @@ const ExchangeOrdersPage = () => {
             <div className="flex justify-center gap-4">
               <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
                 <User size={18} />
-                <span className="font-semibold">
-                  {selectedRecord?.userName}
-                </span>
+                <span className="font-semibold">{selectedRecord?.userName}</span>
               </div>
               <div className="flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-lg">
                 <Package size={18} />
-                <span className="font-semibold">
-                  {selectedRecord?.itemName}
-                </span>
+                <span className="font-semibold">{selectedRecord?.itemName}</span>
               </div>
             </div>
           </div>
@@ -758,7 +634,9 @@ const ExchangeOrdersPage = () => {
             </div>
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium">Amount Paid</span>
+                <span className="text-gray-700 font-medium">
+                  Amount Paid
+                </span>
               }
             >
               <Select
@@ -810,7 +688,9 @@ const ExchangeOrdersPage = () => {
               />
             </Form.Item>
             <Form.Item
-              label={<span className="text-gray-700 font-medium">Remarks</span>}
+              label={
+                <span className="text-gray-700 font-medium">Remarks</span>
+              }
             >
               <Input.TextArea
                 name="remarks"
@@ -834,4 +714,4 @@ const ExchangeOrdersPage = () => {
   );
 };
 
-export default ExchangeOrdersPage;
+export default ExchangeOrdersTable;
