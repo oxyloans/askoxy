@@ -1,237 +1,234 @@
 import React, { useState } from "react";
-import { Globe, Phone, Mail, MapPin, ArrowUp, Facebook, Twitter, Linkedin, Instagram, ChevronDown } from "lucide-react";
-import { FaWhatsapp } from 'react-icons/fa';
+import {
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+  ArrowUp,
+  Facebook,
+  Linkedin,
+  Instagram,
+  ChevronDown,
+} from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 
-type SectionKey = 'destinations' | 'services' | 'contact';
+type SectionKey = "destinations" | "services" | "contact";
 
 const StudyAbroadFooter = () => {
-  // State for mobile accordion sections
-  const [openSections, setOpenSections] = useState({
-    destinations: false,
-    services: false,
-    contact: false
-  });
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(
+    {
+      destinations: false,
+      services: false,
+      contact: false,
+    }
+  );
 
   const toggleSection = (section: SectionKey) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <footer className="bg-white text-gray-800 py-10 shadow-lg border-t border-gray-100">
+    <footer className="bg-white text-gray-800 pt-10 pb-6 border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+        {/* Grid Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Company Info */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-1">
+          <div>
             <div className="flex items-center mb-4">
-              <Globe className="h-8 w-8 text-purple-600 mr-2" />
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">StudyAbroad</span>
+              <Globe className="w-7 h-7 text-purple-600 mr-2" />
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-transparent bg-clip-text">
+                StudyAbroad
+              </span>
             </div>
-            <p className="text-gray-600 text-sm leading-relaxed mb-6">
-              StudentX simplifies university admissions globally with AI-powered matching. Explore courses, connect with alumni, and get personalized recommendations for your academic journey.
+            <p className="text-sm text-gray-600 mb-5">
+              StudentX simplifies global university admissions with AI-matching,
+              alumni connections, and personalized academic recommendations.
             </p>
-            <div className="flex gap-4 mb-6">
+            <div className="flex gap-3 mb-6">
               <a
                 href="https://www.facebook.com/StudyAbroadAskoxy"
                 aria-label="Facebook"
-                className="bg-white p-2 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-purple-600 hover:border-purple-600 transition-all"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full border border-gray-200 hover:border-purple-600 hover:text-purple-600 transition"
               >
                 <Facebook size={18} />
               </a>
-              {/* <a
-                href="#"
-                aria-label="Twitter"
-                className="bg-white p-2 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-purple-600 hover:border-purple-600 transition-all"
-              >
-                <Twitter size={18} />
-              </a> */}
               <a
-                href="https://www.linkedin.com/company/89893468/admin/dashboard/"
+                href="https://www.linkedin.com/company/89893468"
                 aria-label="LinkedIn"
-                className="bg-white p-2 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-purple-600 hover:border-purple-600 transition-all"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full border border-gray-200 hover:border-purple-600 hover:text-purple-600 transition"
               >
                 <Linkedin size={18} />
               </a>
               <a
                 href="https://www.instagram.com/studyabroad_askoxy.ai/"
                 aria-label="Instagram"
-                className="bg-white p-2 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-purple-600 hover:border-purple-600 transition-all"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full border border-gray-200 hover:border-purple-600 hover:text-purple-600 transition"
               >
                 <Instagram size={18} />
               </a>
             </div>
-            
-            {/* Newsletter subscription - desktop only */}
+
+            {/* Desktop Newsletter */}
             <div className="hidden md:block">
-              <h4 className="font-semibold mb-3 text-sm">Subscribe to our newsletter</h4>
+              <h4 className="font-semibold text-sm mb-2">
+                Subscribe to our newsletter
+              </h4>
               <div className="flex">
                 <input
                   type="email"
                   placeholder="Your Email"
-                  className="flex-grow px-3 py-2 text-sm bg-white text-gray-800 border border-gray-200 rounded-l focus:outline-none focus:ring-1 focus:ring-purple-600 focus:border-purple-600"
+                  className="flex-grow px-3 py-2 text-sm border border-gray-300 rounded-l focus:outline-none focus:ring-1 focus:ring-purple-600"
                 />
-                <button className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-r text-sm font-medium transition-colors">
+                <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-r text-sm font-medium transition">
                   Subscribe
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Study Destinations - with mobile accordion */}
-          <div>
-            <div 
-              className="flex justify-between items-center mb-4 cursor-pointer md:cursor-default"
-              onClick={() => toggleSection('destinations')}
-            >
-              <h3 className="text-lg font-semibold">Study Destinations</h3>
-              <ChevronDown 
-                className={`h-5 w-5 md:hidden transition-transform ${openSections.destinations ? 'rotate-180' : ''}`} 
-              />
+          {/* Accordion Section */}
+          {[
+            {
+              key: "destinations",
+              title: "Study Destinations",
+              items: [
+                { name: "USA", href: "#usa" },
+                { name: "United Kingdom", href: "#uk" },
+                { name: "Germany", href: "#germany" },
+                { name: "Canada", href: "#canada" },
+                { name: "Australia", href: "#australia" },
+                { name: "New Zealand", href: "#newzealand" },
+              ],
+            },
+            {
+              key: "services",
+              title: "Our Services",
+              items: [
+                { name: "University Selection", href: "#" },
+                { name: "Application Assistance", href: "#" },
+                { name: "Visa Guidance", href: "#" },
+                { name: "Scholarship Support", href: "#" },
+                { name: "Test Preparation", href: "#" },
+                { name: "Accommodation Help", href: "#" },
+              ],
+            },
+          ].map(({ key, title, items }) => (
+            <div key={key}>
+              <div
+                className="flex justify-between items-center mb-3 cursor-pointer md:cursor-default"
+                onClick={() => toggleSection(key as SectionKey)}
+              >
+                <h3 className="text-lg font-semibold">{title}</h3>
+                <ChevronDown
+                  className={`w-5 h-5 md:hidden transform transition ${
+                    openSections[key as SectionKey] ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+              <ul
+                className={`text-sm transition-all ease-in-out duration-300 overflow-hidden ${
+                  openSections[key as SectionKey]
+                    ? "max-h-96"
+                    : "max-h-0 md:max-h-96"
+                } space-y-2`}
+              >
+                {items.map(({ name, href }, i) => (
+                  <li key={i}>
+                    <a
+                      href={href}
+                      className="hover:text-purple-600 transition-colors"
+                    >
+                      {name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className={`space-y-2 text-sm overflow-hidden transition-all duration-300 ease-in-out ${openSections.destinations ? 'max-h-96' : 'max-h-0 md:max-h-96'}`}>
-              {[
-                { country: "USA", link: "#usa" },
-                { country: "United Kingdom", link: "#uk" },
-                { country: "Germany", link: "#germany" },
-                { country: "Canada", link: "#canada" },
-                { country: "Australia", link: "#australia" },
-                { country: "New Zealand", link: "#newzealand" }
-              ].map((item, index) => (
-                <li key={index}>
-                  <a
-                    href={item.link}
-                    className="text-gray-600 hover:text-purple-600 transition-colors hover:underline"
-                  >
-                    {item.country}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          ))}
 
-          {/* Services - with mobile accordion */}
+          {/* Contact Info */}
           <div>
-            <div 
-              className="flex justify-between items-center mb-4 cursor-pointer md:cursor-default"
-              onClick={() => toggleSection('services')}
-            >
-              <h3 className="text-lg font-semibold">Our Services</h3>
-              <ChevronDown 
-                className={`h-5 w-5 md:hidden transition-transform ${openSections.services ? 'rotate-180' : ''}`} 
-              />
-            </div>
-            <ul className={`space-y-2 text-sm overflow-hidden transition-all duration-300 ease-in-out ${openSections.services ? 'max-h-96' : 'max-h-0 md:max-h-96'}`}>
-              {[
-                "University Selection",
-                "Application Assistance",
-                "Visa Guidance",
-                "Scholarship Support",
-                "Test Preparation",
-                "Accommodation Help"
-              ].map((service, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-gray-600 hover:text-purple-600 transition-colors hover:underline"
-                  >
-                    {service}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact Info - with mobile accordion */}
-          <div>
-            <div 
-              className="flex justify-between items-center mb-4 cursor-pointer md:cursor-default"
-              onClick={() => toggleSection('contact')}
+            <div
+              className="flex justify-between items-center mb-3 cursor-pointer md:cursor-default"
+              onClick={() => toggleSection("contact")}
             >
               <h3 className="text-lg font-semibold">Contact Us</h3>
-              <ChevronDown 
-                className={`h-5 w-5 md:hidden transition-transform ${openSections.contact ? 'rotate-180' : ''}`} 
+              <ChevronDown
+                className={`w-5 h-5 md:hidden transform transition ${
+                  openSections.contact ? "rotate-180" : ""
+                }`}
               />
             </div>
-            <div className={`space-y-4 text-sm overflow-hidden transition-all duration-300 ease-in-out ${openSections.contact ? 'max-h-96' : 'max-h-0 md:max-h-96'}`}>
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+            <div
+              className={`space-y-4 text-sm transition-all duration-300 overflow-hidden ${
+                openSections.contact ? "max-h-96" : "max-h-0 md:max-h-96"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <MapPin className="w-5 h-5 text-purple-600 mt-1" />
                 <address className="not-italic text-gray-600">
-                  CC-03, Block-C, Indu Fortune Fields - The Annexe
-                  KPHB Colony, K P H B Phase 9, Kukatpally, Hyderabad<br />
-                  Telangana 500085
+                  CC-03, Block-C, Indu Fortune Fields - The Annexe, KPHB Phase
+                  9, Kukatpally, Hyderabad, Telangana 500085
                 </address>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <FaWhatsapp className="w-5 h-5 text-purple-600" />
-                <a
-                  // href="+918919636330"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  89196 36330
+              <div className="flex items-center gap-2">
+                <FaWhatsapp className="text-purple-600" />
+                <a href="tel:+918919636330" className="hover:text-purple-600">
+                  +91 89196 36330
                 </a>
               </div>
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-purple-600" />
+              <div className="flex items-center gap-2">
+                <Mail className="text-purple-600" />
                 <a
-                  // href="studyabroad@askoxy.ai"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
+                  href="mailto:studyabroad@askoxy.ai"
+                  className="hover:text-purple-600"
                 >
                   studyabroad@askoxy.ai
                 </a>
               </div>
-              {/* <div className="flex items-center gap-3">         
-                <a
-                  href=""
-                  className="text-Purple-600 hover:text-purple-600 transition-colors"
-                >
-                  CIN : U72900TG2020PTC140756
-                </a>
-              </div> */}
             </div>
           </div>
         </div>
-        
-        {/* Newsletter subscription - mobile only */}
-        <div className="md:hidden mb-8 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-semibold mb-3 text-sm">Subscribe to our newsletter</h4>
+
+        {/* Mobile Newsletter */}
+        <div className="md:hidden mt-10">
+          <h4 className="text-sm font-semibold mb-2">
+            Subscribe to our newsletter
+          </h4>
           <div className="space-y-2">
             <input
               type="email"
               placeholder="Your Email"
-              className="w-full px-3 py-2 text-sm bg-white text-gray-800 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-600 focus:border-purple-600"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-purple-600"
             />
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors">
+            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded text-sm transition">
               Subscribe
             </button>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-200 my-6"></div>
+        <div className="border-t border-gray-200 mt-10 mb-6" />
 
         {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-600">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <p className="text-center md:text-left">
-              &copy; {new Date().getFullYear()} StudyAbroad Global. All rights reserved.
-            </p>
-          </div>
-          
+        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-600 gap-4">
+          <p>
+            &copy; {new Date().getFullYear()} StudyAbroad Global. All rights
+            reserved.
+          </p>
           <button
             onClick={scrollToTop}
-            className="mt-4 md:mt-0 flex items-center text-gray-600 hover:text-purple-600 transition-colors group"
-            aria-label="Scroll to top"
+            className="flex items-center hover:text-purple-600 group transition"
           >
             <span className="mr-2">Back to top</span>
             <ArrowUp className="w-4 h-4 transform group-hover:-translate-y-1 transition-transform" />

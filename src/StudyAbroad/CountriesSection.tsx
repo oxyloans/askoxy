@@ -315,97 +315,95 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({ onViewAllClick }) =
             ))}
           </div>
 
-          {/* Country Details Section with smooth animation */}
+          {/* Country Details */}
           {(showDetails || isAnimating) && activeCountry && (
             <div
-              id="country-details"
-              className={`relative w-full mb-12 transition-all duration-300 ${
+              className={`transition-all duration-300 ${
                 showDetails
-                  ? "opacity-100 transform translate-y-0"
-                  : "opacity-0 transform -translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 -translate-y-4"
               }`}
             >
-              <div className="border-3 border-yellow-500 rounded-lg p-6 bg-white shadow-lg">
-                <div className="flex justify-between items-center mb-6">
+              <div className="bg-white border border-yellow-400 rounded-lg p-6 shadow-md">
+                <div className="flex justify-between items-start sm:items-center mb-6 flex-col sm:flex-row gap-4">
                   <div className="flex items-center">
-                    {/* Updated flag container in country details */}
-                    <div className="w-12 h-12 mr-4 ring-2 ring-purple-200 rounded-full overflow-hidden flag-container" style={{ padding: 0 }}>
-                      <div className="w-full h-full">
-                        {
-                          countryFlags[
-                            activeCountry.name as keyof typeof countryFlags
-                          ]
-                        }
-                      </div>
+                    <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-purple-200 mr-3">
+                      {
+                        countryFlags[
+                          activeCountry.name as keyof typeof countryFlags
+                        ]
+                      }
                     </div>
-                    <h3 className="text-2xl font-bold text-purple-900">
+                    <h3 className="text-xl sm:text-2xl font-bold text-purple-900">
                       {activeCountry.name} Study Information
                     </h3>
                   </div>
                   <button
                     onClick={() => setShowDetails(false)}
-                    className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200"
+                    className="text-gray-600 hover:text-red-500 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <p className="mb-6 text-gray-600 italic border-l-4 border-yellow-500 pl-3">
+                <p className="italic text-gray-600 border-l-4 border-yellow-500 pl-4 mb-6">
                   {activeCountry.description}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-lg mb-3 flex items-center text-purple-800">
+                    <h4 className="font-semibold text-purple-800 mb-2 flex items-center">
                       <BookOpen className="w-5 h-5 mr-2" />
                       Visa Requirements
                     </h4>
-                    <p>{activeCountry.details.visaInfo}</p>
+                    <p className="text-sm">{activeCountry.details.visaInfo}</p>
 
-                    <h4 className="font-semibold text-lg mt-5 mb-3 flex items-center text-purple-800">
+                    <h4 className="font-semibold text-purple-800 mt-5 mb-2 flex items-center">
                       <Globe className="w-5 h-5 mr-2" />
                       Language Requirements
                     </h4>
-                    <p>{activeCountry.details.langRequirements}</p>
+                    <p className="text-sm">
+                      {activeCountry.details.langRequirements}
+                    </p>
 
-                    <h4 className="font-semibold text-lg mt-5 mb-3 flex items-center text-purple-800">
+                    <h4 className="font-semibold text-purple-800 mt-5 mb-2 flex items-center">
                       <Award className="w-5 h-5 mr-2" />
                       Average Tuition
                     </h4>
-                    <p>{activeCountry.details.avgTuition}</p>
+                    <p className="text-sm">
+                      {activeCountry.details.avgTuition}
+                    </p>
                   </div>
 
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-lg mb-3 flex items-center text-purple-800">
+                    <h4 className="font-semibold text-purple-800 mb-2 flex items-center">
                       <GraduationCap className="w-5 h-5 mr-2" />
                       Popular Programs
                     </h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {activeCountry.details.popularPrograms.map(
-                        (program, index) => (
-                          <li key={index}>{program}</li>
-                        )
-                      )}
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {activeCountry.details.popularPrograms.map((p, i) => (
+                        <li key={i}>{p}</li>
+                      ))}
                     </ul>
 
-                    <h4 className="font-semibold text-lg mt-5 mb-3 flex items-center text-purple-800">
+                    <h4 className="font-semibold text-purple-800 mt-5 mb-2 flex items-center">
                       <Award className="w-5 h-5 mr-2" />
                       Scholarships
                     </h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {activeCountry.details.scholarships.map(
-                        (scholarship, index) => (
-                          <li key={index}>{scholarship}</li>
-                        )
-                      )}
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {activeCountry.details.scholarships.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
                     </ul>
                   </div>
                 </div>
 
                 <div className="mt-6 text-center">
-                  <button 
-                    onClick={() => handleExploreCountryUniversities(activeCountry.name)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-bold py-2 px-6 rounded-full shadow-md transition duration-300"
+                  <button
+                    onClick={() =>
+                      handleExploreCountryUniversities(activeCountry.name)
+                    }
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-full transition-all duration-300 shadow-md"
                   >
                     Explore {activeCountry.name} Universities
                   </button>
@@ -414,77 +412,73 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({ onViewAllClick }) =
             </div>
           )}
 
-          {/* Universities Section with divider */}
-          <div className="w-full border-t-2 border-yellow-500 pt-8 mt-6">
+          {/* Universities Section */}
+          <div className="border-t-2 border-yellow-400 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
               <div>
-                <h3 className="text-3xl font-bold text-purple-900">
+                <h3 className="text-2xl sm:text-3xl font-bold text-purple-900">
                   1000+ Universities
                 </h3>
-                <p className="text-xl flex items-center">
-                  <span className="inline-block w-8 h-1 bg-yellow-500 mr-2"></span>
+                <p className="text-lg text-gray-600">
+                  <span className="inline w-6 h-1 0 mr-2"></span>
                   600+ Courses Available
                 </p>
               </div>
-              <button 
+              <button
                 onClick={handleViewAllClick}
-                className="bg-white border-2 border-yellow-500 text-purple-800 hover:bg-yellow-50 px-6 py-2 rounded-full shadow-md transition duration-300 font-semibold flex items-center group"
+                className="border-2 border-yellow-400 bg-white hover:bg-yellow-50 text-purple-800 font-semibold px-6 py-2 rounded-full shadow-sm transition-all duration-300 flex items-center group"
               >
                 View all universities
-                <ChevronRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
 
-            {/* University Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-              {/* Card */}
+            {/* Responsive Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 {
                   name: "Harvard University",
                   location: "Cambridge, Massachusetts",
                   country: "USA",
-                  imageUrl: "/api/placeholder/400/250",
+                  imageUrl: "https://i.ibb.co/S4NRnFsc/download.jpg",
                 },
                 {
                   name: "University of California, Berkeley",
                   location: "Berkeley, California",
                   country: "USA",
-                  imageUrl: "/api/placeholder/400/250",
+                  imageUrl:
+                    "https://i.ibb.co/1Ys9pmWL/1495170014php5jr-KAW.jpg",
                 },
                 {
                   name: "University of Southern California",
                   location: "Los Angeles, California",
                   country: "USA",
-                  imageUrl: "/api/placeholder/400/250",
+                  imageUrl: "https://i.ibb.co/Tx04Qv4X/download-1.jpg",
                 },
               ].map((uni, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-lg shadow-md group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="relative">
                     <img
                       src={uni.imageUrl}
                       alt={uni.name}
-                      className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    {/* Updated flag badge */}
                     <div className="absolute top-3 right-3">
-                      <div className="w-8 h-8 ring-2 ring-white shadow-md overflow-hidden rounded-full flag-container" style={{ padding: 0 }}>
-                        <div className="w-full h-full">
-                          {countryFlags[uni.country as keyof typeof countryFlags]}
-                        </div>
+                      <div className="w-8 h-8 rounded-full ring-2 ring-white overflow-hidden">
+                        {countryFlags[uni.country as keyof typeof countryFlags]}
                       </div>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-20 opacity-70"></div>
                   </div>
-                  <div className="p-4 text-center bg-white">
-                    <h4 className="font-semibold text-lg text-purple-900">
+                  <div className="p-4 text-center">
+                    <h4 className="text-lg font-semibold text-purple-900">
                       {uni.name}
                     </h4>
-                    <p className="text-sm text-gray-600 mt-1">{uni.location}</p>
-                    <div className="mt-3 flex justify-center">
-                      <button className="text-purple-700 hover:text-purple-900 text-sm font-medium inline-flex items-center group">
+                    <p className="text-sm text-gray-500">{uni.location}</p>
+                    <div className="mt-3">
+                      <button className="text-purple-700 hover:text-purple-900 font-medium text-sm flex items-center justify-center group">
                         View Programs
                         <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </button>
@@ -496,7 +490,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({ onViewAllClick }) =
 
             {/* Updated View more universities section to match UniversitiesSection style */}
             <div className="mt-12 text-center">
-              <button 
+              <button
                 onClick={handleViewAllClick}
                 className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2 mx-auto"
               >

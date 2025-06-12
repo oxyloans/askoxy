@@ -40,8 +40,6 @@ export const fetchCampaigns = async (): Promise<Campaign[]> => {
   }
 };
 
-
-
 export const fetchLikesAndComments = async (
   campaignId: string,
   userId: string | null
@@ -52,6 +50,8 @@ export const fetchLikesAndComments = async (
   isLiked: boolean;
   isDisliked: boolean;
   isSubscribed: boolean;
+  likeStatus: string;
+  subscribed: string;
 }> => {
   try {
     const url = `${BASE_URL}/marketing-service/campgin/getcampainlikesandcommentsbycamapignid?campaignId=${campaignId}`;
@@ -66,24 +66,11 @@ export const fetchLikesAndComments = async (
         likesTotalCount: response.data.likesTotalCount || 0,
         dislikesTotalCount: response.data.dislikesTotalCount || 0,
         subComments: response.data.subComments || [],
-        isLiked: userId
-          ? response.data.subComments?.some(
-              (comment: Comment) =>
-                comment.mainComment === "like" && comment.mainCommentId === userId
-            ) || false
-          : false,
-        isDisliked: userId
-          ? response.data.subComments?.some(
-              (comment: Comment) =>
-                comment.mainComment === "dislike" && comment.mainCommentId === userId
-            ) || false
-          : false,
-        isSubscribed: userId
-          ? response.data.subComments?.some(
-              (comment: Comment) =>
-                comment.mainComment === "subscribe" && comment.mainCommentId === userId
-            ) || false
-          : false,
+        likeStatus: response.data.likeStatus || "",
+        subscribed: response.data.subscribed || "",
+        isLiked: userId ? response.data.likeStatus === "yes" : false,
+        isDisliked: userId ? response.data.likeStatus === "no" : false,
+        isSubscribed: userId ? response.data.subscribed === "yes" : false,
       };
     }
   } catch (error) {
@@ -96,6 +83,8 @@ export const fetchLikesAndComments = async (
     isLiked: false,
     isDisliked: false,
     isSubscribed: false,
+    likeStatus: "",
+    subscribed: "",
   };
 };
 
@@ -125,11 +114,15 @@ export const submitWriteToUsQuery = async (
   };
 
   const accessToken = localStorage.getItem("accessToken");
-  const apiUrl = `${BASE_URL}/writetous-service/saveData`;
+
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   try {
-    const response = await axios.post(apiUrl, payload, { headers });
+    const response = await axios.post(
+      `${BASE_URL}/user-service/write/saveData`,
+      payload,
+      { headers }
+    );
     return response.data ? true : false;
   } catch (error) {
     console.error("Error sending the query:", error);
@@ -188,20 +181,36 @@ export const submitInterest = async (
 };
 
 export const submitUserInteraction = async (
-  campaignId: string,
-  userId: string,
-  action: string,
-  commentText: string = ""
+  interaction:
+    | {
+        campaignId: string;
+        interavtionType: "LIKEORDISLIKE";
+        likeStatus: "yes" | "no";
+        userId: string | null;
+      }
+    | {
+        campaignId: string;
+        interavtionType: "SUBSCRIBE";
+        subscribed: "yes" | "no";
+        userId: string | null;
+      }
+    | {
+        campaignId: string;
+        interavtionType: "COMMENTS";
+        userComments: string;
+        userId: string | null;
+      }
 ): Promise<boolean> => {
-  const payload: any = {
-    campaignId,
-    userId,
-    likeStatus: action === "like" ? "yes" : action === "dislike" ? "no" : "",
-    subscribed: action === "subscribe" ? "yes" : "",
-    userComments: action === "comment" ? commentText : "",
-  };
-
   try {
+    const payload = {
+      campaignId: interaction.campaignId,
+      userId: interaction.userId,
+      interavtionType: interaction.interavtionType,
+      likeStatus: interaction.interavtionType === "LIKEORDISLIKE" ? interaction.likeStatus : null,
+      subscribed: interaction.interavtionType === "SUBSCRIBE" ? interaction.subscribed : null,
+      userComments: interaction.interavtionType === "COMMENTS" ? interaction.userComments : null,
+    };
+
     const response = await axios.post(
       `${BASE_URL}/marketing-service/campgin/filluserinteractions`,
       payload,
@@ -209,7 +218,7 @@ export const submitUserInteraction = async (
     );
     return response.status === 200;
   } catch (error) {
-    console.error(`Error submitting ${action}:`, error);
+    console.error("Error submitting user interaction:", error);
     return false;
   }
 };

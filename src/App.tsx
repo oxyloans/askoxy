@@ -186,7 +186,7 @@ const App: React.FC = () => {
       "/rice2roboecommers",
       "/nyayagpt",
       "/student-home",
-      "/studyabroad"
+      "/studyabroad",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -203,14 +203,9 @@ const App: React.FC = () => {
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             <Route path="services/freerudraksha" element={<Freerudraksha />} />
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
-            <Route
-                path="services/:id/:type"
-                element={<CampaignDetails />}
-              />
-              <Route
-                path="blog/:id/:type"
-                element={<BlogDetails />}
-              />
+            <Route path="services/:id/:type" element={<CampaignDetails />} />
+            <Route path="blog/:id/:type" element={<BlogDetails />} />
+            <Route path="addblogs" element={<AddBlog />} />
             <Route path="services/studyabroad" element={<StudyAbroad />} />
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />
@@ -442,14 +437,9 @@ const App: React.FC = () => {
                 path="services/campaign/:type"
                 element={<CampaignDetails />}
               /> */}
-<Route
-                path="services/:id/:type"
-                element={<CampaignDetails />}
-              />
-              <Route
-                path="blog/:id/:type"
-                element={<BlogDetails />}
-              />
+              <Route path="services/:id/:type" element={<CampaignDetails />} />
+              <Route path="blog/:id/:type" element={<BlogDetails />} />
+              <Route path="addblogs" element={<AddBlog />} />
               <Route path="services/studyabroad" element={<StudyAbroad />} />
               <Route
                 path="services/Freechatgpt"
