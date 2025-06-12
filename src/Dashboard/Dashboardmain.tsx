@@ -33,8 +33,8 @@ import RudrakshaImage from "../assets/img/freerudraksha.png";
 import FreeChatGPTmain from "./FreechatGPTmain";
 import VideoImage from "../assets/img/Videothumb.png";
 import BMVCOINmain from "./BMVcoinmain";
+import { fetchCampaigns, Campaign } from "../components/servicesapi";
 
-import BASE_URL from "../Config";
 import { Image, message } from "antd";
 interface DashboardItem {
   title: string;
@@ -44,17 +44,6 @@ interface DashboardItem {
   icon: React.ReactNode;
   category?: string;
   onClick?: () => void;
-}
-
-interface Campaign {
-  imageUrls: Image[];
-  campaignType: string;
-  message: string | null;
-  campaignTypeAddBy: string;
-  campaignDescription: string;
-  campaignStatus: boolean;
-  campaignId: string;
-  campainInputType: string;
 }
 
 interface Image {
@@ -82,25 +71,22 @@ const DashboardMain: React.FC = () => {
   const accessToken = localStorage.getItem("accessToken");
 
   useEffect(() => {
-    const fetchCampaigns = async () => {
+    const loadCampaigns = async () => {
       try {
-        const response = await axios.get<Campaign[]>(
-          BASE_URL + "/marketing-service/campgin/getAllCampaignDetails"
-        );
+        const campaigns = await fetchCampaigns();
 
-        const campaignsWithIds = response.data.map((campaign) => {
-          const id = campaign.campaignId;
-
-          return { ...campaign, id };
-        });
+        const campaignsWithIds = campaigns.map((campaign) => ({
+          ...campaign,
+          id: campaign.campaignId,
+        }));
 
         setCampaigns(campaignsWithIds);
       } catch (err) {
-        console.error(err);
+        console.error("Error loading campaigns:", err);
       }
     };
 
-    fetchCampaigns();
+    loadCampaigns();
   }, []);
 
   useEffect(() => {
@@ -263,9 +249,34 @@ const DashboardMain: React.FC = () => {
           item.category.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
+  const slugify = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 30);
 
-  const handleCampaignClick = (campaignId: string) => {
-    navigate(`/main/services/campaign/${campaignId.slice(-4)}`);
+  const handleCampaignClick = (campaign: Campaign) => {
+    console.log("Campaign clicked:", campaign.campainInputType);
+    
+    if (
+      campaign.campainInputType === "SERVICE" ||
+      campaign.campainInputType === "PRODUCT"
+    ) {
+      navigate(
+        `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
+          campaign.campaignType
+        )}`
+      );
+    } else {
+      navigate(
+        `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
+          campaign.campaignType
+        )}`
+      );
+    }
   };
 
   const renderItems = (items: DashboardItem[]): JSX.Element => (
@@ -473,9 +484,7 @@ const DashboardMain: React.FC = () => {
                   key={campaign.campaignId}
                   className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
             transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                  onClick={() =>
-                    handleCampaignClick(campaign.campaignId as string)
-                  }
+                  onClick={() => handleCampaignClick(campaign)}
                 >
                   <div className="relative aspect-video overflow-hidden bg-gray-50">
                     {campaign.imageUrls && campaign.imageUrls.length > 0 && (
@@ -532,9 +541,7 @@ const DashboardMain: React.FC = () => {
                       key={campaign.campaignId}
                       className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
             transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                      onClick={() =>
-                        handleCampaignClick(campaign.campaignId as string)
-                      }
+                      onClick={() => handleCampaignClick(campaign)}
                     >
                       <div className="relative aspect-video overflow-hidden bg-gray-50">
                         {showImage ? (

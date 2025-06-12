@@ -201,6 +201,7 @@ const AllOrders: React.FC = () => {
           <Typography.Text>Start Date</Typography.Text>
           <DatePicker
             className="w-[150px]"
+            format="DD-MM-YYYY"
             value={startDate}
             onChange={(date) => setStartDate(date)}
             placeholder="Select Start Date"
@@ -212,6 +213,7 @@ const AllOrders: React.FC = () => {
           <Typography.Text>End Date</Typography.Text>
           <DatePicker
             className="w-[150px]"
+            format="DD-MM-YYYY"
             value={endDate}
             onChange={(date) => setEndDate(date)}
             placeholder="Select End Date"
@@ -228,7 +230,7 @@ const AllOrders: React.FC = () => {
           >
             <Select.Option value="All">All Orders</Select.Option>
             <Select.Option value="1">Placed</Select.Option>
-            <Select.Option value="2">Accepted</Select.Option>
+            {/* <Select.Option value="2">Accepted</Select.Option> */}
             <Select.Option value="3">Assigned</Select.Option>
             <Select.Option value="4">Delivered</Select.Option>
             <Select.Option value="5">Rejected</Select.Option>

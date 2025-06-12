@@ -12,8 +12,6 @@ import {
   Spin,
   Tabs,
 } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
-import { IndexKind } from "typescript";
 
 import BASE_URL from "../Config";
 
@@ -58,8 +56,8 @@ const AllCampaignsDetails: React.FC = () => {
     ? "https://www.sandbox.askoxy.ai"
     : "https://www.askoxy.ai";
 
-  const authUrl = `${baseUrl}/main/services/campaign/`;
-  const noAuthUrl = `${baseUrl}/services/campaign/`;
+  const authUrl = `${baseUrl}/main/services/`;
+  const noAuthUrl = `${baseUrl}/services/`;
 
   useEffect(() => {
     fetchCampaigns();
@@ -367,6 +365,15 @@ const AllCampaignsDetails: React.FC = () => {
     );
   };
 
+  const slugify = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 30);
+
   const getColumns = (type: string) => [
     {
       title: <div className="text-center">Media</div>,
@@ -399,10 +406,15 @@ const AllCampaignsDetails: React.FC = () => {
       ),
       key: "noAuthCampaignUrl",
       render: (_: any, record: Campaign) => {
-        const encodedCampaignType = encodeURIComponent(
-          record.campaignId.slice(-4)
-        );
-        const campaignUrl = `${noAuthUrl}${encodedCampaignType}`;
+        const isBlog = record.campainInputType === "BLOG";
+        const slugifiedCampaignType = slugify(record.campaignType);
+        const campaignUrl = isBlog
+          ? `${baseUrl}/blog/${record.campaignId.slice(
+              -4
+            )}/${slugifiedCampaignType}`
+          : `${noAuthUrl}${record.campaignId.slice(
+              -4
+            )}/${slugifiedCampaignType}`;
 
         return (
           <div className="flex flex-wrap items-center gap-2">
@@ -431,10 +443,15 @@ const AllCampaignsDetails: React.FC = () => {
       ),
       key: "authCampaignUrl",
       render: (_: any, record: Campaign) => {
-        const encodedCampaignType = encodeURIComponent(
-          record.campaignId.slice(-4)
-        );
-        const campaignUrl = `${authUrl}${encodedCampaignType}`;
+        const isBlog = record.campainInputType === "BLOG";
+        const slugifiedCampaignType = slugify(record.campaignType);
+         const campaignUrl = isBlog
+          ? `${baseUrl}/main/blog/${record.campaignId.slice(
+              -4
+            )}/${slugifiedCampaignType}`
+          : `${authUrl}${record.campaignId.slice(
+              -4
+            )}/${slugifiedCampaignType}`;
 
         return (
           <div className="flex flex-wrap items-center gap-2">

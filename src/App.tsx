@@ -161,6 +161,7 @@ import AllUniversities from "./StudyAbroad/AllUniversities";
 
 import StudyAbroadLandingPage from "./StudyAbroad/StudyAbroadLandingPage";
 import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
+import BlogDetails from "./components/BlogDetails";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -203,9 +204,13 @@ const App: React.FC = () => {
             <Route path="services/freerudraksha" element={<Freerudraksha />} />
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
             <Route
-              path="services/campaign/:type"
-              element={<CampaignDetails />}
-            />
+                path="services/:id/:type"
+                element={<CampaignDetails />}
+              />
+              <Route
+                path="blog/:id/:type"
+                element={<BlogDetails />}
+              />
             <Route path="services/studyabroad" element={<StudyAbroad />} />
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />
@@ -433,10 +438,18 @@ const App: React.FC = () => {
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
-              <Route
+              {/* <Route
                 path="services/campaign/:type"
                 element={<CampaignDetails />}
+              /> */}
+<Route
+                path="services/:id/:type"
+                element={<CampaignDetails />}
               />
+              <Route
+                path="blog/:id/:type"
+                element={<BlogDetails />}
+              />
               <Route path="services/studyabroad" element={<StudyAbroad />} />
               <Route
                 path="services/Freechatgpt"

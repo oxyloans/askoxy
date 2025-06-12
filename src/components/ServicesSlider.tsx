@@ -2,21 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
-import axios from "axios";
-
-// Import logos
-import BASE_URL from "../Config";
-
-// Define Campaign interface
-interface Campaign {
-  campaignId: string;
-  campaignType: string;
-  campaignDescription: string;
-  campaignStatus: boolean;
-  imageUrls: { imageUrl: string }[];
-  id?: string;
-  campainInputType: string;
-}
+import { fetchCampaigns, Campaign } from "./servicesapi";
 
 const ServicesSlider: React.FC = () => {
   const [showAllServices, setShowAllServices] = useState(false);
@@ -100,44 +86,64 @@ const ServicesSlider: React.FC = () => {
     : blogCampaigns.slice(0, 3);
 
   useEffect(() => {
-    // Simulate loading of images
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 800);
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch campaigns data
   useEffect(() => {
-    const fetchCampaigns = async () => {
+    const loadCampaigns = async () => {
       try {
-        const response = await axios.get<Campaign[]>(
-          BASE_URL + "/marketing-service/campgin/getAllCampaignDetails"
-        );
+        const campaigns = await fetchCampaigns();
 
-        const campaignsWithIds = response.data.map((campaign) => {
-          const id = campaign.campaignId;
-          return { ...campaign, id };
-        });
+        const campaignsWithIds = campaigns.map((campaign) => ({
+          ...campaign,
+          id: campaign.campaignId,
+        }));
 
         setCampaigns(campaignsWithIds);
       } catch (err) {
-        console.error(err);
+        console.error("Error loading campaigns:", err);
       }
     };
 
-    fetchCampaigns();
+    loadCampaigns();
   }, []);
 
   const handleServiceClick = (path: string) => {
     navigate(path);
   };
+  const slugify = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 30);
 
-  const handleCampaignClick = (campaignId: string) => {
+  const handleCampaignClick = (campaign: Campaign) => {
+  console.log(campaign);
+  
     if (accessToken) {
-      navigate(`/main/services/campaign/${campaignId.slice(-4)}`);
+      if (
+        campaign.campainInputType === "SERVICE" ||
+        campaign.campainInputType === "PRODUCT"
+      ) {
+        navigate(`/main/services/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+      } else {
+        navigate(`/main/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+      }
     } else {
-      navigate(`/services/campaign/${campaignId.slice(-4)}`);
+      if (
+        campaign.campainInputType === "SERVICE" ||
+        campaign.campainInputType === "PRODUCT"
+      ) {
+        navigate(`/services/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+      } else {
+        navigate(`/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+      }
     }
   };
 
@@ -291,14 +297,11 @@ const ServicesSlider: React.FC = () => {
                   variants={itemVariants}
                   className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
                     transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                  onClick={() =>
-                    handleCampaignClick(campaign.campaignId as string)
-                  }
+                  onClick={() => handleCampaignClick(campaign)}
                   role="button"
                   tabIndex={0}
                   onKeyPress={(e) =>
-                    e.key === "Enter" &&
-                    handleCampaignClick(campaign.campaignId as string)
+                    e.key === "Enter" && handleCampaignClick(campaign)
                   }
                 >
                   <div className="relative aspect-video overflow-hidden bg-gray-50">
@@ -394,14 +397,11 @@ const ServicesSlider: React.FC = () => {
                     variants={itemVariants}
                     className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
               transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                    onClick={() =>
-                      handleCampaignClick(campaign.campaignId as string)
-                    }
+                    onClick={() => handleCampaignClick(campaign)}
                     role="button"
                     tabIndex={0}
                     onKeyPress={(e) =>
-                      e.key === "Enter" &&
-                      handleCampaignClick(campaign.campaignId as string)
+                      e.key === "Enter" && handleCampaignClick(campaign)
                     }
                   >
                     <div className="relative aspect-video overflow-hidden bg-gray-50">

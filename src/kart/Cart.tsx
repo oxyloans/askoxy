@@ -28,6 +28,7 @@ interface CartItem {
   itemDescription: string;
   units: string;
   weight: string;
+  gstAmount: number;
   cartQuantity: number;
   cartId: string;
   status: string;
@@ -1944,75 +1945,72 @@ const CartPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex justify-between mb-2 text-gray-700">
+                    <span>GST</span>
+                    <span className="font-semibold">
+                      ₹
+                      {cartData
+                        ?.reduce((acc, item) => {
+                          const quantity =
+                            item.status === "FREE"
+                              ? freeCartItems[item.itemId] || 0
+                              : regularCartItems[item.itemId] || 0;
+                          const gstAmount = item.gstAmount ?? 0;
+                          return acc + gstAmount * quantity;
+                        }, 0)
+                        .toFixed(2) || "0.00"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between mb-2 text-gray-700">
                     <span>Shipping</span>
                     <span className="font-semibold">₹0.00</span>
                   </div>
                   {cartData?.map((item) => {
-                    const quantity = regularCartItems[item.itemId] || 0;
+                    const quantity =
+                      item.status === "FREE"
+                        ? freeCartItems[item.itemId] || 0
+                        : regularCartItems[item.itemId] || 0;
                     const goldMakingCost = item.goldMakingCost ?? 0;
                     const goldGst = item.goldGst ?? 0;
-                    const goldMakingCostAndGst =
-                      item.goldMakingCostAndGst ?? goldMakingCost + goldGst;
 
-                    if (goldMakingCost <= 0) return null;
+                    if (goldMakingCost <= 0 && goldGst <= 0) return null;
 
                     return (
                       <div
                         key={item.itemId}
                         className="mb-2 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200"
                       >
-                        {/* Cost breakdown */}
                         <div className="space-y-1.5">
-                          {/* Gold Making Cost */}
-                          <div className="flex justify-between items-center text-xs sm:text-sm">
-                            <span className="text-gray-600 font-medium">
-                              Gold Making Cost
-                            </span>
-                            <span className="text-gray-800 font-semibold">
-                              ₹
-                              {(goldMakingCost * quantity).toLocaleString(
-                                "en-IN",
-                                {
+                          {goldMakingCost > 0 && (
+                            <div className="flex justify-between items-center text-xs sm:text-sm">
+                              <span className="text-gray-600 font-medium">
+                                Gold Making Cost
+                              </span>
+                              <span className="text-gray-800 font-semibold">
+                                ₹
+                                {(goldMakingCost * quantity).toLocaleString(
+                                  "en-IN",
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          {goldGst > 0 && (
+                            <div className="flex justify-between items-center text-xs sm:text-sm">
+                              <span className="text-gray-600 font-medium">
+                                Gold GST
+                              </span>
+                              <span className="text-gray-800 font-semibold">
+                                ₹
+                                {(goldGst * quantity).toLocaleString("en-IN", {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2,
-                                }
-                              )}
-                            </span>
-                          </div>
-
-                          {/* Gold GST */}
-                          <div className="flex justify-between items-center text-xs sm:text-sm">
-                            <span className="text-gray-600 font-medium">
-                              Gold GST
-                            </span>
-                            <span className="text-gray-800 font-semibold">
-                              ₹
-                              {(goldGst * quantity).toLocaleString("en-IN", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </span>
-                          </div>
-
-                          {/*                        
-                          <hr className="border-gray-300" />
-                          <div className="flex justify-between items-center text-sm sm:text-base">
-                            <span className="text-gray-900 font-semibold">
-                              Total
-                            </span>
-                            <span className="text-gray-900 font-bold">
-                              ₹
-                              {(goldMakingCostAndGst * quantity).toLocaleString(
-                                "en-IN",
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </span>
-                          </div> */}
-
-                          {/* Quantity indicator */}
+                                })}
+                              </span>
+                            </div>
+                          )}
                           {quantity > 1 && (
                             <div className="text-xs text-gray-500 text-right">
                               Qty: {quantity}
@@ -2022,13 +2020,11 @@ const CartPage: React.FC = () => {
                       </div>
                     );
                   })}
-
                   <div className="flex justify-between mb-4 text-gray-800 font-bold text-lg">
                     <span>Grand Total</span>
                     <span>
                       ₹
                       {(() => {
-                        // Calculate item total
                         const itemTotal =
                           cartData
                             ?.filter((item) => item.status !== "FREE")
@@ -2040,20 +2036,34 @@ const CartPage: React.FC = () => {
                               0
                             ) || 0;
 
-                        const goldTotal =
+                        const goldMakingCostTotal =
                           cartData?.reduce((acc, item) => {
-                            const quantity = regularCartItems[item.itemId] || 0;
-                            const goldMakingCostAndGst =
-                              item.goldMakingCostAndGst ??
-                              (item.goldMakingCost ?? 0) + (item.goldGst ?? 0);
-                            return acc + goldMakingCostAndGst * quantity;
+                            const quantity =
+                              item.status === "FREE"
+                                ? freeCartItems[item.itemId] || 0
+                                : regularCartItems[item.itemId] || 0;
+                            const goldMakingCost = item.goldMakingCost ?? 0;
+                            return acc + goldMakingCost * quantity;
                           }, 0) || 0;
 
-                        return (itemTotal + goldTotal).toFixed(2);
+                        const gstTotal =
+                          cartData?.reduce((acc, item) => {
+                            const quantity =
+                              item.status === "FREE"
+                                ? freeCartItems[item.itemId] || 0
+                                : regularCartItems[item.itemId] || 0;
+                            const gstAmount = item.gstAmount ?? 0;
+                            return acc + gstAmount * quantity;
+                          }, 0) || 0;
+
+                        return (
+                          itemTotal +
+                          goldMakingCostTotal +
+                          gstTotal
+                        ).toFixed(2);
                       })() || "0.00"}
                     </span>
                   </div>
-
                   {cartData?.some((item) => item.quantity === 0) && (
                     <div className="mb-3 p-3 bg-red-100 text-red-700 rounded">
                       <p className="font-semibold">
@@ -2079,7 +2089,6 @@ const CartPage: React.FC = () => {
                       </button>
                     </div>
                   )}
-
                   {cartData?.some(
                     (item) =>
                       item.cartQuantity > item.quantity && item.quantity > 0

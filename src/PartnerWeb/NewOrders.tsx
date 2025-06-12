@@ -115,7 +115,9 @@ const OrdersPage: React.FC = () => {
         setFilteredExchangeOrders(filtered);
       } else if (status === "3") {
         const filtered = fetchedExchangeOrders.filter(
-          (order) => order.status !== "EXCHANGEREQUESTED"
+          (order) =>
+            order.status !== "EXCHANGEREQUESTED" &&
+            order.status !== "RECOMPLETED"
         );
         setFilteredExchangeOrders(filtered);
       } else {
@@ -768,6 +770,11 @@ const OrdersPage: React.FC = () => {
         <Title level={4} className="text-gray-800 mb-0">
           Orders Management
         </Title>
+
+        <div className="flex gap-4 text-sm text-gray-500">
+          <p>New: {filteredOrders.length}</p>
+          <p>Exchange: {filteredExchangeOrders.length}</p>
+        </div>
       </div>
 
       <Tabs defaultActiveKey={name}>

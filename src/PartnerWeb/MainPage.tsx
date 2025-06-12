@@ -172,7 +172,7 @@ const MainPage: React.FC = () => {
         },
         {
           name: "Exchange Orders",
-          count: exchangeOrdersData.length,
+          count: exchangeOrdersData.filter(order => order.status === 'EXCHANGEREQUESTED').length,
           status: "Exchange",
         },
         {

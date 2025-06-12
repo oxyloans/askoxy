@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
-import axios from "axios";
 import { Button, Input, message, Modal } from "antd";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import BASE_URL from "../Config";
 import Header1 from "./Header";
+import {
+  fetchCampaigns,
+  submitWriteToUsQuery,
+  checkUserInterest,
+  submitInterest,
+} from "./servicesapi";
+
 const { TextArea } = Input;
 
 interface Image {
@@ -25,25 +30,14 @@ interface Campaign {
   campainInputType: string;
 }
 
-interface Comment {
-  mainComment: string;
-  mainCommentId: string;
-  subComments: SubComment[];
-}
-
-interface SubComment {
-  userId: string;
-  comment: string;
-}
-
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pathParts = location.pathname.split("/");
-  const campaignId = pathParts[pathParts.indexOf("campaign") + 1];
+  const campaignId = pathParts[pathParts.indexOf("services") + 1];
   const userId = localStorage.getItem("userId");
   const [isLoading, setIsLoading] = useState(true);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -54,131 +48,44 @@ const CampaignDetails: React.FC = () => {
   const [query, setQuery] = useState("");
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
-  const [campaign, setCampaign] = useState<Campaign>();
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [interested, setInterested] = useState<boolean>(false);
   const submitclicks = sessionStorage.getItem("submitclicks");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [comment, setComment] = useState("");
-  const [isLiked, setIsLiked] = useState<boolean>(false);
-  const [isDisliked, setIsDisliked] = useState<boolean>(false);
-  const [likeCount, setLikeCount] = useState<number>(0);
-  const [dislikeCount, setDislikeCount] = useState<number>(0);
-  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [subComment, setSubComment] = useState<{ [key: string]: string }>({});
-  const [isSubCommentModalOpen, setIsSubCommentModalOpen] = useState<{
-    [key: string]: boolean;
-  }>({});
-
-  // const createSimpleHash = (text: string): string => {
-  //   let hash = 0;
-  //   for (let i = 0; i < text.length; i++) {
-  //     hash = (hash << 5) - hash + text.charCodeAt(i);
-  //     hash = hash & hash;
-  //   }
-  //   return Math.abs(hash).toString(16).substring(0, 8);
-  // };
 
   useEffect(() => {
-    const fetchCampaigns = async () => {
+    const loadCampaign = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get<Campaign[]>(
-          `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
-        );
-
-        const campaignsWithIds = response.data.map((campaign) => ({
-          ...campaign,
-          campaignId: campaign.campaignId,
-        }));
-
-        const foundCampaign = campaignsWithIds.find(
+        const allCampaigns = await fetchCampaigns();
+        const foundCampaign = allCampaigns.find(
           (c) => c.campaignId.slice(-4) === campaignId
         );
-
-        if (!foundCampaign && campaignId) {
-          try {
-            const decodedName = decodeURIComponent(campaignId);
-            const fallbackCampaign = campaignsWithIds.find(
-              (c) =>
-                c.campaignType.trim().slice(0, 10) ===
-                decodedName.trim().slice(0, 10)
-            );
-
-            if (fallbackCampaign) {
-              const newUrl = location.pathname.replace(
-                campaignId,
-                fallbackCampaign.campaignId as string
-              );
-              window.history.replaceState(null, "", newUrl);
-              setCampaign(fallbackCampaign);
-            }
-          } catch (e) {
-            console.error("Error with URL decoding:", e);
-          }
-        } else {
+        if (
+          foundCampaign &&
+          (foundCampaign.campainInputType === "PRODUCT" ||
+            foundCampaign.campainInputType === "SERVICE")
+        ) {
           setCampaign(foundCampaign);
+        } else {
+          setCampaign(null);
         }
-      } catch (err) {
-        console.error("Error fetching services:", err);
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading campaign:", error);
+        setCampaign(null);
       }
+      setIsLoading(false);
     };
 
-    fetchCampaigns();
-  }, [campaignId, location.pathname]);
+    loadCampaign();
+  }, [campaignId]);
 
   useEffect(() => {
-    handleLoadOffersAndCheckInterest();
-    if (campaign?.campainInputType === "BLOG") {
-      fetchLikesAndComments();
+    if (campaign) {
+      handleLoadOffersAndCheckInterest();
     }
   }, [campaign]);
-
-  const fetchLikesAndComments = async () => {
-    try {
-      const url = `${BASE_URL}/marketing-service/campgin/getcampainlikesandcommentsbycamapignid?campaignId=${campaign?.campaignId}`;
-
-      const finalUrl = userId ? `${url}&userId=${userId}` : url;
-
-      const response = await axios.get(finalUrl, {
-        headers: { accept: "*/*" },
-      });
-      if (response.status === 200) {
-        setLikeCount(response.data.likesTotalCount || 0);
-        setDislikeCount(response.data.dislikesTotalCount || 0);
-        setComments(response.data.subComments || []);
-        setIsLiked(
-          response.data.subComments.some(
-            (comment: Comment) =>
-              comment.mainComment === "like" && comment.mainCommentId === userId
-          )
-        );
-        setIsDisliked(
-          response.data.subComments.some(
-            (comment: Comment) =>
-              comment.mainComment === "dislike" &&
-              comment.mainCommentId === userId
-          )
-        );
-        setIsSubscribed(
-          response.data.subComments.some(
-            (comment: Comment) =>
-              comment.mainComment === "subscribe" &&
-              comment.mainCommentId === userId
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching likes and comments:", error);
-      message.error("Failed to load comments and likes.");
-    }
-  };
 
   const handleWriteToUs = () => {
     if (
@@ -199,65 +106,30 @@ const CampaignDetails: React.FC = () => {
       return;
     }
 
-    const campaignType = campaign?.campaignType || "Unknown Service";
-    const payload = {
+    const campaignType = campaign?.campaignType || "Unknown Campaign";
+    const success = await submitWriteToUsQuery(
       email,
-      mobileNumber: finalMobileNumber,
-      queryStatus: "PENDING",
-      projectType: "ASKOXY",
-      askOxyOfers: campaignType,
-      adminDocumentId: "",
-      comments: "",
-      id: "",
-      resolvedBy: "",
-      resolvedOn: "",
-      status: "",
-      userDocumentId: "",
+      finalMobileNumber,
       query,
-      userId,
-    };
+      campaignType,
+      userId
+    );
 
-    const accessToken = localStorage.getItem("accessToken");
-    const apiUrl = `${BASE_URL}/writetous-service/saveData`;
-    const headers = { Authorization: `Bearer ${accessToken}` };
-
-    try {
-      const response = await axios.post(apiUrl, payload, { headers });
-      if (response.data) {
-        setSuccessOpen(true);
-        setIsOpen(false);
-      }
-    } catch (error) {
-      console.error("Error sending the query:", error);
+    if (success) {
+      setSuccessOpen(true);
+      setIsOpen(false);
+    } else {
       message.error("Failed to send query. Please try again.");
     }
   };
 
   const handleLoadOffersAndCheckInterest = async () => {
-    if (!userId) return;
+    if (!userId || !campaign?.campaignType) return;
 
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-        { userId }
-      );
-
-      if (response.status === 200 && Array.isArray(response.data)) {
-        const offers = response.data;
-        const hasFreeRudrakshaOffer = offers.some(
-          (offer: any) => offer.askOxyOfers === campaign?.campaignType
-        );
-
-        setInterested(hasFreeRudrakshaOffer);
-        if (submitclicks) {
-          handleSubmit(hasFreeRudrakshaOffer);
-        }
-      } else {
-        setInterested(false);
-      }
-    } catch (error) {
-      console.error("Error while fetching offers:", error);
-      setInterested(false);
+    const hasInterest = await checkUserInterest(userId, campaign.campaignType);
+    setInterested(hasInterest);
+    if (submitclicks) {
+      handleSubmit(hasInterest);
     }
   };
 
@@ -270,10 +142,24 @@ const CampaignDetails: React.FC = () => {
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/services/campaign/${campaignId}`
-      );
+      if (
+        campaign?.campaignType === "PRODUCT" ||
+        campaign?.campaignType === "PRODUCT"
+      ) {
+        sessionStorage.setItem(
+          "redirectPath",
+          `/main/services/${campaign?.campaignId.slice(-4)}/${
+            campaign?.campaignType
+          }`
+        );
+      } else {
+        sessionStorage.setItem(
+          "redirectPath",
+          `/main/blog/${campaign?.campaignId.slice(-4)}/${
+            campaign?.campaignType
+          }`
+        );
+      }
       return;
     }
 
@@ -306,7 +192,7 @@ const CampaignDetails: React.FC = () => {
       content: `Are you sure you want to join as ${roles || "no role"}?`,
       okText: "Yes, I'm sure",
       cancelText: "Cancel",
-      onOk: () => submitInterest(roles),
+      onOk: () => submitInterestHandler(roles),
       onCancel: () => {
         sessionStorage.removeItem("submitclicks");
         setSelectedRole("");
@@ -314,71 +200,29 @@ const CampaignDetails: React.FC = () => {
     });
   };
 
-  const submitInterest = async (userRole: string) => {
-    try {
-      const campaignType = sessionStorage.getItem("campaigntype");
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-        {
-          askOxyOfers: campaignType,
-          mobileNumber: finalMobileNumber,
-          userId,
-          projectType: "ASKOXY",
-          userRole,
-        }
-      );
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+  const submitInterestHandler = async (userRole: string) => {
+    const campaignType = sessionStorage.getItem("campaigntype") || "";
+    const success = await submitInterest(
+      campaignType,
+      finalMobileNumber,
+      userId,
+      userRole
+    );
+
+    if (success) {
       message.success(
         `Thank you for joining as ${userRole || "no role"} in our ${
           campaign?.campaignType
-        } offer!`
+        } offer campaign!`
       );
-      if (response.status === 200) {
-        setInterested(true);
-        setIsButtonDisabled(true);
-        sessionStorage.removeItem("campaigntype");
-      }
-    } catch (error) {
-      console.error("API Error:", error);
+      setInterested(true);
+      setIsButtonDisabled(true);
+      sessionStorage.removeItem("campaigntype");
+    } else {
       message.error("Failed to submit your interest. Please try again.");
-      setInterested(false);
-    } finally {
-      sessionStorage.removeItem("submitclicks");
-      setSelectedRole("");
     }
-  };
-
-  const handleSpeakDescription = () => {
-    if (!campaign?.campaignDescription) {
-      message.error("No content to read");
-      return;
-    }
-
-    if (isSpeaking) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-    const textToSpeak = campaign.campaignDescription
-      .replace(/###/g, "")
-      .replace(/\*\*/g, "")
-      .replace(/- /g, "")
-      .replace(/https?:\/\/[^\s]+/g, "link")
-      .trim();
-
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 0.8;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      message.error("Speech synthesis failed");
-    };
-
-    speechSynthesis.speak(utterance);
+    sessionStorage.removeItem("submitclicks");
+    setSelectedRole("");
   };
 
   const handlePopUOk = () => {
@@ -390,90 +234,106 @@ const CampaignDetails: React.FC = () => {
     if (!userId) {
       message.warning("Please login to buy now.");
       navigate("/whatsappregister");
-      sessionStorage.setItem("redirectPath", `/main/dashboard/products`);
-      return;
+      sessionStorage.setItem("redirectPath", "/main/dashboard/products");
     } else {
       navigate("/main/dashboard/products");
     }
   };
 
-  const showModal = () => {
-    if (!userId) {
-      message.warning("Please login to comment.");
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/services/campaign/${campaignId}`
-      );
-      return;
-    }
-    setIsModalOpen(true);
-  };
+    const formatCampaignDescription = (description: String) => {
+    if (!description) return null;
 
-  const handleOk = async () => {
-    if (comment.trim() === "") {
-      message.error("Please enter a comment before submitting.");
-      return;
-    }
+    const lines = description.split("\n").filter((line) => line.trim());
 
-    try {
-      await submitUserInteraction("comment", comment);
-      setIsModalOpen(false);
-      setComment("");
-      fetchLikesAndComments();
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-      message.error("Failed to submit comment. Please try again.");
-    }
-  };
+    return lines
+      .map((line, index) => {
+        const trimmedLine = line.trim();
 
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    setComment("");
-  };
+        // Skip empty lines and separators
+        if (trimmedLine === "" || trimmedLine === "---") {
+          return null;
+        }
 
-  const handleSubComment = async (mainCommentId: string) => {
-    if (!userId) {
-      message.warning("Please login to add a sub-comment.");
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/services/campaign/${campaignId}`
-      );
-      return;
-    }
+        // More precise heading detection
+        const isHeading =
+          // Markdown headings (### or ##)
+          trimmedLine.startsWith("###") ||
+          trimmedLine.startsWith("##") ||
+          // Bold headings that start with ** and end with **
+          (trimmedLine.startsWith("**") &&
+            trimmedLine.endsWith("**") &&
+            trimmedLine.length > 4) ||
+          // Headings with emoji and bold (like ### 🛒 **What We Offer**)
+          (trimmedLine.includes("###") && trimmedLine.includes("**")) ||
+          // Headings that start with #### (subheadings)
+          trimmedLine.startsWith("####");
 
-    const subCommentText = subComment[mainCommentId]?.trim();
-    if (!subCommentText) {
-      message.error("Please enter a sub-comment before submitting.");
-      return;
-    }
+        if (isHeading) {
+          // Clean heading text more thoroughly
+          let cleanText = trimmedLine
+            .replace(/^#+\s*/, "") // Remove # symbols
+            .replace(/^\*\*|\*\*$/g, "") // Remove ** from start/end
+            .replace(/\*\*/g, "") // Remove any remaining **
+            .trim();
 
-    try {
-      await axios.post(
-        `${BASE_URL}/marketing-service/campgin/fillusersubinteractioncomments`,
-        {
-          mainCommentId,
-          subComment: subCommentText,
-          userId,
-        },
-        { headers: { accept: "*/*", "Content-Type": "application/json" } }
-      );
-      message.success("Sub-comment submitted successfully!");
-      setSubComment((prev) => ({ ...prev, [mainCommentId]: "" }));
-      setIsSubCommentModalOpen((prev) => ({ ...prev, [mainCommentId]: false }));
-      fetchLikesAndComments();
-    } catch (error) {
-      console.error("Error submitting sub-comment:", error);
-      message.error("Failed to submit sub-comment. Please try again.");
-    }
+          return (
+            <h3
+              key={`heading-${index}`}
+              className="text-lg font-bold text-gray-800 mt-4 mb-2"
+            >
+              {cleanText}
+            </h3>
+          );
+        } else if (
+          trimmedLine.startsWith("*") ||
+          trimmedLine.startsWith("✅") ||
+          trimmedLine.startsWith("•") ||
+          trimmedLine.startsWith("-")
+        ) {
+          // Format bullet points
+          return (
+            <div key={`bullet-${index}`} className="mb-2">
+              <span className="text-gray-600">{trimmedLine}</span>
+            </div>
+          );
+        } else {
+          // Regular content - render links properly
+          const renderTextWithLinks = (text: String) => {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const parts = text.split(urlRegex);
+            return parts.map((part, i) => {
+              if (urlRegex.test(part)) {
+                return (
+                  <a
+                    key={i}
+                    href={part}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline break-words"
+                  >
+                    {part}
+                  </a>
+                );
+              }
+              return <span key={i}>{part}</span>;
+            });
+          };
+
+          return (
+            <p key={`para-${index}`} className="text-gray-600 mb-2">
+              {renderTextWithLinks(trimmedLine)}
+            </p>
+          );
+        }
+      })
+      .filter(Boolean); // Remove null entries
   };
 
   const isVideoUrl = (url: string): boolean => {
-    const videoExtensions = [
+    const videoExtensions: string[] = [
       ".mp4",
       ".webm",
-      ".ogg",
+      ".ogm",
       ".avi",
       ".mov",
       ".wmv",
@@ -485,113 +345,6 @@ const CampaignDetails: React.FC = () => {
       videoExtensions.some((ext) => lowercaseUrl.includes(ext)) ||
       lowercaseUrl.includes("video")
     );
-  };
-
-  const submitUserInteraction = async (
-    action: string,
-    commentText: string = ""
-  ) => {
-    if (!userId) {
-      message.warning("Please login to perform this action.");
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/services/campaign/${campaignId}`
-      );
-      return;
-    }
-
-    const payload: any = {
-      campaignId: campaign?.campaignId,
-      userId,
-      likeStatus: action === "like" ? "yes" : action === "dislike" ? "no" : "",
-      subscribed: action === "subscribe" ? "yes" : "",
-      userComments: action === "comment" ? commentText : "",
-    };
-
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/filluserinteractions`,
-        payload,
-        { headers: { accept: "*/*", "Content-Type": "application/json" } }
-      );
-      if (response.status === 200) {
-        message.success(
-          `${
-            action.charAt(0).toUpperCase() + action.slice(1)
-          } submitted successfully!`
-        );
-        if (action === "like") setIsLiked(true);
-        if (action === "dislike") setIsDisliked(true);
-        if (action === "subscribe") setIsSubscribed(true);
-      }
-    } catch (error) {
-      console.error(`Error submitting ${action}:`, error);
-      message.error(`Failed to submit ${action}. Please try again.`);
-    }
-  };
-
-  const handleLike = async () => {
-    if (isLiked) {
-      setLikeCount((prev) => prev - 1);
-      setIsLiked(false);
-      await submitUserInteraction("like"); // Assuming API allows toggling
-    } else {
-      if (isDisliked) {
-        setDislikeCount((prev) => prev - 1);
-        setIsDisliked(false);
-      }
-      setLikeCount((prev) => prev + 1);
-      setIsLiked(true);
-      await submitUserInteraction("like");
-    }
-  };
-
-  const handleDislike = async () => {
-    if (isDisliked) {
-      setDislikeCount((prev) => prev - 1);
-      setIsDisliked(false);
-      await submitUserInteraction("dislike"); // Assuming API allows toggling
-    } else {
-      if (isLiked) {
-        setLikeCount((prev) => prev - 1);
-        setIsLiked(false);
-      }
-      setDislikeCount((prev) => prev + 1);
-      setIsDisliked(true);
-      await submitUserInteraction("dislike");
-    }
-  };
-
-  const handleSubscribe = async () => {
-    setIsSubscribed(!isSubscribed);
-    await submitUserInteraction("subscribe");
-  };
-
-  const handleCopyContent = () => {
-    if (campaign?.campaignDescription) {
-      navigator.clipboard
-        .writeText(campaign.campaignDescription)
-        .then(() => message.success("Content copied to clipboard!"))
-        .catch(() => message.error("Failed to copy content"));
-    }
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator
-        .share({
-          title: campaign?.campaignType,
-          text: campaign?.campaignDescription,
-          url: window.location.href,
-        })
-        .catch(console.error);
-    } else {
-      navigator.clipboard
-        .writeText(window.location.href)
-        .then(() => message.success("Link copied to clipboard!"))
-        .catch(() => message.error("Failed to copy link"));
-    }
   };
 
   const renderNotFoundPage = () => {
@@ -618,10 +371,10 @@ const CampaignDetails: React.FC = () => {
           </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-4">404</h1>
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            Service Not Found
+            Campaign Not Found
           </h2>
           <p className="text-lg text-gray-600 mb-6">
-            The service is currently inactive or unavailable.
+            The product or service is currently inactive or unavailable.
           </p>
           <button
             onClick={() => navigate("/main")}
@@ -635,7 +388,7 @@ const CampaignDetails: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="w-full lg:max-w-7xl px-4 py-6 h-screen overflow-y-auto">
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -644,563 +397,223 @@ const CampaignDetails: React.FC = () => {
               indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />}
               size="large"
             />
-            <p className="mt-4 text-gray-600">Loading service details...</p>
+            <p className="mt-4 text-gray-600">Loading campaign details...</p>
           </div>
         </div>
-      ) : !campaign ? (
-        renderNotFoundPage()
-      ) : !campaign.campaignStatus ? (
-        renderNotFoundPage()
       ) : (
-        <div>
-          <div className="flex flex-col mb-6 w-full">
-            <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">
-              {campaign.campaignType}
-            </h1>
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
-              {campaign.campainInputType === "PRODUCT" && (
-                <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleBuyNow}
-                  aria-label="Buy Now"
-                  disabled={isButtonDisabled || interested}
-                >
-                  Buy Now
-                </button>
-              )}
-              {campaign.campainInputType !== "BLOG" && (
-                <button
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => handleSubmit(interested)}
-                  aria-label="I'm Interested"
-                  disabled={isButtonDisabled || interested}
-                >
-                  {!interested ? "I'm Interested" : "Already Participated"}
-                </button>
-              )}
-              {campaign.campainInputType === "BLOG" && (
-                <button
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 ${
-                    isSubscribed
-                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
-                      : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600"
-                  }`}
-                  onClick={handleSubscribe}
-                  aria-label={isSubscribed ? "Unsubscribe" : "Subscribe"}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                  </svg>
-                  <span className="font-medium">
-                    {isSubscribed ? "Subscribed" : "Subscribe"}
-                  </span>
-                </button>
-              )}
-              <button
-                className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f4a307] transition-all"
-                aria-label="Write To Us"
-                onClick={handleWriteToUs}
-              >
-                Write To Us
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-8 mb-8">
-            {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
-              campaign.imageUrls.length === 1 ? (
-                <div className="flex justify-center px-4 sm:px-6">
-                  <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
-                      <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg overflow-hidden">
-                      {isVideoUrl(campaign.imageUrls[0].imageUrl) ? (
-                        <video
-                          controls
-                          className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                          onLoadedData={(e) => {
-                            const video = e.target as HTMLVideoElement;
-                            const container = video.parentElement;
-                            if (container) {
-                              const spinner = container.previousElementSibling;
-                              if (spinner && spinner.parentElement) {
-                                spinner.remove();
-                              }
-                            }
-                            video.style.opacity = "1";
-                          }}
-                          style={{
-                            maxHeight: "min(600px, 80vh)",
-                            opacity: "0",
-                            transition: "opacity 0.3s ease-in-out",
-                          }}
-                        >
-                          <source
-                            src={campaign.imageUrls[0].imageUrl}
-                            type="video/mp4"
-                          />
-                          Your browser does not support the video tag.
-                        </video>
-                      ) : (
-                        <img
-                          src={campaign.imageUrls[0].imageUrl}
-                          alt={campaign.campaignType}
-                          className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            const aspectRatio =
-                              img.naturalWidth / img.naturalHeight;
-                            const container = img.parentElement;
-
-                            if (container) {
-                              if (aspectRatio > 1.2) {
-                                img.style.maxHeight = "min(480px, 70vh)";
-                              } else if (aspectRatio < 0.8) {
-                                img.style.maxHeight = "min(600px, 80vh)";
-                              } else {
-                                img.style.maxHeight = "min(500px, 75vh)";
-                              }
-                              container.style.height = "auto";
-                            }
-
-                            const spinner = container?.previousElementSibling;
-                            if (spinner && spinner.parentElement) {
-                              spinner.remove();
-                            }
-                            img.style.opacity = "1";
-                          }}
-                          style={{
-                            opacity: "0",
-                            transition: "opacity 0.3s ease-in-out",
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-6">
-                  {campaign.imageUrls.map((image, index) => (
-                    <div
-                      key={image.imageId}
-                      className="relative bg-gray-50 rounded-lg overflow-hidden h-auto"
+        <div className="flex flex-col h-full">
+          {!campaign || !campaign.campaignStatus ? (
+            renderNotFoundPage()
+          ) : (
+            <div className="p-4">
+              <div className="flex flex-col mb-6 w-full">
+                <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">
+                  {campaign.campaignType}
+                </h1>
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
+                  {campaign.campainInputType === "PRODUCT" && (
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleBuyNow}
+                      aria-label="Buy Now"
+                      disabled={isButtonDisabled || interested}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
-                        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
-                        {isVideoUrl(image.imageUrl) ? (
-                          <video
-                            controls
-                            className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                            onLoadedData={(e) => {
-                              const video = e.target as HTMLVideoElement;
-                              const container = video.parentElement;
-                              if (container) {
-                                container.style.height = "auto";
-                                const spinner =
-                                  container.previousElementSibling;
-                                if (spinner && spinner.parentElement) {
-                                  spinner.remove();
-                                }
-                              }
-                              video.style.opacity = "1";
-                            }}
-                            style={{
-                              maxHeight: "min(400px, 60vh)",
-                              opacity: "0",
-                              transition: "opacity 0.3s ease-in-out",
-                            }}
-                          >
-                            <source src={image.imageUrl} type="video/mp4" />
-                            Your browser does not support the video tag.
-                          </video>
-                        ) : (
-                          <img
-                            src={image.imageUrl}
-                            alt={`${campaign.campaignType} - ${index + 1}`}
-                            className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                            onLoad={(e) => {
-                              const img = e.target as HTMLImageElement;
-                              const aspectRatio =
-                                img.naturalWidth / img.naturalHeight;
-                              const container = img.parentElement;
-
-                              if (container) {
-                                if (aspectRatio > 1.2) {
-                                  img.style.maxHeight = "min(320px, 50vh)";
-                                } else if (aspectRatio < 0.8) {
-                                  img.style.maxHeight = "min(400px, 60vh)";
-                                } else {
-                                  img.style.maxHeight = "min(360px, 55vh)";
-                                }
-                                container.style.height = "auto";
-
-                                if (img.naturalWidth < img.offsetWidth) {
-                                  img.classList.add("mx-auto");
-                                }
-
-                                const spinner =
-                                  container.previousElementSibling;
-                                if (spinner && spinner.parentElement) {
-                                  spinner.remove();
-                                }
-                              }
-                              img.style.opacity = "1";
-                            }}
-                            onError={(e) => {
-                              const img = e.target as HTMLImageElement;
-                              const container = img.parentElement;
-                              if (container) {
-                                container.innerHTML =
-                                  '<div class="flex items-center justify-center h-full p-4 text-red-500">Failed to load image</div>';
-                              }
-                            }}
-                            style={{
-                              opacity: "0",
-                              transition: "opacity 0.3s ease-in-out",
-                            }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            ) : null}
-
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              {campaign.campaignDescription && (
-                <div className="prose max-w-none">
-                  {campaign.campaignDescription
-                    .split("\n")
-                    .map((paragraph: string, index: number) => {
-                      const renderTextWithLinks = (
-                        text: string
-                      ): React.ReactNode[] => {
-                        const urlRegex = /(https?:\/\/[^\s]+)/g;
-                        const parts = text.split(urlRegex);
-                        return parts.map((part: string, i: number) => {
-                          if (urlRegex.test(part)) {
-                            return (
-                              <a
-                                key={i}
-                                href={part}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 underline break-words"
-                              >
-                                {part}
-                              </a>
-                            );
-                          }
-                          return <span key={i}>{part}</span>;
-                        });
-                      };
-
-                      if (paragraph.startsWith("###")) {
-                        return (
-                          <h2
-                            key={index}
-                            className="text-xl font-bold text-gray-800 mb-4"
-                          >
-                            {paragraph.replace("###", "").trim()}
-                          </h2>
-                        );
-                      } else if (paragraph.trim().startsWith("-")) {
-                        return (
-                          <ul key={index} className="list-disc pl-6 mb-4">
-                            <li className="text-gray-600">
-                              {renderTextWithLinks(
-                                paragraph.replace("-", "").trim()
-                              )}
-                            </li>
-                          </ul>
-                        );
-                      } else if (paragraph.includes("**")) {
-                        return (
-                          <p
-                            key={index}
-                            className="font-bold text-gray-800 mb-4"
-                          >
-                            {renderTextWithLinks(
-                              paragraph.replace(/\*\*/g, "").trim()
-                            )}
-                          </p>
-                        );
-                      } else {
-                        return (
-                          <p key={index} className="text-gray-600 mb-4">
-                            {renderTextWithLinks(paragraph.trim())}
-                          </p>
-                        );
-                      }
-                    })}
-                </div>
-              )}
-
-              {campaign.campainInputType === "BLOG" && (
-                <div className="flex flex-wrap items-center gap-3 mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg shadow-md">
+                      Buy Now
+                    </button>
+                  )}
                   <button
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                      isLiked
-                        ? "bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600"
-                        : "bg-white text-gray-700 hover:bg-red-100 hover:text-red-600 border border-red-200"
-                    }`}
-                    onClick={handleLike}
-                    aria-label={isLiked ? "Unlike" : "Like"}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleSubmit(interested)}
+                    aria-label="I'm Interested"
+                    disabled={isButtonDisabled || interested}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill={isLiked ? "currentColor" : "none"}
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                    <span className="font-semibold">
-                      {likeCount} {likeCount === 1 ? "Like" : "Likes"}
-                    </span>
+                    {!interested ? "I'm Interested" : "Already Participated"}
                   </button>
-
-                  {/* <button
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                      isDisliked
-                        ? "bg-gradient-to-r from-gray-500 to-gray-700 text-white hover:from-gray-600 hover:to-gray-800"
-                        : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-800 border border-gray-200"
-                    }`} 
-                    onClick={handleDislike}
-                    aria-label={isDisliked ? "Remove Dislike" : "Dislike"}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill={isDisliked ? "currentColor" : "none"}
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
-                      <line x1="2" y1="2" x2="22" y2="22"></line>
-                    </svg>
-                    <span className="font-semibold">
-                      {dislikeCount}{" "}
-                      {dislikeCount === 1 ? "Dislike" : "Dislikes"}
-                    </span>
-                  </button> */}
-
                   <button
-                    className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-full shadow-lg hover:bg-blue-100 hover:text-blue-800 border border-blue-200 transition-all duration-300 transform hover:scale-105"
-                    onClick={showModal}
-                    aria-label="Comment"
+                    className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f4a307] transition-all"
+                    aria-label="Write To Us"
+                    onClick={handleWriteToUs}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                    </svg>
-                    <span className="font-semibold">Comment</span>
-                  </button>
-
-                  <button
-                    className="flex items-center gap-2 px-4 py-2 bg-white text-green-700 rounded-full shadow-lg hover:bg-green-100 hover:text-green-800 border border-green-200 transition-all duration-300 transform hover:scale-105"
-                    onClick={handleShare}
-                    aria-label="Share"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="18" cy="5" r="3"></circle>
-                      <circle cx="6" cy="12" r="3"></circle>
-                      <circle cx="18" cy="19" r="3"></circle>
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                    <span className="font-semibold">Share</span>
-                  </button>
-
-                  <button
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                      isSpeaking
-                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600"
-                        : "bg-white text-orange-700 hover:bg-orange-100 hover:text-orange-800 border border-orange-200"
-                    }`}
-                    onClick={handleSpeakDescription}
-                    aria-label={isSpeaking ? "Stop Speaking" : "Speak Content"}
-                  >
-                    {isSpeaking ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="11 5,6 9,2 9,2 15,6 15,11 19"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                      </svg>
-                    )}
-                    <span className="font-semibold">
-                      {isSpeaking ? "Stop" : "Listen"}
-                    </span>
+                    Write To Us
                   </button>
                 </div>
-              )}
-              {campaign.campainInputType === "BLOG" && comments.length > 0 && (
-                <div className="mt-6 max-h-[400px] overflow-hidden rounded-lg bg-white shadow-lg">
-                  <h3 className="sticky top-0 z-10 bg-gradient-to-r from-blue-50 to-indigo-50 text-lg font-semibold text-blue-900 px-4 py-3 mb-0 border-b border-blue-200">
-                    Comments ({comments.length})
-                  </h3>
+              </div>
 
-                  <div className="max-h-[360px] overflow-y-auto px-4 pb-4 space-y-2">
-                    {comments.map(
-                      (comment) =>
-                        !["like", "dislike", "subscribe"].includes(
-                          comment.mainComment
-                        ) && (
-                          <div
-                            key={comment.mainCommentId}
-                            className="p-3 rounded-md border border-gray-200 bg-white hover:bg-indigo-50/50 transition-all duration-200 shadow-sm hover:shadow-md"
-                          >
-                            <p className="text-base text-gray-900 font-bold mb-2">
-                              {comment.mainComment}
-                            </p>
-
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
-                              <button
-                                className="text-indigo-600 font-medium hover:text-indigo-800 hover:underline transition-all duration-150"
-                                onClick={() =>
-                                  setIsSubCommentModalOpen((prev) => ({
-                                    ...prev,
-                                    [comment.mainCommentId]: true,
-                                  }))
+              <div className="flex flex-col gap-8 mb-8">
+                {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
+                  campaign.imageUrls.length === 1 ? (
+                    <div className="flex justify-center px-4 sm:px-6">
+                      <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2">
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
+                          <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg overflow-hidden">
+                          {isVideoUrl(campaign.imageUrls[0].imageUrl) ? (
+                            <video
+                              controls
+                              className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                              onLoadedData={(e) => {
+                                const video = e.target as HTMLVideoElement;
+                                const container = video.parentElement;
+                                if (container) {
+                                  const spinner =
+                                    container.previousElementSibling;
+                                  if (spinner && spinner.parentElement) {
+                                    spinner.remove();
+                                  }
                                 }
-                              >
-                                Reply
-                              </button>
-                            </div>
-
-                            {/* Sub-comments */}
-                            {comment.subComments.length > 0 && (
-                              <div className="mt-2 pl-3 border-l-2 border-indigo-300 space-y-1.5">
-                                {comment.subComments.map((sub, index) => (
-                                  <div
-                                    key={index}
-                                    className="bg-gray-50 p-2 rounded-sm shadow-sm border border-gray-100 w-[90%] text-sm"
-                                  >
-                                    <p className="text-gray-700">
-                                      <span className="text-purple-600 font-medium">
-                                        Reply:
-                                      </span>{" "}
-                                      {sub.comment}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Reply Modal */}
-                            <Modal
-                              title={null}
-                              open={
-                                isSubCommentModalOpen[comment.mainCommentId] ||
-                                false
-                              }
-                              onOk={() =>
-                                handleSubComment(comment.mainCommentId)
-                              }
-                              onCancel={() =>
-                                setIsSubCommentModalOpen((prev) => ({
-                                  ...prev,
-                                  [comment.mainCommentId]: false,
-                                }))
-                              }
-                              okText="Reply"
-                              cancelText="Cancel"
-                              okButtonProps={{
-                                className:
-                                  "bg-indigo-600 hover:bg-indigo-700 text-white border-none font-medium rounded-md",
+                                video.style.opacity = "1";
                               }}
-                              cancelButtonProps={{
-                                className:
-                                  "text-gray-600 hover:text-gray-800 border-gray-200 rounded-md",
+                              style={{
+                                maxHeight: "min(600px, 80vh)",
+                                opacity: "0",
+                                transition: "opacity 0.3s ease-in-out",
                               }}
                             >
-                              <TextArea
-                                rows={2}
-                                value={subComment[comment.mainCommentId] || ""}
-                                onChange={(e) =>
-                                  setSubComment((prev) => ({
-                                    ...prev,
-                                    [comment.mainCommentId]: e.target.value,
-                                  }))
-                                }
-                                placeholder="Write your reply..."
-                                className="resize-none text-sm border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-md"
+                              <source
+                                src={campaign.imageUrls[0].imageUrl}
+                                type="video/mp4"
                               />
-                            </Modal>
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <img
+                              src={campaign.imageUrls[0].imageUrl}
+                              alt={campaign.campaignType}
+                              className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                              onLoad={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                const aspectRatio =
+                                  img.naturalWidth / img.naturalHeight;
+                                const container = img.parentElement;
+
+                                if (container) {
+                                  if (aspectRatio > 1.2) {
+                                    img.style.maxHeight = "min(480px, 70vh)";
+                                  } else if (aspectRatio < 0.8) {
+                                    img.style.maxHeight = "min(600px, 80vh)";
+                                  } else {
+                                    img.style.maxHeight = "min(500px, 75vh)";
+                                  }
+                                  container.style.height = "auto";
+                                }
+
+                                const spinner =
+                                  container?.previousElementSibling;
+                                if (spinner && spinner.parentElement) {
+                                  spinner.remove();
+                                }
+                                img.style.opacity = "1";
+                              }}
+                              style={{
+                                opacity: "0",
+                                transition: "opacity 0.3s ease-in-out",
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-6">
+                      {campaign.imageUrls.map((image, index) => (
+                        <div
+                          key={image.imageId}
+                          className="relative bg-gray-50 rounded-lg overflow-hidden h-auto"
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
+                            <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
                           </div>
-                        )
-                    )}
-                  </div>
+                          <div className="bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
+                            {isVideoUrl(image.imageUrl) ? (
+                              <video
+                                controls
+                                className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                                onLoadedData={(e) => {
+                                  const video = e.target as HTMLVideoElement;
+                                  const container = video.parentElement;
+                                  if (container) {
+                                    container.style.height = "auto";
+                                    const spinner =
+                                      container.previousElementSibling;
+                                    if (spinner && spinner.parentElement) {
+                                      spinner.remove();
+                                    }
+                                  }
+                                  video.style.opacity = "1";
+                                }}
+                                style={{
+                                  maxHeight: "min(400px, 60vh)",
+                                  opacity: "0",
+                                  transition: "opacity 0.3s ease-in-out",
+                                }}
+                              >
+                                <source src={image.imageUrl} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : (
+                              <img
+                                src={image.imageUrl}
+                                alt={`${campaign.campaignType} - ${index + 1}`}
+                                className="w-full object-contain rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                                onLoad={(e) => {
+                                  const img = e.target as HTMLImageElement;
+                                  const aspectRatio =
+                                    img.naturalWidth / img.naturalHeight;
+                                  const container = img.parentElement;
+
+                                  if (container) {
+                                    if (aspectRatio > 1.2) {
+                                      img.style.maxHeight = "min(320px, 50vh)";
+                                    } else if (aspectRatio < 0.8) {
+                                      img.style.maxHeight = "min(400px, 60vh)";
+                                    } else {
+                                      img.style.maxHeight = "min(360px, 55vh)";
+                                    }
+                                    container.style.height = "auto";
+
+                                    if (img.naturalWidth < img.offsetWidth) {
+                                      img.classList.add("mx-auto");
+                                    }
+
+                                    const spinner =
+                                      container.previousElementSibling;
+                                    if (spinner && spinner.parentElement) {
+                                      spinner.remove();
+                                    }
+                                  }
+                                  img.style.opacity = "1";
+                                }}
+                                onError={(e) => {
+                                  const img = e.target as HTMLImageElement;
+                                  const container = img.parentElement;
+                                  if (container) {
+                                    container.innerHTML =
+                                      '<div className="flex items-center justify-center h-full p-4 text-red-500">Failed to load image</div>';
+                                  }
+                                }}
+                                style={{
+                                  opacity: "0",
+                                  transition: "opacity 0.3s ease-in-out",
+                                }}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : null}
+
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  {formatCampaignDescription(campaign.campaignDescription)}
                 </div>
-              )}
+                <div className="mt-8">
+                  <Footer />
+                </div>
+              </div>
             </div>
-            <div className="mt-8">
-              <Footer />
-            </div>
-          </div>
+          )}
         </div>
       )}
       {isOpen && (
@@ -1431,7 +844,7 @@ const CampaignDetails: React.FC = () => {
                 </div>
               </button>
               <button
-                className={`p-3 text-left rounded-lg border transition-all duration-300 hover-all duration-300 hover:scale-105 ${
+                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
                   selectedRole.includes("FREELANCER")
                     ? "bg-purple-100 border-purple-500"
                     : "bg-gray-50 border-gray-200"
@@ -1456,7 +869,7 @@ const CampaignDetails: React.FC = () => {
                       strokeWidth="2"
                     >
                       <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                      <path d="M2 17l10 5 10-5"></path>
+                      <path d="M2 17l10 5-7"></path>
                       <path d="M2 12l10 5 10-5"></path>
                     </svg>
                   </div>
@@ -1497,48 +910,6 @@ const CampaignDetails: React.FC = () => {
           </div>
         </div>
       )}
-      <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <span className="text-blue-700 font-semibold">
-              💬 Write a Comment
-            </span>
-            <button
-              className={`ml-auto mr-3 px-3 py-1 text-sm rounded-full transition-all duration-300 ${
-                isSubscribed
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-              onClick={handleSubscribe}
-            >
-              {isSubscribed ? "✓ Subscribed" : "Subscribe"}
-            </button>
-          </div>
-        }
-        open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        okText="Submit Comment"
-        cancelText="Cancel"
-        okButtonProps={{
-          className:
-            "bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700",
-        }}
-      >
-        <div className="space-y-4">
-          <TextArea
-            rows={4}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Type your comment here..."
-            className="resize-none"
-          />
-          <div className="text-sm text-gray-600">
-            Share your thoughts about this content. Your feedback helps us
-            improve!
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

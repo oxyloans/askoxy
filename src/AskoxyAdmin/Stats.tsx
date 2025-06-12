@@ -104,7 +104,7 @@ const Stats: React.FC = () => {
   // Status mapping
   const statusMap: Record<string, StatusInfo> = {
     "1": { label: "Placed", color: "#2563eb", bgColor: "#dbeafe" },
-    "2": { label: "Accepted", color: "#16a34a", bgColor: "#dcfce7" },
+    // "2": { label: "Accepted", color: "#16a34a", bgColor: "#dcfce7" },
     "3": { label: "Assigned", color: "#ea580c", bgColor: "#fed7aa" },
     "4": { label: "Delivered", color: "#0891b2", bgColor: "#cffafe" },
     "5": { label: "Rejected", color: "#dc2626", bgColor: "#fecaca" },

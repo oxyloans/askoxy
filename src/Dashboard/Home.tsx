@@ -35,7 +35,7 @@ import BASE_URL from "../Config";
 import checkProfileCompletion from "../until/ProfileCheck";
 import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals";
-import RiceOfferFAQs from "./Faqs"; // Import the FAQs component
+import RiceOfferFAQs from "./Faqs";
 import ProductImg1 from "../assets/img/ricecard1.png";
 import ProductImg2 from "../assets/img/ricecard2.png";
 import ServiceImg1 from "../assets/img/oxyloasntemp (1).png";
@@ -43,10 +43,8 @@ import ServiceImg2 from "../assets/img/study abroad.png";
 import GPTImg1 from "../assets/img/study abroad.png";
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 import RudrakshaImage from "../assets/img/freerudraksha.png";
-
 import offer5kg from "../assets/img/5offer.png";
 import offer2kgRice from "../assets/img/2offer.png";
-
 import O1 from "../assets/img/o1.png";
 import O2 from "../assets/img/o2.png";
 import O8 from "../assets/img/StudyAbroda.png";
@@ -56,6 +54,27 @@ import O5 from "../assets/img/tb1.png";
 import O6 from "../assets/img/26kg.png";
 import O7 from "../assets/img/5offer.png";
 import O9 from "../assets/img/35kg1.png";
+
+// Define interfaces for Offer and UserEligibleOffer
+interface Offer {
+  id: string;
+  offerName: string;
+  minQtyKg: number;
+  minQty: number;
+  freeItemName: string;
+  freeItemId: string;
+  freeGivenItemId: string;
+  freeQty: number;
+  freeOnce: boolean;
+  active: boolean;
+  offerCreatedAt: number;
+}
+
+interface UserEligibleOffer {
+  offerName: string;
+  eligible: boolean;
+  weight: number;
+}
 
 // Product Skeleton Component
 const ProductSkeleton: React.FC<{ index: number }> = ({ index }) => {
@@ -131,7 +150,6 @@ interface Category {
 }
 
 const Home: React.FC = () => {
-  // Move this to the top of the component
   const context = useContext(CartContext);
   if (!context) {
     throw new Error("Home must be used within a CartProvider");
@@ -159,7 +177,6 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
-  
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -169,18 +186,29 @@ const Home: React.FC = () => {
   const categoriesFetched = useRef(false);
   const initialDataFetched = useRef(false);
 
-  // Add state for promotional offers modal
+  // New states for offers modal
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [userEligibleOffers, setUserEligibleOffers] = useState<
+    UserEligibleOffer[]
+  >([]);
+  const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
+  const [isFetchingOffers, setIsFetchingOffers] = useState(false);
+  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem("displayedOffers");
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  // Existing states
   const [showOffersModal, setShowOffersModal] = useState(false);
 
   const updateCartCount = useCallback(
     (count: number) => {
-      setCartCount(count); // Update local state
-      setCount(count); // Update context state
+      setCartCount(count);
+      setCount(count);
     },
     [setCount]
   );
 
-  // Define fetchCartData first before using it in ProductOfferModals
   const fetchCartData = useCallback(
     async (itemId: string = "") => {
       const userId = localStorage.getItem("userId");
@@ -209,7 +237,6 @@ const Home: React.FC = () => {
             {}
           );
 
-          // Use type assertion and additional type guard
           const totalQuantity = Object.values(cartItemsMap).reduce(
             (sum: number, qty: unknown) => {
               return sum + (typeof qty === "number" ? qty : 0);
@@ -217,19 +244,17 @@ const Home: React.FC = () => {
             0
           );
 
-          // Update both local state and context
-          const roundedTotal = Math.round(totalQuantity);
           setCartItems(cartItemsMap);
           setCartData(cartList);
           localStorage.setItem("cartCount", cartList.length.toString());
-          setCartCount(roundedTotal); // Local state
-          setCount(roundedTotal); // Context state
+          setCartCount(Math.round(totalQuantity));
+          setCount(Math.round(totalQuantity));
         } else {
           setCartItems({});
           setCartData([]);
           localStorage.setItem("cartCount", "0");
-          setCartCount(0); // Local state
-          setCount(0); // Context state
+          setCartCount(0);
+          setCount(0);
         }
       } catch (error) {
         console.error("Error fetching cart items:", error);
@@ -243,9 +268,8 @@ const Home: React.FC = () => {
       }
     },
     [updateCartCount, setCount]
-  ); // Add setCount to the dependency array
+  );
 
-  // Now initialize ProductOfferModals hooks after fetchCartData is defined
   const {
     handleItemAddedToCart,
     freeItemsMap,
@@ -258,95 +282,121 @@ const Home: React.FC = () => {
     cartItems,
   });
 
-  // Handle responsive behavior
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-
-    // Initial check
-    handleResize();
-
-    // Add event listener
-    window.addEventListener("resize", handleResize);
-
-    // Clean up
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Variants for header image hover effect
-  const headerImageVariants = {
-    initial: {
-      scale: 1,
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-    },
-    hover: {
-      scale: 1.05,
-      boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 20,
-      },
-    },
+  // New function to normalize weight
+  const normalizeWeight = (value: any): number | null => {
+    if (value === null || value === undefined) return null;
+    const cleanedValue = String(value).replace(/[^0-9.]/g, "");
+    const parsed = Number(cleanedValue);
+    return isNaN(parsed) ? null : parsed;
   };
 
-  const headerImages: HeaderImage[] = [
-    {
-      id: "o3",
-      src: O3,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=1.0",
-    },
-    // {
-    //   id: "o2",
-    //   src: O2,
-    //   alt: "Products",
-    //   path: "/main/dashboard/products?weight=.0",
-    // },
-    {
-      id: "o6",
-      src: O7,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=5.0",
-    },
-    {
-      id: "o1",
-      src: O6,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=10.0",
-    },
+  // New function to fetch user-eligible offers
+  const fetchUserEligibleOffers = async (userId: string) => {
+    const accessToken = localStorage.getItem("accessToken");
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const normalizedOffers = (response.data || []).map(
+        (offer: UserEligibleOffer) => ({
+          ...offer,
+          weight: normalizeWeight(offer.weight),
+        })
+      );
+      setUserEligibleOffers(normalizedOffers);
+      console.log("User eligible offers:", normalizedOffers);
+    } catch (error) {
+      console.error("Error fetching user-eligible offers:", error);
+      message.error("Failed to load user-eligible offers.");
+      setUserEligibleOffers([]);
+    }
+  };
 
-    {
-      id: "o6",
-      src: O9,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=26.0",
-    },
-    {
-      id: "o1",
-      src: O1,
-      alt: "OxyLoans",
-      path: "/main/service/oxyloans-service",
-    },
-    {
-      id: "o2",
-      src: O8,
-      alt: "Study Abroad",
-      path: "/main/services/studyabroad",
-    },
-    // {
-    //   id: "o4",
-    //   src: O4,
-    //   alt: "Villa @36Lakshs",
-    //   path: "/main/services/campaign/37b3",
-    // },
-  ];
+  // New function to fetch active offers
+  const fetchOffers = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    setIsFetchingOffers(true);
+    try {
+      const offersResponse = await axios.get(
+        `${BASE_URL}/cart-service/cart/activeOffers`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const activeOffers = offersResponse.data || [];
+
+      const filteredOffers = activeOffers.filter((offer: Offer) => {
+        const offerMinQtyKg = normalizeWeight(offer.minQtyKg);
+        if (offerMinQtyKg === null) {
+          console.warn(
+            `Offer ${offer.offerName} has invalid minQtyKg: ${offer.minQtyKg}`
+          );
+          return true;
+        }
+
+        const isExcluded = userEligibleOffers.some((eligibleOffer) => {
+          const eligibleWeight = normalizeWeight(eligibleOffer.weight);
+          if (eligibleWeight === null) {
+            console.warn(
+              `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`
+            );
+            return false;
+          }
+
+          const isEligible = eligibleOffer.eligible === true;
+          const isWeightMatch =
+            Math.abs(eligibleWeight - offerMinQtyKg) < 0.0001;
+
+          return isEligible && isWeightMatch;
+        });
+
+        return !isExcluded;
+      });
+
+      setOffers(filteredOffers);
+      console.log("Filtered offers:", filteredOffers);
+
+      if (filteredOffers.length > 0) {
+        await fetchCartData();
+      }
+    } catch (error) {
+      console.error("Error fetching offers:", error);
+      message.error("Failed to load offers.");
+      setOffers([]);
+    } finally {
+      setIsFetchingOffers(false);
+    }
+  };
 
   const sortItemsByName = (items: Item[]): Item[] => {
     return [...items]
       .filter((item) => item.quantity > 0)
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
+  };
+
+  const updateProducts = (items: Item[]) => {
+    setProductsLoading(true);
+    const productItems = items
+      .filter((item) => item.quantity > 0)
+      .map((item) => ({
+        itemId: item.itemId,
+        title: item.itemName,
+        image: item.itemImage || ProductImg1,
+        description: `₹${item.itemPrice || 0}`,
+        path: `/item/${item.itemId}`,
+        icon: <ShoppingBag className="text-purple-600" size={24} />,
+        itemPrice: item.itemPrice,
+        itemMrp: item.itemMrp,
+        quantity: item.quantity,
+        weight: item.weight,
+        units: item.units,
+        itemName: item.itemName,
+        itemImage: item.itemImage,
+      }));
+
+    setProducts(productItems);
+    setTimeout(() => {
+      setProductsLoading(false);
+    }, 300);
   };
 
   const fetchCategories = useCallback(async () => {
@@ -404,7 +454,7 @@ const Home: React.FC = () => {
     }
   }, []);
 
-  // Initial data loading
+  // Update useEffect for initial data loading to include offers fetching
   useEffect(() => {
     if (initialDataFetched.current) return;
 
@@ -416,6 +466,11 @@ const Home: React.FC = () => {
         setCryptocurrency(fetchCryptocurrency());
         await fetchCartData();
         await fetchCategories();
+        const userId = localStorage.getItem("userId");
+        const accessToken = localStorage.getItem("accessToken");
+        if (userId && accessToken) {
+          await fetchUserEligibleOffers(userId);
+        }
         initialDataFetched.current = true;
       } catch (error) {
         console.error("Error fetching initial data:", error);
@@ -426,6 +481,93 @@ const Home: React.FC = () => {
 
     fetchInitialData();
   }, [fetchCartData, fetchCategories]);
+
+  // New useEffect to trigger offers modal
+  useEffect(() => {
+    const hasShownOffers = localStorage.getItem("hasShownOffers");
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (
+      userId &&
+      accessToken &&
+      !hasShownOffers &&
+      userEligibleOffers.length >= 0
+    ) {
+      fetchOffers().then(() => {
+        if (offers.length > 0) {
+          setIsOffersModalVisible(true);
+          localStorage.setItem("hasShownOffers", "true");
+        }
+      });
+    }
+  }, [userEligibleOffers, offers.length]);
+
+  // Existing useEffect for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const headerImageVariants = {
+    initial: {
+      scale: 1,
+      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+    },
+    hover: {
+      scale: 1.05,
+      boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 20,
+      },
+    },
+  };
+
+  const headerImages: HeaderImage[] = [
+    {
+      id: "o3",
+      src: O3,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=1.0",
+    },
+    {
+      id: "o6",
+      src: O7,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=5.0",
+    },
+    {
+      id: "o1",
+      src: O6,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=10.0",
+    },
+    {
+      id: "o6",
+      src: O9,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=26.0",
+    },
+    {
+      id: "o1",
+      src: O1,
+      alt: "OxyLoans",
+      path: "/main/service/oxyloans-service",
+    },
+    {
+      id: "o2",
+      src: O8,
+      alt: "Study Abroad",
+      path: "/main/services/studyabroad",
+    },
+  ];
 
   const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
@@ -539,7 +681,6 @@ const Home: React.FC = () => {
       await fetchCartData(item.itemId);
       message.success(response.data.errorMessage);
 
-      // Track the event with Google Analytics
       if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", "add_to_cart", {
           currency: "INR",
@@ -556,10 +697,7 @@ const Home: React.FC = () => {
         });
       }
 
-      // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
-      // so use setTimeout to give the cart update time to complete
       setTimeout(async () => {
-        // After successfully adding to cart, check for applicable offers
         await handleItemAddedToCart(item);
       }, 300);
     } catch (error) {
@@ -571,6 +709,7 @@ const Home: React.FC = () => {
       }));
     }
   };
+
   const handleQuantityChange = async (
     item: DashboardItem,
     increment: boolean
@@ -647,11 +786,8 @@ const Home: React.FC = () => {
 
       await fetchCartData(item.itemId);
 
-      // IMPORTANT: We need to ensure the offer modal check happens AFTER the cart update
-      // so use setTimeout to give the cart update time to complete
       if (increment) {
         setTimeout(async () => {
-          // Check for offers when incrementing quantity
           await handleItemAddedToCart(item);
         }, 300);
       }
@@ -695,33 +831,13 @@ const Home: React.FC = () => {
     },
   };
 
-  // Helper function to check for special offers based on weight
-  // const getOfferBadge = (item: DashboardItem) => {
-  //   const weight = parseFloat(item.weight || "0");
-
-  //   if (weight === 1) {
-  //     return (
-  //       <div className="absolute top-1 right-1 z-10">
-  //         <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-  //           <Gift size={10} className="mr-1" /> Buy 1 Get 1 Free
-  //         </span>
-  //       </div>
-  //     );
-  //   }
-  //   }
-
-  //   return null;
-  // };
-
   const renderProductItem = (item: DashboardItem, index: number) => {
-    // Skip rendering if quantity is 0 (out of stock)
     if (item.quantity === 0) {
       return null;
     }
 
     const weight = parseFloat(item.weight || "0");
     const hasOffer = weight === 1 || weight === 5;
-    // const offerBadge = getOfferBadge(item);
 
     return (
       <motion.div
@@ -748,29 +864,6 @@ const Home: React.FC = () => {
             <div className="absolute bottom-0 right-0 transform translate-y border-t-4 border-r-4 sm:border-t-8 sm:border-r-8 border-t-purple-600 border-r-transparent"></div>
           </div>
         )}
-
-        {/* Render offer badge or quantity indicator */}
-        {/* {hasOffer && hoveredProduct === (item.itemId ?? item.id) ? (
-          offerBadge
-        ) : item.quantity && item.quantity < 6 ? (
-          <div className="absolute top-1 right-1 z-10">
-            <span className="bg-yellow-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full">
-              Only {item.quantity} left
-            </span>
-          </div>
-        ) : (
-          hoveredProduct === (item.itemId ?? item.id) && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute top-1 right-1 z-10"
-            >
-              <span className="bg-green-500 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-                <Star size={10} className="mr-1" /> In Stock
-              </span>
-            </motion.div>
-          )
-        )} */}
 
         <div
           className="p-3 cursor-pointer"
@@ -866,7 +959,6 @@ const Home: React.FC = () => {
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   {item.itemId ? cartItems[item.itemId] : 0}
-                  {/* Show "free" indicator for 1kg offer if applicable */}
                   {item.itemId && freeItemsMap[item.itemId] && weight === 1 && (
                     <span className="bg-green-100 text-green-600 text-xs ml-1 px-1 rounded">
                       +1 Free
@@ -937,12 +1029,10 @@ const Home: React.FC = () => {
     );
   };
 
-  // Update displayed products based on search term
   useEffect(() => {
     const validProducts = products.filter((product) => {
       if (product.quantity === undefined || product.quantity <= 0) return false;
 
-      // Apply search filter if there's a search term
       if (searchTerm.trim() !== "") {
         return product.title.toLowerCase().includes(searchTerm.toLowerCase());
       }
@@ -954,33 +1044,6 @@ const Home: React.FC = () => {
       validProducts.slice(0, Math.min(displayCount, validProducts.length))
     );
   }, [products, displayCount, searchTerm]);
-
-  const updateProducts = (items: Item[]) => {
-    setProductsLoading(true);
-    // Filter out items with quantity 0
-    const productItems = items
-      .filter((item) => item.quantity > 0)
-      .map((item) => ({
-        itemId: item.itemId,
-        title: item.itemName,
-        image: item.itemImage || ProductImg1,
-        description: `₹${item.itemPrice || 0}`,
-        path: `/item/${item.itemId}`,
-        icon: <ShoppingBag className="text-purple-600" size={24} />,
-        itemPrice: item.itemPrice,
-        itemMrp: item.itemMrp,
-        quantity: item.quantity,
-        weight: item.weight,
-        units: item.units,
-        itemName: item.itemName,
-        itemImage: item.itemImage,
-      }));
-
-    setProducts(productItems);
-    setTimeout(() => {
-      setProductsLoading(false);
-    }, 300); // Small delay for visual effect
-  };
 
   const viewAllProducts = () => {
     navigate("/main/dashboard/products");
@@ -1020,12 +1083,9 @@ const Home: React.FC = () => {
         }));
 
       setProducts(productItems);
-      // Reset display count when changing categories
       setDisplayCount(5);
-      // Clear search when changing categories
       setSearchTerm("");
 
-      // Add a small delay before hiding the loader for a smoother transition
       setTimeout(() => {
         setProductsLoading(false);
       }, 300);
@@ -1149,13 +1209,87 @@ const Home: React.FC = () => {
     setSearchTerm(e.target.value);
   };
 
+  // New function to handle offers modal close
+  const handleOffersModalClose = () => {
+    setIsOffersModalVisible(false);
+  };
+
   return (
     <div className="min-h-screen">
+      {/* New styles for offers modal scrollbar */}
+      <style>
+        {`
+          .offers-scroll-container {
+            overflow-y: auto;
+            max-height: 50vh;
+          }
+          .offers-scroll-container::-webkit-scrollbar {
+            display: block;
+            width: 8px;
+          }
+          .offers-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          .offers-scroll-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+          }
+          .offers-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+          }
+          .offers-scroll-container {
+            -ms-overflow-style: auto;
+            scrollbar-width: auto;
+          }
+        `}
+      </style>
+
+      {/* New Offers Modal */}
+      <Modal
+        title="Available Offers"
+        open={isOffersModalVisible}
+        onCancel={handleOffersModalClose}
+        footer={[
+          <button
+            key="close"
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900"
+            onClick={handleOffersModalClose}
+          >
+            Close
+          </button>,
+        ]}
+        centered
+        width="90%"
+        style={{ maxWidth: "600px" }}
+        bodyStyle={{ maxHeight: "60vh", padding: "16px" }}
+      >
+        {isFetchingOffers ? (
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin text-purple-600" />
+          </div>
+        ) : offers.length > 0 ? (
+          <div
+            className="space-y-4 offers-scroll-container"
+            style={{ maxHeight: "50vh", overflowY: "auto" }}
+          >
+            {offers.map((offer) => (
+              <div key={offer.id} className="p-4 bg-gray-100 rounded-lg">
+                <h3 className="font-semibold text-purple-800">
+                  {offer.offerName}
+                </h3>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No offers available at the moment.</p>
+        )}
+      </Modal>
+
       {/* Header Images Section */}
       <div className="w-full bg-white border-b border-gray-100 py-3 md:py-6">
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
-          {/* Responsive grid with better sizing for all devices */}
-          <div className="grid grid-cols-2 sm:grid-cols3- md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
             {headerImages.map((image) => (
               <motion.div
                 key={image.id}
@@ -1183,7 +1317,7 @@ const Home: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Special Offers Banner Section with Button to open modal */}
+        {/* Special Offers Banner Section */}
         <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
           <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
             <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-center justify-between">
@@ -1219,6 +1353,7 @@ const Home: React.FC = () => {
             </div>
           </div>
         </section>
+
         {/* Products Section */}
         <section ref={productsRef} className="mb-12">
           <div className="flex items-center mb-4 gap-10">
@@ -1237,7 +1372,6 @@ const Home: React.FC = () => {
             </motion.button>
           </div>
 
-          {/* Category Pills */}
           <div className="mb-6 overflow-x-auto no-scrollbar">
             <div className="flex space-x-2 pb-2">
               {categories.map((category, index) => (
@@ -1264,7 +1398,6 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Products Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <AnimatePresence>
               {productsLoading ? (
@@ -1285,7 +1418,6 @@ const Home: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Load More Button */}
           {!productsLoading && products.length > displayProducts.length && (
             <div className="mt-8 text-center flex justify-center space-x-4">
               <motion.button
@@ -1383,7 +1515,6 @@ const Home: React.FC = () => {
 
         {/* Digital Services Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          {/* Free GPTs Section */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
@@ -1428,7 +1559,6 @@ const Home: React.FC = () => {
             )}
           </div>
 
-          {/* Cryptocurrency Section */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
