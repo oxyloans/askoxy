@@ -133,6 +133,16 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
+  const slugify = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 30);
+
+
   const handleSubmit = (isAlreadyInterested: boolean) => {
     sessionStorage.setItem("submitclicks", "true");
     if (campaign?.campaignType !== undefined) {
@@ -142,22 +152,19 @@ const CampaignDetails: React.FC = () => {
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsappregister");
-      if (
-        campaign?.campaignType === "PRODUCT" ||
-        campaign?.campaignType === "PRODUCT"
-      ) {
+      if (campaign?.campainInputType === "BLOG") {
         sessionStorage.setItem(
           "redirectPath",
-          `/main/services/${campaign?.campaignId.slice(-4)}/${
+          `/main/blog/${campaign?.campaignId.slice(-4)}/${slugify(
             campaign?.campaignType
-          }`
+          )}`
         );
       } else {
         sessionStorage.setItem(
           "redirectPath",
-          `/main/blog/${campaign?.campaignId.slice(-4)}/${
-            campaign?.campaignType
-          }`
+          `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
+            campaign?.campaignType || ""
+          )}`
         );
       }
       return;
@@ -240,7 +247,7 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
-    const formatCampaignDescription = (description: String) => {
+  const formatCampaignDescription = (description: String) => {
     if (!description) return null;
 
     const lines = description.split("\n").filter((line) => line.trim());
@@ -388,7 +395,7 @@ const CampaignDetails: React.FC = () => {
   };
 
   return (
-    <div className="w-full lg:max-w-7xl px-4 py-6 h-screen overflow-y-auto">
+    <div className="w-full lg:max-w-full px-4 py-6 min-h-screen overflow-y-auto">
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
