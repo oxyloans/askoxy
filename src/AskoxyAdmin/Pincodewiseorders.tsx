@@ -14,6 +14,7 @@ import {
 } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import BASE_URL from "../Config";
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -44,6 +45,9 @@ const OrdersByPincode: React.FC = () => {
   const [startDate, setStartDate] = useState<Dayjs>(dayjs().subtract(3, "day"));
   const [endDate, setEndDate] = useState<Dayjs>(dayjs());
   const [selectedPincode, setSelectedPincode] = useState<string>("all");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [commentsModalVisible, setCommentsModalVisible] =
+    useState<boolean>(false);
 
   const parseOrderDetail = (detail: string): OrderDetail => {
     const parts = detail.split(", ");
@@ -200,6 +204,34 @@ const OrdersByPincode: React.FC = () => {
       render: (mobile: string) => mobile || "-",
     },
     {
+      title: "Actions",
+      key: "actions",
+      width: 100,
+      render: (record: OrderDetail) => (
+        <div className="flex gap-2">
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              setSelectedUserId(record.userId);
+              setCommentsModalVisible(true);
+            }}
+            className="rounded-md border border-blue-400 text-blue-600 hover:bg-blue-100"
+          >
+            Comments
+          </Button>
+          {/* <Button
+            type="default"
+            size="small"
+            onClick={() => viewOrderDetails(record)}
+            className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
+          >
+            Orders
+          </Button> */}
+        </div>
+      ),
+    },
+    {
       title: "Amount",
       dataIndex: "grandTotal",
       key: "grandTotal",
@@ -353,6 +385,16 @@ const OrdersByPincode: React.FC = () => {
           </Card>
         )}
       </div>
+
+       <HelpDeskCommentsModal
+              open={commentsModalVisible}
+              onClose={() => setCommentsModalVisible(false)}
+              userId={selectedUserId}
+              updatedBy={localStorage.getItem("userName")?.toUpperCase()}
+              storedUniqueId={localStorage.getItem("uniquId")}
+              record={""}
+              BASE_URL={BASE_URL}
+            />
     </div>
   );
 };

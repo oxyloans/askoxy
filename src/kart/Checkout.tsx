@@ -11,12 +11,12 @@ import {
   Tag,
   ShoppingBag,
   Clock,
+  X,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
-import { Loader2, X } from "lucide-react";
-import Checkbox from "antd";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
 
@@ -50,7 +50,6 @@ interface ProfileData {
   whatsappNumber: string;
 }
 
-// Update the TimeSlot interface to include the status properties
 interface TimeSlot {
   id: string;
   dayOfWeek: string;
@@ -62,32 +61,39 @@ interface TimeSlot {
   date: string;
   isToday: boolean;
   isAvailable: boolean;
-  // Add these new properties as optional to maintain compatibility
   slot1Status?: boolean;
   slot2Status?: boolean;
   slot3Status?: boolean;
   slot4Status?: boolean;
 }
 
-// Type definitions
+interface Coupon {
+  couponCode: string;
+  couponValue?: number;
+  isActive: boolean;
+  status: string;
+  couponDesc?: string;
+  minOrder?: number;
+}
+
 interface DayInfo {
   dayOfWeek: string;
   date: string;
   formattedDay: string;
 }
 
-// Extend the original TimeSlot interface to include formattedDay
 interface ExtendedTimeSlot extends TimeSlot {
   formattedDay?: string;
 }
 
 const CheckoutPage: React.FC = () => {
   const { state } = useLocation();
+  const navigate = useNavigate();
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
-  const [coupenDetails, setCoupenDetails] = useState<any>(null);
+  const [coupenDetails, setCoupenDetails] = useState<number | null>(null);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [coupenLoading, setCoupenLoading] = useState(false);
   const [walletAmount, setWalletAmount] = useState<number>(0);
@@ -96,7 +102,7 @@ const CheckoutPage: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
     "ONLINE"
   );
-  const [selectedAddress, setSelectedAddress] = useState<Address>(
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(
     state?.selectedAddress || null
   );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
@@ -109,33 +115,35 @@ const CheckoutPage: React.FC = () => {
   const [usedWalletAmount, setUsedWalletAmount] = useState<number>(0);
   const [isDeliveryTimelineModalVisible, setIsDeliveryTimelineModalVisible] =
     useState(false);
-  const [orderId, setOrderId] = useState<string>();
+  const [orderId, setOrderId] = useState<string | undefined>();
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
     lastName: "",
     email: "",
     whatsappNumber: "",
   });
-  const [merchantTransactionId, setMerchantTransactionId] = useState();
+  const [merchantTransactionId, setMerchantTransactionId] = useState<
+    string | undefined
+  >();
   const [showDeliveryTimelineModal, setShowDeliveryTimelineModal] =
     useState(false);
-  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [language, setLanguage] = useState<"english" | "telugu">("english");
-  const navigate = useNavigate();
+  const [showCouponsModal, setShowCouponsModal] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [showOtherOptions, setShowOtherOptions] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [exchangePolicyAccepted, setExchangePolicyAccepted] = useState(false);
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
   const userData = localStorage.getItem("profileData");
-  const [isButtonDisabled, setisButtonDisabled] = useState(false);
-  const [showOtherOptions, setShowOtherOptions] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  //Exchange policy
-  const [exchangePolicyAccepted, setExchangePolicyAccepted] = useState(false);
-  const isFreeItem = (item: CartItem) => item.status === "FREE";
 
   const context = useContext(CartContext);
   if (!context) {
@@ -143,11 +151,13 @@ const CheckoutPage: React.FC = () => {
   }
   const { count, setCount } = context;
 
+  const isFreeItem = (item: CartItem) => item.status === "FREE";
+
   useEffect(() => {
     fetchCartData();
-    // totalCart();
     getWalletAmount();
     fetchTimeSlots();
+    fetchAvailableCoupons();
     const queryParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(queryParams.entries());
     const order = params.trans;
@@ -160,7 +170,7 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     const trans = localStorage.getItem("merchantTransactionId");
     const paymentId = localStorage.getItem("paymentId");
-    if (trans === orderId) {
+    if (trans === orderId && paymentId) {
       Requery(paymentId);
     }
   }, [orderId]);
@@ -171,7 +181,6 @@ const CheckoutPage: React.FC = () => {
     }
   }, [selectedTimeSlot]);
 
-  // Type-safe time slot selection handler
   const handleSelectTimeSlot = (
     date: string,
     timeSlot: string,
@@ -185,16 +194,10 @@ const CheckoutPage: React.FC = () => {
     setIsDeliveryTimelineModalVisible(true);
   };
 
-  // Type definition for time slot object used in rendering
-  interface TimeSlotObj {
-    key: string;
-    value: string | null;
-  }
-
   const handleShowDeliveryTimeline = () => {
     setShowDeliveryTimelineModal(true);
   };
-  // Replace the old renderDeliveryTimelineModal function with this one
+
   const renderDeliveryTimelineModal = () => {
     return (
       <Modal
@@ -287,11 +290,8 @@ const CheckoutPage: React.FC = () => {
     );
   };
 
-  // Updated function to get next available days, not just the next 3 calendar days
   const getAvailableDays = (maxDays: number = 14): DayInfo[] => {
     const today = new Date();
-
-    // Start from tomorrow
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     const startDate = tomorrow;
@@ -319,7 +319,6 @@ const CheckoutPage: React.FC = () => {
       "12",
     ];
 
-    // Generate information for the next maxDays days
     const nextDays: DayInfo[] = [];
     for (let offset = 0; offset < maxDays; offset++) {
       const date = new Date(startDate);
@@ -343,14 +342,14 @@ const CheckoutPage: React.FC = () => {
 
       const response = await axios.get(
         `${BASE_URL}/order-service/fetchTimeSlotlist`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       if (response.data && Array.isArray(response.data)) {
-        // Get information for the next 14 days (or adjust as needed)
         const nextDays = getAvailableDays(14);
 
-        // Define a type for the API response slots
         interface ApiTimeSlot {
           id: string;
           dayOfWeek: string;
@@ -361,20 +360,14 @@ const CheckoutPage: React.FC = () => {
           isAvailable: boolean;
         }
 
-        // Process and format time slots
         const formattedTimeSlots: ExtendedTimeSlot[] = [];
-
-        // Iterate through days until we find 3 available days or reach the end
         for (const dayInfo of nextDays) {
-          // Find matching slot for this day
           const matchingSlot = response.data.find(
             (slot: ApiTimeSlot) =>
               slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
           );
 
-          // If we find an available slot for this day, add it to our formatted slots
           if (matchingSlot) {
-            // Check if at least one time slot is available
             const hasTimeSlot =
               matchingSlot.timeSlot1 ||
               matchingSlot.timeSlot2 ||
@@ -390,7 +383,7 @@ const CheckoutPage: React.FC = () => {
                 timeSlot2: matchingSlot.timeSlot2,
                 timeSlot3: matchingSlot.timeSlot3,
                 timeSlot4: matchingSlot.timeSlot4,
-                isAvailable: false, // isAvailable=false means slots are available for selection
+                isAvailable: false,
                 isToday: false,
                 date: dayInfo.date,
                 formattedDay: dayInfo.formattedDay,
@@ -398,13 +391,11 @@ const CheckoutPage: React.FC = () => {
             }
           }
 
-          // If we've found 3 available days, we can stop
           if (formattedTimeSlots.length >= 3) {
             break;
           }
         }
 
-        // Set the time slots state with what we found (might be fewer than 3)
         setTimeSlots(formattedTimeSlots);
       }
     } catch (error) {
@@ -413,6 +404,59 @@ const CheckoutPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAvailableCoupons = async (): Promise<void> => {
+    try {
+      setCouponsLoading(true);
+      console.log("Fetching coupons from API...");
+      const response = await axios.get(
+        `${BASE_URL}/order-service/getAllCoupons`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("API Response:", response.data);
+
+      if (response.data && Array.isArray(response.data)) {
+        const filteredCoupons = response.data
+          .filter(
+            (coupon: any) =>
+              coupon.isActive === true &&
+              coupon.status === "PUBLIC" &&
+              typeof coupon.couponValue === "number" &&
+              coupon.couponValue >= 0
+          )
+          .map((coupon: any) => ({
+            couponCode: coupon.couponCode,
+            couponValue: coupon.couponValue,
+            isActive: coupon.isActive,
+            status: coupon.status,
+            couponDesc: coupon.couponDesc,
+            minOrder: coupon.minOrder,
+          }));
+        console.log("Filtered Coupons:", filteredCoupons);
+        setAvailableCoupons(filteredCoupons);
+        if (filteredCoupons.length === 0) {
+          console.warn("No coupons passed the filter criteria.");
+        }
+      } else {
+        console.warn("API response is not an array or is empty.");
+        setAvailableCoupons([]);
+      }
+    } catch (error) {
+      console.error("Error fetching available coupons:", error);
+      message.error("Failed to fetch available coupons");
+      setAvailableCoupons([]);
+    } finally {
+      setCouponsLoading(false);
+    }
+  };
+
+  const handleOpenCouponsModal = async () => {
+    await fetchAvailableCoupons();
+    setShowCouponsModal(true);
   };
 
   const submitOrder = async (
@@ -453,7 +497,9 @@ const CheckoutPage: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/order-service/placeOrder`,
         requestBody,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       if (response.data?.status) {
@@ -470,151 +516,156 @@ const CheckoutPage: React.FC = () => {
   };
 
   const fetchCartData = async () => {
-  try {
-    const response = await axios.get(
-      `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    if (response.data.customerCartResponseList) {
-      const cartItems = response.data.customerCartResponseList;
-      setCartData(cartItems || []);
+      if (response.data.customerCartResponseList) {
+        const cartItems = response.data.customerCartResponseList;
+        setCartData(cartItems || []);
 
-      // Calculate total quantity including both regular and free items for display
-      const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
-        return sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0);
-      }, 0);
-      setCount(totalQuantity);
+        const totalQuantity = cartItems.reduce(
+          (sum: number, item: CartItem) =>
+            sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0),
+          0
+        );
+        setCount(totalQuantity);
 
-      // Calculate price data for items with status "ADD" only
-      const amountToPay = cartItems
-        .filter((item: CartItem) => item.status === "ADD")
-        .reduce((sum: number, item: CartItem) => {
-          return sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity);
-        }, 0);
+        const amountToPay = cartItems
+          .filter((item: CartItem) => item.status === "ADD")
+          .reduce(
+            (sum: number, item: CartItem) =>
+              sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
+            0
+          );
 
-      const totalDeliveryFee = cartItems
-        .filter((item: CartItem) => item.status === "ADD")
-        .reduce((sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0), 0);
+        const totalDeliveryFee = cartItems
+          .filter((item: CartItem) => item.status === "ADD")
+          .reduce(
+            (sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0),
+            0
+          );
 
-      // Get GST from API response
-      const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
+        const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
 
-      // Update price-related states
-      setSubGst(gstAmount);
-      setDeliveryBoyFee(totalDeliveryFee);
-      setTotalAmount(amountToPay);
-      setGrandTotal(amountToPay);
+        setSubGst(gstAmount);
+        setDeliveryBoyFee(totalDeliveryFee);
+        setTotalAmount(amountToPay);
+        setGrandTotal(amountToPay);
 
-      // Calculate grand total including GST and delivery fee
-      const totalWithGst = amountToPay + gstAmount;
-      const totalWithDelivery = totalWithGst + totalDeliveryFee;
-      setGrandTotalAmount(totalWithDelivery);
-    } else {
-      setCartData([]);
-      setCount(0);
-      setSubGst(0);
-      setDeliveryBoyFee(0);
-      setTotalAmount(0);
-      setGrandTotal(0);
-      setGrandTotalAmount(0);
+        const totalWithGst = amountToPay + gstAmount;
+        const totalWithDelivery = totalWithGst + totalDeliveryFee;
+        setGrandTotalAmount(totalWithDelivery);
+      } else {
+        setCartData([]);
+        setCount(0);
+        setSubGst(0);
+        setDeliveryBoyFee(0);
+        setTotalAmount(0);
+        setGrandTotal(0);
+        setGrandTotalAmount(0);
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      message.error("Failed to fetch cart items");
     }
-  } catch (error) {
-    console.error("Error fetching cart items:", error);
-    message.error("Failed to fetch cart items");
-  }
-};
+  };
 
-  // 2. Make the fetchInitialData function more reliable
   const fetchInitialData = async () => {
-  try {
-    setPricesLoading(true);
+    try {
+      setPricesLoading(true);
 
-    // Fetch cart data
-    const cartResponse = await axios.get(
-      `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const cartResponse = await axios.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    if (cartResponse.data && cartResponse.data.customerCartResponseList) {
-      const cartItems = cartResponse.data.customerCartResponseList;
-      setCartData(cartItems || []);
+      if (cartResponse.data.customerCartResponseList) {
+        const cartItems = cartResponse.data.customerCartResponseList;
+        setCartData(cartItems || []);
 
-      // Calculate total quantity including both regular and free items for display
-      const totalQuantity = cartItems.reduce((sum: number, item: CartItem) => {
-        return sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0);
-      }, 0);
-      setCount(totalQuantity);
+        const totalQuantity = cartItems.reduce(
+          (sum: number, item: CartItem) =>
+            sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0),
+          0
+        );
+        setCount(totalQuantity);
 
-      // Calculate price data for items with status "ADD" only
-      const amountToPay = cartItems
-        .filter((item: CartItem) => item.status === "ADD")
-        .reduce((sum: number, item: CartItem) => {
-          return sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity);
-        }, 0);
+        const amountToPay = cartItems
+          .filter((item: CartItem) => item.status === "ADD")
+          .reduce(
+            (sum: number, item: CartItem) =>
+              sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
+            0
+          );
 
-      const gstAmount = parseFloat(cartResponse.data.totalGstAmountToPay || "0");
-
-      const cartValue = cartItems
-        .filter((item: CartItem) => item.status === "ADD")
-        .reduce((sum: number, item: CartItem) => {
-          return sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity);
-        }, 0);
-
-      const totalDeliveryFee = cartItems
-        .filter((item: CartItem) => item.status === "ADD")
-        .reduce((sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0), 0);
-
-      // Set price state variables
-      setGrandTotal(amountToPay);
-      setSubGst(gstAmount);
-      setDeliveryBoyFee(totalDeliveryFee);
-      setTotalAmount(cartValue);
-
-      // Calculate grand total including GST and delivery fee
-      const totalWithGst = amountToPay + gstAmount;
-      const totalWithDelivery = totalWithGst + totalDeliveryFee;
-      setGrandTotalAmount(totalWithDelivery);
-
-      // Fetch wallet data
-      try {
-        const walletResponse = await axios.post(
-          `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
-          { customerId },
-          { headers: { Authorization: `Bearer ${token}` } }
+        const gstAmount = parseFloat(
+          cartResponse.data.totalGstAmountToPay || "0"
         );
 
-        const usableAmount = walletResponse.data.usableWalletAmountForOrder || 0;
-        setWalletAmount(usableAmount);
-        setAfterWallet(usableAmount);
-        setWalletMessage(walletResponse.data.message || "");
-      } catch (walletError) {
-        console.error("Error fetching wallet data:", walletError);
-      }
+        const cartValue = cartItems
+          .filter((item: CartItem) => item.status === "ADD")
+          .reduce(
+            (sum: number, item: CartItem) =>
+              sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
+            0
+          );
 
-      // Fetch time slots
-      fetchTimeSlots();
+        const totalDeliveryFee = cartItems
+          .filter((item: CartItem) => item.status === "ADD")
+          .reduce(
+            (sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0),
+            0
+          );
 
-      // Recalculate grand total after all data is loaded
-      requestAnimationFrame(() => {
+        setGrandTotal(amountToPay);
+        setSubGst(gstAmount);
+        setDeliveryBoyFee(totalDeliveryFee);
+        setTotalAmount(cartValue);
+
+        const totalWithGst = amountToPay + gstAmount;
+        const totalWithDelivery = totalWithGst + totalDeliveryFee;
+        setGrandTotalAmount(totalWithDelivery);
+
+        try {
+          const walletResponse = await axios.post(
+            `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
+            { customerId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          const usableAmount =
+            walletResponse.data.usableWalletAmountForOrder || 0;
+          setWalletAmount(usableAmount);
+          setAfterWallet(usableAmount);
+          setWalletMessage(walletResponse.data.message || "");
+        } catch (walletError) {
+          console.error("Error fetching wallet data:", walletError);
+        }
+
+        fetchTimeSlots();
+
+        requestAnimationFrame(() => {
+          setPricesLoading(false);
+        });
+      } else {
+        setCartData([]);
+        setCount(0);
+        setGrandTotal(0);
+        setSubGst(0);
+        setDeliveryBoyFee(0);
+        setTotalAmount(0);
+        setGrandTotalAmount(0);
         setPricesLoading(false);
-      });
-    } else {
-      setCartData([]);
-      setCount(0);
-      setGrandTotal(0);
-      setSubGst(0);
-      setDeliveryBoyFee(0);
-      setTotalAmount(0);
-      setGrandTotalAmount(0);
+      }
+    } catch (error) {
+      console.error("Error fetching initial data:", error);
+      message.error("Failed to load checkout data");
       setPricesLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching initial data:", error);
-    message.error("Failed to load checkout data");
-    setPricesLoading(false);
-  }
-};
+  };
 
   const handleInterested = async () => {
     try {
@@ -632,7 +683,7 @@ const CheckoutPage: React.FC = () => {
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData
       );
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+      localStorage.setItem("askOxyOfers", response.data.askData);
 
       Modal.success({
         title: "Thank You!",
@@ -665,7 +716,7 @@ const CheckoutPage: React.FC = () => {
     setCoupenLoading(true);
 
     axios
-      .post(BASE_URL + "/order-service/applycoupontocustomer", data, {
+      .post(`${BASE_URL}/order-service/applycoupontocustomer`, data, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
@@ -680,6 +731,38 @@ const CheckoutPage: React.FC = () => {
         message.error("Failed to apply coupon");
         setCoupenLoading(false);
       });
+  };
+
+  const handleSelectCoupon = async (coupon: Coupon) => {
+    setCouponCode(coupon.couponCode);
+    setCoupenLoading(true);
+
+    const data = {
+      couponCode: coupon.couponCode,
+      customerId: customerId,
+      subTotal: grandTotalAmount,
+    };
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/order-service/applycoupontocustomer`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const { discount, grandTotal } = response.data;
+      message.success(`Coupon ${coupon.couponCode} applied successfully`);
+      setCoupenDetails(discount || 0);
+      setCoupenApplied(response.data.couponApplied);
+      setShowCouponsModal(false);
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      message.error("Failed to apply coupon");
+    } finally {
+      setCoupenLoading(false);
+    }
   };
 
   const deleteCoupen = () => {
@@ -702,11 +785,9 @@ const CheckoutPage: React.FC = () => {
 
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
       setWalletAmount(usableAmount);
-      setAfterWallet(usableAmount); // Initially, after wallet = available wallet
+      setAfterWallet(usableAmount);
       setWalletMessage(response.data.message || "");
-      setUsedWalletAmount(0); // Initially no wallet amount is used
-
-      // Make sure to reset these states when getting new wallet information
+      setUsedWalletAmount(0);
       setUseWallet(false);
     } catch (error: unknown) {
       console.error("Error fetching wallet amount:", error);
@@ -719,35 +800,28 @@ const CheckoutPage: React.FC = () => {
   };
 
   function grandTotalfunc() {
-  // Start with base total including subtotal, delivery fee, and GST
-  const baseTotal = totalAmount + deliveryBoyFee + subGst;
-  let discountedTotal = baseTotal;
+    const baseTotal = totalAmount + deliveryBoyFee + subGst;
+    let discountedTotal = baseTotal;
 
-  // Apply coupon discount if applicable
-  if (coupenApplied && coupenDetails > 0) {
-    discountedTotal = Math.max(0, discountedTotal - coupenDetails);
+    if (coupenApplied && coupenDetails) {
+      discountedTotal = Math.max(0, discountedTotal - coupenDetails);
+    }
+
+    let newUsedWalletAmount = 0;
+    if (useWallet && walletAmount > 0) {
+      newUsedWalletAmount = Math.min(walletAmount, discountedTotal);
+      discountedTotal = Math.max(0, discountedTotal - newUsedWalletAmount);
+    }
+
+    setUsedWalletAmount(newUsedWalletAmount);
+    setAfterWallet(walletAmount - newUsedWalletAmount);
+    setGrandTotalAmount(discountedTotal);
   }
-
-  // Calculate wallet usage
-  let newUsedWalletAmount = 0;
-  if (useWallet && walletAmount > 0) {
-    // Only use what's needed from wallet, up to available amount
-    newUsedWalletAmount = Math.min(walletAmount, discountedTotal);
-    discountedTotal = Math.max(0, discountedTotal - newUsedWalletAmount);
-  }
-
-  // Update states correctly
-  setUsedWalletAmount(newUsedWalletAmount);
-  setAfterWallet(walletAmount - newUsedWalletAmount);
-  setGrandTotalAmount(discountedTotal);
-};
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-
-    // Calculate the current total after any coupon discounts
     let currentTotal = totalAmount + deliveryBoyFee;
-    if (coupenApplied && coupenDetails > 0) {
+    if (coupenApplied && coupenDetails) {
       currentTotal = Math.max(0, currentTotal - coupenDetails);
     }
 
@@ -766,12 +840,10 @@ const CheckoutPage: React.FC = () => {
         setUseWallet(newValue);
 
         if (newValue) {
-          // If enabling wallet, calculate proper amount to use
           setUsedWalletAmount(potentialUsedAmount);
           setAfterWallet(walletAmount - potentialUsedAmount);
           setGrandTotalAmount(currentTotal - potentialUsedAmount);
         } else {
-          // If disabling wallet, reset wallet usage and recalculate total
           setUsedWalletAmount(0);
           setAfterWallet(walletAmount);
           setGrandTotalAmount(currentTotal);
@@ -830,7 +902,6 @@ const CheckoutPage: React.FC = () => {
         return;
       }
 
-      // Validate that wallet usage doesn't exceed available amount
       if (useWallet && usedWalletAmount > walletAmount) {
         Modal.error({
           title: "Wallet Error",
@@ -841,41 +912,41 @@ const CheckoutPage: React.FC = () => {
 
       setLoading(true);
 
-      // Make sure we're passing the correct wallet amount
       const finalWalletAmount = useWallet ? usedWalletAmount : 0;
 
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
-          address: selectedAddress.address,
-          customerId,
-          flatNo: selectedAddress.flatNo,
-          landMark: selectedAddress.landMark,
-          orderStatus: selectedPayment, // Use the selected payment method
-          pincode: selectedAddress.pincode,
-          walletAmount: finalWalletAmount, // Use the correct wallet amount
-          couponCode: coupenApplied ? couponCode.toUpperCase() : null,
-          couponValue: coupenApplied ? coupenDetails : 0,
-          deliveryBoyFee,
-          amount: grandTotalAmount,
-          subTotal: grandTotal,
-          gstAmount: subGst,
-          dayOfWeek: selectedDay,
-          expectedDeliveryDate: selectedDate,
-          timeSlot: selectedTimeSlot,
-          latitude: selectedAddress.latitude,
-          longitude: selectedAddress.longitude,
-          orderFrom: "WEB",
-          paymentType: selectedPayment === "COD" ? 0 : 1, // Add payment type: 0 for COD, 1 for ONLINE
+          address: {
+            address: selectedAddress?.address,
+            customerId,
+            flatNo: selectedAddress?.flatNo,
+            landMark: selectedAddress?.landMark,
+            orderStatus: selectedPayment,
+            pincode: selectedAddress?.pincode,
+            walletAmount: finalWalletAmount,
+            couponCode: coupenApplied ? couponCode.toUpperCase() : null,
+            couponValue: null,
+            couponAmount: null,
+            deliveryBoyFee,
+            amount: grandTotalAmount,
+            subTotal: grandTotal,
+            gst: subGst,
+            dayOfWeek: selectedDay,
+            expectedDeliveryDate: selectedDate,
+            timeSlot: selectedTimeSlot,
+            latitude: selectedAddress?.latitude,
+            longitude: selectedAddress?.longitude,
+            orderFrom: "WEB",
+            paymentType: selectedPayment === "COD" ? 0 : 1,
+          },
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Handle different payment flows based on selected method
       if (response.status === 200 && response.data) {
         await fetchCartData();
 
-        // GA4 Purchase Event Tracking
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "purchase", {
             transaction_id:
@@ -892,14 +963,13 @@ const CheckoutPage: React.FC = () => {
               item_name: item.itemName,
               price: parseFloat(item.itemPrice),
               quantity: parseInt(item.cartQuantity),
-              item_category: "Rice",
+              item_category: "any",
+              couponCode: null,
             })),
           });
         }
 
-        // Handle COD orders differently than online payments
         if (selectedPayment === "COD") {
-          // For COD, just show success and redirect
           Modal.success({
             content: "Order placed successfully! You'll pay on delivery.",
             onOk: () => {
@@ -908,9 +978,8 @@ const CheckoutPage: React.FC = () => {
             },
           });
         } else {
-          // For online payment, proceed with payment gateway
           if (response.data.paymentId) {
-            const number = localStorage.getItem("whatsappNumber");
+            const number = localStorage.getItem("number");
             const withoutCountryCode = number?.replace("+91", "");
             sessionStorage.setItem("address", JSON.stringify(selectedAddress));
 
@@ -923,12 +992,12 @@ const CheckoutPage: React.FC = () => {
               udf1: withoutCountryCode,
               udf2: `${profileData.firstName} ${profileData.lastName}`,
               udf3: profileData.email,
-              ru: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-              callbackUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              ru: `https://amountms.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              callbackUrl: `https://ms.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
               currency: "INR",
               paymentMode: "ALL",
-              txnType: "single",
-              productType: "IPG",
+              money: "single",
+              amountType: "IPG",
               txnNote: "Rice Order In Live",
               vpa: "getepay.merchant128638@icici",
             };
@@ -938,6 +1007,8 @@ const CheckoutPage: React.FC = () => {
             message.error("Order failed");
           }
         }
+      } else {
+        message.error("Failed to place order");
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -1015,46 +1086,45 @@ const CheckoutPage: React.FC = () => {
   const getepayPortal = async (data: any) => {
     const JsonData = JSON.stringify(data);
     const mer = data.merchantTransactionId;
-    var ciphertext = encryptEas(JsonData);
-    var newCipher = ciphertext.toUpperCase();
+    const ciphertext = encryptEas(JsonData);
+    const newCipher = ciphertext.toUpperCase();
 
-    var myHeaders = new Headers();
+    const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
-    var raw = JSON.stringify({
+    const raw = JSON.stringify({
       mid: data.mid,
       terminalId: data.terminalId,
       req: newCipher,
     });
 
-    await fetch(
-      "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
-      {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow",
-      }
-    )
-      .then((response) => response.text())
-      .then((result) => {
-        var resultobj = JSON.parse(result);
-        var responseurl = resultobj.response;
-        var data = decryptEas(responseurl);
-        data = JSON.parse(data);
-        localStorage.setItem("paymentId", data.paymentId);
-        localStorage.setItem("merchantTransactionId", mer);
-        const paymentUrl = data.paymentUrl;
-        window.location.href = paymentUrl;
-      })
-      .catch((error) => {
-        console.log("getepayPortal", error.response);
-        message.error("Failed to generate payment invoice");
-      });
+    try {
+      const response = await fetch(
+        "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
+        {
+          method: "POST",
+          headers: myHeaders,
+          body: raw,
+          redirect: "follow",
+        }
+      );
+      const result = await response.text();
+      const resultobj = JSON.parse(result);
+      const responseurl = resultobj.response;
+      const decryptedData = decryptEas(responseurl);
+      const data = JSON.parse(decryptedData);
+      localStorage.setItem("paymentId", data.paymentId);
+      localStorage.setItem("merchantTransactionId", mer);
+      const paymentUrl = data.paymentUrl;
+      window.location.href = paymentUrl;
+    } catch (error) {
+      console.error("getepayPortal error:", error);
+      message.error("Failed to generate payment invoice");
+    }
   };
 
-  function Requery(paymentId: any) {
-    setLoading(false);
+  const Requery = (paymentId: any) => {
+    setLoading(true);
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
@@ -1076,21 +1146,21 @@ const CheckoutPage: React.FC = () => {
         vpa: "",
       };
 
-      var ciphertext = encryptEas(
+      const ciphertext = encryptEas(
         JSON.stringify(JsonData),
         Config["Getepay Key"],
         Config["Getepay IV"]
       );
-      var newCipher = ciphertext.toUpperCase();
+      const newCipher = ciphertext.toUpperCase();
 
-      var myHeaders = new Headers();
+      const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append(
         "Cookie",
         "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove"
       );
 
-      var raw = JSON.stringify({
+      const raw = JSON.stringify({
         mid: Config["Getepay Mid"],
         terminalId: Config["Getepay Terminal Id"],
         req: newCipher,
@@ -1104,36 +1174,36 @@ const CheckoutPage: React.FC = () => {
       })
         .then((response) => response.text())
         .then((result) => {
-          var resultobj = JSON.parse(result);
+          const resultobj = JSON.parse(result);
           if (resultobj.response != null) {
-            var responseurl = resultobj.response;
-            var data = decryptEas(responseurl);
-            data = JSON.parse(data);
-            setPaymentStatus(data.paymentStatus);
+            const responseurl = resultobj.response;
+            const data = decryptEas(responseurl);
+            const parsedData = JSON.parse(data);
+            setPaymentStatus(parsedData.paymentStatus);
             if (
-              data.paymentStatus == "SUCCESS" ||
-              data.paymentStatus == "FAILED"
+              parsedData.paymentStatus === "SUCCESS" ||
+              parsedData.paymentStatus === "FAILED"
             ) {
-              if (data.paymentStatus === "FAILED") {
+              if (parsedData.paymentStatus === "FAILED") {
                 const add = sessionStorage.getItem("address");
                 if (add) {
                   setSelectedAddress(JSON.parse(add) as Address);
                 }
               }
 
-              if (data.paymentStatus === "SUCCESS") {
-                axios({
-                  method: "get",
-                  url:
-                    BASE_URL +
-                    `/order-service/api/download/invoice?paymentId=${localStorage.getItem(
+              if (parsedData.paymentStatus === "SUCCESS") {
+                axios
+                  .get(
+                    `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
                       "merchantTransactionId"
-                    )}&&userId=${customerId}`,
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                })
+                    )}&userId=${customerId}`,
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  )
                   .then((response) => {
                     console.log(response.data);
                   })
@@ -1142,18 +1212,20 @@ const CheckoutPage: React.FC = () => {
                   });
               }
 
-              axios({
-                method: "POST",
-                url: BASE_URL + "/order-service/orderPlacedPaymet",
-                data: {
-                  paymentId: localStorage.getItem("merchantTransactionId"),
-                  paymentStatus: data.paymentStatus,
-                },
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              })
+              axios
+                .post(
+                  `${BASE_URL}/order-service/orderPlacedPaymet`,
+                  {
+                    paymentId: localStorage.getItem("merchantTransactionId"),
+                    paymentStatus: parsedData.paymentStatus,
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                )
                 .then((secondResponse) => {
                   localStorage.removeItem("paymentId");
                   localStorage.removeItem("merchantTransactionId");
@@ -1174,9 +1246,10 @@ const CheckoutPage: React.FC = () => {
             }
           }
         })
-        .catch((error) => console.log("Payment Status", error));
+        .catch((error) => console.error("Payment Status error:", error));
     }
-  }
+    setLoading(false);
+  };
 
   const renderTimeSlotModal = (): JSX.Element => {
     return (
@@ -1232,14 +1305,12 @@ const CheckoutPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {timeSlots.map((slot, index) => {
-                // Create a formatted day name from dayOfWeek if formattedDay is not available
+              {timeSlots.map((slot: TimeSlot, index: number) => {
                 const displayDay =
                   (slot as ExtendedTimeSlot).formattedDay ||
                   slot.dayOfWeek.charAt(0) +
                     slot.dayOfWeek.slice(1).toLowerCase();
 
-                // Check if all timeslots have the same timing
                 const uniqueTimeSlots = new Set(
                   [
                     slot.timeSlot1,
@@ -1250,7 +1321,6 @@ const CheckoutPage: React.FC = () => {
                 );
                 const allSameTimings = uniqueTimeSlots.size === 1;
 
-                // Create time slot objects - handle cases where status properties might not exist
                 const timeSlotObjects = [
                   {
                     key: "slot1",
@@ -1274,7 +1344,6 @@ const CheckoutPage: React.FC = () => {
                   },
                 ];
 
-                // If all timings are the same, only keep the first available one
                 const filteredTimeSlots = allSameTimings
                   ? [
                       timeSlotObjects.find(
@@ -1326,15 +1395,12 @@ const CheckoutPage: React.FC = () => {
                                     slot.dayOfWeek
                                   )
                                 }
-                                className={`
-                                relative p-3 rounded-lg cursor-pointer transition-all duration-200
-                                ${
+                                className={`relative p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                                   selectedTimeSlot === timeSlotObj.value &&
                                   selectedDate === slot.date
                                     ? "bg-green-50 border border-green-500 shadow-md"
                                     : "bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50"
-                                }
-                              `}
+                                }`}
                                 role="button"
                                 aria-selected={
                                   selectedTimeSlot === timeSlotObj.value &&
@@ -1398,6 +1464,103 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      </Modal>
+    );
+  };
+
+  const renderCouponsModal = (): JSX.Element => {
+    console.log("Rendering Coupons Modal, availableCoupons:", availableCoupons);
+    return (
+      <Modal
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Tag className="w-5 h-5 mr-2 text-purple-500" />
+              Available Coupons
+            </div>
+            <X
+              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={() => setShowCouponsModal(false)}
+            />
+          </div>
+        }
+        open={showCouponsModal}
+        onCancel={() => setShowCouponsModal(false)}
+        footer={[
+          <button
+            key="close"
+            onClick={() => setShowCouponsModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Close
+          </button>,
+        ]}
+        centered
+        width={600}
+        closeIcon={null}
+        className="coupons-modal"
+      >
+        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
+          {couponsLoading ? (
+            <div className="text-center p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+              <p className="text-gray-500 mt-2">Loading coupons...</p>
+            </div>
+          ) : availableCoupons.length === 0 ? (
+            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
+              <Tag className="w-16 h-16 text-purple-200 mb-4" />
+              <p className="text-lg font-medium mb-2">No available coupons</p>
+              <p className="text-sm text-gray-400">
+                Check back later for offers
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {availableCoupons.map((coupon: Coupon) => (
+                <div
+                  key={coupon.couponCode}
+                  className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-semibold text-purple-700">
+                        {coupon.couponCode}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Discount: ₹
+                        {coupon.couponValue !== undefined
+                          ? coupon.couponValue.toFixed(2)
+                          : "0.00"}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Min. Order: ₹
+                        {coupon.minOrder !== undefined
+                          ? coupon.minOrder.toFixed(2)
+                          : "0.00"}
+                      </p>
+                      {coupon.couponDesc && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {coupon.couponDesc}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      className="px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+                      onClick={() => handleSelectCoupon(coupon)}
+                      disabled={coupenLoading}
+                    >
+                      {coupenLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                      ) : (
+                        "Apply"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1511,7 +1674,7 @@ const CheckoutPage: React.FC = () => {
                         <span className="text-gray-600">Delivery Fee</span>
                         <span>₹{deliveryBoyFee.toFixed(2)}</span>
                       </div>
-                      {coupenApplied && coupenDetails > 0 && (
+                      {coupenApplied && coupenDetails && (
                         <div className="flex justify-between py-2 text-green-600">
                           <span>Coupon Discount</span>
                           <span>-₹{coupenDetails.toFixed(2)}</span>
@@ -1570,6 +1733,14 @@ const CheckoutPage: React.FC = () => {
                           </motion.button>
                         )}
                       </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleOpenCouponsModal}
+                        className="w-full mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                      >
+                        View Available Coupons
+                      </motion.button>
                     </div>
 
                     <div className="flex items-start space-x-2 mt-4">
@@ -1647,11 +1818,12 @@ const CheckoutPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            <Footer />
+            {renderTimeSlotModal()}
+            {renderDeliveryTimelineModal()}
+            {renderCouponsModal()}
           </main>
         </div>
-        <Footer />
-        {renderTimeSlotModal()}
-        {renderDeliveryTimelineModal()}
       </div>
     </div>
   );

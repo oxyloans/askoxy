@@ -16,6 +16,7 @@ import {
   Row,
   Col,
   Space,
+  SelectProps,
 } from "antd";
 import {
   CommentOutlined,
@@ -32,10 +33,27 @@ import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
-
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
+
+const emojiOptions: SelectProps["options"] = [
+  { label: "😊 Polite", value: "POLITE" },
+  { label: "😎 Friendly", value: "FRIENDLY" },
+  { label: "😎 Cool", value: "COOL" },
+  { label: "😤 Frustrated", value: "FRUSTRATED" },
+  { label: "😞 Disappointed", value: "DISAPPOINTED" },
+  { label: "😠 Rude", value: "RUDE" },
+  { label: "😡 Angry", value: "ANGRY" },
+  { label: "🤝 Understanding", value: "UNDERSTANDING" },
+  { label: "😕 Confused", value: "CONFUSED" },
+  { label: "📞 Busy", value: "BUSY" },
+  { label: "📴 Out of Service", value: "OUTOFSERVICE" },
+  { label: "❌ Not Connected", value: "NOTCONNECTED" },
+  { label: "🔌 Disconnected", value: "DISCONNECTED" },
+  { label: "⏳ Call Waiting", value: "CALLWAITING" },
+];
 
 interface UserData {
   userId: string;
@@ -131,6 +149,7 @@ interface Comment {
   commentsUpdateBy: string;
   commentsCreatedDate?: string;
   userId?: string;
+  customerBehaviour?: string;
 }
 
 interface ApiResponse {
@@ -177,6 +196,14 @@ const AssignedDataPage: React.FC = () => {
   const storedUniqueId = localStorage.getItem("uniquId");
   const [error, setError] = useState<string | null>(null);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
+  const [userResponse, setUserResponse] = useState<string | undefined>();
+
+  // for getting user response
+  const handleUserResponseChange = (value: string) => {
+    console.log("User Response:", value);
+    setUserResponse(value);
+  };
+
   const deliveredOrdersCount = userOrders.filter(
     (order) => order.orderStatus === "4"
   ).length;
@@ -274,40 +301,40 @@ const AssignedDataPage: React.FC = () => {
 
   const showCommentsModal = async (record: UserData | null) => {
     setCommentsModalVisible(true);
-    await fetchComments(record);
+    // await fetchComments(record);
   };
 
-  const fetchComments = async (record: UserData | null): Promise<void> => {
-    console.log(record);
+  // const fetchComments = async (record: UserData | null): Promise<void> => {
+  //   console.log(record);
 
-    if (!record || !record.userId) return;
+  //   if (!record || !record.userId) return;
 
-    setLoadingComments(true);
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/user-service/fetchAdminComments`,
-        { userId: record.userId },
-        { headers: { "Content-Type": "application/json" } }
-      );
+  //   setLoadingComments(true);
+  //   try {
+  //     const response = await axios.post(
+  //       `${BASE_URL}/user-service/fetchAdminComments`,
+  //       { userId: record.userId },
+  //       { headers: { "Content-Type": "application/json" } }
+  //     );
 
-      if (response.data && typeof response.data === "object") {
-        setComments(response.data);
-      } else {
-        setComments([]);
-      }
-    } catch (error: any) {
-      if (error.response && error.response.status === 500) {
-        message.info("No comments found");
-      } else {
-        message.error(
-          "Failed to load comments...please try again after some time."
-        );
-      }
-      setComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
-  };
+  //     if (response.data && typeof response.data === "object") {
+  //       setComments(response.data);
+  //     } else {
+  //       setComments([]);
+  //     }
+  //   } catch (error: any) {
+  //     if (error.response && error.response.status === 500) {
+  //       message.info("No comments found");
+  //     } else {
+  //       message.error(
+  //         "Failed to load comments...please try again after some time."
+  //       );
+  //     }
+  //     setComments([]);
+  //   } finally {
+  //     setLoadingComments(false);
+  //   }
+  // };
 
   const fetchOrderDetails = async (userId: string) => {
     setLoader(true);
@@ -384,47 +411,55 @@ const AssignedDataPage: React.FC = () => {
     }
   };
 
-  const handleSubmitComment = async (): Promise<void> => {
-    if (!newComment.trim()) {
-      message.warning("Please enter a comment");
-      return;
-    }
-    setOrderId("");
+  // const handleSubmitComment = async (): Promise<void> => {
+  //   console.log("user response", userResponse);
+  //   if (!userResponse?.trim()) {
+  //     message.warning("Please enter customer behaviour");
+  //     return;
+  //   }
+  //   if (!newComment.trim()) {
+  //     message.warning("Please enter comment");
+  //     return;
+  //   }
+  //   setOrderId("");
 
-    let update = updatedBy;
-    const type = localStorage.getItem("primaryType");
-    if (type === "SELLER") {
-      update = "ADMIN";
-    }
+  //   let update = updatedBy;
+  //   const type = localStorage.getItem("primaryType");
+  //   if (type === "SELLER") {
+  //     update = "ADMIN";
+  //   }
 
-    let comment = newComment;
+  //   let comment = newComment;
 
-    if (orderId) {
-      comment = `Regarding order Id ${orderId} ${newComment}`;
-    }
-    setSubmittingComment(true);
-    try {
-      await axios.patch(
-        `${BASE_URL}/user-service/adminUpdateComments`,
-        {
-          adminComments: comment,
-          commentsUpdateBy: update,
-          adminUserId: storedUniqueId,
-          userId: record?.userId,
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
+  //   if (orderId) {
+  //     comment = `Regarding order Id ${orderId} ${newComment}`;
+  //   }
+  //   setSubmittingComment(true);
+  //   try {
+  //     await axios.patch(
+  //       `${BASE_URL}/user-service/adminUpdateComment`,
+  //       {
+  //         adminComments: comment,
+  //         commentsUpdateBy: update,
+  //         adminUserId: storedUniqueId,
+  //         userId: record?.userId,
+  //         customerBehaviour: userResponse,
+  //       },
+  //       { headers: { "Content-Type": "application/json" } }
+  //     );
 
-      message.success("Comment added successfully");
-      setNewComment("");
-      await fetchComments(record);
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-      message.error("Failed to add comment");
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
+  //     message.success("Comment added successfully");
+  //     setNewComment("");
+  //     setUserResponse(undefined);
+  //     // await fetchComments(record);
+  //   } catch (error) {
+  //     console.error("Error submitting comment:", error);
+  //     message.error("Failed to add comment");
+  //   } finally {
+  //     setSubmittingComment(false);
+  //     setNewComment("");
+  //   }
+  // };
 
   const getColumnsForAllOrders = (orders: OrderData[]) => {
     const columns = [
@@ -764,7 +799,7 @@ const AssignedDataPage: React.FC = () => {
             type="default"
             size="small"
             onClick={() => {
-              setRecord(record);
+              setSelectedUser(record);
               showCommentsModal(record);
             }}
             className="rounded-md border border-blue-400 text-blue-600 hover:bg-blue-100"
@@ -979,145 +1014,16 @@ const AssignedDataPage: React.FC = () => {
         />
       )}
 
-      <Modal
-        zIndex={150}
-        title="HelpDesk Comments"
+      <HelpDeskCommentsModal
         open={commentsModalVisible}
-        onCancel={() => {
-          setCommentsModalVisible(false);
-          setComments([]);
-          setOrderId("");
-        }}
-        footer={null}
-        width={550}
-      >
-        <div className="flex flex-col">
-          {/* Comments Section */}
-          <div className="mb-5">
-            <h3 className="text-base font-semibold text-gray-800 mb-3">
-              Recent Comments
-            </h3>
+        onClose={() => setCommentsModalVisible(false)}
+        userId={selectedUser?.userId}
+        updatedBy={updatedBy}
+        storedUniqueId={storedUniqueId}
+        record={record}
+        BASE_URL={BASE_URL}
+      />
 
-            {loadingComments ? (
-              <div className="flex items-center justify-center py-6">
-                <Spin size="default" />
-                <span className="ml-3 text-gray-500">Loading comments...</span>
-              </div>
-            ) : comments && comments.length > 0 ? (
-              <div className="w-full max-w-xl max-h-80 overflow-y-auto border border-gray-200 rounded-lg shadow-sm bg-white">
-                {comments.map((comment, index) => {
-                  const initials = (comment.commentsUpdateBy || "Unknown")
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .toUpperCase();
-
-                  const colorOptions = [
-                    "bg-green-100 text-green-700",
-                    "bg-purple-100 text-purple-700",
-                    "bg-amber-100 text-amber-700",
-                    "bg-teal-100 text-teal-700",
-                    "bg-rose-100 text-rose-700",
-                    "bg-indigo-100 text-indigo-700",
-                  ];
-
-                  const colorIndex =
-                    comment.commentsUpdateBy?.length % colorOptions.length || 0;
-                  const avatarColor = colorOptions[colorIndex];
-
-                  return (
-                    <div
-                      key={index}
-                      className="border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="px-3 py-1.5 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center mb-0.5">
-                          <div
-                            className={`w-6 h-6 rounded-full ${avatarColor} flex items-center justify-center text-[10px] font-semibold mr-2`}
-                          >
-                            {initials}
-                          </div>
-                          <span className="font-medium text-sm text-gray-800">
-                            {comment.commentsUpdateBy || "Unknown"}
-                          </span>
-                          <span className="text-[10px] text-gray-400 ml-auto">
-                            {
-                              formatDate(comment.commentsCreatedDate).split(
-                                ","
-                              )[0]
-                            }
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 pl-8 mt-0.5 leading-snug">
-                          {comment.adminComments}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-                <svg
-                  className="w-6 h-6 text-gray-400 mx-auto mb-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <p className="text-sm text-gray-500">No comments available</p>
-              </div>
-            )}
-          </div>
-
-          {/* Add Comment Section */}
-          <div className="border-t border-gray-200 pt-4">
-            <div className="flex flex-col space-y-3">
-              <TextArea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Type your comment here..."
-                autoSize={{ minRows: 3, maxRows: 5 }}
-                className="text-sm rounded-lg border-gray-300"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmitComment();  
-                  }
-                }}
-              />
-
-              <div className="flex justify-end gap-3 pt-2">
-                <Button
-                  size="middle"
-                  onClick={() => {
-                    setCommentsModalVisible(false);
-                    setComments([]);
-                  }}
-                  className="hover:bg-gray-100"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  size="middle"
-                  onClick={handleSubmitComment}
-                  loading={submittingComment}
-                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
-                >
-                  Submit
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal>
       <Modal
         zIndex={100}
         title={
@@ -1131,6 +1037,7 @@ const AssignedDataPage: React.FC = () => {
           setSelectedUser(null);
           setUserOrders([]);
           setSelectedOrderId(null);
+          setNewComment("");
         }}
         footer={[
           <Button

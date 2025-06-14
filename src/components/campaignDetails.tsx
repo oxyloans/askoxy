@@ -247,7 +247,7 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
-  const formatCampaignDescription = (description: String) => {
+  const formatCampaignDescription = (description: string) => {
     if (!description) return null;
 
     const lines = description.split("\n").filter((line) => line.trim());
@@ -255,38 +255,28 @@ const CampaignDetails: React.FC = () => {
     return lines
       .map((line, index) => {
         const trimmedLine = line.trim();
+        if (trimmedLine === "" || trimmedLine === "---") return null;
 
-        // Skip empty lines and separators
-        if (trimmedLine === "" || trimmedLine === "---") {
-          return null;
-        }
-
-        // More precise heading detection
         const isHeading =
-          // Markdown headings (### or ##)
           trimmedLine.startsWith("###") ||
           trimmedLine.startsWith("##") ||
-          // Bold headings that start with ** and end with **
           (trimmedLine.startsWith("**") &&
             trimmedLine.endsWith("**") &&
             trimmedLine.length > 4) ||
-          // Headings with emoji and bold (like ### 🛒 **What We Offer**)
           (trimmedLine.includes("###") && trimmedLine.includes("**")) ||
-          // Headings that start with #### (subheadings)
           trimmedLine.startsWith("####");
 
         if (isHeading) {
-          // Clean heading text more thoroughly
           let cleanText = trimmedLine
-            .replace(/^#+\s*/, "") // Remove # symbols
-            .replace(/^\*\*|\*\*$/g, "") // Remove ** from start/end
-            .replace(/\*\*/g, "") // Remove any remaining **
+            .replace(/^#+\s*/, "")
+            .replace(/^\*\*|\*\*$/g, "")
+            .replace(/\*/g, "")
             .trim();
 
           return (
             <h3
               key={`heading-${index}`}
-              className="text-lg font-bold text-gray-800 mt-4 mb-2"
+              className="text-base sm:text-lg font-bold text-gray-800 mt-4 mb-2"
             >
               {cleanText}
             </h3>
@@ -297,15 +287,31 @@ const CampaignDetails: React.FC = () => {
           trimmedLine.startsWith("•") ||
           trimmedLine.startsWith("-")
         ) {
-          // Format bullet points
+          // Remove all * characters except the first one (bullet symbol)
+          let cleanBulletText = trimmedLine;
+          const firstChar = cleanBulletText.charAt(0);
+
+          if (firstChar === "*") {
+            // Keep first * as bullet, remove all other * characters
+            cleanBulletText =
+              firstChar + cleanBulletText.slice(1).replace(/\*/g, "");
+          } else {
+            // For other bullet symbols (✅, •, -), remove all * characters
+            cleanBulletText = cleanBulletText.replace(/\*/g, "");
+          }
+
           return (
             <div key={`bullet-${index}`} className="mb-2">
-              <span className="text-gray-600">{trimmedLine}</span>
+              <span className="text-gray-600 text-sm sm:text-base">
+                {cleanBulletText}
+              </span>
             </div>
           );
         } else {
-          // Regular content - render links properly
-          const renderTextWithLinks = (text: String) => {
+          // Remove all * characters from regular paragraphs
+          const cleanText = trimmedLine.replace(/\*/g, "");
+
+          const renderTextWithLinks = (text: string) => {
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             const parts = text.split(urlRegex);
             return parts.map((part, i) => {
@@ -327,13 +333,16 @@ const CampaignDetails: React.FC = () => {
           };
 
           return (
-            <p key={`para-${index}`} className="text-gray-600 mb-2">
-              {renderTextWithLinks(trimmedLine)}
+            <p
+              key={`para-${index}`}
+              className="text-gray-600 mb-2 text-sm sm:text-base"
+            >
+              {renderTextWithLinks(cleanText)}
             </p>
           );
         }
       })
-      .filter(Boolean); // Remove null entries
+      .filter(Boolean);
   };
 
   const isVideoUrl = (url: string): boolean => {

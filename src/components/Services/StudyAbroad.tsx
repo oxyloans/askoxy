@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import "../StudyAbroad.css";
 import "../DiwaliPage.css";
 import "../Freerudraksha.css";
-import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import {
   FaUniversity,
@@ -14,28 +13,27 @@ import {
   FaCalendarAlt,
   FaCheckCircle,
 } from "react-icons/fa";
-import Header1 from "../Header"
-
+import Header1 from "../Header";
 import { useNavigate } from "react-router-dom";
 import Univ1 from "../../assets/img/Univ1.png";
 import Univ2 from "../../assets/img/univ2.png";
 import Univ3 from "../../assets/img/univ3.png";
 import Univ4 from "../../assets/img/univ4.png";
 import Univ5 from "../../assets/img/univ5.png";
-
-// Import gallery images
 import img1 from "../../assets/img/1.1.png";
 import img2 from "../../assets/img/1.2.png";
 import img3 from "../../assets/img/1.3.png";
 import img4 from "../../assets/img/1.4.png";
 import img5 from "../../assets/img/1.5.png";
 import img6 from "../../assets/img/1.6.png";
-
 import Footer from "../Footer";
 import { message, Modal } from "antd";
-import BASE_URL from "../../Config";
+import {
+  checkUserInterest,
+  submitInterest,
+  submitWriteToUsQuery,
+} from "../servicesapi";
 
-// Define TypeScript interfaces for fee structures
 interface BaseFee {
   program: string;
 }
@@ -70,7 +68,8 @@ interface University {
 const StudyAbroad: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const submitclicks = sessionStorage.getItem("submitclicks");
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState<boolean>(false);
+  const [selectedRole, setSelectedRole] = useState<string[]>([]);
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -78,14 +77,15 @@ const StudyAbroad: React.FC = () => {
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState("");
   const [interested, setInterested] = useState<boolean>(false);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [expandedUniversity, setExpandedUniversity] = useState<number | null>(null);
-
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
+  const [expandedUniversity, setExpandedUniversity] = useState<number | null>(
+    null
+  );
+  const submitclicks = sessionStorage.getItem("submitclicks");
   const userId = localStorage.getItem("userId");
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
-
   const email = profileData.customerEmail || null;
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const navigate = useNavigate();
@@ -98,7 +98,6 @@ const StudyAbroad: React.FC = () => {
     projectType: "ASKOXY",
   });
 
-  // Gallery images array
   const images = [
     { src: img1, alt: "Image 1" },
     { src: img2, alt: "Image 2" },
@@ -108,7 +107,6 @@ const StudyAbroad: React.FC = () => {
     { src: img4, alt: "Image 4" },
   ];
 
-  // University data
   const universities: University[] = [
     {
       name: "BPP University",
@@ -127,7 +125,11 @@ const StudyAbroad: React.FC = () => {
       fees: [
         { program: "UG", total: "£33,000", firstYear: "£11,000" },
         { program: "PG (Without PDP)", total: "£13,700", firstYear: "£13,700" },
-        { program: "PG (PDP 18 months Course)", total: "£17,100", firstYear: "£13,700" },
+        {
+          program: "PG (PDP 18 months Course)",
+          total: "£17,100",
+          firstYear: "£13,700",
+        },
       ],
       requirements: [
         "UG: 60% in HSC",
@@ -152,9 +154,24 @@ const StudyAbroad: React.FC = () => {
         "MWP Certification & Digital Badging for Extra Skill Recognition",
       ],
       fees: [
-        { program: "Undergraduate (UG)", annual: "£14,820", scholarship: "£500 - £1,500", net: "£13,320 - £14,320" },
-        { program: "Master's (PG)", annual: "£15,960", scholarship: "£500 - £1,500", net: "£14,500 - £15,500" },
-        { program: "MBA", annual: "£18,060", scholarship: "£500 - £1,500", net: "£17,560" },
+        {
+          program: "Undergraduate (UG)",
+          annual: "£14,820",
+          scholarship: "£500 - £1,500",
+          net: "£13,320 - £14,320",
+        },
+        {
+          program: "Master's (PG)",
+          annual: "£15,960",
+          scholarship: "£500 - £1,500",
+          net: "£14,500 - £15,500",
+        },
+        {
+          program: "MBA",
+          annual: "£18,060",
+          scholarship: "£500 - £1,500",
+          net: "£17,560",
+        },
       ],
     },
     {
@@ -167,12 +184,43 @@ const StudyAbroad: React.FC = () => {
         "Easy Interview Process: Simple pre-deposit interview with resit options.",
       ],
       fees: [
-        { program: "UG", annual: "£17,000", scholarship: "£3,500", net: "£13,500" },
-        { program: "PG", annual: "£18,000", scholarship: "£3,500", net: "£14,500" },
-        { program: "MBA", annual: "£19,500", scholarship: "£3,500", net: "£16,000" },
-        { program: "MFA", annual: "£24,000", scholarship: "£3,500", net: "£20,500" },
-        { program: "MSc Int. Fashion Marketing & MBA Fashion & Entrepreneurship", annual: "£18,000 - £19,500", scholarship: "£5,000", net: "£13,000 - £14,500" },
-        { program: "Business Management (IY1)", annual: "£17,000", scholarship: "£6,000 (Yr 1), £3,500 (Yr 2 & 3)", net: "£13,500" },
+        {
+          program: "UG",
+          annual: "£17,000",
+          scholarship: "£3,500",
+          net: "£13,500",
+        },
+        {
+          program: "PG",
+          annual: "£18,000",
+          scholarship: "£3,500",
+          net: "£14,500",
+        },
+        {
+          program: "MBA",
+          annual: "£19,500",
+          scholarship: "£3,500",
+          net: "£16,000",
+        },
+        {
+          program: "MFA",
+          annual: "£24,000",
+          scholarship: "£3,500",
+          net: "£20,500",
+        },
+        {
+          program:
+            "MSc Int. Fashion Marketing & MBA Fashion & Entrepreneurship",
+          annual: "£18,000 - £19,500",
+          scholarship: "£5,000",
+          net: "£13,000 - £14,500",
+        },
+        {
+          program: "Business Management (IY1)",
+          annual: "£17,000",
+          scholarship: "£6,000 (Yr 1), £3,500 (Yr 2 & 3)",
+          net: "£13,500",
+        },
       ],
     },
     {
@@ -189,8 +237,18 @@ const StudyAbroad: React.FC = () => {
         "Study Gaps Accepted: Flexible policies for both UG and PG applicants",
       ],
       fees: [
-        { program: "UG", annual: "£16,000 - £19,000", scholarship: "Up to £4,500", net: "£14,000 - £16,000" },
-        { program: "PG", annual: "£16,000 - £19,000", scholarship: "Up to £4,500", net: "£14,000 - £16,000" },
+        {
+          program: "UG",
+          annual: "£16,000 - £19,000",
+          scholarship: "Up to £4,500",
+          net: "£14,000 - £16,000",
+        },
+        {
+          program: "PG",
+          annual: "£16,000 - £19,000",
+          scholarship: "Up to £4,500",
+          net: "£14,000 - £16,000",
+        },
       ],
     },
     {
@@ -204,8 +262,20 @@ const StudyAbroad: React.FC = () => {
         "1 Pound Meals: Low-cost meal options for students on campus",
       ],
       fees: [
-        { program: "UG", annual: "£15,200 (Approx)", scholarship: "Up to £7,000 (£4,000 in Year 1, £1,000 in Year 2 & 3, £1,000 EPD)", net: "£11,200" },
-        { program: "PG", annual: "£18,000 (Approx)", scholarship: "Up to £5,000 (50-59%: £2,000, 60%+: £4,000 & £1,000 EPD)", net: "£14,500" },
+        {
+          program: "UG",
+          annual: "£15,200 (Approx)",
+          scholarship:
+            "Up to £7,000 (£4,000 in Year 1, £1,000 in Year 2 & 3, £1,000 EPD)",
+          net: "£11,200",
+        },
+        {
+          program: "PG",
+          annual: "£18,000 (Approx)",
+          scholarship:
+            "Up to £5,000 (50-59%: £2,000, 60%+: £4,000 & £1,000 EPD)",
+          net: "£14,500",
+        },
       ],
     },
   ];
@@ -218,38 +288,18 @@ const StudyAbroad: React.FC = () => {
     }));
   };
 
-    useEffect(() => {
-      handleLoadOffersAndCheckInterest();
-    }, []);
-  
-    const handleLoadOffersAndCheckInterest = async () => {
-      if (!userId) return;
-  
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-          { userId }
-        );
-  
-        if (response.status === 200 && Array.isArray(response.data)) {
-          const offers = response.data;
-  
-          const hasFreeRudrakshaOffer = offers.some(
-            (offer: any) => offer.askOxyOfers === "ROTARIAN"
-          );
-          setInterested(hasFreeRudrakshaOffer);
-          if (submitclicks) {
-            handleSubmit(hasFreeRudrakshaOffer);
-          }
-        } else {
-          setInterested(false);
-        }
-      } catch (error) {
-        console.error("Error while fetching offers:", error);
-        setInterested(false);
-      }
-    };
-  
+  const handleRoleToggle = (role: string) => {
+    setSelectedRole((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
+
+  const handleRoleSelection = (roles: string[]) => {
+    if (roles.length > 0) {
+      setIsRoleModalOpen(false);
+      showConfirmationModal(interested, roles.join(" "));
+    }
+  };
 
   const handleSubmit = (isAlreadyInterested: boolean) => {
     sessionStorage.setItem("submitclicks", "true");
@@ -261,12 +311,23 @@ const StudyAbroad: React.FC = () => {
       return;
     }
 
-    showConfirmationModal(isAlreadyInterested);
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 5);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
+
+    setIsRoleModalOpen(true);
   };
 
-  const showConfirmationModal = (isAlreadyInterested: boolean) => {
+  const showConfirmationModal = (
+    isAlreadyInterested: boolean,
+    role: string
+  ) => {
     if (isAlreadyInterested) {
-      message.warning("You have already participated. Thank you!", 7);
+      message.warning("You have already participated. Thank you!", 5);
       setTimeout(() => {
         sessionStorage.removeItem("submitclicks");
       }, 7000);
@@ -274,45 +335,54 @@ const StudyAbroad: React.FC = () => {
     }
     Modal.confirm({
       title: "Confirm Participation",
-      content: "Are you sure you want to participate in the Study Abroad offer?",
+      content: `Are you sure you want to participate in the Study Abroad offer as ${
+        role || "a participant"
+      }?`,
       okText: "Yes, I’m sure",
       cancelText: "Cancel",
-      onOk: submitInterest,
+      onOk: () => submitInterestHandler(role),
       onCancel: () => {
         sessionStorage.removeItem("submitclicks");
+        setSelectedRole([]);
       },
     });
   };
 
-  const submitInterest = async () => {
-    // if (isButtonDisabled) return;
+  const submitInterestHandler = async (role: string) => {
+    if (isButtonDisabled) return;
 
     try {
       setIsButtonDisabled(true);
-
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-        formData
+      const success = await submitInterest(
+        formData.askOxyOfers,
+        formData.mobileNumber,
+        formData.userId,
+        role
       );
-      console.log("API Response:", response.data);
 
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-
-      message.success(
-        "Thank you for showing interest in our *Study Abroad* offer!"
-      );
-      setInterested(true);
-    } catch (error: any) {
+      if (success) {
+        message.success(
+          "Thank you for showing interest in our *Study Abroad* offer!"
+        );
+        setInterested(true);
+        localStorage.setItem("askOxyOfers", formData.askOxyOfers);
+      } else {
+        message.error("Failed to submit your interest. Please try again.");
+        setInterested(false);
+      }
+    } catch (error) {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
       setInterested(false);
     } finally {
+      setIsButtonDisabled(false);
       sessionStorage.removeItem("submitclicks");
+      setSelectedRole([]);
     }
   };
 
   const handleNavigation = (path: string) => {
-    navigate(path); // Programmatic navigation
+    navigate(path);
     setIsDropdownOpen(false);
   };
 
@@ -337,48 +407,33 @@ const StudyAbroad: React.FC = () => {
   const handleWriteToUsSubmitButton = async () => {
     if (!query || query.trim() === "") {
       setQueryError("Please enter the query before submitting.");
-      return; // Exit the function if the query is invalid
+      return;
     }
-    // Payload with the data to send to the API
-    const payload = {
-      email: email, // You might want to replace this with dynamic values
-      mobileNumber: finalMobileNumber, // You might want to replace this with dynamic values
-      queryStatus: "PENDING",
-      projectType: "ASKOXY",
-      askOxyOfers: "STUDYABROAD",
-      adminDocumentId: "",
-      comments: "",
-      id: "",
-      resolvedBy: "",
-      resolvedOn: "",
-      status: "",
-      userDocumentId: "",
-      query: query,
-      userId: userId,
-    };
-
-    // Log the query to check the input before sending
-    console.log("Query:", query);
-    const accessToken = localStorage.getItem("accessToken");
-
-    const apiUrl = `${BASE_URL}/user-service/write/saveData`;
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-    };
 
     try {
-      // Sending the POST request to the API
-      const response = await axios.post(apiUrl, payload, { headers: headers });
+      setIsLoading(true);
+      const success = await submitWriteToUsQuery(
+        email,
+        finalMobileNumber,
+        query,
+        "STUDYABROAD",
+        userId
+      );
 
-      // Check if the response was successful
-      if (response.data) {
-        console.log("Response:", response.data);
+      if (success) {
         setSuccessOpen(true);
         setIsOpen(false);
+        setQuery("");
+        setQueryError(undefined);
+      } else {
+        message.error("Failed to submit your query. Please try again.");
       }
     } catch (error) {
-      // Handle error if the request fails
       console.error("Error sending the query:", error);
+      message.error("Failed to submit your query. Please try again.");
+      setQueryError("Failed to submit your query. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -390,10 +445,7 @@ const StudyAbroad: React.FC = () => {
     }
   };
 
-  // Handle click outside to close the dropdown - Fixed implementation
   useEffect(() => {
-   
-
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -403,7 +455,6 @@ const StudyAbroad: React.FC = () => {
       }
     };
 
-    // Add event listener only when dropdown is open
     if (isDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -411,27 +462,40 @@ const StudyAbroad: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen]); // Dependency on isDropdownOpen ensures event listeners are managed properly
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
+    handleLoadOffersAndCheckInterest();
+  }, []);
+
+  const handleLoadOffersAndCheckInterest = async () => {
+    if (!userId) return;
+
+    try {
+      const hasInterest = await checkUserInterest(userId, "STUDYABROAD");
+      setInterested(hasInterest);
+      if (submitclicks) {
+        handleSubmit(hasInterest);
+      }
+    } catch (error) {
+      console.error("Error while fetching offers:", error);
+      setInterested(false);
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
-       <div className="mb-4 p-2">
-        {!userId ?   <Header1 />: null}
-      </div>
+      <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div>
         <header className="bg-white shadow-md p-4">
-          {/* Container for layout */}
           <div className="flex flex-col items-center justify-center md:flex-row pt-2 px-4 md:px-6 lg:px-8">
-            {/* Title */}
-            <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold mb-6 text-xl sm:text-xl md:text-3xl lg:text-xl leading-tight  md:mb-0">
+            <h1 className="text-center text-[rgba(91,5,200,0.85)] font-bold mb-6 text-xl sm:text-xl md:text-3xl lg:text-xl leading-tight md:mb-0">
               World's 1<sup>st</sup> AI & Blockchain based platform for
               university admissions
             </h1>
           </div>
 
-          {/* Buttons on the right */}
           <div className="flex flex-col md:flex-row gap-4 mb-2 mt-6 items-center justify-between w-full px-4">
-            {/* 'I'm Interested' Button */}
             <div className="flex items-center gap-4 flex-start">
               <button
                 onClick={() => navigate(-1)}
@@ -444,7 +508,6 @@ const StudyAbroad: React.FC = () => {
               </h1>
             </div>
 
-            {/* Dropdown Menu Button */}
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -455,7 +518,6 @@ const StudyAbroad: React.FC = () => {
                   Explore GPTS
                 </button>
 
-                {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <ul className="absolute bg-white text-black shadow-lg rounded-md mt-2 w-48 md:w-60 overflow-y-auto max-h-60 z-10 right-0">
                     {[
@@ -533,11 +595,11 @@ const StudyAbroad: React.FC = () => {
               </div>
               <button
                 className="w-full md:w-auto px-4 py-2 bg-[#04AA6D] text-white rounded-lg shadow-md hover:bg-green-600 text-sm md:text-base lg:text-lg transition duration-300"
-                onClick={()=>{handleSubmit(interested)}}
-                aria-label="Visit our site" 
+                onClick={() => handleSubmit(interested)}
+                aria-label="I'm Interested"
                 disabled={isButtonDisabled || interested}
               >
-             {interested ? "Already Participated" : "I'm Interested"}
+                {interested ? "Already Participated" : "I'm Interested"}
               </button>
               <a
                 href="https://bmv.money/bankd/index.html"
@@ -559,190 +621,232 @@ const StudyAbroad: React.FC = () => {
           </div>
         </header>
 
-       {/* University Cards Section - Enhanced & Fully Responsive with Left Image Layout */}
-<div className="mt-8 mb-6 px-4 md:px-8 max-w-7xl mx-auto">
-  <h2 className="text-2xl font-bold text-center text-purple-700 mb-6 flex items-center justify-center gap-2">
-    <FaUniversity className="hidden sm:block" />
-    Top UK Universities for International Students
-  </h2>
+        <div className="mt-8 mb-6 px-4 md:px-8 max-w-7xl mx-auto">
+          <h2 className="text-2xl font-bold text-center text-purple-700 mb-6 flex items-center justify-center gap-2">
+            <FaUniversity className="hidden sm:block" />
+            Top UK Universities for International Students
+          </h2>
 
-  <div className="space-y-8">
-    {universities.map((university, index) => (
-      <div 
-        key={index} 
-        className={`bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
-          expandedUniversity === index ? 'ring-2 ring-purple-500' : 'hover:shadow-xl'
-        }`}
-      >
-        {/* University Header - Always visible */}
-        <div className="flex flex-col md:flex-row">
-          {/* University Image - Left side on all screens */}
-          <div className="md:w-1/4 lg:w-1/5 p-4 flex items-center justify-center">
-            <img
-              src={university.image}
-              alt={university.name}
-              className="w-full max-h-full object-contain"
-            />
-          </div>
-          
-          {/* University Content - Right side on all screens */}
-          <div className="md:w-3/4 lg:w-4/5 p-4 md:p-6 border-l border-gray-100">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-              <h3 className="text-xl md:text-2xl font-bold text-purple-700 mb-2 sm:mb-0">
-                {university.name}
-              </h3>
-              <div className="flex items-center gap-2 bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1.5 rounded-full">
-                <FaCalendarAlt className="text-purple-600" />
-                <span>Intakes: {university.intakes}</span>
-              </div>
-            </div>
-            
-            {/* Preview of key highlights - always visible */}
-            <div className="mb-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {university.highlights.slice(0, expandedUniversity === index ? 0 : 3).map((highlight, idx) => (
-                  <div key={idx} className="flex items-start gap-2 bg-gray-50 p-2 rounded-md">
-                    <FaCheckCircle className="text-green-500 mt-1 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{highlight}</span>
+          <div className="space-y-8">
+            {universities.map((university, index) => (
+              <div
+                key={index}
+                className={`bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
+                  expandedUniversity === index
+                    ? "ring-2 ring-purple-500"
+                    : "hover:shadow-xl"
+                }`}
+              >
+                <div className="flex flex-col md:flex-row">
+                  <div className="md:w-1/4 lg:w-1/5 p-4 flex items-center justify-center">
+                    <img
+                      src={university.image}
+                      alt={university.name}
+                      className="w-full max-h-full object-contain"
+                    />
                   </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Button to toggle details */}
-            <button
-              onClick={() => toggleUniversity(index)}
-              className="text-purple-600 font-medium flex items-center gap-1 hover:text-purple-800 transition-colors py-1 px-3 rounded-full border border-purple-200 hover:bg-purple-50"
-            >
-              {expandedUniversity === index ? 'Show Less' : 'Show More Details'}
-              <span>{expandedUniversity === index ? '▲' : '▼'}</span>
-            </button>
 
-            {/* Call to Action */}
-            <div className="mt-6 bg-gradient-to-r from-purple-100 to-blue-100 p-4 rounded-lg shadow-sm">
-                  <p className="text-purple-900 font-medium mb-3">Interested in applying to {university.name}?</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button 
-                      onClick={() => handleWriteToUs()} 
-                      className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md flex items-center gap-1 text-sm transition-colors"
-                    >
-                      <FaInfoCircle /> Request Information
-                    </button>
-                  </div>
-                </div>
-
-          </div>
-        </div>
-        
-        {/* Expandable Content */}
-        {expandedUniversity === index && (
-          <div className="p-4 md:p-6 bg-purple-50 border-t border-purple-100 animate-fadeIn">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left column - Key Highlights */}
-              <div className="lg:col-span-7">
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
-                    <FaInfoCircle />
-                    Key Highlights
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {university.highlights.map((highlight, idx) => (
-                      <div key={idx} className="flex items-start gap-2 bg-white p-3 rounded-md shadow-sm">
-                        <FaCheckCircle className="text-green-500 mt-1 flex-shrink-0" />
-                        <span className="text-gray-700">{highlight}</span>
+                  <div className="md:w-3/4 lg:w-4/5 p-4 md:p-6 border-l border-gray-100">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                      <h3 className="text-xl md:text-2xl font-bold text-purple-700 mb-2 sm:mb-0">
+                        {university.name}
+                      </h3>
+                      <div className="flex items-center gap-2 bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1.5 rounded-full">
+                        <FaCalendarAlt className="text-purple-600" />
+                        <span>Intakes: {university.intakes}</span>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {university.highlights
+                          .slice(0, expandedUniversity === index ? 0 : 3)
+                          .map((highlight, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-2 bg-gray-50 p-2 rounded-md"
+                            >
+                              <FaCheckCircle className="text-green-500 mt-1 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">
+                                {highlight}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => toggleUniversity(index)}
+                      className="text-purple-600 font-medium flex items-center gap-1 hover:text-purple-800 transition-colors py-1 px-3 rounded-full border border-purple-200 hover:bg-purple-50"
+                    >
+                      {expandedUniversity === index
+                        ? "Show Less"
+                        : "Show More Details"}
+                      <span>{expandedUniversity === index ? "▲" : "▼"}</span>
+                    </button>
+
+                    <div className="mt-6 bg-gradient-to-r from-purple-100 to-blue-100 p-4 rounded-lg shadow-sm">
+                      <p className="text-purple-900 font-medium mb-3">
+                        Interested in applying to {university.name}?
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleWriteToUs()}
+                          className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md flex items-center gap-1 text-sm transition-colors"
+                        >
+                          <FaInfoCircle /> Request Information
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-                {/* Requirements Section (if available) */}
-                {university.requirements && (
-                  <div>
-                    <h4 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
-                      <FaBook />
-                      Entry Requirements
-                    </h4>
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {university.requirements.map((req, reqIdx) => (
-                          <div key={reqIdx} className="flex items-start gap-2 border-l-2 border-purple-300 pl-3">
-                            <span className="text-gray-700">{req}</span>
+
+                {expandedUniversity === index && (
+                  <div className="p-4 md:p-6 bg-purple-50 border-t border-purple-100 animate-fadeIn">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      <div className="lg:col-span-7">
+                        <div className="mb-6">
+                          <h4 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
+                            <FaInfoCircle />
+                            Key Highlights
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {university.highlights.map((highlight, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-2 bg-white p-3 rounded-md shadow-sm"
+                              >
+                                <FaCheckCircle className="text-green-500 mt-1 flex-shrink-0" />
+                                <span className="text-gray-700">
+                                  {highlight}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+
+                        {university.requirements && (
+                          <div>
+                            <h4 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
+                              <FaBook />
+                              Entry Requirements
+                            </h4>
+                            <div className="bg-white p-4 rounded-lg shadow-sm">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {university.requirements.map((req, reqIdx) => (
+                                  <div
+                                    key={reqIdx}
+                                    className="flex items-start gap-2 border-l-2 border-purple-300 pl-3"
+                                  >
+                                    <span className="text-gray-700">{req}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="lg:col-span-5">
+                        <div>
+                          <h4 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
+                            <FaPoundSign />
+                            Tuition Fees & Scholarships
+                          </h4>
+                          <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-purple-100">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">
+                                    Program
+                                  </th>
+                                  {university.fees.length > 0 &&
+                                  "annual" in university.fees[0] ? (
+                                    <>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">
+                                        Annual Fee
+                                      </th>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">
+                                        Scholarship
+                                      </th>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">
+                                        Net Fee
+                                      </th>
+                                    </>
+                                  ) : university.fees.length > 0 &&
+                                    "total" in university.fees[0] ? (
+                                    <>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">
+                                        Total Fee
+                                      </th>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">
+                                        First Year
+                                      </th>
+                                    </>
+                                  ) : null}
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {university.fees.map((fee, feeIdx) => (
+                                  <tr
+                                    key={feeIdx}
+                                    className={
+                                      feeIdx % 2 === 0
+                                        ? "bg-white"
+                                        : "bg-purple-50"
+                                    }
+                                  >
+                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                      {fee.program}
+                                    </td>
+                                    {"annual" in fee ? (
+                                      <>
+                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                          {fee.annual}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-green-600 font-medium">
+                                          {fee.scholarship}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm font-medium text-purple-700">
+                                          {fee.net}
+                                        </td>
+                                      </>
+                                    ) : "total" in fee ? (
+                                      <>
+                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                          {fee.total}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm font-medium text-purple-700">
+                                          {fee.firstYear}
+                                        </td>
+                                      </>
+                                    ) : null}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-
-              {/* Right column - Fees Section */}
-              <div className="lg:col-span-5">
-                <div>
-                  <h4 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
-                    <FaPoundSign />
-                    Tuition Fees & Scholarships
-                  </h4>
-                  <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-purple-100">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Program</th>
-                          {university.fees.length > 0 && 'annual' in university.fees[0] ? (
-                            <>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Annual Fee</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Scholarship</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Net Fee</th>
-                            </>
-                          ) : university.fees.length > 0 && 'total' in university.fees[0] ? (
-                            <>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Total Fee</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">First Year</th>
-                            </>
-                          ) : null}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {university.fees.map((fee, feeIdx) => (
-                          <tr key={feeIdx} className={feeIdx % 2 === 0 ? 'bg-white' : 'bg-purple-50'}>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{fee.program}</td>
-                            {'annual' in fee ? (
-                              <>
-                                <td className="px-4 py-3 text-sm text-gray-700">{fee.annual}</td>
-                                <td className="px-4 py-3 text-sm text-green-600 font-medium">{fee.scholarship}</td>
-                                <td className="px-4 py-3 text-sm font-medium text-purple-700">{fee.net}</td>
-                              </>
-                            ) : 'total' in fee ? (
-                              <>
-                                <td className="px-4 py-3 text-sm text-gray-700">{fee.total}</td>
-                                <td className="px-4 py-3 text-sm font-medium text-purple-700">{fee.firstYear}</td>
-                              </>
-                            ) : null}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                
-              </div>
-            </div>
+            ))}
           </div>
-        )}
-      </div>
-    ))}
-  </div>
-</div>
+        </div>
 
-       {/* Gallery Section */}
-       <section className="py-12 px-4 md:px-8 bg-gray-50 max-w-7xl mx-auto">
+        <section className="py-12 px-4 md:px-8 bg-gray-50 max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-center text-purple-700 mb-6 flex items-center justify-center gap-2">
             <FaGlobe className="hidden sm:block" />
             Our Study Abroad
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {images.map((image, index) => (
-              <div key={index} className="overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+              <div
+                key={index}
+                className="overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300"
+              >
                 <img
                   src={image.src}
                   alt={image.alt}
@@ -753,8 +857,7 @@ const StudyAbroad: React.FC = () => {
           </div>
         </section>
 
-         {/* Details Section */}
-         <div className="details px-6 py-8">
+        <div className="details px-6 py-8">
           <strong className="text-purple-600 text-lg sm:text-xl md:text-2xl">
             Our Mission & Vision
           </strong>
@@ -766,7 +869,6 @@ const StudyAbroad: React.FC = () => {
           </strong>
         </div>
 
-        {/* Stats Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8 px-6 mb-5">
           <div className="p-6 bg-white border rounded-lg shadow-md flex flex-col items-center text-center">
             <FaUniversity className="w-16 h-16 mb-4 text-purple-600" />
@@ -804,7 +906,6 @@ const StudyAbroad: React.FC = () => {
           </div>
         </div>
 
-        {/* Benefits Section */}
         <section className="py-12 px-4 md:px-8 bg-white max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-center text-purple-700 mb-8 flex items-center justify-center gap-2">
             <FaPlane className="hidden sm:block" />
@@ -812,39 +913,256 @@ const StudyAbroad: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-purple-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-bold text-lg mb-3 text-purple-700">World-Class Education</h3>
-              <p className="text-gray-700">Access to some of the world's top-ranked universities known for academic excellence and research opportunities.</p>
+              <h3 className="font-bold text-lg mb-3 text-purple-700">
+                World-Class Education
+              </h3>
+              <p className="text-gray-700">
+                Access to some of the world's top-ranked universities known for
+                academic excellence and research opportunities.
+              </p>
             </div>
             <div className="bg-purple-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-bold text-lg mb-3 text-purple-700">International Recognition</h3>
-              <p className="text-gray-700">UK degrees are respected worldwide, opening doors to global career opportunities and further education.</p>
+              <h3 className="font-bold text-lg mb-3 text-purple-700">
+                International Recognition
+              </h3>
+              <p className="text-gray-700">
+                UK degrees are respected worldwide, opening doors to global
+                career opportunities and further education.
+              </p>
             </div>
             <div className="bg-purple-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-bold text-lg mb-3 text-purple-700">Post-Study Work Options</h3>
-              <p className="text-gray-700">Graduate Route visa allows international students to work or look for work for 2 years after completing their degree.</p>
+              <h3 className="font-bold text-lg mb-3 text-purple-700">
+                Post-Study Work Options
+              </h3>
+              <p className="text-gray-700">
+                Graduate Route visa allows international students to work or
+                look for work for 2 years after completing their degree.
+              </p>
             </div>
             <div className="bg-purple-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-bold text-lg mb-3 text-purple-700">Cultural Experience</h3>
-              <p className="text-gray-700">Immerse yourself in the UK's rich history, diverse culture, and vibrant international student community.</p>
+              <h3 className="font-bold text-lg mb-3 text-purple-700">
+                Cultural Experience
+              </h3>
+              <p className="text-gray-700">
+                Immerse yourself in the UK's rich history, diverse culture, and
+                vibrant international student community.
+              </p>
             </div>
             <div className="bg-purple-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-bold text-lg mb-3 text-purple-700">Shorter Programs</h3>
-              <p className="text-gray-700">UK courses are typically shorter than many other countries, helping you save on tuition and living expenses.</p>
+              <h3 className="font-bold text-lg mb-3 text-purple-700">
+                Shorter Programs
+              </h3>
+              <p className="text-gray-700">
+                UK courses are typically shorter than many other countries,
+                helping you save on tuition and living expenses.
+              </p>
             </div>
             <div className="bg-purple-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-bold text-lg mb-3 text-purple-700">Scholarships & Financial Support</h3>
-              <p className="text-gray-700">Various scholarship opportunities and financial aid options available for international students.</p>
+              <h3 className="font-bold text-lg mb-3 text-purple-700">
+                Scholarships & Financial Support
+              </h3>
+              <p className="text-gray-700">
+                Various scholarship opportunities and financial aid options
+                available for international students.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Modal for Write To Us */}
+        {isRoleModalOpen && (
+          <>
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+              <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+                <div className="text-center mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">
+                    Join ASKOXY.AI
+                  </h2>
+                  <p className="text-gray-600 text-sm">
+                    Choose how you'd like to participate in our STUDYABROAD
+                    offer
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                  <button
+                    className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
+                      selectedRole.includes("PARTNER")
+                        ? "bg-blue-100 border-blue-500"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                    onClick={() => handleRoleToggle("PARTNER")}
+                  >
+                    <div className="flex items-center">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                          selectedRole.includes("PARTNER")
+                            ? "bg-blue-600"
+                            : "bg-blue-400"
+                        }`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                        >
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-800 text-sm">
+                          Join as Partner
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          Collaborate with universities and facilitate
+                          admissions
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
+                      selectedRole.includes("USER")
+                        ? "bg-green-100 border-green-500"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                    onClick={() => handleRoleToggle("USER")}
+                  >
+                    <div className="flex items-center">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                          selectedRole.includes("USER")
+                            ? "bg-green-600"
+                            : "bg-green-400"
+                        }`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                        >
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-800 text-sm">
+                          Join as User
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          Apply to study abroad through our platform
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
+                      selectedRole.includes("FREELANCER")
+                        ? "bg-purple-100 border-purple-500"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                    onClick={() => handleRoleToggle("FREELANCER")}
+                  >
+                    <div className="flex items-center">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                          selectedRole.includes("FREELANCER")
+                            ? "bg-purple-600"
+                            : "bg-purple-400"
+                        }`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 -moon"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                        >
+                          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                          <path d="M2 17l10 5-7"></path>
+                          <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-800 text-sm">
+                          Join as Freelancer
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          Promote study abroad opportunities and earn
+                          commissions
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+                <div className="flex justify-between">
+                  <button
+                    className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    onClick={() => {
+                      setIsRoleModalOpen(false);
+                      setSelectedRole([]);
+                      sessionStorage.removeItem("submitclicks");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={`py-2 px-4 rounded-lg text-white ${
+                      selectedRole.length === 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                    onClick={() => handleRoleSelection(selectedRole)}
+                    disabled={selectedRole.length === 0}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold mb-4 text-purple-700">Write To Us</h3>
+              <h3 className="text-lg font-bold mb-4 text-purple-700">
+                Write To Us
+              </h3>
               <div className="mb-4">
-                <label htmlFor="query" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="query"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Your Query
                 </label>
                 <textarea
@@ -858,7 +1176,9 @@ const StudyAbroad: React.FC = () => {
                     setQueryError(undefined);
                   }}
                 />
-                {queryError && <p className="text-red-500 text-xs mt-1">{queryError}</p>}
+                {queryError && (
+                  <p className="text-red-500 text-xs mt-1">{queryError}</p>
+                )}
               </div>
               <div className="flex justify-end space-x-3">
                 <button
@@ -870,15 +1190,15 @@ const StudyAbroad: React.FC = () => {
                 <button
                   className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
                   onClick={handleWriteToUsSubmitButton}
+                  disabled={isLoading}
                 >
-                  Submit
+                  {isLoading ? "Sending..." : "Submit"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Success Modal */}
         {issuccessOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
@@ -886,9 +1206,12 @@ const StudyAbroad: React.FC = () => {
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                   <FaCheckCircle className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Query Submitted Successfully!</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Query Submitted Successfully!
+                </h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  Thank you for your query. Our team will get back to you shortly.
+                  Thank you for your query. Our team will get back to you
+                  shortly.
                 </p>
                 <button
                   className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 w-full"
@@ -901,13 +1224,15 @@ const StudyAbroad: React.FC = () => {
           </div>
         )}
 
-        {/* Profile Update Modal */}
         {isprofileOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold mb-4 text-purple-700">Profile Update Required</h3>
+              <h3 className="text-lg font-bold mb-4 text-purple-700">
+                Profile Update Required
+              </h3>
               <p className="mb-4 text-gray-700">
-                Please update your profile with valid email and mobile number to continue.
+                Please update your profile with valid email and mobile number to
+                continue.
               </p>
               <div className="flex justify-end space-x-3">
                 <button

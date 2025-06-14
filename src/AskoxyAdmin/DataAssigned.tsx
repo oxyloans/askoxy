@@ -16,6 +16,7 @@ import {
   Row,
   Col,
   Space,
+  SelectProps,
 } from "antd";
 import {
   CommentOutlined,
@@ -31,10 +32,27 @@ import axios from "axios";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
-
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
+
+const emojiOptions: SelectProps["options"] = [
+  { label: "😊 Polite", value: "POLITE" },
+  { label: "😎 Friendly", value: "FRIENDLY" },
+  { label: "😎 Cool", value: "COOL" },
+  { label: "😤 Frustrated", value: "FRUSTRATED" },
+  { label: "😞 Disappointed", value: "DISAPPOINTED" },
+  { label: "😠 Rude", value: "RUDE" },
+  { label: "😡 Angry", value: "ANGRY" },
+  { label: "🤝 Understanding", value: "UNDERSTANDING" },
+  { label: "😕 Confused", value: "CONFUSED" },
+  { label: "📞 Busy", value: "BUSY" },
+  { label: "📴 Out of Service", value: "OUTOFSERVICE" },
+  { label: "❌ Not Connected", value: "NOTCONNECTED" },
+  { label: "🔌 Disconnected", value: "DISCONNECTED" },
+  { label: "⏳ Call Waiting", value: "CALLWAITING" },
+];
 
 interface UserData {
   userId: string;
@@ -76,6 +94,7 @@ interface Comment {
   commentsUpdateBy: string;
   commentsCreatedDate?: string;
   userId?: string;
+  customerBehaviour?: string;
 }
 
 interface ApiResponse {
@@ -173,6 +192,14 @@ const DataAssigned: React.FC = () => {
   const [loader, setLoader] = useState<boolean>(false);
   const [userOrders, setUserOrders] = useState<OrderData[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [userResponse, setUserResponse] = useState<string | undefined>();
+
+  // for getting user response
+  const handleUserResponseChange = (value: string) => {
+    console.log("User Response:", value);
+    setUserResponse(value);
+  };
+
   const deliveredOrdersCount = userOrders.filter(
     (order) => order.orderStatus === "4"
   ).length;
@@ -263,42 +290,46 @@ const DataAssigned: React.FC = () => {
 
   const showCommentsModal = async (record: UserData | null) => {
     setCommentsModalVisible(true);
-    await fetchComments(record);
+    // await fetchComments(record);
   };
 
-  const fetchComments = async (record: UserData | null): Promise<void> => {
-    console.log(record);
+  // const fetchComments = async (record: UserData | null): Promise<void> => {
+  //   console.log(record);
 
-    if (!record || !record.userId) return;
+  //   if (!record || !record.userId) return;
 
-    setLoadingComments(true);
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/user-service/fetchAdminComments`,
-        { userId: record.userId },
-        { headers: { "Content-Type": "application/json" } }
-      );
+  //   setLoadingComments(true);
+  //   try {
+  //     const response = await axios.post(
+  //       `${BASE_URL}/user-service/fetchAdminComments`,
+  //       { userId: record.userId },
+  //       { headers: { "Content-Type": "application/json" } }
+  //     );
 
-      if (response.data && typeof response.data === "object") {
-        setComments(response.data);
-      } else {
-        setComments([]);
-      }
-    } catch (error: any) {
-      if (error.response && error.response.status === 500) {
-        message.info("No comments found");
-      } else {
-        message.error(
-          "Failed to load comments...please try again after some time."
-        );
-      }
-      setComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
-  };
+  //     if (response.data && typeof response.data === "object") {
+  //       setComments(response.data);
+  //     } else {
+  //       setComments([]);
+  //     }
+  //   } catch (error: any) {
+  //     if (error.response && error.response.status === 500) {
+  //       message.info("No comments found");
+  //     } else {
+  //       message.error(
+  //         "Failed to load comments...please try again after some time."
+  //       );
+  //     }
+  //     setComments([]);
+  //   } finally {
+  //     setLoadingComments(false);
+  //   }
+  // };
 
   const handleSubmitComment = async (): Promise<void> => {
+    if (!userResponse?.trim()) {
+      message.warning("Please enter customer behaviour");
+      return;
+    }
     if (!newComment.trim()) {
       message.warning("Please enter a comment");
       return;
@@ -325,18 +356,21 @@ const DataAssigned: React.FC = () => {
           commentsUpdateBy: update,
           adminUserId: storedUniqueId,
           userId: record?.userId,
+          customerBehaviour: userResponse,
         },
         { headers: { "Content-Type": "application/json" } }
       );
 
       message.success("Comment added successfully");
       setNewComment("");
-      await fetchComments(record);
+      setUserResponse(undefined);
+      // await fetchComments(record);
     } catch (error) {
       console.error("Error submitting comment:", error);
       message.error("Failed to add comment");
     } finally {
       setSubmittingComment(false);
+      setNewComment("");
     }
   };
 
@@ -489,7 +523,7 @@ const DataAssigned: React.FC = () => {
             type="default"
             size="small"
             onClick={() => {
-              setRecord(record);
+              setSelectedUser(record);
               showCommentsModal(record);
             }}
             className="w-full rounded-md  border-blue-400 text-blue-600 hover:bg-blue-100"
@@ -934,7 +968,7 @@ const DataAssigned: React.FC = () => {
       )}
 
       {/* Comments Modal */}
-      <Modal
+      {/* <Modal
         zIndex={150}
         title="HelpDesk Comments"
         open={commentsModalVisible}
@@ -942,12 +976,13 @@ const DataAssigned: React.FC = () => {
           setCommentsModalVisible(false);
           setComments([]);
           setOrderId("");
+          setNewComment("");
         }}
         footer={null}
         width={550}
       >
         <div className="flex flex-col">
-          {/* Comments Section */}
+        
           <div className="mb-5">
             <h3 className="text-base font-semibold text-gray-800 mb-3">
               Recent Comments
@@ -1030,8 +1065,17 @@ const DataAssigned: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Add Comment Section */}
+           <h3 className="text-base font-semibold text-gray-800 mb-3">
+                       User Response
+                     </h3>
+               <Select
+                 style={{ width: '100%' }}
+                 placeholder="Select a response"
+                 options={emojiOptions}
+                 value={userResponse}
+                 onChange={handleUserResponseChange}
+               />
+       
           <div className="border-t border-gray-200 pt-4">
             <div className="flex flex-col space-y-3">
               <TextArea
@@ -1048,6 +1092,8 @@ const DataAssigned: React.FC = () => {
                   onClick={() => {
                     setCommentsModalVisible(false);
                     setComments([]);
+                    setNewComment("");
+                    setUserResponse(undefined);
                   }}
                   className="hover:bg-gray-100"
                 >
@@ -1066,7 +1112,16 @@ const DataAssigned: React.FC = () => {
             </div>
           </div>
         </div>
-      </Modal>
+      </Modal> */}
+      <HelpDeskCommentsModal
+        open={commentsModalVisible}
+        onClose={() => setCommentsModalVisible(false)}
+        userId={selectedUser?.userId}
+        updatedBy={updatedBy}
+        storedUniqueId={storedUniqueId}
+        record={record}
+        BASE_URL={BASE_URL}
+      />
       <Modal
         zIndex={100}
         title={

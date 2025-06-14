@@ -9,6 +9,7 @@ import {
   Button,
   message,
   Modal,
+  Tag,
 } from "antd";
 import { PhoneOutlined, UserOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -55,7 +56,7 @@ const HelpDeskDashboard: React.FC = () => {
   const [loadingRows, setLoadingRows] = useState<{ [key: string]: boolean }>(
     {}
   );
- const [comments, setComments] = useState<Record<string, string>>({});;
+  const [comments, setComments] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userDetails, setUserDetails] = useState<{
     [key: string]: UserData | null;
@@ -153,58 +154,96 @@ const HelpDeskDashboard: React.FC = () => {
     }
   };
 
-const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>, recordId: string) => {
-  setComments(prev => ({
-    ...prev,
-    [recordId]: e.target.value,
-  }));
-};
-
-  const handleSubmit = async (record: CallerItem) => {
-  const commentText = comments[record.id]?.trim();
-
-  if (!commentText) {
-    message.error("Please enter comments before submitting");
-    return;
-  }
-
-  setIsSubmitting(true);
-  const uniqueId = localStorage.getItem("uniquId");
-
-  const requestData = {
-    adminCommentsId: record.id,
-    superAdminComments: commentText,
-    superAdminUserId: uniqueId,
+  const handleCommentChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    recordId: string
+  ) => {
+    setComments((prev) => ({
+      ...prev,
+      [recordId]: e.target.value,
+    }));
   };
 
-  try {
-    const response = await fetch(`${BASE_URL}/user-service/adminRespondedComments`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
+  const handleSubmit = async (record: CallerItem) => {
+    const commentText = comments[record.id]?.trim();
 
-    if (response.ok) {
-      message.success("Comments submitted successfully");
-
-      // Clear the submitted comment only
-      setComments(prev => ({
-        ...prev,
-        [record.id]: "",
-      }));
-    } else {
-      message.error("Failed to submit comments");
+    if (!commentText) {
+      message.error("Please enter comments before submitting");
+      return;
     }
-  } catch (error) {
-    message.error("An error occurred while submitting comments");
-    console.error("Error submitting comments:", error);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
 
+    setIsSubmitting(true);
+    const uniqueId = localStorage.getItem("uniquId");
+
+    const requestData = {
+      adminCommentsId: record.id,
+      superAdminComments: commentText,
+      superAdminUserId: uniqueId,
+    };
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/user-service/adminRespondedComments`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      if (response.ok) {
+        message.success("Comments submitted successfully");
+
+        // Clear the submitted comment only
+        setComments((prev) => ({
+          ...prev,
+          [record.id]: "",
+        }));
+      } else {
+        message.error("Failed to submit comments");
+      }
+    } catch (error) {
+      message.error("An error occurred while submitting comments");
+      console.error("Error submitting comments:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const emojiMap: Record<string, string> = {
+    POLITE: "😊 Polite",
+    FRIENDLY: "😎 Friendly",
+    COOL: "😎 Cool",
+    FRUSTRATED: "😤 Frustrated",
+    DISAPPOINTED: "😞 Disappointed",
+    RUDE: "😠 Rude",
+    ANGRY: "😡 Angry",
+    UNDERSTANDING: "🤝 Understanding",
+    CONFUSED: "😕 Confused",
+    BUSY: "📞 Busy",
+    OUTOFSERVICE: "📴 Out of Service",
+    NOTCONNECTED: "❌ Not Connected",
+    DISCONNECTED: "🔌 Disconnected",
+    CALLWAITING: "⏳ Call Waiting",
+  };
+  const behaviorColorMap: Record<string, string> = {
+    POLITE: "green",
+    FRIENDLY: "green",
+    COOL: "cyan",
+    UNDERSTANDING: "blue",
+    CONFUSED: "geekblue",
+    FRUSTRATED: "orange",
+    DISAPPOINTED: "volcano",
+    RUDE: "red",
+    ANGRY: "red",
+    BUSY: "gold",
+    OUTOFSERVICE: "purple",
+    NOTCONNECTED: "magenta",
+    DISCONNECTED: "magenta",
+    CALLWAITING: "lime",
+  };
 
   const helpdeskColumns: ColumnsType<CallerItem> = [
     {
@@ -260,8 +299,29 @@ const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>, recordId
       title: "Caller Name",
       dataIndex: "caller",
       key: "caller",
-      width: 150,
-      render: (text: string) => <span>{text}</span>,
+      width: 200,
+      render: (_: string, record: any) => {
+        const behavior = record.customerBehaviour;
+        const emojiLabel = emojiMap[behavior] || behavior;
+        const tagColor = behaviorColorMap[behavior] || "default";
+
+        return (
+          <div className="flex flex-col gap-1">
+            <span>{record.caller}</span>
+
+            {behavior && (
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">
+                  Customer Behaviour:
+                </span>
+                <Tag color={tagColor} className="w-fit">
+                  {emojiLabel}
+                </Tag>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Comments",
@@ -282,10 +342,10 @@ const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>, recordId
       render: (text: string, record) => (
         <div className="w-full relative">
           <TextArea
-         value={comments[record.id] || ""} 
-        onChange={(e) => handleCommentChange(e, record.id)}
+            value={comments[record.id] || ""}
+            onChange={(e) => handleCommentChange(e, record.id)}
             placeholder="Enter superAdmin comments here"
-            className="w-full text-sm pr-10 p-1 h-14" 
+            className="w-full text-sm pr-10 p-1 h-14"
             rows={4}
             style={{ resize: "none" }}
           />

@@ -15,6 +15,8 @@ import {
   Space,
   Row,
   Col,
+  Select,
+  SelectProps,
 } from "antd";
 import {
   SearchOutlined,
@@ -26,9 +28,25 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import BASE_URL from "../Config";
-
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 const { TextArea } = Input;
 const { Text } = Typography;
+const emojiOptions: SelectProps["options"] = [
+  { label: "😊 Polite", value: "POLITE" },
+  { label: "😎 Friendly", value: "FRIENDLY" },
+  { label: "😎 Cool", value: "COOL" },
+  { label: "😤 Frustrated", value: "FRUSTRATED" },
+  { label: "😞 Disappointed", value: "DISAPPOINTED" },
+  { label: "😠 Rude", value: "RUDE" },
+  { label: "😡 Angry", value: "ANGRY" },
+  { label: "🤝 Understanding", value: "UNDERSTANDING" },
+  { label: "😕 Confused", value: "CONFUSED" },
+  { label: "📞 Busy", value: "BUSY" },
+  { label: "📴 Out of Service", value: "OUTOFSERVICE" },
+  { label: "❌ Not Connected", value: "NOTCONNECTED" },
+  { label: "🔌 Disconnected", value: "DISCONNECTED" },
+  { label: "⏳ Call Waiting", value: "CALLWAITING" },
+];
 
 interface ReferralData {
   id: string | null;
@@ -52,6 +70,7 @@ interface Comment {
   commentsUpdateBy: string;
   commentsCreatedDate?: string;
   userId?: string;
+  customerBehaviour?: string;
 }
 
 const ReferredData: React.FC = () => {
@@ -72,6 +91,8 @@ const ReferredData: React.FC = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [userResponse, setUserResponse] = useState<string | undefined>();
+
   const [selectedRecord, setSelectedRecord] = useState<ReferralData | null>(
     null
   );
@@ -80,6 +101,12 @@ const ReferredData: React.FC = () => {
   useEffect(() => {
     fetchReferrals();
   }, []);
+
+  // for getting user response
+  const handleUserResponseChange = (value: string) => {
+    console.log("User Response:", value);
+    setUserResponse(value);
+  };
 
   const fetchReferrals = async () => {
     setLoading(true);
@@ -129,40 +156,44 @@ const ReferredData: React.FC = () => {
   const showCommentsModal = async (record: ReferralData) => {
     setSelectedRecord(record);
     setCommentsModalVisible(true);
-    await fetchComments(record);
+    // await fetchComments(record);
   };
 
-  const fetchComments = async (record: ReferralData): Promise<void> => {
-    if (!record || !record.referrer) return;
+  // const fetchComments = async (record: ReferralData): Promise<void> => {
+  //   if (!record || !record.referrer) return;
 
-    setLoadingComments(true);
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/user-service/fetchAdminComments`,
-        { userId: record.referrer },
-        { headers: { "Content-Type": "application/json" } }
-      );
+  //   setLoadingComments(true);
+  //   try {
+  //     const response = await axios.post(
+  //       `${BASE_URL}/user-service/fetchAdminComments`,
+  //       { userId: record.referrer },
+  //       { headers: { "Content-Type": "application/json" } }
+  //     );
 
-      if (response.data && typeof response.data === "object") {
-        setComments(response.data);
-      } else {
-        setComments([]);
-      }
-    } catch (error: any) {
-      if (error.response && error.response.status === 500) {
-        message.info("No comments found");
-      } else {
-        message.error(
-          "Failed to load comments... please try again after some time."
-        );
-      }
-      setComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
-  };
+  //     if (response.data && typeof response.data === "object") {
+  //       setComments(response.data);
+  //     } else {
+  //       setComments([]);
+  //     }
+  //   } catch (error: any) {
+  //     if (error.response && error.response.status === 500) {
+  //       message.info("No comments found");
+  //     } else {
+  //       message.error(
+  //         "Failed to load comments... please try again after some time."
+  //       );
+  //     }
+  //     setComments([]);
+  //   } finally {
+  //     setLoadingComments(false);
+  //   }
+  // };
 
   const handleSubmitComment = async (): Promise<void> => {
+    if (!userResponse?.trim()) {
+      message.warning("Please enter customer behaviour");
+      return;
+    }
     if (!newComment.trim()) {
       message.warning("Please enter a comment");
       return;
@@ -171,24 +202,27 @@ const ReferredData: React.FC = () => {
     setSubmittingComment(true);
     try {
       await axios.patch(
-        `${BASE_URL}/user-service/adminUpdateComments`,
+        `${BASE_URL}/user-service/adminUpdateCommen`,
         {
           adminComments: newComment,
           commentsUpdateBy: updatedBy,
           adminUserId: localStorage.getItem("uniquId"),
           userId: selectedRecord?.referrer,
+          customerBehaviour: userResponse,
         },
         { headers: { "Content-Type": "application/json" } }
       );
 
       message.success("Comment added successfully");
       setNewComment("");
-      await fetchComments(selectedRecord as ReferralData);
+      setUserResponse(undefined);
+      // await fetchComments(selectedRecord as ReferralData);
     } catch (error) {
       console.error("Error submitting comment:", error);
       message.error("Failed to add comment");
     } finally {
       setSubmittingComment(false);
+      setNewComment("");
     }
   };
 
@@ -534,7 +568,7 @@ const ReferredData: React.FC = () => {
       </Modal>
 
       {/* Comments Modal */}
-      <Modal
+      {/* <Modal
         zIndex={150}
         title={
           <span className="text-lg font-medium text-purple-700">
@@ -545,12 +579,14 @@ const ReferredData: React.FC = () => {
         onCancel={() => {
           setCommentsModalVisible(false);
           setComments([]);
+          setNewComment("");
+          setUserResponse(undefined);
         }}
         footer={null}
         width={550}
       >
         <div className="flex flex-col">
-          {/* Comments Section */}
+        
           <div className="mb-5">
             <h3 className="text-base font-semibold text-gray-800 mb-3">
               Recent Comments
@@ -633,8 +669,17 @@ const ReferredData: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Add Comment Section */}
+          <h3 className="text-base font-semibold text-gray-800 mb-3">
+            User Response
+          </h3>
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Select a response"
+            options={emojiOptions}
+            value={userResponse}
+            onChange={handleUserResponseChange}
+          />
+        
           <div className="border-t border-gray-200 pt-4">
             <div className="flex flex-col space-y-3">
               <TextArea
@@ -651,6 +696,8 @@ const ReferredData: React.FC = () => {
                   onClick={() => {
                     setCommentsModalVisible(false);
                     setComments([]);
+                    setUserResponse(undefined);
+                    setNewComment("");
                   }}
                   className="hover:bg-gray-100"
                 >
@@ -669,7 +716,16 @@ const ReferredData: React.FC = () => {
             </div>
           </div>
         </div>
-      </Modal>
+        </Modal> */}
+      <HelpDeskCommentsModal
+        open={commentsModalVisible}
+        onClose={() => setCommentsModalVisible(false)}
+        userId={selectedRecord?.referrer}
+        updatedBy={updatedBy}
+        storedUniqueId={localStorage.getItem("uniquId")}
+        record={selectedRecord}
+        BASE_URL={BASE_URL}
+      />
     </Card>
   );
 };

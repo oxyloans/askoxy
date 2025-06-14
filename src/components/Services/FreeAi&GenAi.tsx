@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from "react";
 import "../StudyAbroad.css";
 import "../DiwaliPage.css";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Header1 from "../Header"
-
+import Header1 from "../Header";
 import Footer from "../Footer";
 import { message, Modal } from "antd";
 import { ArrowLeft, PlayCircleIcon, UsersIcon } from "lucide-react";
-import { notification } from "antd";
-import BASE_URL from "../../Config";
-
 import FG from "../../assets/img/genai.png";
+import {
+  checkUserInterest,
+  submitInterest,
+  submitWriteToUsQuery,
+} from "../servicesapi"; 
 
 const FreeAiandGenAi: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -22,15 +21,17 @@ const FreeAiandGenAi: React.FC = () => {
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
-  const userId = localStorage.getItem("userId");
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [interested, setInterested] = useState<boolean>(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState<boolean>(false);
+  const [selectedRole, setSelectedRole] = useState<string[]>([]);
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
   const submitclicks = sessionStorage.getItem("submitclicks");
   const email = profileData.customerEmail || null;
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
+  const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
   const [formData, setFormData] = useState({
@@ -50,13 +51,26 @@ const FreeAiandGenAi: React.FC = () => {
   };
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
-  // Whatsapp and Video Links (replace with actual links)
+  // Whatsapp and Video Links
   const WHATSAPP_JOIN_GROUP =
     "https://chat.whatsapp.com/IbsWaPLHADfC0pF5lgGiMe";
   const WHATSAPP_COMMUNITY = "https://chat.whatsapp.com/GJntC36RVHsLTuu20zPLR9";
   const INTRO_VIDEO = "https://www.youtube.com/watch?v=dummy-intro-video";
   const COURSE_OVERVIEW_VIDEO =
     "https://www.askoxy.ai/aiandgenaivsverficationandvalidation";
+
+  const handleRoleToggle = (role: string) => {
+    setSelectedRole((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
+
+  const handleRoleSelection = (roles: string[]) => {
+    if (roles.length > 0) {
+      setIsRoleModalOpen(false);
+      showConfirmationModal(interested, roles.join(" "));
+    }
+  };
 
   const handleSubmit = (isAlreadyInterested: boolean) => {
     sessionStorage.setItem("submitclicks", "true");
@@ -65,17 +79,23 @@ const FreeAiandGenAi: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem("redirectPath", "/main/services/freeai-genai");
       message.warning("Please login to submit your interest.");
-
       return;
     }
 
-    showConfirmationModal(isAlreadyInterested);
-  };
-
-  const showConfirmationModal = (isAlreadyInterested: boolean) => {
     if (isAlreadyInterested) {
       message.warning("You have already participated. Thank you!", 7);
+      setTimeout(() => {
+        sessionStorage.removeItem("submitclicks");
+      }, 7000);
+      return;
+    }
 
+    setIsRoleModalOpen(true); // Show role selection modal
+  };
+
+  const showConfirmationModal = (isAlreadyInterested: boolean, role: string) => {
+    if (isAlreadyInterested) {
+      message.warning("You have already participated. Thank you!", 7);
       setTimeout(() => {
         sessionStorage.removeItem("submitclicks");
       }, 7000);
@@ -84,40 +104,46 @@ const FreeAiandGenAi: React.FC = () => {
     Modal.confirm({
       title: "Confirm Participation",
       content:
-        "Are you sure you want to participate in the Free AI & Gen AI Training offer?",
+        `Are you sure you want to participate in the Free AI & Gen AI Training offer as ${role || "a participant"}?`,
       okText: "Yes, I’m sure",
       cancelText: "Cancel",
-      onOk: submitInterest,
+      onOk: () => submitInterestHandler(role),
       onCancel: () => {
         sessionStorage.removeItem("submitclicks");
+        setSelectedRole([]);
       },
     });
   };
 
-  const submitInterest = async () => {
-    // if (isButtonDisabled) return;
+  const submitInterestHandler = async (role: string) => {
+    if (isButtonDisabled) return;
 
     try {
       setIsButtonDisabled(true);
-
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-        formData
+      const success = await submitInterest(
+        formData.askOxyOfers,
+        formData.mobileNumber,
+        formData.userId,
+        role
       );
-      console.log("API Response:", response.data);
 
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-
-      message.success(
-        "Thank you for showing interest in our *Free AI & Gen Ai Training* offer!"
-      );
-      setInterested(true);
-    } catch (error: any) {
+      if (success) {
+        message.success(
+          "Thank you for showing interest in our *Free AI & Gen Ai Training* offer!"
+        );
+        setInterested(true);
+      } else {
+        message.error("Failed to submit your interest. Please try again.");
+        setInterested(false);
+      }
+    } catch (error) {
       console.error("API Error:", error);
       message.error("Failed to submit your interest. Please try again.");
       setInterested(false);
     } finally {
+      setIsButtonDisabled(false);
       sessionStorage.removeItem("submitclicks");
+      setSelectedRole([]);
     }
   };
 
@@ -147,26 +173,10 @@ const FreeAiandGenAi: React.FC = () => {
     if (!userId) return;
 
     try {
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-        { userId }
-      );
-
-      if (response.status === 200 && Array.isArray(response.data)) {
-        const offers = response.data;
-
-        const hasFreeRudrakshaOffer = offers.some(
-          (offer: any) => offer.askOxyOfers === "FREEAI"
-        );
-
-        console.log(hasFreeRudrakshaOffer);
-
-        setInterested(hasFreeRudrakshaOffer);
-        if (submitclicks) {
-          handleSubmit(hasFreeRudrakshaOffer);
-        }
-      } else {
-        setInterested(false);
+      const hasInterest = await checkUserInterest(userId, "FREEAI");
+      setInterested(hasInterest);
+      if (submitclicks) {
+        handleSubmit(hasInterest);
       }
     } catch (error) {
       console.error("Error while fetching offers:", error);
@@ -180,41 +190,29 @@ const FreeAiandGenAi: React.FC = () => {
       return;
     }
 
-    const payload = {
-      email: email,
-      mobileNumber: finalMobileNumber,
-      queryStatus: "PENDING",
-      projectType: "ASKOXY",
-      askOxyOfers: "FREEAI",
-      adminDocumentId: "",
-      comments: "",
-      id: "",
-      resolvedBy: "",
-      resolvedOn: "",
-      status: "",
-      userDocumentId: "",
-      query: query,
-      userId: userId,
-    };
-
-    console.log("Query:", query);
-    const accessToken = localStorage.getItem("accessToken");
-
-    const apiUrl = `${BASE_URL}/user-service/write/saveData`;
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-    };
-
     try {
-      const response = await axios.post(apiUrl, payload, { headers: headers });
+      setIsLoading(true);
+      const success = await submitWriteToUsQuery(
+        email,
+        finalMobileNumber,
+        query,
+        "FREEAI",
+        userId
+      );
 
-      if (response.data) {
-        console.log("Response:", response.data);
+      if (success) {
         setSuccessOpen(true);
         setIsOpen(false);
+        setQuery("");
+        setQueryError(undefined);
+      } else {
+        message.error("Failed to submit your query. Please try again.");
       }
     } catch (error) {
       console.error("Error sending the query:", error);
+      message.error("Failed to submit your query. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -235,11 +233,8 @@ const FreeAiandGenAi: React.FC = () => {
   };
 
   return (
-    
     <div className="min-h-screen">
-        <div className="mb-4 p-2">
-        {!userId ?   <Header1 />: null}
-      </div>
+      <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="p-4 lg:p-8">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="max-w-7xl mx-auto">
@@ -261,13 +256,11 @@ const FreeAiandGenAi: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   <button
                     className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg shadow-md hover:shadow-lg text-sm md:text-base font-medium transition duration-300 transform hover:-translate-y-0.5"
-                    onClick={() => {
-                      handleSubmit(interested);
-                    }}
+                    onClick={() => handleSubmit(interested)}
                     aria-label="I'm Interested"
                     disabled={interested}
                   >
-                    {!interested ? "I'm Interested" : "Alredy Participated"}
+                    {!interested ? "I'm Interested" : "Already Participated"}
                   </button>
 
                   <button
@@ -327,7 +320,6 @@ const FreeAiandGenAi: React.FC = () => {
                     <span>🌐</span>
                   </p>
 
-                  {/* WhatsApp and Video Section */}
                   <div className="mt-6 grid grid-cols-2 gap-4">
                     <button
                       onClick={handleWhatsAppGroupJoin}
@@ -343,14 +335,6 @@ const FreeAiandGenAi: React.FC = () => {
                       <UsersIcon className="w-5 h-5" />
                       <span>AI & Gen AI Knowledge Sharing</span>
                     </button>
-
-                    {/* <button 
-                      onClick={handleIntroVideo}
-                      className="flex items-center justify-center w-full p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300 space-x-2"
-                    >
-                      <PlayCircleIcon className="w-5 h-5" />
-                      <span>Intro Video</span>
-                    </button> */}
 
                     <button
                       onClick={handleCourseOverviewVideo}
@@ -374,26 +358,191 @@ const FreeAiandGenAi: React.FC = () => {
                       </a>
                     </button>
                   </div>
-
-                  {/* <div className="flex justify-center md:justify-start pt-2">
-                    <a
-                      href="https://sites.google.com/view/globalecommercemarketplace/home"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Oxyloans Training Guide"
-                      className="inline-block"
-                    >
-                      <button className="px-6 py-3 text-base font-bold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-blue-300 focus:outline-none">
-                        <span className="mr-2">📖</span> Our Training Guide
-                      </button>
-                    </a>
-                  </div> */}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Role Selection Modal */}
+      {isRoleModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
+                Join ASKOXY.AI
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Choose how you'd like to participate in our FREEAI offer
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <button
+                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
+                  selectedRole.includes("PARTNER")
+                    ? "bg-blue-100 border-blue-500"
+                    : "bg-gray-50 border-gray-200"
+                }`}
+                onClick={() => handleRoleToggle("PARTNER")}
+              >
+                <div className="flex items-center">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                      selectedRole.includes("PARTNER")
+                        ? "bg-blue-600"
+                        : "bg-blue-400"
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 text-sm">
+                      Join as Partner
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      Sell your products and services
+                    </p>
+                  </div>
+                </div>
+              </button>
+              <button
+                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
+                  selectedRole.includes("USER")
+                    ? "bg-green-100 border-green-500"
+                    : "bg-gray-50 border-gray-200"
+                }`}
+                onClick={() => handleRoleToggle("USER")}
+              >
+                <div className="flex items-center">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                      selectedRole.includes("USER")
+                        ? "bg-green-600"
+                        : "bg-green-400"
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 text-sm">
+                      Join as User
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      Buy my products and services
+                    </p>
+                  </div>
+                </div>
+              </button>
+              <button
+                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
+                  selectedRole.includes("FREELANCER")
+                    ? "bg-purple-100 border-purple-500"
+                    : "bg-gray-50 border-gray-200"
+                }`}
+                onClick={() => handleRoleToggle("FREELANCER")}
+              >
+                <div className="flex items-center">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                      selectedRole.includes("FREELANCER")
+                        ? "bg-purple-600"
+                        : "bg-purple-400"
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                    >
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                      <path d="M2 17l10 5-7"></path>
+                      <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 text-sm">
+                      Join as Freelancer
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      Bring partners and users to earn money
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+            <div className="flex justify-between">
+              <button
+                className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                onClick={() => {
+                  setIsRoleModalOpen(false);
+                  setSelectedRole([]);
+                  sessionStorage.removeItem("submitclicks");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className={`py-2 px-4 rounded-lg text-white ${
+                  selectedRole.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+                onClick={() => handleRoleSelection(selectedRole)}
+                disabled={selectedRole.length === 0}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Write To Us Modal */}
       {isOpen && (
@@ -550,7 +699,10 @@ const FreeAiandGenAi: React.FC = () => {
             </p>
             <div className="flex justify-center">
               <button
-                className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-400 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50"
+                className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-400 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate:
+
+
+-y-0.5 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50"
                 onClick={handlePopUOk}
               >
                 OK

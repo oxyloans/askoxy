@@ -1,7 +1,16 @@
 import React from "react";
 import { ArrowRight, CheckCircle, GraduationCap, Star } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 const CallToActionSection = () => {
+
+  const [clicked, setClicked] = React.useState(false);
+    const navigate = useNavigate();
+  const handleFreeConsultation = () => {
+    setClicked(true);
+    navigate("/student-home");
+   
+  };
+  
   return (
     <section className="py-16 bg-gradient-to-r from-purple-600 via-purple-700 to-blue-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,11 +43,11 @@ const CallToActionSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-semibold py-3 px-6 sm:px-8 rounded-full shadow-lg transition transform hover:scale-105 flex items-center justify-center">
+              <button onClick={handleFreeConsultation}  className="bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-semibold py-3 px-6 sm:px-8 rounded-full shadow-lg transition transform hover:scale-105 flex items-center justify-center">
                 Get Started Now
                 <ArrowRight className="w-5 h-5 ml-2" />
               </button>
-              <button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-700 font-semibold py-3 px-6 sm:px-8 rounded-full transition duration-300">
+              <button onClick={handleFreeConsultation} className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-700 font-semibold py-3 px-6 sm:px-8 rounded-full transition duration-300">
                 Schedule Free Consultation
               </button>
             </div>

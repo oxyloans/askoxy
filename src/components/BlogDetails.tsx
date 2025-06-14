@@ -503,7 +503,7 @@ const BlogDetails: React.FC = () => {
           let cleanText = trimmedLine
             .replace(/^#+\s*/, "")
             .replace(/^\*\*|\*\*$/g, "")
-            .replace(/\*\*/g, "")
+            .replace(/\*/g, "")
             .trim();
 
           return (
@@ -520,14 +520,30 @@ const BlogDetails: React.FC = () => {
           trimmedLine.startsWith("•") ||
           trimmedLine.startsWith("-")
         ) {
+          // Remove all * characters except the first one (bullet symbol)
+          let cleanBulletText = trimmedLine;
+          const firstChar = cleanBulletText.charAt(0);
+
+          if (firstChar === "*") {
+            // Keep first * as bullet, remove all other * characters
+            cleanBulletText =
+              firstChar + cleanBulletText.slice(1).replace(/\*/g, "");
+          } else {
+            // For other bullet symbols (✅, •, -), remove all * characters
+            cleanBulletText = cleanBulletText.replace(/\*/g, "");
+          }
+
           return (
             <div key={`bullet-${index}`} className="mb-2">
               <span className="text-gray-600 text-sm sm:text-base">
-                {trimmedLine}
+                {cleanBulletText}
               </span>
             </div>
           );
         } else {
+          // Remove all * characters from regular paragraphs
+          const cleanText = trimmedLine.replace(/\*/g, "");
+
           const renderTextWithLinks = (text: string) => {
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             const parts = text.split(urlRegex);
@@ -554,7 +570,7 @@ const BlogDetails: React.FC = () => {
               key={`para-${index}`}
               className="text-gray-600 mb-2 text-sm sm:text-base"
             >
-              {renderTextWithLinks(trimmedLine)}
+              {renderTextWithLinks(cleanText)}
             </p>
           );
         }

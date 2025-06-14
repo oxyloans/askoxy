@@ -717,7 +717,8 @@ const CoursesPage: React.FC<{
                 Study Programs in {getCountryName(state?.selectedCountry)}
               </h1>
               <p className="text-gray-600 mt-1">
-                Discover {totalCourses.toLocaleString()} amazing educational opportunities
+                Discover {totalCourses.toLocaleString()} amazing educational
+                opportunities
               </p>
             </div>
           </div>
@@ -726,9 +727,10 @@ const CoursesPage: React.FC<{
         {/* Pagination Top */}
         <PaginationComponent />
 
-        {/* Search and Filter Section - All in one row */}
+        {/* Search and Filter Section */}
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-3 overflow-x-auto md:overflow-visible">
+            {/* Search Input */}
             <div className="relative flex-1 min-w-[250px]">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -741,45 +743,56 @@ const CoursesPage: React.FC<{
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
-            <select
-              value={selectedDegree}
-              onChange={(e) => setSelectedDegree(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[120px]"
-            >
-              {degreeTypes.map(degree => (
-                <option key={degree} value={degree}>{degree}</option>
-              ))}
-            </select>
-            <select
-              value={selectedDuration}
-              onChange={(e) => setSelectedDuration(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[120px]"
-            >
-              {durations.map(duration => (
-                <option key={duration} value={duration}>{duration}</option>
-              ))}
-            </select>
-            <select
-              value={selectedUniversity}
-              onChange={(e) => setSelectedUniversity(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[120px]"
-            >
-              {universities.map(university => (
-                <option key={university} value={university}>{university}</option>
-              ))}
-            </select>
-            <select
-              value={selectedCostRange}
-              onChange={(e) => setSelectedCostRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[120px]"
-            >
-              {costRanges.map(range => (
-                <option key={range} value={range}>{range}</option>
-              ))}
-            </select>
+
+            {/* Filters */}
+            {[
+              {
+                label: "Degree",
+                value: selectedDegree,
+                onChange: (e:any) => setSelectedDegree(e.target.value),
+                options: degreeTypes,
+              },
+              {
+                label: "Duration",
+                value: selectedDuration,
+                onChange: (e:any) => setSelectedDuration(e.target.value),
+                options: durations,
+              },
+              {
+                label: "University",
+                value: selectedUniversity,
+                onChange: (e:any) => setSelectedUniversity(e.target.value),
+                options: universities,
+              },
+              {
+                label: "Cost Range",
+                value: selectedCostRange,
+                onChange: (e:any) => setSelectedCostRange(e.target.value),
+                options: costRanges,
+              },
+            ].map(({ value, onChange, options }, i) => (
+              <select
+                key={i}
+                value={value}
+                onChange={onChange}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[120px]"
+              >
+                {options.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            ))}
+
+            {/* Sort */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'name' | 'cost' | 'duration' | 'university')}
+              onChange={(e) =>
+                setSortBy(
+                  e.target.value as "name" | "cost" | "duration" | "university"
+                )
+              }
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[120px]"
             >
               <option value="name">Sort by Name</option>
@@ -787,6 +800,8 @@ const CoursesPage: React.FC<{
               <option value="duration">Sort by Duration</option>
               <option value="university">Sort by University</option>
             </select>
+
+            {/* Clear Filters */}
             <button
               onClick={clearFilters}
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors duration-200"
@@ -797,24 +812,25 @@ const CoursesPage: React.FC<{
           </div>
         </div>
 
-        {/* Results Info Bar */}
-        <div className="mb-4">
-          <p className="text-gray-600 text-sm">
-            {filteredCourses.length === totalCourses
-              ? `Showing all ${filteredCourses.length.toLocaleString()} programs`
-              : `Showing ${filteredCourses.length.toLocaleString()} of ${totalCourses.toLocaleString()} programs`
-            }
-          </p>
-        </div>
+        {/* Results Info */}
+        <p className="text-gray-600 text-sm mb-4">
+          {filteredCourses.length === totalCourses
+            ? `Showing all ${filteredCourses.length.toLocaleString()} programs`
+            : `Showing ${filteredCourses.length.toLocaleString()} of ${totalCourses.toLocaleString()} programs`}
+        </p>
 
-        {/* Course Cards Grid */}
+        {/* Course Cards */}
         {displayedCourses.length === 0 ? (
           <div className="text-center py-12">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
               <Search className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No programs found</h3>
-            <p className="text-gray-500 mb-4">Try adjusting your search criteria or filters</p>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              No programs found
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Try adjusting your search criteria or filters
+            </p>
             <button
               onClick={clearFilters}
               className="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200"
@@ -823,128 +839,127 @@ const CoursesPage: React.FC<{
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {displayedCourses.map((course, index) => (
               <div
                 key={index}
                 onClick={() => handleCourseSelect(course)}
-                className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group hover:border-purple-300 p-4"
+                className="bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300 ease-in-out cursor-pointer group hover:border-purple-400 p-5 flex flex-col justify-between"
               >
-                <div className="flex flex-col h-full">
-                  <div className="mb-3">
-                    <div className="flex items-start justify-between mb-2">
-                      {getDegreeType(course) && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mb-2">
-                          <Award className="mr-1 h-3 w-3" />
-                          {getDegreeType(course)}
-                        </span>
-                      )}
-                      {shouldDisplayField(course.courseUrl) && (
-                        <button
-                          onClick={(e) => handleCourseUrlClick(course.courseUrl, e)}
-                          className="p-1 text-gray-400 hover:text-purple-600 transition-colors duration-200"
-                          title="View course details"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                    <h3 className="font-bold text-gray-800 text-sm leading-tight group-hover:text-purple-700 transition-colors duration-200 line-clamp-2">
-                      {getFieldOfStudy(course.courseName)}
-                    </h3>
-                    <p className="text-xs text-gray-600 mt-1 flex items-center">
-                      <University className="mr-1 h-3 w-3" />
-                      {course.university}
-                    </p>
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    {getDegreeType(course) && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <Award className="mr-1 h-3 w-3" />
+                        {getDegreeType(course)}
+                      </span>
+                    )}
+                    {shouldDisplayField(course.courseUrl) && (
+                      <button
+                        onClick={(e) =>
+                          handleCourseUrlClick(course.courseUrl, e)
+                        }
+                        className="p-1 text-gray-400 hover:text-purple-600"
+                        title="View course details"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 mb-3 flex-1">
+
+                  <h3 className="font-semibold text-base sm:text-lg text-gray-800 group-hover:text-purple-700 line-clamp-2">
+                    {getFieldOfStudy(course.courseName)}
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-1 flex items-center">
+                    <University className="mr-1 h-3 w-3" />
+                    {course.university}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-700">
                     {shouldDisplayField(course.duration) && (
                       <div className="bg-gray-50 rounded-lg p-2">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
+                        <div className="flex items-center text-gray-500 mb-1">
                           <Clock className="mr-1 h-3 w-3" />
                           Duration
                         </div>
-                        <div className="text-xs font-semibold text-gray-800">{course.duration}</div>
+                        <div className="font-semibold">{course.duration}</div>
                       </div>
                     )}
-                    
                     {shouldDisplayField(course.universityCampusCity) && (
                       <div className="bg-gray-50 rounded-lg p-2 col-span-2">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
+                        <div className="flex items-center text-gray-500 mb-1">
                           <MapPin className="mr-1 h-3 w-3" />
                           Campus Location
                         </div>
-                        <div className="text-xs font-semibold text-gray-800">{course.universityCampusCity}</div>
+                        <div className="font-semibold">
+                          {course.universityCampusCity}
+                        </div>
                       </div>
                     )}
-                    
                     {getAllIntakes(course).length > 0 && (
                       <div className="bg-gray-50 rounded-lg p-2 col-span-2">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
+                        <div className="flex items-center text-gray-500 mb-1">
                           <Calendar className="mr-1 h-3 w-3" />
                           Intakes
                         </div>
-                        <div className="text-xs font-semibold text-gray-800">
-                          {getAllIntakes(course).join(', ')}
+                        <div className="font-semibold">
+                          {getAllIntakes(course).join(", ")}
                         </div>
                       </div>
                     )}
-                    
                     {formatExamRequirements(course.typesOfExams).length > 0 && (
                       <div className="bg-gray-50 rounded-lg p-2 col-span-2">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
+                        <div className="flex items-center text-gray-500 mb-1">
                           <BookOpen className="mr-1 h-3 w-3" />
                           Exams Required
                         </div>
-                        <div className="text-xs font-semibold text-gray-800">
-                          {formatExamRequirements(course.typesOfExams).join(', ')}
+                        <div className="font-semibold">
+                          {formatExamRequirements(course.typesOfExams).join(
+                            ", "
+                          )}
                         </div>
                       </div>
                     )}
-                    
                     {shouldDisplayField(course.applicationFee) && (
                       <div className="bg-gray-50 rounded-lg p-2">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
+                        <div className="flex items-center text-gray-500 mb-1">
                           <CreditCard className="mr-1 h-3 w-3" />
                           Application Fee
                         </div>
-                        <div className="text-xs font-semibold text-gray-800">
+                        <div className="font-semibold">
                           {formatCost(course.applicationFee)}
                         </div>
                       </div>
                     )}
-                    
-                    {shouldDisplayField(course.tutionFee1styr) && course.tutionFee1styr !== course.cost && (
-                      <div className="bg-gray-50 rounded-lg p-2">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
-                          <DollarSign className="mr-1 h-3 w-3" />
-                          1st Year
-                        </div>
-                        <div className="text-xs font-semibold text-gray-800">
-                          {formatCost(course.tutionFee1styr)}
-                                                  </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-auto pt-2">
-                    <div className="flex items-center justify-between">
-                      {shouldDisplayField(course.cost) && (
-                        <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
-                          <span className="text-sm font-bold text-gray-800">
-                            {formatCost(course.cost)}
-                          </span>
+                    {shouldDisplayField(course.tutionFee1styr) &&
+                      course.tutionFee1styr !== course.cost && (
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="flex items-center text-gray-500 mb-1">
+                            <DollarSign className="mr-1 h-3 w-3" />
+                            1st Year
+                          </div>
+                          <div className="font-semibold">
+                            {formatCost(course.tutionFee1styr)}
+                          </div>
                         </div>
                       )}
-                      <button
-                        className="ml-auto inline-flex items-center px-3 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold py-2.5 rounded-lg hover:from-yellow-500 hover:to-yellow-700 transition-all duration-300 shadow-sm hover:shadow-md"
-                      >
-                        View Universities
-                        <ChevronRight className="ml-1 h-3 w-3" />
-                      </button>
-                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    {shouldDisplayField(course.cost) && (
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
+                        <span className="text-sm font-bold text-gray-800">
+                          {formatCost(course.cost)}
+                        </span>
+                      </div>
+                    )}
+                    <button className="ml-auto inline-flex items-center px-3 py-2 bg-yellow-500 text-black font-semibold text-sm rounded-lg hover:bg-yellow-600 transition-all duration-200 shadow">
+                      View Universities
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -955,14 +970,18 @@ const CoursesPage: React.FC<{
         {/* Pagination Bottom */}
         <PaginationComponent />
 
-        {/* Empty State for No Results */}
+        {/* No Filtered Results */}
         {filteredCourses.length === 0 && (
           <div className="text-center py-12">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
               <Search className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No programs match your search</h3>
-            <p className="text-gray-500 mb-4">Try adjusting your filters or search term</p>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              No programs match your search
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Try adjusting your filters or search term
+            </p>
             <button
               onClick={clearFilters}
               className="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200"
@@ -974,6 +993,7 @@ const CoursesPage: React.FC<{
       </div>
     </div>
   );
+  
 };
 
 export default CoursesPage;
