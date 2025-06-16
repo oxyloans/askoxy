@@ -2262,7 +2262,7 @@ const MyOrders: React.FC = () => {
                         Total Amount
                       </span>
                       <span className="text-xs sm:text-sm font-medium">
-                        ₹{order.grandTotal}
+                        ₹{Number(order.grandTotal).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between">

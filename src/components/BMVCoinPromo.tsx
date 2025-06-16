@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import coinImage from "../assets/img/BMVCOIN1.png";
-
+import { useNavigate } from "react-router-dom";
 const BMVCoinPromo = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [countdown, setCountdown] = useState({
@@ -8,6 +8,9 @@ const BMVCoinPromo = () => {
     minutes: 59,
     seconds: 59,
   });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   // Animation on component mount
   useEffect(() => {
@@ -31,6 +34,28 @@ const BMVCoinPromo = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
+
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/crypto"; // your desired path
+
+      if (userId) {
+        // User is already logged in
+        navigate(redirectPath);
+      } else {
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section
@@ -94,7 +119,7 @@ const BMVCoinPromo = () => {
             </div>
 
             <div className="flex justify-center lg:justify-start mb-4">
-              <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold rounded-lg hover:shadow-lg transition-all duration-300 text-base flex items-center justify-center gap-2">
+              <button onClick={handleSignIn} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold rounded-lg hover:shadow-lg transition-all duration-300 text-base flex items-center justify-center gap-2">
                 <span>🚀</span> Claim Your Coins Now
               </button>
             </div>
