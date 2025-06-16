@@ -917,7 +917,6 @@ const CheckoutPage: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
-          address: {
             address: selectedAddress?.address,
             customerId,
             flatNo: selectedAddress?.flatNo,
@@ -926,12 +925,11 @@ const CheckoutPage: React.FC = () => {
             pincode: selectedAddress?.pincode,
             walletAmount: finalWalletAmount,
             couponCode: coupenApplied ? couponCode.toUpperCase() : null,
-            couponValue: null,
-            couponAmount: null,
+            couponValue: coupenDetails || 0,
             deliveryBoyFee,
             amount: grandTotalAmount,
             subTotal: grandTotal,
-            gst: subGst,
+            gstAmount: subGst,
             dayOfWeek: selectedDay,
             expectedDeliveryDate: selectedDate,
             timeSlot: selectedTimeSlot,
@@ -939,7 +937,6 @@ const CheckoutPage: React.FC = () => {
             longitude: selectedAddress?.longitude,
             orderFrom: "WEB",
             paymentType: selectedPayment === "COD" ? 0 : 1,
-          },
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
