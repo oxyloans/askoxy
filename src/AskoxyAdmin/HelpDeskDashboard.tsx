@@ -8,14 +8,20 @@ import {
   Input,
   Button,
   message,
-  Modal,
   Tag,
+  DatePicker,
+  Space,
 } from "antd";
-import { PhoneOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  PhoneOutlined,
+  UserOutlined,
+  DownloadOutlined,
+} from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
 import axios from "axios";
 import TextArea from "antd/es/input/TextArea";
+import dayjs, { Dayjs } from "dayjs";
 
 interface CallerItem {
   userId: string;
@@ -61,6 +67,12 @@ const HelpDeskDashboard: React.FC = () => {
   const [userDetails, setUserDetails] = useState<{
     [key: string]: UserData | null;
   }>({});
+
+  // Excel download states
+  const [showDateInputs, setShowDateInputs] = useState(false);
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const fetchCallerData = async (): Promise<void> => {
     try {
@@ -209,6 +221,72 @@ const HelpDeskDashboard: React.FC = () => {
       console.error("Error submitting comments:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Excel download functions
+  const handleDownloadClick = () => {
+    setShowDateInputs(true);
+  };
+
+  const handleCancelDownload = () => {
+    setShowDateInputs(false);
+    setStartDate(null);
+    setEndDate(null);
+  };
+
+  const handleExcelDownload = async () => {
+    if (!startDate || !endDate) {
+      message.error("Please select both start and end dates");
+      return;
+    }
+
+    const startDateStr = startDate.format("YYYY-MM-DD");
+    const endDateStr = endDate.format("YYYY-MM-DD");
+
+    setIsDownloading(true);
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/user-service/dateRange-caller-comments-xl?startDate=${startDateStr}&endDate=${endDateStr}`,
+        {
+          method: "GET",
+          headers: {
+            accept: "*/*",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download Excel file");
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `caller-comments-${startDateStr}-to-${endDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      message.success("Excel file downloaded successfully");
+      setShowDateInputs(false);
+      setStartDate(null);
+      setEndDate(null);
+    } catch (error) {
+      console.error("Download error:", error);
+      message.error("Failed to download Excel file");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -377,6 +455,7 @@ const HelpDeskDashboard: React.FC = () => {
       ),
     },
   ];
+
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -397,9 +476,74 @@ const HelpDeskDashboard: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-left px-4 w-full">
-        HelpDesk Dashboard
-      </h1>
+      <div className="px-4 sm:px-6 py-4">
+        {!showDateInputs ? (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-left">
+              HelpDesk Dashboard
+            </h1>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadClick}
+              className="bg-green-600 hover:bg-green-700 border-green-600 text-white font-semibold rounded-lg w-full sm:w-auto px-4 py-2"
+            >
+              Download XLS
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="flex flex-col w-full sm:w-auto">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                  </label>
+                  <DatePicker
+                    value={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    format="DD-MM-YYYY"
+                    className="w-full sm:w-40 h-7 rounded-md border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    placeholder="Start date"
+                    size="middle"
+                  />
+                </div>
+                <div className="flex flex-col w-full sm:w-auto">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                  </label>
+                  <DatePicker
+                    value={endDate}
+                    onChange={(date) => setEndDate(date)}
+                    format="DD-MM-YYYY"
+                    className="w-full sm:w-40 h-7 rounded-md border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    placeholder="End date"
+                    size="middle"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-row items-center gap-3 w-full sm:w-auto mt-6 sm:mt-0">
+                <Button
+                  type="primary"
+                  loading={isDownloading}
+                  onClick={handleExcelDownload}
+                  className="bg-green-600 hover:bg-green-700 border-green-600 text-white font-semibold rounded-lg w-full sm:w-auto h-7 px-4"
+                  size="middle"
+                >
+                  Get Data
+                </Button>
+                <Button
+                  onClick={handleCancelDownload}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg w-full sm:w-auto h-7 px-4"
+                  size="middle"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <Row gutter={[16, 16]} className="p-2 bg-gray-100 rounded-lg">
         <Col xs={24} md={8} lg={6}>

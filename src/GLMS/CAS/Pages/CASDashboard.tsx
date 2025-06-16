@@ -97,11 +97,11 @@ const CASDashboard: React.FC = () => {
     const userId = localStorage.getItem("userId");
     if (userId) {
       sessionStorage.setItem("submitclicks", "true");
-      navigate("/main/services/campaign/a6b5");
+      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
     } else {
       message.warning("Please login to submit your interest.");
       sessionStorage.setItem("submitclicks", "true");
-      sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
+      sessionStorage.setItem("redirectPath", "/main/services/a6b5/glms-open-source-hub-job-stree");
       navigate("/whatsappregister");
     }
   };

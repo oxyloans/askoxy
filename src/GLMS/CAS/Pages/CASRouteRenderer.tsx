@@ -21,10 +21,10 @@ const CASRouteRenderer: React.FC = () => {
     sessionStorage.setItem("submitclicks", "true");
 
     if (userId) {
-      navigate("/main/services/campaign/a6b5");
+      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
     } else {
       message.warning("Please login to submit your interest.");
-      sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
+      sessionStorage.setItem("redirectPath", "/main/services/a6b5/glms-open-source-hub-job-stree");
       navigate("/whatsappregister");
     }
   };

@@ -9,6 +9,7 @@ import {
   Col,
   Row,
   message,
+  Tag,
 } from "antd";
 import { PhoneOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -38,6 +39,40 @@ interface ApiResponse {
   response: CallRecord[];
   callerWiseCount: null | any;
 }
+
+
+  const emojiMap: Record<string, string> = {
+    POLITE: "😊 Polite",
+    FRIENDLY: "😎 Friendly",
+    COOL: "😎 Cool",
+    FRUSTRATED: "😤 Frustrated",
+    DISAPPOINTED: "😞 Disappointed",
+    RUDE: "😠 Rude",
+    ANGRY: "😡 Angry",
+    UNDERSTANDING: "🤝 Understanding",
+    CONFUSED: "😕 Confused",
+    BUSY: "📞 Busy",
+    OUTOFSERVICE: "📴 Out of Service",
+    NOTCONNECTED: "❌ Not Connected",
+    DISCONNECTED: "🔌 Disconnected",
+    CALLWAITING: "⏳ Call Waiting",
+  };
+   const behaviorColorMap: Record<string, string> = {
+    POLITE: "green",
+    FRIENDLY: "green",
+    COOL: "cyan",
+    UNDERSTANDING: "blue",
+    CONFUSED: "geekblue",
+    FRUSTRATED: "orange",
+    DISAPPOINTED: "volcano",
+    RUDE: "red",
+    ANGRY: "red",
+    BUSY: "gold",
+    OUTOFSERVICE: "purple",
+    NOTCONNECTED: "magenta",
+    DISCONNECTED: "magenta",
+    CALLWAITING: "lime",
+  };
 
 const CallerHistoryPage: React.FC = () => {
   const [reportData, setReportData] = useState<ApiResponse>({
@@ -194,11 +229,33 @@ const CallerHistoryPage: React.FC = () => {
         );
       },
     },
-    {
-      title: "Caller",
+   {
+      title: "Caller Name",
       dataIndex: "caller",
       key: "caller",
-      width: "20%",
+      width: 200,
+      render: (_: string, record: any) => {
+        const behavior = record.customerBehaviour;
+        const emojiLabel = emojiMap[behavior] || behavior;
+        const tagColor = behaviorColorMap[behavior] || "default";
+
+        return (
+          <div className="flex flex-col gap-1">
+            <span>{record.caller}</span>
+
+            {behavior && (
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">
+                  Customer Behaviour:
+                </span>
+                <Tag color={tagColor} className="w-fit">
+                  {emojiLabel}
+                </Tag>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Comments",

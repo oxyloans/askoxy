@@ -7,6 +7,7 @@ interface Comment {
   adminComments: string;
   commentsUpdateBy: string;
   commentsCreatedDate: string;
+  customerBehaviour?: string; // Added customerBehaviour to the interface
 }
 
 interface Props {
@@ -52,6 +53,13 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     { label: "🔌 Disconnected", value: "DISCONNECTED" },
     { label: "⏳ Call Waiting", value: "CALLWAITING" },
   ];
+
+  // Helper function to get emoji for customer behaviour
+  const getCustomerBehaviourEmoji = (behaviour: string | undefined) => {
+    if (!behaviour) return "";
+    const option = emojiOptions.find(opt => opt.value === behaviour);
+    return option ? option.label : behaviour;
+  };
 
   useEffect(() => {
     console.log(userId, "userId in HelpDeskCommentsModal");
@@ -204,9 +212,17 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
                         <span className="font-medium text-sm text-gray-800">
                           {comment.commentsUpdateBy || "Unknown"}
                         </span>
-                        <span className="text-[10px] text-gray-400 ml-auto">
-                          {formatDate(comment.commentsCreatedDate)}
-                        </span>
+                        <div className="ml-auto flex items-center gap-2">
+                          {/* Customer Behaviour Display */}
+                          {comment.customerBehaviour && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full border">
+                              {getCustomerBehaviourEmoji(comment.customerBehaviour)}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-gray-400">
+                            {formatDate(comment.commentsCreatedDate)}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-sm text-gray-600 pl-8 mt-0.5 leading-snug">
                         {comment.adminComments}

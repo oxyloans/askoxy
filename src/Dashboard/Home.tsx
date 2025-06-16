@@ -1010,8 +1010,9 @@ const Home: React.FC = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAddToCart(item);
+                  console.log("Add to cart clicked", localStorage.getItem("TypeLogin"));
                 }}
-                disabled={item.itemId ? loadingItems.items[item.itemId] : false}
+                disabled={item.itemId ? loadingItems.items[item.itemId] : false || localStorage.getItem("TypeLogin") === "Caller" ? true : false}
               >
                 {item.itemId && loadingItems.items[item.itemId] ? (
                   <Loader2

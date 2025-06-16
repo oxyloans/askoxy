@@ -64,7 +64,7 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
   //   try {
   //     setIsLoading(true);
   //     // Set the default redirect path to the dashboard products page
-  //     const redirectPath = "/main/services/campaign/a6b5";
+  //     const redirectPath = "/main/services/a6b5/glms-open-source-hub-job-stree";
 
   //     // Store the redirect path in multiple storage locations
   //     localStorage.setItem("redirectPath", redirectPath);
@@ -103,7 +103,7 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
 
       if (userId) {
         // If user is logged in, go directly to the campaign page
-        navigate("/main/services/campaign/a6b5");
+        navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
       } else {
         // If not logged in, redirect to WhatsApp login
         window.location.href = LOGIN_URL;
@@ -123,12 +123,12 @@ function Header({ onNavClick, activeLink }: HeaderProps) {
     const userId = localStorage.getItem("userId");
     if (userId) {
       sessionStorage.setItem("submitclicks", "true");
-      navigate("/main/services/campaign/a6b5");
+      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
     } else {
       message.warning("Please login to submit your interest.");
       sessionStorage.setItem("submitclicks", "true");
       navigate("/whatsappregister");
-      sessionStorage.setItem("redirectPath", "/main/services/campaign/a6b5");
+      sessionStorage.setItem("redirectPath", "/main/services/a6b5/glms-open-source-hub-job-stree");
     }
   };
 
