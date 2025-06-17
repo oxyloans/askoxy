@@ -415,15 +415,16 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({ onViewAllClick }) =
           {/* Universities Section */}
           <div className="border-t-2 border-yellow-400 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-              <div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-purple-900">
-                  1000+ Universities
-                </h3>
-                <p className="text-lg text-gray-600">
-                  <span className="inline w-6 h-1 0 mr-2"></span>
-                  600+ Courses Available
-                </p>
-              </div>
+            <div>
+  <h3 className="text-2xl sm:text-3xl font-bold text-purple-900">
+    1000+ Universities
+  </h3>
+  <p className="text-lg text-gray-600 mt-2">
+    <span className="inline-block w-2 h-2 bg-purple-600 rounded-full mr-2 align-middle"></span>
+    1500+ Courses Available
+  </p>
+</div>
+
               <button
                 onClick={handleViewAllClick}
                 className="border-2 border-yellow-400 bg-white hover:bg-yellow-50 text-purple-800 font-semibold px-6 py-2 rounded-full shadow-sm transition-all duration-300 flex items-center group"

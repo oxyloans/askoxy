@@ -20,11 +20,15 @@ const CurrentLandingPage: React.FC = () => {
       {/* <section>
         <UnicornGrid />
       </section> */}
-      <section  className="mt-4">
+      <section className="mt-4">
         <HorizontalScrollGallery />
       </section>
       <section>
         <ServicesSlider />
+      </section>
+      <section>
+        {" "}
+        <BMVCoinPromo />
       </section>
       <section>
         <FreeGPTs />
@@ -32,10 +36,6 @@ const CurrentLandingPage: React.FC = () => {
       <section>
         {" "}
         <OurPeople />
-      </section>
-      <section>
-        {" "}
-        <BMVCoinPromo />
       </section>
 
       <section>

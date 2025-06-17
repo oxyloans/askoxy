@@ -289,12 +289,12 @@ const UniversitiesSection: React.FC<UniversitiesSectionProps> = ({ onViewAllClic
     navigate('/all-universities');
   };
 
-  const handleViewPrograms = (universityName: string) => {
-    console.log(`View programs for ${universityName}`);
+  const handleViewPrograms = () => {
+    navigate("/all-universities");
   };
 
-  const handleApplyNow = (universityName: string) => {
-    console.log(`Apply to ${universityName}`);
+  const handleApplyNow = () => {
+  navigate("/student-home");
   };
 
   const currentUniversities = activeTab === 'qs-ranked' ? qsRankedUniversities : offersBasedUniversities;
@@ -343,7 +343,7 @@ const UniversitiesSection: React.FC<UniversitiesSectionProps> = ({ onViewAllClic
           <div className="text-center flex flex-col items-center w-[140px] flex-shrink-0 hover:scale-105 transition-transform duration-300">
             <Building size={36} className="text-purple-600 mb-2" />
             <div className="text-3xl font-bold text-purple-600">
-              {inView && <CountUp end={600} duration={5} />}+
+              {inView && <CountUp end={1500} duration={5} />}+
             </div>
             <div className="text-gray-600 text-center text-sm">Courses</div>
           </div>
@@ -495,13 +495,13 @@ const UniversitiesSection: React.FC<UniversitiesSectionProps> = ({ onViewAllClic
 
                 <div className="mt-4 flex justify-between items-center">
                   <button
-                    onClick={() => handleViewPrograms(university.name)}
+                    onClick={handleViewPrograms}
                     className="text-purple-600 hover:text-purple-800 text-sm font-medium"
                   >
                     View Programs
                   </button>
                   <button
-                    onClick={() => handleApplyNow(university.name)}
+                    onClick={handleApplyNow}
                     className="text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded-full"
                   >
                     Apply Now

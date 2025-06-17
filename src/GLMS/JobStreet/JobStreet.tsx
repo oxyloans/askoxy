@@ -12,16 +12,23 @@ const images = [
   "https://i.ibb.co/S4h8zBj6/Usecase7.png",
   "https://i.ibb.co/7xpk9fkG/Usecase4.png",
   "https://i.ibb.co/RknWvhzt/Usecase10.png",
-  "https://i.ibb.co/RT3Lxk4n/Usecase3.png",
-  "https://i.ibb.co/LdKHx3tT/Usecase12.png",
+
+  "https://i.ibb.co/9HwBLCzD/20.png",
+  "https://i.ibb.co/CKRF2qdB/18.png",
+  "https://i.ibb.co/27bX7GGK/15.png",
   "https://i.ibb.co/Q7ZhS8Ft/Usecase13.png",
-  "https://i.ibb.co/bRQ3ZDgS/Usecase5.png",
+  "https://i.ibb.co/ZzHt82sV/21.png",
 
-  "https://i.ibb.co/C5ntVDTn/Usecase6.png",
+  "https://i.ibb.co/6RM0pG7p/16.png",
   "https://i.ibb.co/8DpcTcf8/Usecase11.png",
-"https://i.ibb.co/1YLXgzcP/Usecase8.png",
-  "https://i.ibb.co/sv5D1V4Q/Usecase9.png",
-
+  "https://i.ibb.co/1YLXgzcP/Usecase8.png",
+  "https://i.ibb.co/FL1nZSNP/17.png",
+  "https://i.ibb.co/sdPhJbD8/22.png",
+  "https://i.ibb.co/p6h4ny25/25.png",
+  "https://i.ibb.co/cXc44M3Z/27.png",
+  "https://i.ibb.co/ymY8fBs6/29.png",
+  "https://i.ibb.co/GQ4KyMHS/31.png",
+  "https://i.ibb.co/SXDC5zTj/32.png"
 ];
 
 const useCaseNames = [
@@ -33,12 +40,23 @@ const useCaseNames = [
   "Workflow for Loan Appraisal",
   "Workflow for Loan Assessment",
   "Work Flow for Recommendations",
+  "Risk Analysis Documentation",
   "Work Flow for Sanction Letter Generation & Customer Response",
   "Workflow for Loan Sanction",
   "Workflow for Terms & Conditions",
   "Workflow for Capturing Proposed Asset Details",
   "Customer Eligibility & Loan Limit Check",
   "Workflow for Evaluating the Net Worth",
+  "Manual Allocation for Delinquent Customers",
+  "Manual Reallocation for Delinquent Customers",
+  "Legal Collections Workflow",
+  
+  "Work Flow – Finance Rescheduling: Bulk Prepayment",
+  "Work Flow – Finance Rescheduling: Due Date Change",
+  "Work Flow – Repayment Deferral: Finance Wise Deferral",
+
+
+
 ];
 
 const JobStreet: React.FC = () => {

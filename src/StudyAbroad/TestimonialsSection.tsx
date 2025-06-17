@@ -66,72 +66,95 @@ const TestimonialsSection = () => {
 
   const testimonials: Testimonial[] = [
     {
-      name: "Sarah Johnson",
-      university: "Harvard University",
-      country: "USA",
-      program: "Master's in Business Administration",
+      name: "Priya Sharma",
+      university: "University of Oxford",
+      country: "UK",
+      program: "Master's in Public Policy",
       quote:
-        "The guidance I received made my application process seamless. From visa assistance to scholarship recommendations, everything was handled professionally. I couldn't have asked for better support in achieving my dream of studying at Harvard.",
+        "Getting into Oxford felt like a dream. The expert guidance I received made everything—from SOP writing to visa filing—super easy. I'm proud to represent India here in the UK.",
       rating: 5,
-      image: "https://i.ibb.co/WWmCzy4z/download-9.jpg",
+      image: "https://i.ibb.co/5rP9kYz/indian-student-1.jpg", // replace with actual Indian student image URL
       year: "2023",
     },
     {
-      name: "Michael Brown",
-      university: "University of Edinburgh",
-      country: "Scotland",
-      program: "PhD in Engineering",
-      quote:
-        "Studying in Scotland has been life-changing. The educational quality and cultural experience exceeded all my expectations. The application support was exceptional - they helped me navigate through every step of the process.",
-      rating: 5,
-      image: "https://i.ibb.co/Ldj52zmJ/download-10.jpg",
-      year: "2022",
-    },
-    {
-      name: "Aisha Patel",
-      university: "Technical University of Munich",
-      country: "Germany",
-      program: "Master's in Computer Science",
-      quote:
-        "The free tuition in Germany is amazing. Thanks to expert guidance, I secured my spot at TUM and even got a scholarship! The support didn't end there - they helped with accommodation and settling in too.",
-      rating: 5,
-      image: "https://i.ibb.co/DHZjvkT8/download-11.jpg",
-      year: "2023",
-    },
-    {
-      name: "James Chen",
-      university: "University of Toronto",
+      name: "Rohan Verma",
+      university: "University of British Columbia",
       country: "Canada",
-      program: "Bachelor's in Medicine",
+      program: "Bachelor's in Computer Science",
       quote:
-        "Getting into medical school in Canada seemed impossible until I found this support. They helped me understand the requirements, prepare my applications, and even provided interview coaching. Now I'm living my dream!",
+        "Coming from Bengaluru to study in Vancouver was a big step. The support team made my journey smooth by assisting with admissions, visa, and housing. Truly grateful!",
       rating: 5,
-      image: "https://i.ibb.co/995LGPYN/download-8.jpg",
+      image: "https://i.ibb.co/pPGFZ8V/indian-student-2.jpg", // replace with actual Indian student image URL
       year: "2022",
     },
     {
-      name: "Emma Wilson",
-      university: "University of Melbourne",
-      country: "Australia",
-      program: "Master's in Environmental Science",
+      name: "Meera Iyer",
+      university: "ETH Zurich",
+      country: "Switzerland",
+      program: "Master's in Data Science",
       quote:
-        "Australia was always my dream destination. The team made it possible by guiding me through the complex visa process and helping me secure funding. The post-arrival support was incredible too!",
+        "I never imagined I'd study in Switzerland! From shortlisting universities to finding scholarships, the help I received was phenomenal. Zurich is beautiful and so student-friendly.",
       rating: 5,
-      image: "https://i.ibb.co/yFqJCwjd/download-12.jpg",
+      image: "https://i.ibb.co/k2RsqTV/indian-student-3.jpg", // replace with actual Indian student image URL
       year: "2023",
     },
     {
-      name: "Ahmed Hassan",
-      university: "Sorbonne University",
-      country: "France",
-      program: "Master's in International Relations",
+      name: "Arjun Patel",
+      university: "Monash University",
+      country: "Australia",
+      program: "Bachelor's in Biomedical Science",
       quote:
-        "Studying in Paris has been a dream come true. The application process was smooth thanks to the excellent guidance. They even helped me improve my French before I arrived. Merci beaucoup!",
+        "I’m from Ahmedabad, and studying in Melbourne has been life-changing. I received complete guidance from application to post-arrival support. Couldn’t be happier!",
       rating: 5,
-      image: "https://i.ibb.co/nqd9BpNw/download-13.jpg",
+      image: "https://i.ibb.co/hfQBdRd/indian-student-4.jpg", // replace with actual Indian student image URL
+      year: "2022",
+    },
+    {
+      name: "Sneha Reddy",
+      university: "University of Auckland",
+      country: "New Zealand",
+      program: "Master's in Marine Biology",
+      quote:
+        "Coming from Hyderabad, adjusting to life in Auckland was smooth because of the excellent pre-departure guidance. My dream to study marine life came true!",
+      rating: 5,
+      image: "https://i.ibb.co/0qkYvM8/indian-student-5.jpg", // replace with actual Indian student image URL
+      year: "2023",
+    },
+    {
+      name: "Mohammed Irfan",
+      university: "Sciences Po",
+      country: "France",
+      program: "Master's in Political Science",
+      quote:
+        "From Delhi to Paris, the transition was made easy by a fantastic support team. They even helped me prepare for my interview and French language basics!",
+      rating: 5,
+      image: "https://i.ibb.co/MRvhnVP/indian-student-6.jpg", // replace with actual Indian student image URL
+      year: "2022",
+    },
+    {
+      name: "Ankita Deshmukh",
+      university: "National University of Singapore (NUS)",
+      country: "Singapore",
+      program: "Master's in Artificial Intelligence",
+      quote:
+        "Coming from Pune, I was nervous about studying abroad. But the support I received was incredible—from university selection to finding affordable housing in Singapore. Studying at NUS has been a dream come true!",
+      rating: 5,
+      image: "https://i.ibb.co/0CjZvYN/indian-student-7.jpg", // replace with real photo URL
+      year: "2023",
+    },
+    {
+      name: "Rahul Nair",
+      university: "TU Delft",
+      country: "Netherlands",
+      program: "Master's in Civil Engineering",
+      quote:
+        "I’m from Kochi, and studying in the Netherlands has broadened my perspective in every way. The application guidance, especially for European universities, was spot on. I couldn’t have done it without their support!",
+      rating: 5,
+      image: "https://i.ibb.co/CHZfHkb/indian-student-8.jpg", // replace with real photo URL
       year: "2022",
     },
   ];
+  
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);

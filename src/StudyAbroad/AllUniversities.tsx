@@ -1394,7 +1394,7 @@ const AllUniversities = () => {
                   </div>
                   <button
                     className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                    // onClick={() => navigate(`/university/${university.id}`)}
+                    onClick={() => navigate(`/student-home`)}
                   >
                     Explore Elite Program
                     <ArrowUpRight className="w-4 h-4" />

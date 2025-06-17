@@ -80,14 +80,14 @@ const BMVCoinPromo = () => {
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-4 leading-tight text-purple-900">
-              Get <span className="text-purple-600">10,000 BMVCOINS</span> Free
+              Get <span className="text-purple-600">1000 BMVCOINS</span> Free
               Today!
             </h2>
 
             <p className="text-base sm:text-lg md:text-xl mb-6 font-light text-purple-800">
               Claim your{" "}
               <span className="text-purple-600 font-semibold">
-                10,000 BMVCOINS
+                1000 BMVCOINS
               </span>{" "}
               now and join thousands already benefiting from this revolutionary
               digital currency.
@@ -101,18 +101,18 @@ const BMVCoinPromo = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-purple-100">
                   <p className="text-purple-600 font-bold text-sm">Minimum</p>
-                  <p className="text-xl font-bold text-purple-900">₹10,000</p>
+                  <p className="text-xl font-bold text-purple-900">1000 BMVCOINS</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-purple-100">
                   <p className="text-purple-600 font-bold text-sm">Maximum</p>
-                  <p className="text-xl font-bold text-purple-900">₹1,00,000</p>
+                  <p className="text-xl font-bold text-purple-900">Up to 1,00,000 BMVCOINS</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-purple-100">
                   <p className="text-purple-600 font-bold text-sm">
                     Great Value
                   </p>
                   <p className="text-xl font-bold text-purple-900">
-                    ₹8,00,000+
+                    8,00,000+
                   </p>
                 </div>
               </div>

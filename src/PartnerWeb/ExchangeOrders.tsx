@@ -19,13 +19,13 @@ import type { ColumnsType } from "antd/es/table";
 import { Search, Package, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MdCurrencyRupee, MdScale } from "react-icons/md";
-import { 
-  ExchangeOrder, 
-  DeliveryBoy, 
+import {
+  ExchangeOrder,
+  DeliveryBoy,
   fetchExchangeOrders,
-  fetchDeliveryBoys, 
-  assignExchangeOrder, 
-  reassignExchangeOrder 
+  fetchDeliveryBoys,
+  assignExchangeOrder,
+  reassignExchangeOrder,
 } from "./partnerapi";
 
 const { Title } = Typography;
@@ -35,11 +35,14 @@ const ExchangeOrdersTable: React.FC = () => {
   const [exchangeOrders, setExchangeOrders] = useState<ExchangeOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchText, setSearchText] = useState<string>("");
-  const [selectedRecord, setSelectedRecord] = useState<ExchangeOrder | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<ExchangeOrder | null>(
+    null
+  );
   const [dbLoading1, setDbLoading1] = useState<boolean>(false);
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
   const [dbModalVisible, setDbModalVisible] = useState(false);
-  const [selectedDeliveryBoy, setSelectedDeliveryBoy] = useState<DeliveryBoy | null>(null);
+  const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
+    useState<DeliveryBoy | null>(null);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
   const [filteredOrders, setFilteredOrders] = useState<ExchangeOrder[]>([]);
   const [takingNewBag, setTakingNewBag] = useState<string | null>(null);
@@ -53,6 +56,7 @@ const ExchangeOrdersTable: React.FC = () => {
     deliveryBoyId: "",
     amountPaid: "",
   });
+  const [showValidation, setShowValidation] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
 
   // Fetch exchange orders on component mount
@@ -121,11 +125,20 @@ const ExchangeOrdersTable: React.FC = () => {
     navigate(`/home/orderDetails`);
   };
 
-  const calculateUsedBagAmount = (originalWeight: string, remainingWeight: string, price: number) => {
+  const calculateUsedBagAmount = (
+    originalWeight: string,
+    remainingWeight: string,
+    price: number
+  ) => {
     const originalWeightNum = parseFloat(originalWeight);
     const remainingWeightNum = parseFloat(remainingWeight);
 
-    if (originalWeightNum <= 0 || remainingWeightNum < 0 || price <= 0 || isNaN(remainingWeightNum)) {
+    if (
+      originalWeightNum <= 0 ||
+      remainingWeightNum < 0 ||
+      price <= 0 ||
+      isNaN(remainingWeightNum)
+    ) {
       return "0.00";
     }
 
@@ -264,7 +277,11 @@ const ExchangeOrdersTable: React.FC = () => {
               <div>
                 <strong>Diff:</strong>{" "}
                 <span
-                  className={record.daysDifference <= 3 ? "text-green-500" : "text-red-500"}
+                  className={
+                    record.daysDifference <= 3
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }
                 >
                   {record.daysDifference}
                 </span>
@@ -295,7 +312,12 @@ const ExchangeOrdersTable: React.FC = () => {
     }
     setDbLoading(true);
     try {
-      await assignExchangeOrder(exchangeId, selectedDeliveryBoy.userId, takingNewBag, newBagBarcode || null);
+      await assignExchangeOrder(
+        exchangeId,
+        selectedDeliveryBoy.userId,
+        takingNewBag,
+        newBagBarcode || null
+      );
       message.success("Order assigned successfully!");
       setDbModalVisible(false);
       onRefresh();
@@ -324,6 +346,7 @@ const ExchangeOrdersTable: React.FC = () => {
   };
 
   const handleCancel = () => {
+    setShowValidation(false)
     setFormData({
       newBagBarcodes: "",
       returnBagWeight: "",
@@ -358,7 +381,11 @@ const ExchangeOrdersTable: React.FC = () => {
     }));
 
     if (selectedRecord && value !== null) {
-      const newAmount = calculateUsedBagAmount(selectedRecord.weight, newWeight, selectedRecord.itemPrice);
+      const newAmount = calculateUsedBagAmount(
+        selectedRecord.weight,
+        newWeight,
+        selectedRecord.itemPrice
+      );
       setFormData((prev) => ({
         ...prev,
         amountCollected: newAmount,
@@ -381,9 +408,40 @@ const ExchangeOrdersTable: React.FC = () => {
   };
 
   const handleOk = async () => {
-    const hasAtLeastOneField = Object.values(formData).some((value) => value.trim() !== "");
-    if (!hasAtLeastOneField) {
-      message.error("Please fill at least one field before submitting.");
+    setShowValidation(true); 
+
+    const errors: string[] = [];
+
+    if (
+      !formData.returnBagWeight ||
+      isNaN(parseFloat(formData.returnBagWeight))
+    ) {
+      errors.push("Remaining Bag Weight is required.");
+    }
+
+    if (
+      !formData.amountCollected ||
+      isNaN(parseFloat(formData.amountCollected))
+    ) {
+      errors.push("Amount for Used Weight is required.");
+    }
+
+    if (!formData.amountPaid) {
+      errors.push("Please select if the amount is paid.");
+    }
+
+    if (!formData.deliveryBoyId) {
+      errors.push("Please select a delivery boy.");
+    }
+
+    if (errors.length > 0) {
+      message.error(
+        <>
+          {errors.map((err, idx) => (
+            <div key={idx}>{err}</div>
+          ))}
+        </>
+      );
       return;
     }
 
@@ -391,6 +449,7 @@ const ExchangeOrdersTable: React.FC = () => {
       await reassignExchangeOrder(selectedRecord?.exchangeId || "", formData);
       message.success("Data submitted successfully!");
       setIsModalOpen(false);
+      setShowValidation(false); // Reset validation display
       onRefresh();
     } catch (error: any) {
       message.error(error.message || "Something went wrong!");
@@ -426,7 +485,13 @@ const ExchangeOrdersTable: React.FC = () => {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {["All", "EXCHANGEREQUESTED", "ASSIGNTOCOLLECT", "COLLECTED", "RECOMPLETED"].map((status) => (
+        {[
+          "All",
+          "EXCHANGEREQUESTED",
+          "ASSIGNTOCOLLECT",
+          "COLLECTED",
+          "RECOMPLETED",
+        ].map((status) => (
           <Button
             key={status}
             type={selectedStatus === status ? "primary" : "default"}
@@ -465,7 +530,11 @@ const ExchangeOrdersTable: React.FC = () => {
         open={dbModalVisible}
         onCancel={handleCancelClick}
         footer={[
-          <Button key="cancel" onClick={handleCancelClick} className="rounded-lg">
+          <Button
+            key="cancel"
+            onClick={handleCancelClick}
+            className="rounded-lg"
+          >
             Cancel
           </Button>,
           <Button
@@ -478,7 +547,9 @@ const ExchangeOrdersTable: React.FC = () => {
                 return;
               }
               if (takingNewBag === null) {
-                message.error("Please select if delivery boy is taking a new bag");
+                message.error(
+                  "Please select if delivery boy is taking a new bag"
+                );
                 return;
               }
               if (takingNewBag === "yes" && !newBagBarcode) {
@@ -503,7 +574,9 @@ const ExchangeOrdersTable: React.FC = () => {
             <div>
               <Radio.Group
                 onChange={(e) => {
-                  const selectedBoy = deliveryBoys.find((boy) => boy.userId === e.target.value);
+                  const selectedBoy = deliveryBoys.find(
+                    (boy) => boy.userId === e.target.value
+                  );
                   setSelectedDeliveryBoy(selectedBoy || null);
                 }}
                 value={selectedDeliveryBoy?.userId}
@@ -564,7 +637,11 @@ const ExchangeOrdersTable: React.FC = () => {
         width={600}
         className="rounded-lg"
         footer={[
-          <Button key="cancel" onClick={handleCancel} className="rounded-lg border-gray-300">
+          <Button
+            key="cancel"
+            onClick={handleCancel}
+            className="rounded-lg border-gray-300"
+          >
             Cancel
           </Button>,
           <Button
@@ -585,11 +662,15 @@ const ExchangeOrdersTable: React.FC = () => {
             <div className="flex justify-center gap-4">
               <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
                 <User size={18} />
-                <span className="font-semibold">{selectedRecord?.userName}</span>
+                <span className="font-semibold">
+                  {selectedRecord?.userName}
+                </span>
               </div>
               <div className="flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-lg">
                 <Package size={18} />
-                <span className="font-semibold">{selectedRecord?.itemName}</span>
+                <span className="font-semibold">
+                  {selectedRecord?.itemName}
+                </span>
               </div>
             </div>
           </div>
@@ -602,6 +683,13 @@ const ExchangeOrdersTable: React.FC = () => {
                     Remaining Bag Weight (kg)
                     <MdScale className="inline ml-2 text-gray-500" />
                   </span>
+                }
+                required
+                validateStatus={
+                  showValidation && !formData.returnBagWeight ? "error" : ""
+                }
+                help={
+                  showValidation && !formData.returnBagWeight ? "Required" : ""
                 }
               >
                 <InputNumber
@@ -621,6 +709,13 @@ const ExchangeOrdersTable: React.FC = () => {
                     <MdCurrencyRupee className="inline ml-2 text-gray-500" />
                   </span>
                 }
+                required
+                validateStatus={
+                  showValidation && !formData.amountCollected ? "error" : ""
+                }
+                help={
+                  showValidation && !formData.amountCollected ? "Required" : ""
+                }
               >
                 <InputNumber
                   value={parseFloat(formData.amountCollected) || 0}
@@ -632,12 +727,16 @@ const ExchangeOrdersTable: React.FC = () => {
                 />
               </Form.Item>
             </div>
+
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium">
-                  Amount Paid
-                </span>
+                <span className="text-gray-700 font-medium">Amount Paid</span>
               }
+              required
+              validateStatus={
+                showValidation && !formData.amountPaid ? "error" : ""
+              }
+              help={showValidation && !formData.amountPaid ? "Required" : ""}
             >
               <Select
                 placeholder="Select option"
@@ -649,12 +748,18 @@ const ExchangeOrdersTable: React.FC = () => {
                 <Select.Option value="no">No</Select.Option>
               </Select>
             </Form.Item>
+
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">
                   Select Delivery Boy
                 </span>
               }
+              required
+              validateStatus={
+                showValidation && !formData.deliveryBoyId ? "error" : ""
+              }
+              help={showValidation && !formData.deliveryBoyId ? "Required" : ""}
             >
               <Select
                 placeholder="Select a delivery boy"
@@ -672,10 +777,11 @@ const ExchangeOrdersTable: React.FC = () => {
                   ))}
               </Select>
             </Form.Item>
+
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">
-                  New Bag Barcodes
+                  New Bag Barcodes (Optional)
                 </span>
               }
             >
@@ -687,10 +793,9 @@ const ExchangeOrdersTable: React.FC = () => {
                 className="rounded-lg"
               />
             </Form.Item>
+
             <Form.Item
-              label={
-                <span className="text-gray-700 font-medium">Remarks</span>
-              }
+              label={<span className="text-gray-700 font-medium">Remarks</span>}
             >
               <Input.TextArea
                 name="remarks"
@@ -705,7 +810,7 @@ const ExchangeOrdersTable: React.FC = () => {
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
             <span className="text-yellow-800 text-sm font-medium">
-              Note: At least one field must be filled before submitting.
+              Note: All fields except remarks are mandatory.
             </span>
           </div>
         </div>

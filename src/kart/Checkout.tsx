@@ -153,6 +153,34 @@ const CheckoutPage: React.FC = () => {
 
   const isFreeItem = (item: CartItem) => item.status === "FREE";
 
+  // Function to handle bmvCashBack POST call
+  const applyBmvCashBack = async () => {
+    if (!customerId) {
+      console.error("Customer ID is missing");
+      return;
+    }
+
+    const requestBody = {
+      orderAmount: totalAmount,
+      userId: customerId,
+    };
+
+    try {
+      await axios.post(
+        `${BASE_URL}/user-service/bmvCashBack`,
+        requestBody,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("BMV cashback applied successfully");
+    } catch (error) {
+      console.error("Error applying BMV cashback:", error);
+      // Optionally, you can show a non-blocking message to the user
+      // message.error("Failed to apply BMV cashback");
+    }
+  };
+
   useEffect(() => {
     fetchCartData();
     getWalletAmount();
@@ -273,7 +301,7 @@ const CheckoutPage: React.FC = () => {
                     మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత
                     మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
                   </p>
-                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                  <p>మీ సహకారం మ aching మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
                 </>
               )}
             </div>
@@ -816,7 +844,7 @@ const CheckoutPage: React.FC = () => {
     setUsedWalletAmount(newUsedWalletAmount);
     setAfterWallet(walletAmount - newUsedWalletAmount);
     setGrandTotalAmount(discountedTotal);
-  }
+  };
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
@@ -917,26 +945,26 @@ const CheckoutPage: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
-            address: selectedAddress?.address,
-            customerId,
-            flatNo: selectedAddress?.flatNo,
-            landMark: selectedAddress?.landMark,
-            orderStatus: selectedPayment,
-            pincode: selectedAddress?.pincode,
-            walletAmount: finalWalletAmount,
-            couponCode: coupenApplied ? couponCode.toUpperCase() : null,
-            couponValue: coupenDetails || 0,
-            deliveryBoyFee,
-            amount: grandTotalAmount,
-            subTotal: grandTotal,
-            gstAmount: subGst,
-            dayOfWeek: selectedDay,
-            expectedDeliveryDate: selectedDate,
-            timeSlot: selectedTimeSlot,
-            latitude: selectedAddress?.latitude,
-            longitude: selectedAddress?.longitude,
-            orderFrom: "WEB",
-            paymentType: selectedPayment === "COD" ? 0 : 1,
+          address: selectedAddress?.address,
+          customerId,
+          flatNo: selectedAddress?.flatNo,
+          landMark: selectedAddress?.landMark,
+          orderStatus: selectedPayment,
+          pincode: selectedAddress?.pincode,
+          walletAmount: finalWalletAmount,
+          couponCode: coupenApplied ? couponCode.toUpperCase() : null,
+          couponValue: coupenDetails || 0,
+          deliveryBoyFee,
+          amount: grandTotalAmount,
+          subTotal: grandTotal,
+          gstAmount: subGst,
+          dayOfWeek: selectedDay,
+          expectedDeliveryDate: selectedDate,
+          timeSlot: selectedTimeSlot,
+          latitude: selectedAddress?.latitude,
+          longitude: selectedAddress?.longitude,
+          orderFrom: "WEB",
+          paymentType: selectedPayment === "COD" ? 0 : 1,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -967,6 +995,7 @@ const CheckoutPage: React.FC = () => {
         }
 
         if (selectedPayment === "COD") {
+          applyBmvCashBack(); // Trigger BMV cashback immediately
           Modal.success({
             content: "Order placed successfully! You'll pay on delivery.",
             onOk: () => {
@@ -1227,6 +1256,7 @@ const CheckoutPage: React.FC = () => {
                   localStorage.removeItem("paymentId");
                   localStorage.removeItem("merchantTransactionId");
                   fetchCartData();
+                  applyBmvCashBack(); // Trigger BMV cashback immediately
                   Modal.success({
                     content: secondResponse.data.status
                       ? secondResponse.data.status

@@ -493,15 +493,15 @@ const MyCrypto: React.FC = () => {
               <div className="bg-blue-50 p-3 rounded-lg text-center">
                 <p className="text-blue-800 text-sm sm:text-base">Minimum</p>
                 <p className="text-base sm:text-lg font-bold text-blue-700">
-                  ₹10,000
+                  1000
                 </p>
               </div>
               <div className="bg-green-50 p-3 rounded-lg text-center">
                 <p className="text-green-800 text-sm sm:text-base">
-                  Great Value
+                  Maximum
                 </p>
                 <p className="text-base sm:text-lg font-bold text-green-700">
-                  $10,000
+                  100000
                 </p>
               </div>
             </div>
@@ -517,7 +517,7 @@ const MyCrypto: React.FC = () => {
                   •
                 </span>
                 <span className="text-sm sm:text-base">
-                  A minimum of 20,000 BMVCoins is required for redemption.
+                  A minimum of 1000 BMVCoins is required for redemption.
                 </span>
               </li>
               <li className="flex items-start">
@@ -551,7 +551,7 @@ const MyCrypto: React.FC = () => {
     </div>
   );
 
-  // TransferModal Component - THIS WAS THE MISSING COMPONENT
+  // TransferModal Component
   const TransferModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div
@@ -693,6 +693,9 @@ const MyCrypto: React.FC = () => {
 
   // Transfers Modal Component with fixed close button and filters
   const TransfersModal = () => {
+    // Sort filteredTransfers in descending order to show latest transactions first
+    const sortedTransfers = [...filteredTransfers].reverse();
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
         <div
@@ -762,7 +765,7 @@ const MyCrypto: React.FC = () => {
           {/* Clean divider with sufficient margin */}
           <div className="w-full h-px bg-gray-200 mb-4"></div>
 
-          {/* Rest of the TransfersModal component remains the same */}
+          {/* Rest of the TransfersModal component */}
           <div className="flex-1 overflow-y-auto">
             {transfersLoading ? (
               // Loading state - simplified
@@ -785,7 +788,7 @@ const MyCrypto: React.FC = () => {
                   Try Again
                 </button>
               </div>
-            ) : filteredTransfers.length === 0 ? (
+            ) : sortedTransfers.length === 0 ? (
               // Empty state
               <div className="text-center py-8 sm:py-12">
                 <div className="mb-4 flex justify-center">
@@ -804,10 +807,14 @@ const MyCrypto: React.FC = () => {
             ) : (
               // Transfers list
               <div className="space-y-3 sm:space-y-4 pr-1">
-                {filteredTransfers.map((transfer, index) => {
-                  // Correctly determine if current user is sender or receiver
+                {sortedTransfers.map((transfer, index) => {
+                  // Determine if current user is sender or receiver
                   const isSent = transfer.txMobileNumber === userMobileNumber;
-                  const otherPartyMobile = isSent
+                  // Check if this is a cashback transaction
+                  const isCashback = !transfer.txMobileNumber;
+                  const otherPartyMobile = isCashback
+                    ? "Cashback"
+                    : isSent
                     ? transfer.rxMobileNumber
                     : transfer.txMobileNumber;
                   const isExpanded = expandedTxId === index;
@@ -829,22 +836,38 @@ const MyCrypto: React.FC = () => {
                         <div className="flex items-center">
                           <div
                             className={`p-2 rounded-full mr-2 sm:mr-3 ${
-                              isSent ? "bg-red-100" : "bg-green-100"
+                              isSent
+                                ? "bg-red-100"
+                                : isCashback
+                                ? "bg-yellow-100"
+                                : "bg-green-100"
                             }`}
                           >
                             {isSent ? (
                               <SendHorizonal className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                             ) : (
-                              <SendHorizonal className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 transform rotate-180" />
+                              <SendHorizonal
+                                className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                                  isCashback ? "text-yellow-600" : "text-green-600"
+                                } transform rotate-180`}
+                              />
                             )}
                           </div>
                           <div>
                             <p
                               className={`text-xs sm:text-sm ${
-                                isSent ? "text-red-600" : "text-green-600"
+                                isSent
+                                  ? "text-red-600"
+                                  : isCashback
+                                  ? "text-yellow-600"
+                                  : "text-green-600"
                               } font-medium`}
                             >
-                              {isSent ? "Sent to" : "Received from"}
+                              {isCashback
+                                ? "Cashback"
+                                : isSent
+                                ? "Sent to"
+                                : "Received from"}
                             </p>
                             <p className="font-medium text-sm sm:text-base text-gray-800">
                               {otherPartyMobile}
@@ -854,10 +877,10 @@ const MyCrypto: React.FC = () => {
                         <div className="text-right flex items-center">
                           <p
                             className={`font-bold text-base sm:text-lg mr-2 ${
-                              isSent ? "text-red-600" : "text-green-600"
+                              isSent ? "text-red-600" : isCashback ? "text-yellow-600" : "text-green-600"
                             }`}
                           >
-                            {isSent ? "-" : "+"}
+                            {isSent && !isCashback ? "-" : "+"}
                             {transfer.amountTransfer}
                           </p>
                           {isExpanded ? (
@@ -875,7 +898,7 @@ const MyCrypto: React.FC = () => {
                             <div>
                               <p className="text-xs text-gray-500 mb-1">From</p>
                               <p className="text-sm font-medium text-gray-800 break-all">
-                                {transfer.txMobileNumber}
+                                {isCashback ? "Cashback" : transfer.txMobileNumber || "N/A"}
                               </p>
                             </div>
                             <div>

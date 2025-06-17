@@ -32,14 +32,6 @@ interface ProductItem {
   categoryId: string;
 }
 
-interface UpdateStockData {
-  buyingPrice: number;
-  itemId: string;
-  stockQty: number;
-  totalPurchasePrice: number;
-  vendor: string;
-}
-
 interface StockHistoryItem {
   id: string;
   stockUpdatePrimaryId: string;
@@ -77,11 +69,11 @@ const StockUpdate: React.FC = () => {
     itemId: "",
     stockQty: 0,
     buyingPrice: 0,
+    itemMrp: 0, // Added MRP field
     totalPurchasePrice: 0,
     vendor: "",
   });
 
-  // Fetch products data
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -140,12 +132,12 @@ const StockUpdate: React.FC = () => {
     }
   };
 
-  // Update stock
   const updateStock = async (values: any) => {
     try {
       const updateData = {
         buyingPrice: values.buyingPrice,
         itemId: selectedItem?.itemId,
+        itemMrp: values.itemMrp, 
         stockQty: values.stockQty,
         totalPurchasePrice: values.totalPurchasePrice,
         vendor: values.vendor,
@@ -153,7 +145,7 @@ const StockUpdate: React.FC = () => {
 
       const response = await fetch(`${BASE_URL}/product-service/updateStock`, {
         method: "PATCH",
-        headers: {
+        headers: {  
           accept: "*/*",
           "Content-Type": "application/json",
         },
@@ -184,6 +176,7 @@ const StockUpdate: React.FC = () => {
       itemId: item.itemId,
       stockQty: 0,
       buyingPrice: 0,
+      itemMrp: 0, 
       totalPurchasePrice: 0,
       vendor: "",
     });
@@ -336,6 +329,7 @@ const StockUpdate: React.FC = () => {
             itemId: "",
             stockQty: 0,
             buyingPrice: 0,
+            itemMrp: 0, 
             totalPurchasePrice: 0,
             vendor: "",
           });
@@ -393,7 +387,6 @@ const StockUpdate: React.FC = () => {
               </label>
               <InputNumber
                 min={0}
-                precision={2}
                 className="w-full rounded-md text-sm"
                 placeholder="Enter price"
                 addonBefore="₹"
@@ -408,11 +401,25 @@ const StockUpdate: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                MRP *
+              </label>
+              <InputNumber
+                min={0}
+                className="w-full rounded-md text-sm"
+                placeholder="Enter MRP"
+                addonBefore="₹"
+                value={formData.itemMrp}
+                onChange={(value) =>
+                  setFormData({ ...formData, itemMrp: value || 0 })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Total Purchase Price *
               </label>
               <InputNumber
                 min={0}
-                precision={2}
                 className="w-full rounded-md text-sm"
                 placeholder="Enter total"
                 addonBefore="₹"
@@ -422,6 +429,9 @@ const StockUpdate: React.FC = () => {
                 }
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Vendor *
@@ -445,6 +455,7 @@ const StockUpdate: React.FC = () => {
                   itemId: "",
                   stockQty: 0,
                   buyingPrice: 0,
+                  itemMrp: 0, // Reset MRP field
                   totalPurchasePrice: 0,
                   vendor: "",
                 });
@@ -459,6 +470,7 @@ const StockUpdate: React.FC = () => {
                 if (
                   formData.stockQty &&
                   formData.buyingPrice &&
+                  formData.itemMrp &&
                   formData.totalPurchasePrice &&
                   formData.vendor
                 ) {
@@ -662,13 +674,21 @@ const StockUpdate: React.FC = () => {
                           </div>
                           <div>
                             <Text className="text-gray-500 text-sm block mb-1">
+                              MRP
+                            </Text>
+                            <Text className="text-lg font-bold text-blue-600">
+                              ₹{history.itemMrp > 0 ? history.itemMrp.toLocaleString() : "N/A"}
+                            </Text>
+                          </div>
+                          <div>
+                            <Text className="text-gray-500 text-sm block mb-1">
                               Weight
                             </Text>
                             <Text className="text-lg font-bold text-orange-600">
                               {history.itemWeight} kg
                             </Text>
                           </div>
-                          <div>
+                          <div className="col-span-2">
                             <Text className="text-gray-500 text-sm block mb-1">
                               Updated On
                             </Text>

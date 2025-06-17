@@ -298,7 +298,7 @@ const WhatsappRegister = () => {
           setTimeout(() => {
             setShowSuccessPopup(false);
             setMessage("");
-          }, 2000);
+          }, 4000);
         }
       }
     } catch (err: any) {
@@ -493,7 +493,7 @@ const WhatsappRegister = () => {
           setTimeout(() => {
             setShowSuccessPopup(false);
             setMessage("");
-          }, 2000);
+          }, 3000);
         }
       } catch (err: any) {
         if (err.response && err.response.data && err.response.data.message) {

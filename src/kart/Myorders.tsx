@@ -636,42 +636,36 @@ const MyOrders: React.FC = () => {
         });
       }
 
-      const invoiceContent = `
-    INVOICE
-    =============================
-    Order ID: ${order.newOrderId || order.orderId}
-    Date: ${formattedDate}
-    Customer: ${order.customerName}
-    Phone: ${order.customerMobile}
-    
-    Items:
-    -----------------------------
-    ${order.orderItems
-      .map(
-        (item) =>
-          `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
-            item.quantity
-          } = ₹${(item.quantity * item.singleItemPrice).toFixed(2)}`
-      )
-      .join("\n")}
-    
-    -----------------------------
-    Sub Total: ₹${order.subTotal || order.grandTotal}
-    Delivery Fee: ₹${order.deliveryFee}
-    ${order.walletAmount > 0 ? `Wallet Amount: -₹${order.walletAmount}\n` : ""}
-    ${
-      order.discountAmount > 0
-        ? `Coupon Discount: -₹${order.discountAmount}\n`
-        : ""
-    }
-    ${order.gstAmount > 0 ? `GST Charges: ₹${order.gstAmount}\n` : ""}
-    
-    TOTAL: ₹${order.grandTotal}
-    =============================
-    Payment Method: ${
-      order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"
-    }
-    `;
+    const invoiceContent = `
+  INVOICE
+  =============================
+  Order ID: ${order.newOrderId || order.orderId}
+  Date: ${formattedDate}
+  Customer: ${order.customerName}
+  Phone: ${order.customerMobile}
+  
+  Items:
+  -----------------------------
+  ${order.orderItems
+    .map(
+      (item) =>
+        `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
+          item.quantity
+        } =₹${Math.round(Number(item.quantity * item.singleItemPrice))}`
+    )
+    .join("\n")}
+  
+  -----------------------------
+  Sub Total: ₹${Math.round(Number(order.subTotal || order.grandTotal))}
+  Delivery Fee: ₹${Math.round(Number(order.deliveryFee))}
+  ${order.walletAmount > 0 ? `Wallet Amount: -₹${Math.round(Number(order.walletAmount))}\n` : ""}
+  ${order.discountAmount > 0 ? `Coupon Discount: -₹${Math.round(Number(order.discountAmount))}\n` : ""}
+  ${order.gstAmount > 0 ? `GST Charges: ₹${Math.round(Number(order.gstAmount))}\n` : ""}
+  
+  TOTAL: ₹${Math.round(Number(order.grandTotal))}
+  =============================
+  Payment Method: ${order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"}
+`;
 
       const blob = new Blob([invoiceContent], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
@@ -2262,7 +2256,7 @@ const MyOrders: React.FC = () => {
                         Total Amount
                       </span>
                       <span className="text-xs sm:text-sm font-medium">
-                        ₹{Number(order.grandTotal).toFixed(2)}
+                        ₹{Math.round(Number(order.grandTotal))}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -2645,7 +2639,7 @@ const MyOrders: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Total Amount</span>
-                      <span>₹{selectedOrder.grandTotal}</span>
+                      <span>₹{Math.round(selectedOrder.grandTotal)}</span>
                     </div>
                     {selectedOrder.orderStatus === "7" && (
                       <>
@@ -2908,7 +2902,7 @@ const MyOrders: React.FC = () => {
                             {item.quantity}
                           </p>
                           <p className="text-xs font-medium">
-                            ₹{(item.quantity * item.singleItemPrice).toFixed(2)}
+                            ₹{Math.round((item.quantity * item.singleItemPrice))}
                           </p>
                           {item.isExchanged && (
                             <p className="text-xs text-blue-600 mt-1">
@@ -2929,34 +2923,49 @@ const MyOrders: React.FC = () => {
                     <div className="flex justify-between">
                       <span>Subtotal</span>
                       <span>
-                        ₹{selectedOrder.subTotal || selectedOrder.grandTotal}
+                        ₹
+                        {Math.round(
+                          Number(
+                            selectedOrder.subTotal || selectedOrder.grandTotal
+                          )
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery Fee</span>
-                      <span>₹{selectedOrder.deliveryFee}</span>
+                      <span>
+                        ₹{Math.round(Number(selectedOrder.deliveryFee))}
+                      </span>
                     </div>
                     {selectedOrder.walletAmount > 0 && (
                       <div className="flex justify-between">
                         <span>Wallet Amount</span>
-                        <span>-₹{selectedOrder.walletAmount}</span>
+                        <span>
+                          -₹{Math.round(Number(selectedOrder.walletAmount))}
+                        </span>
                       </div>
                     )}
                     {selectedOrder.discountAmount > 0 && (
                       <div className="flex justify-between">
                         <span>Coupon Discount</span>
-                        <span>-₹{selectedOrder.discountAmount}</span>
+                        <span>
+                          -₹{Math.round(Number(selectedOrder.discountAmount))}
+                        </span>
                       </div>
                     )}
                     {selectedOrder.gstAmount > 0 && (
                       <div className="flex justify-between">
                         <span>GST Charges</span>
-                        <span>₹{selectedOrder.gstAmount}</span>
+                        <span>
+                          ₹{Math.round(Number(selectedOrder.gstAmount))}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between font-semibold text-gray-900 pt-2 border-t border-gray-100">
                       <span>Total</span>
-                      <span>₹{selectedOrder.grandTotal}</span>
+                      <span>
+                        ₹{Math.round(Number(selectedOrder.grandTotal))}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       {selectedOrder.paymentType === 2 ? (

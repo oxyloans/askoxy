@@ -87,11 +87,12 @@ function StudyAbroadHeroSection() {
             </div>
 
             <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
-              To enable <strong>1 million students</strong> to fulfill their
-              abroad dream by 2030–2050. Our vision is to connect all
-              stakeholders seamlessly with high trust.
+              Empower <strong>1 million students</strong> to study abroad and
+              lead a life-changing career with us. Our vision is to help
+              students fulfill their global dreams by 2030–2050, seamlessly
+              connecting all stakeholders with high trust.
               <span className="block text-purple-600 mt-2">
-                <strong>25+ countries</strong> with{" "}
+                Operating in <strong>25+ countries</strong> with a{" "}
                 <strong>95% visa success rate</strong>.
               </span>
             </p>
@@ -174,18 +175,21 @@ function StudyAbroadHeroSection() {
             </div>
           </div>
 
-        
-            {/* Right Content - Hero Image */}
-            <div className={`lg:col-span-6 space-x-10 flex justify-center items-center transition-all duration-700 transform ${
-            isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
-          }`}>
+          {/* Right Content - Hero Image */}
+          <div
+            className={`lg:col-span-6 space-x-10 flex justify-center items-center transition-all duration-700 transform ${
+              isVisible
+                ? "translate-x-0 opacity-100"
+                : "translate-x-10 opacity-0"
+            }`}
+          >
             <div className="w-full h-full">
               {/* Hero Image Container with responsive sizing */}
-              <div >
+              <div>
                 {/* The image with responsive properties */}
-                <img 
+                <img
                   src={Heroimg}
-                  alt="Study Abroad Hero" 
+                  alt="Study Abroad Hero"
                   className="w-full h-auto object-cover object-center max-h-96 md:max-h-[500px] lg:max-h-[600px] rounded-lg"
                   loading="eager"
                 />
