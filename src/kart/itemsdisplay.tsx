@@ -882,7 +882,7 @@ const ItemDisplayPage = () => {
                             <div className="flex items-center bg-purple-50 rounded-lg p-1">
                               <button
                                 onClick={() => handleQuantityChange(itemDetails, false)}
-                                disabled={loadingItems.items[itemDetails.itemId]}
+                                disabled={loadingItems.items[itemDetails.itemId] || localStorage.getItem("TypeLogin") === "Caller"}
                                 className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors disabled:opacity-50"
                               >
                                 {loadingItems.items[itemDetails.itemId] ? (
@@ -898,7 +898,7 @@ const ItemDisplayPage = () => {
                                 onClick={() => handleQuantityChange(itemDetails, true)}
                                 disabled={
                                   loadingItems.items[itemDetails.itemId] ||
-                                  isMaxStockReached(itemDetails)
+                                  isMaxStockReached(itemDetails) || localStorage.getItem("TypeLogin") === "Caller"
                                 }
                                 className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors disabled:opacity-50"
                               >
@@ -927,7 +927,7 @@ const ItemDisplayPage = () => {
                             onClick={() => handleAddToCart(itemDetails)}
                             disabled={
                               loadingItems.items[itemDetails.itemId] ||
-                              itemDetails.quantity === 0
+                              itemDetails.quantity === 0 || localStorage.getItem("TypeLogin") === "Caller"
                             }
                             className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white py-3 px-6 rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                           >

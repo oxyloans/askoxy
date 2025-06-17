@@ -2120,7 +2120,7 @@ const CartPage: React.FC = () => {
                         : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
                     }`}
                     onClick={() => handleToProcess()}
-                    disabled={isCheckoutDisabled()}
+                    disabled={isCheckoutDisabled() || localStorage.getItem("TypeLogin") === "Caller"}
                   >
                     {isCheckoutDisabled()
                       ? !selectedAddress

@@ -955,7 +955,9 @@ const Categories: React.FC<CategoriesProps> = ({
                             e.stopPropagation();
                             handleQuantityChange(item, false, "sub");
                           }}
-                          disabled={loadingItems.items[item.itemId]}
+                          disabled={loadingItems.items[item.itemId]
+                            ||localStorage.getItem("TypeLogin") === "Caller"
+                          }
                         >
                           -
                         </motion.button>
@@ -983,7 +985,8 @@ const Categories: React.FC<CategoriesProps> = ({
                             cartItems[item.itemId] >= item.quantity ||
                             loadingItems.items[item.itemId] ||
                             (item.itemPrice === 1 &&
-                              cartItems[item.itemId] >= 1)
+                              cartItems[item.itemId] >= 1) ||
+                              localStorage.getItem("TypeLogin") === "Caller"
                           }
                         >
                           +
@@ -998,7 +1001,7 @@ const Categories: React.FC<CategoriesProps> = ({
                           e.stopPropagation();
                           handleAddToCart(item);
                         }}
-                        disabled={loadingItems.items[item.itemId]}
+                        disabled={loadingItems.items[item.itemId] || localStorage.getItem("TypeLogin") === "Caller"}
                       >
                         {loadingItems.items[item.itemId] ? (
                           <Loader2 className="mr-2 animate-spin inline-block" />

@@ -939,7 +939,7 @@ const Home: React.FC = () => {
                     handleQuantityChange(item, false);
                   }}
                   disabled={
-                    item.itemId ? loadingItems.items[item.itemId] : false
+                    item.itemId ? loadingItems.items[item.itemId] : false || localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
                   {item.itemId &&
@@ -990,7 +990,8 @@ const Home: React.FC = () => {
                       ? cartItems[item.itemId] >= item.quantity ||
                         loadingItems.items[item.itemId] ||
                         (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
-                      : true
+                      : true ||
+                        localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
                   {item.itemId &&
@@ -1011,8 +1012,12 @@ const Home: React.FC = () => {
                   e.stopPropagation();
                   handleAddToCart(item);
                   console.log("Add to cart clicked", localStorage.getItem("TypeLogin"));
+                  console.log(item.itemId ? loadingItems.items[item.itemId] : false);
                 }}
-                disabled={item.itemId ? loadingItems.items[item.itemId] : false || localStorage.getItem("TypeLogin") === "Caller" ? true : false}
+               disabled={
+                  (item.itemId && loadingItems.items[item.itemId]) ||
+                  localStorage.getItem("TypeLogin") === "Caller"
+                }
               >
                 {item.itemId && loadingItems.items[item.itemId] ? (
                   <Loader2
