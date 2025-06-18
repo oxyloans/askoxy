@@ -107,7 +107,7 @@ const CoursesPage: React.FC<{
   const [showFilters, setShowFilters] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(30);
+  const [pageSize] = useState(32);
   const [totalCourses, setTotalCourses] = useState(0);
 
   const getCountryName = (country: string | { countryName: string; countryCode: string; name: string; id: string } | undefined): string => {
@@ -724,9 +724,6 @@ const CoursesPage: React.FC<{
           </div>
         </div>
 
-        {/* Pagination Top */}
-        <PaginationComponent />
-
         {/* Search and Filter Section */}
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 mb-6">
           <div className="flex flex-wrap gap-3 overflow-x-auto md:overflow-visible">
@@ -968,8 +965,10 @@ const CoursesPage: React.FC<{
         )}
 
         {/* Pagination Bottom */}
-        <PaginationComponent />
-
+        <div className='mt-6'>
+ <PaginationComponent />
+        </div>
+       
         {/* No Filtered Results */}
         {filteredCourses.length === 0 && (
           <div className="text-center py-12">

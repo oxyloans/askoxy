@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Globe,
   Phone,
@@ -12,16 +13,14 @@ import {
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
-type SectionKey = "destinations" | "services" | "contact";
+type SectionKey = "destinations" | "contact";
 
 const StudyAbroadFooter = () => {
-  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(
-    {
-      destinations: false,
-      services: false,
-      contact: false,
-    }
-  );
+  const navigate = useNavigate();
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
+    destinations: false,
+    contact: false,
+  });
 
   const toggleSection = (section: SectionKey) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -31,11 +30,30 @@ const StudyAbroadFooter = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleCountryClick = (country: string) => {
+    try {
+      // Map footer country names to CountriesSection.tsx names
+      const countryMap: Record<string, string> = {
+        "United Kingdom": "UK",
+        "New Zealand": "New Zealand",
+        USA: "USA",
+        Germany: "Germany",
+        Canada: "Canada",
+        Australia: "Australia",
+      };
+      const normalizedCountry = countryMap[country] || country;
+      console.log(`Navigating to /countries?selected=${normalizedCountry}`);
+      // navigate(`/countries?selected=${encodeURIComponent(normalizedCountry)}`);
+    } catch (error) {
+      console.error("Navigation error:", error);
+    }
+  };
+
   return (
     <footer className="bg-white text-gray-800 pt-10 pb-6 border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Grid Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
@@ -96,65 +114,43 @@ const StudyAbroadFooter = () => {
             </div>
           </div>
 
-          {/* Accordion Section */}
-          {[
-            {
-              key: "destinations",
-              title: "Study Destinations",
-              items: [
+          {/* Study Destinations */}
+          <div>
+            <div
+              className="flex justify-between items-center mb-3 cursor-pointer md:cursor-default"
+              onClick={() => toggleSection("destinations")}
+            >
+              <h3 className="text-lg font-semibold">Study Destinations</h3>
+              <ChevronDown
+                className={`w-5 h-5 md:hidden transform transition ${
+                  openSections.destinations ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            <ul
+              className={`text-sm transition-all ease-in-out duration-300 overflow-hidden ${
+                openSections.destinations ? "max-h-96" : "max-h-0 md:max-h-96"
+              } space-y-2`}
+            >
+              {[
                 { name: "USA", href: "#usa" },
                 { name: "United Kingdom", href: "#uk" },
                 { name: "Germany", href: "#germany" },
                 { name: "Canada", href: "#canada" },
                 { name: "Australia", href: "#australia" },
                 { name: "New Zealand", href: "#newzealand" },
-              ],
-            },
-            {
-              key: "services",
-              title: "Our Services",
-              items: [
-                { name: "University Selection", href: "#" },
-                { name: "Application Assistance", href: "#" },
-                { name: "Visa Guidance", href: "#" },
-                { name: "Scholarship Support", href: "#" },
-                { name: "Test Preparation", href: "#" },
-                { name: "Accommodation Help", href: "#" },
-              ],
-            },
-          ].map(({ key, title, items }) => (
-            <div key={key}>
-              <div
-                className="flex justify-between items-center mb-3 cursor-pointer md:cursor-default"
-                onClick={() => toggleSection(key as SectionKey)}
-              >
-                <h3 className="text-lg font-semibold">{title}</h3>
-                <ChevronDown
-                  className={`w-5 h-5 md:hidden transform transition ${
-                    openSections[key as SectionKey] ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-              <ul
-                className={`text-sm transition-all ease-in-out duration-300 overflow-hidden ${
-                  openSections[key as SectionKey]
-                    ? "max-h-96"
-                    : "max-h-0 md:max-h-96"
-                } space-y-2`}
-              >
-                {items.map(({ name, href }, i) => (
-                  <li key={i}>
-                    <a
-                      href={href}
-                      className="hover:text-purple-600 transition-colors"
-                    >
-                      {name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+              ].map(({ name, href }, i) => (
+                <li key={i}>
+                  <button
+                    onClick={() => handleCountryClick(name)}
+                    className="hover:text-purple-600 transition-colors text-left w-full"
+                  >
+                    {name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Contact Info */}
           <div>
@@ -223,7 +219,7 @@ const StudyAbroadFooter = () => {
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-600 gap-4">
           <p>
-            &copy; {new Date().getFullYear()} StudyAbroad Global. All rights
+            © {new Date().getFullYear()} StudyAbroad Global. All rights
             reserved.
           </p>
           <button

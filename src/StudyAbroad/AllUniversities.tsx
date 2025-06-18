@@ -1,1413 +1,794 @@
-// import React, { useState, useMemo } from "react";
-// import { useNavigate } from "react-router-dom";
-// import {
-//   ChevronRight,
-//   Globe,
-//   Star,
-//   Users,
-//   School,
-//   Building,
-//   CheckCircle,
-//   GraduationCap,
-//   Filter,
-//   Search,
-//   X,
-//   MapPin,
-//   Calendar,
-//   DollarSign,
-//   BookOpen,
-//   Award,
-//   Eye,
-//   Heart,
-//   ArrowUpRight,
-//   Crown,
-//   TrendingUp,
-//   University,
-//   Clock,
-//   SlidersHorizontal,
-//   AlertCircle,
-//   Loader2,
-// } from "lucide-react";
-
-// // Type definitions
-// interface University {
-//   id: number;
-//   name: string;
-//   country: string;
-//   location: string;
-//   image: string;
-//   description: string;
-//   ranking?: string;
-//   programs?: number;
-//   intake: string[];
-//   tuitionFee: string;
-//   establishedYear: number;
-//   type: string;
-//   acceptanceRate: string;
-//   internationalStudents: string;
-// }
-
-// const AllUniversities = () => {
-//   // Filter states
-//   const [selectedCountry, setSelectedCountry] = useState<string>("");
-//   const [selectedIntake, setSelectedIntake] = useState<string>("");
-//   const [searchTerm, setSearchTerm] = useState<string>("");
-//   const [showAdvancedFilters, setShowAdvancedFilters] =
-//     useState<boolean>(false);
-//   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-//   const [sortBy, setSortBy] = useState<
-//     "name" | "ranking" | "programs" | "year"
-//   >("name");
-//   const [loading, setLoading] = useState(false);
-//   const [initialLoad, setInitialLoad] = useState(false);
-//   const navigate = useNavigate();
-
-//   const countries = [
-//     { code: "USA", name: "United States", flag: "🇺🇸" },
-//     { code: "UK", name: "United Kingdom", flag: "🇬🇧" },
-//     { code: "Germany", name: "Germany", flag: "🇩🇪" },
-//     { code: "Canada", name: "Canada", flag: "🇨🇦" },
-//     { code: "Australia", name: "Australia", flag: "🇦🇺" },
-//     { code: "France", name: "France", flag: "🇫🇷" },
-//     { code: "Netherlands", name: "Netherlands", flag: "🇳🇱" },
-//     { code: "Sweden", name: "Sweden", flag: "🇸🇪" },
-//     { code: "Switzerland", name: "Switzerland", flag: "🇨🇭" },
-//     { code: "Japan", name: "Japan", flag: "🇯🇵" },
-//   ];
-
-//   const intakeOptions = ["Fall", "Spring", "Summer", "Winter"];
-
-//   const countryFlags: Record<string, string> = {
-//     USA: "🇺🇸",
-//     UK: "🇬🇧",
-//     Germany: "🇩🇪",
-//     Canada: "🇨🇦",
-//     Australia: "🇦🇺",
-//     France: "🇫🇷",
-//     Netherlands: "🇳🇱",
-//     Sweden: "🇸🇪",
-//     Switzerland: "🇨🇭",
-//     Japan: "🇯🇵",
-//   };
-
-//   // Enhanced universities data with more complete information
-  // const universities: University[] = [
-  //   {
-  //     id: 1,
-  //     name: "Harvard University",
-  //     country: "USA",
-  //     location: "Cambridge, Massachusetts",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Prestigious Ivy League institution known for excellence in all fields including medicine, law, and business",
-  //     ranking: "#1 Global",
-  //     programs: 180,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "$54,000/year",
-  //     establishedYear: 1636,
-  //     type: "Private Research",
-  //     acceptanceRate: "3.4%",
-  //     internationalStudents: "25%",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Stanford University",
-  //     country: "USA",
-  //     location: "Stanford, California",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Leading research university in Silicon Valley with world-class technology and engineering programs",
-  //     ranking: "#2 USA",
-  //     programs: 150,
-  //     intake: ["Fall", "Spring", "Summer"],
-  //     tuitionFee: "$56,000/year",
-  //     establishedYear: 1885,
-  //     type: "Private Research",
-  //     acceptanceRate: "4.3%",
-  //     internationalStudents: "22%",
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Massachusetts Institute of Technology",
-  //     country: "USA",
-  //     location: "Cambridge, Massachusetts",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "World-renowned institute for technology, engineering, and scientific research with cutting-edge facilities",
-  //     ranking: "#3 USA",
-  //     programs: 120,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "$55,000/year",
-  //     establishedYear: 1861,
-  //     type: "Private Research",
-  //     acceptanceRate: "6.7%",
-  //     internationalStudents: "33%",
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "University of California, Berkeley",
-  //     country: "USA",
-  //     location: "Berkeley, California",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Top public research university with diverse academic programs and renowned faculty across disciplines",
-  //     ranking: "#4 USA",
-  //     programs: 200,
-  //     intake: ["Fall", "Spring", "Summer"],
-  //     tuitionFee: "$45,000/year",
-  //     establishedYear: 1868,
-  //     type: "Public Research",
-  //     acceptanceRate: "14.5%",
-  //     internationalStudents: "18%",
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "Yale University",
-  //     country: "USA",
-  //     location: "New Haven, Connecticut",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Historic Ivy League university with exceptional liberal arts programs and distinguished alumni network",
-  //     ranking: "#5 USA",
-  //     programs: 160,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "$58,000/year",
-  //     establishedYear: 1701,
-  //     type: "Private Research",
-  //     acceptanceRate: "4.6%",
-  //     internationalStudents: "20%",
-  //   },
-  //   {
-  //     id: 6,
-  //     name: "University of Oxford",
-  //     country: "UK",
-  //     location: "Oxford, England",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "One of the oldest and most prestigious universities globally, offering world-class education since 1096",
-  //     ranking: "#1 UK",
-  //     programs: 200,
-  //     intake: ["Fall"],
-  //     tuitionFee: "£9,250/year",
-  //     establishedYear: 1096,
-  //     type: "Public Research",
-  //     acceptanceRate: "15.9%",
-  //     internationalStudents: "45%",
-  //   },
-  //   {
-  //     id: 7,
-  //     name: "University of Cambridge",
-  //     country: "UK",
-  //     location: "Cambridge, England",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Historic university with outstanding academic reputation and innovative research across all disciplines",
-  //     ranking: "#2 UK",
-  //     programs: 190,
-  //     intake: ["Fall"],
-  //     tuitionFee: "£9,250/year",
-  //     establishedYear: 1209,
-  //     type: "Public Research",
-  //     acceptanceRate: "18.8%",
-  //     internationalStudents: "38%",
-  //   },
-  //   {
-  //     id: 8,
-  //     name: "Imperial College London",
-  //     country: "UK",
-  //     location: "London, England",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Leading university specialized in science, technology, engineering and medicine with industry connections",
-  //     ranking: "#3 UK",
-  //     programs: 120,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "£32,000/year",
-  //     establishedYear: 1907,
-  //     type: "Public Research",
-  //     acceptanceRate: "14.3%",
-  //     internationalStudents: "59%",
-  //   },
-  //   {
-  //     id: 9,
-  //     name: "Technical University of Munich",
-  //     country: "Germany",
-  //     location: "Munich, Bavaria",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Leading technical university with strong industry partnerships and excellent engineering programs",
-  //     ranking: "#1 Germany",
-  //     programs: 145,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "€1,500/year",
-  //     establishedYear: 1868,
-  //     type: "Public Technical",
-  //     acceptanceRate: "8%",
-  //     internationalStudents: "35%",
-  //   },
-  //   {
-  //     id: 10,
-  //     name: "University of Toronto",
-  //     country: "Canada",
-  //     location: "Toronto, Ontario",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Canada's top university with diverse academic programs and world-class research facilities",
-  //     ranking: "#1 Canada",
-  //     programs: 215,
-  //     intake: ["Fall", "Spring", "Summer"],
-  //     tuitionFee: "CAD $58,000/year",
-  //     establishedYear: 1827,
-  //     type: "Public Research",
-  //     acceptanceRate: "43%",
-  //     internationalStudents: "25%",
-  //   },
-  //   {
-  //     id: 11,
-  //     name: "University of Melbourne",
-  //     country: "Australia",
-  //     location: "Melbourne, Victoria",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Australia's leading university with excellent research facilities and diverse international community",
-  //     ranking: "#1 Australia",
-  //     programs: 190,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "AUD $45,000/year",
-  //     establishedYear: 1853,
-  //     type: "Public Research",
-  //     acceptanceRate: "70%",
-  //     internationalStudents: "47%",
-  //   },
-  //   {
-  //     id: 12,
-  //     name: "Sorbonne University",
-  //     country: "France",
-  //     location: "Paris, Île-de-France",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Historic university in the heart of Paris, renowned for humanities, sciences, and cultural programs",
-  //     ranking: "#1 France",
-  //     programs: 120,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "€2,770/year",
-  //     establishedYear: 1150,
-  //     type: "Public Research",
-  //     acceptanceRate: "10%",
-  //     internationalStudents: "21%",
-  //   },
-  //   {
-  //     id: 13,
-  //     name: "University of Amsterdam",
-  //     country: "Netherlands",
-  //     location: "Amsterdam, North Holland",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Leading research university in vibrant Amsterdam with strong international programs and partnerships",
-  //     ranking: "#1 Netherlands",
-  //     programs: 180,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "€2,168/year",
-  //     establishedYear: 1632,
-  //     type: "Public Research",
-  //     acceptanceRate: "25%",
-  //     internationalStudents: "30%",
-  //   },
-  //   {
-  //     id: 14,
-  //     name: "Karolinska Institute",
-  //     country: "Sweden",
-  //     location: "Stockholm",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "World-renowned medical university known for Nobel Prize connections and cutting-edge medical research",
-  //     ranking: "#1 Sweden",
-  //     programs: 80,
-  //     intake: ["Fall"],
-  //     tuitionFee: "Free for EU",
-  //     establishedYear: 1810,
-  //     type: "Public Medical",
-  //     acceptanceRate: "6%",
-  //     internationalStudents: "15%",
-  //   },
-  //   {
-  //     id: 15,
-  //     name: "ETH Zurich",
-  //     country: "Switzerland",
-  //     location: "Zurich",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "World-leading science and technology university with exceptional engineering and research programs",
-  //     ranking: "#1 Switzerland",
-  //     programs: 110,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "CHF 730/year",
-  //     establishedYear: 1855,
-  //     type: "Public Technical",
-  //     acceptanceRate: "8%",
-  //     internationalStudents: "40%",
-  //   },
-  //   {
-  //     id: 16,
-  //     name: "University of Tokyo",
-  //     country: "Japan",
-  //     location: "Tokyo",
-  //     image: "/api/placeholder/400/250",
-  //     description:
-  //       "Japan's most prestigious university with comprehensive programs and strong research in technology",
-  //     ranking: "#1 Japan",
-  //     programs: 180,
-  //     intake: ["Fall", "Spring"],
-  //     tuitionFee: "¥535,800/year",
-  //     establishedYear: 1877,
-  //     type: "Public Research",
-  //     acceptanceRate: "34%",
-  //     internationalStudents: "12%",
-  //   },
-  // ];
-
-//   // Filter universities based on selected filters
-//   const filteredUniversities = useMemo(() => {
-//     let filtered = universities.filter((university) => {
-//       const countryMatch =
-//         !selectedCountry || university.country === selectedCountry;
-//       const intakeMatch =
-//         !selectedIntake || university.intake.includes(selectedIntake);
-//       const searchMatch =
-//         !searchTerm ||
-//         university.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         university.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         university.country.toLowerCase().includes(searchTerm.toLowerCase());
-
-//       return countryMatch && intakeMatch && searchMatch;
-//     });
-
-//     // Sort universities
-//     filtered.sort((a, b) => {
-//       switch (sortBy) {
-//         case "name":
-//           return a.name.localeCompare(b.name);
-//         case "ranking":
-//           const rankA = parseInt(a.ranking?.replace(/[^\d]/g, "") || "999");
-//           const rankB = parseInt(b.ranking?.replace(/[^\d]/g, "") || "999");
-//           return rankA - rankB;
-//         case "programs":
-//           return (b.programs || 0) - (a.programs || 0);
-//         case "year":
-//           return a.establishedYear - b.establishedYear;
-//         default:
-//           return 0;
-//       }
-//     });
-
-//     return filtered;
-//   }, [selectedCountry, selectedIntake, searchTerm, sortBy]);
-
-//   const clearFilters = () => {
-//     setSelectedCountry("");
-//     setSelectedIntake("");
-//     setSearchTerm("");
-//     setSortBy("name");
-//   };
-
-//   const formatEstablishedYear = (year: number) => {
-//     const currentYear = new Date().getFullYear();
-//     const yearsOld = currentYear - year;
-//     if (yearsOld > 500) return `${yearsOld}+ years of legacy`;
-//     if (yearsOld > 200) return `${yearsOld}+ years old`;
-//     return `Est. ${year}`;
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
-//       {/* Compact Header */}
-//       <div className="relative bg-white border-b border-purple-200 shadow-sm">
-//         <div className="px-4 sm:px-6 lg:px-8 py-4">
-//           <div className="flex items-center gap-3 mb-2">
-//             <button
-//               onClick={() => navigate(-1)}
-//               className="p-2 hover:bg-purple-100 rounded-lg transition-colors"
-//             >
-//               <ChevronRight className="w-5 h-5 text-purple-600 rotate-180" />
-//             </button>
-//             <div>
-//               <h1 className="text-2xl font-bold text-purple-800">
-//                 Elite Universities Worldwide
-//               </h1>
-//               <p className="text-gray-600 text-sm flex items-center gap-2">
-//                 <Crown className="w-4 h-4 text-purple-600" />
-//                 {universities.length} premium institutions from{" "}
-//                 {countries.length} destinations
-//               </p>
-//             </div>
-//           </div>
-
-//           {/* Compact Search Bar */}
-//           <div className="max-w-xl">
-//             <div className="relative">
-//               <Search
-//                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400"
-//                 size={18}
-//               />
-//               <input
-//                 type="text"
-//                 value={searchTerm}
-//                 onChange={(e) => setSearchTerm(e.target.value)}
-//                 placeholder="Search universities, locations, programs..."
-//                 className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-purple-200 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm"
-//               />
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Compact Filters Section */}
-//       <div className="bg-white border-b border-purple-200">
-//         <div className="px-4 sm:px-6 lg:px-8 py-3">
-//           {/* Filter Controls Row */}
-//           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
-//             {/* Compact Country Filter */}
-//             <div className="md:col-span-2">
-//               <label className="block text-xs font-semibold text-purple-700 mb-1 flex items-center gap-1">
-//                 <Globe className="w-3 h-3" />
-//                 COUNTRY
-//               </label>
-//               <select
-//                 value={selectedCountry}
-//                 onChange={(e) => setSelectedCountry(e.target.value)}
-//                 className="w-full appearance-none bg-white border border-purple-200 rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-//               >
-//                 <option value="">🌍 All Countries ({countries.length})</option>
-//                 {countries.map((country) => (
-//                   <option key={country.code} value={country.code}>
-//                     {country.flag} {country.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             {/* Compact Intake Filter */}
-//             <div>
-//               <label className="block text-xs font-semibold text-purple-700 mb-1 flex items-center gap-1">
-//                 <Calendar className="w-3 h-3" />
-//                 INTAKE
-//               </label>
-//               <select
-//                 value={selectedIntake}
-//                 onChange={(e) => setSelectedIntake(e.target.value)}
-//                 className="w-full appearance-none bg-white border border-purple-200 rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-//               >
-//                 <option value="">All Intakes</option>
-//                 {intakeOptions.map((intake) => (
-//                   <option key={intake} value={intake}>
-//                     {intake} 2025
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             {/* Compact Sort By */}
-//             <div>
-//               <label className="block text-xs font-semibold text-purple-700 mb-1 flex items-center gap-1">
-//                 <SlidersHorizontal className="w-3 h-3" />
-//                 SORT BY
-//               </label>
-//               <select
-//                 value={sortBy}
-//                 onChange={(e) =>
-//                   setSortBy(
-//                     e.target.value as "name" | "ranking" | "programs" | "year"
-//                   )
-//                 }
-//                 className="w-full appearance-none bg-white border border-purple-200 rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-//               >
-//                 <option value="name">Name</option>
-//                 <option value="ranking">Ranking</option>
-//                 <option value="programs">Programs</option>
-//                 <option value="year">Year</option>
-//               </select>
-//             </div>
-
-//             {/* Compact Clear Button */}
-//             <div className="flex items-end">
-//               <button
-//                 onClick={clearFilters}
-//                 className="w-full px-3 py-2 text-purple-600 bg-white border border-purple-200 rounded-md hover:bg-purple-50 transition-colors flex items-center justify-center gap-1 text-sm font-medium"
-//               >
-//                 <X className="w-3 h-3" />
-//                 Clear
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* Compact Results Summary */}
-//           <div className="flex items-center justify-between bg-purple-50 rounded-md px-3 py-2 border border-purple-200">
-//             <div className="flex items-center gap-3">
-//               <span className="text-xs font-bold text-purple-700 flex items-center gap-1">
-//                 <Crown className="w-3 h-3 text-purple-600" />
-//                 {filteredUniversities.length} Universities
-//               </span>
-//               <span className="text-xs text-gray-600">
-//                 By:{" "}
-//                 <span className="font-medium text-purple-700 capitalize">
-//                   {sortBy}
-//                 </span>
-//               </span>
-//             </div>
-//             {selectedCountry && (
-//               <div className="flex items-center gap-1 text-xs text-purple-600">
-//                 <span>{countryFlags[selectedCountry]}</span>
-//                 <span className="font-medium">
-//                   {countries.find((c) => c.code === selectedCountry)?.name}
-//                 </span>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Main Content Area */}
-//       <div className="px-4 sm:px-6 lg:px-8 py-4">
-//         {filteredUniversities.length === 0 ? (
-//           <div className="text-center py-20">
-//             <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto border border-purple-200">
-//               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-//                 <AlertCircle className="w-8 h-8 text-purple-600" />
-//               </div>
-//               <h3 className="text-2xl font-bold text-purple-800 mb-4">
-//                 No Universities Found
-//               </h3>
-//               <p className="text-gray-600 mb-6 leading-relaxed">
-//                 We couldn't find any universities matching your search criteria.
-//                 Try adjusting your filters or search terms.
-//               </p>
-//               <button
-//                 onClick={clearFilters}
-//                 className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-700 transition-colors shadow-lg"
-//               >
-//                 <X size={18} />
-//                 Clear All Filters
-//               </button>
-//             </div>
-//           </div>
-//         ) : (
-//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-//             {filteredUniversities.map((university) => (
-//               <div
-//                 key={university.id}
-//                 className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-purple-100 hover:border-purple-300 flex flex-col"
-//               >
-//                 {/* Header with Image and Basic Info */}
-//                 <div className="p-4 pb-3 border-b border-purple-50">
-//                   <div className="flex items-start gap-3 mb-3">
-//                     {/* University Image Circle */}
-//                     <div className="relative flex-shrink-0">
-//                       <img
-//                         src={university.image}
-//                         alt={university.name}
-//                         className="w-14 h-14 rounded-full object-cover border-2 border-purple-200 shadow-sm"
-//                       />
-//                       {/* Country Flag Overlay */}
-//                       <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-sm shadow-sm border border-purple-100">
-//                         {countryFlags[university.country]}
-//                       </div>
-//                     </div>
-
-//                     {/* University Name and Location */}
-//                     <div className="flex-1 min-w-0">
-//                       {/* Ranking Badge */}
-//                       {university.ranking && (
-//                         <div className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-2 py-1 rounded-full text-xs font-semibold mb-2">
-//                           <Crown className="w-3 h-3" />
-//                           {university.ranking}
-//                         </div>
-//                       )}
-
-//                       <h3 className="text-sm font-bold text-gray-900 line-clamp-2 mb-2 leading-tight">
-//                         {university.name}
-//                       </h3>
-
-//                       <div className="flex items-center text-gray-600 text-xs mb-1">
-//                         <MapPin className="w-3 h-3 mr-1 text-purple-500 flex-shrink-0" />
-//                         <span className="truncate">{university.location}</span>
-//                       </div>
-
-//                       <div className="flex items-center text-gray-500 text-xs">
-//                         <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
-//                         {formatEstablishedYear(university.establishedYear)}
-//                       </div>
-//                     </div>
-//                   </div>
-
-//                   <p className="text-gray-600 text-xs mb-0 line-clamp-3 leading-relaxed">
-//                     {university.description}
-//                   </p>
-//                 </div>
-
-//                 {/* Enhanced Stats Cards */}
-//                 <div className="p-4 flex-1 flex flex-col">
-//                   <div className="grid grid-cols-2 gap-3 mb-3">
-//                     {/* Programs Count */}
-//                     <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
-//                       <div className="flex items-center text-purple-600 text-xs font-semibold mb-1">
-//                         <BookOpen className="w-3 h-3 mr-1" />
-//                         PROGRAMS
-//                       </div>
-//                       <div className="text-purple-800 font-bold text-sm">
-//                         {university.programs}+
-//                       </div>
-//                     </div>
-
-//                     {/* Acceptance Rate */}
-//                     <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-//                       <div className="flex items-center text-blue-600 text-xs font-semibold mb-1">
-//                         <CheckCircle className="w-3 h-3 mr-1" />
-//                         ACCEPTANCE
-//                       </div>
-//                       <div className="text-blue-800 font-bold text-sm">
-//                         {university.acceptanceRate}
-//                       </div>
-//                     </div>
-//                   </div>
-
-//                   {/* Tuition and International Students */}
-//                   <div className="grid grid-cols-2 gap-3 mb-3">
-//                     <div className="bg-green-50 rounded-lg p-3 border border-green-100">
-//                       <div className="flex items-center text-green-600 text-xs font-semibold mb-1">
-//                         <DollarSign className="w-3 h-3 mr-1" />
-//                         TUITION
-//                       </div>
-//                       <div className="text-green-800 font-bold text-xs leading-tight">
-//                         {university.tuitionFee}
-//                       </div>
-//                     </div>
-
-//                     <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
-//                       <div className="flex items-center text-orange-600 text-xs font-semibold mb-1">
-//                         <Globe className="w-3 h-3 mr-1" />
-//                         INTL STUDENTS
-//                       </div>
-//                       <div className="text-orange-800 font-bold text-sm">
-//                         {university.internationalStudents}
-//                       </div>
-//                     </div>
-//                   </div>
-
-//                   {/* Next Intake */}
-//                   <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3 mb-3 border border-purple-200">
-//                     <div className="flex items-center text-purple-600 text-xs font-semibold mb-1">
-//                       <Calendar className="w-3 h-3 mr-1" />
-//                       NEXT INTAKE
-//                     </div>
-//                     <div className="text-purple-800 font-semibold text-sm flex items-center gap-2">
-//                       {university.intake[0]} {new Date().getFullYear()}
-//                       <span className="bg-green-200 text-green-800 px-2 py-0.5 rounded-full text-xs">
-//                         Open
-//                       </span>
-//                     </div>
-//                   </div>
-
-//                   {/* University Type and Required Exams */}
-//                   <div className="mb-4">
-//                     <div className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-//                       <Building className="w-3 h-3" />
-//                       {university.type.toUpperCase()}
-//                     </div>
-//                     <div className="flex flex-wrap gap-1">
-//                       <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-medium">
-//                         TOEFL 90+
-//                       </span>
-//                       <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-medium">
-//                         IELTS 6.5+
-//                       </span>
-//                     </div>
-//                   </div>
-
-//                   {/* Fixed Bottom Button */}
-//                   <div className="mt-auto">
-//                     <button className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-[1.02]">
-//                       <Crown className="w-4 h-4" />
-//                       Explore Elite Program
-//                       <ArrowUpRight className="w-4 h-4" />
-//                     </button>
-//                   </div>
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default AllUniversities;
-
-
-
-
-
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ChevronRight,
-  Globe,
-  Star,
-  Users,
-  School,
-  Building,
-  CheckCircle,
-  GraduationCap,
-  Filter,
+  ChevronLeft,
   Search,
   X,
   MapPin,
-  Calendar,
-  DollarSign,
-  BookOpen,
-  Award,
-  Eye,
-  Heart,
-  ArrowUpRight,
-  Crown,
-  TrendingUp,
-  University,
-  Clock,
-  SlidersHorizontal,
-  AlertCircle,
+  Globe,
+  Building,
+  Filter,
   Loader2,
+  AlertCircle,
+  RefreshCw,
+  Star,
+  ChevronDown,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowRight,
 } from "lucide-react";
 
-// Type definitions
+import BASE_URL from "../Config";
+
+// Type definitions based on API response
 interface University {
-  id: number;
-  name: string;
+  id: string;
+  universityName: string;
+  universityLink: string | null;
+  address: string;
   country: string;
-  location: string;
-  image: string;
-  description: string;
-  ranking?: string;
-  programs?: number;
-  intake: string[];
-  tuitionFee: string;
-  establishedYear: number;
-  type: string;
-  acceptanceRate: string;
-  internationalStudents: string;
+  city: string | null;
+  universityCampusCity: string;
+  universityLogo: string;
+  isQSRanked?: boolean;
+  ranking?: number;
 }
 
-// Dummy data for universities (replace with real data or fetch from API)
-const universities: University[] = [
-  {
-    id: 1,
-    name: "Harvard University",
-    country: "USA",
-    location: "Cambridge, Massachusetts",
-    image: "https://i.ibb.co/S4NRnFsc/download.jpg",
-    description:
-      "Prestigious Ivy League institution known for excellence in all fields including medicine, law, and business",
-    ranking: "#1 Global",
-    programs: 180,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "$54,000/year",
-    establishedYear: 1636,
-    type: "Private Research",
-    acceptanceRate: "3.4%",
-    internationalStudents: "25%",
-  },
-  {
-    id: 2,
-    name: "Stanford University",
-    country: "USA",
-    location: "Stanford, California",
-    image: "https://i.ibb.co/S4NRnFsc/download.jpg",
-    description:
-      "Leading research university in Silicon Valley with world-class technology and engineering programs",
-    ranking: "#2 USA",
-    programs: 150,
-    intake: ["Fall", "Spring", "Summer"],
-    tuitionFee: "$56,000/year",
-    establishedYear: 1885,
-    type: "Private Research",
-    acceptanceRate: "4.3%",
-    internationalStudents: "22%",
-  },
-  {
-    id: 3,
-    name: "Massachusetts Institute of Technology",
-    country: "USA",
-    location: "Cambridge, Massachusetts",
-    image: "https://i.ibb.co/fYT75tzG/mit-supply-chain-management-00-0.jpg",
-    description:
-      "World-renowned institute for technology, engineering, and scientific research with cutting-edge facilities",
-    ranking: "#3 USA",
-    programs: 120,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "$55,000/year",
-    establishedYear: 1861,
-    type: "Private Research",
-    acceptanceRate: "6.7%",
-    internationalStudents: "33%",
-  },
-  {
-    id: 4,
-    name: "University of California, Berkeley",
-    country: "USA",
-    location: "Berkeley, California",
-    image: "https://i.ibb.co/0y0LvXnx/download-3.jpg",
-    description:
-      "Top public research university with diverse academic programs and renowned faculty across disciplines",
-    ranking: "#4 USA",
-    programs: 200,
-    intake: ["Fall", "Spring", "Summer"],
-    tuitionFee: "$45,000/year",
-    establishedYear: 1868,
-    type: "Public Research",
-    acceptanceRate: "14.5%",
-    internationalStudents: "18%",
-  },
-  {
-    id: 5,
-    name: "Yale University",
-    country: "USA",
-    location: "New Haven, Connecticut",
-    image: "https://i.ibb.co/27Kj8ryM/download-6.jpg",
-    description:
-      "Historic Ivy League university with exceptional liberal arts programs and distinguished alumni network",
-    ranking: "#5 USA",
-    programs: 160,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "$58,000/year",
-    establishedYear: 1701,
-    type: "Private Research",
-    acceptanceRate: "4.6%",
-    internationalStudents: "20%",
-  },
-  {
-    id: 6,
-    name: "University of Oxford",
-    country: "UK",
-    location: "Oxford, England",
-    image: "https://i.ibb.co/d41rW2Js/Tanongsak-Mahakusol-9-cropped.jpg",
-    description:
-      "One of the oldest and most prestigious universities globally, offering world-class education since 1096",
-    ranking: "#1 UK",
-    programs: 200,
-    intake: ["Fall"],
-    tuitionFee: "£9,250/year",
-    establishedYear: 1096,
-    type: "Public Research",
-    acceptanceRate: "15.9%",
-    internationalStudents: "45%",
-  },
-  {
-    id: 7,
-    name: "University of Cambridge",
-    country: "UK",
-    location: "Cambridge, England",
-    image:
-      "https://i.ibb.co/QvLNDQv3/Banner-Image-The-University-of-Cambridge.webp",
-    description:
-      "Historic university with outstanding academic reputation and innovative research across all disciplines",
-    ranking: "#2 UK",
-    programs: 190,
-    intake: ["Fall"],
-    tuitionFee: "£9,250/year",
-    establishedYear: 1209,
-    type: "Public Research",
-    acceptanceRate: "18.8%",
-    internationalStudents: "38%",
-  },
-  {
-    id: 8,
-    name: "Imperial College London",
-    country: "UK",
-    location: "London, England",
-    image: "https://i.ibb.co/s932xwg2/1678969832php9e6w-QM-g.jpg",
-    description:
-      "Leading university specialized in science, technology, engineering and medicine with industry connections",
-    ranking: "#3 UK",
-    programs: 120,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "£32,000/year",
-    establishedYear: 1907,
-    type: "Public Research",
-    acceptanceRate: "14.3%",
-    internationalStudents: "59%",
-  },
-  {
-    id: 9,
-    name: "Technical University of Munich",
-    country: "Germany",
-    location: "Munich, Bavaria",
-    image: "https://i.ibb.co/1YPTCwJc/images.jpg",
-    description:
-      "Leading technical university with strong industry partnerships and excellent engineering programs",
-    ranking: "#1 Germany",
-    programs: 145,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "€1,500/year",
-    establishedYear: 1868,
-    type: "Public Technical",
-    acceptanceRate: "8%",
-    internationalStudents: "35%",
-  },
-  {
-    id: 10,
-    name: "University of Toronto",
-    country: "Canada",
-    location: "Toronto, Ontario",
-    image:
-      "https://i.ibb.co/mFyNbXW7/664f5b920e69b8f7e88ee60d-university-of-toronto.webp",
-    description:
-      "Canada's top university with diverse academic programs and world-class research facilities",
-    ranking: "#1 Canada",
-    programs: 215,
-    intake: ["Fall", "Spring", "Summer"],
-    tuitionFee: "CAD $58,000/year",
-    establishedYear: 1827,
-    type: "Public Research",
-    acceptanceRate: "43%",
-    internationalStudents: "25%",
-  },
-  {
-    id: 11,
-    name: "University of Melbourne",
-    country: "Australia",
-    location: "Melbourne, Victoria",
-    image: "https://i.ibb.co/yFCZJrrG/download-4.jpg",
-    description:
-      "Australia's leading university with excellent research facilities and diverse international community",
-    ranking: "#1 Australia",
-    programs: 190,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "AUD $45,000/year",
-    establishedYear: 1853,
-    type: "Public Research",
-    acceptanceRate: "70%",
-    internationalStudents: "47%",
-  },
-  {
-    id: 12,
-    name: "Sorbonne University",
-    country: "France",
-    location: "Paris, Île-de-France",
-    image: "https://i.ibb.co/tMLqM7ty/download-1.jpg",
-    description:
-      "Historic university in the heart of Paris, renowned for humanities, sciences, and cultural programs",
-    ranking: "#1 France",
-    programs: 120,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "€2,770/year",
-    establishedYear: 1150,
-    type: "Public Research",
-    acceptanceRate: "10%",
-    internationalStudents: "21%",
-  },
-  {
-    id: 13,
-    name: "University of Amsterdam",
-    country: "Netherlands",
-    location: "Amsterdam, North Holland",
-    image: "https://i.ibb.co/dwwT5gN5/download-2.jpg",
-    description:
-      "Leading research university in vibrant Amsterdam with strong international programs and partnerships",
-    ranking: "#1 Netherlands",
-    programs: 180,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "€2,168/year",
-    establishedYear: 1632,
-    type: "Public Research",
-    acceptanceRate: "25%",
-    internationalStudents: "30%",
-  },
-  {
-    id: 14,
-    name: "Karolinska Institute",
-    country: "Sweden",
-    location: "Stockholm",
-    image: "https://i.ibb.co/k2Y0xyxQ/download.jpg",
-    description:
-      "World-renowned medical university known for Nobel Prize connections and cutting-edge medical research",
-    ranking: "#1 Sweden",
-    programs: 80,
-    intake: ["Fall"],
-    tuitionFee: "Free for EU",
-    establishedYear: 1810,
-    type: "Public Medical",
-    acceptanceRate: "6%",
-    internationalStudents: "15%",
-  },
-  {
-    id: 15,
-    name: "ETH Zurich",
-    country: "Switzerland",
-    location: "Zurich",
-    image: "https://i.ibb.co/v25xvyc/images.jpg",
-    description:
-      "World-leading science and technology university with exceptional engineering and research programs",
-    ranking: "#1 Switzerland",
-    programs: 110,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "CHF 730/year",
-    establishedYear: 1855,
-    type: "Public Technical",
-    acceptanceRate: "8%",
-    internationalStudents: "40%",
-  },
-  {
-    id: 16,
-    name: "University of Tokyo",
-    country: "Japan",
-    location: "Tokyo",
-    image: "https://i.ibb.co/zwJnb5t/download-5.jpg",
-    description:
-      "Japan's most prestigious university with comprehensive programs and strong research in technology",
-    ranking: "#1 Japan",
-    programs: 180,
-    intake: ["Fall", "Spring"],
-    tuitionFee: "¥535,800/year",
-    establishedYear: 1877,
-    type: "Public Research",
-    acceptanceRate: "34%",
-    internationalStudents: "12%",
-  },
-];
+interface Course {
+  courseName: string;
+  duration: string | null;
+  cost: string;
+  typesOfExams: string;
+  country: string | null;
+  universityId: string | null;
+  university: string | null;
+  degree: string;
+  tutionFee1styr: string;
+  applicationFee: string;
+  courseUrl: string;
+  intake: string;
+  intake2: string;
+  intake3: string;
+}
 
-const AllUniversities = () => {
+interface ApiResponse {
+  data: University[] | Course[];
+  count: number;
+  success: boolean;
+  message?: string;
+}
+
+const AllUniversities: React.FC = () => {
+  // State management
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
+  const [coursePage, setCoursePage] = useState(1);
+  const [coursePageSize] = useState(20);
+  const [totalCourseCount, setTotalCourseCount] = useState(0);
+  
   // Filter states
   const [selectedCountry, setSelectedCountry] = useState<string>("");
-  const [selectedIntake, setSelectedIntake] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [showAdvancedFilters, setShowAdvancedFilters] =
-    useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortBy, setSortBy] = useState<
-    "name" | "ranking" | "programs" | "year"
-  >("name");
-  const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(false);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"name" | "country" | "ranking">("name");
+  const [showFilters, setShowFilters] = useState(false);
+  
   const navigate = useNavigate();
 
-  const countries = [
-    { code: "USA", name: "United States", flag: "🇺🇸" },
-    { code: "UK", name: "United Kingdom", flag: "🇬🇧" },
-    { code: "Germany", name: "Germany", flag: "🇩🇪" },
-    { code: "Canada", name: "Canada", flag: "🇨🇦" },
-    { code: "Australia", name: "Australia", flag: "🇦🇺" },
-    { code: "France", name: "France", flag: "🇫🇷" },
-    { code: "Netherlands", name: "Netherlands", flag: "🇳🇱" },
-    { code: "Sweden", name: "Sweden", flag: "🇸🇪" },
-    { code: "Switzerland", name: "Switzerland", flag: "🇨🇭" },
-    { code: "Japan", name: "Japan", flag: "🇯🇵" },
-  ];
+  // Calculate pagination values for universities
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalCount);
 
-  const intakeOptions = ["Fall", "Spring", "Summer", "Winter"];
+  // Calculate pagination values for courses
+  const totalCoursePages = Math.ceil(totalCourseCount / coursePageSize);
+  const courseStartIndex = (coursePage - 1) * coursePageSize + 1;
+  const courseEndIndex = Math.min(coursePage * coursePageSize, totalCourseCount);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCountry, debouncedSearchTerm, sortBy, pageSize]);
+
+  // Reset course page when modal opens
+  useEffect(() => {
+    if (isModalOpen) {
+      setCoursePage(1);
+    }
+  }, [isModalOpen]);
+
+  // Fetch universities function
+  const fetchUniversities = useCallback(async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const queryParams = new URLSearchParams({
+        pageIndex: (page - 1).toString(),
+        pageSize: pageSize.toString(),
+      });
+
+      if (selectedCountry) queryParams.append('country', selectedCountry);
+      if (debouncedSearchTerm) queryParams.append('search', debouncedSearchTerm);
+      if (sortBy) queryParams.append('sortBy', sortBy);
+
+      const apiUrl = `${BASE_URL}/user-service/student/universities?${queryParams.toString()}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ApiResponse = await response.json();
+      
+      if (data.success === false) {
+        throw new Error(data.message || 'API request failed');
+      }
+
+      const universitiesData = data.data || [];
+      
+      setUniversities(universitiesData as University[]);
+      setTotalCount(data.count || universitiesData.length);
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch universities';
+      setError(errorMessage);
+      setUniversities([]);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCountry, debouncedSearchTerm, sortBy, pageSize]);
+
+  // Fetch courses function
+  const fetchCourses = useCallback(async (university: University, page: number = 1) => {
+    try {
+      setCoursesLoading(true);
+      setCoursesError(null);
+      
+      const queryParams = new URLSearchParams({
+        pageIndex: page.toString(),
+        pageSize: coursePageSize.toString(),
+      });
+
+      const response = await fetch(
+        `${BASE_URL}/user-service/student/courses-mapped-to-university?${queryParams.toString()}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            countryName: university.country,
+            university: university.universityName,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ApiResponse = await response.json();
+      
+      if (data.success === false) {
+        throw new Error(data.message || 'API request failed');
+      }
+
+      setCourses(data.data as Course[]);
+      setTotalCourseCount(data.count || data.data.length);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch courses';
+      setCoursesError(errorMessage);
+      setCourses([]);
+      setTotalCourseCount(0);
+    } finally {
+      setCoursesLoading(false);
+    }
+  }, [coursePageSize]);
+
+  useEffect(() => {
+    fetchUniversities(currentPage);
+  }, [fetchUniversities, currentPage]);
+
+  useEffect(() => {
+    if (selectedUniversity && isModalOpen) {
+      fetchCourses(selectedUniversity, coursePage);
+    }
+  }, [fetchCourses, selectedUniversity, isModalOpen, coursePage]);
+
+  // Get unique countries
+  const countries = useMemo(() => {
+    const uniqueCountries = Array.from(new Set(universities.map((uni: University) => uni.country)))
+      .filter((country: string) => country)
+      .sort();
+    return uniqueCountries;
+  }, [universities]);
+
+  // Country flags mapping
   const countryFlags: Record<string, string> = {
-    USA: "🇺🇸",
-    UK: "🇬🇧",
-    Germany: "🇩🇪",
-    Canada: "🇨🇦",
-    Australia: "🇦🇺",
-    France: "🇫🇷",
-    Netherlands: "🇳🇱",
-    Sweden: "🇸🇪",
-    Switzerland: "🇨🇭",
-    Japan: "🇯🇵",
+    'USA': '🇺🇸',
+    'UK': '🇬🇧', 
+    'CAN': '🇨🇦',
+    'AUS': '🇦🇺',
+    'GER': '🇩🇪',
+    'FRA': '🇫🇷',
+    'NLD': '🇳🇱',
+    'SWE': '🇸🇪',
+    'CHE': '🇨🇭',
+    'JPN': '🇯🇵',
   };
 
-  // Filter and sort universities
-  const filteredUniversities = useMemo(() => {
-    let filtered = universities.filter((university: University) => {
-      const countryMatch =
-        !selectedCountry || university.country === selectedCountry;
-      const intakeMatch =
-        !selectedIntake || university.intake.includes(selectedIntake);
-      const searchMatch =
-        !searchTerm ||
-        university.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        university.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        university.country.toLowerCase().includes(searchTerm.toLowerCase());
-      return countryMatch && intakeMatch && searchMatch;
-    });
-
-    filtered.sort((a: any, b: any) => {
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "ranking":
-          const rankA = parseInt(a.ranking?.replace(/[^\d]/g, "") || "999");
-          const rankB = parseInt(b.ranking?.replace(/[^\d]/g, "") || "999");
-          return rankA - rankB;
-        case "programs":
-          return (b.programs || 0) - (a.programs || 0);
-        case "year":
-          return a.establishedYear - b.establishedYear;
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }, [selectedCountry, selectedIntake, searchTerm, sortBy]);
+  const getCountryName = (code: string) => {
+    const names: Record<string, string> = {
+      'USA': 'United States',
+      'UK': 'United Kingdom',
+      'CAN': 'Canada',
+      'AUS': 'Australia',
+      'GER': 'Germany',
+      'FRA': 'France',
+      'NLD': 'Netherlands',
+      'SWE': 'Sweden',
+      'CHE': 'Switzerland',
+      'JPN': 'Japan',
+    };
+    return names[code] || code;
+  };
 
   const clearFilters = () => {
     setSelectedCountry("");
-    setSelectedIntake("");
     setSearchTerm("");
+    setDebouncedSearchTerm("");
     setSortBy("name");
+    setCurrentPage(1);
   };
 
-  const formatEstablishedYear = (year: number) => {
-    const currentYear = new Date().getFullYear();
-    const yearsOld = currentYear - year;
-    return yearsOld > 200 ? `${yearsOld}+ years` : `Est. ${year}`;
+  // Pagination handlers for universities
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToNextPage = () => goToPage(currentPage + 1);
+  const goToPrevPage = () => goToPage(currentPage - 1);
+
+  // Pagination handlers for courses
+  const goToCoursePage = (page: number) => {
+    if (page >= 1 && page <= totalCoursePages) {
+      setCoursePage(page);
+    }
+  };
+
+  const goToFirstCoursePage = () => goToCoursePage(1);
+  const goToLastCoursePage = () => goToCoursePage(totalCoursePages);
+  const goToNextCoursePage = () => goToCoursePage(coursePage + 1);
+  const goToPrevCoursePage = () => goToCoursePage(coursePage - 1);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = (total: number, current: number) => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 7;
+    
+    if (total <= maxVisible) {
+      for (let i = 1; i <= total; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(total);
+      } else if (current >= total - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = total - 4; i <= total; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = current - 1; i <= current + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(total);
+      }
+    }
+    
+    return pages;
+  };
+
+  // Handle View Programs click
+  const handleViewPrograms = (e: React.MouseEvent, university: University) => {
+    e.stopPropagation();
+    setSelectedUniversity(university);
+    setIsModalOpen(true);
+  };
+
+  // Render university card
+  const renderUniversityCard = (university: University) => (
+    <div
+      key={university.id}
+      className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+       onClick={(e) => handleViewPrograms(e, university)}
+    >
+      <div className="relative h-32 bg-gray-50 rounded-t-lg flex items-center justify-center p-4">
+        {university.universityLogo ? (
+          <img
+            src={university.universityLogo}
+            alt={`${university.universityName} logo`}
+            className="max-h-full max-w-full object-contain"
+            loading="lazy"
+            onError={(e) => {
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        
+        <div className="absolute top-2 right-2 bg-white rounded-full px-2 py-1 text-xs font-medium shadow-sm">
+          {countryFlags[university.country] || '🌍'} {university.country}
+        </div>
+        
+        {university.isQSRanked && (
+          <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            {university.ranking ? `#${university.ranking}` : 'QS'}
+          </div>
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 leading-tight">
+          {university.universityName}
+        </h3>
+        
+        <div className="space-y-1 mb-3">
+          <div className="flex items-center text-xs text-gray-600">
+            <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{university.universityCampusCity}</span>
+          </div>
+          <div className="flex items-center text-xs text-gray-600">
+            <Globe className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span>{getCountryName(university.country)}</span>
+          </div>
+          <div className="flex items-center text-xs text-gray-600">
+            <Building className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{university.address}</span>
+          </div>
+        </div>
+
+        <button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1"
+          onClick={(e) => handleViewPrograms(e, university)}
+        >
+          View Programs
+          <ArrowRight className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render course card
+  const renderCourseCard = (course: Course) => (
+    <div
+      key={course.courseName}
+      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+    >
+      <h3 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 leading-tight">
+        {course.courseName}
+      </h3>
+      <div className="space-y-1 text-xs text-gray-600">
+        <div><span className="font-medium">Degree:</span> {course.degree}</div>
+        <div><span className="font-medium">Tuition Fee (1st Year):</span> {course.tutionFee1styr}</div>
+        <div><span className="font-medium">Application Fee:</span> {course.applicationFee}</div>
+        <div><span className="font-medium">Intakes:</span> {course.intake}, {course.intake2}, {course.intake3}</div>
+        {course.courseUrl && (
+          <div>
+            <a
+              href={course.courseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Learn More
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Main render
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Left Section: Back Button + Title */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2.5 hover:bg-gray-100 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
-              aria-label="Go back"
-            >
-              <ChevronRight className="w-6 h-6 text-purple-600 rotate-180" />
-            </button>
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                Explore Top Universities
-              </h1>
-              <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                <Crown className="w-4 h-4 text-purple-600" />
-                {universities.length} elite institutions across{" "}
-                {countries.length} countries
-              </p>
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">
+                {selectedUniversity?.universityName} - Programs
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="p-6">
+              {coursesLoading ? (
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Loading programs...</p>
+                </div>
+              ) : coursesError ? (
+                <div className="text-center">
+                  <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">{coursesError}</p>
+                  <button
+                    onClick={() => selectedUniversity && fetchCourses(selectedUniversity, coursePage)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : courses.length === 0 ? (
+                <div className="text-center">
+                  <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No programs found for this university.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    {courses.map((course) => renderCourseCard(course))}
+                  </div>
+                  {totalCoursePages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        Showing {courses.length > 0 ? courseStartIndex : 0} - {courseEndIndex} of {totalCourseCount} programs
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={goToFirstCoursePage}
+                          disabled={coursePage === 1}
+                          className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="First page"
+                        >
+                          <ChevronsLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={goToPrevCoursePage}
+                          disabled={coursePage === 1}
+                          className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Previous page"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1">
+                          {getPageNumbers(totalCoursePages, coursePage).map((page, index) => (
+                            <React.Fragment key={index}>
+                              {page === '...' ? (
+                                <span className="px-3 py-2 text-gray-400">...</span>
+                              ) : (
+                                <button
+                                  onClick={() => goToCoursePage(page as number)}
+                                  className={`px-3 py-2 rounded-lg border transition-colors ${
+                                    coursePage === page
+                                      ? 'bg-blue-600 text-white border-blue-600'
+                                      : 'border-gray-300 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                        <button
+                          onClick={goToNextCoursePage}
+                          disabled={coursePage === totalCoursePages}
+                          className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Next page"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={goToLastCoursePage}
+                          disabled={coursePage === totalCoursePages}
+                          className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Last page"
+                        >
+                          <ChevronsRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Right Section: Search */}
-          <div className="relative w-full sm:w-auto sm:max-w-xs lg:max-w-sm">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="universities, locations, or countries..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm shadow-sm hover:shadow-md"
-            />
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">All Universities</h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  {totalCount} universities available
+                </p>
+              </div>
+            </div>
+
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search universities..."
+                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <section className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Country Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                <Globe className="w-4 h-4" /> Country
-              </label>
-              <select
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">All Countries ({countries.length})</option>
-                {countries.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {country.flag} {country.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Intake Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                <Calendar className="w-4 h-4" /> Intake
-              </label>
-              <select
-                value={selectedIntake}
-                onChange={(e) => setSelectedIntake(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">All Intakes</option>
-                {intakeOptions.map((intake) => (
-                  <option key={intake} value={intake}>
-                    {intake} 2025
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sort By */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                <SlidersHorizontal className="w-4 h-4" /> Sort By
-              </label>
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(
-                    e.target.value as "name" | "ranking" | "programs" | "year"
-                  )
-                }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="name">Name</option>
-                <option value="ranking">Ranking</option>
-                <option value="programs">Programs</option>
-                <option value="year">Established Year</option>
-              </select>
-            </div>
-
-            {/* Clear Filters */}
-            <div className="flex items-end">
-              <button
-                onClick={clearFilters}
-                className="w-full py-2 px-4 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition flex items-center justify-center gap-2 text-sm font-medium"
-              >
-                <X className="w-4 h-4" /> Clear Filters
-              </button>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">Show:</label>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={50}>50</option>
+                </select>
+                <span className="text-sm text-gray-600">per page</span>
+              </div>
+              
+              {(selectedCountry || searchTerm) && (
+                <button
+                  onClick={clearFilters}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  Clear All
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Result Summary */}
-          <div className="mt-4 bg-purple-50 rounded-lg p-3 flex items-center justify-between text-sm">
-            <span className="font-medium text-purple-700">
-              Showing {filteredUniversities.length} universities
-            </span>
-            {selectedCountry && (
-              <span className="text-purple-600 flex items-center gap-1">
-                {countryFlags[selectedCountry]}{" "}
-                {countries.find((c) => c.code === selectedCountry)?.name}
-              </span>
-            )}
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Countries</option>
+                  {countries.map((country: string) => (
+                    <option key={country} value={country}>
+                      {countryFlags[country] || '🌍'} {getCountryName(country)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "name" | "country" | "ranking")}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="name">University Name</option>
+                  <option value="country">Country</option>
+                  <option value="ranking">Ranking</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      {loading && universities.length === 0 ? (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Loading universities...</p>
           </div>
         </div>
-      </section>
-
-      {/* Cards Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {filteredUniversities.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
-            <AlertCircle className="w-12 h-12 text-purple-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No Universities Found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Try adjusting your filters or search terms to find more results.
-            </p>
+      ) : error && universities.length === 0 ? (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center bg-white p-6 rounded-lg shadow-sm max-w-md">
+            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Universities</h3>
+            <p className="text-gray-600 mb-4 text-sm">{error}</p>
             <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+              onClick={() => fetchUniversities(currentPage)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center gap-2 mx-auto"
             >
-              <X className="w-4 h-4" /> Clear Filters
+              <RefreshCw className="w-4 h-4" />
+              Try Again
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredUniversities.map((university) => (
-              <div
-                key={university.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 border border-gray-100 hover:border-purple-300"
-              >
-                {/* University Card Content */}
-                <div className="relative">
-                  <img
-                    src={university.image}
-                    alt={university.name}
-                    className="w-full h-40 object-cover rounded-t-xl"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <Crown className="w-3 h-3" /> {university.ranking}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg font-bold text-gray-900 truncate">
-                      {university.name}
-                    </span>
-                    <span className="text-xl">
-                      {countryFlags[university.country]}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {university.description}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-purple-50 p-2 rounded-lg">
-                      <div className="text-xs text-purple-600 flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" /> Programs
-                      </div>
-                      <div className="text-sm font-semibold text-purple-800">
-                        {university.programs}+
-                      </div>
-                    </div>
-                    <div className="bg-blue-50 p-2 rounded-lg">
-                      <div className="text-xs text-blue-600 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Acceptance
-                      </div>
-                      <div className="text-sm font-semibold text-blue-800">
-                        {university.acceptanceRate}
-                      </div>
-                    </div>
-                    <div className="bg-green-50 p-2 rounded-lg">
-                      <div className="text-xs text-green-600 flex items-center gap-1">
-                        <DollarSign className="w-3 h-3" /> Tuition
-                      </div>
-                      <div className="text-sm font-semibold text-green-800">
-                        {university.tuitionFee}
-                      </div>
-                    </div>
-                    <div className="bg-orange-50 p-2 rounded-lg">
-                      <div className="text-xs text-orange-600 flex items-center gap-1">
-                        <Users className="w-3 h-3" /> Intl. Students
-                      </div>
-                      <div className="text-sm font-semibold text-orange-800">
-                        {university.internationalStudents}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mb-4 text-xs text-gray-600 space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Next Intake:{" "}
-                      <span className="font-medium">
-                        {university.intake[0]} 2025
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> {university.location} |{" "}
-                      {formatEstablishedYear(university.establishedYear)}
-                    </div>
-                  </div>
-                  <button
-                    className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                    onClick={() => navigate(`/student-home`)}
-                  >
-                    Explore Elite Program
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-sm text-gray-600">
+              Showing {universities.length > 0 ? startIndex : 0} - {endIndex} of {totalCount} results
+            </div>
+            {loading && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Loading...</span>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </main>
+
+          {universities.length === 0 && !loading ? (
+            <div className="text-center py-16">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Universities Found</h3>
+              <p className="text-gray-600 mb-4">Try adjusting your search or filters.</p>
+              <button
+                onClick={clearFilters}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+                {universities.map((university: University) => renderUniversityCard(university))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={goToFirstPage}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="First page"
+                    >
+                      <ChevronsLeft className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={goToPrevPage}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Previous page"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers(totalPages, currentPage).map((page, index) => (
+                        <React.Fragment key={index}>
+                          {page === '...' ? (
+                            <span className="px-3 py-2 text-gray-400">...</span>
+                          ) : (
+                            <button
+                              onClick={() => goToPage(page as number)}
+                              className={`px-3 py-2 rounded-lg border transition-colors ${
+                                currentPage === page
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Next page"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={goToLastPage}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Last page"
+                    >
+                      <ChevronsRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
 export default AllUniversities;
-
