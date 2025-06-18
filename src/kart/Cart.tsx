@@ -28,7 +28,8 @@ interface CartItem {
   itemDescription: string;
   units: string;
   weight: string;
-  gstAmount: number;
+  gstAmount?: number; // Made optional as it’s not used for non-gold items
+  totalGstAmountToPay: number; // Added for non-gold items GST
   cartQuantity: number;
   cartId: string;
   status: string;
@@ -93,7 +94,7 @@ const CartPage: React.FC = () => {
   const [freeCartItems, setFreeCartItems] = useState<{ [key: string]: number }>(
     {}
   );
-
+  const [totalGstAmount, setTotalGstAmount] = useState<number>(0);
   const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] =
     useState<boolean>(false);
   const [currentPlanDetails, setCurrentPlanDetails] = useState<
@@ -203,7 +204,6 @@ const CartPage: React.FC = () => {
 
       if (response.status === 400) {
         const errorMessage = response.data.message || "";
-        // Check for variations of the error message
         if (
           errorMessage.toLowerCase().includes("reference offer already exists")
         ) {
@@ -358,10 +358,9 @@ const CartPage: React.FC = () => {
       cancelText: "Go Back",
       onOk: async () => {
         try {
-          // Remove free container from cart
           await removeContainerFromCart();
           setIsReferralModalVisible(false);
-          setSelectedPlans([]); // Clear selected plans to prevent any further processing
+          setSelectedPlans([]);
           message.info(
             "Referral offer cancelled and free container removed from cart."
           );
@@ -504,7 +503,6 @@ const CartPage: React.FC = () => {
       return { eligible: false, reason: "empty_cart" };
     }
 
-    // Check for existing containers, but allow free containers
     const hasContainer = cartItems.some(
       (item) =>
         [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
@@ -517,7 +515,6 @@ const CartPage: React.FC = () => {
       return { eligible: false, reason: "already_has_container" };
     }
 
-    // Check if a free container is already in the cart
     const freeContainer = cartItems.find(
       (item) =>
         [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
@@ -633,7 +630,6 @@ const CartPage: React.FC = () => {
           }
         );
 
-        // message.info("Free Container removed from your cart");
         await fetchCartData();
         containerExistsRef.current = false;
         return true;
@@ -649,99 +645,55 @@ const CartPage: React.FC = () => {
   };
 
   const fetchCartData = async () => {
-    try {
-      console.log("Fetching cart data for customer ID:", customerId);
+  try {
+    console.log("Fetching cart data for customer ID:", customerId);
 
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+    const response = await axios.get(
+      `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("API Response:", response.data);
+
+    if (response.data.customerCartResponseList) {
+      const cartItems = response.data.customerCartResponseList;
+      console.log(`Fetched ${cartItems.length} items in cart, Total GST: ${response.data.totalGstAmountToPay}`);
+
+      const hasContainer = cartItems.some((item: CartItem) =>
+        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+          item.itemId
+        )
       );
 
-      if (response.data.customerCartResponseList) {
-        const cartItems = response.data.customerCartResponseList;
-        console.log(`Fetched ${cartItems.length} items in cart`);
+      containerExistsRef.current = hasContainer;
+      console.log(`Container exists in cart: ${hasContainer}`);
 
-        const hasContainer = cartItems.some((item: CartItem) =>
-          [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-            item.itemId
-          )
-        );
+      const regularItemsMap = cartItems
+        .filter((item: CartItem) => item.status !== "FREE")
+        .reduce((acc: { [key: string]: number }, item: CartItem) => {
+          acc[item.itemId] = item.cartQuantity || 0;
+          return acc;
+        }, {});
 
-        containerExistsRef.current = hasContainer;
-        console.log(`Container exists in cart: ${hasContainer}`);
+      const freeItemsMap = cartItems
+        .filter((item: CartItem) => item.status === "FREE")
+        .reduce((acc: { [key: string]: number }, item: CartItem) => {
+          acc[item.itemId] = item.cartQuantity || 0;
+          return acc;
+        }, {});
 
-        // Separate regular and free items
-        const regularItemsMap = cartItems
-          .filter((item: CartItem) => item.status !== "FREE")
-          .reduce((acc: { [key: string]: number }, item: CartItem) => {
-            acc[item.itemId] = item.cartQuantity || 0;
-            return acc;
-          }, {});
+      setRegularCartItems(regularItemsMap);
+      setFreeCartItems(freeItemsMap);
 
-        const freeItemsMap = cartItems
-          .filter((item: CartItem) => item.status === "FREE")
-          .reduce((acc: { [key: string]: number }, item: CartItem) => {
-            acc[item.itemId] = item.cartQuantity || 0;
-            return acc;
-          }, {});
-
-        setRegularCartItems(regularItemsMap);
-        setFreeCartItems(freeItemsMap);
-
-        // Calculate total quantity including both regular and free items
-        const totalQuantity = cartItems.reduce(
-          (sum: number, item: CartItem) => {
-            return sum + (item.cartQuantity || 0); // Include all items (FREE and non-FREE)
-          },
-          0
-        );
-        setCount(totalQuantity);
-
-        const cartWithFreeItems = response.data?.customerCartResponseList || [];
-
-        cartWithFreeItems.forEach((item: CartItem) => {
-          if (
-            item.itemName.toLowerCase().includes("rice") &&
-            item.weight &&
-            parseFloat(item.weight) >= 5
-          ) {
-            const freeItems = Math.floor(item.cartQuantity / 5) * 2;
-            item.freeQuantity = freeItems;
-          } else if (
-            item.itemName.toLowerCase().includes("rice") &&
-            item.weight &&
-            parseFloat(item.weight) === 1 &&
-            item.status === "FREE"
-          ) {
-            item.freeQuantity = 1;
-          }
-        });
-
-        const outOfStockItems = cartWithFreeItems.filter(
-          (item: CartItem) => item.cartQuantity > item.quantity
-        );
-
-        if (outOfStockItems.length > 0) {
-          setCheckoutError(true);
-          message.warning(
-            `Please decrease the quantity for: ${outOfStockItems
-              .map((item: CartItem) => item.itemName)
-              .join(", ")} before proceeding to checkout.`,
-            5
-          );
-        }
-
-        setCartData(cartWithFreeItems);
-        return cartWithFreeItems;
-      } else {
-        setRegularCartItems({});
-        setFreeCartItems({});
-        setCount(0);
-      }
+      const totalQuantity = cartItems.reduce(
+        (sum: number, item: CartItem) => sum + (item.cartQuantity || 0),
+        0
+      );
+      setCount(totalQuantity);
 
       const cartWithFreeItems = response.data?.customerCartResponseList || [];
 
@@ -778,14 +730,37 @@ const CartPage: React.FC = () => {
       }
 
       setCartData(cartWithFreeItems);
+      setTotalGstAmount(response.data.totalGstAmountToPay || 0); // Set the total GST amount
       return cartWithFreeItems;
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
+    } else {
+      console.warn("No customerCartResponseList in response, setting empty cart");
+      setRegularCartItems({});
+      setFreeCartItems({});
+      setCount(0);
+      setCartData([]);
+      setTotalGstAmount(0); // Reset GST amount
       return [];
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching cart items:", error);
+    if (axios.isAxiosError(error)) {
+      console.error(
+        "Axios Error:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+    }
+    setRegularCartItems({});
+    setFreeCartItems({});
+    setCount(0);
+    setCartData([]);
+    setTotalGstAmount(0); // Reset GST amount on error
+    message.error("Failed to load cart data. Please try again.");
+    return [];
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const getCoordinates = async (address: string) => {
     try {
@@ -964,7 +939,6 @@ const CartPage: React.FC = () => {
         }
       );
 
-      // Update the appropriate cart items state
       if (isFreeItem) {
         setFreeCartItems((prev) => ({
           ...prev,
@@ -975,7 +949,6 @@ const CartPage: React.FC = () => {
           ...prev,
           [item.itemId]: newQuantity,
         }));
-        // Update count for regular items only
         const currentCount = context.count || 0;
         setCount(currentCount + 1);
       }
@@ -1016,7 +989,6 @@ const CartPage: React.FC = () => {
           }
         );
 
-        // Update the appropriate cart items state
         if (isFreeItem) {
           setFreeCartItems((prev) => ({
             ...prev,
@@ -1027,7 +999,6 @@ const CartPage: React.FC = () => {
             ...prev,
             [item.itemId]: newQuantity,
           }));
-          // Update count for regular items only
           const currentCount = context.count || 0;
           setCount(Math.max(0, currentCount - 1));
         }
@@ -1066,7 +1037,6 @@ const CartPage: React.FC = () => {
       );
 
       if (isFreeItem) {
-        // Remove free items using removeFreeContainer API
         await axios.delete(
           `${BASE_URL}/cart-service/cart/removeFreeContainer`,
           {
@@ -1083,7 +1053,6 @@ const CartPage: React.FC = () => {
           }
         );
       } else {
-        // Remove non-free items using the standard remove API
         await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
           data: {
             id: cartIdToRemove,
@@ -1095,7 +1064,6 @@ const CartPage: React.FC = () => {
         });
       }
 
-      // Handle eligible rice removal and container cleanup
       if (isEligibleRice && containerExistsRef.current) {
         const remainingRiceItems = cartData.filter(
           (ci) =>
@@ -1117,7 +1085,6 @@ const CartPage: React.FC = () => {
 
       setCartData((prev) => prev.filter((ci) => ci.cartId !== cartIdToRemove));
 
-      // Update the appropriate cart items state
       if (isFreeItem) {
         setFreeCartItems((prev) => {
           const updated = { ...prev };
@@ -1359,7 +1326,6 @@ const CartPage: React.FC = () => {
         setContainerPreference(preference);
 
         modalDisplayedRef.current = false;
-        // Skip showing the container modal
         console.log("Free container modal is disabled");
       } catch (error) {
         console.error("Error initializing cart page:", error);
@@ -1374,7 +1340,7 @@ const CartPage: React.FC = () => {
 
   useEffect(() => {
     const hasStockIssues = cartData.some(
-      (item) => item.quantity === 0 || -0 || item.cartQuantity > item.quantity
+      (item) => item.quantity === 0 || item.cartQuantity > item.quantity
     );
     setCheckoutError(hasStockIssues);
   }, [cartData]);
@@ -1519,7 +1485,6 @@ const CartPage: React.FC = () => {
   };
 
   const handlePlanOk = async () => {
-    // Check if a free container exists in the cart
     const freeContainer = cartData.find(
       (item) =>
         [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
@@ -1536,10 +1501,9 @@ const CartPage: React.FC = () => {
         cancelText: "Go Back",
         onOk: async () => {
           try {
-            // Remove free container from cart using the specified API
             await removeContainerFromCart();
             setIsPlanModalVisible(false);
-            modalDisplayedRef.current = true; // Prevent modal from reopening
+            modalDisplayedRef.current = true;
           } catch (error) {
             console.error("Error declining container offer:", error);
             message.error("Failed to decline container offer");
@@ -1549,7 +1513,6 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    // Prepare success message based on selected plan(s)
     let successMessage = "";
     if (selectedPlan.includes("planA") && selectedPlan.includes("planB")) {
       successMessage = "Both Plan A and Plan B have been selected successfully";
@@ -1559,16 +1522,14 @@ const CartPage: React.FC = () => {
       successMessage = "Plan B has been selected successfully";
     }
 
-    // Show success alert with selected plan details
     message.success({
       content: successMessage,
       duration: 5,
     });
 
     setIsPlanModalVisible(false);
-    modalDisplayedRef.current = true; // Prevent modal from reopening
+    modalDisplayedRef.current = true;
 
-    // If a free container is already in the cart, use its type and skip eligibility check
     if (freeContainer) {
       const containerType =
         freeContainer.itemId === CONTAINER_ITEM_IDS.HEAVY_BAG
@@ -1588,7 +1549,6 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    // If no free container, check eligibility
     const eligibility = checkEligibilityForContainer(cartData);
     if (!eligibility.eligible || !eligibility.containerType) {
       message.error("Something went wrong. No eligible container found.");
@@ -1616,10 +1576,7 @@ const CartPage: React.FC = () => {
       cancelText: "Stay",
       onOk: async () => {
         try {
-          // Remove free container from cart if it exists
           await removeContainerFromCart();
-
-          // message.info("Container offer declined");
         } catch (error) {
           console.error("Error declining container offer:", error);
           message.error("Failed to decline container offer");
@@ -1633,7 +1590,6 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Custom for the free container modal*/}
       <style>
         {`
     .container-modal-content {
@@ -1901,7 +1857,7 @@ const CartPage: React.FC = () => {
                 </span>
               )}
               <div className="mb-4">
-                <label className="block font-bold text-gray-700  mb-1">
+                <label className="block font-bold text-gray-700 mb-1">
                   Select Address
                 </label>
                 <select
@@ -1947,17 +1903,7 @@ const CartPage: React.FC = () => {
                   <div className="flex justify-between mb-2 text-gray-700">
                     <span>GST</span>
                     <span className="font-semibold">
-                      ₹
-                      {cartData
-                        ?.reduce((acc, item) => {
-                          const quantity =
-                            item.status === "FREE"
-                              ? freeCartItems[item.itemId] || 0
-                              : regularCartItems[item.itemId] || 0;
-                          const gstAmount = item.gstAmount ?? 0;
-                          return acc + gstAmount * quantity;
-                        }, 0)
-                        .toFixed(2) || "0.00"}
+                      ₹{totalGstAmount.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between mb-2 text-gray-700">
@@ -1971,8 +1917,14 @@ const CartPage: React.FC = () => {
                         : regularCartItems[item.itemId] || 0;
                     const goldMakingCost = item.goldMakingCost ?? 0;
                     const goldGst = item.goldGst ?? 0;
+                    const totalGstAmountToPay = item.totalGstAmountToPay ?? 0;
 
-                    if (goldMakingCost <= 0 && goldGst <= 0) return null;
+                    if (
+                      goldMakingCost <= 0 &&
+                      goldGst <= 0 &&
+                      totalGstAmountToPay <= 0
+                    )
+                      return null;
 
                     return (
                       <div
@@ -2005,6 +1957,22 @@ const CartPage: React.FC = () => {
                               <span className="text-gray-800 font-semibold">
                                 ₹
                                 {(goldGst * quantity).toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            </div>
+                          )}
+                          {totalGstAmountToPay > 0 && !goldGst && (
+                            <div className="flex justify-between items-center text-xs sm:text-sm">
+                              <span className="text-gray-600 font-medium">
+                                GST
+                              </span>
+                              <span className="text-gray-800 font-semibold">
+                                ₹
+                                {(
+                                  totalGstAmountToPay * quantity
+                                ).toLocaleString("en-IN", {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2,
                                 })}
@@ -2046,20 +2014,24 @@ const CartPage: React.FC = () => {
                             return acc + goldMakingCost * quantity;
                           }, 0) || 0;
 
-                        const gstTotal =
+                        const goldGstTotal =
                           cartData?.reduce((acc, item) => {
                             const quantity =
                               item.status === "FREE"
                                 ? freeCartItems[item.itemId] || 0
                                 : regularCartItems[item.itemId] || 0;
-                            const gstAmount = item.gstAmount ?? 0;
-                            return acc + gstAmount * quantity;
+                            const goldGst = item.goldGst ?? 0;
+                            return acc + goldGst * quantity;
                           }, 0) || 0;
+
+                        // Use totalGstAmount (from state) for non-gold items, subtract goldGst to avoid double-counting
+                        const nonGoldGstTotal = totalGstAmount - goldGstTotal;
 
                         return (
                           itemTotal +
                           goldMakingCostTotal +
-                          gstTotal
+                          goldGstTotal +
+                          nonGoldGstTotal
                         ).toFixed(2);
                       })() || "0.00"}
                     </span>
@@ -2120,7 +2092,7 @@ const CartPage: React.FC = () => {
                         : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
                     }`}
                     onClick={() => handleToProcess()}
-                    disabled={isCheckoutDisabled() || localStorage.getItem("TypeLogin") === "Caller"}
+                    disabled={isCheckoutDisabled()}
                   >
                     {isCheckoutDisabled()
                       ? !selectedAddress
@@ -2274,197 +2246,185 @@ const CartPage: React.FC = () => {
                   </button>
                 </div>
 
-                <p className="text-sm text-gray-600 mb-4">
-                  Add mobile numbers of friends you want to refer. They'll
-                  receive a special offer and you'll get rewards!
-                </p>
-
-                <div className="mb-4">
-                  <div className="flex gap-2">
-                    <input
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Enter mobile numbers of friends to refer (Plan B).
+                  </p>
+                  <div className="flex space-x-2">
+                    <Input
                       type="text"
                       placeholder="Enter mobile number"
                       value={currentNumber}
-                      onChange={(e) => {
-                        const input = e.target.value.replace(/\D/g, "");
-                        if (input.length <= 10) {
-                          setCurrentNumber(input);
-                        }
-                      }}
+                      onChange={(e) => setCurrentNumber(e.target.value)}
                       maxLength={10}
-                      className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="flex-1 p-2 border border-gray-300 rounded-md"
                     />
-                    <button
+                    <Button
+                      type="primary"
                       onClick={handleAddNumber}
-                      className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+                      className="bg-purple-500 hover:bg-purple-600"
                     >
                       Add
-                    </button>
+                    </Button>
                   </div>
+                  {mobileNumbers.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">Added Numbers:</p>
+                      <div className="space-y-1">
+                        {mobileNumbers.map((number, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center bg-gray-100 p-2 rounded-md"
+                          >
+                            <span>{number}</span>
+                            <Button
+                              type="link"
+                              onClick={() => handleRemoveNumber(index)}
+                              className="text-red-500"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {mobileNumbers.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm font-semibold mb-2">Added numbers:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {mobileNumbers.map((number, index) => (
-                        <div
-                          key={number}
-                          className="flex items-center bg-purple-50 px-3 py-1 rounded-md"
-                        >
-                          <span className="text-sm text-gray-700">
-                            {number}
-                          </span>
-                          <button
-                            onClick={() => handleRemoveNumber(index)}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-4 mt-4">
-                  <button
+                <div className="mt-6 flex justify-end space-x-4">
+                  <Button
                     onClick={handleReferralCancel}
                     className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    type="primary"
                     onClick={handleConfirmReferrals}
-                    disabled={mobileNumbers.length === 0}
-                    className={`px-4 py-2 rounded-md ${
-                      mobileNumbers.length === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-purple-500 text-white hover:bg-purple-600"
-                    }`}
+                    className="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-md"
                   >
                     Confirm
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
           )}
-        </div>
 
-        <Modal
-          title="🎁 Special Offer: Free Rice Container!"
-          open={isPlanModalVisible}
-          onCancel={handlePlanCancel}
-          centered
-          width="90%"
-          style={{ maxWidth: "600px" }}
-          footer={null} // Custom footer defined below
-        >
-          <div className="container-modal-content">
-            <div className="text-center text-gray-800">
-              <p className="text-lg font-medium mt-1">
-                Buy a 26kg or 10kg rice bag and get a{" "}
-                <strong>FREE rice container</strong>!
-              </p>
-              <p className="text-sm text-gray-600 italic">
-                (Note: Container remains Oxy Group asset until ownership is
-                earned.)
-              </p>
-
-              <div className="mt-4 text-left">
-                <h3 className="text-md font-semibold mb-2">
-                  📋 How to Earn Ownership:
-                </h3>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>
-                    <strong>Plan A:</strong> Purchase 9 bags within the next 3
-                    years and the container is yours forever.
-                  </li>
-                  <li className="list-none text-center text-gray-500">
-                    AND/OR
-                  </li>
-                  <li>
-                    <strong>Plan B:</strong> Refer 9 people. Once each of them
-                    buys their first bag, the container is yours.
-                  </li>
-                </ul>
-              </div>
-
-              <p className="mt-4 text-sm font-semibold">
-                ⚠️ Note: If there's no purchase within 90 days or a 90+ day gap
-                between purchases, the container will be taken back.
-              </p>
-
-              <div className="mt-4">
-                <h4 className="font-semibold mb-3">Choose Plan(s):</h4>
-                <div className="space-y-4">
-                  {["planA", "planB"].map((planKey) => (
-                    <div key={planKey}>
-                      <label
-                        htmlFor={planKey}
-                        className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors shadow-sm ${
-                          selectedPlan.includes(planKey)
-                            ? "bg-purple-600 text-white border-purple-600"
-                            : "bg-white text-gray-800 hover:bg-gray-100 border-gray-300"
-                        }`}
+          {(isPlanModalVisible || forcePlanModalDisplay) && (
+            <Modal
+              title="Choose Your Free Container Plan"
+              open={isPlanModalVisible || forcePlanModalDisplay}
+              onOk={handlePlanOk}
+              onCancel={handlePlanCancel}
+              okText="Confirm"
+              cancelText="Cancel"
+              footer={
+                <div className="container-modal-footer">
+                  <Button
+                    key="cancel"
+                    onClick={handlePlanCancel}
+                    className="bg-gray-300 text-gray-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    key="submit"
+                    type="primary"
+                    onClick={handlePlanOk}
+                    className="bg-purple-500 hover:bg-purple-600"
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              }
+              className="container-modal"
+            >
+              <div className="container-modal-content">
+                <div>
+                  <label className="flex items-start space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlan.includes("planA")}
+                      onChange={() => {
+                        setSelectedPlan((prev) =>
+                          prev.includes("planA")
+                            ? prev.filter((p) => p !== "planA")
+                            : [...prev, "planA"]
+                        );
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <h3>Plan A: Free Steel Container Policy</h3>
+                      <p>
+                        Get a free steel container with your rice purchase,
+                        subject to our policy.
+                      </p>
+                      <ul className="list-disc pl-5">
+                        <li>
+                          Buy 9 bags of rice in 3 years to keep the container
+                          forever.
+                        </li>
+                        <li>
+                          Refer 9 friends who make a purchase – keep the
+                          container.
+                        </li>
+                        <li>Gap of 90 days = container is taken back.</li>
+                      </ul>
+                      <Button
+                        type="link"
+                        onClick={() => {
+                          setCurrentPlanDetails("planA");
+                          setIsPlanDetailsModalOpen(true);
+                        }}
+                        className="p-0 text-purple-500"
                       >
-                        <input
-                          type="checkbox"
-                          id={planKey}
-                          name="planSelection"
-                          checked={selectedPlan.includes(planKey)}
-                          onChange={() => {
-                            if (selectedPlan.includes(planKey)) {
-                              setSelectedPlan(
-                                selectedPlan.filter((p) => p !== planKey)
-                              );
-                            } else {
-                              setSelectedPlan([...selectedPlan, planKey]);
-                            }
-                          }}
-                          className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300"
-                        />
-                        <span className="text-sm font-medium">
-                          {planKey === "planA"
-                            ? "Plan A: Free Steel Container Policy"
-                            : "Plan B: Referral 9 members"}
-                        </span>
-                      </label>
+                        <Info size={16} className="inline mr-1" />
+                        View Details
+                      </Button>
                     </div>
-                  ))}
+                  </label>
+                </div>
+                <div>
+                  <label className="flex items-start space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlan.includes("planB")}
+                      onChange={() => {
+                        setSelectedPlan((prev) =>
+                          prev.includes("planB")
+                            ? prev.filter((p) => p !== "planB")
+                            : [...prev, "planB"]
+                        );
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <h3>Plan B: Referral Program</h3>
+                      <p>Earn a free container by referring friends.</p>
+                      <ul className="list-disc pl-5">
+                        <li>Refer friends using your unique link.</li>
+                        <li>They must sign up and buy rice.</li>
+                        <li>You get a free container + ₹50 cashback.</li>
+                      </ul>
+                      <Button
+                        type="link"
+                        onClick={() => {
+                          setCurrentPlanDetails("planB");
+                          setIsPlanDetailsModalOpen(true);
+                        }}
+                        className="p-0 text-purple-500"
+                      >
+                        <Info size={16} className="inline mr-1" />
+                        View Details
+                      </Button>
+                    </div>
+                  </label>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="container-modal-footer">
-            <button
-              onClick={handlePlanCancel}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                if (selectedPlan.length === 0) {
-                  Modal.warning({
-                    title: "Confirmation Required",
-                    content:
-                      "Please select any of the plans to avail the free container offer.",
-                    okText: "OK",
-                    onOk: () => {},
-                    cancelButtonProps: { style: { display: "none" } },
-                  });
-                } else {
-                  handlePlanOk();
-                }
-              }}
-              className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 ml-2"
-            >
-              Continue
-            </button>
-          </div>
-        </Modal>
+            </Modal>
+          )}
+        </div>
       </div>
       <Footer />
     </div>

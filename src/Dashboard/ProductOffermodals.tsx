@@ -3,15 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { message, Modal, Radio, Button, Tag, Space, Divider } from "antd";
 import { motion } from "framer-motion";
-import { 
-  ShoppingBag, 
-  Gift, 
-  Ticket, 
-  Info, 
-  CheckCircle, 
-} from "lucide-react";
+import { ShoppingBag, Gift, Ticket, Info, CheckCircle } from "lucide-react";
 import BASE_URL from "../Config";
-
 
 interface ProductItem {
   itemId?: string;
@@ -40,15 +33,19 @@ interface ProductOfferModalsReturn {
   handleItemAddedToCart: (item: ProductItem) => Promise<void>;
   freeItemsMap: { [key: string]: number };
   movieOfferMap: { [key: string]: boolean };
-  setFreeItemsMap: React.Dispatch<React.SetStateAction<{ [key: string]: number }>>;
-  setMovieOfferMap: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
+  setFreeItemsMap: React.Dispatch<
+    React.SetStateAction<{ [key: string]: number }>
+  >;
+  setMovieOfferMap: React.Dispatch<
+    React.SetStateAction<{ [key: string]: boolean }>
+  >;
 }
 
 // Instead of FC, define it as a function that returns an object
 const ProductOfferModals = ({
   fetchCartData,
   cartData,
-  cartItems
+  cartItems,
 }: ProductOfferModalsProps): ProductOfferModalsReturn => {
   // State variables for 1kg offer (One Plus One)
   const [hasShownOnePlusOne, setHasShownOnePlusOne] = useState(
@@ -59,7 +56,9 @@ const ProductOfferModals = ({
 
   // Using a ref to track whether onePlus modal is currently open
   const onePlusOneModalOpenRef = useRef(false);
-  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>({});
+  const [freeItemsMap, setFreeItemsMap] = useState<{ [key: string]: number }>(
+    {}
+  );
 
   // State variables for 5kg offer (Movie Ticket)
   const [hasShownMovieOffer, setHasShownMovieOffer] = useState(
@@ -67,7 +66,7 @@ const ProductOfferModals = ({
   );
   // Using a real state reference for movie modal shown
   const [movieOfferModalShown, setMovieOfferModalShown] = useState(false);
-  
+
   // Using a ref to track whether movie modal is currently open
   const movieOfferModalOpenRef = useRef(false);
   const [movieOfferMap, setMovieOfferMap] = useState<{
@@ -83,32 +82,32 @@ const ProductOfferModals = ({
   }, []);
 
   // 1Kg Rice Bag: One Plus One Offer
-  const checkOnePlusOneStatus = async (): Promise<boolean> => {
-    const customerId = localStorage.getItem("userId");
-    const accessToken = localStorage.getItem("accessToken");
-    if (!customerId || !accessToken) return true;
+  // const checkOnePlusOneStatus = async (): Promise<boolean> => {
+  //   const customerId = localStorage.getItem("userId");
+  //   const accessToken = localStorage.getItem("accessToken");
+  //   if (!customerId || !accessToken) return true;
 
-    const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
-    if (claimed) return true;
+  //   const claimed = localStorage.getItem("onePlusOneClaimed") === "true";
+  //   if (claimed) return true;
 
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+  //   try {
+  //     const response = await axios.get(
+  //       `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //       }
+  //     );
 
-      const offeravail = response.data?.cartQuantity || 0;
-      console.log("1+1 Offer available quantity:", offeravail);
-      return offeravail >= 2;
-    } catch (error) {
-      console.error("Failed to fetch 1+1 offer availability:", error);
-      return true; // Default to true to avoid showing modal on error
-    }
-  };
+  //     const offeravail = response.data?.cartQuantity || 0;
+  //     console.log("1+1 Offer available quantity:", offeravail);
+  //     return offeravail >= 2;
+  //   } catch (error) {
+  //     console.error("Failed to fetch 1+1 offer availability:", error);
+  //     return true; // Default to true to avoid showing modal on error
+  //   }
+  // };
 
   const findOneKgBag = (item: ProductItem): ProductItem | null => {
     const weight = parseWeight(item.weight);
@@ -120,11 +119,11 @@ const ProductOfferModals = ({
 
   const showOnePlusOneModal = (item: ProductItem) => {
     if (onePlusOneModalOpenRef.current) return;
-    
+
     const accessToken = localStorage.getItem("accessToken");
     const customerId = localStorage.getItem("userId");
     if (!accessToken || !customerId || !item.itemId) return;
-    
+
     // Set modal open flag to true
     onePlusOneModalOpenRef.current = true;
 
@@ -140,7 +139,8 @@ const ProductOfferModals = ({
         <div className="py-3">
           <div className="bg-purple-50 p-3 rounded-lg mb-4 border-l-4 border-purple-500">
             <p className="text-purple-800 font-medium mb-2">
-              Congratulations! You're eligible for our exclusive offer on 1kg rice bags!
+              Congratulations! You're eligible for our exclusive offer on 1kg
+              rice bags!
             </p>
             <div className="flex items-center justify-center mb-2">
               <div className="flex items-center bg-white rounded-lg p-2 shadow-sm">
@@ -162,11 +162,13 @@ const ProductOfferModals = ({
               </div>
             </div>
           </div>
-          
+
           <p>
-            Get another <strong className="text-purple-700">{item.title}</strong> absolutely free with your purchase!
+            Get another{" "}
+            <strong className="text-purple-700">{item.title}</strong> absolutely
+            free with your purchase!
           </p>
-          
+
           <div className="mt-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
             <h4 className="font-semibold text-yellow-700 flex items-center mb-2">
               <Info size={16} className="mr-1" /> Offer Terms
@@ -186,8 +188,8 @@ const ProductOfferModals = ({
           Add Free Bag
         </div>
       ),
-      okButtonProps: { 
-        style: { background: '#8B5CF6', borderColor: '#7C3AED' },
+      okButtonProps: {
+        style: { background: "#8B5CF6", borderColor: "#7C3AED" },
       },
       cancelText: "No Thanks",
       width: 480,
@@ -219,7 +221,7 @@ const ProductOfferModals = ({
           localStorage.setItem("onePlusOneClaimed", "true");
           setHasShownOnePlusOne(true);
           setOnePlusOneModalShown(true);
-          
+
           message.success({
             content: (
               <div className="flex items-center">
@@ -229,7 +231,7 @@ const ProductOfferModals = ({
             ),
             icon: null,
           });
-          
+
           await fetchCartData(item.itemId);
         } catch (err) {
           console.error("1+1 offer failed:", err);
@@ -243,7 +245,7 @@ const ProductOfferModals = ({
         // Reset modal flags when canceled
         onePlusOneModalOpenRef.current = false;
         setOnePlusOneModalShown(true);
-      }
+      },
     });
   };
 
@@ -254,11 +256,11 @@ const ProductOfferModals = ({
     const eligibleBag = findOneKgBag(item);
     if (!eligibleBag) return;
 
-    const isOfferClaimed = await checkOnePlusOneStatus();
-    if (isOfferClaimed || hasShownOnePlusOne) return;
+    // const isOfferClaimed = await checkOnePlusOneStatus();
+    // if (isOfferClaimed || hasShownOnePlusOne) return;
 
     // Show the modal
-    showOnePlusOneModal(eligibleBag);
+    // showOnePlusOneModal(eligibleBag);
   };
 
   // // 5Kg Rice Bag: Movie Ticket Offer
@@ -278,7 +280,7 @@ const ProductOfferModals = ({
 
   // const showMovieOfferModal = (item: ProductItem) => {
   //   if (movieOfferModalOpenRef.current) return;
-    
+
   //   // Set movie modal open flag to true
   //   movieOfferModalOpenRef.current = true;
 
@@ -305,11 +307,11 @@ const ProductOfferModals = ({
   //             <span className="text-sm text-white text-opacity-80">with your 5KG rice purchase</span>
   //           </div>
   //         </div>
-          
+
   //         <p className="mb-4">
   //           Enjoy a free PVR Movie Ticket to watch <strong>HIT: The Third Case</strong> on us!
   //         </p>
-          
+
   //         <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
   //           <h4 className="font-semibold text-blue-700 flex items-center mb-2">
   //             <Info size={16} className="mr-1" /> Offer Details
@@ -341,7 +343,7 @@ const ProductOfferModals = ({
   //         Claim Movie Ticket
   //       </div>
   //     ),
-  //     okButtonProps: { 
+  //     okButtonProps: {
   //       style: { background: '#8B5CF6', borderColor: '#7C3AED' },
   //     },
   //     cancelText: "No Thanks",
@@ -371,7 +373,7 @@ const ProductOfferModals = ({
   //           icon: null,
   //           duration: 5,
   //         });
-          
+
   //         if (item.itemId) {
   //           await fetchCartData(item.itemId);
   //         }
@@ -422,17 +424,17 @@ const ProductOfferModals = ({
   const handleItemAddedToCart = useCallback(
     async (item: ProductItem): Promise<void> => {
       const weight = parseWeight(item.weight);
-      
+
       // First check if we've already shown modals for this session
       if (onePlusOneModalShown && movieOfferModalShown) {
         return;
       }
-      
+
       // Check if any modals are currently open - don't show new modals
       if (onePlusOneModalOpenRef.current || movieOfferModalOpenRef.current) {
         return;
       }
-      
+
       // 1kg rice bag offer
       if (weight === 1 && !onePlusOneModalShown && !hasShownOnePlusOne) {
         await maybeShowOnePlusOneModal(item);
@@ -445,7 +447,7 @@ const ProductOfferModals = ({
       //   return; // Exit early to not show other modals
       // }
     },
-    [onePlusOneModalShown,  hasShownOnePlusOne]
+    [onePlusOneModalShown, hasShownOnePlusOne]
   );
 
   return {

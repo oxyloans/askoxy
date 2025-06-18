@@ -135,49 +135,42 @@ export default function ChatApp() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-purple-50 to-purple-100">
       {/* Header */}
-      <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-center gap-4">
-            <RobotOutlined className="text-3xl" />
-            <h1 className="text-3xl font-bold">AskOxy.AI Assistant</h1>
+      <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-center gap-3 sm:gap-4">
+         
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              AskOxy.AI Assistant
+            </h1>
           </div>
         </div>
       </header>
 
       {/* Chat Messages */}
-      <main className="flex-1 overflow-y-auto px-6 py-8">
+      <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto space-y-6">
           {messages.length === 0 && (
-            <div className="text-center py-16">
-              <RobotOutlined className="text-8xl text-gray-300 mb-8" />
-              <Text className="text-gray-500 text-xl block mb-8">
+            <div className="text-center py-20 sm:py-24">
+              <RobotOutlined className="text-8xl text-gray-300 mb-6" />
+              <Text className="text-gray-600 text-lg sm:text-xl block mb-6">
                 Welcome! How can I help you today?
               </Text>
-              <div className="flex flex-wrap gap-4 justify-center max-w-6xl mx-auto">
-                <Card
-                  className="p-4 hover:shadow-lg cursor-pointer border-purple-200 hover:border-purple-400 transition-all flex-1 min-w-72"
-                  onClick={() => setInput("What are OxyLoans interest rates?")}
-                >
-                  <Text className="text-gray-600 text-center text-lg">
-                    What are OxyLoans interest rates?
-                  </Text>
-                </Card>
-                <Card
-                  className="p-4 hover:shadow-lg cursor-pointer border-purple-200 hover:border-purple-400 transition-all flex-1 min-w-72"
-                  onClick={() => setInput("How do I apply for a loan?")}
-                >
-                  <Text className="text-gray-600 text-center text-lg">
-                    How do I apply for a loan?
-                  </Text>
-                </Card>
-                <Card
-                  className="p-4 hover:shadow-lg cursor-pointer border-purple-200 hover:border-purple-400 transition-all flex-1 min-w-72"
-                  onClick={() => setInput("Generate an image of a sunset")}
-                >
-                  <Text className="text-gray-600 text-center text-lg">
-                    Generate an image of a sunset
-                  </Text>
-                </Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-center">
+                {[
+                  "What are OxyLoans interest rates?",
+                  "How do I apply for a loan?",
+                  "Generate an image of a sunset",
+                ].map((prompt) => (
+                  <Card
+                    key={prompt}
+                    className="p-4 hover:shadow-xl cursor-pointer border border-purple-200 hover:border-purple-400 transition-all"
+                    onClick={() => setInput(prompt)}
+                  >
+                    <Text className="text-gray-600 text-center text-base sm:text-lg">
+                      {prompt}
+                    </Text>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -185,29 +178,31 @@ export default function ChatApp() {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex gap-4 ${
+              className={`flex gap-3 sm:gap-4 ${
                 msg.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
               {msg.role === "assistant" && (
                 <Avatar
                   icon={<RobotOutlined />}
-                  className="bg-purple-500 flex-shrink-0 mt-1"
+                  className="bg-purple-500 mt-1 flex-shrink-0"
                   size="large"
                 />
               )}
 
               <Card
-                className={`max-w-3xl shadow-lg border-0 ${
-                  msg.role === "user" ? "bg-purple-500 text-white" : "bg-white"
+                className={`max-w-3xl shadow-md border-0 ${
+                  msg.role === "user"
+                    ? "bg-purple-500 text-white"
+                    : "bg-white text-gray-800"
                 }`}
-                bodyStyle={{ padding: "20px" }}
+                bodyStyle={{ padding: "16px" }}
               >
                 {msg.isImage ? (
                   <div className="relative">
                     <img
                       src={msg.content}
-                      alt="AI Generated Content"
+                      alt="AI Generated"
                       className="rounded-lg max-w-full h-auto shadow-sm max-h-96"
                       loading="lazy"
                     />
@@ -215,28 +210,22 @@ export default function ChatApp() {
                       type="primary"
                       icon={<DownloadOutlined />}
                       onClick={() => handleImageDownload(msg.content)}
-                      className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 border-gray-300 text-gray-700 shadow-lg hover:shadow-xl"
+                      className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 border-gray-300 text-gray-700 shadow-lg"
                       size="large"
                       shape="circle"
                     />
                   </div>
                 ) : (
-                  <div>
-                    <Text
-                      className={`${
-                        msg.role === "user" ? "text-white" : "text-gray-800"
-                      } whitespace-pre-wrap leading-relaxed text-lg`}
-                    >
-                      {msg.content}
-                    </Text>
-                  </div>
+                  <Text className="whitespace-pre-wrap leading-relaxed text-base sm:text-lg">
+                    {msg.content}
+                  </Text>
                 )}
               </Card>
 
               {msg.role === "user" && (
                 <Avatar
                   icon={<UserOutlined />}
-                  className="bg-purple-500 flex-shrink-0 mt-1"
+                  className="bg-purple-500 mt-1 flex-shrink-0"
                   size="large"
                 />
               )}
@@ -244,17 +233,17 @@ export default function ChatApp() {
           ))}
 
           {loading && (
-            <div className="flex justify-start gap-4">
+            <div className="flex justify-start gap-3 sm:gap-4">
               <Avatar
                 icon={<RobotOutlined />}
-                className="bg-purple-500 flex-shrink-0 mt-1"
+                className="bg-purple-500 mt-1 flex-shrink-0"
                 size="large"
               />
-              <Card className="bg-white shadow-lg border-0 max-w-md">
+              <Card className="bg-white shadow-md border-0 max-w-md">
                 <div className="flex items-center gap-3 py-3">
                   <Spin size="default" />
                   <Text className="text-gray-600 text-base">
-                    Assistant is thinking...
+                     ASKOXY.AI Assistant is thinking...
                   </Text>
                 </div>
               </Card>
@@ -266,14 +255,14 @@ export default function ChatApp() {
       </main>
 
       {/* Input Area */}
-      <footer className="bg-white border-t border-gray-200 shadow-lg">
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="flex gap-4 items-end">
+      <footer className="bg-white border-t border-gray-200 shadow-md sticky bottom-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
             <div className="flex-1">
               <Input.TextArea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
+                placeholder="Type your message... (Enter to send, Shift+Enter for newline)"
                 onPressEnter={handleKeyPress}
                 disabled={loading}
                 autoSize={{ minRows: 1, maxRows: 4 }}
@@ -287,7 +276,7 @@ export default function ChatApp() {
               onClick={handleSend}
               disabled={!input.trim()}
               size="large"
-              className="bg-purple-500 hover:bg-purple-600 px-8"
+              className="bg-purple-500 hover:bg-purple-600 px-6"
             >
               Send
             </Button>
@@ -296,4 +285,5 @@ export default function ChatApp() {
       </footer>
     </div>
   );
+  
 }

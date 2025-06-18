@@ -419,14 +419,14 @@ const AllUniversities: React.FC = () => {
         <div><span className="font-medium">Intakes:</span> {course.intake}, {course.intake2}, {course.intake3}</div>
         {course.courseUrl && (
           <div>
-            <a
+            {/* <a
               href={course.courseUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
             >
               Learn More
-            </a>
+            </a> */}
           </div>
         )}
       </div>

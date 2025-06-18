@@ -8,28 +8,28 @@ function HeroSection() {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    const domainsSection = document.getElementById("usecases");
-    if (domainsSection) {
-      domainsSection.scrollIntoView({ behavior: "smooth" });
+    const usecases = document.getElementById("usecases");
+    if (usecases) {
+      usecases.scrollIntoView({ behavior: "smooth" });
     } else {
       navigate("/glmshome");
     }
   };
 
   return (
-    <section className="bg-gradient-to-br from-white via-blue-50 to-purple-50 py-12 lg:py-20 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+    <section className="relative bg-gradient-to-br from-white via-blue-50 to-purple-50 py-12 lg:py-20 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         {/* Left Content */}
-        <div className="animate-fade-in space-y-6 text-center lg:text-left">
-          <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
+        <div className="space-y-6 text-center lg:text-left animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               Global Lending Management Systems
             </span>
           </h1>
 
-          <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+          <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
             We are building <strong>Global Lending Management Solutions</strong>{" "}
-            with you—powered by <strong>60+ proven BFSI use cases</strong>,{" "}
+            with you — powered by <strong>60+ proven BFSI use cases</strong>,{" "}
             <strong>50+ expert roles</strong>, and{" "}
             <strong>AI-driven delivery models</strong>.
             <br />
@@ -39,14 +39,13 @@ function HeroSection() {
             <strong>Finastra</strong>, <strong>TCS BaNCS</strong>, and{" "}
             <strong>Avaloq</strong>.
             <br />
-            Our mission: <strong>modernize lending globally</strong> with domain
+            <strong>Mission:</strong> Modernize global lending with domain
             depth, platform expertise & scalable talent.
             <br />
-            We're enabling a <em>1M+ strong talent pool</em> with free training.
+            Free training for a <em>1M+ strong talent pool</em>.
             <br />
-            ✅ Get job-ready for top product companies
-            <br />✅ Become a hot prospect for{" "}
-            <strong>100,000+ banks and finance firms</strong>
+            ✅ Job-ready for top product companies
+            <br />✅ Hot prospect for <strong>100,000+ BFSI firms</strong>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -64,41 +63,43 @@ function HeroSection() {
         </div>
 
         {/* Right Content */}
-        <div className="relative animate-slide-in flex justify-center items-center px-4">
-          <div className="relative p-6 w-full max-w-sm text-center bg-white rounded-3xl shadow-xl space-y-4">
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-full w-64 h-64 mx-auto flex items-center justify-center overflow-hidden shadow-md">
+        <div className="relative animate-slide-in flex justify-center items-center">
+          <div className="relative p-6 w-full max-w-sm bg-white rounded-3xl shadow-xl text-center space-y-5">
+            <div className="rounded-full overflow-hidden w-56 h-56 sm:w-64 sm:h-64 mx-auto bg-gradient-to-r from-blue-100 to-purple-100 shadow-md">
               <img
                 src={RadhakrishnaImg}
                 alt="Radhakrishna"
                 className="w-full h-full object-cover rounded-full"
               />
             </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold text-gray-900">
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
                 RadhaKrishna.T
               </h3>
-              <p className="text-gray-600 text-lg">CEO & Co-Founder</p>
+              <p className="text-gray-600 text-md sm:text-lg">
+                CEO & Co-Founder
+              </p>
             </div>
             <div className="flex justify-center">
               <a
                 href="https://www.linkedin.com/in/oxyradhakrishna/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-3xl transition duration-300"
+                className="text-blue-600 hover:text-blue-800 text-2xl sm:text-3xl transition duration-300"
                 title="Connect on LinkedIn"
               >
                 <FaLinkedin />
               </a>
             </div>
 
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 opacity-30 rounded-full -translate-y-10 translate-x-10"></div>
-            <div className="absolute bottom-0 left-0 w-20 h-20 bg-purple-200 opacity-30 rounded-full translate-y-8 -translate-x-8"></div>
+            {/* Decorative Gradient Blobs */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 opacity-30 rounded-full -translate-y-10 translate-x-10 z-0"></div>
+            <div className="absolute bottom-0 left-0 w-20 h-20 bg-purple-200 opacity-30 rounded-full translate-y-8 -translate-x-8 z-0"></div>
           </div>
 
-          {/* Extra Background Shapes */}
-          <div className="hidden md:block absolute -bottom-6 right-4 w-24 h-24 bg-yellow-100 rounded-xl rotate-12 shadow-lg"></div>
-          <div className="hidden md:block absolute top-12 -left-4 w-16 h-16 bg-green-100 rounded-full shadow-md"></div>
+          {/* Background Shapes */}
+          <div className="hidden md:block absolute -bottom-6 right-4 w-24 h-24 bg-yellow-100 rounded-xl rotate-12 shadow-lg z-0"></div>
+          <div className="hidden md:block absolute top-12 -left-4 w-16 h-16 bg-green-100 rounded-full shadow-md z-0"></div>
         </div>
       </div>
     </section>

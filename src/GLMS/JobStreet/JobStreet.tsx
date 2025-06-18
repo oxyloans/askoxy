@@ -2,23 +2,18 @@ import React, { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
 
-
-
 const images = [
   "https://i.ibb.co/ksGJZZtz/Usecase.png",
-
   "https://i.ibb.co/PvkT9gXY/Usecase1.png",
   "https://i.ibb.co/wZTqnXXC/Usecase2.png",
   "https://i.ibb.co/S4h8zBj6/Usecase7.png",
   "https://i.ibb.co/7xpk9fkG/Usecase4.png",
   "https://i.ibb.co/RknWvhzt/Usecase10.png",
-
   "https://i.ibb.co/9HwBLCzD/20.png",
   "https://i.ibb.co/CKRF2qdB/18.png",
   "https://i.ibb.co/27bX7GGK/15.png",
   "https://i.ibb.co/Q7ZhS8Ft/Usecase13.png",
   "https://i.ibb.co/ZzHt82sV/21.png",
-
   "https://i.ibb.co/6RM0pG7p/16.png",
   "https://i.ibb.co/8DpcTcf8/Usecase11.png",
   "https://i.ibb.co/1YLXgzcP/Usecase8.png",
@@ -28,7 +23,7 @@ const images = [
   "https://i.ibb.co/cXc44M3Z/27.png",
   "https://i.ibb.co/ymY8fBs6/29.png",
   "https://i.ibb.co/GQ4KyMHS/31.png",
-  "https://i.ibb.co/SXDC5zTj/32.png"
+  "https://i.ibb.co/SXDC5zTj/32.png",
 ];
 
 const useCaseNames = [
@@ -50,13 +45,9 @@ const useCaseNames = [
   "Manual Allocation for Delinquent Customers",
   "Manual Reallocation for Delinquent Customers",
   "Legal Collections Workflow",
-  
   "Work Flow – Finance Rescheduling: Bulk Prepayment",
   "Work Flow – Finance Rescheduling: Due Date Change",
   "Work Flow – Repayment Deferral: Finance Wise Deferral",
-
-
-
 ];
 
 const JobStreet: React.FC = () => {
@@ -88,6 +79,42 @@ const JobStreet: React.FC = () => {
     title: name,
     image: images[idx],
   }));
+
+  const getRouteByUseCase = (title: string): string => {
+    const casKeywords = [
+      "Customer ID Creation Workflow (LOS)",
+      "Link Co-Applicant/Guarantor Workflow (LOS)",
+      "Link Customer ID to Loan Product (LOS)",
+      "Workflow for Loan Appraisal",
+      "Workflow for Loan Assessment",
+      "Work Flow for Recommendations",
+      "Risk Analysis Documentation",
+      "Work Flow for Sanction Letter Generation & Customer Response",
+      "Workflow for Loan Sanction",
+      "Workflow for Terms & Conditions",
+      "Workflow for Capturing Proposed Asset Details",
+      "Customer Eligibility & Loan Limit Check",
+      "Workflow for Evaluating the Net Worth",
+    ];
+
+    const cmsKeywords = [
+      "Manual Allocation for Delinquent Customers",
+      "Manual Reallocation for Delinquent Customers",
+      "Legal Collections Workflow",
+    ];
+
+    const fmsKeywords = [
+      "Work Flow – Finance Rescheduling: Bulk Prepayment",
+      "Work Flow – Finance Rescheduling: Due Date Change",
+      "Work Flow – Repayment Deferral: Finance Wise Deferral",
+    ];
+
+    if (casKeywords.includes(title)) return "/cas";
+    if (cmsKeywords.includes(title)) return "/cms";
+    if (fmsKeywords.includes(title)) return "/fms";
+
+    return ""; // fallback: no navigation
+  };
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? useCases.length - 1 : prev - 1));
@@ -182,14 +209,23 @@ const JobStreet: React.FC = () => {
             </div>
 
             {/* Use Case Content */}
-            <div className="px-4 sm:px-8">
+            <div
+              className="cursor-pointer"
+              onClick={() => {
+                const route = getRouteByUseCase(currentUseCase.title);
+                if (route) {
+                  window.location.href = route;
+                }
+              }}
+              aria-label={`Navigate to use case details for ${currentUseCase.title}`}
+            >
               <h3 className="text-lg sm:text-xl font-semibold text-indigo-700 mb-4">
                 {currentUseCase.title}
               </h3>
               <img
                 src={currentUseCase.image}
                 alt={`Use Case ${currentIndex + 1}`}
-                className="w-full max-h-[550px] sm:max-h-[600px] object-contain rounded-md"
+                className="w-full max-h-[550px] sm:max-h-[600px] object-contain rounded-md transition-transform duration-300 hover:scale-[1.02]"
               />
             </div>
 

@@ -84,6 +84,7 @@ const OrdersPage: React.FC = () => {
     deliveryBoyId: "",
     amountPaid: "",
   });
+  const [showValidation, setShowValidation] = useState(false);
 
   const loadOrders = async () => {
     try {
@@ -117,7 +118,8 @@ const OrdersPage: React.FC = () => {
         const filtered = fetchedExchangeOrders.filter(
           (order) =>
             order.status !== "EXCHANGEREQUESTED" &&
-            order.status !== "RECOMPLETED"
+            order.status !== "RECOMPLETED" &&
+            order.status !== "CANCELLED"
         );
         setFilteredExchangeOrders(filtered);
       } else {
@@ -368,13 +370,43 @@ const OrdersPage: React.FC = () => {
   };
 
   const handleExchangeOk = async () => {
-    const hasAtLeastOneField = Object.values(formData).some(
-      (value) => value.trim() !== ""
-    );
-    if (!hasAtLeastOneField) {
-      message.error("Please fill at least one field before submitting.");
+    setShowValidation(true);
+
+    const errors: string[] = [];
+
+    if (
+      !formData.returnBagWeight ||
+      isNaN(parseFloat(formData.returnBagWeight))
+    ) {
+      errors.push("Remaining Bag Weight is required.");
+    }
+
+    if (
+      !formData.amountCollected ||
+      isNaN(parseFloat(formData.amountCollected))
+    ) {
+      errors.push("Amount for Used Weight is required.");
+    }
+
+    if (!formData.amountPaid) {
+      errors.push("Please select if the amount is paid.");
+    }
+
+    if (!formData.deliveryBoyId) {
+      errors.push("Please select a delivery boy.");
+    }
+
+    if (errors.length > 0) {
+      message.error(
+        <>
+          {errors.map((err, idx) => (
+            <div key={idx}>{err}</div>
+          ))}
+        </>
+      );
       return;
     }
+
     try {
       await reassignExchangeOrder(
         selectedExchangeOrder?.exchangeId ?? "",
@@ -382,8 +414,10 @@ const OrdersPage: React.FC = () => {
       );
       message.success("Data submitted successfully!");
       setIsExchangeModalOpen(false);
-    } catch (error) {
-      message.error("error.message");
+      setShowValidation(false); // Reset validation display
+      // Add onRefresh() if you have a refresh function
+    } catch (error: any) {
+      message.error(error.message || "Something went wrong!");
     } finally {
       handleExchangeCancel();
     }
@@ -491,7 +525,7 @@ const OrdersPage: React.FC = () => {
     {
       title: "Details",
       key: "details",
-      width: 120,
+      width: 140,
       render: (record: {
         orderDate: string;
         grandTotal: number;
@@ -573,8 +607,7 @@ const OrdersPage: React.FC = () => {
       title: "Actions",
       dataIndex: "orderStatus",
       key: "orderStatus",
-      width: 160,
-      sorter: (a, b) => a.orderStatus.localeCompare(b.orderStatus),
+      width: 200,
       render: (text: string, record: any) => {
         return (
           <div className="flex flex-col items-center gap-2">
@@ -704,7 +737,7 @@ const OrdersPage: React.FC = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 80,
+      width: 120,
       render: (_, record) => (
         <div className="flex flex-wrap gap-1 justify-start">
           {(record.status === "EXCHANGEREQUESTED" ||
@@ -772,7 +805,9 @@ const OrdersPage: React.FC = () => {
         </Title>
 
         <div className="flex gap-4 text-sm text-gray-500">
-          <p>New: {filteredOrders.length}</p>
+          <p>
+            {name}: {filteredOrders.length}
+          </p>
           <p>Exchange: {filteredExchangeOrders.length}</p>
         </div>
       </div>
@@ -1015,6 +1050,7 @@ const OrdersPage: React.FC = () => {
               </div>
             </div>
           </div>
+
           <Form layout="vertical" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
@@ -1023,6 +1059,13 @@ const OrdersPage: React.FC = () => {
                     Remaining Bag Weight (kg)
                     <MdScale className="inline ml-2 text-gray-500" />
                   </span>
+                }
+                required
+                validateStatus={
+                  showValidation && !formData.returnBagWeight ? "error" : ""
+                }
+                help={
+                  showValidation && !formData.returnBagWeight ? "Required" : ""
                 }
               >
                 <InputNumber
@@ -1042,6 +1085,13 @@ const OrdersPage: React.FC = () => {
                     <MdCurrencyRupee className="inline ml-2 text-gray-500" />
                   </span>
                 }
+                required
+                validateStatus={
+                  showValidation && !formData.amountCollected ? "error" : ""
+                }
+                help={
+                  showValidation && !formData.amountCollected ? "Required" : ""
+                }
               >
                 <InputNumber
                   value={parseFloat(formData.amountCollected) || 0}
@@ -1053,10 +1103,16 @@ const OrdersPage: React.FC = () => {
                 />
               </Form.Item>
             </div>
+
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">Amount Paid</span>
               }
+              required
+              validateStatus={
+                showValidation && !formData.amountPaid ? "error" : ""
+              }
+              help={showValidation && !formData.amountPaid ? "Required" : ""}
             >
               <Select
                 placeholder="Select option"
@@ -1068,12 +1124,18 @@ const OrdersPage: React.FC = () => {
                 <Select.Option value="no">No</Select.Option>
               </Select>
             </Form.Item>
+
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">
                   Select Delivery Boy
                 </span>
               }
+              required
+              validateStatus={
+                showValidation && !formData.deliveryBoyId ? "error" : ""
+              }
+              help={showValidation && !formData.deliveryBoyId ? "Required" : ""}
             >
               <Select
                 placeholder="Select a delivery boy"
@@ -1091,10 +1153,11 @@ const OrdersPage: React.FC = () => {
                   ))}
               </Select>
             </Form.Item>
+
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium">
-                  New Bag Barcodes
+                  New Bag Barcodes (Optional)
                 </span>
               }
             >
@@ -1106,6 +1169,7 @@ const OrdersPage: React.FC = () => {
                 className="rounded-lg"
               />
             </Form.Item>
+
             <Form.Item
               label={<span className="text-gray-700 font-medium">Remarks</span>}
             >
@@ -1119,9 +1183,10 @@ const OrdersPage: React.FC = () => {
               />
             </Form.Item>
           </Form>
+
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
             <span className="text-yellow-800 text-sm font-medium">
-              Note: At least one field must be filled before submitting.
+              Note: All fields except remarks are mandatory.
             </span>
           </div>
         </div>

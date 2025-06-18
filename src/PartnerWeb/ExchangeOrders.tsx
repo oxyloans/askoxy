@@ -490,6 +490,7 @@ const ExchangeOrdersTable: React.FC = () => {
           "EXCHANGEREQUESTED",
           "ASSIGNTOCOLLECT",
           "COLLECTED",
+          "CANCELLED",
           "RECOMPLETED",
         ].map((status) => (
           <Button

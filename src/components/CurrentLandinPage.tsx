@@ -14,9 +14,12 @@ import UnicornGrid from "./SuperOurApp";
 const CurrentLandingPage: React.FC = () => {
   return (
     <>
-      <section>
-        <Header />
+    <section>
+      <Header />
       </section>
+      {/* <section>
+        <Header />
+      </section> */}
       {/* <section>
         <UnicornGrid />
       </section> */}

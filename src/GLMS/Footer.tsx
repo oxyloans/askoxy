@@ -9,8 +9,8 @@ const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white pt-14 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Grid: 4 Columns on large screens */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Company Info */}
           <div>
             <h4 className="text-2xl font-bold mb-4">
@@ -20,38 +20,38 @@ const Footer = () => {
               Modernizing loan management systems globally through domain
               expertise and innovative technology solutions.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex items-center space-x-4">
               <a
                 href="https://www.facebook.com/ASKOXYAI"
-                aria-label="Facebook"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-white transition"
+                aria-label="Facebook"
+                className="hover:text-white text-blue-600 transition duration-200"
               >
                 <Facebook size={20} />
               </a>
               <a
                 href="#"
                 aria-label="Twitter"
-                className="text-sky-400 hover:text-white transition"
+                className="hover:text-white text-sky-400 transition duration-200"
               >
                 <Twitter size={20} />
               </a>
               <a
                 href="https://www.linkedin.com/company/82577404/admin/dashboard/"
-                aria-label="LinkedIn"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:text-white transition"
+                aria-label="LinkedIn"
+                className="hover:text-white text-blue-500 transition duration-200"
               >
                 <Linkedin size={20} />
               </a>
               <a
                 href="https://www.instagram.com/askoxy.ai_oxyrice/"
-                aria-label="Instagram"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-pink-500 hover:text-white transition"
+                aria-label="Instagram"
+                className="hover:text-white text-pink-500 transition duration-200"
               >
                 <Instagram size={20} />
               </a>
@@ -66,7 +66,7 @@ const Footer = () => {
                 <li key={link}>
                   <a
                     href={`#${link.toLowerCase()}`}
-                    className="text-gray-400 hover:text-white transition"
+                    className="text-gray-400 hover:text-white transition duration-200"
                   >
                     {link}
                   </a>
@@ -90,7 +90,7 @@ const Footer = () => {
                     href={service.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-white transition"
+                    className="text-gray-400 hover:text-white transition duration-200"
                   >
                     {service.name}
                   </a>
@@ -113,7 +113,7 @@ const Footer = () => {
               <p>
                 <a
                   href="mailto:support@globalloans.com"
-                  className="hover:text-white transition"
+                  className="hover:text-white transition duration-200"
                 >
                   support@globalloans.com
                 </a>
@@ -121,7 +121,7 @@ const Footer = () => {
               <p>
                 <a
                   href="tel:+916300873713"
-                  className="hover:text-white transition"
+                  className="hover:text-white transition duration-200"
                 >
                   +91 6300873713
                 </a>
@@ -133,15 +133,15 @@ const Footer = () => {
         {/* Divider */}
         <div className="border-t border-gray-800 my-6"></div>
 
-        {/* Bottom Section */}
+        {/* Bottom Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center text-gray-400 text-sm gap-4">
           <p className="text-center sm:text-left">
-            &copy; {new Date().getFullYear()} Global Lending Management Solutions.
-            All rights reserved.
+            &copy; {new Date().getFullYear()} Global Lending Management
+            Solutions. All rights reserved.
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center hover:text-white transition"
+            className="flex items-center hover:text-white transition duration-200"
             aria-label="Scroll to top"
           >
             <span className="mr-2">Back to top</span>

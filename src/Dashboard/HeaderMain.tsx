@@ -7,7 +7,7 @@ import AskOxyLogo from "../assets/img/askoxylogostatic.png";
 import { CartContext } from "../until/CartContext";
 import axios from "axios";
 
-import  BASE_URL  from "../Config";
+import BASE_URL from "../Config";
 import { message } from "antd";
 import SearchBar from "../kart/SearchBar";
 
@@ -31,18 +31,20 @@ const Header: React.FC<HeaderProps> = ({
   const [searchValue, setSearchValue] = useState("");
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
-  const [activeButton, setActiveButton] = useState<"profile" | "cart" | null>(null);
+  const [activeButton, setActiveButton] = useState<"profile" | "cart" | null>(
+    null
+  );
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showValidationPopup, setShowValidationPopup] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [profileLoader, setProfileLoader] = useState(false);
-const [whatsappVerified, setWhatsappVerified] = useState(false);
-const [mobileVerified, setMobileVerified] = useState(false);
-const [isLoginWithWhatsapp, setIsLoginWithWhatsapp] = useState(false);
-const [firstName, setFirstName] = useState(""); // Only required field
-  
+  const [whatsappVerified, setWhatsappVerified] = useState(false);
+  const [mobileVerified, setMobileVerified] = useState(false);
+  const [isLoginWithWhatsapp, setIsLoginWithWhatsapp] = useState(false);
+  const [firstName, setFirstName] = useState(""); // Only required field
+
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
   };
@@ -102,18 +104,20 @@ const [firstName, setFirstName] = useState(""); // Only required field
 
   const searchProducts = async (query: string) => {
     if (!query.trim()) return;
-    
+
     setIsSearching(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/product/search?searchText=${encodeURIComponent(query)}`,
+        `${BASE_URL}/product-service/product/search?searchText=${encodeURIComponent(
+          query
+        )}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       setSearchResults(response.data || []);
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error("Error searching products:", error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -127,14 +131,14 @@ const [firstName, setFirstName] = useState(""); // Only required field
   const fetchCartData = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/customersCartItems?customerId=${customerId}`,
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       setCount(response.data.length);
     } catch (error) {
-      console.error('Error fetching cart items:', error);
+      console.error("Error fetching cart items:", error);
     }
   };
 
@@ -147,20 +151,20 @@ const [firstName, setFirstName] = useState(""); // Only required field
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (response.status === 200) {
         const profileData = response.data;
-  
+
         // Update verification statuses
         setWhatsappVerified(profileData.whatsappVerified);
         setMobileVerified(profileData.mobileVerified);
         if (profileData.whatsappVerified) {
           setIsLoginWithWhatsapp(true);
         }
-  
+
         // Update only required fields
         setFirstName(profileData.firstName || "");
-  
+
         // Check profile completion
         return !!(profileData.firstName && profileData.firstName.trim() !== "");
       }
@@ -171,7 +175,6 @@ const [firstName, setFirstName] = useState(""); // Only required field
     }
     return false;
   };
-  
 
   const handleCartClick = () => {
     if (!checkProfileCompletion()) {
@@ -192,7 +195,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (searchValue.trim()) {
       navigate("/main", { state: { searchQuery: searchValue } });
       setIsSearchVisible(false);
@@ -201,7 +204,9 @@ const [firstName, setFirstName] = useState(""); // Only required field
   };
 
   const handleSearchItemClick = (item: SearchResult) => {
-    navigate(`/main/product/${item.id}`, { state: { productName: item.productName } });
+    navigate(`/main/product/${item.id}`, {
+      state: { productName: item.productName },
+    });
     setIsSearchVisible(false);
     setSearchValue("");
     setIsFocused(false);
@@ -213,10 +218,10 @@ const [firstName, setFirstName] = useState(""); // Only required field
       // Reset search state when opening search overlay
       setSearchValue("");
       setSearchResults([]);
-      
+
       // Focus on the search input after the overlay is shown
       setTimeout(() => {
-        const searchInput = document.querySelector('.mobile-search-input');
+        const searchInput = document.querySelector(".mobile-search-input");
         if (searchInput) {
           (searchInput as HTMLInputElement).focus();
         }
@@ -234,21 +239,24 @@ const [firstName, setFirstName] = useState(""); // Only required field
   useEffect(() => {
     if (isSearchVisible) {
       // Prevent body scrolling when search overlay is shown
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
       // Re-enable body scrolling when search overlay is hidden
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     }
 
     return () => {
       // Make sure to clean up
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [isSearchVisible]);
 
   const renderSearchResults = () => {
     // Show predefined suggestions if no search or results
-    if (searchValue.length < 2 || (searchResults.length === 0 && !isSearching)) {
+    if (
+      searchValue.length < 2 ||
+      (searchResults.length === 0 && !isSearching)
+    ) {
       return (
         <div className="bg-white py-2 px-4">
           <p className="text-xs text-gray-500 mb-2">Suggested searches:</p>
@@ -303,16 +311,18 @@ const [firstName, setFirstName] = useState(""); // Only required field
             ))}
           </>
         ) : (
-          <p className="text-sm text-gray-500">No results found for "{searchValue}"</p>
+          <p className="text-sm text-gray-500">
+            No results found for "{searchValue}"
+          </p>
         )}
       </div>
     );
   };
 
   const renderDesktopSearchBar = () => (
-    <form 
+    <form
       id="search-container"
-      onSubmit={handleSearchSubmit} 
+      onSubmit={handleSearchSubmit}
       className="relative w-full group"
     >
       <input
@@ -340,7 +350,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
             <FaTimes className="text-base" />
           </button>
         )}
-        <button 
+        <button
           type="submit"
           className="ml-2 text-gray-400 hover:text-purple-500 hover:scale-110 transition-all duration-200"
           aria-label="Submit search"
@@ -348,7 +358,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
           <FaSearch className="text-base" />
         </button>
       </div>
-  
+
       {/* Updated Search Results Dropdown */}
       {isFocused && (
         <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -373,7 +383,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
               >
                 <FaBars className="w-5 h-5" />
               </button>
-              
+
               <img
                 src={AskOxyLogo}
                 className="h-8 w-auto sm:h-12 object-contain cursor-pointer"
@@ -406,20 +416,27 @@ const [firstName, setFirstName] = useState(""); // Only required field
                 onMouseUp={() => setActiveButton(null)}
                 onMouseLeave={() => setActiveButton(null)}
                 className={`p-2 text-gray-700 hover:bg-gray-50 rounded-full hover:text-green-600 transition-all duration-300 flex items-center 
-                  ${location.pathname === "/main/profile" ? "bg-green-50 text-green-600" : ""}`}
+                  ${
+                    location.pathname === "/main/profile"
+                      ? "bg-green-50 text-green-600"
+                      : ""
+                  }`}
                 aria-label="Profile"
               >
                 <UserCircle
                   size={20}
                   className={`transition-colors duration-300 
-                    ${location.pathname === "/main/profile"
-                      ? "text-green-600"
-                      : activeButton === "profile"
-                      ? "text-green-500"
-                      : "text-gray-700"
+                    ${
+                      location.pathname === "/main/profile"
+                        ? "text-green-600"
+                        : activeButton === "profile"
+                        ? "text-green-500"
+                        : "text-gray-700"
                     }`}
                 />
-                <span className="ml-1 hidden sm:block text-sm font-medium">Profile</span>
+                <span className="ml-1 hidden sm:block text-sm font-medium">
+                  Profile
+                </span>
               </button>
 
               {/* Cart button with text (for web view) */}
@@ -464,7 +481,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
         <div className="fixed inset-0 bg-white z-50 flex flex-col animate-fadeIn sm:hidden">
           {/* Search header */}
           <div className="border-b border-gray-200 px-4 py-3 flex items-center shadow-sm">
-            <form 
+            <form
               className="flex-1 flex items-center relative rounded-full bg-gray-100 px-4 py-2"
               onSubmit={handleSearchSubmit}
             >
@@ -477,7 +494,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
                 autoFocus
               />
               {searchValue && (
-                <button 
+                <button
                   type="button"
                   onClick={() => setSearchValue("")}
                   className="ml-1 text-gray-400"
@@ -489,7 +506,7 @@ const [firstName, setFirstName] = useState(""); // Only required field
                 <FaSearch size={16} />
               </button>
             </form>
-            <button 
+            <button
               onClick={closeSearch}
               className="ml-3 p-1 text-gray-500 hover:text-gray-700"
               aria-label="Close search"
@@ -497,11 +514,9 @@ const [firstName, setFirstName] = useState(""); // Only required field
               <X size={20} />
             </button>
           </div>
-          
+
           {/* Search results container */}
-          <div className="flex-1 overflow-y-auto">
-            {renderSearchResults()}
-          </div>
+          <div className="flex-1 overflow-y-auto">{renderSearchResults()}</div>
         </div>
       )}
 

@@ -9,7 +9,7 @@ const domains = [
     link: "/cas",
     description:
       "Optimized workflows for onboarding and expanding your customer base efficiently.",
-    icon: <Users size={32} className="text-blue-600" />,
+    icon: <Users size={28} className="text-blue-600" />,
     useCases: [
       {
         id: "cas-1",
@@ -39,26 +39,26 @@ const domains = [
     link: "/cms",
     description:
       "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
-    icon: <CreditCard size={32} className="text-blue-600" />,
+    icon: <CreditCard size={28} className="text-blue-600" />,
     useCases: [
       {
         id: "col-1",
-        name: "Allocation of Delinquent Cases_Allocation Hold",
+        name: "Allocation Hold",
         desc: "Monitor outstanding debts with ease",
       },
       {
         id: "col-2",
-        name: "Allocation of Delinquent Cases_Define Allocation contract",
+        name: "Define Allocation Contract",
         desc: "Automated reminders and communication",
       },
       {
         id: "col-3",
-        name: "Allocation of Delinquent Cases_Manual Allocation",
+        name: "Manual Allocation",
         desc: "Customizable repayment timelines",
       },
       {
         id: "col-4",
-        name: "Allocation of Delinquent Cases_Manual Reallocation",
+        name: "Manual Reallocation",
         desc: "Seamless payment handling within system",
       },
     ],
@@ -69,7 +69,7 @@ const domains = [
     link: "/fms",
     description:
       "End-to-end financial tracking, processing, and reporting for loan servicing.",
-    icon: <DollarSign size={32} className="text-blue-600" />,
+    icon: <DollarSign size={28} className="text-blue-600" />,
     useCases: [
       {
         id: "fms-1",
@@ -83,12 +83,12 @@ const domains = [
       },
       {
         id: "fms-3",
-        name: "WF_ Installment Prepayment",
+        name: "Installment Prepayment",
         desc: "Real-time ledger updates and audits",
       },
       {
         id: "fms-4",
-        name: "WF_ NPA Grading",
+        name: "NPA Grading",
         desc: "Generate balance sheets and statements",
       },
     ],
@@ -97,59 +97,62 @@ const domains = [
 
 const DomainSection = () => {
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-green-50">
-      <div className="max-w-screen-xl mx-auto">
+    <section className="py-12 md:py-20 bg-gradient-to-br from-blue-50 to-green-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
             Global Lending Management Solutions
           </h2>
-          <p className="mt-2 text-gray-600 text-base max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
             Explore systems that streamline every phase of the loan lifecycle,
             from origination to servicing.
           </p>
         </div>
 
-        <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {domains.map((domain) => (
             <Link
-              key={domain.id}
               to={domain.link}
-              className="group bg-white rounded-xl shadow hover:shadow-xl transition duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              key={domain.id}
+              className="bg-white rounded-xl shadow hover:shadow-2xl transition-all duration-300 group overflow-hidden cursor-pointer flex flex-col justify-between"
             >
-              <div className="flex flex-col justify-between h-full p-6">
-                <div>
-                  <div className="flex items-center mb-4">
-                    <div className="bg-blue-100 rounded-full p-2 mr-3">
-                      {domain.icon}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {domain.title}
-                    </h3>
+              <div className="p-6 flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-center mb-4">
+                  <div className="bg-blue-100 rounded-full p-2 mr-3">
+                    {domain.icon}
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {domain.description}
-                  </p>
-
-                  <div>
-                    <h4 className="font-medium text-gray-700 text-sm mb-2">
-                      Use Cases:
-                    </h4>
-                    <ul className="space-y-2">
-                      {domain.useCases.map((uc) => (
-                        <li key={uc.id}>
-                          <div className="text-gray-800 font-medium text-sm">
-                            {uc.name}
-                          </div>
-                          <p className="text-gray-500 text-xs">{uc.desc}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {domain.title}
+                  </h3>
                 </div>
 
-                <div className="mt-5 flex items-center text-blue-600 text-sm font-medium hover:text-blue-800">
+                {/* Description */}
+                <p className="text-sm text-gray-600 mb-4">
+                  {domain.description}
+                </p>
+
+                {/* Use Cases */}
+                <div className="mb-4">
+                  <h4 className="font-medium text-gray-700 text-sm mb-2">
+                    Use Cases:
+                  </h4>
+                  <ul className="space-y-2">
+                    {domain.useCases.map((uc) => (
+                      <li key={uc.id}>
+                        <div className="text-sm font-medium text-gray-800">
+                          {uc.name}
+                        </div>
+                        <p className="text-xs text-gray-500">{uc.desc}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Learn More */}
+                <div className="mt-auto text-blue-600 font-medium text-sm flex items-center group-hover:text-blue-800">
                   Learn more
-                  <ChevronRight className="ml-1 w-4 h-4 transition-transform transform group-hover:translate-x-1" />
+                  <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </Link>

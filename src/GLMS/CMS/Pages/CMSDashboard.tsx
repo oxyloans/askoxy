@@ -123,7 +123,7 @@ const CMSDashboard: React.FC = () => {
             <div className="hidden md:flex gap-3">
               <button
                 onClick={handleGLMSClick}
-                className="bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 text-white px-5 py-2 rounded-md transition"
+                className="bg-indigo-100 text-blue-700 rounded hover:bg-indigo-200 text-blue px-5 py-2 rounded-md transition"
               >
                 Go To GLMS
               </button>
@@ -145,7 +145,7 @@ const CMSDashboard: React.FC = () => {
             <div className="md:hidden pb-4 pt-2 gap-3">
               <button
                 onClick={handleGLMSClick}
-                className="bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 px-5 py-2 rounded-md transition"
+                className="bg-indigo-100 text-blue-700 rounded hover:bg-indigo-200 px-5 py-2 rounded-md transition"
               >
                 Go To GLMS
               </button>

@@ -64,22 +64,23 @@ const VideoSection = () => {
   return (
     <section className="py-12 md:py-20 bg-gradient-to-br from-purple-50 to-yellow-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Heading */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
             See Our Platform in Action
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-            Watch these videos to learn how our Global Loan Management System
-            can transform your business operations.
+          <p className="text-gray-600 max-w-xl mx-auto text-sm sm:text-base">
+            Watch these videos to learn how our Global Loan Management System can transform your business operations.
           </p>
         </div>
 
+        {/* Video Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {displayedVideos.map((video) => (
             <div
               key={video.id}
               onClick={() => setModalVideo(video.embedUrl)}
-              className="bg-white rounded-xl shadow hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden"
+              className="bg-white rounded-xl shadow-md hover:shadow-2xl transition duration-300 cursor-pointer group overflow-hidden"
             >
               <div className="relative aspect-video">
                 <img
@@ -87,36 +88,34 @@ const VideoSection = () => {
                   alt={video.title}
                   className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <PlayCircle className="w-12 h-12 text-white" />
                 </div>
               </div>
               <div className="p-5">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {video.title}
-                </h3>
-                <p className="text-sm text-gray-600 mt-2 line-clamp-3">
-                  {video.description}
-                </p>
+                <h3 className="text-lg font-semibold text-gray-800">{video.title}</h3>
+                <p className="text-sm text-gray-600 mt-2 line-clamp-3">{video.description}</p>
               </div>
             </div>
           ))}
         </div>
 
+        {/* View All Button */}
         {!showAll && videos.length > 3 && (
           <div className="text-center mt-10">
             <button
               onClick={() => setShowAll(true)}
-              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition font-medium text-sm sm:text-base"
+              className="px-6 py-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition font-medium text-sm sm:text-base"
             >
               View All Videos
             </button>
           </div>
         )}
 
+        {/* Video Modal */}
         {modalVideo && (
-          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-            <div className="relative w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden animate-fadeIn">
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="relative w-full max-w-5xl rounded-lg overflow-hidden bg-white shadow-xl animate-fadeIn">
               <button
                 onClick={() => setModalVideo(null)}
                 className="absolute top-4 right-4 text-gray-700 hover:text-red-600 z-10"
@@ -124,7 +123,7 @@ const VideoSection = () => {
               >
                 <X className="w-6 h-6" />
               </button>
-              <div className="aspect-video w-full">
+              <div className="w-full aspect-video">
                 <iframe
                   src={`${modalVideo}?autoplay=1`}
                   title="Video Player"

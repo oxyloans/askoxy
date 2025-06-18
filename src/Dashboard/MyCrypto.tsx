@@ -305,7 +305,7 @@ const MyCrypto: React.FC = () => {
 
   const navItems: NavItem[] = [
     {
-      label: "BMVCoin",
+      label: "BMVCoins",
       icon: Info,
       color: "purple",
       action: () => setShowBmvModal(true),
@@ -1091,7 +1091,7 @@ const MyCrypto: React.FC = () => {
               </div>
               <div className="ml-3 sm:ml-4">
                 <h1 className="text-3xl sm:text-2xl mx-2 mt-2 font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  MyCrypto
+                  My Crypto
                 </h1>
               </div>
             </div>
@@ -1246,7 +1246,7 @@ const MyCrypto: React.FC = () => {
                 {/* BMVCoin info */}
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-                    BMVCoin
+                    BMVCoins
                   </h2>
                   <button
                     onClick={() => setShowBmvModal(true)}
