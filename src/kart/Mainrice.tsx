@@ -9,21 +9,33 @@ import rice2 from "../assets/img/ricecard2.png";
 import rice3 from "../assets/img/ricecard3.png";
 import rice4 from "../assets/img/ricecard4.png";
 import CARD from "../assets/img/oxycard1.png";
+import RiceOfferFAQs from "../Dashboard/Faqs";
 import { CartContext } from "../until/CartContext";
-import VideoImage from "../assets/img/Videothumb.png"
+import VideoImage from "../assets/img/Videothumb.png";
 import {
-  FaSearch,FaUniversity, FaMoneyBillWave ,
+  FaSearch,
+  FaUniversity,
+  FaMoneyBillWave,
   FaTimes,
   FaQuestionCircle,
-  FaExternalLinkAlt
+  FaExternalLinkAlt,
 } from "react-icons/fa";
-import { 
-  GraduationCap, XIcon,
-  Award, PlayCircle,
-  FileText, Globe,
-  ArrowRight 
-} from 'lucide-react';
+import {
+  GraduationCap,
+  XIcon,
+  Award,
+  PlayCircle,
+  FileText,
+  Globe,
+  ArrowRight,
+  Gift,
+  Sparkles,
+  Package,
+  ShoppingBag,
+  Info,
+} from "lucide-react";
 import BASE_URL from "../Config";
+import { Modal } from "antd";
 interface Item {
   itemName: string;
   itemId: string;
@@ -67,7 +79,6 @@ const ProductSkeletonItem: React.FC = () => (
 const CategorySkeletonItem: React.FC = () => (
   <div className="px-2 py-1 rounded-full bg-gray-200 animate-pulse w-24 h-8 mx-1"></div>
 );
-
 
 // New OxyLoans Modal Component
 const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
@@ -156,7 +167,6 @@ const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     </motion.div>
   );
 };
-
 
 const SkeletonLoader: React.FC = () => (
   <>
@@ -511,7 +521,7 @@ const Ricebags: React.FC = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("All Items");
   const [isHovered, setIsHovered] = useState(false);
-  const [activeTab, setActiveTab] = useState('video');
+  const [activeTab, setActiveTab] = useState("video");
   const [showScholarshipModal, setShowScholarshipModal] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [cart, setCart] = useState<{ [key: string]: number }>({});
@@ -526,6 +536,7 @@ const Ricebags: React.FC = () => {
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [noResults, setNoResults] = useState(false);
   const [showAppModal, setShowAppModal] = useState(false);
+  const [showOffersModal, setShowOffersModal] = useState(false);
   // New state for FAQ modal
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [showOxyLoansModal, setShowOxyLoansModal] = useState(false);
@@ -767,10 +778,8 @@ const Ricebags: React.FC = () => {
     setTouchEnd(e.touches[0].clientX);
   };
 
-
-  
   const VideoModal = () => (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
       onClick={() => setIsVideoModalOpen(false)}
     >
@@ -781,7 +790,7 @@ const Ricebags: React.FC = () => {
         className="w-full max-w-4xl relative aspect-video"
         onClick={(e) => e.stopPropagation()}
       >
-        <button 
+        <button
           onClick={() => setIsVideoModalOpen(false)}
           className="absolute top-2 right-2 z-10 bg-white/20 rounded-full p-2 hover:bg-white/40 transition-colors"
         >
@@ -836,11 +845,9 @@ const Ricebags: React.FC = () => {
     }
     // On desktop, the modal will show both options
   };
- 
 
   return (
     <div className="min-h-screen">
-      
       {/* Image Slider */}
       <div
         className="relative w-full overflow-hidden cursor-pointer"
@@ -1051,6 +1058,103 @@ const Ricebags: React.FC = () => {
             Discover our exclusive collection of premium rice varieties
           </p>
         </motion.div>
+        <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
+          <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl overflow-hidden relative mb-6">
+            <div className="relative px-4 md:px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              {/* Left Side */}
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-full">
+                  <Gift className="text-white" size={24} />
+                </div>
+                <h1 className="text-white text-lg md:text-2xl font-bold flex items-center gap-2 flex-wrap">
+                  <span className="bg-white text-emerald-600 px-3 py-1 rounded-lg font-black shadow-lg">
+                    Get ₹50 Cashback
+                  </span>
+                  <span className="text-sm md:text-lg">
+                    on your first order!
+                  </span>
+                  <Sparkles className="text-yellow-300" size={20} />
+                </h1>
+              </div>
+              <button
+                onClick={() => setActiveCategory("All Items")}
+                className="bg-white text-emerald-600 hover:bg-gray-50 px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg"
+              >
+                Order Now <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-lg shadow-lg overflow-hidden">
+              <div className="px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                {/* Left Section */}
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-white text-lg md:text-xl font-bold">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <span className="bg-white text-yellow-600 px-2 py-1 rounded-md font-black text-lg md:text-xl shadow-md">
+                        Up to ₹40 Cashback
+                      </span>
+                      <span className="text-sm md:text-base block">
+                        on Cashews – on Your First Order!
+                      </span>
+                    </div>
+                  </h2>
+                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center w-fit">
+                    <Package size={12} className="mr-1" />
+                    <span className="font-medium text-xs">Premium Quality</span>
+                  </div>
+                </div>
+
+                {/* Right Section – Button */}
+                <div className="self-start md:self-center">
+                  <button
+                    onClick={() =>
+                      setActiveCategory("Cashew nuts upto ₹40 cashback")
+                    }
+                    className="bg-white text-yellow-700 hover:bg-yellow-50 px-4 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap shadow-md"
+                  >
+                    Shop Now <ArrowRight size={12} className="ml-1" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-lg shadow-lg overflow-hidden">
+              <div className="px-4 py-3 md:px-6 md:py-4 flex flex-row items-center justify-between">
+                <div className="flex-1">
+                  <h2 className="text-white text-lg md:text-xl font-bold mb-2">
+                    Exclusive Rice Offers!
+                  </h2>
+                  <div className="flex flex-wrap gap-1 text-xs">
+                    <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                      <Package size={10} className="mr-1" /> 10kg → Free
+                      Container
+                    </div>
+                    <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                      <ShoppingBag size={10} className="mr-1" /> 26kg → Free
+                      Container
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  <button
+                    onClick={() => setShowOffersModal(true)}
+                    className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-3 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap"
+                  >
+                    <Info size={12} className="mr-1" /> FAQ's
+                  </button>
+                  <button
+                    onClick={() => setActiveCategory("Low GI")}
+                    className="bg-white text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap"
+                  >
+                    Shop Now <ArrowRight size={12} className="ml-1" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {noResults ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -1096,7 +1200,7 @@ const Ricebags: React.FC = () => {
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-24 right-4 p-3 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white z-50"
+        className="fixed bottom-24 right-4 w-14 h-14 md:w-auto md:h-auto p-3 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white z-50 flex items-center justify-center"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
         <svg
@@ -1143,7 +1247,19 @@ const Ricebags: React.FC = () => {
               ))}
         </div>
       </nav>
-
+      <Modal
+        visible={showOffersModal}
+        onCancel={() => setShowOffersModal(false)}
+        footer={null}
+        width={1000}
+        centered
+        bodyStyle={{ padding: 0 }}
+        className="promotional-offers-modal"
+      >
+        <div className="p-0">
+          <RiceOfferFAQs />
+        </div>
+      </Modal>
       <Footer />
     </div>
   );

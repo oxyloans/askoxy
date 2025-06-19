@@ -1,3 +1,5 @@
+//page-2
+
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -18,6 +20,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
+  Maximize2,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
@@ -57,6 +60,21 @@ interface Message {
   type: "sent" | "received" | "system";
 }
 
+interface GoldPriceUrl {
+  id: string;
+  goLdUrls: string | null;
+  description: string;
+}
+
+interface FullscreenImage extends GoldImage {
+  index: number;
+}
+interface GoldImage {
+  [key: string]: any;
+  id: string;
+  imageUrl: string;
+}
+
 interface ItemImage {
   imageId: string;
   imageUrl: string;
@@ -75,6 +93,9 @@ const ItemDisplayPage = () => {
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
+  const [fullscreenImage, setFullscreenImage] =
+    useState<FullscreenImage | null>(null);
+  const [wasModalOpen, setWasModalOpen] = useState<boolean>(false);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -88,12 +109,33 @@ const ItemDisplayPage = () => {
     items: {}, // Stores boolean values for each item
     status: {}, // Stores status strings for each item
   });
+  const [modalData, setModalData] = useState<{
+    images: GoldImage[];
+    urls: string[];
+  }>({ images: [], urls: [] });
   // Added state for Special Offers modal
-  const [offerModal, setOfferModal] = useState<{ visible: boolean; content: string }>({
+  const [offerModal, setOfferModal] = useState<{
+    visible: boolean;
+    content: string;
+  }>({
     visible: false,
     content: "",
   });
-  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(new Set());
+  const [goldPriceUrls, setGoldPriceUrls] = useState<
+    GoldPriceUrl | undefined
+  >();
+  const [goldPriceModal, setGoldPriceModal] = useState<{
+    visible: boolean;
+    urls: string[];
+    images: GoldImage[];
+  }>({
+    visible: false,
+    urls: [],
+    images: [],
+  });
+  const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(
+    new Set()
+  );
 
   const context = useContext(CartContext);
 
@@ -201,7 +243,8 @@ const ItemDisplayPage = () => {
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      const customerCart: CartItem[] = response.data?.customerCartResponseList || [];
+      const customerCart: CartItem[] =
+        response.data?.customerCartResponseList || [];
 
       console.log("fetchCartData API response:", response.data);
 
@@ -254,7 +297,13 @@ const ItemDisplayPage = () => {
         ) {
           setOfferModal({
             visible: true,
-            content: `<b>2+1 Offer Is Active.</b><br><br>Buy 2 Bags of ${addItem.itemName} of ${normalizeWeight(addItem.weight)} Kg and get 1 Bag of ${freeItem.itemName} of ${normalizeWeight(freeItem.weight)} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+            content: `<b>2+1 Offer Is Active.</b><br><br>Buy 2 Bags of ${
+              addItem.itemName
+            } of ${normalizeWeight(addItem.weight)} Kg and get 1 Bag of ${
+              freeItem.itemName
+            } of ${normalizeWeight(
+              freeItem.weight
+            )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`2+1_${addItem.itemId}`);
         }
@@ -274,13 +323,16 @@ const ItemDisplayPage = () => {
             normalizeWeight(item.weight) === 1.0 &&
             item.cartQuantity === 2
         );
-        if (
-          freeItems &&
-          !newDisplayedOffers.has(`5+2_${addItem.itemId}`)
-        ) {
+        if (freeItems && !newDisplayedOffers.has(`5+2_${addItem.itemId}`)) {
           setOfferModal({
             visible: true,
-            content: `<b>5+2 Offer Is Active.</b><br><br>Buy 1 Bag of ${addItem.itemName} of ${normalizeWeight(addItem.weight)} Kg and get 2 Bags of ${freeItems.itemName} of ${normalizeWeight(freeItems.weight)} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+            content: `<b>5+2 Offer Is Active.</b><br><br>Buy 1 Bag of ${
+              addItem.itemName
+            } of ${normalizeWeight(addItem.weight)} Kg and get 2 Bags of ${
+              freeItems.itemName
+            } of ${normalizeWeight(
+              freeItems.weight
+            )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`5+2_${addItem.itemId}`);
         }
@@ -290,7 +342,8 @@ const ItemDisplayPage = () => {
       const containerOfferItems = customerCart.filter(
         (item) =>
           item.status === "ADD" &&
-          (normalizeWeight(item.weight) === 10.0 || normalizeWeight(item.weight) === 26.0) &&
+          (normalizeWeight(item.weight) === 10.0 ||
+            normalizeWeight(item.weight) === 26.0) &&
           item.cartQuantity >= 1
       );
       for (const addItem of containerOfferItems) {
@@ -344,7 +397,7 @@ const ItemDisplayPage = () => {
 
   const fetchRelatedItems = async () => {
     if (!itemDetails) return;
-    
+
     try {
       const response = await axios.get(
         `${BASE_URL}/product-service/showItemsForCustomrs`
@@ -362,7 +415,10 @@ const ItemDisplayPage = () => {
           )
       );
 
-      if (matchingCategory && Array.isArray(matchingCategory.itemsResponseDtoList)) {
+      if (
+        matchingCategory &&
+        Array.isArray(matchingCategory.itemsResponseDtoList)
+      ) {
         // Extract related items, excluding the selected one
         const categoryItems = matchingCategory.itemsResponseDtoList
           .filter((item: any) => item.itemId !== itemDetails.itemId)
@@ -503,7 +559,6 @@ const ItemDisplayPage = () => {
             );
             console.log("PATCH success:", patchRes.status, patchRes.data);
           } catch (error) {
-            // Check if the error is an AxiosError using 'instanceof'
             if (error instanceof AxiosError && error.response) {
               const { status, data } = error.response;
               console.warn("PATCH error response:", status, data);
@@ -669,13 +724,13 @@ const ItemDisplayPage = () => {
 
   // Image navigation functions
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev === 0 ? getAllImages().length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev === getAllImages().length - 1 ? 0 : prev + 1
     );
   };
@@ -683,22 +738,98 @@ const ItemDisplayPage = () => {
   // Function to get all images (existing + new from API)
   const getAllImages = () => {
     const images = [];
-    
+
     // Add existing item image if available
     if (itemDetails?.itemImage || itemDetails?.image) {
       images.push({
-        imageId: 'existing',
+        imageId: "existing",
         imageUrl: itemDetails.itemImage || itemDetails.image,
-        itemId: itemDetails.itemId
+        itemId: itemDetails.itemId,
       });
     }
-    
+
     // Add images from API
     if (itemImages && itemImages.length > 0) {
       images.push(...itemImages);
     }
-    
+
     return images;
+  };
+
+  // Return both values instead of setting state inside
+  const fetchGoldDetails = async (id: string) => {
+    try {
+      const [imagesResponse, urlsResponse] = await Promise.all([
+        axios.get(
+          `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${id}`
+        ),
+        axios.get(
+          `${BASE_URL}/product-service/goldUrsBasedOnItemId?itemId=${id}`
+        ),
+      ]);
+
+      const rawImages = imagesResponse.data?.list || [];
+      const images: GoldImage[] = rawImages.map(
+        (img: { images: string }, index: number) => ({
+          id: `image-${index}`,
+          imageUrl: img.images,
+        })
+      );
+
+      const urlsRaw = urlsResponse.data?.goLdUrls || "";
+      const urls = urlsRaw
+        .split(",")
+        .map((url: string) => url.trim())
+        .filter(Boolean);
+
+      return { images, urls };
+    } catch (error) {
+      console.error("Error fetching gold details:", error);
+      return { images: [], urls: [] };
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && fullscreenImage) {
+        closeFullscreen();
+      }
+    };
+
+    if (fullscreenImage) {
+      document.addEventListener("keydown", handleKeyPress);
+      return () => {
+        document.removeEventListener("keydown", handleKeyPress);
+      };
+    }
+  }, [fullscreenImage]);
+
+  const openFullscreen = (image: GoldImage, index: number): void => {
+    setFullscreenImage({ ...image, index });
+    handleGoldPriceModalClose(); // Close the modal
+  };
+
+  const closeFullscreen = (): void => {
+    setFullscreenImage(null);
+
+    setTimeout(() => {
+      setGoldPriceModal({
+        visible: true,
+        images: modalData.images,
+        urls: modalData.urls,
+      });
+    }, 100);
+  };
+
+  const handleComparePrices = async () => {
+    if (!itemId) return;
+    const { images, urls } = await fetchGoldDetails(itemId);
+    setModalData({ images, urls });
+    setGoldPriceModal({ visible: true, images, urls });
+  };
+
+  const handleGoldPriceModalClose = () => {
+    setGoldPriceModal({ visible: false, urls: [], images: [] });
   };
 
   return (
@@ -787,7 +918,6 @@ const ItemDisplayPage = () => {
                     )}
                   </div>
 
-                  {/* Image Thumbnails */}
                   {getAllImages().length > 1 && (
                     <div className="flex space-x-2 mt-4 overflow-x-auto">
                       {getAllImages().map((image, index) => (
@@ -809,9 +939,19 @@ const ItemDisplayPage = () => {
                       ))}
                     </div>
                   )}
-                </div>
 
-                {/* Product Details */}
+                  {/* Compare Prices button moved here - directly below the image field */}
+                  {/* {itemDetails?.itemId ===
+                    "f2138ee5-21b2-4ece-894f-3ebb84d768a6" && ( )}*/}
+                  <div className="flex justify-center mt-4">
+                    <button
+                      onClick={handleComparePrices}
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+                    >
+                      <span>Compare Prices</span>
+                    </button>
+                  </div>
+                </div>{" "}
                 <div className="space-y-4">
                   {/* Product Name */}
                   <div>
@@ -826,7 +966,9 @@ const ItemDisplayPage = () => {
                             className="w-4 h-4 fill-yellow-400 text-yellow-400"
                           />
                         ))}
-                        <span className="ml-2 text-sm text-gray-600">(4.8)</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          (4.8)
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -837,27 +979,36 @@ const ItemDisplayPage = () => {
                       <span className="text-3xl font-bold text-purple-600">
                         ₹{itemDetails?.itemPrice}
                       </span>
-                      {itemDetails?.itemMrp && itemDetails.itemMrp > itemDetails.itemPrice && (
-                        <>
-                          <span className="text-xl text-gray-500 line-through">
-                            ₹{itemDetails.itemMrp}
-                          </span>
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-                            {calculateDiscount(itemDetails.itemMrp, itemDetails.itemPrice)}% OFF
-                          </span>
-                        </>
-                      )}
+                      {itemDetails?.itemMrp &&
+                        itemDetails.itemMrp > itemDetails.itemPrice && (
+                          <>
+                            <span className="text-xl text-gray-500 line-through">
+                              ₹{itemDetails.itemMrp}
+                            </span>
+                            <span className="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                              {calculateDiscount(
+                                itemDetails.itemMrp,
+                                itemDetails.itemPrice
+                              )}
+                              % OFF
+                            </span>
+                          </>
+                        )}
                     </div>
                     <p className="text-sm text-gray-600">
                       Weight: {itemDetails?.itemWeight || itemDetails?.weight}
-                    {itemDetails?.weightUnit || itemDetails?.units}
+                      {itemDetails?.weightUnit || itemDetails?.units}
                     </p>
                   </div>
 
                   {/* Stock Status */}
                   {itemDetails && (
                     <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
-                      <div className={`px-3 py-1 rounded-full ${getStockStatus(itemDetails.quantity).color}`}>
+                      <div
+                        className={`px-3 py-1 rounded-full ${
+                          getStockStatus(itemDetails.quantity).color
+                        }`}
+                      >
                         {getStockStatus(itemDetails.quantity).text}
                       </div>
                     </div>
@@ -866,7 +1017,9 @@ const ItemDisplayPage = () => {
                   {/* Product Description */}
                   {itemDetails?.itemDescription && (
                     <div className="border-t pt-4">
-                      <h3 className="font-medium text-gray-900 mb-2">Description</h3>
+                      <h3 className="font-medium text-gray-900 mb-2">
+                        Description
+                      </h3>
                       <p className="text-gray-600 text-sm leading-relaxed">
                         {itemDetails.itemDescription}
                       </p>
@@ -881,8 +1034,13 @@ const ItemDisplayPage = () => {
                           <div className="flex items-center space-x-3">
                             <div className="flex items-center bg-purple-50 rounded-lg p-1">
                               <button
-                                onClick={() => handleQuantityChange(itemDetails, false)}
-                                disabled={loadingItems.items[itemDetails.itemId] || localStorage.getItem("TypeLogin") === "Caller"}
+                                onClick={() =>
+                                  handleQuantityChange(itemDetails, false)
+                                }
+                                disabled={
+                                  loadingItems.items[itemDetails.itemId] ||
+                                  localStorage.getItem("TypeLogin") === "Caller"
+                                }
                                 className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors disabled:opacity-50"
                               >
                                 {loadingItems.items[itemDetails.itemId] ? (
@@ -895,10 +1053,13 @@ const ItemDisplayPage = () => {
                                 {cartItems[itemDetails.itemId] || 0}
                               </span>
                               <button
-                                onClick={() => handleQuantityChange(itemDetails, true)}
+                                onClick={() =>
+                                  handleQuantityChange(itemDetails, true)
+                                }
                                 disabled={
                                   loadingItems.items[itemDetails.itemId] ||
-                                  isMaxStockReached(itemDetails) || localStorage.getItem("TypeLogin") === "Caller"
+                                  isMaxStockReached(itemDetails) ||
+                                  localStorage.getItem("TypeLogin") === "Caller"
                                 }
                                 className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors disabled:opacity-50"
                               >
@@ -910,7 +1071,9 @@ const ItemDisplayPage = () => {
                               </button>
                             </div>
                             <button
-                              onClick={() => handleRemoveItem(itemDetails.itemId)}
+                              onClick={() =>
+                                handleRemoveItem(itemDetails.itemId)
+                              }
                               disabled={loadingItems.items[itemDetails.itemId]}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                               title="Remove from cart"
@@ -927,7 +1090,8 @@ const ItemDisplayPage = () => {
                             onClick={() => handleAddToCart(itemDetails)}
                             disabled={
                               loadingItems.items[itemDetails.itemId] ||
-                              itemDetails.quantity === 0 || localStorage.getItem("TypeLogin") === "Caller"
+                              itemDetails.quantity === 0 ||
+                              localStorage.getItem("TypeLogin") === "Caller"
                             }
                             className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white py-3 px-6 rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                           >
@@ -937,15 +1101,19 @@ const ItemDisplayPage = () => {
                               <ShoppingCart className="w-5 h-5" />
                             )}
                             <span>
-                              {itemDetails.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                              {itemDetails.quantity === 0
+                                ? "Out of Stock"
+                                : "Add to Cart"}
                             </span>
                           </button>
                         )}
-                        
+
                         {isMaxStockReached(itemDetails) && (
                           <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 p-3 rounded-lg">
                             <AlertCircle className="w-4 h-4" />
-                            <span className="text-sm">Maximum available quantity reached</span>
+                            <span className="text-sm">
+                              Maximum available quantity reached
+                            </span>
                           </div>
                         )}
                       </div>
@@ -979,14 +1147,16 @@ const ItemDisplayPage = () => {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                
+
                 <div className="border rounded-lg">
                   <div className="h-64 overflow-y-auto p-4 space-y-3">
                     {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.type === "sent" ? "justify-end" : "justify-start"
+                          message.type === "sent"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
                         <div
@@ -1003,14 +1173,16 @@ const ItemDisplayPage = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="border-t p-4">
                     <div className="flex space-x-2">
                       <input
                         type="text"
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && handleSendMessage()
+                        }
                         placeholder="Ask about this product..."
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
@@ -1031,7 +1203,7 @@ const ItemDisplayPage = () => {
           <div className="lg:col-span-4">
             <div className="bg-white rounded-xl p-6 shadow-sm sticky top-4">
               <h3 className="text-lg font-semibold mb-4">Related Products</h3>
-              
+
               {relatedItems.length > 0 ? (
                 <div className="space-y-4">
                   {relatedItems.map((item) => (
@@ -1054,13 +1226,15 @@ const ItemDisplayPage = () => {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-gray-900 text-sm truncate">
                             {item.itemName}
                           </h4>
                           <p className="text-xs text-gray-500 mt-1">
-  {(item.itemWeight || item.weight) + ' ' + (item.weightUnit || item.units || '')}
+                            {(item.itemWeight || item.weight) +
+                              " " +
+                              (item.weightUnit || item.units || "")}
                           </p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="font-bold text-purple-600 text-sm">
@@ -1087,7 +1261,187 @@ const ItemDisplayPage = () => {
           </div>
         </div>
       </div>
-      
+
+      <Modal
+        title="Compare Gold Prices"
+        open={goldPriceModal.visible}
+        onCancel={handleGoldPriceModalClose}
+        footer={[
+          <button
+            key="close"
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg hover:from-blue-700 hover:to-blue-900"
+            onClick={handleGoldPriceModalClose}
+          >
+            Close
+          </button>,
+        ]}
+        centered
+        width="90%"
+        style={{ maxWidth: "600px" }}
+      >
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Gold Item Images
+            </h3>
+            {goldPriceModal.images.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {goldPriceModal.images.map((image, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={image.imageUrl}
+                      alt={`Gold item ${index + 1}`}
+                      className="w-full h-32 object-contain rounded-lg bg-gray-50 cursor-pointer transition-transform hover:scale-105"
+                      onClick={() => openFullscreen(image, index)}
+                    />
+                    {/* Fullscreen icon overlay */}
+                    <div
+                      className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      onClick={() => openFullscreen(image, index)}
+                    >
+                      <Maximize2 size={16} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No additional images available.</p>
+            )}
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Today Gold Price Comparison Links
+            </h3>
+
+            {goldPriceModal.urls.length > 0 ? (
+              <ul className="space-y-2">
+                {goldPriceModal.urls.map((url, index) => (
+                  <li key={index}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline transition-colors"
+                    >
+                      {url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">
+                No price comparison links available.
+              </p>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-[9999]"
+          onClick={closeFullscreen}
+        >
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            {/* Close button - Top Right */}
+            <button
+              className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-black bg-opacity-50 rounded-full p-2 transition-colors"
+              onClick={closeFullscreen}
+              title="Close fullscreen"
+            >
+              <X size={24} />
+            </button>
+
+            {/* ESC key hint */}
+            <div className="absolute top-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded text-sm">
+              Press ESC to close
+            </div>
+
+            {/* Fullscreen image */}
+            <img
+              src={fullscreenImage.imageUrl}
+              alt={`Gold item ${fullscreenImage.index + 1} - Fullscreen`}
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
+            />
+
+            {/* Image counter */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+              Image {fullscreenImage.index + 1} of {modalData.images.length}
+            </div>
+
+            {/* Navigation arrows if multiple images */}
+            {modalData.images.length > 1 && (
+              <>
+                {/* Previous button */}
+                {fullscreenImage.index > 0 && (
+                  <button
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-3 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const prevIndex = fullscreenImage.index - 1;
+                      setFullscreenImage({
+                        ...modalData.images[prevIndex],
+                        index: prevIndex,
+                      });
+                    }}
+                    title="Previous image"
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M15 18L9 12L15 6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+
+                {/* Next button */}
+                {fullscreenImage.index < modalData.images.length - 1 && (
+                  <button
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-3 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextIndex = fullscreenImage.index + 1;
+                      setFullscreenImage({
+                        ...modalData.images[nextIndex],
+                        index: nextIndex,
+                      });
+                    }}
+                    title="Next image"
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M9 18L15 12L9 6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <Footer />
     </div>
   );

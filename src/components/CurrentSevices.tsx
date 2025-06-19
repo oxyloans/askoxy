@@ -21,6 +21,14 @@ const ResponsiveGallery = () => {
       weight: 1.0, // Adding weight parameter
     },
     {
+      id: 4,
+      src: "https://i.ibb.co/4gPVZ3Wv/both.png",
+      alt: "cashew",
+      category: "CASHWE 1 KG & 500 GRAMS",
+      link: "/main/dashboard/products",
+      weight: 1.0, // Adding weight parameter
+    },
+    {
       id: 5,
       src: "https://i.ibb.co/N6gbrWzc/11f.png",
       alt: "Buy 5 Kg Rice & Get 2 Kg Free",
@@ -95,13 +103,7 @@ const ResponsiveGallery = () => {
       link: "/main/dashboard/products",
       weigtht: 26.0, // Adding weight parameter
     },
-    {
-      id: 4,
-      src: "https://i.ibb.co/fdD1FFhf/Manchester.png",
-      alt: "University of Chester",
-      category: "UNIVERSITY OF CHESTER",
-      link: "/main/services/studyabroad",
-    },
+
     {
       id: 8,
       src: "https://i.ibb.co/8n0fNmRN/IMAGE-8.png",

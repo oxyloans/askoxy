@@ -23,11 +23,10 @@ interface UploadResponse {
   documentPath: string;
   documentType: string;
   id: string;
-  message: string;
-  projectType: string;
-  propertyId?: string;
+  message: string | null;
+  propertyId: string | null;
   uploadStatus: string;
-  uploadedAt: string;
+  uploadedAt: number;
   userId: string;
 }
 
@@ -37,17 +36,16 @@ interface ApiDocument {
   propertyId: string | null;
   documentPath: string;
   uploadStatus: string | null;
-  projectType: string | null;
   userId: string;
-  uploadedAt: string;
+  uploadedAt: number;
   message: string | null;
   documentType: string;
 }
 
 interface UploadData {
   documentType: string;
-  fileType: string;
   file: File | null;
+  userId: string;
 }
 
 const Documents = () => {
@@ -61,14 +59,12 @@ const Documents = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string>('');
 
-  // Upload form state
   const [uploadData, setUploadData] = useState<UploadData>({
     documentType: '',
-    fileType: 'kyc',
-    file: null
+    file: null,
+    userId: ''
   });
 
-  // Documents data - will be populated from API
   const [documents, setDocuments] = useState<Document[]>([]);
 
   const documentTypeOptions = [
@@ -85,40 +81,31 @@ const Documents = () => {
     { value: 'TRANSCRIPTS', label: 'Academic Transcripts' }
   ];
 
-  // Get user ID helper function
   const getUserId = () => {
-    console.log('Checking localStorage for Customer ID or User ID...');
-    
-    // Check for Customer ID or User ID directly
     const customerId = localStorage.getItem('customerId') || localStorage.getItem('Customer_ID');
     if (customerId) {
-      console.log('Found Customer ID:', customerId);
       return customerId;
     }
 
     const userId = localStorage.getItem('userId') || localStorage.getItem('USER_ID') || localStorage.getItem('user_id');
     if (userId) {
-      console.log('Found User ID:', userId);
       return userId;
     }
     
-    console.log('No Customer ID or User ID found in localStorage');
     return null;
   };
 
-  // Convert API document to internal document format
   const convertApiDocumentToDocument = (apiDoc: ApiDocument): Document => {
-    // Extract file extension from document path for format
     const getFileFormat = (path: string, name: string): string => {
       const extension = path.split('.').pop() || name.split('.').pop() || 'unknown';
       return extension.toUpperCase();
     };
 
-    // Determine status based on uploadStatus
     const getStatus = (uploadStatus: string | null): string => {
       if (!uploadStatus) return 'pending';
       
       switch (uploadStatus.toLowerCase()) {
+        case 'uploaded':
         case 'success':
         case 'completed':
           return 'completed';
@@ -130,19 +117,16 @@ const Documents = () => {
       }
     };
 
-    // Calculate approximate file size (we don't have this from API, so we'll estimate or mark as unknown)
     const getApproximateFileSize = (documentPath: string): string => {
-      // Since we don't have file size from API, we'll just return "Unknown"
-      // In a real scenario, you might want to make a HEAD request to get file size
       return 'Unknown';
     };
 
     return {
-      id: Date.now() + Math.random(), // Generate unique ID for React key
+      id: Date.now() + Math.random(), 
       name: apiDoc.documentName || apiDoc.documentType,
       type: apiDoc.documentType,
       status: getStatus(apiDoc.uploadStatus),
-      uploadDate: apiDoc.uploadedAt ? new Date(apiDoc.uploadedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      uploadDate: new Date(apiDoc.uploadedAt).toISOString().split('T')[0],
       fileSize: getApproximateFileSize(apiDoc.documentPath),
       format: getFileFormat(apiDoc.documentPath, apiDoc.documentName),
       apiId: apiDoc.id,
@@ -150,7 +134,6 @@ const Documents = () => {
     };
   };
 
-  // Fetch documents from API
   const fetchDocuments = async () => {
     const userId = getUserId();
     
@@ -164,33 +147,22 @@ const Documents = () => {
       setLoading(true);
       setFetchError('');
 
-      console.log('Fetching documents for user:', userId);
-
-      const response = await fetch('https://meta.oxyloans.com/api/user-service/student/getStudentDocuments', {
+      const response = await fetch(`https://meta.oxyloans.com/api/user-service/student/getStudentDocuments?userId=${userId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
-        },
-        // For GET request with body (though uncommon), some implementations expect this
-        body: JSON.stringify(userId)
+        }
       });
 
-      console.log('Fetch response status:', response.status);
-
       if (!response.ok) {
-        throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch documents: ${response.status}`);
       }
 
-      const apiDocuments: ApiDocument[] = await response.json();
-      console.log('Fetched documents:', apiDocuments);
-
-      // Convert API documents to internal format
+      const result = await response.json();
+      const apiDocuments: ApiDocument[] = Array.isArray(result) ? result : [];
       const convertedDocuments = apiDocuments.map(convertApiDocumentToDocument);
       
-      // Sort by upload date (newest first)
       convertedDocuments.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
-
       setDocuments(convertedDocuments);
 
     } catch (error) {
@@ -201,33 +173,39 @@ const Documents = () => {
     }
   };
 
-  // Fetch documents on component mount
   useEffect(() => {
     fetchDocuments();
   }, []);
 
   const handleUpload = async () => {
-    // Clear previous errors
     setUploadError('');
     
     const userId = getUserId();
-    console.log('Final ID for upload:', userId);
-
-    // Validation checks
     if (!userId) {
       setUploadError('Please login first to upload documents.');
       return;
     }
+
+    setUploadData(prev => ({
+      ...prev,
+      userId: userId
+    }));
 
     if (!uploadData.file || !uploadData.documentType) {
       setUploadError('Please select document type and file.');
       return;
     }
 
-    // File size validation (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     if (uploadData.file.size > maxSize) {
       setUploadError('File size must be less than 10MB.');
+      return;
+    }
+
+    const allowedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+    const fileExtension = uploadData.file.name.toLowerCase().substring(uploadData.file.name.lastIndexOf('.'));
+    if (!allowedTypes.includes(fileExtension)) {
+      setUploadError('Please upload only PDF, DOC, DOCX, JPG, JPEG, or PNG files.');
       return;
     }
 
@@ -237,76 +215,82 @@ const Documents = () => {
     try {
       const formData = new FormData();
       
-      // Add required fields to payload
       formData.append('documentType', uploadData.documentType);
-      formData.append('fileType', uploadData.fileType || 'kyc'); // KYC or null
       formData.append('userId', userId);
+      formData.append('fileType', 'kyc');
       formData.append('file', uploadData.file);
 
-      console.log('Uploading document:', {
-        documentType: uploadData.documentType,
-        fileType: uploadData.fileType || 'kyc',
-        userId: userId,
-        fileName: uploadData.file.name
-      });
-
-      const response = await fetch('https://meta.oxyloans.com/api/user-service/student/uploadStudentDocuments', {
+      const response = await fetch(`https://meta.oxyloans.com/api/user-service/student/uploadStudentDocuments`, {
         method: 'POST',
         body: formData,
-        // Add headers if required
-        headers: {
-          // Don't set Content-Type for FormData, let browser set it with boundary
-          'Accept': 'application/json',
-        }
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      let result;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const responseText = await response.text();
+        try {
+          result = JSON.parse(responseText);
+        } catch (parseError) {
+          result = {
+            uploadStatus: response.ok ? 'UPLOADED' : 'FAILED',
+            message: response.ok ? 'Document uploaded successfully' : responseText || 'Upload failed',
+            documentName: uploadData.file.name,
+            documentType: uploadData.documentType
+          };
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(`Upload failed. Please try again.`);
+        throw new Error(result?.message || `Upload failed with status ${response.status}`);
       }
 
-      const result = await response.json();
-      console.log('Upload response:', result);
-      
-      // Validate response structure
-      if (!result || typeof result !== 'object') {
-        throw new Error('Invalid response format from server');
-      }
-
-      // Add the new document to the list
       const newDocument: Document = {
-        id: Date.now(), // Temporary ID
+        id: Date.now(),
         name: result.documentName || uploadData.file.name || uploadData.documentType,
         type: uploadData.documentType,
-        status: result.uploadStatus === 'SUCCESS' || result.uploadStatus === 'success' ? 'completed' : 'pending',
-        uploadDate: result.uploadedAt ? new Date(result.uploadedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: response.ok ? 'completed' : 'pending',
+        uploadDate: result.uploadedAt ? 
+          new Date(result.uploadedAt).toISOString().split('T')[0] : 
+          new Date().toISOString().split('T')[0],
         fileSize: uploadData.file ? `${(uploadData.file.size / (1024 * 1024)).toFixed(1)} MB` : '0 MB',
-        format: uploadData.fileType.toUpperCase(),
-        apiId: result.id,
-        documentPath: result.documentPath
+        format: uploadData.file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+        apiId: result.id || 'pending',
+        documentPath: result.documentPath || ''
       };
 
       setDocuments(prev => [newDocument, ...prev]);
-      setUploadSuccess(result);
       
-      // Reset form
+      setUploadSuccess({
+        documentName: result.documentName || uploadData.file.name,
+        documentPath: result.documentPath || '',
+        documentType: uploadData.documentType,
+        id: result.id || 'unknown',
+        message: result.message || 'Document uploaded successfully',
+        propertyId: result.propertyId || null,
+        uploadStatus: result.uploadStatus || 'UPLOADED',
+        uploadedAt: result.uploadedAt || Date.now(),
+        userId: userId
+      });
+      
       setUploadData({
         documentType: '',
-        fileType: 'kyc',
-        file: null
+        file: null,
+        userId: userId
       });
 
-      // Close modal after 3 seconds to give user time to read success message
       setTimeout(() => {
         setShowUploadModal(false);
         setUploadSuccess(null);
+        fetchDocuments();
       }, 3000);
 
     } catch (error) {
       console.error('Upload error:', error);
-      setUploadError('Upload failed. Please try again.');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -317,11 +301,9 @@ const Documents = () => {
     if (file) {
       setUploadData(prev => ({
         ...prev,
-        file: file,
-        fileType: 'kyc' // Only KYC or will be null if not applicable
+        file: file
       }));
       
-      // Clear any previous errors
       setUploadError('');
     }
   };
@@ -357,7 +339,7 @@ const Documents = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const documentTypes = ['all', 'official', 'reference', 'essay', 'test', 'identity', 'financial'];
+  const documentTypes = ['all', 'passport', 'resume', 'letter', 'statement', 'certificate', 'transcript'];
   const statusTypes = ['all', 'completed', 'in-progress', 'pending'];
 
   const getDocumentStats = () => {
@@ -371,7 +353,11 @@ const Documents = () => {
 
   const stats = getDocumentStats();
 
-  // Loading state
+  const getFriendlyDocumentType = (type: string) => {
+    const option = documentTypeOptions.find(opt => opt.value === type);
+    return option ? option.label : type;
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 p-6">
@@ -384,7 +370,6 @@ const Documents = () => {
     );
   }
 
-  // Error state
   if (fetchError) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 p-6">
@@ -515,15 +500,13 @@ const Documents = () => {
               <div className="text-center py-8">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h4 className="text-lg font-semibold text-green-700 mb-2">Upload Successful!</h4>
-                <p className="text-gray-600 mb-2">{uploadSuccess.message}</p>
+                <p className="text-gray-600 mb-2">{uploadSuccess.message || 'Document uploaded successfully'}</p>
                 <p className="text-sm text-gray-500 mb-2">Document ID: {uploadSuccess.id}</p>
-                {uploadSuccess.documentPath && (
-                  <p className="text-sm text-gray-500">Path: {uploadSuccess.documentPath}</p>
-                )}
+                <p className="text-sm text-gray-500 mb-2">Type: {getFriendlyDocumentType(uploadSuccess.documentType)}</p>
+                <p className="text-sm text-gray-500">Status: {uploadSuccess.uploadStatus}</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Error Display */}
                 {uploadError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex">
@@ -535,7 +518,7 @@ const Documents = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Document Type *
+                    Document Type * <span className="text-xs text-gray-500">(Required)</span>
                   </label>
                   <select
                     value={uploadData.documentType}
@@ -551,7 +534,7 @@ const Documents = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select File * (Max 10MB)
+                    Select File * <span className="text-xs text-gray-500">(Max 10MB - PDF, DOC, DOCX, JPG, JPEG, PNG)</span>
                   </label>
                   <input
                     type="file"
@@ -560,9 +543,10 @@ const Documents = () => {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                   />
                   {uploadData.file && (
-                    <div className="text-sm text-gray-600 mt-1">
-                      <p>Selected: {uploadData.file.name}</p>
-                      <p>Size: {(uploadData.file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <div className="text-sm text-gray-600 mt-2 p-3 bg-gray-50 rounded-lg">
+                      <p><strong>Selected:</strong> {uploadData.file.name}</p>
+                      <p><strong>Size:</strong> {(uploadData.file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      <p><strong>Type:</strong> {uploadData.file.type || 'Binary'}</p>
                     </div>
                   )}
                 </div>
@@ -592,7 +576,7 @@ const Documents = () => {
         </div>
       )}
 
-      {/* Documents Grid - Show message when no documents */}
+      {/* Documents Display */}
       {documents.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -623,97 +607,82 @@ const Documents = () => {
                     <h4 className="font-bold text-gray-900 text-lg mb-1">
                       {doc.name}
                     </h4>
-                    <p className="text-sm text-gray-600 mb-2">{doc.type}</p>
+                    <p className="text-sm text-gray-600 mb-2">{getFriendlyDocumentType(doc.type)}</p>
                     <div className="flex items-center space-x-2">
                       <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
                         {getStatusIcon(doc.status)}
-                        <span className="ml-1">{doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}</span>
+                        <span className="ml-1 capitalize">{doc.status}</span>
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {doc.format} • {doc.fileSize}
-                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Document Details */}
-              <div className="space-y-2 mb-4">
-                {doc.score && (
-                  <div className="text-sm text-violet-600 font-medium bg-violet-50 px-3 py-1 rounded-lg">
-                    {doc.score}
-                  </div>
-                )}
-                {doc.universities && (
-                  <div className="text-sm text-amber-600 font-medium bg-amber-50 px-3 py-1 rounded-lg">
-                    {doc.universities}
-                  </div>
-                )}
-                {doc.count && (
-                  <div className="text-sm text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-lg">
-                    {doc.count}
-                  </div>
-                )}
-                {doc.required && (
-                  <div className="text-sm text-red-600 font-medium bg-red-50 px-3 py-1 rounded-lg">
-                    {doc.required}
-                  </div>
-                )}
-                {doc.expires && (
-                  <div className="text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-lg">
-                    {doc.expires}
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Upload Date</p>
+                  <p className="text-sm font-medium text-gray-900">{doc.uploadDate}</p>
+                </div>
+                {/* <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">File Size</p>
+                  <p className="text-sm font-medium text-gray-900">{doc.fileSize}</p>
+                </div> */}
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Format</p>
+                  <p className="text-sm font-medium text-gray-900">{doc.format}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Document ID</p>
+                  <p className="text-sm font-medium text-gray-900">{doc.apiId || 'N/A'}</p>
+                </div>
               </div>
 
-              {/* Upload Date */}
-              <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-                <Calendar className="w-4 h-4" />
-                <span>Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}</span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex space-x-2">
-                <button 
-                  onClick={() => doc.documentPath && window.open(doc.documentPath, '_blank')}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-violet-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>View</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    if (doc.documentPath) {
-                      const link = document.createElement('a');
-                      link.href = doc.documentPath;
-                      link.download = doc.name;
-                      link.click();
-                    }
-                  }}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-xl hover:bg-blue-200 transition-colors font-medium"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download</span>
-                </button>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center space-x-2">
+                  {/* <button className="flex items-center space-x-1 text-violet-600 hover:text-violet-700 text-sm font-medium transition-colors">
+                    <Eye className="w-4 h-4" />
+                    <span>View</span>
+                  </button> */}
+                  {doc.documentPath && (
+                    <button 
+                      onClick={() => {
+                        if (doc.documentPath) {
+                          const link = document.createElement('a');
+                          link.href = doc.documentPath;
+                          link.download = doc.name;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }
+                      }}
+                      className="flex items-center space-x-1 text-gray-600 hover:text-gray-700 text-sm font-medium transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download</span>
+                    </button>
+                  )}
+                </div>
+                {/* <div className="text-xs text-gray-500">
+                  {doc.apiId && `ID: ${doc.apiId}`}
+                </div> */}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Empty State for filtered results */}
       {documents.length > 0 && filteredDocuments.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No documents found</h3>
           <p className="text-gray-600 mb-6">
-            Try adjusting your search or filter criteria to find more documents.
+            Try adjusting your search terms or filters.
           </p>
           <button
             onClick={() => {
-              setSearchTerm("");
-              setFilterStatus("all");
-              setFilterType("all");
+              setSearchTerm('');
+              setFilterStatus('all');
+              setFilterType('all');
             }}
             className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
           >

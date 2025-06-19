@@ -28,6 +28,7 @@ import {
   Gift,
   Ticket,
   Info,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -939,7 +940,9 @@ const Home: React.FC = () => {
                     handleQuantityChange(item, false);
                   }}
                   disabled={
-                    item.itemId ? loadingItems.items[item.itemId] : false || localStorage.getItem("TypeLogin") === "Caller"
+                    item.itemId
+                      ? loadingItems.items[item.itemId]
+                      : false || localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
                   {item.itemId &&
@@ -990,8 +993,7 @@ const Home: React.FC = () => {
                       ? cartItems[item.itemId] >= item.quantity ||
                         loadingItems.items[item.itemId] ||
                         (item.itemPrice === 1 && cartItems[item.itemId] >= 1)
-                      : true ||
-                        localStorage.getItem("TypeLogin") === "Caller"
+                      : true || localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
                   {item.itemId &&
@@ -1011,10 +1013,15 @@ const Home: React.FC = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAddToCart(item);
-                  console.log("Add to cart clicked", localStorage.getItem("TypeLogin"));
-                  console.log(item.itemId ? loadingItems.items[item.itemId] : false);
+                  console.log(
+                    "Add to cart clicked",
+                    localStorage.getItem("TypeLogin")
+                  );
+                  console.log(
+                    item.itemId ? loadingItems.items[item.itemId] : false
+                  );
                 }}
-               disabled={
+                disabled={
                   (item.itemId && loadingItems.items[item.itemId]) ||
                   localStorage.getItem("TypeLogin") === "Caller"
                 }
@@ -1321,11 +1328,8 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Special Offers Banner Section */}
-        <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
-          <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
+        {/* <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
             <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-center justify-between">
               <div className="w-full md:w-3/5 mb-6 md:mb-0 text-center md:text-left">
                 <h2 className="text-white text-xl md:text-2xl font-bold mb-3">
@@ -1357,10 +1361,103 @@ const Home: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div> */}
+        <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
+          <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl overflow-hidden relative mb-6">
+            <div className="relative px-4 md:px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              {/* Left Side */}
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-full">
+                  <Gift className="text-white" size={24} />
+                </div>
+                <h1 className="text-white text-lg md:text-2xl font-bold flex items-center gap-2 flex-wrap">
+                  <span className="bg-white text-emerald-600 px-3 py-1 rounded-lg font-black shadow-lg">
+                    Get ₹50 Cashback
+                  </span>
+                  <span className="text-sm md:text-lg">
+                    on your first order!
+                  </span>
+                  <Sparkles className="text-yellow-300" size={20} />
+                </h1>
+              </div>
+              <button
+                onClick={viewAllProducts}
+                className="bg-white text-emerald-600 hover:bg-gray-50 px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg"
+              >
+                Order Now <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-lg shadow-lg overflow-hidden">
+              <div className="px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                {/* Left Section */}
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-white text-lg md:text-xl font-bold">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <span className="bg-white text-yellow-600 px-2 py-1 rounded-md font-black text-lg md:text-xl shadow-md">
+                        Up to ₹40 Cashback
+                      </span>
+                      <span className="text-sm md:text-base block">
+                        on Cashews – on Your First Order!
+                      </span>
+                    </div>
+                  </h2>
+                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center w-fit">
+                    <Package size={12} className="mr-1" />
+                    <span className="font-medium text-xs">Premium Quality</span>
+                  </div>
+                </div>
+
+                {/* Right Section – Button */}
+                <div className="self-start md:self-center">
+                  <button
+                    onClick={viewAllProducts}
+                    className="bg-white text-yellow-700 hover:bg-yellow-50 px-4 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap shadow-md"
+                  >
+                    Shop Now <ArrowRight size={12} className="ml-1" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-lg shadow-lg overflow-hidden">
+              <div className="px-4 py-3 md:px-6 md:py-4 flex flex-row items-center justify-between">
+                <div className="flex-1">
+                  <h2 className="text-white text-lg md:text-xl font-bold mb-2">
+                    Exclusive Rice Offers!
+                  </h2>
+                  <div className="flex flex-wrap gap-1 text-xs">
+                    <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                      <Package size={10} className="mr-1" /> 10kg → Free
+                      Container
+                    </div>
+                    <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
+                      <ShoppingBag size={10} className="mr-1" /> 26kg → Free
+                      Container
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  <button
+                    onClick={() => setShowOffersModal(true)}
+                    className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-3 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap"
+                  >
+                    <Info size={12} className="mr-1" /> FAQ's
+                  </button>
+                  <button
+                    onClick={viewAllProducts}
+                    className="bg-white text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap"
+                  >
+                    Shop Now <ArrowRight size={12} className="ml-1" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Products Section */}
         <section ref={productsRef} className="mb-12">
           <div className="flex items-center mb-4 gap-10">
             <h2 className="text-xl font-bold text-gray-800 flex items-center">

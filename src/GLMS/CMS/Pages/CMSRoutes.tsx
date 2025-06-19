@@ -1,38 +1,127 @@
 // pages/CASRouteRenderer.tsx
-import React,{useEffect,useState,useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCMSRoutes } from "../Routes/useCmsRoutes";
 import { Menu, X } from "react-feather";
 import { message } from "antd";
 import Askoxylogo from "../../../assets/img/askoxylogostatic.png";
+import { Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import BASE_URL from "../../../Config";
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  isImage?: boolean;
+  timestamp?: Date;
+  sender?: "user" | "ai"; // Keep for backward compatibility
+  text?: string; // Keep for backward compatibility
+}
 const CMSRouteRenderer: React.FC = () => {
   const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
   const useCase = useCMSRoutes[useCaseId || ""];
   const navigate = useNavigate();
   const [chatOpen, setChatOpen] = useState(false); // Changed to false by default
-    const [isFullScreen, setIsFullScreen] = useState(false);
-    const [messageInput, setMessageInput] = useState("");
-    const [isTyping, setIsTyping] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [messageInput, setMessageInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [hasAutoQuestionSent, setHasAutoQuestionSent] = useState(false);
+
   const handleCMSClick = () => (window.location.href = "/cms");
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
- const [messages, setMessages] = useState([
-    {
-      text: `What would you like to know about ${
-        useCase?.title || "the product"
+
+  // Function to limit response to 50 words
+  const limitToFiftyWords = (text: string): string => {
+    const words = text.split(" ");
+    if (words.length <= 2000) return text;
+
+    const limitedWords = words.slice(0, 2000);
+    const limitedText = limitedWords.join(" ");
+
+    // Ensure it ends with proper punctuation
+    if (
+      !limitedText.endsWith(".") &&
+      !limitedText.endsWith("!") &&
+      !limitedText.endsWith("?")
+    ) {
+      return limitedText + ".";
+    }
+    return limitedText;
+  };
+
+  // Auto-generate question based on use case
+  const generateAutoQuestion = (useCaseTitle: string, type: string) => {
+    const questions = [
+      `What would you like to know about  ${useCaseTitle}?`,
+      `How does ${useCaseTitle} help ${
+        type === "business" ? "businesses" : "systems"
       }?`,
-      sender: "ai",
-      timestamp: new Date(),
-    },
-  ]);
+      `What are the benefits of implementing ${useCaseTitle}?`,
+      `Can you explain how ${useCaseTitle} works?`,
+      `What makes ${useCaseTitle} unique in the market?`,
+    ];
+
+    // Select a random question
+    return questions[Math.floor(Math.random() * questions.length)];
+  };
+
+  // Auto-send question when use case is loaded
   useEffect(() => {
-    scrollToBottom();
+    if (
+      useCase &&
+      type &&
+      chatOpen &&
+      !hasAutoQuestionSent &&
+      messages.length === 0
+    ) {
+      const autoQuestion = generateAutoQuestion(useCase.title, type);
+
+      // Add auto question as user message
+      const autoUserMessage: Message = {
+        role: "user",
+        content: autoQuestion,
+        timestamp: new Date(),
+        sender: "user",
+        text: autoQuestion,
+      };
+
+      setMessages([autoUserMessage]);
+      setHasAutoQuestionSent(true);
+      simulateAIResponse(autoQuestion);
+    }
+  }, [useCase, type, chatOpen, hasAutoQuestionSent, messages.length]);
+
+  // Reset auto question flag when chat is reopened
+  useEffect(() => {
+    if (chatOpen && messages.length === 0) {
+      setHasAutoQuestionSent(false);
+    }
+  }, [chatOpen]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Handle scroll detection for header styling
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   if (!useCase || (type !== "business" && type !== "system")) {
     return (
       <div className="text-red-600 text-center mt-8">
@@ -41,111 +130,184 @@ const CMSRouteRenderer: React.FC = () => {
     );
   }
   const handleInterest = () => {
-     const userId = localStorage.getItem("userId");
-     if (userId) {
-       sessionStorage.setItem("submitclicks", "true");
-       navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
-     } else {
-       message.warning("Please login to submit your interest.");
-       sessionStorage.setItem("submitclicks", "true");
-       navigate("/whatsappregister");
-       sessionStorage.setItem("redirectPath", "/main/services/a6b5/glms-open-source-hub-job-stree");
-     }
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      sessionStorage.setItem("submitclicks", "true");
+      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
+    } else {
+      message.warning("Please login to submit your interest.");
+      sessionStorage.setItem("submitclicks", "true");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        "/main/services/a6b5/glms-open-source-hub-job-stree"
+      );
+    }
   };
-  
-   const simulateAIResponse = (userMessage: string) => {
-      setIsTyping(true);
-  
-      setTimeout(() => {
-        let aiResponse = "";
-  
-        if (
-          userMessage.toLowerCase().includes("price") ||
-          userMessage.toLowerCase().includes("cost")
-        ) {
-          aiResponse =
-            "I'd be happy to help you with pricing information! Please contact our sales team for detailed pricing options.";
-        } else if (
-          userMessage.toLowerCase().includes("feature") ||
-          userMessage.toLowerCase().includes("functionality")
-        ) {
-          aiResponse = `The ${
-            useCase.title
-          } includes comprehensive features designed for ${
-            type === "business" ? "business" : "system"
-          } requirements. Would you like me to elaborate on any specific aspect?`;
-        } else if (
-          userMessage.toLowerCase().includes("demo") ||
-          userMessage.toLowerCase().includes("trial")
-        ) {
-          aiResponse =
-            "You can request a demo or trial by clicking the 'I'm Interested' button above. Our team will get in touch with you shortly!";
-        } else if (userMessage.toLowerCase().includes("integration")) {
-          aiResponse =
-            "Our solution offers flexible integration options with various platforms and APIs. What specific integration are you looking for?";
-        } else if (userMessage.toLowerCase().includes("support")) {
-          aiResponse =
-            "We provide 24/7 technical support and comprehensive documentation. Our support team is always ready to assist you!";
-        } else {
-          aiResponse =
-            "Thanks for your question! I'm here to help you learn more about our use case. Feel free to ask about features, pricing, demos, or any other aspects you'd like to know about.";
-        }
-  
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: aiResponse,
-            sender: "ai",
-            timestamp: new Date(),
-          },
-        ]);
-        setIsTyping(false);
-      }, 1000 + Math.random() * 2000);
+
+  // API-based chat handler with 50-word limit
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    const userMessage: Message = {
+      role: "user",
+      content: input.trim(),
+      timestamp: new Date(),
+      sender: "user",
+      text: input.trim(),
     };
-  
-    const handleSendMessage = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (messageInput.trim()) {
-        const userMessage = messageInput.trim();
-  
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: userMessage,
-            sender: "user",
-            timestamp: new Date(),
-          },
-        ]);
-  
-        setMessageInput("");
-        simulateAIResponse(userMessage);
+
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMessages),
+      });
+
+      const data = await response.text();
+      const isImageUrl = data.startsWith("http");
+
+      // Limit API response to 50 words if it's text
+      const limitedData = isImageUrl ? data : limitToFiftyWords(data);
+
+      const assistantReply: Message = {
+        role: "assistant",
+        content: limitedData,
+        isImage: isImageUrl,
+        timestamp: new Date(),
+        sender: "ai",
+        text: limitedData,
+      };
+
+      setMessages([...updatedMessages, assistantReply]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      // Fallback to simulated response on API error
+      simulateAIResponse(input.trim());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Form submission handler (combines both approaches)
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      // Try API first, fallback to simulation
+      handleSend();
+    }
+  };
+
+  const handleThumbsUp = (messageIndex: number) => {
+    console.log(`Thumbs up for message ${messageIndex}`);
+    // TODO: Implement feedback API call
+  };
+  // Enhanced AI response simulation with 50-word limit
+  const simulateAIResponse = (userMessage: string) => {
+    setIsTyping(true);
+
+    setTimeout(() => {
+      let aiResponse = "";
+      const lowerMessage = userMessage.toLowerCase();
+
+      if (lowerMessage.includes("price") || lowerMessage.includes("cost")) {
+        aiResponse =
+          "Our pricing is customized based on your specific needs and usage requirements. We offer flexible plans for different business sizes. Contact our sales team for detailed pricing options and personalized quotes. We ensure competitive rates with excellent value for your investment.";
+      } else if (
+        lowerMessage.includes("feature") ||
+        lowerMessage.includes("functionality") ||
+        lowerMessage.includes("key features")
+      ) {
+        aiResponse = `${useCase.title} includes comprehensive features for ${
+          type === "business" ? "business" : "system"
+        } requirements. Key capabilities include advanced analytics, seamless integration, robust security measures, and scalable architecture. The solution offers real-time monitoring, automated workflows, and user-friendly interfaces for optimal performance.`;
+      } else if (
+        lowerMessage.includes("demo") ||
+        lowerMessage.includes("trial")
+      ) {
+        aiResponse =
+          "You can request a demo or trial by clicking 'I'm Interested' button. Our team will schedule a personalized demonstration and set up a trial environment. Experience all features hands-on with guided support from our experts during the trial period.";
+      } else if (lowerMessage.includes("integration")) {
+        aiResponse =
+          "Our solution offers flexible integration options with various platforms through REST APIs, webhooks, and pre-built connectors. We support popular business tools and custom integrations. Our technical team provides comprehensive integration support and documentation for seamless implementation.";
+      } else if (lowerMessage.includes("support")) {
+        aiResponse =
+          "We provide comprehensive support including 24/7 technical assistance, detailed documentation, video tutorials, and dedicated account management. Our experienced support team ensures quick resolution of issues. We offer multiple support channels for your convenience and success.";
+      } else if (lowerMessage.includes("security")) {
+        aiResponse =
+          "Security is our top priority with enterprise-grade measures including end-to-end encryption, secure authentication, and regular security audits. We comply with industry standards like SOC 2 and GDPR. Your data protection and privacy are guaranteed with our robust security framework.";
+      } else if (
+        lowerMessage.includes("benefits") ||
+        lowerMessage.includes("help")
+      ) {
+        aiResponse = `${useCase.title} helps ${
+          type === "business" ? "businesses" : "systems"
+        } by streamlining operations, reducing costs, and improving efficiency. It automates complex processes, provides valuable insights, and enhances productivity. Users experience faster decision-making, better resource management, and improved overall performance with measurable results.`;
+      } else if (
+        lowerMessage.includes("how") &&
+        lowerMessage.includes("work")
+      ) {
+        aiResponse = `${useCase.title} works through intelligent automation and advanced algorithms to process data efficiently. The system analyzes requirements, executes tasks automatically, and provides real-time feedback. It integrates seamlessly with existing infrastructure while maintaining high performance and reliability standards.`;
+      } else if (
+        lowerMessage.includes("unique") ||
+        lowerMessage.includes("different")
+      ) {
+        aiResponse = `${useCase.title} stands out with its innovative approach, cutting-edge technology, and user-centric design. Our solution offers superior performance, scalability, and customization options. We provide exceptional customer support, competitive pricing, and continuous updates to ensure market-leading capabilities.`;
+      } else {
+        aiResponse = `Welcome to ${
+          useCase.title
+        }! This powerful solution is designed for ${
+          type === "business" ? "business" : "system"
+        } excellence. I'm here to help you understand features, pricing, demos, integrations, security, and benefits. Feel free to ask specific questions about our capabilities and how we can help you succeed.`;
       }
-    };
-  
-    const handleThumbsUp = (messageIndex: number) => {
-      console.log(`Thumbs up for message ${messageIndex}`);
-    };
-  
-    const handleThumbsDown = (messageIndex: number) => {
-      console.log(`Thumbs down for message ${messageIndex}`);
-    };
-  
-    const toggleFullScreen = () => {
-      setIsFullScreen(!isFullScreen);
-    };
-  
-    const handleCloseChat = () => {
-      setChatOpen(false);
+
+      // Limit response to 50 words
+      const limitedResponse = limitToFiftyWords(aiResponse);
+
+      // Add message in the new format
+      const newMessage: Message = {
+        role: "assistant",
+        content: limitedResponse,
+        timestamp: new Date(),
+        sender: "ai",
+        text: limitedResponse,
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+      setIsTyping(false);
+    }, 1000 + Math.random() * 2000);
+  };
+  const handleThumbsDown = (messageIndex: number) => {
+    console.log(`Thumbs down for message ${messageIndex}`);
+    // TODO: Implement feedback API call
+  };
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+
+  const handleCloseChat = () => {
+    setChatOpen(false);
+    setIsFullScreen(false);
+    // Reset auto question when chat is closed
+    setMessages([]);
+    setHasAutoQuestionSent(false);
+  };
+
+  const toggleChat = () => {
+    setChatOpen(!chatOpen);
+    if (!chatOpen) {
       setIsFullScreen(false);
-    };
-  
-    const toggleChat = () => {
-      setChatOpen(!chatOpen);
-      if (!chatOpen) {
-        setIsFullScreen(false);
-      }
-    };
-  const SelectedComponent = useCase[type];
+    }
+  };
+
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+
   const AIIcon = () => (
     <svg
       width="31"
@@ -163,7 +325,7 @@ const CMSRouteRenderer: React.FC = () => {
         fill="white"
       />
       <path
-        d="M18.6208 14.2236C18.5925 14.2236 18.5641 14.2236 18.5359 14.2236C18.4695 14.2075 18.446 14.1559 18.4291 14.0968C18.3469 13.8084 18.2771 13.5156 18.1781 13.233C17.9238 12.5069 17.4176 12.0413 16.6809 11.8275C16.4388 11.7572 16.196 11.6898 15.9535 11.6207C15.8972 11.6046 15.8482 11.579 15.8335 11.515C15.8335 11.4866 15.8335 11.4582 15.8335 11.4297C15.8496 11.3629 15.9011 11.3396 15.96 11.3228C16.2329 11.2452 16.5087 11.1764 16.7774 11.0867C17.5267 10.8364 18.0073 10.3236 18.2254 9.5633C18.2937 9.32491 18.3612 9.08612 18.4295 8.84774C18.4526 8.7676 18.5062 8.7235 18.5786 8.72363C18.6509 8.72363 18.7036 8.76801 18.7274 8.84815C18.8201 9.15944 18.8864 9.47947 19.0034 9.78216C19.2709 10.4741 19.7714 10.9159 20.4829 11.1185C20.7231 11.1869 20.9632 11.255 21.2031 11.3243C21.2878 11.3487 21.3355 11.4056 21.3334 11.4758C21.3314 11.5453 21.2866 11.5965 21.2031 11.6208C20.903 11.7083 20.5967 11.7785 20.3037 11.8854C19.5927 12.1448 19.1388 12.6519 18.9315 13.3808C18.863 13.6217 18.795 13.8625 18.7264 14.1033C18.7103 14.1599 18.6844 14.2086 18.6208 14.2236Z"
+        d="M18.6208 14.2236C18.5925 14.2236 18.5641 14.2236 18.5359 14.2236C18.4695 14.2075 18.446 14.1559 18.4291 14.0968C18.3469 13.8084 18.2771 13.5156 18.1781 13.233C17.9238 12.5069 17.4176 12.0413 16.6809 11.8275C16.4388 11.7572 16.196 11.6898 15.9535 11.6207C15.8972 11.6046 15.8482 11.579 15.8335 11.515C15.8335 11.4866 15.8335 11.4582 15.8335 11.4297C15.8496 11.3629 15.9011 11.3396 15.96 11.3228C16.2329 11.2452 16.5087 11.1764 16.7774 11.0867C17.5267 10.8364 18.0073 10.3236 18.2254 9.5633C18.2937 9.32491 18.3612 9.08612 18.4295 8.84774C18.4526 8.7676 18.5062 8.7235 18.5786 8.72363C18.6509 8.72363 18.7036 8.76801 18.7274 8.84815C18.8201 9.15944 18.8864 9.47947 19.0034 9.78216C19.2709 10.4741 19.7714 10.9159 20.4829 11.1185C20.7231 11.1869 20.9632 11.255 21.2031 11.3243C21.2878 11.3487 21.3355 11.4056 21.3334 11.4758C21.3314 11.5453 21.2866 21.5965 21.2031 11.6208C20.903 11.7083 20.5967 11.7785 20.3037 11.8854C19.5927 12.1448 19.1388 12.6519 18.9315 13.3808C18.863 13.6217 18.795 13.8625 18.7264 14.1033C18.7103 14.1599 18.6844 14.2086 18.6208 14.2236Z"
         fill="white"
       />
       <defs>
@@ -182,7 +344,7 @@ const CMSRouteRenderer: React.FC = () => {
       </defs>
     </svg>
   );
-  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const SelectedComponent = useCase[type];
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sticky Header */}
@@ -200,24 +362,26 @@ const CMSRouteRenderer: React.FC = () => {
             <div className="hidden md:flex gap-3">
               <button
                 onClick={handleCMSClick}
-                className="bg-indigo-100 text-blue-700 rounded hover:bg-indigo-200 text-blue px-5 py-2 rounded-md transition"
+                className="bg-indigo-100 text-blue-700 hover:bg-indigo-200 px-5 py-2 rounded-md transition"
               >
                 Go To CMS
               </button>
               <button
                 onClick={toggleChat}
                 aria-label={chatOpen ? "Close AI Chat" : "Open AI Chat"}
-                className="bg-purple-100 text-purple-700 rounded hover:bg-purple-200 px-5 py-2 transition rounded-md"
+                className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-5 py-2 rounded-md transition flex items-center gap-2"
               >
+                <Sparkles className="w-4 h-4" />
                 <span>{chatOpen ? "Close AI Chat" : "AI Chat"}</span>
               </button>
               <button
                 onClick={handleInterest}
-                className="bg-green-100 text-green-700 rounded hover:bg-green-200 px-5 py-2 rounded-md font-medium transition hover:scale-105"
+                className="bg-green-100 text-green-700 hover:bg-green-200 px-5 py-2 rounded-md font-medium transition hover:scale-105"
               >
                 I'm Interested
               </button>
             </div>
+
             <div className="md:hidden">
               <button onClick={toggleMobileMenu}>
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -226,23 +390,25 @@ const CMSRouteRenderer: React.FC = () => {
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 pt-2 gap-3">
+            <div className="md:hidden pb-4 pt-2 space-y-2">
               <button
                 onClick={toggleChat}
                 aria-label={chatOpen ? "Close AI Chat" : "Open AI Chat"}
-                className="bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm flex items-center gap-2 shadow-sm"
+                className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-5 py-2 rounded-md transition flex items-center gap-2"
               >
+                <Sparkles className="w-4 h-4" />
                 <span>{chatOpen ? "Close AI Chat" : "AI Chat"}</span>
               </button>
+
               <button
                 onClick={handleCMSClick}
-                className="bg-indigo-100 text-blue-700 rounded hover:bg-indigo-200 px-5 py-2 rounded-md transition"
+                className="w-full bg-indigo-100 text-blue-700 hover:bg-indigo-200 px-4 py-2 rounded-md transition text-sm"
               >
                 Go To CMS
               </button>
               <button
                 onClick={handleInterest}
-                className="w-full bg-green-100 text-green-700 rounded hover:bg-green-200 py-2 rounded-md font-medium transition"
+                className="w-full bg-green-100 text-green-700 hover:bg-green-200 py-2 rounded-md font-medium transition text-sm"
               >
                 I'm Interested
               </button>
@@ -259,6 +425,7 @@ const CMSRouteRenderer: React.FC = () => {
         © {new Date().getFullYear()} Global Lending Management Solutions. All
         rights reserved.
       </footer>
+
       {/* AI Assistant Chat Window */}
       {chatOpen && (
         <div
@@ -277,16 +444,13 @@ const CMSRouteRenderer: React.FC = () => {
         >
           {/* Chat Header */}
           <div className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">
-            {/* Left Side - Title with Gradient Text */}
             <div className="flex items-center gap-3">
               <p className="text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text">
                 CMS AI Assistant
               </p>
             </div>
 
-            {/* Right Side - Buttons */}
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* Fullscreen Toggle Button */}
               <button
                 type="button"
                 aria-label={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
@@ -328,7 +492,6 @@ const CMSRouteRenderer: React.FC = () => {
                 )}
               </button>
 
-              {/* Close Chat Button */}
               <button
                 type="button"
                 aria-label="Close AI Chat"
@@ -362,15 +525,19 @@ const CMSRouteRenderer: React.FC = () => {
                   <div
                     key={index}
                     className={`flex ${
-                      msg.sender === "user" ? "justify-end" : "justify-start"
+                      msg.role === "user" || msg.sender === "user"
+                        ? "justify-end"
+                        : "justify-start"
                     }`}
                   >
                     <div
                       className={`flex max-w-[85%] sm:max-w-[75%] ${
-                        msg.sender === "user" ? "flex-row-reverse" : "flex-row"
+                        msg.role === "user" || msg.sender === "user"
+                          ? "flex-row-reverse"
+                          : "flex-row"
                       } items-start gap-2 sm:gap-3`}
                     >
-                      {msg.sender === "ai" && (
+                      {(msg.role === "assistant" || msg.sender === "ai") && (
                         <div className="flex-shrink-0 mt-1">
                           <div className="w-6 h-6 sm:w-8 sm:h-8">
                             <AIIcon />
@@ -379,15 +546,25 @@ const CMSRouteRenderer: React.FC = () => {
                       )}
                       <div className="flex flex-col">
                         <div
-                          className={`rounded-lg p-2 sm:p-2 text-sm sm:text-base leading-relaxed ${
-                            msg.sender === "ai"
+                          className={`rounded-lg p-2 sm:p-3 text-sm sm:text-base leading-relaxed ${
+                            msg.role === "assistant" || msg.sender === "ai"
                               ? "bg-gray-100 text-gray-800"
                               : "bg-blue-600 text-white"
                           } shadow-sm`}
                         >
-                          <p className="break-words">{msg.text}</p>
+                          {msg.isImage ? (
+                            <img
+                              src={msg.content || msg.text}
+                              alt="AI Response"
+                              className="max-w-full h-auto rounded"
+                            />
+                          ) : (
+                            <ReactMarkdown className="break-words">
+                              {msg.content || msg.text || ""}
+                            </ReactMarkdown>
+                          )}
                         </div>
-                        {msg.sender === "ai" && (
+                        {(msg.role === "assistant" || msg.sender === "ai") && (
                           <div className="flex items-center gap-1 mt-2">
                             <button
                               type="button"
@@ -396,8 +573,8 @@ const CMSRouteRenderer: React.FC = () => {
                               aria-label="Thumbs up"
                             >
                               <svg
-                                width="20"
-                                height="20"
+                                width="16"
+                                height="16"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -418,8 +595,8 @@ const CMSRouteRenderer: React.FC = () => {
                               aria-label="Thumbs down"
                             >
                               <svg
-                                width="20"
-                                height="20"
+                                width="16"
+                                height="16"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -441,7 +618,7 @@ const CMSRouteRenderer: React.FC = () => {
                 ))}
 
                 {/* Typing Indicator */}
-                {isTyping && (
+                {(isTyping || loading) && (
                   <div className="flex justify-start">
                     <div className="flex max-w-[85%] sm:max-w-[75%] flex-row items-start gap-2 sm:gap-3">
                       <div className="flex-shrink-0 mt-1">
@@ -481,18 +658,18 @@ const CMSRouteRenderer: React.FC = () => {
                 type="text"
                 name="message"
                 placeholder="Ask about this use case..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                disabled={isTyping}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isTyping || loading}
                 className="flex-grow bg-transparent text-sm sm:text-base focus:outline-none placeholder-gray-500 disabled:cursor-not-allowed"
                 aria-label="Chat input"
               />
               <button
                 type="submit"
-                disabled={!messageInput.trim() || isTyping}
+                disabled={!input.trim() || isTyping || loading}
                 aria-label="Send message"
                 className={`flex items-center justify-center rounded-full p-2.5 transition-all duration-200 ${
-                  messageInput.trim() && !isTyping
+                  input.trim() && !isTyping && !loading
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-gray-300 text-gray-400 cursor-not-allowed"
                 } shadow-sm`}

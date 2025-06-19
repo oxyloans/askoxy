@@ -1,29 +1,46 @@
+
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
 import { message, Upload, Button, Modal } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { UploadOutlined, CopyOutlined, FacebookOutlined, InstagramOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 
 interface MediaItem {
   url: string;
   status: boolean;
-  type: 'image' | 'video';
+  type: "image" | "video";
   fileName?: string;
 }
 
 interface CampaignForm {
   campaignType: string;
   campaignDescription: string;
+  socialMediaCaption: string;
   mediaUrls: MediaItem[];
   campaignTypeAddBy: string;
   campainInputType: string;
+}
+
+interface CampaignResponse {
+  imageUrls: string[] | null;
+  campaignType: string | null;
+  message: string;
+  campaignTypeAddBy: string | null;
+  campaignDescription: string | null;
+  campaignStatus: string | null;
+  campaignId: string;
+  campainInputType: string | null;
+  facebookCampaignUrl: string;
+  instagramCampaignUrl: string;
 }
 
 const AddBlog: React.FC = () => {
   const [formData, setFormData] = useState<CampaignForm>({
     campaignType: "",
     campaignDescription: "",
+    socialMediaCaption: "",
     mediaUrls: [],
     campaignTypeAddBy: "RAMA",
     campainInputType: "SERVICE",
@@ -37,7 +54,15 @@ const AddBlog: React.FC = () => {
 
   const [nameErrorMessage, setNameErrorMessage] = useState<string>("");
   const [descErrormessage, setDescErrorMessage] = useState<string>("");
+  const [socialMediaCaptionErrorMessage, setSocialMediaCaptionErrorMessage] =
+    useState<string>("");
   const [typeErrorMessage, setTypeErrorMessage] = useState<string>("");
+
+  const [isLinksModalVisible, setIsLinksModalVisible] = useState(false);
+  const [socialMediaLinks, setSocialMediaLinks] = useState({
+    facebook: "",
+    instagram: "",
+  });
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -46,15 +71,33 @@ const AddBlog: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Real-time validation for social media caption
+    if (name === "socialMediaCaption") {
+      if (value.length < 25) {
+        setSocialMediaCaptionErrorMessage(
+          "Social Media Caption must be between 25 and 30 characters"
+        );
+      } else {
+        setSocialMediaCaptionErrorMessage("");
+      }
+    }
   };
 
   const isVideoFile = (file: File): boolean => {
-    const videoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm'];
+    const videoTypes = [
+      "video/mp4",
+      "video/avi",
+      "video/mov",
+      "video/wmv",
+      "video/flv",
+      "video/webm",
+    ];
     return videoTypes.includes(file.type);
   };
 
   const isImageFile = (file: File): boolean => {
-    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const imageTypes = ["image/jpeg", "image/jpg", "image/png"];
     return imageTypes.includes(file.type);
   };
 
@@ -69,7 +112,6 @@ const AddBlog: React.FC = () => {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
-      // Check if file is already uploaded
       const isAlreadyUploaded = formData.mediaUrls.some(
         (item) => item.fileName === file.name
       );
@@ -79,7 +121,6 @@ const AddBlog: React.FC = () => {
         continue;
       }
 
-      // Validate file type
       if (!isImageFile(file) && !isVideoFile(file)) {
         setMediaErrorMessage(`${file.name} is not a supported file type`);
         continue;
@@ -102,8 +143,8 @@ const AddBlog: React.FC = () => {
         );
 
         if (response.data.uploadStatus === "UPLOADED") {
-          const mediaType = isVideoFile(file) ? 'video' : 'image';
-          
+          const mediaType = isVideoFile(file) ? "video" : "image";
+
           setFormData((prev) => ({
             ...prev,
             mediaUrls: [
@@ -119,11 +160,15 @@ const AddBlog: React.FC = () => {
 
           setMediaErrorMessage("");
         } else {
-          setMediaErrorMessage(`Failed to upload ${file.name}. Please try again.`);
+          setMediaErrorMessage(
+            `Failed to upload ${file.name}. Please try again.`
+          );
         }
       } catch (error) {
         console.error("Error uploading file:", error);
-        setMediaErrorMessage(`Failed to upload ${file.name}. Please try again.`);
+        setMediaErrorMessage(
+          `Failed to upload ${file.name}. Please try again.`
+        );
       } finally {
         setIsUploading(false);
       }
@@ -138,11 +183,17 @@ const AddBlog: React.FC = () => {
     }));
   };
 
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    message.success("Link copied to clipboard!");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     setNameErrorMessage("");
     setDescErrorMessage("");
+    setSocialMediaCaptionErrorMessage("");
     setTypeErrorMessage("");
     setSuccessMessage("");
 
@@ -165,10 +216,9 @@ const AddBlog: React.FC = () => {
   };
 
   const submitCampaign = async () => {
-    // Pass both images and videos within the images array
-    const images = formData.mediaUrls.map(item => ({ 
-      imageUrl: item.url, 
-      status: item.status 
+    const images = formData.mediaUrls.map((item) => ({
+      imageUrl: item.url,
+      status: item.status,
     }));
 
     const requestPayload = {
@@ -176,6 +226,7 @@ const AddBlog: React.FC = () => {
         {
           campaignDescription: formData.campaignDescription,
           campaignType: formData.campaignType,
+          socialMediaCaption: formData.socialMediaCaption,
           campaignTypeAddBy: formData.campaignTypeAddBy,
           images: images,
           campainInputType: "BLOG",
@@ -184,7 +235,7 @@ const AddBlog: React.FC = () => {
     };
 
     try {
-      const response = await axios.patch(
+      const response = await axios.patch<CampaignResponse>(
         BASE_URL + "/marketing-service/campgin/addCampaignTypes",
         requestPayload,
         {
@@ -197,9 +248,15 @@ const AddBlog: React.FC = () => {
 
       if (response.data) {
         message.success("Blog Added Successfully...!");
+        setSocialMediaLinks({
+          facebook: response.data.facebookCampaignUrl,
+          instagram: response.data.instagramCampaignUrl,
+        });
+        setIsLinksModalVisible(true);
         setFormData({
           campaignType: "",
           campaignDescription: "",
+          socialMediaCaption: "",
           mediaUrls: [],
           campaignTypeAddBy: "RAMA",
           campainInputType: "SERVICE",
@@ -229,11 +286,23 @@ const AddBlog: React.FC = () => {
       isValid = false;
     }
 
+    if (formData.socialMediaCaption.trim() === "") {
+      setSocialMediaCaptionErrorMessage("Social Media Caption is required");
+      isValid = false;
+    } else if (
+      formData.socialMediaCaption.length < 25
+    ) {
+      setSocialMediaCaptionErrorMessage(
+        "Social Media Caption must be between 25 and 30 characters"
+      );
+      isValid = false;
+    }
+
     return isValid;
   };
 
-  const images = formData.mediaUrls.filter(item => item.type === 'image');
-  const videos = formData.mediaUrls.filter(item => item.type === 'video');
+  const images = formData.mediaUrls.filter((item) => item.type === "image");
+  const videos = formData.mediaUrls.filter((item) => item.type === "video");
 
   return (
     <div className="flex flex-col md:flex-row">
@@ -266,7 +335,6 @@ const AddBlog: React.FC = () => {
               )}
             </div>
 
-            {/* Campaign Description */}
             <div className="mb-4">
               <label
                 htmlFor="campaignDescription"
@@ -290,7 +358,30 @@ const AddBlog: React.FC = () => {
               )}
             </div>
 
-            {/* Media Upload */}
+            <div className="mb-4">
+              <label
+                htmlFor="socialMediaCaption"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Social Media Caption
+              </label>
+              <textarea
+                id="socialMediaCaption"
+                name="socialMediaCaption"
+                value={formData.socialMediaCaption}
+                onChange={handleInputChange}
+                rows={3}
+                placeholder="Enter social media caption for this blog post (25-30 characters)..."
+                className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              ></textarea>
+              {socialMediaCaptionErrorMessage && (
+                <div className="text-red-500 text-sm mb-4">
+                  {socialMediaCaptionErrorMessage}
+                </div>
+              )}
+            </div>
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">
                 Upload Images & Videos
@@ -322,8 +413,9 @@ const AddBlog: React.FC = () => {
                   />
                 </label>
                 <p className="text-sm text-gray-600">
-                  Upload images (JPG, PNG) and videos (MP4, AVI, MOV, WMV, FLV, WEBM). 
-                  Each file should be below <span className="font-bold">1MB</span>.
+                  Upload images (JPG, PNG) and videos (MP4, AVI, MOV, WMV, FLV,
+                  WEBM). Each file should be below{" "}
+                  <span className="font-bold">1MB</span>.
                 </p>
                 {isUploading && (
                   <div className="flex items-center text-sm text-gray-600">
@@ -336,12 +428,21 @@ const AddBlog: React.FC = () => {
                 )}
               </div>
 
-              {/* Display Images */}
               {images.length > 0 && (
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      className="w-5 h-5 mr-2 text-blue-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                     Images ({images.length})
                   </h3>
@@ -358,12 +459,28 @@ const AddBlog: React.FC = () => {
                           </div>
                           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           <button
-                            onClick={() => handleDeleteMedia(formData.mediaUrls.findIndex(item => item === image))}
+                            onClick={() =>
+                              handleDeleteMedia(
+                                formData.mediaUrls.findIndex(
+                                  (item) => item === image
+                                )
+                              )
+                            }
                             className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
                             type="button"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
                             </svg>
                           </button>
                           <div className="absolute bottom-3 left-3 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
@@ -376,12 +493,21 @@ const AddBlog: React.FC = () => {
                 </div>
               )}
 
-              {/* Display Videos */}
               {videos.length > 0 && (
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <svg
+                      className="w-5 h-5 mr-2 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
                     </svg>
                     Videos ({videos.length})
                   </h3>
@@ -399,12 +525,28 @@ const AddBlog: React.FC = () => {
                           </div>
                           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                           <button
-                            onClick={() => handleDeleteMedia(formData.mediaUrls.findIndex(item => item === video))}
+                            onClick={() =>
+                              handleDeleteMedia(
+                                formData.mediaUrls.findIndex(
+                                  (item) => item === video
+                                )
+                              )
+                            }
                             className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
                             type="button"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
                             </svg>
                           </button>
                           <div className="absolute bottom-3 left-3 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0 pointer-events-none">
@@ -445,12 +587,10 @@ const AddBlog: React.FC = () => {
               </div>
             )}
 
-            {/* Error Message */}
             {errorMessage && (
               <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               className={`w-full p-2 text-white rounded ${
@@ -466,6 +606,49 @@ const AddBlog: React.FC = () => {
           </form>
         </div>
       </div>
+ <Modal
+      title="Social Media Links"
+      open={isLinksModalVisible}
+      onCancel={() => setIsLinksModalVisible(false)}
+      footer={null}
+    >
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <FacebookOutlined className="text-blue-600 text-xl" />
+          <a
+            href={socialMediaLinks.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 truncate text-blue-600 underline hover:text-blue-800 transition-colors"
+          >
+            {socialMediaLinks.facebook}
+          </a>
+          <Button
+            icon={<CopyOutlined />}
+            onClick={() => handleCopyLink(socialMediaLinks.facebook)}
+          >
+            Copy
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
+          <InstagramOutlined className="text-pink-600 text-xl" />
+          <a
+            href={socialMediaLinks.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 truncate text-blue-600 underline hover:text-blue-800 transition-colors"
+          >
+            {socialMediaLinks.instagram}
+          </a>
+          <Button
+            icon={<CopyOutlined />}
+            onClick={() => handleCopyLink(socialMediaLinks.instagram)}
+          >
+            Copy
+          </Button>
+        </div>
+      </div>
+    </Modal>
     </div>
   );
 };

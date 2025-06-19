@@ -311,6 +311,17 @@ const UniversityListPage: React.FC = () => {
     }
   };
 
+  // Handle apply now navigation
+  const handleApplyNow = (university: UniversityResponse['universities'][0]) => {
+    navigate('/student-dashboard', {
+      state: {
+        university: university.universityName,
+        universityId: university.universityId,
+        courseName: selectedCourseName
+      }
+    });
+  };
+
   // Initial fetch
   useEffect(() => {
     fetchUniversities(0);
@@ -485,13 +496,13 @@ const UniversityListPage: React.FC = () => {
                         {renderIntakeBadges(course)}
                       </div>
                     </div>
-                    <button
+                    {/* <button
                       onClick={(e) => handleExternalLink(course.courseUrl, e)}
                       className="w-full mt-3 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-300 flex items-center justify-center text-xs font-bold"
                     >
                       <ExternalLink className="mr-1 h-3 w-3" />
                       View Course
-                    </button>
+                    </button> */}
                   </div>
                 ))}
               </div>
@@ -609,6 +620,13 @@ const UniversityListPage: React.FC = () => {
                             >
                               <BookOpen className="mr-1 h-3 w-3" />
                               University Courses
+                            </button>
+                            <button
+                              onClick={() => handleApplyNow(univ)}
+                              className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center justify-center text-xs font-bold"
+                            >
+                              <GraduationCap className="mr-1 h-3 w-3" />
+                              Apply Now
                             </button>
                             <button
                               onClick={() => {
@@ -1024,6 +1042,13 @@ const UniversityListPage: React.FC = () => {
                           University Courses
                         </button>
                         <button
+                          onClick={() => handleApplyNow(univ)}
+                          className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center text-xs font-bold shadow-sm"
+                        >
+                          <GraduationCap className="mr-1 h-3 w-3" />
+                          Apply Now
+                        </button>
+                        <button
                           onClick={() => handleUniversitySelect(univ)}
                           className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold text-xs whitespace-nowrap shadow-md ${
                             isSelected
@@ -1113,6 +1138,13 @@ const UniversityListPage: React.FC = () => {
                       >
                         <BookOpen className="mr-1 h-3 w-3" />
                         University Courses
+                      </button>
+                      <button 
+                        onClick={() => handleApplyNow(univ)}
+                        className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center justify-center font-bold text-xs shadow-sm"
+                      >
+                        <GraduationCap className="mr-1 h-3 w-3" />
+                        Apply Now
                       </button>
                       <button 
                         onClick={() => handleUniversitySelect(univ)}

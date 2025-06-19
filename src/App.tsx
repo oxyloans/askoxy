@@ -150,7 +150,7 @@ import RealEstate from "./Real Estate/Real Estate/RealEstate";
 import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
 
 import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
-import ChatApp from "./components/OpenAi";
+
 
 // *************************STUDY ABRAD****************************//
 import CoursesPage from "./StudyAbroad/Course";
@@ -162,6 +162,7 @@ import AllUniversities from "./StudyAbroad/AllUniversities";
 import StudyAbroadLandingPage from "./StudyAbroad/StudyAbroadLandingPage";
 import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
+import AskoxyAi from "./components/OpenAi";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -263,7 +264,7 @@ const App: React.FC = () => {
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
             />
-            <Route path="/generateimage" element={<ChatApp />} />
+            <Route path="/generateimage" element={<AskoxyAi />} />
             <Route path="/caandcsservices" element={<CACSService />} />
             <Route
               path="/goldandsilveranddiamonds"
