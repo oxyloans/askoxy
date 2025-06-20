@@ -19,6 +19,7 @@ import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
+import DeliveryFee from "./DeliveryFee"; // Import DeliveryFee component
 
 interface CartItem {
   itemId: string;
@@ -27,10 +28,6 @@ interface CartItem {
   cartQuantity: string;
   quantity: number;
   status: string;
-}
-
-interface CartData {
-  deliveryBoyFee: number;
 }
 
 interface Address {
@@ -106,7 +103,7 @@ const CheckoutPage: React.FC = () => {
     state?.selectedAddress || null
   );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
-  const [deliveryBoyFee, setDeliveryBoyFee] = useState<number>(0);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(0); // Allow null
   const [subGst, setSubGst] = useState(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [walletMessage, setWalletMessage] = useState<string>("");
@@ -176,8 +173,6 @@ const CheckoutPage: React.FC = () => {
       console.log("BMV cashback applied successfully");
     } catch (error) {
       console.error("Error applying BMV cashback:", error);
-      // Optionally, you can show a non-blocking message to the user
-      // message.error("Failed to apply BMV cashback");
     }
   };
 
@@ -301,7 +296,7 @@ const CheckoutPage: React.FC = () => {
                     మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత
                     మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
                   </p>
-                  <p>మీ సహకారం మ aching మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
+                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
                 </>
               )}
             </div>
@@ -496,7 +491,7 @@ const CheckoutPage: React.FC = () => {
     usedWalletAmount: number,
     couponCode: string | null,
     coupenDetails: number,
-    deliveryBoyFee: number,
+    deliveryFee: number | null, // Allow null
     grandTotalAmount: number,
     grandTotal: number,
     subGst: number,
@@ -516,7 +511,7 @@ const CheckoutPage: React.FC = () => {
         walletAmount: usedWalletAmount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         couponValue: couponCode !== null ? coupenDetails : 0,
-        deliveryBoyFee: deliveryBoyFee,
+        deliveryBoyFee: deliveryFee ?? 0, // Use 0 if null
         amount: grandTotalAmount,
         subTotal: grandTotal,
         gstAmount: subGst,
@@ -569,28 +564,20 @@ const CheckoutPage: React.FC = () => {
             0
           );
 
-        const totalDeliveryFee = cartItems
-          .filter((item: CartItem) => item.status === "ADD")
-          .reduce(
-            (sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0),
-            0
-          );
-
         const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
 
         setSubGst(gstAmount);
-        setDeliveryBoyFee(totalDeliveryFee);
         setTotalAmount(amountToPay);
         setGrandTotal(amountToPay);
 
         const totalWithGst = amountToPay + gstAmount;
-        const totalWithDelivery = totalWithGst + totalDeliveryFee;
+        const totalWithDelivery = totalWithGst + (deliveryFee ?? 0); // Use 0 if null
         setGrandTotalAmount(totalWithDelivery);
       } else {
         setCartData([]);
         setCount(0);
         setSubGst(0);
-        setDeliveryBoyFee(0);
+        setDeliveryFee(0);
         setTotalAmount(0);
         setGrandTotal(0);
         setGrandTotalAmount(0);
@@ -641,20 +628,12 @@ const CheckoutPage: React.FC = () => {
             0
           );
 
-        const totalDeliveryFee = cartItems
-          .filter((item: CartItem) => item.status === "ADD")
-          .reduce(
-            (sum: number, item: CartData) => sum + (item.deliveryBoyFee || 0),
-            0
-          );
-
         setGrandTotal(amountToPay);
         setSubGst(gstAmount);
-        setDeliveryBoyFee(totalDeliveryFee);
         setTotalAmount(cartValue);
 
         const totalWithGst = amountToPay + gstAmount;
-        const totalWithDelivery = totalWithGst + totalDeliveryFee;
+        const totalWithDelivery = totalWithGst + (deliveryFee ?? 0); // Use 0 if null
         setGrandTotalAmount(totalWithDelivery);
 
         try {
@@ -683,7 +662,7 @@ const CheckoutPage: React.FC = () => {
         setCount(0);
         setGrandTotal(0);
         setSubGst(0);
-        setDeliveryBoyFee(0);
+        setDeliveryFee(0);
         setTotalAmount(0);
         setGrandTotalAmount(0);
         setPricesLoading(false);
@@ -828,7 +807,7 @@ const CheckoutPage: React.FC = () => {
   };
 
   function grandTotalfunc() {
-    const baseTotal = totalAmount + deliveryBoyFee + subGst;
+    const baseTotal = totalAmount + (deliveryFee ?? 0) + subGst; // Use 0 if null
     let discountedTotal = baseTotal;
 
     if (coupenApplied && coupenDetails) {
@@ -848,7 +827,7 @@ const CheckoutPage: React.FC = () => {
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-    let currentTotal = totalAmount + deliveryBoyFee;
+    let currentTotal = totalAmount + (deliveryFee ?? 0); // Use 0 if null
     if (coupenApplied && coupenDetails) {
       currentTotal = Math.max(0, currentTotal - coupenDetails);
     }
@@ -889,7 +868,7 @@ const CheckoutPage: React.FC = () => {
     grandTotalfunc();
   }, [
     totalAmount,
-    deliveryBoyFee,
+    deliveryFee,
     coupenApplied,
     coupenDetails,
     useWallet,
@@ -938,6 +917,16 @@ const CheckoutPage: React.FC = () => {
         return;
       }
 
+      if (!selectedAddress) {
+        Modal.error({ title: "Error", content: "Please select an address." });
+        return;
+      }
+
+      if (deliveryFee === null) {
+        Modal.error({ title: "Error", content: "Delivery not available for this location." });
+        return;
+      }
+
       setLoading(true);
 
       const finalWalletAmount = useWallet ? usedWalletAmount : 0;
@@ -954,7 +943,7 @@ const CheckoutPage: React.FC = () => {
           walletAmount: finalWalletAmount,
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
           couponValue: coupenDetails || 0,
-          deliveryBoyFee,
+          deliveryBoyFee: deliveryFee ?? 0, // Use 0 if null
           amount: grandTotalAmount,
           subTotal: grandTotal,
           gstAmount: subGst,
@@ -980,7 +969,7 @@ const CheckoutPage: React.FC = () => {
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
-            shipping: deliveryBoyFee,
+            shipping: deliveryFee ?? 0, // Use 0 if null
             coupon: coupenApplied ? couponCode.toUpperCase() : "",
             payment_type: selectedPayment,
             items: cartData.map((item) => ({
@@ -995,7 +984,7 @@ const CheckoutPage: React.FC = () => {
         }
 
         if (selectedPayment === "COD") {
-          applyBmvCashBack(); // Trigger BMV cashback immediately
+          applyBmvCashBack();
           Modal.success({
             content: "Order placed successfully! You'll pay on delivery.",
             onOk: () => {
@@ -1256,7 +1245,7 @@ const CheckoutPage: React.FC = () => {
                   localStorage.removeItem("paymentId");
                   localStorage.removeItem("merchantTransactionId");
                   fetchCartData();
-                  applyBmvCashBack(); // Trigger BMV cashback immediately
+                  applyBmvCashBack();
                   Modal.success({
                     content: secondResponse.data.status
                       ? secondResponse.data.status
@@ -1699,7 +1688,11 @@ const CheckoutPage: React.FC = () => {
                       </div>
                       <div className="flex justify-between py-2">
                         <span className="text-gray-600">Delivery Fee</span>
-                        <span>₹{deliveryBoyFee.toFixed(2)}</span>
+                        <span>
+                          {deliveryFee !== null
+                            ? `₹${deliveryFee.toFixed(2)}`
+                            : "Not serviceable"}
+                        </span>
                       </div>
                       {coupenApplied && coupenDetails && (
                         <div className="flex justify-between py-2 text-green-600">
@@ -1819,12 +1812,19 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     )}
 
+                    {/* Integrate DeliveryFee component */}
+                    <DeliveryFee
+                      userLat={selectedAddress?.latitude}
+                      userLng={selectedAddress?.longitude}
+                      onFeeCalculated={(fee) => setDeliveryFee(fee)}
+                    />
+
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handlePayment}
                       disabled={
-                        loading || !selectedAddress || !selectedTimeSlot
+                        loading || !selectedAddress || !selectedTimeSlot || deliveryFee === null
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >

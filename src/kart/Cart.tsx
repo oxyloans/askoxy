@@ -9,6 +9,7 @@ import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import DeliveryFee from "./DeliveryFee";
 
 interface Address {
   id?: string;
@@ -17,6 +18,8 @@ interface Address {
   address: string;
   pincode: string;
   addressType: "Home" | "Work" | "Others";
+  latitude?: number;
+  longitude?: number;
 }
 
 interface CartItem {
@@ -109,6 +112,8 @@ const CartPage: React.FC = () => {
   const [mobileNumbers, setMobileNumbers] = useState<string[]>([]);
   const [currentNumber, setCurrentNumber] = useState<string>("");
   const containerExistsRef = useRef<boolean>(false);
+  //states for delivery fee
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
 
   const CONTAINER_ITEM_IDS = {
     HEAVY_BAG: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
@@ -645,122 +650,126 @@ const CartPage: React.FC = () => {
   };
 
   const fetchCartData = async () => {
-  try {
-    console.log("Fetching cart data for customer ID:", customerId);
+    try {
+      console.log("Fetching cart data for customer ID:", customerId);
 
-    const response = await axios.get(
-      `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    console.log("API Response:", response.data);
-
-    if (response.data.customerCartResponseList) {
-      const cartItems = response.data.customerCartResponseList;
-      console.log(`Fetched ${cartItems.length} items in cart, Total GST: ${response.data.totalGstAmountToPay}`);
-
-      const hasContainer = cartItems.some((item: CartItem) =>
-        [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
-          item.itemId
-        )
-      );
-
-      containerExistsRef.current = hasContainer;
-      console.log(`Container exists in cart: ${hasContainer}`);
-
-      const regularItemsMap = cartItems
-        .filter((item: CartItem) => item.status !== "FREE")
-        .reduce((acc: { [key: string]: number }, item: CartItem) => {
-          acc[item.itemId] = item.cartQuantity || 0;
-          return acc;
-        }, {});
-
-      const freeItemsMap = cartItems
-        .filter((item: CartItem) => item.status === "FREE")
-        .reduce((acc: { [key: string]: number }, item: CartItem) => {
-          acc[item.itemId] = item.cartQuantity || 0;
-          return acc;
-        }, {});
-
-      setRegularCartItems(regularItemsMap);
-      setFreeCartItems(freeItemsMap);
-
-      const totalQuantity = cartItems.reduce(
-        (sum: number, item: CartItem) => sum + (item.cartQuantity || 0),
-        0
-      );
-      setCount(totalQuantity);
-
-      const cartWithFreeItems = response.data?.customerCartResponseList || [];
-
-      cartWithFreeItems.forEach((item: CartItem) => {
-        if (
-          item.itemName.toLowerCase().includes("rice") &&
-          item.weight &&
-          parseFloat(item.weight) >= 5
-        ) {
-          const freeItems = Math.floor(item.cartQuantity / 5) * 2;
-          item.freeQuantity = freeItems;
-        } else if (
-          item.itemName.toLowerCase().includes("rice") &&
-          item.weight &&
-          parseFloat(item.weight) === 1 &&
-          item.status === "FREE"
-        ) {
-          item.freeQuantity = 1;
+      const response = await axios.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-
-      const outOfStockItems = cartWithFreeItems.filter(
-        (item: CartItem) => item.cartQuantity > item.quantity
       );
 
-      if (outOfStockItems.length > 0) {
-        setCheckoutError(true);
-        message.warning(
-          `Please decrease the quantity for: ${outOfStockItems
-            .map((item: CartItem) => item.itemName)
-            .join(", ")} before proceeding to checkout.`,
-          5
+      console.log("API Response:", response.data);
+
+      if (response.data.customerCartResponseList) {
+        const cartItems = response.data.customerCartResponseList;
+        console.log(
+          `Fetched ${cartItems.length} items in cart, Total GST: ${response.data.totalGstAmountToPay}`
+        );
+
+        const hasContainer = cartItems.some((item: CartItem) =>
+          [CONTAINER_ITEM_IDS.HEAVY_BAG, CONTAINER_ITEM_IDS.LIGHT_BAG].includes(
+            item.itemId
+          )
+        );
+
+        containerExistsRef.current = hasContainer;
+        console.log(`Container exists in cart: ${hasContainer}`);
+
+        const regularItemsMap = cartItems
+          .filter((item: CartItem) => item.status !== "FREE")
+          .reduce((acc: { [key: string]: number }, item: CartItem) => {
+            acc[item.itemId] = item.cartQuantity || 0;
+            return acc;
+          }, {});
+
+        const freeItemsMap = cartItems
+          .filter((item: CartItem) => item.status === "FREE")
+          .reduce((acc: { [key: string]: number }, item: CartItem) => {
+            acc[item.itemId] = item.cartQuantity || 0;
+            return acc;
+          }, {});
+
+        setRegularCartItems(regularItemsMap);
+        setFreeCartItems(freeItemsMap);
+
+        const totalQuantity = cartItems.reduce(
+          (sum: number, item: CartItem) => sum + (item.cartQuantity || 0),
+          0
+        );
+        setCount(totalQuantity);
+
+        const cartWithFreeItems = response.data?.customerCartResponseList || [];
+
+        cartWithFreeItems.forEach((item: CartItem) => {
+          if (
+            item.itemName.toLowerCase().includes("rice") &&
+            item.weight &&
+            parseFloat(item.weight) >= 5
+          ) {
+            const freeItems = Math.floor(item.cartQuantity / 5) * 2;
+            item.freeQuantity = freeItems;
+          } else if (
+            item.itemName.toLowerCase().includes("rice") &&
+            item.weight &&
+            parseFloat(item.weight) === 1 &&
+            item.status === "FREE"
+          ) {
+            item.freeQuantity = 1;
+          }
+        });
+
+        const outOfStockItems = cartWithFreeItems.filter(
+          (item: CartItem) => item.cartQuantity > item.quantity
+        );
+
+        if (outOfStockItems.length > 0) {
+          setCheckoutError(true);
+          message.warning(
+            `Please decrease the quantity for: ${outOfStockItems
+              .map((item: CartItem) => item.itemName)
+              .join(", ")} before proceeding to checkout.`,
+            5
+          );
+        }
+
+        setCartData(cartWithFreeItems);
+        setTotalGstAmount(response.data.totalGstAmountToPay || 0); // Set the total GST amount
+        return cartWithFreeItems;
+      } else {
+        console.warn(
+          "No customerCartResponseList in response, setting empty cart"
+        );
+        setRegularCartItems({});
+        setFreeCartItems({});
+        setCount(0);
+        setCartData([]);
+        setTotalGstAmount(0); // Reset GST amount
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Axios Error:",
+          error.response?.status,
+          error.response?.data || error.message
         );
       }
-
-      setCartData(cartWithFreeItems);
-      setTotalGstAmount(response.data.totalGstAmountToPay || 0); // Set the total GST amount
-      return cartWithFreeItems;
-    } else {
-      console.warn("No customerCartResponseList in response, setting empty cart");
       setRegularCartItems({});
       setFreeCartItems({});
       setCount(0);
       setCartData([]);
-      setTotalGstAmount(0); // Reset GST amount
+      setTotalGstAmount(0); // Reset GST amount on error
+      message.error("Failed to load cart data. Please try again.");
       return [];
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching cart items:", error);
-    if (axios.isAxiosError(error)) {
-      console.error(
-        "Axios Error:",
-        error.response?.status,
-        error.response?.data || error.message
-      );
-    }
-    setRegularCartItems({});
-    setFreeCartItems({});
-    setCount(0);
-    setCartData([]);
-    setTotalGstAmount(0); // Reset GST amount on error
-    message.error("Failed to load cart data. Please try again.");
-    return [];
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const getCoordinates = async (address: string) => {
     try {
@@ -1163,9 +1172,14 @@ const CartPage: React.FC = () => {
       return;
     }
 
+    if (deliveryFee === null) {
+      message.error("Delivery is not available for the selected address");
+      return;
+    }
+
     const isAddressValid = await handleAddressChange(selectedAddress);
     if (isAddressValid?.isWithin) {
-      navigate("/main/checkout", { state: { selectedAddress } });
+      navigate("/main/checkout", { state: { selectedAddress, deliveryFee } });
     }
   };
 
@@ -1396,7 +1410,12 @@ const CartPage: React.FC = () => {
 
       return updatedWithinRadius;
     }
-    setSelectedAddress(selectedAddress);
+
+    setSelectedAddress({
+      ...selectedAddress,
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
+    });
     return withinRadius;
   };
 
@@ -1405,6 +1424,9 @@ const CartPage: React.FC = () => {
       return true;
     }
     if (!cartData || cartData.length === 0) {
+      return true;
+    }
+    if (deliveryFee === null) {
       return true;
     }
 
@@ -1866,7 +1888,6 @@ const CartPage: React.FC = () => {
                     const selected = addresses.find(
                       (addr) => addr.address === e.target.value
                     );
-
                     if (selected) {
                       handleAddressChange(selected);
                     }
@@ -1906,10 +1927,16 @@ const CartPage: React.FC = () => {
                       ₹{totalGstAmount.toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex justify-between mb-2 text-gray-700">
-                    <span>Shipping</span>
-                    <span className="font-semibold">₹0.00</span>
-                  </div>
+                  {cartData.length > 0 && (
+                    <div className="flex justify-between mb-2 text-gray-700">
+                      <span>Delivery Fee</span>
+                      <span className="font-semibold">
+                        {deliveryFee === null
+                          ? "N/A"
+                          : `₹${deliveryFee.toFixed(2)}`}
+                      </span>
+                    </div>
+                  )}
                   {cartData?.map((item) => {
                     const quantity =
                       item.status === "FREE"
@@ -2024,14 +2051,16 @@ const CartPage: React.FC = () => {
                             return acc + goldGst * quantity;
                           }, 0) || 0;
 
-                        // Use totalGstAmount (from state) for non-gold items, subtract goldGst to avoid double-counting
                         const nonGoldGstTotal = totalGstAmount - goldGstTotal;
+                        const deliveryFeeTotal =
+                          cartData.length > 0 ? deliveryFee || 0 : 0;
 
                         return (
                           itemTotal +
                           goldMakingCostTotal +
                           goldGstTotal +
-                          nonGoldGstTotal
+                          nonGoldGstTotal +
+                          deliveryFeeTotal
                         ).toFixed(2);
                       })() || "0.00"}
                     </span>
@@ -2087,12 +2116,12 @@ const CartPage: React.FC = () => {
                   )}
                   <button
                     className={`w-full py-3 px-6 rounded-lg transition ${
-                      isCheckoutDisabled()
+                      isCheckoutDisabled() || deliveryFee === null
                         ? "bg-gray-400 cursor-not-allowed"
                         : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
                     }`}
                     onClick={() => handleToProcess()}
-                    disabled={isCheckoutDisabled()}
+                    disabled={isCheckoutDisabled() || deliveryFee === null}
                   >
                     {isCheckoutDisabled()
                       ? !selectedAddress
@@ -2100,6 +2129,8 @@ const CartPage: React.FC = () => {
                         : !cartData || cartData.length === 0
                         ? "Cart is Empty"
                         : "Cannot Checkout - Stock Issues"
+                      : deliveryFee === null
+                      ? "Delivery Not Available"
                       : "Proceed to Checkout"}
                   </button>
                 </div>
@@ -2427,6 +2458,11 @@ const CartPage: React.FC = () => {
         </div>
       </div>
       <Footer />
+      <DeliveryFee
+        userLat={selectedAddress?.latitude}
+        userLng={selectedAddress?.longitude}
+        onFeeCalculated={(fee) => setDeliveryFee(fee)}
+      />
     </div>
   );
 };
