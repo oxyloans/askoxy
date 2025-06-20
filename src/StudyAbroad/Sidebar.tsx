@@ -26,7 +26,7 @@ const StudentSidebar: React.FC<SidebarProps> = ({
     { id: "dashboard", label: "Dashboard", icon: GraduationCap },
     { id: "applications", label: "My Applications", icon: FileText },
     { id: "universities", label: "University Search", icon: Building2 },
-    { id: "scholarships", label: "Scholarships", icon: Award },
+    // { id: "scholarships", label: "Scholarships", icon: Award },
     { id: "profile", label: "My Profile", icon: User },
     { id: "TestScores", label: "Test Scores", icon: FileText },
     { id: "documents", label: "My Documents", icon: FileText },  

@@ -112,7 +112,7 @@ import DbOrderDetails from "./PartnerWeb/DbOrderList";
 import AddBlog from "./AskoxyAdmin/AddBlog";
 import OrderStatsDashboard from "./AskoxyAdmin/Stats";
 import StockUpdate from "./AskoxyAdmin/Stockupdate";
-
+import ContactUs from "./kart/ContactUs";
 import Register from "./AskoxyAdmin/Register";
 import AssignedDataPage from "./AskoxyAdmin/AssignedData";
 import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
@@ -289,6 +289,7 @@ const App: React.FC = () => {
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
+            <Route path = "/contactus" element={<ContactUs />}/>
             <Route path="/faqs" element={<RiceOfferFAQs />} />
             {/* study abrad */}
             <Route path="/studyabroad" element={<StudyAbroadLandingPage />} />
