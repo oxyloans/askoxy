@@ -19,7 +19,7 @@ import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
-import DeliveryFee from "./DeliveryFee"; // Import DeliveryFee component
+import DeliveryFee from "./DeliveryFee";
 
 interface CartItem {
   itemId: string;
@@ -103,7 +103,7 @@ const CheckoutPage: React.FC = () => {
     state?.selectedAddress || null
   );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
-  const [deliveryFee, setDeliveryFee] = useState<number | null>(0); // Allow null
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
   const [subGst, setSubGst] = useState(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [walletMessage, setWalletMessage] = useState<string>("");
@@ -150,7 +150,6 @@ const CheckoutPage: React.FC = () => {
 
   const isFreeItem = (item: CartItem) => item.status === "FREE";
 
-  // Function to handle bmvCashBack POST call
   const applyBmvCashBack = async () => {
     if (!customerId) {
       console.error("Customer ID is missing");
@@ -491,7 +490,7 @@ const CheckoutPage: React.FC = () => {
     usedWalletAmount: number,
     couponCode: string | null,
     coupenDetails: number,
-    deliveryFee: number | null, // Allow null
+    deliveryFee: number | null,
     grandTotalAmount: number,
     grandTotal: number,
     subGst: number,
@@ -511,7 +510,7 @@ const CheckoutPage: React.FC = () => {
         walletAmount: usedWalletAmount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         couponValue: couponCode !== null ? coupenDetails : 0,
-        deliveryBoyFee: deliveryFee ?? 0, // Use 0 if null
+        deliveryBoyFee: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
         amount: grandTotalAmount,
         subTotal: grandTotal,
         gstAmount: subGst,
@@ -571,7 +570,7 @@ const CheckoutPage: React.FC = () => {
         setGrandTotal(amountToPay);
 
         const totalWithGst = amountToPay + gstAmount;
-        const totalWithDelivery = totalWithGst + (deliveryFee ?? 0); // Use 0 if null
+        const totalWithDelivery = totalWithGst + (cartItems.length > 0 ? (deliveryFee ?? 0) : 0);
         setGrandTotalAmount(totalWithDelivery);
       } else {
         setCartData([]);
@@ -633,7 +632,7 @@ const CheckoutPage: React.FC = () => {
         setTotalAmount(cartValue);
 
         const totalWithGst = amountToPay + gstAmount;
-        const totalWithDelivery = totalWithGst + (deliveryFee ?? 0); // Use 0 if null
+        const totalWithDelivery = totalWithGst + (cartItems.length > 0 ? (deliveryFee ?? 0) : 0);
         setGrandTotalAmount(totalWithDelivery);
 
         try {
@@ -807,7 +806,8 @@ const CheckoutPage: React.FC = () => {
   };
 
   function grandTotalfunc() {
-    const baseTotal = totalAmount + (deliveryFee ?? 0) + subGst; // Use 0 if null
+    const effectiveDeliveryFee = cartData.length > 0 ? (deliveryFee ?? 0) : 0;
+    const baseTotal = totalAmount + effectiveDeliveryFee + subGst;
     let discountedTotal = baseTotal;
 
     if (coupenApplied && coupenDetails) {
@@ -827,7 +827,7 @@ const CheckoutPage: React.FC = () => {
 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-    let currentTotal = totalAmount + (deliveryFee ?? 0); // Use 0 if null
+    let currentTotal = totalAmount + (cartData.length > 0 ? (deliveryFee ?? 0) : 0);
     if (coupenApplied && coupenDetails) {
       currentTotal = Math.max(0, currentTotal - coupenDetails);
     }
@@ -873,6 +873,7 @@ const CheckoutPage: React.FC = () => {
     coupenDetails,
     useWallet,
     walletAmount,
+    cartData,
   ]);
 
   const handlePayment = async () => {
@@ -888,6 +889,16 @@ const CheckoutPage: React.FC = () => {
     }
 
     try {
+      if (cartData.length === 0) {
+        Modal.error({
+          title: "Cart Empty",
+          content: "Please add items to your cart before proceeding.",
+          okText: "OK",
+          onOk: () => navigate("/main/mycart"),
+        });
+        return;
+      }
+
       const hasStockIssues = cartData.some(
         (item) =>
           parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
@@ -943,7 +954,7 @@ const CheckoutPage: React.FC = () => {
           walletAmount: finalWalletAmount,
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
           couponValue: coupenDetails || 0,
-          deliveryBoyFee: deliveryFee ?? 0, // Use 0 if null
+          deliveryBoyFee: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
           amount: grandTotalAmount,
           subTotal: grandTotal,
           gstAmount: subGst,
@@ -969,7 +980,7 @@ const CheckoutPage: React.FC = () => {
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
-            shipping: deliveryFee ?? 0, // Use 0 if null
+            shipping: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
             coupon: coupenApplied ? couponCode.toUpperCase() : "",
             payment_type: selectedPayment,
             items: cartData.map((item) => ({
@@ -1644,24 +1655,30 @@ const CheckoutPage: React.FC = () => {
                       </h3>
                     </div>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {cartData.map((item) => (
-                        <div
-                          key={item.itemId}
-                          className="flex justify-between items-center p-2 border-b"
-                        >
-                          <div>
-                            <p className="font-medium">{item.itemName}</p>
-                            <p className="text-gray-600 text-sm">
-                              Qty: {item.cartQuantity}
-                            </p>
+                      {cartData.length === 0 ? (
+                        <p className="text-gray-600 text-center">
+                          Your cart is empty
+                        </p>
+                      ) : (
+                        cartData.map((item) => (
+                          <div
+                            key={item.itemId}
+                            className="flex justify-between items-center p-2 border-b"
+                          >
+                            <div>
+                              <p className="font-medium">{item.itemName}</p>
+                              <p className="text-gray-600 text-sm">
+                                Qty: {item.cartQuantity}
+                              </p>
+                            </div>
+                            {isFreeItem(item) ? (
+                              <p className="text-green-600 font-semibold">FREE</p>
+                            ) : (
+                              <p className="font-medium">₹{item.itemPrice}</p>
+                            )}
                           </div>
-                          {isFreeItem(item) ? (
-                            <p className="text-green-600 font-semibold">FREE</p>
-                          ) : (
-                            <p className="font-medium">₹{item.itemPrice}</p>
-                          )}
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
 
@@ -1686,14 +1703,16 @@ const CheckoutPage: React.FC = () => {
                         <span className="text-gray-600">GST</span>
                         <span>₹{subGst.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-600">Delivery Fee</span>
-                        <span>
-                          {deliveryFee !== null
-                            ? `₹${deliveryFee.toFixed(2)}`
-                            : "Not serviceable"}
-                        </span>
-                      </div>
+                      {cartData.length > 0 && (
+                        <div className="flex justify-between py-2">
+                          <span className="text-gray-600">Delivery Fee</span>
+                          <span>
+                            {deliveryFee !== null
+                              ? `₹${deliveryFee.toFixed(2)}`
+                              : "Not serviceable"}
+                          </span>
+                        </div>
+                      )}
                       {coupenApplied && coupenDetails && (
                         <div className="flex justify-between py-2 text-green-600">
                           <span>Coupon Discount</span>
@@ -1812,7 +1831,6 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Integrate DeliveryFee component */}
                     <DeliveryFee
                       userLat={selectedAddress?.latitude}
                       userLng={selectedAddress?.longitude}
@@ -1824,7 +1842,11 @@ const CheckoutPage: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       onClick={handlePayment}
                       disabled={
-                        loading || !selectedAddress || !selectedTimeSlot || deliveryFee === null
+                        loading ||
+                        !selectedAddress ||
+                        !selectedTimeSlot ||
+                        cartData.length === 0 ||
+                        deliveryFee === null
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >

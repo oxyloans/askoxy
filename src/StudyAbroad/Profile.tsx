@@ -34,6 +34,9 @@ interface EducationDetail {
   dob: string;
   homeAddress: string;
 }
+interface ProfileProps {
+  onNavigate?: (tab: string) => void;
+}
 
 interface StudentEduInfo {
   city: string;
@@ -51,7 +54,7 @@ interface StudentEduInfo {
 
 const BASE_URL = "https://meta.oxyloans.com/api";
 
-const StudentProfile: React.FC = () => {
+const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { university, universityId, courseName } = location.state || {};
@@ -533,6 +536,32 @@ const StudentProfile: React.FC = () => {
     }
   };
 
+  // Add success handler that can navigate to other pages
+  const handleSuccessfulSave = async (type: 'profile' | 'education') => {
+    if (type === 'profile') {
+      setSuccessMessage("Profile updated successfully!");
+      setEditStatus(true);
+      setProfileSaved(true);
+      localStorage.setItem("profileData", JSON.stringify(formData));
+      await fetchProfileData();
+    } else {
+      setSuccessMessage("Education details updated successfully!");
+      await fetchEducationData();
+    }
+
+    // Show suggestion to complete other sections
+    setTimeout(() => {
+      const hasDocuments = localStorage.getItem('hasDocuments') === 'true';
+      const hasTestScores = localStorage.getItem('hasTestScores') === 'true';
+      
+      if (!hasDocuments) {
+        setSuccessMessage(prev => prev + " Next, upload your documents!");
+      } else if (!hasTestScores) {
+        setSuccessMessage(prev => prev + " Don't forget to add your test scores!");
+      }
+    }, 2000);
+  };
+
   const handleSaveProfile = async () => {
     if (!validateProfileForm()) {
       setIsValidationPopupOpen(true);
@@ -546,6 +575,7 @@ const StudentProfile: React.FC = () => {
         whatsappNumber: formData.whatsappNumber.trim(),
         mobileNumber: formData.mobileNumber.replace(countryCode, "").trim(),
         customerId: customerId || "0",
+        
       };
 
       console.log("Saving profile with payload:", payload);
@@ -572,6 +602,7 @@ const StudentProfile: React.FC = () => {
       setProfileSaved(true);
       localStorage.setItem("profileData", JSON.stringify(payload));
       await fetchProfileData();
+       await handleSuccessfulSave('profile');
     } catch (err: any) {
       console.error("Error updating profile:", err);
       setError(err.response?.data?.message || "Error updating profile");
@@ -621,6 +652,7 @@ const StudentProfile: React.FC = () => {
 
       setSuccessMessage("Education details updated successfully!");
       await fetchEducationData();
+      await handleSuccessfulSave('education');
     } catch (err: any) {
       console.error("Error updating education details:", err);
       setError(
@@ -642,17 +674,6 @@ const StudentProfile: React.FC = () => {
     }
   }, [successMessage, error]);
 
-  // Show loading state during initial load
-  if ((loadingProfile || loadingEducation) && !initialLoadComplete) {
-    return (
-      <div className="flex items-center justify-center min-h-scree">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-500 mx-auto mb-4" />
-          <span className="text-gray-700">Loading profile...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 bg-gray-50 min-h-screen">
@@ -1073,34 +1094,50 @@ const StudentProfile: React.FC = () => {
           ))}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-          <button
-            onClick={handleSaveProfile}
-            disabled={loadingProfile}
-            className="flex items-center justify-center space-x-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loadingProfile ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            <span>{loadingProfile ? "Saving..." : "Save Profile"}</span>
-          </button>
+  <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+    <button
+      onClick={handleSaveProfile}
+      disabled={loadingProfile}
+      className="flex items-center justify-center space-x-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loadingProfile ? (
+        <Loader2 className="w-5 h-5 animate-spin" />
+      ) : (
+        <Save className="w-5 h-5" />
+      )}
+      <span>{loadingProfile ? "Saving..." : "Save Profile"}</span>
+    </button>
 
-          <button
-            onClick={handleSaveEducation}
-            disabled={loadingEducation}
-            className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loadingEducation ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            <span>{loadingEducation ? "Saving..." : "Save Education"}</span>
-          </button>
-        </div>
+    <button
+      onClick={handleSaveEducation}
+      disabled={loadingEducation}
+      className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loadingEducation ? (
+        <Loader2 className="w-5 h-5 animate-spin" />
+      ) : (
+        <Save className="w-5 h-5" />
+      )}
+      <span>{loadingEducation ? "Saving..." : "Save Education"}</span>
+    </button>
+
+    {/* Quick Navigation Buttons */}
+    <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
+      <button
+        onClick={() => onNavigate?.('documents')}
+        className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm"
+      >
+        Upload Documents
+      </button>
+      <button
+        onClick={() => onNavigate?.('TestScores')}
+        className="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm"
+      >
+        Add Test Scores
+      </button>
+    </div>
+  </div>
+
       </div>
     </div>
   );

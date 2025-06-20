@@ -47,8 +47,11 @@ interface UploadData {
   file: File | null;
   userId: string;
 }
+interface DocumentsProps {
+  onNavigate?: (tab: string) => void;
+}
 
-const Documents = () => {
+const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -578,19 +581,27 @@ const Documents = () => {
 
       {/* Documents Display */}
       {documents.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No documents uploaded yet</h3>
-          <p className="text-gray-600 mb-6">
-            Start by uploading your first document using the upload button above.
-          </p>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
-          >
-            Upload Your First Document
-          </button>
-        </div>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+      <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">No documents uploaded yet</h3>
+      <p className="text-gray-600 mb-6">
+        Start by uploading your first document. Make sure your profile is complete first.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <button
+          onClick={() => setShowUploadModal(true)}
+          className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
+        >
+          Upload Your First Document
+        </button>
+        <button
+          onClick={() => onNavigate?.('profile')}
+          className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-all duration-300 font-medium"
+        >
+          Complete Profile First
+        </button>
+      </div>
+    </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredDocuments.map((doc) => (

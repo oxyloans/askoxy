@@ -54,8 +54,11 @@ interface TestConfig {
   color: string;
   bgColor: string;
 }
+interface TestScoresProps {
+  onNavigate?: (tab: string) => void;
+}
 
-const TestScores = () => {
+const TestScores: React.FC<TestScoresProps> = ({ onNavigate }) => {
   const [scores, setScores] = useState<TestScore>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -285,10 +288,11 @@ const TestScores = () => {
         const data = await response.json();
         setScores(data);
         setIsEditing(false);
-        setMessage({
-          type: "success",
-          text: "Test scores saved successfully!",
-        });
+         setMessage({
+        type: "success",
+        text: "Test scores saved successfully! Ready to apply to universities?",
+      });
+      localStorage.setItem('hasTestScores', 'true');
         setTimeout(() => setMessage(null), 3000);
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -607,25 +611,31 @@ const TestScores = () => {
         ))}
       </div>
 
-      {/* Empty State for no scores */}
-      {stats.completedTests === 0 && !isEditing && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No test scores recorded yet
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Start by adding your standardized test scores to track your academic
-            progress.
-          </p>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
-          >
-            Add Your First Test Score
-          </button>
-        </div>
-      )}
+  {stats.completedTests === 0 && !isEditing && (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+      <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        No test scores recorded yet
+      </h3>
+      <p className="text-gray-600 mb-6">
+        Start by adding your standardized test scores to track your academic progress and strengthen your applications.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <button
+          onClick={() => setIsEditing(true)}
+          className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
+        >
+          Add Your First Test Score
+        </button>
+        <button
+          onClick={() => onNavigate?.('profile')}
+          className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-all duration-300 font-medium"
+        >
+          Complete Profile First
+        </button>
+      </div>
+    </div>
+  )}
     </div>
   );
 };

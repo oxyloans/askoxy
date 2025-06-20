@@ -45,6 +45,9 @@ interface CoursesApiResponse {
   data: Course[];
   count?: number;
 }
+interface DashboardOverviewProps {
+  onNavigate?: (tab: string) => void;
+}
 
 interface UniversityApiResponse {
   universities: University[];
@@ -144,7 +147,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-const DashboardOverview = () => {
+const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => {
   // State management
   const [countries, setCountries] = useState<Country[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -575,7 +578,6 @@ const DashboardOverview = () => {
   const uniqueCourses = Array.from(new Set(savedPreferences.map(pref => pref.courseName)));
   const uniqueUniversities = Array.from(new Set(savedPreferences.map(pref => pref.universityName)));
 
-  // KPI Cards
   const kpiCards = [
     {
       title: "Countries Available",
@@ -583,6 +585,7 @@ const DashboardOverview = () => {
       subtitle: "Study destinations worldwide",
       icon: Globe,
       color: "from-blue-500 to-blue-600",
+      onClick: () => onNavigate?.('universities'),
     },
     {
       title: "Saved Preferences",
@@ -590,6 +593,7 @@ const DashboardOverview = () => {
       subtitle: `${uniqueCountries.length} countries selected`,
       icon: Heart,
       color: "from-purple-500 to-purple-600",
+      onClick: () => onNavigate?.('profile'),
     },
     {
       title: "Course Options",
@@ -597,6 +601,7 @@ const DashboardOverview = () => {
       subtitle: courses.length > 0 ? "Available in selected country" : "Select country to view",
       icon: BookOpen,
       color: "from-green-500 to-green-600",
+      onClick: () => onNavigate?.('universities'),
     },
     {
       title: "Universities",
@@ -604,6 +609,7 @@ const DashboardOverview = () => {
       subtitle: universities.length > 0 ? "Ready for applications" : "Select course to view",
       icon: Building2,
       color: "from-orange-500 to-orange-600",
+      onClick: () => onNavigate?.('universities'),
     },
   ];
 
@@ -751,21 +757,25 @@ const DashboardOverview = () => {
           <div className="xl:col-span-3 space-y-6">
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {kpiCards.map((card, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-xl bg-gradient-to-r ${card.color} text-white`}>
-                      <card.icon className="w-6 h-6" />
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{card.title}</h3>
-                  <p className="text-sm text-gray-600">{card.subtitle}</p>
-                </div>
-              ))}
-            </div>
+    {kpiCards.map((card, index) => (
+      <div 
+        key={index} 
+        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+        onClick={card.onClick}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-3 rounded-xl bg-gradient-to-r ${card.color} text-white`}>
+            <card.icon className="w-6 h-6" />
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-gray-900">{card.value}</div>
+          </div>
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-1">{card.title}</h3>
+        <p className="text-sm text-gray-600">{card.subtitle}</p>
+      </div>
+    ))}
+  </div>
 
             {/* Saved Preferences */}
             {loadingPreferences ? (

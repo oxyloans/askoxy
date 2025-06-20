@@ -25,6 +25,9 @@ interface University {
   universityCampusCity: string;
   universityLogo: string;
 }
+interface UniversitySearchProps {
+  onNavigate?: (tab: string) => void;
+}
 
 interface UniversitiesApiResponse {
   data: University[];
@@ -64,7 +67,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-const UniversitySearch: React.FC = () => {
+const UniversitySearch: React.FC<UniversitySearchProps> = ({ onNavigate }) => {
   // State management
   const [universities, setUniversities] = useState<University[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -160,6 +163,11 @@ const UniversitySearch: React.FC = () => {
       fetchUniversities(1, term);
     }
   };
+  const handleApplyToUniversity = (university: University) => {
+    // Store selected university data for potential application
+    localStorage.setItem('selectedUniversity', JSON.stringify(university));
+    onNavigate?.('applications');
+  };
 
   // Effects
   useEffect(() => {
@@ -214,11 +222,13 @@ const UniversitySearch: React.FC = () => {
             <div>
               <select
                 value={filters.country}
-                onChange={(e) => setFilters(prev => ({ ...prev, country: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, country: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Countries</option>
-                {uniqueCountries.map(country => (
+                {uniqueCountries.map((country) => (
                   <option key={country} value={country}>
                     {country}
                   </option>
@@ -229,7 +239,9 @@ const UniversitySearch: React.FC = () => {
             <div>
               <select
                 value={filters.region}
-                onChange={(e) => setFilters(prev => ({ ...prev, region: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, region: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Regions</option>
@@ -253,7 +265,8 @@ const UniversitySearch: React.FC = () => {
           {/* View Controls */}
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-600">
-              {filteredUniversities.length} of {totalCount.toLocaleString()} universities
+              {filteredUniversities.length} of {totalCount.toLocaleString()}{" "}
+              universities
               {loading && <span className="ml-2">Loading...</span>}
             </div>
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -285,7 +298,9 @@ const UniversitySearch: React.FC = () => {
         {loading && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-violet-600 mx-auto mb-3" />
-            <h3 className="text-base font-medium text-gray-900 mb-1">Loading Universities</h3>
+            <h3 className="text-base font-medium text-gray-900 mb-1">
+              Loading Universities
+            </h3>
             <p className="text-sm text-gray-600">Please wait...</p>
           </div>
         )}
@@ -303,17 +318,17 @@ const UniversitySearch: React.FC = () => {
                     <div className="flex flex-col items-center text-center mb-4">
                       <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center text-2xl overflow-hidden mb-3">
                         {uni.universityLogo ? (
-                          <img 
-                            src={uni.universityLogo} 
+                          <img
+                            src={uni.universityLogo}
                             alt={`${uni.universityName} Logo`}
                             className="w-full h-full object-contain"
                             onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.parentElement!.innerHTML = '🎓';
+                              e.currentTarget.style.display = "none";
+                              e.currentTarget.parentElement!.innerHTML = "🎓";
                             }}
                           />
                         ) : (
-                          '🎓'
+                          "🎓"
                         )}
                       </div>
                       <h4 className="font-bold text-gray-900 group-hover:text-violet-600 transition-colors mb-2 text-base line-clamp-2">
@@ -321,7 +336,9 @@ const UniversitySearch: React.FC = () => {
                       </h4>
                       <div className="flex items-center justify-center space-x-2 text-gray-600 mb-3">
                         <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-sm">{uni.universityCampusCity}</span>
+                        <span className="text-sm">
+                          {uni.universityCampusCity}
+                        </span>
                       </div>
                       <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
                         {uni.country}
@@ -332,17 +349,25 @@ const UniversitySearch: React.FC = () => {
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center justify-center space-x-2 mb-1">
                           <Globe className="w-4 h-4 text-blue-600" />
-                          <span className="text-xs text-gray-600 font-medium">LOCATION</span>
+                          <span className="text-xs text-gray-600 font-medium">
+                            LOCATION
+                          </span>
                         </div>
-                        <div className="font-medium text-gray-900 text-sm text-center">{uni.address}</div>
+                        <div className="font-medium text-gray-900 text-sm text-center">
+                          {uni.address}
+                        </div>
                       </div>
 
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center justify-center space-x-2 mb-1">
                           <Building2 className="w-4 h-4 text-purple-600" />
-                          <span className="text-xs text-gray-600 font-medium">CAMPUS</span>
+                          <span className="text-xs text-gray-600 font-medium">
+                            CAMPUS
+                          </span>
                         </div>
-                        <div className="font-medium text-gray-900 text-sm text-center">{uni.universityCampusCity}</div>
+                        <div className="font-medium text-gray-900 text-sm text-center">
+                          {uni.universityCampusCity}
+                        </div>
                       </div>
                     </div>
 
@@ -358,9 +383,12 @@ const UniversitySearch: React.FC = () => {
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       )}
-                      <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm">
-                        View Details
-                      </button>
+                      {/* <button
+                        onClick={() => handleApplyToUniversity(uni)}
+                        className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium text-sm"
+                      >
+                        Apply Now
+                      </button> */}
                     </div>
                   </div>
                 ))}
@@ -377,17 +405,18 @@ const UniversitySearch: React.FC = () => {
                         <div className="flex items-start space-x-3 md:space-x-4 flex-1">
                           <div className="w-12 h-12 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg flex items-center justify-center text-xl overflow-hidden flex-shrink-0">
                             {uni.universityLogo ? (
-                              <img 
-                                src={uni.universityLogo} 
+                              <img
+                                src={uni.universityLogo}
                                 alt={`${uni.universityName} Logo`}
                                 className="w-full h-full object-contain"
                                 onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.parentElement!.innerHTML = '🎓';
+                                  e.currentTarget.style.display = "none";
+                                  e.currentTarget.parentElement!.innerHTML =
+                                    "🎓";
                                 }}
                               />
                             ) : (
-                              '🎓'
+                              "🎓"
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -395,7 +424,8 @@ const UniversitySearch: React.FC = () => {
                               {uni.universityName}
                             </h4>
                             <div className="text-sm text-gray-600 mb-2">
-                              {uni.universityCampusCity} • {uni.country} • {uni.address}
+                              {uni.universityCampusCity} • {uni.country} •{" "}
+                              {uni.address}
                             </div>
                           </div>
                         </div>
@@ -411,8 +441,11 @@ const UniversitySearch: React.FC = () => {
                               <ExternalLink className="w-4 h-4" />
                             </a>
                           )}
-                          <button className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-4 md:px-6 py-2 rounded-xl text-sm hover:from-violet-600 hover:to-purple-600 transition">
-                            View Details
+                          <button
+                            onClick={() => handleApplyToUniversity(uni)}
+                            className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-4 md:px-6 py-2 rounded-xl text-sm hover:from-violet-600 hover:to-purple-600 transition"
+                          >
+                            Apply Now
                           </button>
                         </div>
                       </div>
@@ -428,9 +461,12 @@ const UniversitySearch: React.FC = () => {
         {!loading && filteredUniversities.length === 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 md:p-12 text-center">
             <Building2 className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No universities found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No universities found
+            </h3>
             <p className="text-gray-600 mb-6">
-              Try adjusting your search criteria or filters to find more universities.
+              Try adjusting your search criteria or filters to find more
+              universities.
             </p>
             <button
               onClick={resetFilters}
@@ -446,7 +482,8 @@ const UniversitySearch: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages} ({totalCount.toLocaleString()} total universities)
+                Page {currentPage} of {totalPages} (
+                {totalCount.toLocaleString()} total universities)
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -456,7 +493,7 @@ const UniversitySearch: React.FC = () => {
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                
+
                 {/* Page Numbers */}
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -470,15 +507,15 @@ const UniversitySearch: React.FC = () => {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
                         className={`px-3 py-2 text-sm rounded-lg transition-colors ${
                           currentPage === pageNum
-                            ? 'bg-violet-500 text-white'
-                            : 'text-gray-600 hover:text-violet-600 hover:bg-violet-50'
+                            ? "bg-violet-500 text-white"
+                            : "text-gray-600 hover:text-violet-600 hover:bg-violet-50"
                         }`}
                       >
                         {pageNum}
@@ -486,7 +523,7 @@ const UniversitySearch: React.FC = () => {
                     );
                   })}
                 </div>
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}

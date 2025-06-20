@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { MessageCircle, Phone, Mail, Clock, Calendar, Users, BookOpen, Heart, Star, ChevronRight } from 'lucide-react';
 
-const Support = () => {
+interface SupportProps {
+  onNavigate?: (tab: string) => void;
+}
+
+const Support: React.FC<SupportProps> = ({ onNavigate }) => {
   const [activeSupport, setActiveSupport] = useState('counselor');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [consultationForm, setConsultationForm] = useState({
@@ -243,31 +247,59 @@ const Support = () => {
           )}
         </div>
 
-        {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Contact Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h5 className="font-bold text-gray-900 mb-4">Emergency Contact</h5>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                <Phone className="w-4 h-4 text-red-600" />
-                <div>
-                  <div className="font-medium text-red-900 text-sm">Crisis Hotline</div>
-                  <div className="text-xs text-red-700">Available 24/7</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <Mail className="w-4 h-4 text-blue-600" />
-                <div>
-                  <div className="font-medium text-blue-900 text-sm">support@university.edu</div>
-                  <div className="text-xs text-blue-700">General inquiries</div>
-                </div>
-              </div>
-            </div>
+    {/* Contact Info */}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h5 className="font-bold text-gray-900 mb-4">Emergency Contact</h5>
+      <div className="space-y-3">
+        <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
+          <Phone className="w-4 h-4 text-red-600" />
+          <div>
+            <div className="font-medium text-red-900 text-sm">Crisis Hotline</div>
+            <div className="text-xs text-red-700">Available 24/7</div>
           </div>
-
-          
         </div>
+        <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <Mail className="w-4 h-4 text-blue-600" />
+          <div>
+            <div className="font-medium text-blue-900 text-sm">support@studyabroad.com</div>
+            <div className="text-xs text-blue-700">General inquiries</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Quick Actions */}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h5 className="font-bold text-gray-900 mb-4">Quick Actions</h5>
+      <div className="space-y-2">
+        <button
+          onClick={() => onNavigate?.('profile')}
+          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        >
+          Complete Profile
+        </button>
+        <button
+          onClick={() => onNavigate?.('documents')}
+          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        >
+          Upload Documents
+        </button>
+        <button
+          onClick={() => onNavigate?.('universities')}
+          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        >
+          Search Universities
+        </button>
+        <button
+          onClick={() => onNavigate?.('applications')}
+          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        >
+          View Applications
+        </button>
+      </div>
+    </div>
+  </div>
       </div>
     </div>
   );

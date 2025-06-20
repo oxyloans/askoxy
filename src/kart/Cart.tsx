@@ -841,7 +841,7 @@ const CartPage: React.FC = () => {
             <>
               <p>
                 Sorry! We're unable to deliver to this address as it is{" "}
-                {withinRadius.distanceInKm} km away, beyond our 20 km delivery
+                {withinRadius.distanceInKm} km away, beyond our 25 km delivery
                 radius. Please select another saved address within the radius or
                 add a new one to proceed. We appreciate your understanding!
               </p>

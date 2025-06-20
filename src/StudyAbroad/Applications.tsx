@@ -45,8 +45,11 @@ interface ApiResponse {
   data: Application[];
   count: number;
 }
+interface ApplicationsProps {
+  onNavigate?: (tab: string) => void;
+}
 
-const Applications: React.FC = () => {
+const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [applications, setApplications] = useState<Application[]>([]);
@@ -361,21 +364,24 @@ const Applications: React.FC = () => {
         ))}
       </div>
 
-      {filteredApplications.length === 0 && !loading && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-          <p className="text-gray-600 mb-6">
-            {searchTerm 
-              ? "Try adjusting your search criteria"
-              : "Start your study abroad journey by creating your first application"
-            }
-          </p>
-          {/* <button className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium">
-            Create New Application
-          </button> */}
-        </div>
-      )}
+     {filteredApplications.length === 0 && !loading && (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+      <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
+      <p className="text-gray-600 mb-6">
+        {searchTerm 
+          ? "Try adjusting your search criteria"
+          : "Start your study abroad journey by searching for universities"
+        }
+      </p>
+      <button 
+        onClick={() => onNavigate?.('universities')}
+        className="bg-gradient-to-r from-violet-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all duration-300 font-medium"
+      >
+        Search Universities
+      </button>
+    </div>
+  )}
 
       {/* Pagination */}
       {totalCount > pageSize && (
