@@ -1,8 +1,7 @@
-//page-2
-
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { message, Modal } from "antd"; // Added Modal import for Special Offers modal
 import {
   ShoppingCart,
@@ -828,6 +827,12 @@ const ItemDisplayPage = () => {
     setGoldPriceModal({ visible: true, images, urls });
   };
 
+  // Define gold item IDs
+  const goldItemIds = [
+    "619bd23a-0267-46da-88da-30977037225a",
+    "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
+  ];
+
   const handleGoldPriceModalClose = () => {
     setGoldPriceModal({ visible: false, urls: [], images: [] });
   };
@@ -854,7 +859,7 @@ const ItemDisplayPage = () => {
       >
         <div
           dangerouslySetInnerHTML={{
-            __html: offerModal.content,
+            __html: DOMPurify.sanitize(offerModal.content), // <-- Sanitize the HTML here
           }}
         />
       </Modal>
@@ -940,18 +945,18 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
 
-                  {/* Compare Prices button moved here - directly below the image field */}
-                  {/* {itemDetails?.itemId ===
-                    "f2138ee5-21b2-4ece-894f-3ebb84d768a6" && ( )}*/}
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={handleComparePrices}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
-                    >
-                      <span>Compare Prices</span>
-                    </button>
-                  </div>
-                </div>{" "}
+                  {/* Compare Prices button - conditionally rendered for gold items */}
+                  {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
+                    <div className="flex justify-center mt-4">
+                      <button
+                        onClick={handleComparePrices}
+                        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+                      >
+                        <span>Compare Prices</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="space-y-4">
                   {/* Product Name */}
                   <div>

@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect } from "react"
+
 import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
 
@@ -207,7 +208,7 @@ const App: React.FC = () => {
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
             <Route path="addblogs" element={<AddBlog />} />
-            <Route path="services/studyabroad" element={<StudyAbroad />} />
+            
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />
             <Route path="services/bmvcoin" element={<BMVCOINmain />} />
@@ -223,6 +224,7 @@ const App: React.FC = () => {
             <Route path="services/legalservice" element={<LegalService />} />
             <Route path="services/we-are-hiring" element={<HiringService />} />
             {/* ----------------------- */}
+            {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
@@ -304,7 +306,7 @@ const App: React.FC = () => {
               path="/listofuniversities"
               element={<UniversityListPage />}
             />
-            <Route path="/course" element={<CoursesPage />} />
+            {/* <Route path="/course" element={<CoursesPage />} /> */}
             {/* <Route
               path="/communities/maruthielite"
               element={<RiceSalePage />}
@@ -442,7 +444,7 @@ const App: React.FC = () => {
               <Route path="services/:id/:type" element={<CampaignDetails />} />
               <Route path="blog/:id/:type" element={<BlogDetails />} />
               <Route path="addblogs" element={<AddBlog />} />
-              <Route path="services/studyabroad" element={<StudyAbroad />} />
+              {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
               <Route
                 path="services/Freechatgpt"
                 element={<FreeChatGPTmain />}

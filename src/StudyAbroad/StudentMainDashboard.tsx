@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import DashboardOverview from "./DashboardOverview";
 import { Globe, X, MapPin, ChevronDown } from "lucide-react";
@@ -7,6 +8,7 @@ import UniversitySearch from "./UniversitySearch";
 import Documents from "./Documents";
 import Profile from "./Profile";
 import StudentHeader from "./Header";
+import CoursesPage from "./Course";
 import Support from "./Support";
 import TestScores from "./TestScore";
 import { Link } from "react-router-dom";
@@ -15,6 +17,59 @@ const StudentMainDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuthentication = () => {
+      try {
+        // Check for userId in localStorage, sessionStorage, or your auth context
+        const userId = localStorage.getItem('userId') || 
+                      sessionStorage.getItem('userId') || 
+                      localStorage.getItem('user_id') ||
+                      sessionStorage.getItem('user_id');
+        
+        // Alternative: Check for auth token or user object
+        const authToken = localStorage.getItem('authToken') || 
+                         sessionStorage.getItem('authToken');
+        
+        const userObject = localStorage.getItem('user');
+        let parsedUser = null;
+        
+        if (userObject) {
+          try {
+            parsedUser = JSON.parse(userObject);
+          } catch (e) {
+            console.error('Error parsing user object:', e);
+          }
+        }
+
+        // Check if user is authenticated
+        const isUserAuthenticated = !!(
+          userId || 
+          authToken || 
+          (parsedUser && parsedUser.id)
+        );
+
+        if (isUserAuthenticated) {
+          setIsAuthenticated(true);
+        } else {
+          // Redirect to landing page if not authenticated
+          navigate('/studyabroad'); // or navigate('/studyabroad') depending on your landing page route
+        }
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        // Redirect to landing page on error
+        navigate('/studyabroad');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthentication();
+  }, [navigate]);
 
   // Navigation handler for cross-page navigation
   const handleNavigation = (tab: string) => {
@@ -26,6 +81,11 @@ const StudentMainDashboard = () => {
     switch (activeTab) {
       case "dashboard":
         return <DashboardOverview onNavigate={handleNavigation} />;
+      case "courses":
+        return <CoursesPage onCourseSelect={(course) => {
+          // Handle course selection logic here
+          console.log('Selected course:', course);
+        }} />;
       case "applications":
         return <Applications onNavigate={handleNavigation} />;
       case "universities":
@@ -42,6 +102,23 @@ const StudentMainDashboard = () => {
         return <DashboardOverview onNavigate={handleNavigation} />;
     }
   };
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render dashboard if authenticated
+  if (!isAuthenticated) {
+    return null; // This shouldn't render as we redirect in useEffect
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -160,7 +160,7 @@ const DashboardMain: React.FC = () => {
           "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
         description:
           "Explore opportunities to study abroad with expert guidance and support.",
-        path: `${accessToken ? "/main" : ""}/services/studyabroad`,
+        path: "/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,
         category: "Education",
       },

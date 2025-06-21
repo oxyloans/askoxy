@@ -40,6 +40,7 @@ const StudentSidebar: React.FC<SidebarProps> = ({
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: GraduationCap },
+    { id: "courses", label: "Courses", icon: Award },
     { id: "applications", label: "My Applications", icon: FileText },
     { id: "universities", label: "University Search", icon: Building2 },
     { id: "profile", label: "My Profile", icon: User },

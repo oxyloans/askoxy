@@ -48,7 +48,8 @@ const WhatsappRegister = () => {
   const [isPhoneDisabled, setisPhoneDisabled] = useState(false);
   const [isMethodDisabled, setIsMethodDisabled] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [showEriceAlert, setShowEriceAlert] = useState(true);
+  const [showEriceAlert, setShowEriceAlert] = useState(false);
+  const [primaryType, setPrimaryType] = useState<string>("CUSTOMER");
 
   // States for the checkboxes
   const [receiveNotifications, setReceiveNotifications] = useState(false);
@@ -57,7 +58,47 @@ const WhatsappRegister = () => {
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
+  const queryPrimaryType = queryParams.get("primaryType");
   console.log("User Type:", userType);
+
+  // Determine primary type and Erice alert visibility
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const referrer = document.referrer;
+    const entryPoint = localStorage.getItem("entryPoint") || "";
+    
+    // Check URL parameter first
+    if (queryPrimaryType === "STUDENT") {
+      setPrimaryType("STUDENT");
+      setShowEriceAlert(false);
+      sessionStorage.setItem("fromStudyAbroad", "true");
+      return;
+    }
+    
+    // Check if user comes from study abroad page (/studyabroad)
+    const isFromStudyAbroad = 
+      currentPath === "/studyabroad" ||
+      currentPath.includes("/studyabroad") ||
+      referrer.includes("/studyabroad") ||
+      entryPoint.includes("/studyabroad") ||
+      location.state?.from?.includes("/studyabroad") ||
+      sessionStorage.getItem("fromStudyAbroad") === "true" ||
+      location.pathname.includes("/studyabroad");
+
+    if (isFromStudyAbroad) {
+      setPrimaryType("STUDENT");
+      setShowEriceAlert(false); // Hide Erice content for students
+      sessionStorage.setItem("fromStudyAbroad", "true");
+      // Set entry point for students
+      if (!localStorage.getItem("entryPoint")) {
+        localStorage.setItem("entryPoint", "/studyabroad");
+      }
+    } else {
+      setPrimaryType("CUSTOMER");
+      setShowEriceAlert(false); // Don't show for registration page
+      sessionStorage.removeItem("fromStudyAbroad");
+    }
+  }, [location, queryPrimaryType]);
 
   // Save preferences to localStorage only
   const savePreferences = () => {
@@ -70,9 +111,13 @@ const WhatsappRegister = () => {
     const accessToken = localStorage.getItem("accessToken");
 
     if (userId && accessToken) {
-      navigate(location.state?.from || "/main/dashboard/home", {
-        replace: true,
-      });
+      // Check existing primary type in localStorage
+      const storedPrimaryType = localStorage.getItem("primaryType");
+      if (storedPrimaryType === "STUDENT" || primaryType === "STUDENT") {
+        navigate("/main/studyabroad/dashboard", { replace: true });
+      } else {
+        navigate(location.state?.from || "/main/dashboard/home", { replace: true });
+      }
       return;
     }
 
@@ -82,7 +127,7 @@ const WhatsappRegister = () => {
       localStorage.setItem("refferrerId", refParam);
       console.log("Extracted userId:", refParam);
     }
-  }, [navigate, location]);
+  }, [navigate, location, primaryType]);
 
   useEffect(() => {
     if (resendDisabled) {
@@ -115,10 +160,17 @@ const WhatsappRegister = () => {
 
   const handleClose = () => {
     setIsClosing(true);
-    const entryPoint = localStorage.getItem("entryPoint") || "/";
-    console.log("Closing - Redirecting to:", entryPoint);
+    let redirectUrl = "/";
+    
+    // Determine redirect URL based on user type
+    if (primaryType === "STUDENT" || sessionStorage.getItem("fromStudyAbroad") === "true") {
+      redirectUrl = "/studyabroad";
+    } else {
+      redirectUrl = localStorage.getItem("entryPoint") || "/";
+    }
+    
     setTimeout(() => {
-      navigate(entryPoint);
+      navigate(redirectUrl);
     }, 300);
   };
 
@@ -231,7 +283,10 @@ const WhatsappRegister = () => {
     setError("");
     setMessage("");
     setIsLoading(true);
-    setShowEriceAlert(false);
+    // Hide Erice alert when Get OTP is clicked (only for CUSTOMER type)
+    if (primaryType === "CUSTOMER") {
+      setShowEriceAlert(false);
+    }
 
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
       setError("Please enter a valid Phone number with country code");
@@ -244,6 +299,7 @@ const WhatsappRegister = () => {
         registrationType: otpMethod,
         userType: "Register",
         countryCode: countryCode,
+        primaryType: primaryType, // Add primary type based on entry point
       };
       if (otpMethod === "whatsapp") {
         requestBody.whatsappNumber = phoneNumber.replace(countryCode, "");
@@ -269,7 +325,13 @@ const WhatsappRegister = () => {
           setError(
             "You are already registered with this number. Please log in."
           );
-          setTimeout(() => navigate("/whatsapplogin"), 1500);
+          setTimeout(() => {
+            if (primaryType === "STUDENT") {
+              navigate("/whatsapplogin?primaryType=STUDENT");
+            } else {
+              navigate("/whatsapplogin");
+            }
+          }, 1500);
           return;
         }
 
@@ -280,11 +342,18 @@ const WhatsappRegister = () => {
         localStorage.setItem("salt", response.data.salt);
         localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
         localStorage.setItem("userType", userType);
+        localStorage.setItem("primaryType", primaryType); // Store primary type
 
         if (response.data.mobileOtpSession === null) {
           setShowSuccessPopup(false);
           setError("You already registered with this number.");
-          setTimeout(() => navigate("/whatsapplogin"), 1000);
+          setTimeout(() => {
+            if (primaryType === "STUDENT") {
+              navigate("/whatsapplogin?primaryType=STUDENT");
+            } else {
+              navigate("/whatsapplogin");
+            }
+          }, 1000);
         } else {
           setIsButtonEnabled(true);
           setOtpShow(true);
@@ -310,7 +379,13 @@ const WhatsappRegister = () => {
           setError(
             "You are already registered with this number. Please log in."
           );
-          setTimeout(() => navigate("/whatsapplogin"), 1500);
+          setTimeout(() => {
+            if (primaryType === "STUDENT") {
+              navigate("/whatsapplogin?primaryType=STUDENT");
+            } else {
+              navigate("/whatsapplogin");
+            }
+          }, 1500);
         } else {
           setError(
             err.response.data.message ||
@@ -360,6 +435,7 @@ const WhatsappRegister = () => {
         registrationType: otpMethod,
         userType: "Register",
         countryCode: countryCode,
+        primaryType: primaryType, // Add primary type for registration
       };
 
       if (otpMethod === "whatsapp") {
@@ -396,13 +472,20 @@ const WhatsappRegister = () => {
           setOtpError(
             "You are already registered with this number. Redirecting to login..."
           );
-          setTimeout(() => navigate("/whatsapplogin"), 1000);
+          setTimeout(() => {
+            if (primaryType === "STUDENT") {
+              navigate("/whatsapplogin?primaryType=STUDENT");
+            } else {
+              navigate("/whatsapplogin");
+            }
+          }, 1000);
           return;
         }
 
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem("primaryType", primaryType); // Store primary type after registration
         setMessage("Registration Successful");
         if (otpMethod === "whatsapp") {
           localStorage.setItem("whatsappNumber", phoneNumber || "");
@@ -421,8 +504,15 @@ const WhatsappRegister = () => {
             window.location.href = redirectPath;
             sessionStorage.removeItem("redirectPath");
           } else {
-            navigate(location.state?.from || "/main/dashboard/home");
+            // Redirect based on primary type
+            if (primaryType === "STUDENT") {
+              navigate("/main/studyabroad/dashboard");
+            } else {
+              navigate(location.state?.from || "/main/dashboard/home");
+            }
           }
+          // Clear study abroad session flag after successful registration
+          sessionStorage.removeItem("fromStudyAbroad");
         }, 1000);
       }
     } catch (err: any) {
@@ -450,6 +540,7 @@ const WhatsappRegister = () => {
           registrationType: otpMethod,
           userType: "Register",
           countryCode: countryCode,
+          primaryType: primaryType, // Add primary type for resend OTP
         };
         if (otpMethod === "whatsapp") {
           requestBody.whatsappNumber = phoneNumber?.replace(countryCode, "");
@@ -468,7 +559,13 @@ const WhatsappRegister = () => {
             setError(
               "You are already registered with this number. Redirecting to login..."
             );
-            setTimeout(() => navigate("/whatsapplogin"), 1000);
+            setTimeout(() => {
+              if (primaryType === "STUDENT") {
+                navigate("/whatsapplogin?primaryType=STUDENT");
+              } else {
+                navigate("/whatsapplogin");
+              }
+            }, 1000);
             return;
           }
 
@@ -518,7 +615,10 @@ const WhatsappRegister = () => {
     setOtpShow(false);
     setisPhoneDisabled(false);
     setOtpError("");
-    setShowEriceAlert(true);
+    // Show Erice alert again when changing number (only for CUSTOMER type)
+    if (primaryType === "CUSTOMER") {
+      setShowEriceAlert(true);
+    }
     setCredentials({
       otp: ["", "", "", ""],
       mobileOTP: ["", "", "", "", "", ""],
@@ -534,7 +634,7 @@ const WhatsappRegister = () => {
       >
         <div className="bg-purple-600 p-3 sm:p-4 lg:p-6 relative">
           <h2 className="text-2xl font-bold text-white text-center">
-            Register to Askoxy.AI
+            {primaryType === "STUDENT" ? "Register for Study Abroad Portal" : "Register to Askoxy.AI"}
           </h2>
           <button
             onClick={handleClose}
@@ -545,13 +645,13 @@ const WhatsappRegister = () => {
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-4 mt-4">
               <button
-                onClick={() => (window.location.href = "/whatsapplogin")}
+                onClick={() => (window.location.href = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin")}
                 className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
               >
                 Login
               </button>
               <button
-                onClick={() => (window.location.href = "/whatsappregister")}
+                onClick={() => (window.location.href = primaryType === "STUDENT" ? "/whatsappregister?primaryType=STUDENT" : "/whatsappregister")}
                 className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
               >
                 Register
@@ -559,6 +659,21 @@ const WhatsappRegister = () => {
             </div>
           </div>
         </div>
+
+        {/* Welcome Message for Students */}
+        {primaryType === "STUDENT" && (
+          <div className="mx-4 mt-2">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-start gap-2">
+              <div className="w-5 h-5 flex-shrink-0 mt-0.5">🎓</div>
+              <div>
+                <p className="font-bold">Welcome to Study Abroad Portal</p>
+                <p className="text-xs">
+                  Register to explore world-class universities and courses abroad. Start your journey to international education today!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showSuccessPopup && (
           <div className="mx-6 mt-6 animate-fadeIn">
@@ -670,7 +785,7 @@ const WhatsappRegister = () => {
                       htmlFor="notifications"
                       className="ml-2 text-sm text-gray-700"
                     >
-                      I want to receive notifications on SMS, RCS & Email from Askoxy.ai.
+                      I want to receive notifications on SMS, RCS & Email from {primaryType === "STUDENT" ? "Study Abroad Portal" : "Askoxy.ai"}.
                     </label>
                   </div>
                   <div className="flex items-center">
@@ -814,7 +929,7 @@ const WhatsappRegister = () => {
           <p className="text-sm text-gray-600 text-center">
             Already registered?{" "}
             <Link
-              to="/whatsapplogin"
+              to={primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin"}
               className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group"
             >
               Login Now

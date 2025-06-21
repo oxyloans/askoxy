@@ -6,28 +6,25 @@ import React, {
   ChangeEvent,
 } from "react";
 import {
-  Send,
   Download,
   Bot,
   User,
   Sparkles,
-  Zap,
-  Camera,
-  Palette,
-  Wand2,
   Plus,
   ArrowUp,
   Loader2,
-  Copy,
-  Check,
-  MoreVertical,
-  RefreshCw,
-  Moon,
-  Sun,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
 import BASE_URL from "../Config";
+import {
+  AcademicCapIcon,
+  CodeBracketIcon,
+  NewspaperIcon,
+  PhotoIcon,
+  ClipboardIcon,
+  ShareIcon,
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
+} from "@heroicons/react/24/outline";
 
 // Simple markdown parser for basic formatting
 const parseMarkdown = (text: string) => {
@@ -82,11 +79,10 @@ const OpenAi: React.FC = () => {
   const [downloadingImage, setDownloadingImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
 
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [readingAloudId, setReadingAloudId] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
   const [relatedOptions, setRelatedOptions] = useState<string[]>([]);
   useEffect(() => {
@@ -111,57 +107,76 @@ const OpenAi: React.FC = () => {
       textareaRef.current.style.height = `${Math.min(scrollHeight, 120)}px`;
     }
   };
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Copied to clipboard!");
+    });
+  };
+  const shareContent = (text: string) => {
+    if (navigator.share) {
+      navigator
+        .share({
+          text,
+        })
+        .catch((error) => {
+          alert("Sharing failed: " + error);
+        });
+    } else {
+      alert("Sharing is not supported on this browser.");
+    }
+  };
+
+  const readAloud = (text: string, id: string) => {
+    if (!("speechSynthesis" in window)) {
+      alert("Text-to-speech not supported in this browser.");
+      return;
+    }
+
+    // Stop current speech if any
+    window.speechSynthesis.cancel();
+
+    if (readingAloudId === id) {
+      // If already reading this message, stop reading
+      setReadingAloudId(null);
+      return;
+    }
+
+    setReadingAloudId(id);
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => setReadingAloudId(null);
+    window.speechSynthesis.speak(utterance);
+  };
 
   useEffect(() => {
     adjustTextareaHeight();
   }, [input]);
 
   // Fixed image download function
-  const handleImageDownload = async (imageUrl: string) => {
-    setDownloadingImage(imageUrl);
+  const handleImageDownload = async (imageUrl:string) => {
+    const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+    const proxiedUrl = proxyUrl + imageUrl;
     try {
-      // Create a proxy URL to handle CORS issues
-      const proxyUrl = `https://cors-anywhere.herokuapp.com/${imageUrl}`;
-
-      // Try direct download first
-      const response = await fetch(imageUrl, {
-        method: "GET",
-        mode: "no-cors",
-      }).catch(() => {
-        // If direct fetch fails, try with proxy
-        return fetch(proxyUrl, { method: "GET" });
-      });
-
-      // Alternative approach: Create a temporary link and trigger download
+      const response = await fetch(proxiedUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = imageUrl;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-
+      link.href = url;
       const timestamp = new Date()
         .toISOString()
         .slice(0, 19)
         .replace(/:/g, "-");
-      link.download = `askoxy-ai-image-${timestamp}.png`;
-
-      // For mobile compatibility
-      if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
-        // On mobile, open in new tab
-        window.open(imageUrl, "_blank");
-      } else {
-        // On desktop, try to download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      link.download = `ai-image-${timestamp}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Image download failed:", error);
-      // Fallback: open image in new tab
+      console.error("Download failed:", error);
       window.open(imageUrl, "_blank");
-    } finally {
-      setDownloadingImage(null);
     }
   };
+  
 
   const handleSend = async (messageContent?: string) => {
     const textToSend = messageContent || input.trim();
@@ -217,51 +232,50 @@ const OpenAi: React.FC = () => {
   // Updated suggestion prompts - only 3 prompts for mobile-friendly layout
   const suggestionPrompts = [
     {
-      text: "Create Image",
-      icon: <Camera className="w-4 h-4" />,
-      gradient: "from-emerald-500 to-teal-600",
+      text: "Image Generation",
+      icon: <PhotoIcon className="w-5 h-5" />,
+      gradient: "from-green-600 to-cyan-700",
       related: [
-        "Generate a beautiful sunset image",
-        "Create an AI image of a beach sunset",
-        "Show a sunset over the mountains",
-        "Design a peaceful evening sky image",
+        "Generate a landscape image",
+        "Create a product mockup",
+        "Design a corporate banner",
+        "Visualize data infographic",
       ],
     },
     {
       text: "Learning",
-      icon: <Wand2 className="w-4 h-4" />,
-      gradient: "from-pink-500 to-rose-600",
+      icon: <AcademicCapIcon className="w-5 h-5" />,
+      gradient: "from-pink-600 to-red-600",
       related: [
-        "Best online learning platforms in 2025",
-        "How to study effectively with AI",
-        "AI tips for mastering coding",
-        "Create a learning schedule",
+        "Top skills for 2025",
+        "Remote learning tips",
+        "AI for professional growth",
+        "Create a learning plan",
       ],
     },
     {
-      text: "Programming Solving",
-      icon: <Sparkles className="w-4 h-4" />,
-      gradient: "from-blue-500 to-purple-600",
+      text: "Development",
+      icon: <CodeBracketIcon className="w-5 h-5" />,
+      gradient: "from-indigo-600 to-purple-700",
       related: [
-        "Write a React component for a navbar",
-        "Fix a bug in this JavaScript code",
-        "Explain closures in JavaScript",
-        "Create a REST API in Node.js",
+        "React authentication",
+        "Optimize Node.js API",
+        "Clean code practices",
+        "Async JavaScript explained",
       ],
     },
     {
-      text: "Latest News",
-      icon: <Sparkles className="w-4 h-4" />,
-      gradient: "from-yellow-500 to-orange-500",
+      text: "News",
+      icon: <NewspaperIcon className="w-5 h-5" />,
+      gradient: "from-yellow-600 to-orange-600",
       related: [
-        "What's the latest in AI technology?",
-        "Top tech headlines today",
-        "Recent trends in global economy",
-        "Highlights from today's news",
+        "Latest AI research",
+        "2025 market trends",
+        "Tech policy updates",
+        "Financial news summary",
       ],
     },
   ];
-  
 
   // const suggestionPrompts = [
   //   {
@@ -299,9 +313,8 @@ const OpenAi: React.FC = () => {
   const handlePromptSelect = (promptText: string, related: string[]) => {
     setSelectedPrompt(promptText);
     setRelatedOptions(related);
+    setShowDropdown(true);
   };
-  
-  
 
   // Determine if we should show the centered layout
   const showCenteredLayout = messages.length === 0 && !loading;
@@ -323,7 +336,7 @@ const OpenAi: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    ASKOXY.AI
+                    OXYGENIX
                   </span>
                 </div>
               </div>
@@ -346,165 +359,80 @@ const OpenAi: React.FC = () => {
       {showCenteredLayout && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           <div className="absolute inset-0">
-            {/* Bubble 1 */}
-            <div
-              className="absolute w-4 h-4 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full animate-float-bubble"
-              style={{
-                left: "10%",
-                top: "20%",
-                animationDelay: "0s",
-                animationDuration: "8s",
-              }}
-            >
+            {/* Group 1 – Indigo/Purple */}
+            {[
+              { left: "10%", top: "20%" },
+              { right: "15%", top: "30%" },
+              { left: "50%", bottom: "10%" },
+            ].map((pos, i) => (
               <div
-                className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "0s", animationDuration: "3s" }}
-              />
-            </div>
+                key={`g1-${i}`}
+                className="absolute w-4 h-4 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full animate-float-bubble"
+                style={{
+                  ...pos,
+                  animationDelay: `${i * 1.5}s`,
+                  animationDuration: `${8 + i}s`,
+                }}
+              >
+                <div
+                  className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full animate-ping"
+                  style={{
+                    animationDelay: `${i * 1.5}s`,
+                    animationDuration: "3s",
+                  }}
+                />
+              </div>
+            ))}
 
-            {/* Bubble 2 */}
-            <div
-              className="absolute w-6 h-6 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full animate-float-bubble"
-              style={{
-                right: "15%",
-                top: "30%",
-                animationDelay: "2s",
-                animationDuration: "10s",
-              }}
-            >
+            {/* Group 2 – Pink/Rose */}
+            {[
+              { left: "70%", top: "15%" },
+              { right: "5%", top: "70%" },
+              { left: "25%", bottom: "30%" },
+            ].map((pos, i) => (
               <div
-                className="w-full h-full bg-gradient-to-r from-purple-400/30 to-pink-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "2s", animationDuration: "4s" }}
-              />
-            </div>
+                key={`g2-${i}`}
+                className="absolute w-5 h-5 bg-gradient-to-r from-pink-400/20 to-rose-400/20 rounded-full animate-float-bubble"
+                style={{
+                  ...pos,
+                  animationDelay: `${2 + i}s`,
+                  animationDuration: `${7 + i}s`,
+                }}
+              >
+                <div
+                  className="w-full h-full bg-gradient-to-r from-pink-400/30 to-rose-400/30 rounded-full animate-ping"
+                  style={{
+                    animationDelay: `${2 + i}s`,
+                    animationDuration: "3.5s",
+                  }}
+                />
+              </div>
+            ))}
 
-            {/* Bubble 3 */}
-            <div
-              className="absolute w-3 h-3 bg-gradient-to-r from-indigo-400/20 to-blue-400/20 rounded-full animate-float-bubble"
-              style={{
-                left: "25%",
-                bottom: "25%",
-                animationDelay: "4s",
-                animationDuration: "7s",
-              }}
-            >
+            {/* Group 3 – Blue/Cyan */}
+            {[
+              { right: "25%", top: "50%" },
+              { left: "5%", top: "60%" },
+              { left: "80%", bottom: "30%" },
+            ].map((pos, i) => (
               <div
-                className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-blue-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "4s", animationDuration: "2.5s" }}
-              />
-            </div>
-
-            {/* Bubble 4 */}
-            <div
-              className="absolute w-5 h-5 bg-gradient-to-r from-pink-400/20 to-rose-400/20 rounded-full animate-float-bubble"
-              style={{
-                right: "30%",
-                bottom: "40%",
-                animationDelay: "1s",
-                animationDuration: "9s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-pink-400/30 to-rose-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "1s", animationDuration: "3.5s" }}
-              />
-            </div>
-
-            {/* Bubble 5 */}
-            <div
-              className="absolute w-7 h-7 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 rounded-full animate-float-bubble"
-              style={{
-                left: "5%",
-                top: "60%",
-                animationDelay: "3s",
-                animationDuration: "11s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-blue-400/30 to-indigo-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "3s", animationDuration: "4.5s" }}
-              />
-            </div>
-
-            {/* Bubble 6 */}
-            <div
-              className="absolute w-4 h-4 bg-gradient-to-r from-purple-400/20 to-indigo-400/20 rounded-full animate-float-bubble"
-              style={{
-                right: "8%",
-                top: "70%",
-                animationDelay: "5s",
-                animationDuration: "8s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-purple-400/30 to-indigo-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "5s", animationDuration: "3s" }}
-              />
-            </div>
-
-            {/* Bubble 7 */}
-            <div
-              className="absolute w-8 h-8 bg-gradient-to-r from-rose-400/15 to-pink-400/15 rounded-full animate-float-bubble"
-              style={{
-                left: "70%",
-                top: "15%",
-                animationDelay: "6s",
-                animationDuration: "12s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-rose-400/25 to-pink-400/25 rounded-full animate-ping"
-                style={{ animationDelay: "6s", animationDuration: "5s" }}
-              />
-            </div>
-
-            {/* Bubble 8 */}
-            <div
-              className="absolute w-3 h-3 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full animate-float-bubble"
-              style={{
-                left: "50%",
-                bottom: "15%",
-                animationDelay: "7s",
-                animationDuration: "6s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "7s", animationDuration: "2s" }}
-              />
-            </div>
-
-            {/* Bubble 9 */}
-            <div
-              className="absolute w-5 h-5 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full animate-float-bubble"
-              style={{
-                right: "25%",
-                top: "50%",
-                animationDelay: "8s",
-                animationDuration: "9s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full animate-ping"
-                style={{ animationDelay: "8s", animationDuration: "3.5s" }}
-              />
-            </div>
-
-            {/* Bubble 10 */}
-            <div
-              className="absolute w-6 h-6 bg-gradient-to-r from-violet-400/15 to-purple-400/15 rounded-full animate-float-bubble"
-              style={{
-                left: "80%",
-                bottom: "30%",
-                animationDelay: "9s",
-                animationDuration: "10s",
-              }}
-            >
-              <div
-                className="w-full h-full bg-gradient-to-r from-violet-400/25 to-purple-400/25 rounded-full animate-ping"
-                style={{ animationDelay: "9s", animationDuration: "4s" }}
-              />
-            </div>
+                key={`g3-${i}`}
+                className="absolute w-6 h-6 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full animate-float-bubble"
+                style={{
+                  ...pos,
+                  animationDelay: `${3 + i}s`,
+                  animationDuration: `${9 + i}s`,
+                }}
+              >
+                <div
+                  className="w-full h-full bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full animate-ping"
+                  style={{
+                    animationDelay: `${3 + i}s`,
+                    animationDuration: "4s",
+                  }}
+                />
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -528,7 +456,7 @@ const OpenAi: React.FC = () => {
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 animate-fade-in">
-                ASKOXY.AI
+                OXYGENIX
               </h1>
               <p className="text-xl md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed animate-fade-in-delayed">
                 Your intelligent AI companion for creativity, learning, and
@@ -593,7 +521,8 @@ const OpenAi: React.FC = () => {
               </div>
             </div> */}
 
-            <div className="w-full max-w-5xl mx-auto px-4">
+            <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-6">
+              {/* Prompt Buttons */}
               <div className="flex flex-wrap gap-3 justify-center">
                 {suggestionPrompts.map((prompt, idx) => (
                   <button
@@ -613,25 +542,28 @@ const OpenAi: React.FC = () => {
                 ))}
               </div>
 
-              {relatedOptions.length > 0 && (
-  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 justify-center">
-    {relatedOptions.map((question, index) => (
-      <button
-        key={index}
-        onClick={() => {
-          setInput(question);
-          handleSend(question);
-          setRelatedOptions([]);
-          setSelectedPrompt(null);
-        }}
-        className="px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm transition-all"
-      >
-        {question}
-      </button>
-    ))}
-  </div>
-)}
-
+              {/* Related Prompt Dropdown (Google-style suggestion) */}
+              {showDropdown && relatedOptions.length > 0 && (
+                <div className="w-full mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {relatedOptions.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setInput(question);
+                          handleSend(question);
+                          setRelatedOptions([]);
+                          setSelectedPrompt(null);
+                          setShowDropdown(false);
+                        }}
+                        className="w-full px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm transition-all text-center"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -718,6 +650,61 @@ const OpenAi: React.FC = () => {
                                     { hour: "2-digit", minute: "2-digit" }
                                   )}
                               </div>
+                              <div className="flex gap-3">
+                                {/* Copy */}
+                                <button
+                                  onClick={() => copyToClipboard(msg.content)}
+                                  className="text-gray-500 hover:text-gray-700 dark:hover:text-white transition"
+                                  title="Copy message"
+                                  aria-label="Copy message"
+                                >
+                                  <ClipboardIcon className="w-5 h-5" />
+                                </button>
+
+                                {/* Share */}
+                                <button
+                                  onClick={() => shareContent(msg.content)}
+                                  className="text-gray-500 hover:text-gray-700 dark:hover:text-white transition"
+                                  title="Share message"
+                                  aria-label="Share message"
+                                >
+                                  <ShareIcon className="w-5 h-5" />
+                                </button>
+
+                                {/* Read Aloud / Stop */}
+                                <button
+                                  onClick={() =>
+                                    readAloud(
+                                      msg.content,
+                                      msg.id !== undefined
+                                        ? String(msg.id)
+                                        : String(idx)
+                                    )
+                                  }
+                                  className={`text-gray-500 hover:text-gray-700 dark:hover:text-white transition ${
+                                    readingAloudId === (msg.id || String(idx))
+                                      ? "text-indigo-600"
+                                      : ""
+                                  }`}
+                                  title={
+                                    readingAloudId === (msg.id || String(idx))
+                                      ? "Stop reading"
+                                      : "Read aloud"
+                                  }
+                                  aria-label={
+                                    readingAloudId === (msg.id || String(idx))
+                                      ? "Stop reading"
+                                      : "Read aloud"
+                                  }
+                                >
+                                  {readingAloudId ===
+                                  (msg.id || String(idx)) ? (
+                                    <SpeakerXMarkIcon className="w-5 h-5" />
+                                  ) : (
+                                    <SpeakerWaveIcon className="w-5 h-5" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -737,7 +724,7 @@ const OpenAi: React.FC = () => {
                     <div className="bg-white dark:bg-gray-800 rounded-2xl px-5 py-4 shadow-lg border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          ASKOXY.AI is thinking
+                          Oxygenix is thinking
                         </span>
                         <div className="flex gap-1">
                           <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />

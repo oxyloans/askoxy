@@ -566,7 +566,7 @@ const Home: React.FC = () => {
       id: "o2",
       src: O8,
       alt: "Study Abroad",
-      path: "/main/services/studyabroad",
+      path: "/studyabroad",
     },
   ];
 
@@ -596,7 +596,7 @@ const Home: React.FC = () => {
         image:
           "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
         description: "Complete guidance for international education",
-        path: "/main/services/studyabroad",
+        path: "/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,
       },
       {

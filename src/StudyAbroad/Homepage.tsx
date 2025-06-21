@@ -1,22 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Users, ArrowLeft, CheckCircle, ChevronDown, Globe, Search, X, Loader2, MapPin, Flag, Star } from 'lucide-react';
+import { GraduationCap, Users, ArrowLeft, ChevronDown, Globe, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import Student1 from "../assets/img/page1.png"; // Character illustration
 import mapbw from "../assets/img/mapbw.png"; // Map background
 import { Link } from 'react-router-dom';
-
-interface Country {
-  countryName: string;
-  countryCode: string;
-  name: string;
-  id: string;
-}
-
-interface CountriesResponse {
-  countries: Country[];
-  totalCountries: number;
-}
 
 interface StudyAbroadHeaderProps {
   onNavClick: (id: "home" | "countries" | "universities" | "testimonials") => void;
@@ -177,21 +165,6 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
             </ul>
           </nav>
 
-          {/* <div className="hidden md:flex items-center gap-3">
-           
-            <button
-              className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group"
-              style={{ transition: "box-shadow 0.2s" }}
-              onClick={handleLogout}
-            >
-              <span className="relative z-10">Log Out</span>
-              <span
-                className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
-                style={{ transition: "transform 0.3s" }}
-              ></span>
-            </button>
-          </div> */}
-
           {/* Mobile menu toggle with improved styling */}
           <div className="md:hidden">
             <button
@@ -201,7 +174,10 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
-                <X size={20} />
+                <div className="space-y-1.5">
+                  <div className="w-5 h-0.5 bg-current transform rotate-45 translate-y-1"></div>
+                  <div className="w-5 h-0.5 bg-current transform -rotate-45"></div>
+                </div>
               ) : (
                 <div className="space-y-1.5">
                   <div className="w-5 h-0.5 bg-current"></div>
@@ -277,38 +253,16 @@ const createAuthConfig = () => {
   };
 };
 
-// Utility function to handle auth errors
-const handleAuthError = (error: any, navigate: any) => {
-  if (error.response?.status === 401 || error.response?.status === 403) {
-    navigate('/login', { state: { message: 'Session expired. Please log in again.' } });
-    return true;
-  }
-  return false;
-};
-// const handleLogout = () => 
-// {
-//   localStorage.removeItem('accessToken');
-//   sessionStorage.removeItem('accessToken');
-//   window.location.href = '/student-home'; // Redirect to login page
-// }
+
 const UserSelectionPage = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<'student' | 'counselor' | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedCountryData, setSelectedCountryData] = useState<Country | null>(null);
-  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [filteredCountries, setFilteredCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showCountrySelection, setShowCountrySelection] = useState(false);
-  const [hoveredCountry, setHoveredCountry] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
   const [activeLink, setActiveLink] = useState("home");
-  const dropdownRef = useRef<HTMLDivElement>(null);
- const [isLoading, setIsLoading] = useState<boolean>(false);
-    const LOGIN_URL = "/whatsapplogin";
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
     
   // Check if user is authenticated on component mount
   useEffect(() => {
@@ -316,74 +270,15 @@ const UserSelectionPage = () => {
     if (!token) {
       setAuthRequired(true);
     }
-  }, [navigate]);
+  }, []);
 
   // Handle navigation clicks from header
   const handleNavClick = useCallback((id: "home" | "countries" | "universities" | "testimonials") => {
     setActiveLink(id);
-    // Navigation is now handled in the header component itself
     console.log(`Active section: ${id}`);
   }, []);
 
-  // Fetch countries from API with authentication
-  const fetchCountries = async () => {
-    const token = getAccessToken();
-    if (!token) {
-      setError('Authentication required. Please log in to continue.');
-      setAuthRequired(true);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await axios.get<CountriesResponse>(
-        'https://meta.oxyloans.com/api/user-service/student/getAll-countries',
-        createAuthConfig()
-      );
-      
-      if (response.data && response.data.countries) {
-        const countriesData = response.data.countries;
-        const sortedCountries = [...countriesData].sort((a: Country, b: Country) => 
-          a.name.localeCompare(b.name)
-        );
-        setCountries(sortedCountries);
-        setFilteredCountries(sortedCountries);
-        setAuthRequired(false);
-      } else {
-        setError('No countries data received from server.');
-      }
-    } catch (error: any) {
-      console.error('Error fetching countries:', error);
-      
-      if (handleAuthError(error, navigate)) {
-        return;
-      }
-      
-      if (error.response?.status === 404) {
-        setError('Countries data not found.');
-      } else if (error.response?.status === 500) {
-        setError('Server error. Please try again later.');
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        setError(`Failed to load countries: ${error.response?.data?.message || error.message || 'Unknown error'}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const filtered = countries.filter(country => 
-      country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      country.countryName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredCountries(filtered);
-  }, [searchQuery, countries]);
-
-  const handleStudentClick = () => {
+  const handleStudentClick = async () => {
     const token = getAccessToken();
     if (!token) {
       setError('Please log in to continue as a student.');
@@ -391,41 +286,28 @@ const UserSelectionPage = () => {
       return;
     }
 
-    setUserRole('student');
-    fetchCountries();
-    setTimeout(() => {
-      setShowCountrySelection(true);
-    }, 300);
-  };
+    setLoading(true);
+    setError(null);
 
-  const handleCountrySelect = (country: Country) => {
-    setSelectedCountry(country.name);
-    setSelectedCountryData(country);
-    setSearchQuery('');
-    setIsCountryDropdownOpen(false);
-  };
-
-  const handleContinue = () => {
-    if (selectedCountryData) {
-      const token = getAccessToken();
-      if (!token) {
-        setError('Authentication expired. Please log in again.');
+    try {  
+      // Navigate to student dashboard
+      navigate('/student-dashboard');
+    } catch (error: any) {
+      console.error('Error updating primary type:', error);
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setError('Session expired. Please log in again.');
         setAuthRequired(true);
-        return;
+      } else {
+        setError('Failed to update profile. Please try again.');
       }
-
-      navigate('/course', { 
-        state: { 
-          userRole, 
-          selectedCountry: {
-            countryName: selectedCountryData.countryName,
-            countryCode: selectedCountryData.countryCode,
-            name: selectedCountryData.name,
-            id: selectedCountryData.id
-          }
-        } 
-      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleCounselorClick = () => {
+    setUserRole('counselor');
   };
 
   const handleLogin = () => {
@@ -433,13 +315,11 @@ const UserSelectionPage = () => {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/student-home"; // your desired path
+      const redirectPath = "/student-home";
 
       if (userId) {
-        // User is already logged in
         navigate(redirectPath);
       } else {
-        // Save redirect path before redirecting to login
         sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
@@ -450,34 +330,10 @@ const UserSelectionPage = () => {
     }
   };
 
-  const handleRetry = () => {
-    const token = getAccessToken();
-    if (!token) {
-      setError('Please log in to continue.');
-      setAuthRequired(true);
-      return;
-    }
-    fetchCountries();
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsCountryDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   // Show authentication required message
   if (authRequired) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
         <StudyAbroadHeader onNavClick={handleNavClick} activeLink={activeLink} />
         
         <div className="p-4 font-sans">
@@ -499,9 +355,17 @@ const UserSelectionPage = () => {
                   <div className="space-y-3">
                     <button 
                       onClick={handleLogin}
-                      className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-md text-sm"
+                      disabled={isLoading}
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
-                      Log In to Continue
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                          Signing In...
+                        </>
+                      ) : (
+                        'Log In to Continue'
+                      )}
                     </button>
                     <button 
                       onClick={() => setAuthRequired(false)}
@@ -521,27 +385,21 @@ const UserSelectionPage = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <StudyAbroadHeader onNavClick={handleNavClick} activeLink={activeLink} />
       
       <div className="p-4 font-sans">
-        {/* Main container - 20% smaller */}
         <div className="w-full max-w-5xl mx-auto h-[85vh] bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 rounded-2xl relative overflow-hidden shadow-xl">
           
-          {/* Background world map overlay */}
           <div 
             className="absolute inset-0 opacity-10 bg-no-repeat bg-center bg-cover"
             style={{ backgroundImage: `url(${mapbw})` }}
           />
 
-          {/* Floating decorative elements */}
           <div className="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full blur-xl"></div>
           <div className="absolute bottom-20 right-20 w-32 h-32 bg-pink-300 bg-opacity-20 rounded-full blur-2xl"></div>
 
-          {/* Main content container */}
           <div className="relative z-10 h-full flex items-center">
             
-            {/* Left side - Character illustration */}
             <div className="hidden lg:block lg:w-1/2 h-full relative">
               <div className="absolute bottom-0 left-6 xl:left-12 w-72 xl:w-80 h-full flex items-end">
                 <img 
@@ -553,16 +411,13 @@ const UserSelectionPage = () => {
               </div>
             </div>
 
-            {/* Right side - Modal content */}
             <div className="w-full lg:w-1/2 flex items-center justify-center px-4 lg:px-6 xl:px-12">
               <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden backdrop-blur-md bg-opacity-95">
                 
-                {/* Modal content */}
                 <div className="p-6">
                   
                   {!userRole ? (
                     <div className="space-y-5">
-                      {/* Header */}
                       <div className="text-center mb-6">
                         <div className="inline-flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2 rounded-full shadow-lg mb-4">
                           <span className="text-sm font-medium">
@@ -572,26 +427,42 @@ const UserSelectionPage = () => {
                         <h2 className="text-lg font-medium text-gray-700">Choose your role</h2>
                       </div>
                       
-                      {/* Role Options */}
+                      {error && (
+                        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                          <p className="text-red-700 text-xs font-medium">{error}</p>
+                        </div>
+                      )}
+                      
                       <div className="space-y-3">
                         <button
                           onClick={handleStudentClick}
-                          className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 hover:border-indigo-300 rounded-xl p-4 transition-all duration-300 flex items-center justify-between group"
+                          disabled={loading}
+                          className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 hover:border-indigo-300 rounded-xl p-4 transition-all duration-300 flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <div className="flex items-center">
                             <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2.5 rounded-lg mr-3 group-hover:scale-110 transition-transform">
-                              <GraduationCap size={18} className="text-white" />
+                              {loading ? (
+                                <Loader2 size={18} className="text-white animate-spin" />
+                              ) : (
+                                <GraduationCap size={18} className="text-white" />
+                              )}
                             </div>
                             <div className="text-left">
-                              <div className="font-semibold text-gray-800 text-sm">Student</div>
-                              <div className="text-xs text-gray-500">Explore study opportunities</div>
+                              <div className="font-semibold text-gray-800 text-sm">
+                                {loading ? 'Processing...' : 'Student'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {loading ? 'Setting up your profile' : 'Explore study opportunities'}
+                              </div>
                             </div>
                           </div>
-                          <ChevronDown size={14} className="text-gray-400 transform -rotate-90 group-hover:text-indigo-500 transition-colors" />
+                          {!loading && (
+                            <ChevronDown size={14} className="text-gray-400 transform -rotate-90 group-hover:text-indigo-500 transition-colors" />
+                          )}
                         </button>
                         
                         <button
-                          onClick={() => setUserRole('counselor')}
+                          onClick={handleCounselorClick}
                           className="w-full bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border border-purple-200 hover:border-pink-300 rounded-xl p-4 transition-all duration-300 flex items-center justify-between group"
                         >
                           <div className="flex items-center">
@@ -607,159 +478,8 @@ const UserSelectionPage = () => {
                         </button>
                       </div>
                     </div>
-                  ) : userRole === 'student' && showCountrySelection ? (
-                    <div>
-                      {/* Back Button */}
-                      <div className="flex items-center mb-5">
-                        <button 
-                          onClick={() => {
-                            setUserRole(null);
-                            setShowCountrySelection(false);
-                            setSelectedCountry('');
-                            setSelectedCountryData(null);
-                            setSearchQuery('');
-                            setError(null);
-                          }} 
-                          className="flex items-center group text-gray-600 hover:text-indigo-600 transition-colors"
-                        >
-                          <div className="h-7 w-7 bg-gray-100 group-hover:bg-indigo-100 rounded-full flex items-center justify-center mr-2 transition-all duration-300">
-                            <ArrowLeft size={12} className="text-gray-600 group-hover:text-indigo-600" />
-                          </div>
-                          <span className="text-xs font-medium">Back</span>
-                        </button>
-                      </div>
-                      
-                      {/* Header */}
-                      <div className="text-center mb-5">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-1">Choose your destination 🌍</h2>
-                        <p className="text-gray-600 text-xs">Select where you want to study</p>
-                      </div>
-                      
-                      {/* Error Display */}
-                      {error && (
-                        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                          <p className="text-red-700 text-xs font-medium">{error}</p>
-                          <button 
-                            onClick={handleRetry}
-                            className="mt-1 px-2 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-xs font-medium"
-                          >
-                            Try Again
-                          </button>
-                        </div>
-                      )}
-                      
-                      {/* Selected Country Display */}
-                      {selectedCountryData && (
-                        <div className="mb-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
-                          <div className="flex items-center justify-center">
-                            <Flag size={14} className="text-green-600 mr-2" />
-                            <span className="text-green-700 font-semibold text-sm">{selectedCountryData.name}</span>
-                            <span className="text-green-600 text-xs ml-2">({selectedCountryData.countryCode})</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Loading State */}
-                      {loading ? (
-                        <div className="text-center py-6">
-                          <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-500 mb-3" />
-                          <p className="text-gray-500 text-xs">Loading countries...</p>
-                        </div>
-                      ) : (
-                        <>
-                          {/* Search Countries */}
-                          <div className="mb-5">
-                            <h3 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
-                              <Globe size={12} className="mr-1" />
-                              Available Countries{countries.length > 0 ? ` (${countries.length})` : ''}
-                            </h3>
-                            
-                            {/* Search Input */}
-                            <div className="relative mb-2">
-                              <Search size={12} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                              <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search countries..."
-                                className="w-full pl-8 pr-8 py-2.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                              />
-                              {searchQuery && (
-                                <button 
-                                  onClick={() => setSearchQuery('')}
-                                  className="absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 rounded p-1"
-                                >
-                                  <X size={10} className="text-gray-400" />
-                                </button>
-                              )}
-                            </div>
-                            
-                            {/* Countries List */}
-                            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
-                              {filteredCountries.length > 0 ? (
-                                filteredCountries.map((country) => (
-                                  <div
-                                    key={country.id}
-                                    onClick={() => handleCountrySelect(country)}
-                                    onMouseEnter={() => setHoveredCountry(country.id)}
-                                    onMouseLeave={() => setHoveredCountry('')}
-                                    className={`px-3 py-2.5 flex items-center cursor-pointer transition-all duration-200 first:rounded-t-lg last:rounded-b-lg border-b border-gray-100 last:border-b-0 ${
-                                      selectedCountryData?.id === country.id 
-                                        ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700' 
-                                        : hoveredCountry === country.id
-                                          ? 'bg-gray-50'
-                                          : 'hover:bg-gray-25'
-                                    }`}
-                                  >
-                                    <div className="flex items-center flex-1">
-                                      <div className={`w-2 h-2 rounded-full mr-2 ${
-                                        selectedCountryData?.id === country.id ? 'bg-indigo-500' : 'bg-gray-300'
-                                      }`}></div>
-                                      <div className="flex-1">
-                                        <span className="text-xs font-medium block">{country.name}</span>
-                                        <span className="text-xs text-gray-500">{country.countryCode}</span>
-                                      </div>
-                                    </div>
-                                    {selectedCountryData?.id === country.id && (
-                                      <CheckCircle size={12} className="text-indigo-500" />
-                                    )}
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="px-3 py-4 text-center">
-                                  <p className="text-gray-500 text-xs">
-                                    {searchQuery ? `No countries found for "${searchQuery}"` : 'No countries available'}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Continue Button */}
-                          <button
-                            onClick={handleContinue}
-                            disabled={!selectedCountryData}
-                            className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-                              selectedCountryData
-                                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            {selectedCountryData ? (
-                              <span className="flex items-center justify-center">
-                                Continue
-                                <Star size={12} className="ml-1" />
-                              </span>
-                            ) : (
-                              'Select a country to continue'
-                            )}
-                          </button>
-                        </>
-                      )}
-                    </div>
                   ) : userRole === 'counselor' ? (
                     <div>
-                      {/* Back Button */}
                       <div className="flex items-center mb-5">
                         <button 
                           onClick={() => setUserRole(null)} 
@@ -772,7 +492,6 @@ const UserSelectionPage = () => {
                         </button>
                       </div>
                       
-                      {/* Counselor Content */}
                       <div className="text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 mb-4">
                           <Users className="h-6 w-6 text-white" />
@@ -781,21 +500,6 @@ const UserSelectionPage = () => {
                         <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                           Thank you for your interest! This portal will be launching soon
                         </p>
-                        
-                        {/* <div className="space-y-3">
-                          <button 
-                            onClick={() => navigate('/counselor-dashboard')}
-                            className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-medium shadow-md text-sm"
-                          >
-                            Access Dashboard
-                          </button>
-                          <button 
-                            onClick={() => navigate('/student-management')}
-                            className="w-full px-4 py-2 bg-white text-purple-600 border border-purple-200 rounded-lg hover:bg-purple-50 transition-all duration-300 font-medium shadow-sm text-sm"
-                          >
-                            Manage Students
-                          </button>
-                        </div> */}
                       </div>
                     </div>
                   ) : null}

@@ -25,7 +25,7 @@ const ServicesSlider: React.FC = () => {
     {
       image: "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
       title: "Study Abroad",
-      path: "/services/studyabroad",
+      path: "/studyabroad",
     },
     {
       image:
