@@ -383,7 +383,7 @@ const UniversitiesSection: React.FC = () => {
     if (err.response?.status === 401) {
       sessionStorage.setItem("redirectPath", window.location.pathname);
       sessionStorage.setItem("fromStudyAbroad", "true");
-      navigate("/whatsapplogin?primaryType=STUDENT");
+      navigate("/whatsappregister?primaryType=STUDENT");
       return true;
     }
     return false;
@@ -393,7 +393,7 @@ const UniversitiesSection: React.FC = () => {
   const handleLoginRedirect = (redirectPath?: string) => {
     sessionStorage.setItem("redirectPath", redirectPath || window.location.pathname);
     sessionStorage.setItem("fromStudyAbroad", "true");
-    navigate("/whatsapplogin?primaryType=STUDENT");
+    navigate("/whatsappregister?primaryType=STUDENT");
   };
 
   // Fetch courses for a specific university

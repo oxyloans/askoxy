@@ -24,6 +24,27 @@ import {
 } from "lucide-react";
 import BASE_URL from "../../Config";
 
+// Handle auth error utility function
+const handleAuthError = (err: any, navigate: any) => {
+  if (err.response?.status === 401) {
+    sessionStorage.setItem("redirectPath", window.location.pathname);
+    sessionStorage.setItem("fromStudyAbroad", "true");
+    navigate("/whatsapplogin?primaryType=STUDENT");
+    return true;
+  }
+  return false;
+};
+
+// Handle login redirect for non-authenticated users
+const handleLoginRedirect = (navigate: any, redirectPath?: string) => {
+  sessionStorage.setItem(
+    "redirectPath",
+    redirectPath || window.location.pathname
+  );
+  sessionStorage.setItem("fromStudyAbroad", "true");
+  navigate("/whatsapplogin?primaryType=STUDENT");
+};
+
 const WhatsappLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,45 +76,48 @@ const WhatsappLogin = () => {
   const [showUserMessage, setShowUserMessage] = useState(true);
   // Add state for showing Erice alert
   const [showEriceAlert, setShowEriceAlert] = useState(false);
-  
+
   // Add state for user type
-  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">("CUSTOMER");
+  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">(
+    "CUSTOMER"
+  );
 
   // Get query parameters
   const queryParams = new URLSearchParams(location.search);
-  const userTypeFromQuery = queryParams.get('primaryType');
+  const userTypeFromQuery = queryParams.get("primaryType");
 
   // Determine primary type based on URL and set redirect paths
   useEffect(() => {
-    console.log('Location:', location);
-    console.log('Query params:', Object.fromEntries(queryParams.entries()));
-    
+    console.log("Location:", location);
+    console.log("Query params:", Object.fromEntries(queryParams.entries()));
+
     let detectedPrimaryType: "CUSTOMER" | "STUDENT" = "CUSTOMER";
-    
+
     // Check query parameter first (highest priority)
     if (userTypeFromQuery === "STUDENT") {
       detectedPrimaryType = "STUDENT";
-    } 
-    // Check if coming from studyabroad routes
+    }
+    // Check if coming from studyabroad routes or session storage
     else if (
-      queryParams.get('from') === 'studyabroad' ||
-      location.state?.from?.includes('/studyabroad') ||
-      document.referrer.includes('/studyabroad') ||
-      sessionStorage.getItem('primaryType') === 'STUDENT'
+      queryParams.get("from") === "studyabroad" ||
+      location.state?.from?.includes("/studyabroad") ||
+      document.referrer.includes("/studyabroad") ||
+      sessionStorage.getItem("primaryType") === "STUDENT" ||
+      sessionStorage.getItem("fromStudyAbroad") === "true"
     ) {
       detectedPrimaryType = "STUDENT";
     }
-    
+
     setPrimaryType(detectedPrimaryType);
-    
+
     // Show Erice alert only for CUSTOMER users
     setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
-    
+
     // Store the primary type for future reference
-    sessionStorage.setItem('primaryType', detectedPrimaryType);
-    
-    console.log('Primary Type set to:', detectedPrimaryType);
-    console.log('Show Erice Alert:', detectedPrimaryType === "CUSTOMER");
+    sessionStorage.setItem("primaryType", detectedPrimaryType);
+
+    console.log("Primary Type set to:", detectedPrimaryType);
+    console.log("Show Erice Alert:", detectedPrimaryType === "CUSTOMER");
   }, [location, userTypeFromQuery]);
 
   useEffect(() => {
@@ -101,10 +125,11 @@ const WhatsappLogin = () => {
     const accessToken = localStorage.getItem("accessToken");
     if (userId && accessToken) {
       // Redirect based on user type
-      const defaultPath = primaryType === "STUDENT" 
-        ? "/student-dashboard" 
-        : "/main/dashboard/home";
-      
+      const defaultPath =
+        primaryType === "STUDENT"
+          ? "/student-dashboard"
+          : "/main/dashboard/home";
+
       navigate(location.state?.from || defaultPath, {
         replace: true,
       });
@@ -252,7 +277,7 @@ const WhatsappLogin = () => {
     setError("");
     setMessage("");
     setIsLoading(true);
-    
+
     // Hide Erice alert when Get OTP is clicked (only for customers)
     if (primaryType === "CUSTOMER") {
       setShowEriceAlert(false);
@@ -305,9 +330,10 @@ const WhatsappLogin = () => {
           setShowSuccessPopup(true);
           setMessage("This number is not registered. Please register now.");
           // Redirect to appropriate register page based on user type
-          const registerPath = primaryType === "STUDENT" 
-            ? "/studyabroad/register" 
-            : "/whatsappregister";
+          const registerPath =
+            primaryType === "STUDENT"
+              ? "/whatsappregister"
+              : "/whatsappregister";
           setTimeout(() => navigate(registerPath), 1000);
         } else {
           setOtpShow(true);
@@ -416,7 +442,7 @@ const WhatsappLogin = () => {
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
         localStorage.setItem("primaryType", primaryType); // Store primary type
-        
+
         if (otpMethod === "whatsapp") {
           localStorage.setItem("whatsappNumber", phoneWithoutCode);
         } else {
@@ -428,13 +454,17 @@ const WhatsappLogin = () => {
         localStorage.removeItem("mobileOtpSession");
         localStorage.removeItem("salt");
         localStorage.removeItem("expiryTime");
+        // Clear session storage after successful login
+        sessionStorage.removeItem("fromStudyAbroad");
+        sessionStorage.removeItem("primaryType");
         setMessage("Login Successful");
 
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem("redirectPath");
-          const defaultPath = primaryType === "STUDENT" 
-            ? "/student-dashboard" 
-            : "/main/dashboard/home";
+          const defaultPath =
+            primaryType === "STUDENT"
+              ? "/student-dashboard"
+              : "/main/dashboard/home";
 
           if (redirectPath) {
             navigate(redirectPath);
@@ -561,7 +591,7 @@ const WhatsappLogin = () => {
     setIsMethodDisabled(false); // Re-enable method selection
     setChangeNumberClicked(true); // Mark as clicked once
     setIsGetOtpButtonDisabled(true); // Disable "Get OTP" button again
-    
+
     // Show Erice alert again when changing number (only for customers)
     if (primaryType === "CUSTOMER") {
       setShowEriceAlert(true);
@@ -591,14 +621,17 @@ const WhatsappLogin = () => {
           </button>
           <div className="flex flex-col items-center gap-3">
             <h2 className="text-2xl font-bold text-white text-center">
-              {primaryType === "STUDENT" ? "Welcome to Study Abroad Portal" : "Welcome to Askoxy.AI"}
+              {primaryType === "STUDENT"
+                ? "Welcome to Study Abroad Portal"
+                : "Welcome to ASKOXY.AI"}
             </h2>
             <div className="flex gap-4">
               <button
                 onClick={() => {
-                  const loginPath = primaryType === "STUDENT" 
-                    ? "/whatsapplogin?primaryType=STUDENT" 
-                    : "/whatsapplogin";
+                  const loginPath =
+                    primaryType === "STUDENT"
+                      ? "/whatsapplogin?primaryType=STUDENT"
+                      : "/whatsapplogin";
                   window.location.href = loginPath;
                 }}
                 className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
@@ -607,9 +640,10 @@ const WhatsappLogin = () => {
               </button>
               <button
                 onClick={() => {
-                  const registerPath = primaryType === "STUDENT" 
-                    ? "/studyabroad/register" 
-                    : "/whatsappregister";
+                  const registerPath =
+                    primaryType === "STUDENT"
+                      ? "/whatsappregister"
+                      : "/whatsappregister";
                   window.location.href = registerPath;
                 }}
                 className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
@@ -742,7 +776,7 @@ const WhatsappLogin = () => {
                 ) : (
                   <PhoneCall className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
                 )}
-                </div>
+              </div>
 
               {error && (
                 <p className="text-red-500 text-sm mt-2 flex items-center gap-1 animate-fadeIn">
@@ -798,9 +832,6 @@ const WhatsappLogin = () => {
                       {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {phoneNumber && `+${countryCode} ${extractPhoneWithoutCode(phoneNumber)}`}
-                  </p>
                 </div>
 
                 <div className="space-y-4">
@@ -909,7 +940,11 @@ const WhatsappLogin = () => {
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
               <Link
-                to={primaryType === "STUDENT" ? "/studyabroad/register" : "/whatsappregister"}
+                to={
+                  primaryType === "STUDENT"
+                    ? "/whatsappregister"
+                    : "/whatsappregister"
+                }
                 className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
               >
                 Register here

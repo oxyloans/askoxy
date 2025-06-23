@@ -22,6 +22,27 @@ import {
 } from "lucide-react";
 import BASE_URL from "../../Config";
 
+// Handle auth error
+const handleAuthError = (err: any, navigate: any) => {
+  if (err.response?.status === 401) {
+    sessionStorage.setItem("redirectPath", window.location.pathname);
+    sessionStorage.setItem("fromStudyAbroad", "true");
+    navigate("/whatsappregister?primaryType=STUDENT");
+    return true;
+  }
+  return false;
+};
+
+// Handle login redirect for non-authenticated users
+const handleLoginRedirect = (navigate: any, redirectPath?: string) => {
+  sessionStorage.setItem(
+    "redirectPath",
+    redirectPath || window.location.pathname
+  );
+  sessionStorage.setItem("fromStudyAbroad", "true");
+  navigate("/whatsapplogin?primaryType=STUDENT");
+};
+
 const WhatsappRegister = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,14 +75,25 @@ const WhatsappRegister = () => {
   const [receiveNotifications, setReceiveNotifications] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
+  // Primary type state - dynamic based on source
+  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">(
+    "CUSTOMER"
+  );
+
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
+  const urlPrimaryType = params.primaryType;
+
   console.log("User Type:", userType);
+  console.log("Primary Type from URL:", urlPrimaryType);
 
   // Save preferences to localStorage only
   const savePreferences = () => {
-    localStorage.setItem("receiveNotifications", receiveNotifications.toString());
+    localStorage.setItem(
+      "receiveNotifications",
+      receiveNotifications.toString()
+    );
     localStorage.setItem("agreeToTerms", agreeToTerms.toString());
   };
 
@@ -82,6 +114,23 @@ const WhatsappRegister = () => {
       localStorage.setItem("refferrerId", refParam);
       console.log("Extracted userId:", refParam);
     }
+
+    // Set primary type based on URL parameter or session storage
+    const urlPrimaryType = queryParams.get("primaryType");
+    const fromStudyAbroad = sessionStorage.getItem("fromStudyAbroad");
+
+    if (urlPrimaryType === "STUDENT" || fromStudyAbroad === "true") {
+      setPrimaryType("STUDENT");
+    } else {
+      setPrimaryType("CUSTOMER");
+    }
+
+    console.log(
+      "Set Primary Type:",
+      urlPrimaryType === "STUDENT" || fromStudyAbroad === "true"
+        ? "STUDENT"
+        : "CUSTOMER"
+    );
   }, [navigate, location]);
 
   useEffect(() => {
@@ -226,217 +275,207 @@ const WhatsappRegister = () => {
     setMessage("");
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-    setIsLoading(true);
-    setShowEriceAlert(false);
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
+  setMessage("");
+  setIsLoading(true);
+  setShowEriceAlert(false);
 
-    if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
-      setError("Please enter a valid Phone number with country code");
-      setIsLoading(false);
-      return;
+  if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
+    setError("Please enter a valid Phone number with country code");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const requestBody: Record<string, any> = {
+      registrationType: otpMethod,
+      userType: "Register",
+      primaryType: primaryType,
+      countryCode: countryCode,
+    };
+    if (otpMethod === "whatsapp") {
+      requestBody.whatsappNumber = phoneNumber.replace(countryCode, "");
+    } else {
+      requestBody.mobileNumber = phoneNumber.replace(countryCode, "");
     }
 
-    try {
-      const requestBody: Record<string, any> = {
-        registrationType: otpMethod,
-        userType: "Register",
-        countryCode: countryCode,
-      };
-      if (otpMethod === "whatsapp") {
-        requestBody.whatsappNumber = phoneNumber.replace(countryCode, "");
+    if (reffererId) {
+      requestBody.referrer_id = reffererId;
+    }
+
+    console.log("Registration request body:", requestBody);
+
+    const response = await axios.post(
+      `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
+      requestBody
+    );
+
+    if (response.data) {
+      localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession);
+      localStorage.setItem("salt", response.data.salt);
+      localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
+      localStorage.setItem("userType", userType);
+      localStorage.setItem("primaryType", primaryType);
+
+      if (response.data.mobileOtpSession === null) {
+        setShowSuccessPopup(false);
+        setError("You are already registered with this number.");
+        const loginUrl =
+          primaryType === "STUDENT"
+            ? "/whatsapplogin?primaryType=STUDENT"
+            : "/whatsapplogin";
+        setTimeout(() => navigate(loginUrl), 1000);
       } else {
-        requestBody.mobileNumber = phoneNumber.replace(countryCode, "");
-      }
-
-      if (reffererId) {
-        requestBody.referrer_id = reffererId;
-      }
-
-      const response = await axios.post(
-        `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
-        requestBody
-      );
-
-      if (response.data) {
-        if (
-          response.data.message ===
-          "User already registered with this Mobile Number, please log in."
-        ) {
-          setShowSuccessPopup(false);
-          setError(
-            "You are already registered with this number. Please log in."
-          );
-          setTimeout(() => navigate("/whatsapplogin"), 1500);
-          return;
-        }
-
-        localStorage.setItem(
-          "mobileOtpSession",
-          response.data.mobileOtpSession
+        setIsButtonEnabled(true);
+        setOtpShow(true);
+        setShowSuccessPopup(true);
+        setMessage(
+          `OTP sent successfully to your ${
+            otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+          } number`
         );
-        localStorage.setItem("salt", response.data.salt);
-        localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
-        localStorage.setItem("userType", userType);
-
-        if (response.data.mobileOtpSession === null) {
+        setResendDisabled(true);
+        setisPhoneDisabled(true);
+        setResendTimer(30);
+        setTimeout(() => {
           setShowSuccessPopup(false);
-          setError("You already registered with this number.");
-          setTimeout(() => navigate("/whatsapplogin"), 1000);
-        } else {
-          setIsButtonEnabled(true);
-          setOtpShow(true);
-          setShowSuccessPopup(true);
-          setMessage(
-            `OTP sent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`
-          );
-          setResendDisabled(true);
-          setisPhoneDisabled(true);
-          setResendTimer(30);
-          setTimeout(() => {
-            setShowSuccessPopup(false);
-            setMessage("");
-          }, 4000);
-        }
+          setMessage("");
+        }, 4000);
       }
-    } catch (err: any) {
-      if (err.response && err.response.data) {
-        if (
-          err.response.data.message ===
-          "User already registered with this Mobile Number, please log in."
-        ) {
-          setError(
-            "You are already registered with this number. Please log in."
-          );
-          setTimeout(() => navigate("/whatsapplogin"), 1500);
-        } else {
-          setError(
-            err.response.data.message ||
-            "An error occurred. Please try again later."
-          );
-        }
-      } else {
-        setError("An error occurred. Please try again later.");
-      }
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err: any) {
+    if (err.response?.status === 409) {
+      // Handle existing user with 409 Conflict
+      setShowSuccessPopup(false);
+      setError("You are already registered with this number. Please log in.");
+      const loginUrl =
+        primaryType === "STUDENT"
+          ? "/whatsapplogin?primaryType=STUDENT"
+          : "/whatsapplogin";
+      setTimeout(() => navigate(loginUrl), 1500);
+    } else {
+      setError(
+        err.response?.data?.message || "An error occurred. Please try again later."
+      );
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
+const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setOtpError("");
+  setMessage("");
+  setIsLoading(true);
+  setIsRegistering(true);
 
-  const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setOtpError("");
-    setMessage("");
-    setIsLoading(true);
-    setIsRegistering(true);
+  if (!credentials) {
+    setOtpError("Please enter the complete OTP");
+    setIsLoading(false);
+    setIsRegistering(false);
+    return;
+  }
 
-    if (!credentials) {
-      setOtpError("Please enter the complete OTP");
+  if (otpMethod === "whatsapp") {
+    if (credentials.otp.join("").length !== 4) {
+      setOtpError("Please enter the complete WhatsApp OTP");
       setIsLoading(false);
       setIsRegistering(false);
       return;
     }
+  } else if (otpMethod === "mobile") {
+    if (credentials.mobileOTP.join("").length !== 6) {
+      setOtpError("Please enter the complete Mobile OTP");
+      setIsLoading(false);
+      setIsRegistering(false);
+      return;
+    }
+  }
+
+  try {
+    const requestBody: Record<string, any> = {
+      registrationType: otpMethod,
+      userType: "Register",
+      primaryType: primaryType,
+      countryCode: countryCode,
+    };
 
     if (otpMethod === "whatsapp") {
-      if (credentials.otp.join("").length !== 4) {
-        setOtpError("Please enter the complete WhatsApp OTP");
-        setIsLoading(false);
-        setIsRegistering(false);
-        return;
-      }
-    } else if (otpMethod === "mobile") {
-      if (credentials.mobileOTP.join("").length !== 6) {
-        setOtpError("Please enter the complete Mobile OTP");
-        setIsLoading(false);
-        setIsRegistering(false);
-        return;
-      }
+      requestBody.whatsappNumber = phoneNumber?.replace(countryCode, "");
+      requestBody.whatsappOtpSession = localStorage.getItem("mobileOtpSession");
+      requestBody.whatsappOtpValue = credentials.otp.join("");
+      requestBody.salt = localStorage.getItem("salt");
+      requestBody.expiryTime = localStorage.getItem("expiryTime");
+      requestBody.registerdFrom = "WEB";
+    } else {
+      requestBody.mobileNumber = phoneNumber?.replace(countryCode, "");
+      requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
+      requestBody.mobileOtpValue = credentials.mobileOTP.join("");
+      requestBody.expiryTime = localStorage.getItem("expiryTime");
+      requestBody.salt = localStorage.getItem("salt");
+      requestBody.registerdFrom = "WEB";
     }
 
-    try {
-      const requestBody: Record<string, any> = {
-        registrationType: otpMethod,
-        userType: "Register",
-        countryCode: countryCode,
-      };
+    if (reffererId) {
+      requestBody.referrer_id = reffererId;
+    }
 
+    console.log("OTP verification request body:", requestBody);
+
+    const response = await axios.post(
+      `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
+      requestBody
+    );
+
+    if (response.data) {
+      // Handle successful registration for new user
+      setShowSuccessPopup(true);
+      localStorage.setItem("userId", response.data.userId);
+      localStorage.setItem("accessToken", response.data.accessToken);
+      localStorage.setItem("primaryType", primaryType);
       if (otpMethod === "whatsapp") {
-        requestBody.whatsappNumber = phoneNumber?.replace(countryCode, "");
-        requestBody.whatsappOtpSession =
-          localStorage.getItem("mobileOtpSession");
-        requestBody.whatsappOtpValue = credentials.otp.join("");
-        requestBody.salt = localStorage.getItem("salt");
-        requestBody.expiryTime = localStorage.getItem("expiryTime");
-        requestBody.registerdFrom = "WEB";
+        localStorage.setItem("whatsappNumber", phoneNumber || "");
       } else {
-        requestBody.mobileNumber = phoneNumber?.replace(countryCode, "");
-        requestBody.mobileOtpSession = localStorage.getItem("mobileOtpSession");
-        requestBody.mobileOtpValue = credentials.mobileOTP.join("");
-        requestBody.expiryTime = localStorage.getItem("expiryTime");
-        requestBody.salt = localStorage.getItem("salt");
-        requestBody.registerdFrom = "WEB";
+        localStorage.setItem("mobileNumber", requestBody.mobileNumber);
       }
+      localStorage.removeItem("refferrerId");
+      sessionStorage.removeItem("fromStudyAbroad");
 
-      if (reffererId) {
-        requestBody.referrer_id = reffererId;
-      }
+      // Save preferences after successful registration
+      savePreferences();
 
-      const response = await axios.post(
-        `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
-        requestBody
-      );
+      setMessage("Registration Successful");
 
-      if (response.data) {
-        if (
-          response.data.message ===
-          "User already registered with this Mobile Number, please log in."
-        ) {
-          setOtpError(
-            "You are already registered with this number. Redirecting to login..."
-          );
-          setTimeout(() => navigate("/whatsapplogin"), 1000);
-          return;
-        }
-
-        setShowSuccessPopup(true);
-        localStorage.setItem("userId", response.data.userId);
-        localStorage.setItem("accessToken", response.data.accessToken);
-        setMessage("Registration Successful");
-        if (otpMethod === "whatsapp") {
-          localStorage.setItem("whatsappNumber", phoneNumber || "");
-        } else {
-          localStorage.setItem("mobileNumber", requestBody.mobileNumber);
-        }
-        localStorage.removeItem("refferrerId");
-
-        // Save preferences after successful registration
-        savePreferences();
-
-        setTimeout(() => {
-          const redirectPath = sessionStorage.getItem("redirectPath");
-
-          if (redirectPath) {
-            window.location.href = redirectPath;
-            sessionStorage.removeItem("redirectPath");
-          } else {
-            navigate(location.state?.from || "/main/dashboard/home");
-          }
-        }, 1000);
-      }
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setOtpError(err.response.data.message);
-      } else {
-        setOtpError("Invalid OTP");
-      }
-      setOtpSession(null);
-      setIsRegistering(false);
-    } finally {
-      setIsLoading(false);
+      // Redirect to the intended destination
+      setTimeout(() => {
+        const redirectPath =
+          sessionStorage.getItem("redirectPath") ||
+          location.state?.from ||
+          "/main/dashboard/home";
+        sessionStorage.removeItem("redirectPath");
+        navigate(redirectPath, { replace: true });
+      }, 1000);
     }
-  };
+  } catch (err: any) {
+    if (err.response?.status === 409) {
+      // Handle existing user with 409 Conflict
+      setOtpError("You are already registered with this number. Redirecting to login...");
+      const loginUrl =
+        primaryType === "STUDENT"
+          ? "/whatsapplogin?primaryType=STUDENT"
+          : "/whatsapplogin";
+      setTimeout(() => navigate(loginUrl), 1500);
+    } else {
+      setOtpError(err.response?.data?.message || "Invalid OTP");
+    }
+    setOtpSession(null);
+    setIsRegistering(false);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleResendOtp = async () => {
     if (!resendDisabled) {
@@ -449,6 +488,7 @@ const WhatsappRegister = () => {
         const requestBody: Record<string, any> = {
           registrationType: otpMethod,
           userType: "Register",
+          primaryType: primaryType, // Add primary type to resend OTP
           countryCode: countryCode,
         };
         if (otpMethod === "whatsapp") {
@@ -456,6 +496,9 @@ const WhatsappRegister = () => {
         } else {
           requestBody.mobileNumber = phoneNumber?.replace(countryCode, "");
         }
+
+        console.log("Resend OTP request body:", requestBody);
+
         const response = await axios.post(
           `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
           requestBody
@@ -468,7 +511,11 @@ const WhatsappRegister = () => {
             setError(
               "You are already registered with this number. Redirecting to login..."
             );
-            setTimeout(() => navigate("/whatsapplogin"), 1000);
+            const loginUrl =
+              primaryType === "STUDENT"
+                ? "/whatsapplogin?primaryType=STUDENT"
+                : "/whatsapplogin";
+            setTimeout(() => navigate(loginUrl), 1000);
             return;
           }
 
@@ -481,7 +528,9 @@ const WhatsappRegister = () => {
 
           setShowSuccessPopup(true);
           setMessage(
-            `OTP resent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`
+            `OTP resent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
           );
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
@@ -525,6 +574,15 @@ const WhatsappRegister = () => {
     });
   };
 
+  // Function to handle login redirect with proper primaryType
+  const handleLoginRedirectClick = () => {
+    const loginUrl =
+      primaryType === "STUDENT"
+        ? "/whatsapplogin?primaryType=STUDENT"
+        : "/whatsapplogin";
+    navigate(loginUrl);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-4">
       <div
@@ -534,7 +592,12 @@ const WhatsappRegister = () => {
       >
         <div className="bg-purple-600 p-3 sm:p-4 lg:p-6 relative">
           <h2 className="text-2xl font-bold text-white text-center">
-            Register to Askoxy.AI
+            Register to ASKOXY.AI
+            {primaryType === "STUDENT" && (
+              <span className="block text-sm font-normal text-purple-200 mt-1">
+                Student Registration
+              </span>
+            )}
           </h2>
           <button
             onClick={handleClose}
@@ -545,13 +608,19 @@ const WhatsappRegister = () => {
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-4 mt-4">
               <button
-                onClick={() => (window.location.href = "/whatsapplogin")}
+                onClick={handleLoginRedirectClick}
                 className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
               >
                 Login
               </button>
               <button
-                onClick={() => (window.location.href = "/whatsappregister")}
+                onClick={() => {
+                  const registerUrl =
+                    primaryType === "STUDENT"
+                      ? "/whatsappregister?primaryType=STUDENT"
+                      : "/whatsappregister";
+                  window.location.href = registerUrl;
+                }}
                 className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
               >
                 Register
@@ -663,14 +732,17 @@ const WhatsappRegister = () => {
                       type="checkbox"
                       id="notifications"
                       checked={receiveNotifications}
-                      onChange={(e) => setReceiveNotifications(e.target.checked)}
+                      onChange={(e) =>
+                        setReceiveNotifications(e.target.checked)
+                      }
                       className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                     />
                     <label
                       htmlFor="notifications"
                       className="ml-2 text-sm text-gray-700"
                     >
-                      I want to receive notifications on SMS, RCS & Email from Askoxy.ai.
+                      I want to receive notifications on SMS, RCS & Email from
+                      ASKOXY.AI
                     </label>
                   </div>
                   <div className="flex items-center">
@@ -709,10 +781,13 @@ const WhatsappRegister = () => {
                 <div className="space-y-4 animate-fadeIn">
                   <div className="flex justify-between items-center">
                     <label className="block text-sm font-medium text-gray-700">
-                      Enter {otpMethod === "whatsapp" ? "4-digit" : "6-digit"} OTP
+                      Enter {otpMethod === "whatsapp" ? "4-digit" : "6-digit"}{" "}
+                      OTP
                     </label>
                     <span className="text-xs text-gray-500">
-                      {otpMethod === "whatsapp" ? "Sent via WhatsApp" : "Sent via SMS"}
+                      {otpMethod === "whatsapp"
+                        ? "Sent via WhatsApp"
+                        : "Sent via SMS"}
                     </span>
                   </div>
                   <div className="flex justify-center gap-3">

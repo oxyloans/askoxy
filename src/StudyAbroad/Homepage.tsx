@@ -309,6 +309,9 @@ const UserSelectionPage = () => {
   const handleCounselorClick = () => {
     setUserRole('counselor');
   };
+  const handleStudyabroad = () => {
+    navigate('/studyabroad');
+  }
   
 const handleLogin = () => {
   try {
@@ -323,7 +326,7 @@ const handleLogin = () => {
       sessionStorage.setItem("redirectPath", redirectPath);
       sessionStorage.setItem("primaryType", "STUDENT"); // Set primary type for students
       // Pass primaryType as query parameter
-      window.location.href = "/whatsapplogin?primaryType=STUDENT";
+      window.location.href = "/whatsappregister?primaryType=STUDENT";
     }
   } catch (error) {
     console.error("Sign in error:", error);
@@ -352,7 +355,7 @@ const handleLogin = () => {
                   </div>
                   <h2 className="text-lg font-bold text-gray-800 mb-2">Authentication Required</h2>
                   <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-                    Please log in to explore study abroad opportunities and access premium programs.
+                    Please register to explore study abroad opportunities and access premium programs.
                   </p>
                   <div className="space-y-3">
                     <button 
@@ -366,11 +369,11 @@ const handleLogin = () => {
                           Signing In...
                         </>
                       ) : (
-                        'Log In to Continue'
+                        'Register to Continue'
                       )}
                     </button>
                     <button 
-                      onClick={() => setAuthRequired(false)}
+                      onClick={handleStudyabroad}
                       className="w-full px-4 py-2 bg-white text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium shadow-sm text-sm"
                     >
                       Back to Home

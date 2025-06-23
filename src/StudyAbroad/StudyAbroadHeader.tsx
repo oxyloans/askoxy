@@ -194,7 +194,7 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
         style={{ transition: 'box-shadow 0.2s' }}
         onClick={handleClick}
       >
-        <span className="relative z-10">Apply Now</span>
+        <span className="relative z-10">Register Now</span>
         <span
           className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
           style={{ transition: 'transform 0.3s' }}
