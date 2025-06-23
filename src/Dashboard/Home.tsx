@@ -532,18 +532,18 @@ const Home: React.FC = () => {
   };
 
   const headerImages: HeaderImage[] = [
-    {
-      id: "o3",
-      src: O3,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=1.0",
-    },
-    {
-      id: "o6",
-      src: O7,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=5.0",
-    },
+    // {
+    //   id: "o3",
+    //   src: O3,
+    //   alt: "Products",
+    //   path: "/main/dashboard/products?weight=1.0",
+    // },
+    // {
+    //   id: "o6",
+    //   src: O7,
+    //   alt: "Products",
+    //   path: "/main/dashboard/products?weight=5.0",
+    // },
     {
       id: "o1",
       src: O6,
@@ -556,12 +556,12 @@ const Home: React.FC = () => {
       alt: "Products",
       path: "/main/dashboard/products?weight=26.0",
     },
-    {
-      id: "o1",
-      src: O1,
-      alt: "OxyLoans",
-      path: "/main/service/oxyloans-service",
-    },
+    // {
+    //   id: "o1",
+    //   src: O1,
+    //   alt: "OxyLoans",
+    //   path: "/main/service/oxyloans-service",
+    // },
     {
       id: "o2",
       src: O8,

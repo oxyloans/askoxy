@@ -65,7 +65,7 @@ const gridImages = [
   {
     id: "s7",
     src: mockImages.s7,
-    route: "/rice2orboecommers",
+    route: "/rice2roboecommers",
     title: "Rice 2 Robo\nECommerce",
   },
   {

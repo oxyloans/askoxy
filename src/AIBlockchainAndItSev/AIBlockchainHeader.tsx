@@ -25,7 +25,10 @@ const AIBlockchainHeader = memo(function AIBlockchainHeader({
   const scrollRef = useRef(isScrolled);
    const [isLoading, setIsLoading] = useState<boolean>(false);
   const LOGIN_URL = "/whatsapplogin";
-
+const handleHome =() =>
+{
+  navigate("/");
+}
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -171,7 +174,7 @@ const AIBlockchainHeader = memo(function AIBlockchainHeader({
             {/* Logo */}
             <div
               className="flex items-center cursor-pointer"
-              onClick={() => handleNavClick("home")}
+              onClick={handleHome}
             >
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-400 rounded-full opacity-50 blur"></div>

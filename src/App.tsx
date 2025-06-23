@@ -164,6 +164,7 @@ import StudyAbroadLandingPage from "./StudyAbroad/StudyAbroadLandingPage";
 import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
 import AskoxyAi from "./components/OpenAi";
+import GenOxy from "./GenOxy/Genoxy";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -266,7 +267,8 @@ const App: React.FC = () => {
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
             />
-            <Route path="/generateimage" element={<AskoxyAi />} />
+            {/* <Route path="/generateimage" element={<AskoxyAi />} /> */}
+            <Route path="/genoxy" element={<GenOxy />} />
             <Route path="/caandcsservices" element={<CACSService />} />
             <Route
               path="/goldandsilveranddiamonds"

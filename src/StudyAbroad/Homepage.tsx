@@ -262,7 +262,7 @@ const UserSelectionPage = () => {
   const [authRequired, setAuthRequired] = useState(false);
   const [activeLink, setActiveLink] = useState("home");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const LOGIN_URL = "/whatsapplogin";
+  const LOGIN_URL = "/whatsapplogin?primaryType=STUDENT";
     
   // Check if user is authenticated on component mount
   useEffect(() => {
@@ -309,26 +309,28 @@ const UserSelectionPage = () => {
   const handleCounselorClick = () => {
     setUserRole('counselor');
   };
+  
+const handleLogin = () => {
+  try {
+    setIsLoading(true);
 
-  const handleLogin = () => {
-    try {
-      setIsLoading(true);
+    const userId = localStorage.getItem("userId");
+    const redirectPath = "/student-home";
 
-      const userId = localStorage.getItem("userId");
-      const redirectPath = "/student-home";
-
-      if (userId) {
-        navigate(redirectPath);
-      } else {
-        sessionStorage.setItem("redirectPath", redirectPath);
-        window.location.href = LOGIN_URL;
-      }
-    } catch (error) {
-      console.error("Sign in error:", error);
-    } finally {
-      setIsLoading(false);
+    if (userId) {
+      navigate(redirectPath);
+    } else {
+      sessionStorage.setItem("redirectPath", redirectPath);
+      sessionStorage.setItem("primaryType", "STUDENT"); // Set primary type for students
+      // Pass primaryType as query parameter
+      window.location.href = "/whatsapplogin?primaryType=STUDENT";
     }
-  };
+  } catch (error) {
+    console.error("Sign in error:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Show authentication required message
   if (authRequired) {

@@ -564,13 +564,13 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                 </p>
               </div>
 
-              <button
+              {/* <button
                 onClick={handleViewAllClick}
                 className="border-2 border-yellow-400 bg-white hover:bg-yellow-50 text-purple-800 font-semibold px-6 py-2 rounded-full shadow-sm transition-all duration-300 flex items-center group"
               >
                 View all universities
                 <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </button> */}
             </div>
 
             {loading ? (

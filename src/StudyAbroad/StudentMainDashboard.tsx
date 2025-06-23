@@ -9,6 +9,7 @@ import Documents from "./Documents";
 import Profile from "./Profile";
 import StudentHeader from "./Header";
 import CoursesPage from "./Course";
+import CashbackUniversitiesPage from "./univeristyoffers";
 import Support from "./Support";
 import TestScores from "./TestScore";
 import { Link } from "react-router-dom";
@@ -57,7 +58,7 @@ const StudentMainDashboard = () => {
           setIsAuthenticated(true);
         } else {
           // Redirect to landing page if not authenticated
-          navigate('/studyabroad'); // or navigate('/studyabroad') depending on your landing page route
+          navigate('/studyabroad');
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
@@ -81,6 +82,8 @@ const StudentMainDashboard = () => {
     switch (activeTab) {
       case "dashboard":
         return <DashboardOverview onNavigate={handleNavigation} />;
+      case "cashback-universities": // Fixed: Match the exact ID from sidebar
+        return <CashbackUniversitiesPage onNavigate={handleNavigation} />;
       case "courses":
         return <CoursesPage onCourseSelect={(course) => {
           // Handle course selection logic here

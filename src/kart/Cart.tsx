@@ -1937,84 +1937,72 @@ const CartPage: React.FC = () => {
                       </span>
                     </div>
                   )}
-                  {cartData?.map((item) => {
-                    const quantity =
-                      item.status === "FREE"
-                        ? freeCartItems[item.itemId] || 0
-                        : regularCartItems[item.itemId] || 0;
-                    const goldMakingCost = item.goldMakingCost ?? 0;
-                    const goldGst = item.goldGst ?? 0;
-                    const totalGstAmountToPay = item.totalGstAmountToPay ?? 0;
-
-                    if (
-                      goldMakingCost <= 0 &&
-                      goldGst <= 0 &&
-                      totalGstAmountToPay <= 0
+                  {cartData
+                    ?.filter(
+                      (item) =>
+                        (item.goldMakingCost ?? 0) > 0 ||
+                        (item.goldGst ?? 0) > 0
                     )
-                      return null;
+                    .map((item) => {
+                      const quantity =
+                        item.status === "FREE"
+                          ? freeCartItems[item.itemId] || 0
+                          : regularCartItems[item.itemId] || 0;
+                      const goldMakingCost = item.goldMakingCost ?? 0;
+                      const goldGst = item.goldGst ?? 0;
 
-                    return (
-                      <div
-                        key={item.itemId}
-                        className="mb-2 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200"
-                      >
-                        <div className="space-y-1.5">
-                          {goldMakingCost > 0 && (
-                            <div className="flex justify-between items-center text-xs sm:text-sm">
-                              <span className="text-gray-600 font-medium">
-                                Gold Making Cost
-                              </span>
-                              <span className="text-gray-800 font-semibold">
-                                ₹
-                                {(goldMakingCost * quantity).toLocaleString(
-                                  "en-IN",
-                                  {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  }
-                                )}
-                              </span>
-                            </div>
-                          )}
-                          {goldGst > 0 && (
-                            <div className="flex justify-between items-center text-xs sm:text-sm">
-                              <span className="text-gray-600 font-medium">
-                                Gold GST
-                              </span>
-                              <span className="text-gray-800 font-semibold">
-                                ₹
-                                {(goldGst * quantity).toLocaleString("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                            </div>
-                          )}
-                          {totalGstAmountToPay > 0 && !goldGst && (
-                            <div className="flex justify-between items-center text-xs sm:text-sm">
-                              <span className="text-gray-600 font-medium">
-                                GST
-                              </span>
-                              <span className="text-gray-800 font-semibold">
-                                ₹
-                                {(
-                                  totalGstAmountToPay * quantity
-                                ).toLocaleString("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                            </div>
-                          )}
-                          {quantity > 1 && (
-                            <div className="text-xs text-gray-500 text-right">
-                              Qty: {quantity}
-                            </div>
-                          )}
+                      return (
+                        <div
+                          key={item.itemId}
+                          className="mb-2 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          <div className="space-y-1.5">
+                            <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-1">
+                              GST Breakdown
+                            </h4>
+                            {goldMakingCost > 0 && (
+                              <div className="flex justify-between items-center text-xs sm:text-sm">
+                                <span className="text-gray-600 font-medium">
+                                  Gold Making Cost
+                                </span>
+                                <span className="text-gray-800 font-semibold">
+                                  ₹
+                                  {(goldMakingCost * quantity).toLocaleString(
+                                    "en-IN",
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            {goldGst > 0 && (
+                              <div className="flex justify-between items-center text-xs sm:text-sm">
+                                <span className="text-gray-600 font-medium">
+                                  Gold GST
+                                </span>
+                                <span className="text-gray-800 font-semibold">
+                                  ₹
+                                  {(goldGst * quantity).toLocaleString(
+                                    "en-IN",
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            {quantity > 1 && (
+                              <div className="text-xs text-gray-500 text-right">
+                                Qty: {quantity}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   <div className="flex justify-between mb-4 text-gray-800 font-bold text-lg">
                     <span>Grand Total</span>
                     <span>
@@ -2031,35 +2019,12 @@ const CartPage: React.FC = () => {
                               0
                             ) || 0;
 
-                        const goldMakingCostTotal =
-                          cartData?.reduce((acc, item) => {
-                            const quantity =
-                              item.status === "FREE"
-                                ? freeCartItems[item.itemId] || 0
-                                : regularCartItems[item.itemId] || 0;
-                            const goldMakingCost = item.goldMakingCost ?? 0;
-                            return acc + goldMakingCost * quantity;
-                          }, 0) || 0;
-
-                        const goldGstTotal =
-                          cartData?.reduce((acc, item) => {
-                            const quantity =
-                              item.status === "FREE"
-                                ? freeCartItems[item.itemId] || 0
-                                : regularCartItems[item.itemId] || 0;
-                            const goldGst = item.goldGst ?? 0;
-                            return acc + goldGst * quantity;
-                          }, 0) || 0;
-
-                        const nonGoldGstTotal = totalGstAmount - goldGstTotal;
                         const deliveryFeeTotal =
                           cartData.length > 0 ? deliveryFee || 0 : 0;
 
                         return (
                           itemTotal +
-                          goldMakingCostTotal +
-                          goldGstTotal +
-                          nonGoldGstTotal +
+                          totalGstAmount +
                           deliveryFeeTotal
                         ).toFixed(2);
                       })() || "0.00"}

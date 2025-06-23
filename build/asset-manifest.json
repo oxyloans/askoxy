@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.3eb33d7a.css",
-    "main.js": "/static/js/main.92d6afac.js",
+    "main.css": "/static/css/main.4c8ab509.css",
+    "main.js": "/static/js/main.1016be0b.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
     "static/media/3 (4).png": "/static/media/3 (4).bb25f69f5e1e92c84eb1.png",
@@ -44,6 +44,7 @@
     "static/media/proudlender7.png": "/static/media/proudlender7.b7c44ce20700a22aa396.png",
     "static/media/askoxylogostatic.png": "/static/media/askoxylogostatic.3e03c861742645ba9a15.png",
     "static/media/proudlender11.png": "/static/media/proudlender11.c6e137c2c197a5881239.png",
+    "static/media/thumbnail.png": "/static/media/thumbnail.43045b9c32dea30871a6.png",
     "static/media/proudlender6.png": "/static/media/proudlender6.6bf2d27333289b4ca8c4.png",
     "static/media/proudlender10.png": "/static/media/proudlender10.05b1babc5b7b7b7a3991.png",
     "static/media/s1.png": "/static/media/s1.38e2f5efb98c328687f0.png",
@@ -84,9 +85,7 @@
     "static/media/testimonial15.png": "/static/media/testimonial15.4a692e3fc9549e8d31a8.png",
     "static/media/newzealand.png": "/static/media/newzealand.f0984138e1f5989d6fec.png",
     "static/media/usa.png": "/static/media/usa.054e520ae0d54acbe8d8.png",
-    "static/media/5offer.png": "/static/media/5offer.4c09878033c20c301574.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
-    "static/media/2offer.png": "/static/media/2offer.6b7c59e146b45fa528b9.png",
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.5993d0be5c2d681d469f.png",
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
     "static/media/goldlines.png": "/static/media/goldlines.c8089f38ce39f29ee687.png",
@@ -103,7 +102,6 @@
     "static/media/radha sir.png": "/static/media/radha sir.b3007a012f0fe6437f56.png",
     "static/media/fa-regular-400.ttf": "/static/media/fa-regular-400.914997e1bdfc990d0897.ttf",
     "static/media/canada.png": "/static/media/canada.e4ab107d28902f54636b.png",
-    "static/media/o1.png": "/static/media/o1.2001b8feaefd5084d5d1.png",
     "static/media/image1.png": "/static/media/image1.553556b36d15fceb7fc0.png",
     "static/media/germany.png": "/static/media/germany.be48534245dc56c42889.png",
     "static/media/italy.png": "/static/media/italy.020927346ed322784c92.png",
@@ -126,11 +124,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.3eb33d7a.css.map": "/static/css/main.3eb33d7a.css.map",
-    "main.92d6afac.js.map": "/static/js/main.92d6afac.js.map"
+    "main.4c8ab509.css.map": "/static/css/main.4c8ab509.css.map",
+    "main.1016be0b.js.map": "/static/js/main.1016be0b.js.map"
   },
   "entrypoints": [
-    "static/css/main.3eb33d7a.css",
-    "static/js/main.92d6afac.js"
+    "static/css/main.4c8ab509.css",
+    "static/js/main.1016be0b.js"
   ]
 }

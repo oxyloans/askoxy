@@ -23,7 +23,7 @@ const RealEstateHeader = memo(function RealEstateHeader({
    const [isLoading, setIsLoading] = useState<boolean>(false);
     const LOGIN_URL = "/whatsapplogin";
     const navigate = useNavigate();
-
+const handleHome = () =>{navigate("/")};
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -167,7 +167,7 @@ const RealEstateHeader = memo(function RealEstateHeader({
             {/* Logo */}
             <div
               className="flex items-center cursor-pointer group"
-              onClick={() => handleNavClick("home")}
+              onClick={handleHome}
             >
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full opacity-50 blur group-hover:opacity-70 transition-opacity"></div>

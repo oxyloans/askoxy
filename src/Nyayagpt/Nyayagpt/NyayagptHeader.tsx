@@ -23,6 +23,7 @@ const NyayagptHeader = memo(function NyayagptHeader({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const LOGIN_URL = "/whatsapplogin";
  const navigate = useNavigate();
+ const handleHome = () =>{navigate("/")}; 
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -181,7 +182,7 @@ const NyayagptHeader = memo(function NyayagptHeader({
                 {navLinks.map((link) => (
                   <li key={link.id}>
                     <button
-                      onClick={() => handleNavClick(link.id)}
+                      onClick={handleHome}
                       className={`px-4 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 ${
                         activeLink === link.id
                           ? "text-white bg-gradient-to-r from-indigo-600 to-purple-500 shadow-md scale-105"
