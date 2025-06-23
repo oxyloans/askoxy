@@ -328,11 +328,11 @@ export default function StudyAbroadLandingPage() {
         <div ref={homeRef} id="home">
           <StudyAbroadHeroSection />
         </div>
+         <div ref={universitiesRef} id="universities">
+          <UniversitiesSection />
+        </div>
         <div ref={countriesRef} id="countries">
           <CountriesSection />
-        </div>
-        <div ref={universitiesRef} id="universities">
-          <UniversitiesSection />
         </div>
         <div ref={testimonialsRef} id="testimonials">
           <TestimonialsSection />

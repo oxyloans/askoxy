@@ -80,6 +80,10 @@ const UniversitiesSection: React.FC = () => {
   const [applicationResponse, setApplicationResponse] = useState<any>(null);
   const [applicationError, setApplicationError] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
+  
+  // Video modal states
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
 
   // Constants
   const BASE_URL = 'https://meta.oxyloans.com/api';
@@ -335,27 +339,6 @@ const UniversitiesSection: React.FC = () => {
     }
   ];
 
-  const handleCloseToDashboard = () => {
-  // Reset all application states
-  setSelectedUniversityForApplication(null);
-  setApplicationData({
-    selectedCourse: "",
-    intake: "",
-    intakeYear: "",
-    remarks: "",
-  });
-  setApplicationSuccess(false);
-  setApplicationError(null);
-  setApplicationResponse(null);
-  setAvailableCoursesForApplication([]);
-  setSelectedCourseForApplication(null);
-  setCoursesError(null);
-  setIsSubmittingApplication(false);
-  
-  // Navigate to student dashboard
-  navigate('/student-dashboard');
-};
-
   // Get user ID from local storage
   const getUserId = () => {
     return localStorage.getItem("userId");
@@ -527,7 +510,7 @@ const UniversitiesSection: React.FC = () => {
     fetchUKUniversities();
   }, [fetchUKUniversities]);
 
-// Updated submitApplication function - removes automatic navigation
+// FIXED: Updated submitApplication function with auto navigation to /student-dashboard
 const submitApplication = async () => {
   if (!selectedUniversityForApplication || !applicationData.selectedCourse) return;
 
@@ -568,13 +551,33 @@ const submitApplication = async () => {
       setApplicationResponse(response.data);
       setSelectedCourseForApplication(selectedCourse);
       
-      // IMPORTANT: Do NOT navigate here automatically
-      // Let user choose to navigate via "Go to Dashboard" button
+      // FIXED: Auto-close modal after 2 seconds and navigate to /student-dashboard
+      setTimeout(() => {
+        // Reset all states
+        setSelectedUniversityForApplication(null);
+        setSelectedCourseForApplication(null);
+        setAvailableCoursesForApplication([]);
+        setIsLoadingCourses(false);
+        setCoursesError(null);
+        setApplicationSuccess(false);
+        setApplicationData({
+          selectedCourse: "",
+          intake: "",
+          intakeYear: "",
+          remarks: "",
+        });
+        setApplicationError(null);
+        setApplicationResponse(null);
+        setIsSubmittingApplication(false);
+        
+        // Navigate to student dashboard
+        navigate('/student-dashboard');
+      }, 2000);
       
     } else {
       setApplicationError(response.data.message || "Application submission failed");
     }
-  } catch (err: unknown) { // Fix 1: Type the error parameter
+  } catch (err: unknown) {
     console.error("Error submitting application:", err);
 
     if (handleAuthError(err, navigate)) {
@@ -583,7 +586,6 @@ const submitApplication = async () => {
 
     let errorMessage = "Failed to submit application. Please try again.";
     
-    // Fix 2: Type guard to check if err is an axios error
     if (err && typeof err === 'object' && 'response' in err) {
       const axiosError = err as { response?: { status?: number } };
       if (axiosError.response?.status === 400) {
@@ -635,6 +637,21 @@ const handleApplyNow = async (university: University) => {
     setApplicationError("Failed to initialize application. Please try again.");
   }
 };
+
+  // Video modal handlers
+  const openVideoModal = () => {
+    setShowVideoModal(true);
+    setVideoLoading(true);
+  };
+
+  const closeVideoModal = () => {
+    setShowVideoModal(false);
+    setVideoLoading(true);
+  };
+
+  const handleVideoLoad = () => {
+    setVideoLoading(false);
+  };
 
   const countryFlags: Record<string, string> = {
     "United Kingdom": "🇬🇧",
@@ -691,773 +708,817 @@ const handleApplyNow = async (university: University) => {
     <section className="py-16 bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Title */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <div className="h-px w-16 sm:w-24 bg-gradient-to-r from-transparent to-purple-500"></div>
-            <h2 className="mx-4 text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600">
-              Top UK Universities
-            </h2>
-            <div className="h-px w-16 sm:w-24 bg-gradient-to-l from-transparent to-purple-500"></div>
-          </div>
-          <p className="text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-            Discover premier institutions offering world-class education and research opportunities in the United Kingdom.
-          </p>
-        </div>
+       <div className="text-center mb-12">
+         <div className="flex items-center justify-center mb-4">
+           <div className="h-px w-16 sm:w-24 bg-gradient-to-r from-transparent to-purple-500"></div>
+           <h2 className="mx-4 text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600">
+             Top UK Universities
+           </h2>
+           <div className="h-px w-16 sm:w-24 bg-gradient-to-l from-transparent to-purple-500"></div>
+         </div>
+         <p className="text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+           Discover premier institutions offering world-class education and research opportunities in the United Kingdom.
+         </p>
+       </div>
+       {/* Statistics */}
+       <div
+         ref={ref}
+         className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+       >
+         <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+           <Users size={40} className="text-purple-600 mb-3 mx-auto" />
+           <div className="text-3xl font-bold text-purple-600 mb-1">
+             {inView && <CountUp end={5000} duration={3} />}+
+           </div>
+           <div className="text-gray-600 text-sm">Happy Students</div>
+         </div>
+         <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+           <School size={40} className="text-blue-600 mb-3 mx-auto" />
+           <div className="text-3xl font-bold text-blue-600 mb-1">
+             {inView && <CountUp end={100} duration={3} />}+
+           </div>
+           <div className="text-gray-600 text-sm">UK Universities</div>
+         </div>
+         <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+           <Building size={40} className="text-green-600 mb-3 mx-auto" />
+           <div className="text-3xl font-bold text-green-600 mb-1">
+             {inView && <CountUp end={1500} duration={3} />}+
+           </div>
+           <div className="text-gray-600 text-sm">Study Programs</div>
+         </div>
+         <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+           <Award size={40} className="text-orange-600 mb-3 mx-auto" />
+           <div className="text-3xl font-bold text-orange-600 mb-1">
+             {inView && <CountUp end={25} duration={3} />}+
+           </div>
+           <div className="text-gray-600 text-sm">Scholarship Programs</div>
+         </div>
+       </div>
 
-        {/* Statistics */}
-        <div
-          ref={ref}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
-        >
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-            <Users size={40} className="text-purple-600 mb-3 mx-auto" />
-            <div className="text-3xl font-bold text-purple-600 mb-1">
-              {inView && <CountUp end={5000} duration={3} />}+
-            </div>
-            <div className="text-gray-600 text-sm">Happy Students</div>
-          </div>
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-            <School size={40} className="text-blue-600 mb-3 mx-auto" />
-            <div className="text-3xl font-bold text-blue-600 mb-1">
-              {inView && <CountUp end={100} duration={3} />}+
-            </div>
-            <div className="text-gray-600 text-sm">UK Universities</div>
-          </div>
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-            <Building size={40} className="text-green-600 mb-3 mx-auto" />
-            <div className="text-3xl font-bold text-green-600 mb-1">
-              {inView && <CountUp end={1500} duration={3} />}+
-            </div>
-            <div className="text-gray-600 text-sm">Study Programs</div>
-          </div>
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-            <Award size={40} className="text-orange-600 mb-3 mx-auto" />
-            <div className="text-3xl font-bold text-orange-600 mb-1">
-              {inView && <CountUp end={25} duration={3} />}+
-            </div>
-            <div className="text-gray-600 text-sm">Scholarship Programs</div>
-          </div>
-        </div>
+       {/* Enhanced Video and Offers Section */}
+       <div className="flex flex-col xl:flex-row gap-8 mb-12">
+         {/* UPDATED: Enhanced Video Section with iframe modal */}
+         <div className="xl:w-3/5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl overflow-hidden shadow-lg border border-purple-100">
+           <div className="relative">
+             {/* Video Thumbnail */}
+             <div className="relative aspect-video bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden cursor-pointer" onClick={openVideoModal}>
+               <img 
+                 src={videoThumbnailUrl}
+                 alt="Why Study in the UK - Video Thumbnail"
+                 className="w-full h-full object-cover"
+                 onError={(e) => {
+                   (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=640&h=360&fit=crop&auto=format';
+                 }}
+               />
+               
+               <div className="absolute inset-0 bg-black/20"></div>
+               
+               {/* Video Background Pattern */}
+               <div className="absolute inset-0 opacity-10">
+                 <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-500 rounded-full blur-3xl animate-pulse"></div>
+                 <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-blue-500 rounded-full blur-2xl animate-pulse delay-1000"></div>
+               </div>
 
-        {/* Enhanced Video and Offers Section */}
-        <div className="flex flex-col xl:flex-row gap-8 mb-12">
-          {/* Enhanced Video Section with Direct Thumbnail */}
-          <div className="xl:w-3/5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl overflow-hidden shadow-lg border border-purple-100">
-            <div className="relative">
-              {/* Direct Video Thumbnail */}
-              <div className="relative aspect-video bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden">
-                <img 
-                  src={videoThumbnailUrl}
-                  alt="Why Study in the UK - Video Thumbnail"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to a default thumbnail if Google Drive thumbnail fails
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=640&h=360&fit=crop&auto=format';
-                  }}
-                />
-                
-                <div className="absolute inset-0 bg-black/20"></div>
-                
-                {/* Video Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-500 rounded-full blur-3xl animate-pulse"></div>
-                  <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-blue-500 rounded-full blur-2xl animate-pulse delay-1000"></div>
-                </div>
+               {/* Play Button Overlay */}
+               <div className="absolute inset-0 flex items-center justify-center">
+                 <div className="group relative">
+                   {/* Ripple Effect */}
+                   <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20"></div>
+                   <div className="absolute inset-2 bg-white rounded-full animate-ping opacity-30 animation-delay-500"></div>
+                   
+                   {/* Play Button */}
+                   <div className="relative bg-white/90 backdrop-blur-sm rounded-full p-6 hover:bg-white hover:scale-110 transition-all duration-300 shadow-2xl">
+                     <Play className="w-12 h-12 text-purple-600 ml-1" fill="currentColor" />
+                   </div>
+                 </div>
+               </div>
 
-                {/* Play Button Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <a 
-                    href={videoEmbedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative"
-                  >
-                    {/* Ripple Effect */}
-                    <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20"></div>
-                    <div className="absolute inset-2 bg-white rounded-full animate-ping opacity-30 animation-delay-500"></div>
-                    
-                    {/* Play Button */}
-                    <div className="relative bg-white/90 backdrop-blur-sm rounded-full p-6 hover:bg-white hover:scale-110 transition-all duration-300 shadow-2xl">
-                      <Play className="w-12 h-12 text-purple-600 ml-1" fill="currentColor" />
-                    </div>
-                  </a>
-                </div>
+               {/* Video Info Overlay */}
+               <div className="absolute bottom-4 left-4 right-4 text-white">
+                 <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4">
+                   <div className="flex items-center justify-between">
+                     <div>
+                       <h3 className="text-xl font-bold mb-1">🎓 Why Study in the UK?</h3>
+                       <p className="text-sm text-gray-200">Discover world-class education opportunities</p>
+                     </div>
+                     <div className="flex items-center gap-2 text-sm">
+                       <div className="bg-red-500 w-2 h-2 rounded-full animate-pulse"></div>
+                       <span>Watch Now</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
 
-                {/* Video Info Overlay */}
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1">🎓 Why Study in the UK?</h3>
-                        <p className="text-sm text-gray-200">Discover world-class education opportunities</p>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="bg-red-500 w-2 h-2 rounded-full animate-pulse"></div>
-                        <span>Watch Now</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+             {/* Video Description */}
+             <div className="p-6">
+               <div className="flex items-start justify-between mb-4">
+                 <div>
+                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Discover UK Education Excellence</h3>
+                   <p className="text-gray-600 leading-relaxed">
+                     Watch our comprehensive guide to understand why the UK is the perfect destination for international students. 
+                     Learn about world-class education, cultural diversity, career opportunities, and scholarship programs.
+                   </p>
+                 </div>
+               </div>
 
-              {/* Video Description */}
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Discover UK Education Excellence</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Watch our comprehensive guide to understand why the UK is the perfect destination for international students. 
-                      Learn about world-class education, cultural diversity, career opportunities, and scholarship programs.
-                    </p>
-                  </div>
-                </div>
+               {/* Video Features */}
+               <div className="grid grid-cols-3 gap-4 mt-6">
+                 <div className="text-center p-3 bg-white rounded-lg shadow-sm">
+                   <GraduationCap className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                   <p className="text-xs font-medium text-gray-700">World Rankings</p>
+                 </div>
+                 <div className="text-center p-3 bg-white rounded-lg shadow-sm">
+                   <Globe className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                   <p className="text-xs font-medium text-gray-700">Global Recognition</p>
+                 </div>
+                 <div className="text-center p-3 bg-white rounded-lg shadow-sm">
+                   <Award className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                   <p className="text-xs font-medium text-gray-700">Scholarships</p>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
 
-                {/* Video Features */}
-                <div className="grid grid-cols-3 gap-4 mt-6">
-                  <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                    <GraduationCap className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                    <p className="text-xs font-medium text-gray-700">World Rankings</p>
-                  </div>
-                  <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                    <Globe className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                    <p className="text-xs font-medium text-gray-700">Global Recognition</p>
-                  </div>
-                  <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                    <Award className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                    <p className="text-xs font-medium text-gray-700">Scholarships</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+         {/* Enhanced Scholarship Offers Section */}
+         <div className="xl:w-2/5 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 shadow-lg border border-blue-100">
+           <div className="flex items-center justify-between mb-6">
+             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+               <Award className="text-blue-600" /> 
+               🏆 Exclusive UK Scholarships
+             </h3>
+             <span className="bg-gradient-to-r from-yellow-500 to-yellow-700 mb-4 font-bold text-black text-xs px-3 py-1 rounded-full font-medium">
+               Limited Time
+             </span> 
+           </div>
+           
+           <div className="space-y-4 mb-6">
+             {universities.slice(0, 6).map((uni, index) => (
+               <div key={index} className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-blue-200 group">
+                 <div className="flex items-start justify-between">
+                   <div className="flex-1">
+                     <h4 className="font-semibold text-blue-800 text-sm mb-1 group-hover:text-blue-600 transition-colors">
+                       {uni.name}
+                     </h4>
+                     <div className="flex justify-between text-xs mb-1">
+                       <span className="text-gray-600">Eligibility:</span>
+                       <span className="font-medium bg-yellow-100 px-2 py-0.5 rounded-full text-yellow-800">
+                         {uni.eligibility}
+                       </span>
+                     </div>
+                     <div className="flex justify-between text-xs">
+                       <span className="text-gray-600">Scholarship:</span>
+                       <span className="font-bold text-green-600">{uni.scholarshipAmount}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
+         </div>
+       </div>
 
-          {/* Enhanced Scholarship Offers Section */}
-          <div className="xl:w-2/5 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 shadow-lg border border-blue-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Award className="text-blue-600" /> 
-                🏆 Exclusive UK Scholarships
-              </h3>
-              <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-medium animate-pulse">
-                Limited Time
-              </span>
-            </div>
-            
-            <div className="space-y-4 mb-6">
-              {universities.slice(0, 6).map((uni, index) => (
-                <div key={index} className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-blue-200 group">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-blue-800 text-sm mb-1 group-hover:text-blue-600 transition-colors">
-                        {uni.name}
-                      </h4>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-600">Eligibility:</span>
-                        <span className="font-medium bg-yellow-100 px-2 py-0.5 rounded-full text-yellow-800">
-                          {uni.eligibility}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600">Scholarship:</span>
-                        <span className="font-bold text-green-600">{uni.scholarshipAmount}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+       {/* Header & View All */}
+       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+         <div>
+           <h3 className="text-2xl font-bold text-gray-900 mb-2">
+             🏆 UK Universities with 5% Cashback
+           </h3>
+           <p className="text-gray-600 text-sm">
+             UK universities offering exclusive scholarships and admission benefits for international students
+           </p>
+         </div>
+       </div>
 
-        {/* Header & View All */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              🏆 UK Universities with Scholarships
-            </h3>
-            <p className="text-gray-600 text-sm">
-              UK universities offering exclusive scholarships and admission benefits for international students
-            </p>
-          </div>
-        </div>
+       {/* Universities Grid */}
+       {universities.length > 0 && (
+         <>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+             {displayedUniversities.map((university, index) => (
+               <div
+                 key={university.id}
+                 className="group bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col transform hover:-translate-y-2 hover:scale-[1.02]"
+                 style={{ animationDelay: `${index * 100}ms` }}
+               >
+                 <div className="relative overflow-hidden">
+                   <img
+                     src={university.image}
+                     alt={university.name}
+                     className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
+                     onError={(e) => {
+                       (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=400&h=300&fit=crop&auto=format';
+                     }}
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                   
+                   <div className="absolute top-4 left-4 space-y-2">
+                     {university.specialOffer && (
+                       <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg animate-pulse">
+                         🔥 {university.specialOffer}
+                       </span>
+                     )}
+                     {university.scholarshipAmount && (
+                       <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
+                         💰 {university.scholarshipAmount} Scholarship
+                       </span>
+                     )}
+                   </div>
+                   
+                   <div className="absolute top-4 right-4 space-y-2">
+                     <div className="flex flex-col items-end gap-2">
+                       <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 text-gray-700 shadow-sm text-xs font-medium">
+                         {countryFlags[university.country] || '🏳️'} {university.country}
+                       </span>
+                       {university.eligibility && (
+                         <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg text-xs font-medium">
+                           📝 {university.eligibility}
+                         </span>
+                       )}
+                     </div>
+                   </div>
+                 </div>
 
-        {/* Universities Grid - UPDATED: Removed QS Ranking and View Programs button */}
-        {universities.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedUniversities.map((university, index) => (
-                <div
-                  key={university.id}
-                  className="group bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col transform hover:-translate-y-2 hover:scale-[1.02]"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={university.image}
-                      alt={university.name}
-                      className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=400&h=300&fit=crop&auto=format';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    <div className="absolute top-4 left-4 space-y-2">
-                      {university.specialOffer && (
-                        <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg animate-pulse">
-                          🔥 {university.specialOffer}
-                        </span>
-                      )}
-                      {university.scholarshipAmount && (
-                        <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                          💰 {university.scholarshipAmount} Scholarship
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="absolute top-4 right-4 space-y-2">
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 text-gray-700 shadow-sm text-xs font-medium">
-                          {countryFlags[university.country] || '🏳️'} {university.country}
-                        </span>
-                        {university.eligibility && (
-                          <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg text-xs font-medium">
-                            📝 {university.eligibility}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                 <div className="p-6 flex flex-col justify-between flex-1">
+                   <div>
+                     <h4 className="text-xl font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-purple-600 transition-colors duration-300">
+                       {university.name}
+                     </h4>
+                     
+                     <div className="flex items-center text-purple-600 text-sm mb-3">
+                       <MapPin className="w-4 h-4 mr-1" />
+                       <span>{university.location}</span>
+                     </div>
+                     
+                     <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
+                       {university.description}
+                     </p>
 
-                  <div className="p-6 flex flex-col justify-between flex-1">
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-purple-600 transition-colors duration-300">
-                        {university.name}
-                      </h4>
-                      
-                      <div className="flex items-center text-purple-600 text-sm mb-3">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        <span>{university.location}</span>
-                      </div>
-                      
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
-                        {university.description}
-                      </p>
+                     <div className="space-y-3 mb-4">
+                       {university.programsCount && (
+                         <div className="flex justify-between items-center">
+                           <div className="flex items-center gap-2 text-sm text-gray-700">
+                             <GraduationCap className="w-4 h-4 text-purple-600" />
+                             <span className="font-medium">{university.programsCount}+ Programs</span>
+                           </div>
+                           <div className="flex text-yellow-400">
+                             {[...Array(5)].map((_, i) => (
+                               <Star key={i} className="w-3 h-3 fill-current" />
+                             ))}
+                           </div>
+                         </div>
+                       )}
 
-                      <div className="space-y-3 mb-4">
-                        {university.programsCount && (
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <GraduationCap className="w-4 h-4 text-purple-600" />
-                              <span className="font-medium">{university.programsCount}+ Programs</span>
-                            </div>
-                            <div className="flex text-yellow-400">
-                              {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="w-3 h-3 fill-current" />
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                       {university.tuitionFee && (
+                         <div className="flex items-center gap-2 text-sm">
+                           <Award className="w-4 h-4 text-green-600" />
+                           <span className="text-gray-700">
+                             <span className="font-medium text-green-600">Tuition:</span> {university.tuitionFee}
+                           </span>
+                         </div>
+                       )}
+                     </div>
+                   </div>
 
-                        {university.tuitionFee && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Award className="w-4 h-4 text-green-600" />
-                            <span className="text-gray-700">
-                              <span className="font-medium text-green-600">Tuition:</span> {university.tuitionFee}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                   {/* Apply Now button with cashback mention */}
+                   <div className="flex justify-center items-center gap-3 pt-4 border-t border-gray-100">
+                     <button
+                       onClick={() => handleApplyNow(university)}
+                       className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full relative overflow-hidden group"
+                     >
+                       <span className="relative z-10">Apply Now</span>
+                       <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                     </button>
+                   </div>
+                   
+                   {/* Cashback reminder */}
+                   <div className="text-center mt-2">
+                     <span className="text-xs text-green-600 font-medium">💰 Get 5% Cashback</span>
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
 
-                    {/* UPDATED: Only Apply Now button, centered */}
-                    <div className="flex justify-center items-center gap-3 pt-4 border-t border-gray-100">
-                      <button
-                        onClick={() => handleApplyNow(university)}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full"
-                      >
-                        Apply Now
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+           {/* Show More/Less Button */}
+           {universities.length > displayLimit && (
+             <div className="text-center mt-10">
+               <button
+                 onClick={() => setShowAllCards(!showAllCards)}
+                 className="bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 text-purple-700 px-8 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 mx-auto shadow-sm hover:shadow-md"
+               >
+                 {showAllCards ? (
+                   <>
+                     Show Less Universities
+                     <ChevronRight className="w-5 h-5 rotate-90 transition-transform duration-300" />
+                   </>
+                 ) : (
+                   <>
+                     Show {universities.length - displayLimit} More Universities
+                     <ChevronRight className="w-5 h-5 -rotate-90 transition-transform duration-300" />
+                   </>
+                 )}
+               </button>
+             </div>
+           )}
+         </>
+       )}
 
-            {/* Show More/Less Button */}
-            {universities.length > displayLimit && (
-              <div className="text-center mt-10">
-                <button
-                  onClick={() => setShowAllCards(!showAllCards)}
-                  className="bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 text-purple-700 px-8 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 mx-auto shadow-sm hover:shadow-md"
-                >
-                  {showAllCards ? (
-                    <>
-                      Show Less Universities
-                      <ChevronRight className="w-5 h-5 rotate-90 transition-transform duration-300" />
-                    </>
-                  ) : (
-                    <>
-                      Show {universities.length - displayLimit} More Universities
-                      <ChevronRight className="w-5 h-5 -rotate-90 transition-transform duration-300" />
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </>
-        )}
+       {/* Popular UK Programs */}
+       <div className="mt-20 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-8 rounded-2xl border border-purple-100">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+           <div>
+             <h3 className="text-2xl font-bold text-gray-900 mb-2">
+               🎓 Most Popular UK Study Programs
+             </h3>
+             <p className="text-gray-600 text-sm">
+               Explore trending academic programs across UK universities
+             </p>
+           </div>
+         </div>
+         
+         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+           {[
+             { name: "Business & Management", icon: "💼", count: "150+", universities: "45 UK Universities", color: "from-blue-500 to-cyan-500" },
+             { name: "Computer Science", icon: "💻", count: "120+", universities: "38 UK Universities", color: "from-purple-500 to-pink-500" },
+             { name: "Engineering", icon: "⚙️", count: "200+", universities: "52 UK Universities", color: "from-orange-500 to-red-500" },
+             { name: "Medicine & Health", icon: "🏥", count: "80+", universities: "28 UK Universities", color: "from-green-500 to-emerald-500" },
+             { name: "Arts & Design", icon: "🎨", count: "90+", universities: "32 UK Universities", color: "from-pink-500 to-rose-500" },
+             { name: "Law", icon: "⚖️", count: "60+", universities: "25 UK Universities", color: "from-gray-600 to-gray-800" },
+             { name: "Environmental Science", icon: "🌱", count: "70+", universities: "30 UK Universities", color: "from-green-400 to-blue-500" },
+             { name: "Psychology", icon: "🧠", count: "85+", universities: "35 UK Universities", color: "from-indigo-500 to-purple-600" },
+           ].map((program, i) => (
+             <div
+               key={i}
+               className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-purple-200 transform hover:-translate-y-1"
+               onClick={() => {
+                 if (!isLoggedIn()) {
+                   handleLoginRedirect("/student-dashboard");
+                 } else {
+                   navigate('/student-dashboard');
+                 }
+               }}
+             >
+               <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
+                 {program.icon}
+               </div>
+               <h4 className="text-sm font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">
+                 {program.name}
+               </h4>
+               <div className={`text-sm font-semibold bg-gradient-to-r ${program.color} bg-clip-text text-transparent mb-1`}>
+                 {program.count} Courses
+               </div>
+               <p className="text-xs text-gray-500">{program.universities}</p>
+             </div>
+           ))}
+         </div>
+       </div>
+     </div>
 
-        {/* Popular UK Programs */}
-        <div className="mt-20 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-8 rounded-2xl border border-purple-100">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                🎓 Most Popular UK Study Programs
-              </h3>
-              <p className="text-gray-600 text-sm">
-                Explore trending academic programs across UK universities
-              </p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[
-              { name: "Business & Management", icon: "💼", count: "150+", universities: "45 UK Universities", color: "from-blue-500 to-cyan-500" },
-              { name: "Computer Science", icon: "💻", count: "120+", universities: "38 UK Universities", color: "from-purple-500 to-pink-500" },
-              { name: "Engineering", icon: "⚙️", count: "200+", universities: "52 UK Universities", color: "from-orange-500 to-red-500" },
-              { name: "Medicine & Health", icon: "🏥", count: "80+", universities: "28 UK Universities", color: "from-green-500 to-emerald-500" },
-              { name: "Arts & Design", icon: "🎨", count: "90+", universities: "32 UK Universities", color: "from-pink-500 to-rose-500" },
-              { name: "Law", icon: "⚖️", count: "60+", universities: "25 UK Universities", color: "from-gray-600 to-gray-800" },
-              { name: "Environmental Science", icon: "🌱", count: "70+", universities: "30 UK Universities", color: "from-green-400 to-blue-500" },
-              { name: "Psychology", icon: "🧠", count: "85+", universities: "35 UK Universities", color: "from-indigo-500 to-purple-600" },
-            ].map((program, i) => (
-              <div
-                key={i}
-                className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-purple-200 transform hover:-translate-y-1"
-                onClick={() => {
-                  if (!isLoggedIn()) {
-                    handleLoginRedirect("/student-dashboard");
-                  } else {
-                    navigate('/student-dashboard');
-                  }
-                }}
-              >
-                <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
-                  {program.icon}
-                </div>
-                <h4 className="text-sm font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">
-                  {program.name}
-                </h4>
-                <div className={`text-sm font-semibold bg-gradient-to-r ${program.color} bg-clip-text text-transparent mb-1`}>
-                  {program.count} Courses
-                </div>
-                <p className="text-xs text-gray-500">{program.universities}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+     {/* UPDATED: Video Modal with iframe */}
+     {showVideoModal && (
+       <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+         <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+           <div className="flex justify-between items-center p-4 border-b">
+             <h3 className="text-xl font-bold text-gray-900">Why Study in the UK?</h3>
+             <button 
+               onClick={closeVideoModal}
+               className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+             >
+               <X className="h-6 w-6" />
+             </button>
+           </div>
+           <div className="relative aspect-video bg-gray-900">
+             {videoLoading && (
+               <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                 <div className="text-white text-center">
+                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                   <p>Loading video...</p>
+                 </div>
+               </div>
+             )}
+             <iframe
+               className="w-full h-full"
+               src={videoEmbedUrl}
+               title="Why Study in the UK - Educational Video"
+               frameBorder="0"
+               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+               allowFullScreen
+               onLoad={handleVideoLoad}
+             />
+           </div>
+         </div>
+       </div>
+     )}
 
-      {/* Application Modal */}
-      {selectedUniversityForApplication && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Apply to {selectedUniversityForApplication.name}</h3>
-                <button 
-                  onClick={() => {
-                    setSelectedUniversityForApplication(null);
-                    setSelectedCourseForApplication(null);
-                    setAvailableCoursesForApplication([]);
-                    setIsLoadingCourses(false);
-                    setCoursesError(null);
-                    setApplicationSuccess(false);
-                    setApplicationData({
-                      selectedCourse: "",
-                      intake: "",
-                      intakeYear: "",
-                      remarks: "",
-                    });
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-{applicationSuccess ? (
-  <div className="text-center py-8">
-    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-    <h4 className="text-xl font-bold text-gray-900 mb-2">Application Submitted Successfully!</h4>
-    <p className="text-gray-600 mb-6">
-      Your application for {applicationData.selectedCourse} at {selectedUniversityForApplication.name} has been received.
-    </p>
-    <div className="bg-gray-50 p-4 rounded-lg text-left mb-6">
-      <h5 className="font-semibold mb-2">Application Details:</h5>
-      <p className="text-sm"><span className="font-medium">Course:</span> {applicationData.selectedCourse}</p>
-      <p className="text-sm"><span className="font-medium">University:</span> {selectedUniversityForApplication.name}</p>
-      <p className="text-sm"><span className="font-medium">Intake:</span> {applicationData.intake}</p>
-      {applicationResponse?.applicationId && (
-        <p className="text-sm mt-2">
-          <span className="font-medium">Application ID:</span> {applicationResponse.applicationId}
-        </p>
-      )}
-    </div>
-    <div className="flex gap-3 justify-center">
-      <button
-        onClick={() => {
-          // Reset all states
-          setSelectedUniversityForApplication(null);
-          setSelectedCourseForApplication(null);
-          setAvailableCoursesForApplication([]);
-          setIsLoadingCourses(false);
-          setCoursesError(null);
-          setApplicationSuccess(false);
-          setApplicationData({
-            selectedCourse: "",
-            intake: "",
-            intakeYear: "",
-            remarks: "",
-          });
-          setApplicationError(null);
-          setApplicationResponse(null);
-          setIsSubmittingApplication(false);
-          // Navigate to student dashboard
-          navigate('/student-dashboard');
-        }}
-        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300"
-      >
-        Go to Dashboard
-      </button>
-      <button
-        onClick={() => {
-          // Reset all states but stay on current page
-          setSelectedUniversityForApplication(null);
-          setSelectedCourseForApplication(null);
-          setAvailableCoursesForApplication([]);
-          setIsLoadingCourses(false);
-          setCoursesError(null);
-          setApplicationSuccess(false);
-          setApplicationData({
-            selectedCourse: "",
-            intake: "",
-            intakeYear: "",
-            remarks: "",
-          });
-          setApplicationError(null);
-          setApplicationResponse(null);
-          setIsSubmittingApplication(false);
-        }}
-        className="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-) : (
-  <>
-    <div className="mb-6">
-      <h4 className="font-medium text-gray-900 mb-3">University Information:</h4>
-      <div className="bg-gray-50 p-4 rounded-lg mb-4">
-        <div className="flex items-center gap-3 mb-2">
-          <img
-            src={selectedUniversityForApplication.image}
-            alt={selectedUniversityForApplication.name}
-            className="w-12 h-12 rounded-lg object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=50&h=50&fit=crop&auto=format';
-            }}
-          />
-          <div>
-            <p className="font-semibold text-gray-900">{selectedUniversityForApplication.name}</p>
-            <p className="text-sm text-gray-600">{selectedUniversityForApplication.location}</p>
-          </div>
-        </div>
-        {selectedUniversityForApplication.scholarshipAmount && (
-          <div className="bg-green-100 p-2 rounded mt-2">
-            <p className="text-sm text-green-800">
-              <span className="font-medium">🎓 Scholarship Available:</span> {selectedUniversityForApplication.scholarshipAmount}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+     {/* Application Modal */}
+     {selectedUniversityForApplication && (
+       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+         <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+           <div className="p-6">
+             <div className="flex justify-between items-center mb-4">
+               <h3 className="text-xl font-bold text-gray-900">Apply to {selectedUniversityForApplication.name}</h3>
+               <button 
+                 onClick={() => {
+                   setSelectedUniversityForApplication(null);
+                   setSelectedCourseForApplication(null);
+                   setAvailableCoursesForApplication([]);
+                   setIsLoadingCourses(false);
+                   setCoursesError(null);
+                   setApplicationSuccess(false);
+                   setApplicationData({
+                     selectedCourse: "",
+                     intake: "",
+                     intakeYear: "",
+                     remarks: "",
+                   });
+                 }}
+                 className="text-gray-500 hover:text-gray-700"
+               >
+                 <X className="h-6 w-6" />
+               </button>
+             </div>
 
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      submitApplication();
-    }}>
-      <div className="space-y-4">
-        {/* Course Selection Dropdown */}
-        <div>
-          <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
-            Select Course/Program *
-          </label>
-          
-          {isLoadingCourses ? (
-            <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
-              <svg className="animate-spin h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span className="text-gray-600">Loading courses for {selectedUniversityForApplication?.name}...</span>
-            </div>
-          ) : availableCoursesForApplication.length > 0 ? (
-            <div className="space-y-3">
-              <select
-                id="course"
-                value={applicationData.selectedCourse}
-                onChange={(e) => setApplicationData({...applicationData, selectedCourse: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                required
-              >
-                <option value="">Choose a course/program</option>
-                {availableCoursesForApplication.map((course, index) => (
-                  <option key={index} value={course.courseName}>
-                    {course.courseName} 
-                    {course.degree && ` (${course.degree})`}
-                  </option>
-                ))}
-              </select>
-              <div className="text-xs text-gray-500">
-                Found {availableCoursesForApplication.length} courses for {selectedUniversityForApplication?.name}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {coursesError && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-              )}
-              <input
-                type="text"
-                placeholder="Enter the program you're interested in (e.g., Master of Business Administration, Computer Science, etc.)"
-                value={applicationData.selectedCourse}
-                onChange={(e) => setApplicationData({...applicationData, selectedCourse: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                required
-              />
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => fetchUniversityCourses(selectedUniversityForApplication?.name || "", selectedUniversityForApplication?.country || "United Kingdom")}
-                  className="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50"
-                  disabled={isLoadingCourses}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Retry loading courses
-                </button>
-                <span className="text-xs text-gray-500">
-                  University: {selectedUniversityForApplication?.name}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
+             {applicationSuccess ? (
+               <div className="text-center py-8">
+                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                 <h4 className="text-xl font-bold text-gray-900 mb-2">Application Submitted Successfully! 🎉</h4>
+                 <p className="text-gray-600 mb-4">
+                   Your application for {applicationData.selectedCourse} at {selectedUniversityForApplication.name} has been received.
+                 </p>
+                 
+                 {/* UPDATED: Added cashback and savings information */}
+                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                   <div className="flex items-center justify-center mb-3">
+                     <Award className="w-6 h-6 text-green-600 mr-2" />
+                     <h5 className="font-semibold text-green-800">Congratulations! You're eligible for:</h5>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                     <div className="bg-white p-3 rounded-lg">
+                       <div className="text-lg font-bold text-green-600">💰 5% Cashback</div>
+                       <p className="text-gray-600">Will be credited after fee payment</p>
+                     </div>
+                     <div className="bg-white p-3 rounded-lg">
+                       <div className="text-lg font-bold text-green-600">💸 Save ₹1,50,000</div>
+                       <p className="text-gray-600">Total potential savings on fees</p>
+                     </div>
+                   </div>
+                 </div>
 
-        {/* Course Details Display */}
-        {applicationData.selectedCourse && availableCoursesForApplication.length > 0 && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h5 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
-              <GraduationCap className="w-4 h-4" />
-              Selected Course Details:
-            </h5>
-            {(() => {
-              const selectedCourse = availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse);
-              if (!selectedCourse) return null;
-              return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="text-sm">
-                      <span className="font-medium text-gray-700">Course:</span>
-                      <p className="text-gray-900 mt-1">{selectedCourse.courseName}</p>
-                    </div>
-                    {selectedCourse.degree && (
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">Degree Type:</span>
-                        <p className="text-gray-900 mt-1">{selectedCourse.degree}</p>
-                      </div>
-                    )}
-                    {selectedCourse.tutionFee1styr && (
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">Tuition Fee (1st Year):</span>
-                        <p className="text-green-600 font-semibold mt-1">{selectedCourse.tutionFee1styr}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {selectedCourse.applicationFee && (
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">Application Fee:</span>
-                        <p className="text-blue-600 font-semibold mt-1">{selectedCourse.applicationFee}</p>
-                      </div>
-                    )}
-                    {(selectedCourse.intake || selectedCourse.intake2 || selectedCourse.intake3) && (
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">Available Intakes:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {[selectedCourse.intake, selectedCourse.intake2, selectedCourse.intake3]
-                            .filter(Boolean)
-                            .map((intake, idx) => (
-                              <span key={idx} className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
-                                {intake}
-                              </span>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-                    {selectedCourse.courseUrl && (
-                      <div className="text-sm">
-                        <a 
-                          href={selectedCourse.courseUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
-                        >
-                          <span>View Course Details</span>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
+                 <div className="bg-gray-50 p-4 rounded-lg text-left mb-6">
+                   <h5 className="font-semibold mb-2">Application Details:</h5>
+                   <p className="text-sm"><span className="font-medium">Course:</span> {applicationData.selectedCourse}</p>
+                   <p className="text-sm"><span className="font-medium">University:</span> {selectedUniversityForApplication.name}</p>
+                   <p className="text-sm"><span className="font-medium">Intake:</span> {applicationData.intake}</p>
+                   {applicationResponse?.applicationId && (
+                     <p className="text-sm mt-2">
+                       <span className="font-medium">Application ID:</span> {applicationResponse.applicationId}
+                     </p>
+                   )}
+                 </div>
 
-        <div>
-          <label htmlFor="intake" className="block text-sm font-medium text-gray-700 mb-1">
-            Select Intake *
-          </label>
-          <select
-            id="intake"
-            value={applicationData.intake}
-            onChange={(e) => setApplicationData({...applicationData, intake: e.target.value})}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            required
-          >
-            <option value="">Select intake</option>
-            {/* Dynamic intakes based on selected course */}
-            {applicationData.selectedCourse && availableCoursesForApplication.length > 0 && (() => {
-              const selectedCourse = availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse);
-              if (selectedCourse) {
-                const intakes = [selectedCourse.intake, selectedCourse.intake2, selectedCourse.intake3].filter(Boolean);
-                if (intakes.length > 0) {
-                  return intakes.map((intake, index) => (
-                    <option key={index} value={intake}>{intake}</option>
-                  ));
-                }
-              }
-              return null;
-            })()}
-            {/* Default intakes if no course-specific intakes available */}
-            {(!applicationData.selectedCourse || availableCoursesForApplication.length === 0 || 
-              !availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse)?.intake) && (
-              <>
-                <option value={`Sep ${new Date().getFullYear()}`}>Sep {new Date().getFullYear()}</option>
-                <option value={`Jan ${new Date().getFullYear() + 1}`}>Jan {new Date().getFullYear() + 1}</option>
-                <option value={`Sep ${new Date().getFullYear() + 1}`}>Sep {new Date().getFullYear() + 1}</option>
-                <option value={`May ${new Date().getFullYear() + 1}`}>May {new Date().getFullYear() + 1}</option>
-              </>
-            )}
-          </select>
-          {applicationData.selectedCourse && availableCoursesForApplication.length > 0 && (() => {
-            const selectedCourse = availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse);
-            const courseIntakes = selectedCourse ? [selectedCourse.intake, selectedCourse.intake2, selectedCourse.intake3].filter(Boolean) : [];
-            if (courseIntakes.length > 0) {
-              return (
-                <p className="text-xs text-green-600 mt-1">
-                  ✓ Showing available intakes for selected course
-                </p>
-              );
-            }
-            return null;
-          })()}
-        </div>
+                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                   <p className="text-sm text-blue-800">
+                     <strong>🚀 Redirecting to your dashboard in a few seconds...</strong>
+                   </p>
+                   <p className="text-xs text-blue-600 mt-1">Track your application status and access exclusive offers in your dashboard.</p>
+                 </div>
+               </div>
+             ) : (
+               <>
+                 <div className="mb-6">
+                   <h4 className="font-medium text-gray-900 mb-3">University Information:</h4>
+                   <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                     <div className="flex items-center gap-3 mb-2">
+                       <img
+                         src={selectedUniversityForApplication.image}
+                         alt={selectedUniversityForApplication.name}
+                         className="w-12 h-12 rounded-lg object-cover"
+                         onError={(e) => {
+                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=50&h=50&fit=crop&auto=format';
+                         }}
+                       />
+                       <div>
+                         <p className="font-semibold text-gray-900">{selectedUniversityForApplication.name}</p>
+                         <p className="text-sm text-gray-600">{selectedUniversityForApplication.location}</p>
+                       </div>
+                     </div>
+                     {selectedUniversityForApplication.scholarshipAmount && (<div className="bg-green-100 p-2 rounded mt-2">
+                         <p className="text-sm text-green-800">
+                           <span className="font-medium">🎓 Scholarship Available:</span> {selectedUniversityForApplication.scholarshipAmount}
+                         </p>
+                       </div>
+                     )}
+                     
+                     {/* UPDATED: Added cashback information */}
+                     <div className="bg-blue-100 p-2 rounded mt-2">
+                       <p className="text-sm text-blue-800">
+                         <span className="font-medium">💰 Special Offer:</span> 5% Cashback + Save up to ₹1,50,000
+                       </p>
+                     </div>
+                   </div>
+                 </div>
 
-        <div>
-          <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
-            Additional Remarks
-          </label>
-          <textarea
-            id="remarks"
-            rows={3}
-            value={applicationData.remarks}
-            onChange={(e) => setApplicationData({...applicationData, remarks: e.target.value})}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            placeholder="Any additional information you'd like to share about your application..."
-          />
-        </div>
+                 <form onSubmit={(e) => {
+                   e.preventDefault();
+                   submitApplication();
+                 }}>
+                   <div className="space-y-4">
+                     {/* Course Selection Dropdown */}
+                     <div>
+                       <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
+                         Select Course/Program *
+                       </label>
+                       
+                       {isLoadingCourses ? (
+                         <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+                           <svg className="animate-spin h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                           </svg>
+                           <span className="text-gray-600">Loading courses for {selectedUniversityForApplication?.name}...</span>
+                         </div>
+                       ) : availableCoursesForApplication.length > 0 ? (
+                         <div className="space-y-3">
+                           <select
+                             id="course"
+                             value={applicationData.selectedCourse}
+                             onChange={(e) => setApplicationData({...applicationData, selectedCourse: e.target.value})}
+                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                             required
+                           >
+                             <option value="">Choose a course/program</option>
+                             {availableCoursesForApplication.map((course, index) => (
+                               <option key={index} value={course.courseName}>
+                                 {course.courseName} 
+                                 {course.degree && ` (${course.degree})`}
+                               </option>
+                             ))}
+                           </select>
+                           <div className="text-xs text-gray-500">
+                             Found {availableCoursesForApplication.length} courses for {selectedUniversityForApplication?.name}
+                           </div>
+                         </div>
+                       ) : (
+                         <div className="space-y-3">
+                           {coursesError && (
+                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                               <div className="flex items-start gap-2">
+                                 <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                 </svg>
+                               </div>
+                             </div>
+                           )}
+                           <input
+                             type="text"
+                             placeholder="Enter the program you're interested in (e.g., Master of Business Administration, Computer Science, etc.)"
+                             value={applicationData.selectedCourse}
+                             onChange={(e) => setApplicationData({...applicationData, selectedCourse: e.target.value})}
+                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                             required
+                           />
+                           <div className="flex items-center justify-between">
+                             <button
+                               type="button"
+                               onClick={() => fetchUniversityCourses(selectedUniversityForApplication?.name || "", selectedUniversityForApplication?.country || "United Kingdom")}
+                               className="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50"
+                               disabled={isLoadingCourses}
+                             >
+                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                               </svg>
+                               Retry loading courses
+                             </button>
+                             <span className="text-xs text-gray-500">
+                               University: {selectedUniversityForApplication?.name}
+                             </span>
+                           </div>
+                         </div>
+                       )}
+                     </div>
 
-        {applicationError && (
-          <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
-            {applicationError}
-          </div>
-        )}
+                     {/* Course Details Display */}
+                     {applicationData.selectedCourse && availableCoursesForApplication.length > 0 && (
+                       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                         <h5 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                           <GraduationCap className="w-4 h-4" />
+                           Selected Course Details:
+                         </h5>
+                         {(() => {
+                           const selectedCourse = availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse);
+                           if (!selectedCourse) return null;
+                           return (
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-2">
+                                 <div className="text-sm">
+                                   <span className="font-medium text-gray-700">Course:</span>
+                                   <p className="text-gray-900 mt-1">{selectedCourse.courseName}</p>
+                                 </div>
+                                 {selectedCourse.degree && (
+                                   <div className="text-sm">
+                                     <span className="font-medium text-gray-700">Degree Type:</span>
+                                     <p className="text-gray-900 mt-1">{selectedCourse.degree}</p>
+                                   </div>
+                                 )}
+                                 {selectedCourse.tutionFee1styr && (
+                                   <div className="text-sm">
+                                     <span className="font-medium text-gray-700">Tuition Fee (1st Year):</span>
+                                     <p className="text-green-600 font-semibold mt-1">{selectedCourse.tutionFee1styr}</p>
+                                   </div>
+                                 )}
+                               </div>
+                               <div className="space-y-2">
+                                 {selectedCourse.applicationFee && (
+                                   <div className="text-sm">
+                                     <span className="font-medium text-gray-700">Application Fee:</span>
+                                     <p className="text-blue-600 font-semibold mt-1">{selectedCourse.applicationFee}</p>
+                                   </div>
+                                 )}
+                                 {(selectedCourse.intake || selectedCourse.intake2 || selectedCourse.intake3) && (
+                                   <div className="text-sm">
+                                     <span className="font-medium text-gray-700">Available Intakes:</span>
+                                     <div className="flex flex-wrap gap-1 mt-1">
+                                       {[selectedCourse.intake, selectedCourse.intake2, selectedCourse.intake3]
+                                         .filter(Boolean)
+                                         .map((intake, idx) => (
+                                           <span key={idx} className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                                             {intake}
+                                           </span>
+                                         ))}
+                                     </div>
+                                   </div>
+                                 )}
+                                 {selectedCourse.courseUrl && (
+                                   <div className="text-sm">
+                                     <a 
+                                       href={selectedCourse.courseUrl} 
+                                       target="_blank" 
+                                       rel="noopener noreferrer"
+                                       className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                                     >
+                                       <span>View Course Details</span>
+                                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                       </svg>
+                                     </a>
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                           );
+                         })()}
+                       </div>
+                     )}
 
-        {/* Submit and Close Buttons */}
-        <div className="flex gap-3 mt-6">
-          <button
-            type="submit"
-            disabled={isSubmittingApplication || isLoadingCourses || !applicationData.selectedCourse || !applicationData.intake}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            {isSubmittingApplication ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Submitting Application...
-              </>
-            ) : (
-              'Submit Application'
-            )}
-          </button>
+                     <div>
+                       <label htmlFor="intake" className="block text-sm font-medium text-gray-700 mb-1">
+                         Select Intake *
+                       </label>
+                       <select
+                         id="intake"
+                         value={applicationData.intake}
+                         onChange={(e) => setApplicationData({...applicationData, intake: e.target.value})}
+                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                         required
+                       >
+                         <option value="">Select intake</option>
+                         {/* Dynamic intakes based on selected course */}
+                         {applicationData.selectedCourse && availableCoursesForApplication.length > 0 && (() => {
+                           const selectedCourse = availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse);
+                           if (selectedCourse) {
+                             const intakes = [selectedCourse.intake, selectedCourse.intake2, selectedCourse.intake3].filter(Boolean);
+                             if (intakes.length > 0) {
+                               return intakes.map((intake, index) => (
+                                 <option key={index} value={intake}>{intake}</option>
+                               ));
+                             }
+                           }
+                           return null;
+                         })()}
+                         {/* Default intakes if no course-specific intakes available */}
+                         {(!applicationData.selectedCourse || availableCoursesForApplication.length === 0 || 
+                           !availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse)?.intake) && (
+                           <>
+                             <option value={`Sep ${new Date().getFullYear()}`}>Sep {new Date().getFullYear()}</option>
+                             <option value={`Jan ${new Date().getFullYear() + 1}`}>Jan {new Date().getFullYear() + 1}</option>
+                             <option value={`Sep ${new Date().getFullYear() + 1}`}>Sep {new Date().getFullYear() + 1}</option>
+                             <option value={`May ${new Date().getFullYear() + 1}`}>May {new Date().getFullYear() + 1}</option>
+                           </>
+                         )}
+                       </select>
+                       {applicationData.selectedCourse && availableCoursesForApplication.length > 0 && (() => {
+                         const selectedCourse = availableCoursesForApplication.find(c => c.courseName === applicationData.selectedCourse);
+                         const courseIntakes = selectedCourse ? [selectedCourse.intake, selectedCourse.intake2, selectedCourse.intake3].filter(Boolean) : [];
+                         if (courseIntakes.length > 0) {
+                           return (
+                             <p className="text-xs text-green-600 mt-1">
+                               ✓ Showing available intakes for selected course
+                             </p>
+                           );
+                         }
+                         return null;
+                       })()}
+                     </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              // Reset all states and close modal
-              setSelectedUniversityForApplication(null);
-              setSelectedCourseForApplication(null);
-              setAvailableCoursesForApplication([]);
-              setIsLoadingCourses(false);
-              setCoursesError(null);
-              setApplicationSuccess(false);
-              setApplicationData({
-                selectedCourse: "",
-                intake: "",
-                intakeYear: "",
-                remarks: "",
-              });
-              setApplicationError(null);
-              setApplicationResponse(null);
-              setIsSubmittingApplication(false);
-            }}
-            className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Close
-          </button>
-        </div>
-      </div>
-    </form>
-  </>
-)}
+                     <div>
+                       <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
+                         Additional Remarks
+                       </label>
+                       <textarea
+                         id="remarks"
+                         rows={3}
+                         value={applicationData.remarks}
+                         onChange={(e) => setApplicationData({...applicationData, remarks: e.target.value})}
+                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                         placeholder="Any additional information you'd like to share about your application..."
+                       />
+                     </div>
+
+                     {applicationError && (
+                       <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+                         {applicationError}
+                       </div>
+                     )}
+
+                     {/* UPDATED: Added cashback reminder before submit button */}
+                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                       <div className="flex items-center gap-2 mb-2">
+                         <Award className="w-5 h-5 text-green-600" />
+                         <h5 className="font-medium text-green-800">Your Benefits Upon Application:</h5>
+                       </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                         <div className="flex items-center gap-2">
+                           <span className="text-green-600">💰</span>
+                           <span className="text-green-700">5% Cashback on fees</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <span className="text-green-600">💸</span>
+                           <span className="text-green-700">Save up to ₹1,50,000</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <span className="text-green-600">🎓</span>
+                           <span className="text-green-700">Scholarship opportunities</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <span className="text-green-600">⚡</span>
+                           <span className="text-green-700">Fast processing</span>
+                         </div>
+                       </div>
+                     </div>
+
+                     {/* Submit and Close Buttons */}
+                     <div className="flex gap-3 mt-6">
+                       <button
+                         type="submit"
+                         disabled={isSubmittingApplication || isLoadingCourses || !applicationData.selectedCourse || !applicationData.intake}
+                         className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
+                       >
+                         {isSubmittingApplication ? (
+                           <>
+                             <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                             </svg>
+                             Submitting Application...
+                           </>
+                         ) : (
+                           'Submit Application & Get 5% Cashback'
+                         )}
+                       </button>
+
+                       <button
+                         type="button"
+                         onClick={() => {
+                           // Reset all states and close modal
+                           setSelectedUniversityForApplication(null);
+                           setSelectedCourseForApplication(null);
+                           setAvailableCoursesForApplication([]);
+                           setIsLoadingCourses(false);
+                           setCoursesError(null);
+                           setApplicationSuccess(false);
+                           setApplicationData({
+                             selectedCourse: "",
+                             intake: "",
+                             intakeYear: "",
+                             remarks: "",
+                           });
+                           setApplicationError(null);
+                           setApplicationResponse(null);
+                           setIsSubmittingApplication(false);
+                         }}
+                         className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2"
+                       >
+                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                         </svg>
+                         Close
+                       </button>
+                     </div>
+                   </div>
+                 </form>
+               </>
+             )}
            </div>
          </div>
        </div>
