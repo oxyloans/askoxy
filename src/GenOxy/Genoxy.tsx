@@ -24,24 +24,18 @@ const GenOxy: React.FC<OpenAiProps> = () => {
     setMessages,
     input,
     setInput,
-    setLoading,
-    
+    setLoading
   );
- 
+
   const showCenteredLayout = messages.length === 0 && !loading;
 
-  // const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-  //   if (e.key === "Enter" && !e.shiftKey) {
-  //     e.preventDefault();
-  //     handleSend();
-  //   }
-  // };
   const handleKeyPress = async (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       await handleSend();
     }
   };
+
   return (
     <div
       className={`h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300 ${
@@ -49,30 +43,9 @@ const GenOxy: React.FC<OpenAiProps> = () => {
       }`}
     >
       {!showCenteredLayout && <Header clearChat={() => setMessages([])} />}
-      <main
-        className={`flex-1 ${
-          showCenteredLayout ? "flex flex-col" : "overflow-y-auto"
-        }`}
-      >
-        {showCenteredLayout ? (
-          <WelcomeScreen
-            input={input}
-            setInput={setInput}
-            handleSend={handleSend}
-            handleKeyPress={handleKeyPress}
-            loading={loading}
-            textareaRef={textareaRef}
-          />
-        ) : (
-          <ChatMessages
-            messages={messages}
-            messagesEndRef={messagesEndRef}
-            loading={loading}
-          />
-        )}
-      </main>
-      {!showCenteredLayout && (
-        <InputBar
+
+      {showCenteredLayout ? (
+        <WelcomeScreen
           input={input}
           setInput={setInput}
           handleSend={handleSend}
@@ -80,6 +53,22 @@ const GenOxy: React.FC<OpenAiProps> = () => {
           loading={loading}
           textareaRef={textareaRef}
         />
+      ) : (
+        <div className="flex-1 flex flex-col min-h-0">
+          <ChatMessages
+            messages={messages}
+            messagesEndRef={messagesEndRef}
+            loading={loading}
+          />
+          <InputBar
+            input={input}
+            setInput={setInput}
+            handleSend={handleSend}
+            handleKeyPress={handleKeyPress}
+            loading={loading}
+            textareaRef={textareaRef}
+          />
+        </div>
       )}
     </div>
   );

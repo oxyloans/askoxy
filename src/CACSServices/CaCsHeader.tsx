@@ -119,7 +119,7 @@ const CaCsHeader = memo(function CaCsHeader({
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/3385"; // your desired path
+      const redirectPath = "/main/services/3385/ca-services"; // your desired path
 
       if (userId) {
         // User is already logged in

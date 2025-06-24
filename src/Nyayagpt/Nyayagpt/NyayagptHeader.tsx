@@ -107,7 +107,7 @@ const NyayagptHeader = memo(function NyayagptHeader({
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/37b3"; // your desired path
+      const redirectPath = "/main/services/legalservice"; // your desired path
 
       if (userId) {
         // User is already logged in

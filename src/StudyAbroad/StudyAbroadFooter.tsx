@@ -63,7 +63,7 @@ const StudyAbroadFooter = () => {
               </span>
             </div>
             <p className="text-sm text-gray-600 mb-5">
-              StudentX simplifies global university admissions with AI-matching,
+              Simplifies global university admissions with AI-matching, 
               alumni connections, and personalized academic recommendations.
             </p>
             <div className="flex gap-3 mb-6">

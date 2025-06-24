@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Book,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -86,6 +87,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
       icon: <Coins size={20} />,
       label: "My Crypto",
     },
+    {
+      to: "/main/dashboard/services",
+      icon: <Book size={18} />,
+      label: "Services & Blogs",
+    },
+    
   ];
 
   return (
@@ -105,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
         </button>
       </div>
 
-      <div className={`flex-1 px-3 pb-2 space-y-1.5`}>
+      <div className={`flex-1 px-3 pb-2 space-y-1.5 overflow-y-auto`}>
         {menuItems.map((item, index) => {
           const isActive = location.pathname === item.to;
           return (

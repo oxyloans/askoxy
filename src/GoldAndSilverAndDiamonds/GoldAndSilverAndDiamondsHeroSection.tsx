@@ -71,7 +71,7 @@ function GoldSilverDiamondHeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/71e3"; // your desired path
+      const redirectPath = "/main/services/71e3/gold-silver-diamonds"; // your desired path
 
       if (userId) {
         // User is already logged in

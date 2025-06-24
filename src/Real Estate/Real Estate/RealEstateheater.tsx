@@ -106,7 +106,7 @@ const handleHome = () =>{navigate("/")};
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/37b3"; // your desired path
+      const redirectPath = "/main/services/37b3/urban-springs-300-sqyards-vill"; // your desired path
 
       if (userId) {
         // User is already logged in

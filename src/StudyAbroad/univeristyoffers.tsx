@@ -632,133 +632,133 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
         </div>
 
         {/* Universities Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {universities.map((university, index) => (
-            <div
-              key={university.id}
-              className="group bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col transform hover:-translate-y-2 hover:scale-[1.02]"
-              style={{ animationDelay: `${index * 50}ms`, minHeight: "600px" }}
-            >
-              <div className="relative overflow-hidden">
-                <img
-                  src={university.image}
-                  alt={university.name}
-                  className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=400&h=300&fit=crop&auto=format";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+  {universities.map((university, index) => (
+    <div
+      key={university.id}
+      className="group bg-white border border-gray-100 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col transform hover:-translate-y-1 hover:scale-[1.01]"
+      style={{ animationDelay: `${index * 50}ms`, minHeight: "480px" }}
+    >
+      <div className="relative overflow-hidden">
+        <img
+          src={university.image}
+          alt={university.name}
+          className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=400&h=300&fit=crop&auto=format";
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                {/* Enhanced Badges */}
-                <div className="absolute top-3 left-3 space-y-2">
-                  <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg">💰 5% Cashback</span>
-                  {university.specialOffer && (
-                    <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg animate-pulse">🔥 {university.specialOffer}</span>
-                  )}
-                </div>
+        {/* Compact Badges */}
+        <div className="absolute top-2 left-2 space-y-1">
+          <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-md">💰 5% Cashback</span>
+          {university.specialOffer && (
+            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-md animate-pulse">🔥 {university.specialOffer}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Compact Content */}
+      <div className="p-3 flex flex-col flex-1">
+        <div className="flex-1">
+          <h3 className="text-base font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-purple-600 transition-colors duration-300" style={{ minHeight: "2.5rem" }}>
+            {university.name}
+          </h3>
+
+          <div className="flex items-center text-purple-600 text-xs mb-2">
+            <MapPin className="w-3 h-3 mr-1" />
+            <span className="font-medium">{university.location}</span>
+          </div>
+
+          <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-3" style={{ minHeight: "2.5rem" }}>
+            {university.description}
+          </p>
+
+          {/* Compact University Details */}
+          <div className="space-y-2 mb-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-1 text-xs text-gray-700">
+                <BookOpen className="w-3 h-3 text-purple-600" />
+                <span className="font-semibold">{university.programsCount}+ Programs</span>
               </div>
+              <div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <Star key={i} className="w-2.5 h-2.5 fill-current" />)}</div>
+            </div>
 
-              {/* Content */}
-              <div className="p-5 flex flex-col flex-1">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-purple-600 transition-colors duration-300" style={{ minHeight: "3.5rem" }}>
-                    {university.name}
-                  </h3>
+            {university.tuitionFee && (
+              <div className="flex items-center gap-1 text-xs">
+                <DollarSign className="w-3 h-3 text-green-600" />
+                <span className="text-gray-700">
+                  <span className="font-semibold text-green-600">Tuition:</span> {university.tuitionFee}
+                </span>
+              </div>
+            )}
 
-                  <div className="flex items-center text-purple-600 text-sm mb-3">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    <span className="font-medium">{university.location}</span>
-                  </div>
+            {university.scholarshipAmount && (
+              <div className="flex items-center gap-1 text-xs">
+                <Award className="w-3 h-3 text-orange-600" />
+                <span className="text-gray-700">
+                  <span className="font-semibold text-orange-600">Scholarship:</span> {university.scholarshipAmount}
+                </span>
+              </div>
+            )}
 
-                  <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4" style={{ minHeight: "4rem" }}>
-                    {university.description}
-                  </p>
+            {university.eligibility && (
+              <div className="bg-blue-50 p-1.5 rounded-md">
+                <span className="text-xs text-blue-800 font-semibold">Eligibility: {university.eligibility}</span>
+              </div>
+            )}
+          </div>
 
-                  {/* University Details */}
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <BookOpen className="w-4 h-4 text-purple-600" />
-                        <span className="font-semibold">{university.programsCount}+ Programs</span>
-                      </div>
-                      <div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-current" />)}</div>
-                    </div>
-
-                    {university.tuitionFee && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <DollarSign className="w-4 h-4 text-green-600" />
-                        <span className="text-gray-700">
-                          <span className="font-semibold text-green-600">Tuition:</span> {university.tuitionFee}
-                        </span>
-                      </div>
-                    )}
-
-                    {university.scholarshipAmount && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Award className="w-4 h-4 text-orange-600" />
-                        <span className="text-gray-700">
-                          <span className="font-semibold text-orange-600">Scholarship:</span> {university.scholarshipAmount}
-                        </span>
-                      </div>
-                    )}
-
-                    {university.eligibility && (
-                      <div className="bg-blue-50 p-2 rounded-lg">
-                        <span className="text-xs text-blue-800 font-semibold">Eligibility: {university.eligibility}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Featured Programs */}
-                  {university.featuredPrograms && (
-                    <div className="mb-4">
-                      <h4 className="text-xs font-semibold text-gray-600 mb-2">Popular Programs:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {university.featuredPrograms.slice(0, 3).map((program, idx) => (
-                          <span key={idx} className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium">
-                            {program}
-                          </span>
-                        ))}
-                        {university.featuredPrograms.length > 3 && (
-                          <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-medium">+{university.featuredPrograms.length - 3} more</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Available Intakes */}
-                  {university.intakes && (
-                    <div className="mb-4">
-                      <h4 className="text-xs font-semibold text-gray-600 mb-2">Next Intakes:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {university.intakes.slice(0, 2).map((intake, idx) => (
-                          <span key={idx} className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
-                            <CalendarDays className="w-3 h-3" />
-                            {intake}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Apply Button */}
-                <div className="mt-auto pt-4">
-                  <div className="border-t border-gray-100 pt-4">
-                    <button
-                      onClick={() => handleApplyNow(university)}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl relative overflow-hidden group"
-                    >
-                      <span className="relative z-10">Apply Now & Get 5% Cashback</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                    </button>
-                  </div>
-                </div>
+          {/* Compact Featured Programs */}
+          {university.featuredPrograms && (
+            <div className="mb-3">
+              <h4 className="text-xs font-semibold text-gray-600 mb-1">Popular Programs:</h4>
+              <div className="flex flex-wrap gap-1">
+                {university.featuredPrograms.slice(0, 2).map((program, idx) => (
+                  <span key={idx} className="bg-purple-100 text-purple-700 text-xs px-1.5 py-0.5 rounded-full font-medium">
+                    {program}
+                  </span>
+                ))}
+                {university.featuredPrograms.length > 2 && (
+                  <span className="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full font-medium">+{university.featuredPrograms.length - 2} more</span>
+                )}
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Compact Available Intakes */}
+          {university.intakes && (
+            <div className="mb-3">
+              <h4 className="text-xs font-semibold text-gray-600 mb-1">Next Intakes:</h4>
+              <div className="flex flex-wrap gap-1">
+                {university.intakes.slice(0, 2).map((intake, idx) => (
+                  <span key={idx} className="bg-green-100 text-green-700 text-xs px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                    <CalendarDays className="w-2.5 h-2.5" />
+                    {intake}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Compact Apply Button */}
+        <div className="mt-auto pt-2">
+          <div className="border-t border-gray-100 pt-2">
+            <button
+              onClick={() => handleApplyNow(university)}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg relative overflow-hidden group"
+            >
+              <span className="relative z-10">Apply Now & Get 5% Cashback</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
 
         {/* Bottom CTA Section */}
         <div className="mt-16 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-8 rounded-2xl border border-purple-100 shadow-xl">

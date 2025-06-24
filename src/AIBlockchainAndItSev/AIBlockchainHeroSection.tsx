@@ -52,7 +52,7 @@ function AIBlockchainHeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/campaign/0f02"; // your desired path
+      const redirectPath = "/main/services/0f02/ai-blockchain-it-services"; // your desired path
 
       if (userId) {
         // User is already logged in

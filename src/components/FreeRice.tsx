@@ -96,38 +96,39 @@ const FreeRiceBlog: React.FC = () => {
 
   // Rice product data with weights, titles and descriptions
 const riceProducts: RiceProduct[] = [
-    {
-      id: 1,
-      imageUrl: Rice1,
-      title: "Buy 2 KG Rice Get 1 KG FREE",
-      description:
-        "Premium quality rice with a Buy 2 Get 1 Free offer, perfect for small families.",
-      weight: 1.0,
-    },
-    {
-      id: 2,
-      imageUrl: Rice2,
-      title: "5 KG Premium Rice Bag and Get 2 KG Rice Free",
-      description: "Buy a 5 KG Rice Bag and Get 2 KG Rice Free",
-      weight: 5.0,
-    },
-    {
-      id: 3,
-      imageUrl: Rice4,
-      title: "10KG Premium Rice Bag",
-      description:
-        "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
-      weight: 10.0,
-    },
-    {
-      id: 4,
-      imageUrl: Rice3,
-      title: "26KG Premium Rice Bag",
-      description:
-        "Buy a 26KG Rice Bag and Get a 35+ KG Steel Container Worth ₹2300 free!",
-      weight: 26.0,
-    },
-  ];
+  {
+    id: 1,
+    imageUrl:
+      "https://i.ibb.co/vCZr4JhQ/Whats-App-Image-2025-06-24-at-11-40-40-5952be46.jpg",
+    title: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
+    description: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
+    weight: 1.0,
+  },
+  {
+    id: 2,
+    imageUrl:
+      "https://i.ibb.co/cKY19SPt/Whats-App-Image-2025-06-24-at-11-40-40-03b6ee95.jpg",
+    title: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
+    description: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
+    weight: 5.0,
+  },
+  {
+    id: 3,
+    imageUrl: Rice4,
+    title: "10KG Premium Rice Bag",
+    description:
+      "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
+    weight: 10.0,
+  },
+  {
+    id: 4,
+    imageUrl: Rice3,
+    title: "26KG Premium Rice Bag",
+    description:
+      "Buy a 26KG Rice Bag and Get a 35+ KG Steel Container Worth ₹2300 free!",
+    weight: 26.0,
+  },
+];
 
 
   useEffect(() => {

@@ -88,17 +88,19 @@ const MeyaporeMetro: React.FC = () => {
   const riceProducts: RiceProduct[] = [
     {
       id: 1,
-      imageUrl: Rice1,
-      title: "Buy 2 KG Rice Get 1 KG FREE",
+      imageUrl:
+        "https://i.ibb.co/vCZr4JhQ/Whats-App-Image-2025-06-24-at-11-40-40-5952be46.jpg",
+      title: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
       description:
-        "Premium quality rice with a Buy 2 Get 1 Free offer, perfect for small families.",
+        "Get ₹20 cashback on your first order of a 2 KG rice bag. perfect for small families.",
       weight: 1.0,
     },
     {
       id: 2,
-      imageUrl: Rice2,
-      title: "5 KG Premium Rice Bag and Get 2 KG Rice Free",
-      description: "Buy a 5 KG Rice Bag and Get 2 KG Rice Free",
+      imageUrl:
+        "https://i.ibb.co/cKY19SPt/Whats-App-Image-2025-06-24-at-11-40-40-03b6ee95.jpg",
+      title: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
+      description: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
       weight: 5.0,
     },
     {

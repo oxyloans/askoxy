@@ -1,11 +1,9 @@
 {
   "files": {
-    "main.css": "/static/css/main.10e79e15.css",
-    "main.js": "/static/js/main.ea8dbcf0.js",
+    "main.css": "/static/css/main.ef8d27bd.css",
+    "main.js": "/static/js/main.f55b0cdc.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
-    "static/media/3 (3).png": "/static/media/3 (3).40927cef61b3bda310eb.png",
     "static/media/3 (4).png": "/static/media/3 (4).bb25f69f5e1e92c84eb1.png",
-    "static/media/3 (2).png": "/static/media/3 (2).388e7e20c6284a0a96ea.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
     "static/media/page1.png": "/static/media/page1.377acc651cd141d1516d.png",
     "static/media/WhatsApp Image 2025-03-08 at 12.08.11.png": "/static/media/WhatsApp Image 2025-03-08 at 12.08.11.9c30b1cf3d8cdc3d134e.png",
@@ -124,11 +122,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.10e79e15.css.map": "/static/css/main.10e79e15.css.map",
-    "main.ea8dbcf0.js.map": "/static/js/main.ea8dbcf0.js.map"
+    "main.ef8d27bd.css.map": "/static/css/main.ef8d27bd.css.map",
+    "main.f55b0cdc.js.map": "/static/js/main.f55b0cdc.js.map"
   },
   "entrypoints": [
-    "static/css/main.10e79e15.css",
-    "static/js/main.ea8dbcf0.js"
+    "static/css/main.ef8d27bd.css",
+    "static/js/main.f55b0cdc.js"
   ]
 }

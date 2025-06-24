@@ -260,7 +260,7 @@ const DashboardMain: React.FC = () => {
 
   const handleCampaignClick = (campaign: Campaign) => {
     console.log("Campaign clicked:", campaign.campainInputType);
-    
+
     if (
       campaign.campainInputType === "SERVICE" ||
       campaign.campainInputType === "PRODUCT"
@@ -513,9 +513,12 @@ const DashboardMain: React.FC = () => {
                 </div>
               ))}
           </div>
-          <h2 className="text-3xl font-bold text-purple-700 bg-purple-50 px-4 py-3 rounded-md shadow-sm border-l-4 border-purple-600 mb-6 mt-12">
-            BLOGS
+          <hr />
+          <h2 className="text-3xl sm:text-4xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-none mb-[-4px]">
+            Our <span className="text-yellow-500">Blogs</span>
           </h2>
+
+          <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mx-auto sm:mx-0 rounded-full mt-0" />
 
           {(() => {
             const blogCampaigns = campaigns.filter(
