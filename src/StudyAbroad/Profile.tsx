@@ -689,24 +689,7 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 : "Manage your personal information and education details"}
             </p>
           </div>
-        </div>
-
-        {profileSaved !== null && (
-          <div
-            className={`mb-6 p-4 rounded-lg flex items-center space-x-2 ${
-              profileSaved
-                ? "bg-green-50 text-green-800 border border-green-200"
-                : "bg-yellow-50 text-yellow-800 border border-yellow-200"
-            }`}
-          >
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">
-              {profileSaved
-                ? "Profile is saved for this user"
-                : "No profile found. Please save your profile."}
-            </span>
-          </div>
-        )}
+        </div> 
 
         {(successMessage || error) && (
           <div
@@ -798,6 +781,23 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
             </p>
           </div>
         </div>
+
+         {profileSaved !== null && (
+          <div
+            className={`mb-6 p-4 rounded-lg flex items-center space-x-2 ${
+              profileSaved
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : "bg-yellow-50 text-yellow-800 border border-yellow-200"
+            }`}
+          >
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">
+              {profileSaved
+                ? "Profile is saved for this user"
+                : "No profile found. Please save your profile."}
+            </span>
+          </div>
+        )}
 
         {/* Personal Information Section */}
         <div className="mb-8">

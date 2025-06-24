@@ -18,13 +18,13 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
   });
 
   const supportTypes = [
-    {
-      id: 'counselor',
-      title: 'Counselor Support',
-      icon: MessageCircle,
-      description: 'Get expert guidance from experienced counselors',
-      color: 'from-violet-500 to-purple-500'
-    },
+    // {
+    //   id: 'counselor',
+    //   title: 'Counselor Support',
+    //   icon: MessageCircle,
+    //   description: 'Get expert guidance from experienced counselors',
+    //   color: 'from-violet-500 to-purple-500'
+    // },
     {
       id: 'academic',
       title: 'Academic Help',
@@ -197,9 +197,9 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
             We're working on bringing you the best {type.title.toLowerCase()} experience.
           </p>
         </div>
-        <button className={`w-full bg-gradient-to-r ${type.color} text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all duration-300 font-medium`}>
+        {/* <button className={`w-full bg-gradient-to-r ${type.color} text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all duration-300 font-medium`}>
           Get Notified
-        </button>
+        </button> */}
       </div>
     </div>
   );
@@ -308,27 +308,6 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Support Hours */}
-          <div className="bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl p-4 md:p-6 text-white">
-            <h5 className="font-bold mb-3 flex items-center">
-              <Clock className="w-4 h-4 mr-2" />
-              Support Hours
-            </h5>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Monday - Friday</span>
-                <span>9:00 AM - 6:00 PM</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Saturday</span>
-                <span>10:00 AM - 4:00 PM</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Sunday</span>
-                <span>Emergency Only</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

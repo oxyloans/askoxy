@@ -332,7 +332,7 @@ const WhatsappLogin = () => {
           // Redirect to appropriate register page based on user type
           const registerPath =
             primaryType === "STUDENT"
-              ? "/whatsappregister"
+              ? "/whatsappregister?primaryType=STUDENT"
               : "/whatsappregister";
           setTimeout(() => navigate(registerPath), 1000);
         } else {
@@ -603,7 +603,13 @@ const WhatsappLogin = () => {
       mobileOTP: ["", "", "", "", "", ""],
     });
   };
-
+  const handleRegisterRedirectClick = () => {
+    const loginUrl =
+      primaryType === "STUDENT"
+        ? "/whatsappregister?primaryType=STUDENT"
+        : "/whatsappregister";
+    navigate(loginUrl);
+  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 row">
       <div
@@ -622,7 +628,7 @@ const WhatsappLogin = () => {
           <div className="flex flex-col items-center gap-3">
             <h2 className="text-2xl font-bold text-white text-center">
               {primaryType === "STUDENT"
-                ? "Welcome to Study Abroad Portal"
+                ? "Welcome to Study Abroad"
                 : "Welcome to ASKOXY.AI"}
             </h2>
             <div className="flex gap-4">
@@ -639,13 +645,7 @@ const WhatsappLogin = () => {
                 Login
               </button>
               <button
-                onClick={() => {
-                  const registerPath =
-                    primaryType === "STUDENT"
-                      ? "/whatsappregister"
-                      : "/whatsappregister";
-                  window.location.href = registerPath;
-                }}
+                onClick={handleRegisterRedirectClick}
                 className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
               >
                 Register
@@ -939,16 +939,12 @@ const WhatsappLogin = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link
-                to={
-                  primaryType === "STUDENT"
-                    ? "/whatsappregister"
-                    : "/whatsappregister"
-                }
-                className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              <button
+                onClick={handleRegisterRedirectClick}
+                className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group"
               >
                 Register here
-              </Link>
+              </button>
             </p>
           </div>
         </div>

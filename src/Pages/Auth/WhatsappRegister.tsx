@@ -592,12 +592,9 @@ const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       >
         <div className="bg-purple-600 p-3 sm:p-4 lg:p-6 relative">
           <h2 className="text-2xl font-bold text-white text-center">
-            Register to ASKOXY.AI
-            {primaryType === "STUDENT" && (
-              <span className="block text-sm font-normal text-purple-200 mt-1">
-                Student Registration
-              </span>
-            )}
+            {primaryType === "STUDENT"
+              ? "Register to Study Abroad"
+              : "Register to ASKOXY.AI"}
           </h2>
           <button
             onClick={handleClose}
@@ -888,13 +885,13 @@ const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         <div className="border-t p-6 bg-gray-50">
           <p className="text-sm text-gray-600 text-center">
             Already registered?{" "}
-            <Link
-              to="/whatsapplogin"
+            <button
+              onClick={handleLoginRedirectClick}
               className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group"
             >
               Login Now
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </button>
           </p>
         </div>
       </div>

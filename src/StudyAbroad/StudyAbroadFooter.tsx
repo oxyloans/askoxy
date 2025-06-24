@@ -97,7 +97,7 @@ const StudyAbroadFooter = () => {
             </div>
 
             {/* Desktop Newsletter */}
-            <div className="hidden md:block">
+            {/* <div className="hidden md:block">
               <h4 className="font-semibold text-sm mb-2">
                 Subscribe to our newsletter
               </h4>
@@ -111,11 +111,11 @@ const StudyAbroadFooter = () => {
                   Subscribe
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Study Destinations */}
-          <div>
+          {/* <div>
             <div
               className="flex justify-between items-center mb-3 cursor-pointer md:cursor-default"
               onClick={() => toggleSection("destinations")}
@@ -150,7 +150,7 @@ const StudyAbroadFooter = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </div> */}
 
           {/* Contact Info */}
           <div>

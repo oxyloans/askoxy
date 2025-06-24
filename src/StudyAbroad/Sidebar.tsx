@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   GraduationCap,
-  Building2,
   FileText,
   Award,
   LogOut,
@@ -40,26 +39,32 @@ const StudentSidebar: React.FC<SidebarProps> = ({
 }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "cashback-universities", label: "5% Cashback Universities", icon: Percent, badge: "HOT" },
+    {
+      id: "cashback-universities",
+      label: "5% Cashback Universities",
+      icon: Percent,
+      badge: "HOT",
+    },
     { id: "courses", label: "Browse Courses", icon: Award },
     { id: "applications", label: "My Applications", icon: FileText },
     { id: "universities", label: "University Search", icon: Search },
     { id: "profile", label: "My Profile", icon: User },
     { id: "TestScores", label: "Test Scores", icon: GraduationCap },
-    { id: "documents", label: "My Documents", icon: FileText },  
+    { id: "documents", label: "My Documents", icon: FileText },
     { id: "support", label: "Counselor Support", icon: MessageCircle },
   ];
 
   const fetchUserProfile = async () => {
     try {
-      const customerId = localStorage.getItem("userId") || localStorage.getItem("customerId");
-      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
-      
+      const customerId =
+        localStorage.getItem("userId") || localStorage.getItem("customerId");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+
       if (!customerId || !token) {
         setLoadingProfile(false);
         return;
@@ -70,8 +75,8 @@ const StudentSidebar: React.FC<SidebarProps> = ({
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -93,35 +98,9 @@ const StudentSidebar: React.FC<SidebarProps> = ({
 
   const handleSignout = () => {
     const entryPoint = localStorage.getItem("entryPoint") || "/";
-    console.log("Signing out - Redirecting to:", entryPoint);
-
-    localStorage.removeItem("userId");
-    localStorage.removeItem("email");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("mobileNumber");
-    localStorage.removeItem("whatsappNumber");
     localStorage.clear();
     localStorage.setItem("entryPoint", entryPoint);
-
     navigate(entryPoint);
-  };
-
-  const getDisplayName = () => {
-    if (!userProfile) return "Student";
-    
-    const firstName = userProfile.userFirstName || userProfile.firstName || "";
-    const lastName = userProfile.userLastName || userProfile.lastName || "";
-    
-    if (firstName || lastName) {
-      return `${firstName} ${lastName}`.trim();
-    }
-    
-    return userProfile.customerEmail || userProfile.email || "Student";
-  };
-
-  const getDisplayEmail = () => {
-    if (!userProfile) return "";
-    return userProfile.customerEmail || userProfile.email || "";
   };
 
   return (
@@ -133,7 +112,7 @@ const StudentSidebar: React.FC<SidebarProps> = ({
             className="fixed inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl border-r border-gray-200">
+          <div className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl border-r border-gray-200 overflow-y-auto">
             <div className="flex items-center justify-between p-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white mb-4">
               <Link to="/student-home" className="flex items-center">
                 <div className="relative">
@@ -155,39 +134,63 @@ const StudentSidebar: React.FC<SidebarProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <nav className="p-3 space-y-1 overflow-y-auto h-full pb-20">
-              {sidebarItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 text-sm relative ${
-                    activeTab === item.id
-                      ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium shadow-md"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
+            <div className="flex flex-col h-full justify-between">
+              <nav className="p-3 space-y-1">
+                {sidebarItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 text-sm relative ${
+                      activeTab === item.id
+                        ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium shadow-md"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+              <div className="p-4 bg-gray-50 m-3 rounded-lg border border-gray-200">
+                {loadingProfile ? (
                   <div className="flex items-center space-x-3">
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.label}</span>
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                    <div>
+                      <div className="h-4 bg-gray-200 rounded w-20 mb-1"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    </div>
                   </div>
-                  {item.badge && (
-                    <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full font-bold ">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </nav>
+                ) : (
+                  <button
+                    onClick={handleSignout}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors duration-200"
+                  >
+                    <LogOut size={16} />
+                    <span className="text-sm font-medium">Sign Out</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white shadow-lg border-r border-gray-200">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col h-full">
+        <div className="flex flex-col flex-grow bg-white shadow-lg border-r border-gray-200 overflow-y-auto max-h-screen">
+          {/* Logo Section */}
           <div className="px-6 py-6 mb-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white">
             <Link to="/student-home" className="flex items-center">
               <div className="relative">
@@ -203,49 +206,52 @@ const StudentSidebar: React.FC<SidebarProps> = ({
               </div>
             </Link>
           </div>
-          
-          <nav className="flex-1 px-4 py-5 space-y-2 overflow-y-auto">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 text-sm relative group ${
-                  activeTab === item.id
-                    ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium shadow-md"
-                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className={`text-xs px-2 py-1 rounded-full font-bold  ${
+
+          {/* Navigation + Footer wrapped together for scroll */}
+          <div className="flex-1 flex flex-col justify-between">
+            <nav className="px-4 py-5 space-y-2">
+              {sidebarItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 text-sm relative group ${
                     activeTab === item.id
-                      ? "bg-white/20 text-white"
-                      : "bg-gradient-to-r from-red-500 to-pink-500 text-white"
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-          
-          {/* User Profile Section */}
-          <div className="p-4 bg-gray-50 m-4 rounded-lg border border-gray-200">
-            {loadingProfile ? (
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium shadow-md"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-bold ${
+                        activeTab === item.id
+                          ? "bg-white/20 text-white"
+                          : "bg-gradient-to-r from-red-500 to-pink-500 text-white"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+
+            {/* Sign Out Section */}
+            <div className="p-4 bg-gray-50 m-4 rounded-lg border border-gray-200">
+              {loadingProfile ? (
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  </div>
+                  <div>
+                    <div className="h-4 bg-gray-200 rounded w-20 mb-1"></div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                  </div>
                 </div>
-                <div>
-                  <div className="h-4 bg-gray-200 rounded w-20 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-16"></div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3"> 
+              ) : (
                 <button
                   onClick={handleSignout}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors duration-200"
@@ -253,8 +259,8 @@ const StudentSidebar: React.FC<SidebarProps> = ({
                   <LogOut size={16} />
                   <span className="text-sm font-medium">Sign Out</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

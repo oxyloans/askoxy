@@ -47,9 +47,6 @@ const CallToActionSection = () => {
                 Get Started Now
                 <ArrowRight className="w-5 h-5 ml-2" />
               </button>
-              <button onClick={handleFreeConsultation} className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-700 font-semibold py-3 px-6 sm:px-8 rounded-full transition duration-300">
-                Schedule Free Consultation
-              </button>
             </div>
 
             {/* Trust Indicators */}

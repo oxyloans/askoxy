@@ -1,23 +1,32 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { Globe, X, MapPin, ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import SALOGO from "../assets/img/sa.png";
 
 interface StudyAbroadHeaderProps {
-  onNavClick: (id: "home" | "countries" | "universities" | "testimonials") => void;
+  onNavClick: (
+    id: "home" | "universities" | "countries" | "testimonials"
+  ) => void;
   activeLink: string;
+  isMainPage?: boolean; // Add prop to determine which logo to show
 }
 
 // Make the component pure with React.memo to prevent unnecessary re-renders
-const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLink }: StudyAbroadHeaderProps) {
+const StudyAbroadHeader = memo(function StudyAbroadHeader({
+  onNavClick,
+  activeLink,
+  isMainPage = false,
+}: StudyAbroadHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Initialize isScrolled based on current scroll position to prevent initial flash
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const [clicked, setClicked] = useState(false);
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   // Use a ref to track the current scroll state without causing re-renders
   const scrollRef = React.useRef(isScrolled);
-  
+
   // Optimized scroll handler with throttling instead of debouncing
   useEffect(() => {
     let ticking = false;
@@ -34,10 +43,10 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
         ticking = true;
       }
     };
-    
+
     // Initial check on mount
     handleScroll();
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []); // Empty dependency array - this effect only runs once
@@ -49,44 +58,46 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
   };
 
   // Stable reference to the nav click handler
-  const handleNavClick = useCallback((
-    id: "home" | "countries" | "universities" | "testimonials"
-  ): void => {
-    // Use a function reference to ensure we're working with the latest state
-    requestAnimationFrame(() => {
-      onNavClick(id);
-      setIsMenuOpen(false);
-    });
-  }, [onNavClick]);
+  const handleNavClick = useCallback(
+    (id: "home" | "universities" | "countries" | "testimonials"): void => {
+      // Use a function reference to ensure we're working with the latest state
+      requestAnimationFrame(() => {
+        onNavClick(id);
+        setIsMenuOpen(false);
+      });
+    },
+    [onNavClick]
+  );
 
   // Simplified click outside handler to prevent re-renders
   useEffect(() => {
     if (!isMenuOpen) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       // Prevent the event from bubbling to avoid multiple handlers
       e.stopPropagation();
-      
+
       if (
         !(e.target instanceof HTMLElement) ||
         (!e.target.closest(".mobile-menu-container") &&
-         !e.target.closest(".menu-button"))
+          !e.target.closest(".menu-button"))
       ) {
         requestAnimationFrame(() => {
           setIsMenuOpen(false);
         });
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside, true);
-    return () => document.removeEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside, true);
   }, [isMenuOpen]);
 
   // Handle body scroll locking with less DOM manipulation
   useEffect(() => {
     if (isMenuOpen) {
       const originalStyle = window.getComputedStyle(document.body).overflow;
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = originalStyle;
       };
@@ -94,19 +105,23 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
   }, [isMenuOpen]);
 
   // Memoize navLinks to prevent recreation on re-render
-  const navLinks = React.useMemo(() => [
-    { id: "home", label: "Home" },
-    { id: "countries", label: "Countries" },
-    { id: "universities", label: "Universities" },
-    { id: "testimonials", label: "Success Stories" },
-  ] as const, []);
+  const navLinks = React.useMemo(
+    () =>
+      [
+        { id: "home", label: "Home" },
+        { id: "universities", label: "Universities" },
+        { id: "countries", label: "Countries" },
+        { id: "testimonials", label: "Success Stories" },
+      ] as const,
+    []
+  );
 
   // Use useCallback for event handlers to maintain stable references
   const toggleMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     requestAnimationFrame(() => {
-      setIsMenuOpen(prev => !prev);
+      setIsMenuOpen((prev) => !prev);
     });
   }, []);
 
@@ -114,32 +129,34 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
   const headerClasses = {
     base: "sticky top-0 z-50 w-full",
     scrolled: "bg-white shadow-lg",
-    notScrolled: "bg-white bg-opacity-95 backdrop-blur-sm"
+    notScrolled: "bg-white bg-opacity-95 backdrop-blur-sm",
   };
 
   const navButtonClasses = {
     base: "relative px-4 py-2 font-medium rounded-full",
-    active: "text-white bg-gradient-to-r from-purple-700 to-purple-500 shadow-md",
-    inactive: "text-purple-800 hover:text-purple-600 hover:bg-purple-50"
+    active:
+      "text-white bg-gradient-to-r from-purple-700 to-purple-500 shadow-md",
+    inactive: "text-purple-800 hover:text-purple-600 hover:bg-purple-50",
   };
 
   const mobileNavButtonClasses = {
     base: "block w-full text-left px-4 py-3 rounded-xl",
-    active: "text-white bg-gradient-to-r from-purple-700 to-purple-500 shadow-sm",
-    inactive: "text-purple-900 hover:text-purple-700 hover:bg-purple-50"
+    active:
+      "text-white bg-gradient-to-r from-purple-700 to-purple-500 shadow-sm",
+    inactive: "text-purple-900 hover:text-purple-700 hover:bg-purple-50",
   };
 
   return (
     <header
-      className={`${headerClasses.base} ${isScrolled ? headerClasses.scrolled : headerClasses.notScrolled}`}
-      style={{ transition: 'background-color 0.3s, box-shadow 0.3s' }}
+      className={`${headerClasses.base} ${
+        isScrolled ? headerClasses.scrolled : headerClasses.notScrolled
+      }`}
+      style={{ transition: "background-color 0.3s, box-shadow 0.3s" }}
     >
-
-      
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Left: Logo with unique design */}
-          <div className="flex items-center">
+          {/* Left: Logo only - no text */}
+          <Link to="/" className="flex items-center cursor-pointer">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
               <div className="relative bg-white rounded-full p-2">
@@ -151,7 +168,7 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                 Study<span className="text-purple-600">Abroad</span>
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Center: Navigation with distinctive styling */}
           <nav className="hidden md:flex flex-1 justify-center mt-4">
@@ -163,7 +180,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                     <button
                       onClick={() => handleNavClick(link.id)}
                       className={`${navButtonClasses.base} ${
-                        isActive ? navButtonClasses.active : navButtonClasses.inactive
+                        isActive
+                          ? navButtonClasses.active
+                          : navButtonClasses.inactive
                       }`}
                     >
                       {link.label}
@@ -189,17 +208,17 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                 />
               </span>
             </button> */}
-             <button
-        className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group"
-        style={{ transition: 'box-shadow 0.2s' }}
-        onClick={handleClick}
-      >
-        <span className="relative z-10">Register Now</span>
-        <span
-          className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
-          style={{ transition: 'transform 0.3s' }}
-        ></span>
-      </button>
+            <button
+              className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group"
+              style={{ transition: "box-shadow 0.2s" }}
+              onClick={handleClick}
+            >
+              <span className="relative z-10">Register Now</span>
+              <span
+                className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
+                style={{ transition: "transform 0.3s" }}
+              ></span>
+            </button>
           </div>
 
           {/* Mobile menu toggle with improved styling */}
@@ -225,9 +244,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
 
         {/* Mobile Navigation with enhanced UX - Render conditionally with fixed positioning */}
         {isMenuOpen && (
-          <div 
+          <div
             className="mobile-menu-container md:hidden bg-white py-4 fixed left-0 right-0 w-full border-t border-purple-100 shadow-lg rounded-b-2xl"
-            style={{ top: '4.5rem' }}
+            style={{ top: "4.5rem" }}
           >
             <ul className="flex flex-col px-2">
               {navLinks.map((link) => {
@@ -237,7 +256,9 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                     <button
                       onClick={() => handleNavClick(link.id)}
                       className={`${mobileNavButtonClasses.base} ${
-                        isActive ? mobileNavButtonClasses.active : mobileNavButtonClasses.inactive
+                        isActive
+                          ? mobileNavButtonClasses.active
+                          : mobileNavButtonClasses.inactive
                       }`}
                     >
                       {link.label}
@@ -246,18 +267,18 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
                 );
               })}
               <li className="px-2 pt-4 space-y-3">
-                <button 
+                <button
                   className="w-full bg-white text-purple-700 font-medium py-3 px-4 rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-md"
-                  style={{ transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                  style={{ transition: "border-color 0.2s, box-shadow 0.2s" }}
                 >
                   <span className="flex items-center justify-center">
                     Explore
                     <ChevronDown size={16} className="ml-1" />
                   </span>
                 </button>
-                <button 
+                <button
                   className="w-full bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg"
-                  style={{ transition: 'box-shadow 0.2s' }}
+                  style={{ transition: "box-shadow 0.2s" }}
                 >
                   Apply Now
                 </button>
@@ -268,6 +289,6 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({ onNavClick, activeLi
       </div>
     </header>
   );
-})
+});
 
 export default StudyAbroadHeader;

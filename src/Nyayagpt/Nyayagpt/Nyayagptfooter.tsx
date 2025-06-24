@@ -102,7 +102,7 @@ const Nyayagptfooter = () => {
             </div>
 
             {/* Newsletter subscription - desktop only */}
-            <div className="hidden md:block">
+            {/* <div className="hidden md:block">
               <h4 className="font-semibold mb-3 text-sm">
                 Subscribe to our newsletter
               </h4>
@@ -121,7 +121,7 @@ const Nyayagptfooter = () => {
                   Subscribe
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
 
          {/* Solutions - with mobile accordion */}
