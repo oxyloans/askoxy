@@ -537,7 +537,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-6 text-center">
+                {/* <div className="mt-6 text-center">
                   <button
                     onClick={() =>
                       handleExploreCountryUniversities(activeCountry.name)
@@ -546,7 +546,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                   >
                     Explore {activeCountry.name} Universities
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           )}

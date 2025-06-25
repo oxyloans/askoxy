@@ -53,10 +53,15 @@ const Footer = () => {
       type: "email",
     },
     {
-      icon: <Phone className="h-4 w-4" />,
-      content: "+91 98765 43210",
-      type: "phone",
-    },
+    icon: <Phone className="h-4 w-4 mb-1" />,
+    content: "+91 81432 71103",
+    type: "phone",
+  },
+  {
+    icon: <Phone className="h-4 w-4 mb-1" />,
+    content: "+91 91105 64106",
+    type: "phone",
+  },
   ];
 
   return (
