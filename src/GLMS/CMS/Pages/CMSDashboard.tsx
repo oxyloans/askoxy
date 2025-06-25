@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogostatic.png";
+import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
 import { Menu, X } from "react-feather";
 
 const useCases = [

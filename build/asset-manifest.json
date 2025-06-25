@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.ef8d27bd.css",
-    "main.js": "/static/js/main.65f4c0df.js",
+    "main.css": "/static/css/main.c50c6828.css",
+    "main.js": "/static/js/main.636fed5d.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (4).png": "/static/media/3 (4).bb25f69f5e1e92c84eb1.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
@@ -22,11 +22,9 @@
     "static/media/RBI.png": "/static/media/RBI.e09618a200e694984500.png",
     "static/media/womenempower.png": "/static/media/womenempower.2a55408a083b7a253aef.png",
     "static/media/manufacturing.png": "/static/media/manufacturing.a9c453bbcc19cc62b890.png",
-    "static/media/26kg.png": "/static/media/26kg.0da29a2bfc7efcc8ae54.png",
     "static/media/s9.png": "/static/media/s9.bceac12f152a7dd41c42.png",
     "static/media/s6.png": "/static/media/s6.666e5c1ff01736464f7c.png",
     "static/media/s4.png": "/static/media/s4.78715afb2059f7575b67.png",
-    "static/media/35kg1.png": "/static/media/35kg1.44f6954582f704d3931d.png",
     "static/media/template2.png": "/static/media/template2.118b82b53aafa42d728c.png",
     "static/media/s7.png": "/static/media/s7.2e8009d618507848f20e.png",
     "static/media/oxy group.png": "/static/media/oxy group.f89491de343811f87233.png",
@@ -62,7 +60,7 @@
     "static/media/testimonial8.png": "/static/media/testimonial8.43ce273a9bcaf451fa69.png",
     "static/media/testimonial1.png": "/static/media/testimonial1.e09424c97ef4040cf0ad.png",
     "static/media/logo.png": "/static/media/logo.61b3c70f02d304fee500.png",
-    "static/media/askoxylogonew.png": "/static/media/askoxylogonew.c29adb1b9d17ed6ab512.png",
+    "static/media/askoxylogoblack.png": "/static/media/askoxylogoblack.acf3782a284d2b665e39.png",
     "static/media/testimonial19.png": "/static/media/testimonial19.432b71a913686b43f6f4.png",
     "static/media/testimonial10.png": "/static/media/testimonial10.747b1e0971dcd647ebf6.png",
     "static/media/testimonial4.png": "/static/media/testimonial4.a73b5729148966400f00.png",
@@ -74,6 +72,11 @@
     "static/media/testimonial13.png": "/static/media/testimonial13.f925cd34d6bf1bb8ccfa.png",
     "static/media/testimonial16.png": "/static/media/testimonial16.c0b4f2d3618261aae6b0.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
+    "static/media/35kg1.png": "/static/media/35kg1.be97a2698b296f701f04.png",
+    "static/media/26kg.png": "/static/media/26kg.f53c0436e2e535fa1ece.png",
+    "static/media/rice offers.png": "/static/media/rice offers.911613ceb37bfeae42a2.png",
+    "static/media/StudyAbroda.png": "/static/media/StudyAbroda.85705e5e99c29f138987.png",
+    "static/media/cashewoffer1.png": "/static/media/cashewoffer1.c9cfa294e808a6f745a9.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
     "static/media/mapbw.png": "/static/media/mapbw.4094352cf827b2840ba6.png",
@@ -81,10 +84,10 @@
     "static/media/testimonial9.png": "/static/media/testimonial9.f386453652d69c54a59d.png",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.1815e00441357e01619e.ttf",
     "static/media/testimonial15.png": "/static/media/testimonial15.4a692e3fc9549e8d31a8.png",
+    "static/media/cashback offer png.png": "/static/media/cashback offer png.543eabcbcbf053da6f98.png",
     "static/media/newzealand.png": "/static/media/newzealand.f0984138e1f5989d6fec.png",
     "static/media/usa.png": "/static/media/usa.054e520ae0d54acbe8d8.png",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
-    "static/media/StudyAbroda.png": "/static/media/StudyAbroda.5993d0be5c2d681d469f.png",
     "static/media/sneha.png": "/static/media/sneha.badb9ce0bdb98f6a0762.png",
     "static/media/goldlines.png": "/static/media/goldlines.c8089f38ce39f29ee687.png",
     "static/media/australia.png": "/static/media/australia.2529b375afe8bf715e40.png",
@@ -122,11 +125,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.ef8d27bd.css.map": "/static/css/main.ef8d27bd.css.map",
-    "main.65f4c0df.js.map": "/static/js/main.65f4c0df.js.map"
+    "main.c50c6828.css.map": "/static/css/main.c50c6828.css.map",
+    "main.636fed5d.js.map": "/static/js/main.636fed5d.js.map"
   },
   "entrypoints": [
-    "static/css/main.ef8d27bd.css",
-    "static/js/main.65f4c0df.js"
+    "static/css/main.c50c6828.css",
+    "static/js/main.636fed5d.js"
   ]
 }

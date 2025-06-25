@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import AskOxyLogo from "../assets/img/askoxylogostatic.png";
+import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import Template1Image from "../assets/img/template1.png";
 import Template2Image from "../assets/img/template2.png";
 

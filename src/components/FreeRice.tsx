@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 // import Rice2 from "../assets/img/RICEU7.png";
 // import Rice3 from "../assets/img/35kg1.png";
 // import Rice4 from "../assets/img/26kg.png";
-import AskOxyLogo from "../assets/img/askoxylogostatic.png";
+import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 // import Retro from "../assets/img/retro.png";
 // import O5 from "../assets/img/tb1.png";
 

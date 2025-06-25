@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import Askoxy from "../assets/img/askoxylogostatic.png";
+import Askoxy from "../assets/img/askoxylogoblack.png";
 import { message } from "antd";
 
 interface HeaderProps {

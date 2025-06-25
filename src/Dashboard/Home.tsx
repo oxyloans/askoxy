@@ -53,6 +53,9 @@ import O3 from "../assets/img/2offer.png";
 import O4 from "../assets/img/o4.png";
 import O5 from "../assets/img/tb1.png";
 import O6 from "../assets/img/26kg.png";
+import CB from "../assets/img/cashback offer png.png"
+import Cashew from "../assets/img/cashewoffer1.png"
+import Riceoffers from "../assets/img/rice offers.png"
 import O7 from "../assets/img/5offer.png";
 import O9 from "../assets/img/35kg1.png";
 
@@ -113,6 +116,7 @@ interface HeaderImage {
   src: string;
   alt?: string;
   path: string;
+  onClick?: () => void;
 }
 
 interface DashboardItem {
@@ -532,18 +536,29 @@ const Home: React.FC = () => {
   };
 
   const headerImages: HeaderImage[] = [
-    // {
-    //   id: "o3",
-    //   src: O3,
-    //   alt: "Products",
-    //   path: "/main/dashboard/products?weight=1.0",
-    // },
-    // {
-    //   id: "o6",
-    //   src: O7,
-    //   alt: "Products",
-    //   path: "/main/dashboard/products?weight=5.0",
-    // },
+    {
+      id: "Cashback1",
+      src: CB,
+      alt: "Products",
+      path: "/main/dashboard/products",
+    },
+   {
+  id: "Cashew Offer",
+  alt: "Products",
+  src: Cashew,
+  path: "/main/dashboard/products",
+  onClick: () => {
+    setActiveCategory("Cashew nuts upto ₹40 cashback");
+    navigate("/main/dashboard/products");
+  }
+}
+    ,
+    {
+      id: "Cashback2",
+      src: Riceoffers,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=5.0",
+    },
     {
       id: "o1",
       src: O6,
@@ -556,12 +571,6 @@ const Home: React.FC = () => {
       alt: "Products",
       path: "/main/dashboard/products?weight=26.0",
     },
-    // {
-    //   id: "o1",
-    //   src: O1,
-    //   alt: "OxyLoans",
-    //   path: "/main/service/oxyloans-service",
-    // },
     {
       id: "o2",
       src: O8,
@@ -1298,166 +1307,69 @@ const Home: React.FC = () => {
           <p className="text-gray-500">No offers available at the moment.</p>
         )}
       </Modal>
-
       {/* Header Images Section */}
-      <div className="w-full bg-white border-b border-gray-100 py-3 md:py-6">
-        <div className="px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-4">
-            {headerImages.map((image) => (
-              <motion.div
-                key={image.id}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="cursor-pointer overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-white"
-                onHoverStart={() => setHoveredImage(image.id)}
-                onHoverEnd={() => setHoveredImage(null)}
-                onClick={() => navigate(image.path)}
-              >
-                <div className="relative w-full h-0 pb-[75%]">
-                  <motion.img
-                    src={image.src}
-                    alt={image.alt || "Header image"}
-                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                    animate={{ scale: hoveredImage === image.id ? 1.05 : 1 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              </motion.div>
-            ))}
+ <div className="w-full py-1 md:py-2">
+  <div className="px-1 sm:px-2 md:px-3 lg:px-4 mx-auto max-w-7xl">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 md:gap-2 lg:gap-3">
+      {headerImages.map((image) => (
+        <motion.div
+          key={image.id}
+          whileHover={{ 
+            scale: 1.05,
+            y: -5,
+            rotateY: 5
+          }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ 
+            duration: 0.3, 
+            ease: "easeOut",
+            type: "spring",
+            stiffness: 300,
+            damping: 20
+          }}
+          className="cursor-pointer overflow-hidden rounded-lg transition-all duration-300"
+          onHoverStart={() => setHoveredImage(image.id)}
+          onHoverEnd={() => setHoveredImage(null)}
+          onClick={() => navigate(image.path)}
+        >
+          <div className="relative w-full overflow-hidden rounded-lg">
+            <motion.img
+              src={image.src}
+              alt={image.alt || "Header image"}
+              className="w-full h-auto object-contain rounded-lg"
+              animate={{ 
+                scale: hoveredImage === image.id ? 1.02 : 1
+              }}
+              transition={{ 
+                duration: 0.4,
+                ease: "easeInOut"
+              }}
+              whileHover={{
+                filter: "brightness(1.1) contrast(1.05)"
+              }}
+              style={{
+                filter: hoveredImage === image.id ? "brightness(1.1) contrast(1.05)" : "brightness(1) contrast(1)"
+              }}
+            />
+            <motion.div
+              className="absolute inset-0 rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ 
+                opacity: hoveredImage === image.id ? 0.1 : 0
+              }}
+              style={{
+                background: "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))"
+              }}
+              transition={{ duration: 0.3 }}
+            />
           </div>
-        </div>
-      </div>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-center justify-between">
-              <div className="w-full md:w-3/5 mb-6 md:mb-0 text-center md:text-left">
-                <h2 className="text-white text-xl md:text-2xl font-bold mb-3">
-                  Exclusive Rice Offers!
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                  <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
-                    <Package size={isMobile ? 12 : 16} className="mr-2" /> Buy
-                    10kg Get 20KG+ Steel Container
-                  </div>
-                  <div className="bg-white bg-opacity-20 text-white px-3 py-2 rounded-full flex items-center justify-center md:justify-start">
-                    <ShoppingBag size={isMobile ? 12 : 16} className="mr-2" />{" "}
-                    Buy 26kg Get 20KG+ Steel Container
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <button
-                  onClick={() => setShowOffersModal(true)}
-                  className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
-                >
-                  <Info size={16} className="mr-2" /> FAQS
-                </button>
-                <button
-                  onClick={viewAllProducts}
-                  className="bg-white text-purple-700 hover:bg-purple-50 px-5 py-3 rounded-full font-medium text-sm flex items-center justify-center transition-colors"
-                >
-                  Shop Now <ArrowRight size={16} className="ml-2" />
-                </button>
-              </div>
-            </div>
-          </div> */}
-        <section className="mb-8 px-2 sm:px-0 max-w-6xl mx-auto">
-          <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl overflow-hidden relative mb-6">
-            <div className="relative px-4 md:px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              {/* Left Side */}
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-full">
-                  <Gift className="text-white" size={24} />
-                </div>
-                <h1 className="text-white text-lg md:text-2xl font-bold flex items-center gap-2 flex-wrap">
-                  <span className="bg-white text-emerald-600 px-3 py-1 rounded-lg font-black shadow-lg">
-                    Get ₹50 Cashback
-                  </span>
-                  <span className="text-sm md:text-lg">
-                    on your first order!
-                  </span>
-                  <Sparkles className="text-yellow-300" size={20} />
-                </h1>
-              </div>
-              <button
-                onClick={viewAllProducts}
-                className="bg-white text-emerald-600 hover:bg-gray-50 px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg"
-              >
-                Order Now <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-lg shadow-lg overflow-hidden">
-              <div className="px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                {/* Left Section */}
-                <div className="flex flex-col gap-2">
-                  <h2 className="text-white text-lg md:text-xl font-bold">
-                    <div className="flex items-center flex-wrap gap-2">
-                      <span className="bg-white text-yellow-600 px-2 py-1 rounded-md font-black text-lg md:text-xl shadow-md">
-                        Up to ₹40 Cashback
-                      </span>
-                      <span className="text-sm md:text-base block">
-                        on Cashews – on Your First Order!
-                      </span>
-                    </div>
-                  </h2>
-                  <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center w-fit">
-                    <Package size={12} className="mr-1" />
-                    <span className="font-medium text-xs">Premium Quality</span>
-                  </div>
-                </div>
-
-                {/* Right Section – Button */}
-                <div className="self-start md:self-center">
-                  <button
-                    onClick={viewAllProducts}
-                    className="bg-white text-yellow-700 hover:bg-yellow-50 px-4 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap shadow-md"
-                  >
-                    Shop Now <ArrowRight size={12} className="ml-1" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-lg shadow-lg overflow-hidden">
-              <div className="px-4 py-3 md:px-6 md:py-4 flex flex-row items-center justify-between">
-                <div className="flex-1">
-                  <h2 className="text-white text-lg md:text-xl font-bold mb-2">
-                    Exclusive Rice Offers!
-                  </h2>
-                  <div className="flex flex-wrap gap-1 text-xs">
-                    <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
-                      <Package size={10} className="mr-1" /> 10kg → Free
-                      Container
-                    </div>
-                    <div className="bg-white bg-opacity-20 text-white px-2 py-1 rounded-full flex items-center">
-                      <ShoppingBag size={10} className="mr-1" /> 26kg → Free
-                      Container
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 ml-4">
-                  <button
-                    onClick={() => setShowOffersModal(true)}
-                    className="bg-purple-100 text-purple-700 hover:bg-purple-50 px-3 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap"
-                  >
-                    <Info size={12} className="mr-1" /> FAQ's
-                  </button>
-                  <button
-                    onClick={viewAllProducts}
-                    className="bg-white text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-full font-medium text-xs flex items-center justify-center transition-colors whitespace-nowrap"
-                  >
-                    Shop Now <ArrowRight size={12} className="ml-1" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section ref={productsRef} className="mb-12">
           <div className="flex items-center mb-4 gap-10">
             <h2 className="text-xl font-bold text-gray-800 flex items-center">

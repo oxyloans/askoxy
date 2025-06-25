@@ -887,7 +887,7 @@ const ItemDisplayPage = () => {
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                {/* Enhanced Product Image Section with Gallery */}
+                {/* Enhanced Product Name Section */}
                 <div className="relative">
                   <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
                     {getAllImages().length > 0 ? (
@@ -1019,18 +1019,6 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
 
-                  {/* Product Description */}
-                  {itemDetails?.itemDescription && (
-                    <div className="border-t pt-4">
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        Description
-                      </h3>
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        {itemDetails.itemDescription}
-                      </p>
-                    </div>
-                  )}
-
                   {/* Add to Cart Section */}
                   <div className="border-t pt-4">
                     {itemDetails && (
@@ -1135,10 +1123,21 @@ const ItemDisplayPage = () => {
                   </button>
                 </div>
               </div>
+              {/* Product Description - Spanning Full Width */}
+              {itemDetails?.itemDescription && (
+                <div className="mt-4 w-full">
+                  <h3 className="font-medium text-gray-900 mb-2 font-bold">Description :</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed w-full">
+                    {itemDetails.itemDescription}
+                  </p>
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Chat Section */}
-            {showChatSection && (
+          {/* Right Column - Related Products or Chat Section */}
+          <div className="lg:col-span-4">
+            {showChatSection ? (
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold flex items-center space-x-2">
@@ -1201,68 +1200,65 @@ const ItemDisplayPage = () => {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            ) : (
+              <div className="bg-white rounded-xl p-6 shadow-sm sticky top-4">
+                <h3 className="text-lg font-semibold mb-4">Related Products</h3>
 
-          {/* Right Column - Related Products */}
-          <div className="lg:col-span-4">
-            <div className="bg-white rounded-xl p-6 shadow-sm sticky top-4">
-              <h3 className="text-lg font-semibold mb-4">Related Products</h3>
-
-              {relatedItems.length > 0 ? (
-                <div className="space-y-4">
-                  {relatedItems.map((item) => (
-                    <div
-                      key={item.itemId}
-                      className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => handleRelatedItemClick(item)}
-                    >
-                      <div className="flex space-x-3">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                          {item.itemImage || item.image ? (
-                            <img
-                              src={item.itemImage || item.image}
-                              alt={item.itemName}
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package2 className="w-6 h-6 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 text-sm truncate">
-                            {item.itemName}
-                          </h4>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {(item.itemWeight || item.weight) +
-                              " " +
-                              (item.weightUnit || item.units || "")}
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="font-bold text-purple-600 text-sm">
-                              ₹{item.itemPrice}
-                            </span>
-                            {item.itemMrp && item.itemMrp > item.itemPrice && (
-                              <span className="text-xs text-gray-500 line-through">
-                                ₹{item.itemMrp}
-                              </span>
+                {relatedItems.length > 0 ? (
+                  <div className="space-y-4">
+                    {relatedItems.map((item) => (
+                      <div
+                        key={item.itemId}
+                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleRelatedItemClick(item)}
+                      >
+                        <div className="flex space-x-3">
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            {item.itemImage || item.image ? (
+                              <img
+                                src={item.itemImage || item.image}
+                                alt={item.itemName}
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package2 className="w-6 h-6 text-gray-400" />
+                              </div>
                             )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900 text-sm truncate">
+                              {item.itemName}
+                            </h4>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {(item.itemWeight || item.weight) +
+                                " " +
+                                (item.weightUnit || item.units || "")}
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="font-bold text-purple-600 text-sm">
+                                ₹{item.itemPrice}
+                              </span>
+                              {item.itemMrp && item.itemMrp > item.itemPrice && (
+                                <span className="text-xs text-gray-500 line-through">
+                                  ₹{item.itemMrp}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Package2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No related products found</p>
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Package2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500">No related products found</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

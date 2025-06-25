@@ -149,6 +149,7 @@ import GoldAndSilverAndDiamond from "./GoldAndSilverAndDiamonds/GoldAndSilverAnd
 import LoansInvestmentsLandingPage from "./LoansInvestments/LoanInvestmentsLandingPage";
 import RealEstate from "./Real Estate/Real Estate/RealEstate";
 import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
+import MetroLogin  from "./Pages/Auth/MetroLogin"
 
 import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
 
@@ -209,6 +210,7 @@ const App: React.FC = () => {
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
             <Route path="addblogs" element={<AddBlog />} />
+            <Route path="metroLogin" element={<MetroLogin />} />
             
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />

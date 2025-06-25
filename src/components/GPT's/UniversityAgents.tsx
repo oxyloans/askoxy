@@ -425,7 +425,7 @@ import {
   User,
 } from "lucide-react";
 
-import AskOxyLogo from "../../assets/img/askoxylogostatic.png";
+import AskOxyLogo from "../../assets/img/askoxylogoblack.png";
 
 interface ChatMessage {
   type: "question" | "answer";

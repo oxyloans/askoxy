@@ -3,7 +3,7 @@ import { ShoppingCart, UserCircle, X } from "lucide-react";
 import { FaBars, FaSearch, FaTimes } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
-import AskOxyLogo from "../assets/img/askoxylogostatic.png";
+import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import { CartContext } from "../until/CartContext";
 import axios from "axios";
 
@@ -294,7 +294,7 @@ const Header: React.FC<HeaderProps> = ({
 
     // Show API results
     return (
-      <div className="bg-white py-2 px-4">
+      <div className="bg-#5c3391 py-2 px-4">
         {searchResults.length > 0 ? (
           <>
             <p className="text-xs text-gray-500 mb-2">Search results:</p>
@@ -370,7 +370,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="bg-white shadow-md sticky top-0 z-40">
+      <header className="bg-#5c3391 shadow-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           {/* Main header row - always visible */}
           <div className="flex items-center justify-between h-14 sm:h-20">

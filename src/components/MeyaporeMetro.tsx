@@ -13,7 +13,7 @@ import Rice4 from "../assets/img/3 (4).png";
 import Rice2 from "../assets/img/3 (2).png";
 import Rice3 from "../assets/img/3 (1).png";
 import Rice1 from "../assets/img/3 (3).png";
-import AskOxyLogo from "../assets/img/askoxylogostatic.png";
+import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 
 
 // Campaign Base URL

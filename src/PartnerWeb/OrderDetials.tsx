@@ -288,8 +288,8 @@ const OrderDetailsPage: React.FC = () => {
         itemId = "53d7f68c-f770-4a70-ad67-ee2726a1f8f3";
         itemName = "Stainless Steel Rice Vault - 20Kg+";
       } else if (selectedItem.weight === 26) {
-        itemId = "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61";
-        itemName = "Premium Steel Rice Storage - 35kg+";
+        itemId = "53d7f68c-f770-4a70-ad67-ee2726a1f8f3";
+        itemName = "Stainless Steel Rice Vault - 20Kg+";
       } else {
         message.error("Invalid item weight for adding a container");
         return;
@@ -823,7 +823,6 @@ const OrderDetailsPage: React.FC = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-       
             <Card
               title={
                 <span className="text-blue-600">
@@ -958,7 +957,7 @@ const OrderDetailsPage: React.FC = () => {
                         <BadgePercent className="w-4 h-4 text-blue-500 mr-2" />
                         <span className="font-medium">Price:</span>
                         <span className="ml-auto font-semibold text-gray-800">
-                          ₹{(item.itemprice || 0).toFixed(2)}
+                          ₹{(item.itemprice || 0).toFixed(0)}
                         </span>
                       </div>
 
@@ -1089,30 +1088,38 @@ const OrderDetailsPage: React.FC = () => {
               <div className="flex justify-between text-sm text-gray-700">
                 <span>SubTotal</span>
                 <span className="font-medium">
-                  ₹{(orderDetails.subTotal || 0).toFixed(2)}
+                  ₹{(orderDetails.subTotal || 0).toFixed(0)}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Delivery Fee</span>
                 <span className="font-medium">
-                  ₹{(orderDetails.deliveryFee || 0).toFixed(2)}
+                  ₹{(orderDetails.deliveryFee || 0).toFixed(0)}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-700">
                 <span>GST</span>
                 <span className="font-medium">
-                  ₹{(orderDetails.gstAmount || 0).toFixed(2)}
+                  ₹{(orderDetails.gstAmount || 0).toFixed(0)}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Discount</span>
                 <span className="font-medium">
-                  ₹{(orderDetails.discountAmount || 0).toFixed(2)}
+                  ₹{(orderDetails.discountAmount || 0).toFixed(0)}
                 </span>
               </div>
+              {orderDetails.walletAmount && (
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Wallet Amount</span>
+                  <span className="font-medium">
+                    - ₹{(orderDetails.walletAmount || 0).toFixed(0)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-base font-bold text-blue-600 pt-3 border-t">
                 <span>Total Amount</span>
-                <span>₹{(orderDetails.grandTotal || 0).toFixed(2)}</span>
+                <span>₹{(orderDetails.grandTotal || 0).toFixed(0)}</span>
               </div>
             </div>
           </div>

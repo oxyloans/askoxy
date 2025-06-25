@@ -8,7 +8,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
-import Logo from "../assets/img/askoxylogostatic.png";
+import Logo from "../assets/img/askoxylogoblack.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();

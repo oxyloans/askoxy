@@ -5,7 +5,7 @@ interface RequireAuthProps {
 }
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
-  const token = localStorage.getItem("accessToken"); // Check for authentication token
+  const token = localStorage.getItem("accessToken") ?localStorage.getItem("accessToken"):localStorage.getItem("userId")  // Check for authentication token
   const location = useLocation(); // Get current location
 
   if (!token) {

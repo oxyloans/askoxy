@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useCMSRoutes } from "../Routes/useCmsRoutes";
 import { Menu, X } from "react-feather";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogostatic.png";
+import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
 import { Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import BASE_URL from "../../../Config";
