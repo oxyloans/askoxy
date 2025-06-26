@@ -57,7 +57,7 @@ import CB from "../assets/img/cashback offer png.png"
 import Cashew from "../assets/img/cashewoffer1.png"
 import Riceoffers from "../assets/img/rice offers.png"
 import O7 from "../assets/img/5offer.png";
-import O9 from "../assets/img/35kg1.png";
+import O9 from "../assets/img/essentialsmart.png";
 
 // Define interfaces for Offer and UserEligibleOffer
 interface Offer {

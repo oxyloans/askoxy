@@ -10,6 +10,7 @@ import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import DeliveryFee from "./DeliveryFee";
+import { RiArrowDropDownLine } from "react-icons/ri";
 
 interface Address {
   id?: string;
@@ -68,6 +69,8 @@ interface ContainerEligibility {
 }
 
 const CartPage: React.FC = () => {
+  const [isItemTotalDropdownOpen, setIsItemTotalDropdownOpen] =
+    useState<boolean>(false);
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<{ [key: string]: number }>({});
   const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>(
@@ -114,6 +117,9 @@ const CartPage: React.FC = () => {
   const containerExistsRef = useRef<boolean>(false);
   //states for delivery fee
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
+  //states for small cart fee and serivce charges
+  const [smallCartFee, setSmallCartFee] = useState<number>(0);
+  const [serviceFee, setServiceFee] = useState<number>(0);
 
   const CONTAINER_ITEM_IDS = {
     HEAVY_BAG: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
@@ -1359,6 +1365,36 @@ const CartPage: React.FC = () => {
     setCheckoutError(hasStockIssues);
   }, [cartData]);
 
+  //useEffect for the small cart fee and service charges
+  useEffect(() => {
+    const cartAmount =
+      cartData
+        ?.filter((item) => item.status !== "FREE")
+        .reduce(
+          (acc, item) =>
+            acc +
+            parseFloat(item.itemPrice) * (regularCartItems[item.itemId] || 0),
+          0
+        ) || 0;
+
+    let newSmallCartFee = 0;
+    let newServiceFee = 0;
+
+    if (cartAmount < 85) {
+      newSmallCartFee = 10;
+      newServiceFee = 10;
+    } else if (cartAmount < 199) {
+      newSmallCartFee = 5;
+      newServiceFee = 5;
+    } else if (cartAmount < 499) {
+      newSmallCartFee = 0;
+      newServiceFee = 0;
+    }
+
+    setSmallCartFee(newSmallCartFee);
+    setServiceFee(newServiceFee);
+  }, [cartData, regularCartItems]);
+
   const handleAddressChange = async (selectedAddress: Address) => {
     const fullAddress = `${selectedAddress?.flatNo}, ${selectedAddress?.landMark}, ${selectedAddress?.address}, ${selectedAddress?.pincode}`;
     const coordinates = await getCoordinates(fullAddress);
@@ -1905,27 +1941,75 @@ const CartPage: React.FC = () => {
               </div>
               <div className="border-t border-gray-200 mt-4 pt-4">
                 <div className="border-t border-gray-200 mt-4 pt-4">
-                  <div className="flex justify-between mb-2 text-gray-700">
-                    <span>Subtotal</span>
-                    <span className="font-semibold">
-                      ₹
-                      {cartData
-                        ?.filter((item) => item.status !== "FREE")
-                        .reduce(
-                          (acc, item) =>
-                            acc +
-                            parseFloat(item.itemPrice) *
-                              (regularCartItems[item.itemId] || 0),
-                          0
-                        )
-                        .toFixed(2) || "0.00"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mb-2 text-gray-700">
-                    <span>GST</span>
-                    <span className="font-semibold">
-                      ₹{totalGstAmount.toFixed(2)}
-                    </span>
+                  <div className="mb-2">
+                    <button
+                      className="w-full flex justify-between items-center text-gray-700 font-semibold text-sm"
+                      onClick={() =>
+                        setIsItemTotalDropdownOpen((prev) => !prev)
+                      }
+                      aria-expanded={isItemTotalDropdownOpen}
+                    >
+                      <div className="flex items-center">
+                        <span className="border-b border-dashed border-gray-400 pb-1">
+                          Item Total & GST
+                        </span>
+                        <RiArrowDropDownLine
+                          className={`ml-2 h-5 w-5 transform transition-transform duration-200 ${
+                            isItemTotalDropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                      <span>
+                        ₹
+                        {(
+                          (cartData
+                            ?.filter((item) => item.status !== "FREE")
+                            .reduce(
+                              (acc, item) =>
+                                acc +
+                                parseFloat(item.itemPrice) *
+                                  (regularCartItems[item.itemId] || 0),
+                              0
+                            ) || 0) + totalGstAmount
+                        ).toFixed(2)}
+                      </span>
+                    </button>
+                    {isItemTotalDropdownOpen && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-600 mb-2">
+                          Askoxy.ai has no role to play in the taxes and charges
+                          being levied by the government
+                        </p>
+                        <div className="flex justify-between text-gray-700 text-sm">
+                          <span>Item Cost</span>
+                          <span>
+                            ₹
+                            {cartData
+                              ?.filter((item) => item.status !== "FREE")
+                              .reduce(
+                                (acc, item) =>
+                                  acc +
+                                  parseFloat(item.itemPrice) *
+                                    (regularCartItems[item.itemId] || 0),
+                                0
+                              )
+                              .toFixed(2) || "0.00"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-gray-700 text-sm mt-1">
+                          <span>GST Charges</span>
+                          <span>₹{(totalGstAmount || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-700 text-sm mt-1">
+                          <span>Small Cart Fee</span>
+                          <span>₹{(smallCartFee || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-700 text-sm mt-1">
+                          <span>Service Charges</span>
+                          <span>₹{(serviceFee || 0).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {cartData.length > 0 && (
                     <div className="flex justify-between mb-2 text-gray-700">
@@ -1967,13 +2051,10 @@ const CartPage: React.FC = () => {
                                 </span>
                                 <span className="text-gray-800 font-semibold">
                                   ₹
-                                  {(goldMakingCost * quantity).toLocaleString(
-                                    "en-IN",
-                                    {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    }
-                                  )}
+                                  {goldMakingCost.toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                                 </span>
                               </div>
                             )}
@@ -1984,13 +2065,10 @@ const CartPage: React.FC = () => {
                                 </span>
                                 <span className="text-gray-800 font-semibold">
                                   ₹
-                                  {(goldGst * quantity).toLocaleString(
-                                    "en-IN",
-                                    {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    }
-                                  )}
+                                  {goldGst.toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                                 </span>
                               </div>
                             )}
@@ -2003,32 +2081,41 @@ const CartPage: React.FC = () => {
                         </div>
                       );
                     })}
-                  <div className="flex justify-between mb-4 text-gray-800 font-bold text-lg">
-                    <span>Grand Total</span>
-                    <span>
-                      ₹
-                      {(() => {
-                        const itemTotal =
-                          cartData
-                            ?.filter((item) => item.status !== "FREE")
-                            .reduce(
-                              (acc, item) =>
-                                acc +
-                                parseFloat(item.itemPrice) *
-                                  (regularCartItems[item.itemId] || 0),
-                              0
-                            ) || 0;
+                  <div className="mb-4">
+                    <div className="flex justify-between text-gray-800 font-bold text-lg">
+                      <div className="flex flex-col">
+                        <span>To Pay</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                          (incl. of all taxes and fees)
+                        </span>
+                      </div>
+                      <span>
+                        ₹
+                        {(() => {
+                          const itemTotal =
+                            cartData
+                              ?.filter((item) => item.status !== "FREE")
+                              .reduce(
+                                (acc, item) =>
+                                  acc +
+                                  parseFloat(item.itemPrice) *
+                                    (regularCartItems[item.itemId] || 0),
+                                0
+                              ) || 0;
 
-                        const deliveryFeeTotal =
-                          cartData.length > 0 ? deliveryFee || 0 : 0;
+                          const deliveryFeeTotal =
+                            cartData?.length > 0 ? deliveryFee || 0 : 0;
 
-                        return (
-                          itemTotal +
-                          totalGstAmount +
-                          deliveryFeeTotal
-                        ).toFixed(2);
-                      })() || "0.00"}
-                    </span>
+                          return (
+                            itemTotal +
+                            totalGstAmount +
+                            deliveryFeeTotal +
+                            smallCartFee +
+                            serviceFee
+                          ).toFixed(2);
+                        })() || "0.00"}
+                      </span>
+                    </div>
                   </div>
                   {cartData?.some((item) => item.quantity === 0) && (
                     <div className="mb-3 p-3 bg-red-100 text-red-700 rounded">
@@ -2053,6 +2140,30 @@ const CartPage: React.FC = () => {
                       >
                         Remove all out-of-stock items
                       </button>
+                    </div>
+                  )}
+                  {cartData?.some(
+                    (item) =>
+                      item.cartQuantity > item.quantity && item.quantity > 0
+                  ) && (
+                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                      <p className="font-semibold">
+                        Quantity adjustments needed:
+                      </p>
+                      <ul className="ml-4 mt-1 list-disc">
+                        {cartData
+                          .filter(
+                            (item) =>
+                              item.cartQuantity > item.quantity &&
+                              item.quantity > 0
+                          )
+                          .map((item) => (
+                            <li key={item.itemId}>
+                              {item.itemName} - Only {item.quantity} in stock
+                              (you have {item.cartQuantity})
+                            </li>
+                          ))}
+                      </ul>
                     </div>
                   )}
                   {cartData?.some(
@@ -2136,7 +2247,6 @@ const CartPage: React.FC = () => {
                       {addressFormErrors.flatNo}
                     </p>
                   )}
-
 
                   <input
                     type="text"
