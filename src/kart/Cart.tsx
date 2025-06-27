@@ -2184,6 +2184,7 @@ const CartPage: React.FC = () => {
                         </div>
                       );
                     })}
+
                   <div className="mb-4">
                     <div className="flex justify-between text-gray-800 font-bold text-lg">
                       <div className="flex flex-col">
@@ -2220,6 +2221,7 @@ const CartPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
+                  
                   {cartData?.some((item) => item.quantity === 0) && (
                     <div className="mb-3 p-3 bg-red-100 text-red-700 rounded">
                       <p className="font-semibold">
