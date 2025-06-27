@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./Header.css";
-import Logo from "../assets/img/askoxylogoblack.png"; // Corrected path
+import Logo from "../assets/img/askoxylogonew.png"; // Corrected path
 import SignInIcon from "../assets/img/signin.png"; // Ensure path is correct
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";

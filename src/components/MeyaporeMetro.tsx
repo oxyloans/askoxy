@@ -103,14 +103,14 @@ const MeyaporeMetro: React.FC = () => {
       description: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
       weight: 5.0,
     },
-    {
-      id: 3,
-      imageUrl: Rice4,
-      title: "10KG Premium Rice Bag",
-      description:
-        "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
-      weight: 10.0,
-    },
+    // {
+    //   id: 3,
+    //   imageUrl: Rice4,
+    //   title: "10KG Premium Rice Bag",
+    //   description:
+    //     "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
+    //   weight: 10.0,
+    // },
     {
       id: 4,
       imageUrl: Rice3,

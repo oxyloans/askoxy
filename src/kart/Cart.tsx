@@ -78,6 +78,7 @@ const CartPage: React.FC = () => {
   );
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [coordinatesReady, setCoordinatesReady] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -161,10 +162,51 @@ const CartPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setAddresses(response.data);
-      setSelectedAddress(response.data[0] || null);
+      const fetchedAddresses = response.data;
+      let defaultAddress = fetchedAddresses[0] || null;
+
+      if (
+        defaultAddress &&
+        (!defaultAddress.latitude || !defaultAddress.longitude)
+      ) {
+        const fullAddress = `${defaultAddress.flatNo}, ${defaultAddress.landMark}, ${defaultAddress.address}, ${defaultAddress.pincode}`;
+        const coordinates = await getCoordinates(fullAddress);
+        if (coordinates) {
+          defaultAddress = {
+            ...defaultAddress,
+            latitude: coordinates.lat,
+            longitude: coordinates.lng,
+          };
+          // Optionally, update the address in the backend to save coordinates
+          try {
+            await axios.put(
+              `${BASE_URL}/user-service/updateAddress/${defaultAddress.id}`,
+              {
+                ...defaultAddress,
+                latitude: coordinates.lat.toString(),
+                longitude: coordinates.lng.toString(),
+                userId: customerId,
+              },
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+          } catch (error) {
+            console.error("Error updating address with coordinates:", error);
+          }
+        } else {
+          console.warn("Could not fetch coordinates for address:", fullAddress);
+          message.warning(
+            "Unable to fetch coordinates for the selected address."
+          );
+        }
+      }
+
+      setAddresses(fetchedAddresses);
+      setSelectedAddress(defaultAddress);
     } catch (error) {
       console.error("Error fetching addresses:", error);
+      message.error("Failed to load addresses. Please try again.");
     }
   };
 
@@ -1335,9 +1377,72 @@ const CartPage: React.FC = () => {
   useEffect(() => {
     const initializeCartPage = async () => {
       setIsLoading(true);
+      setCoordinatesReady(false); // Reset coordinates readiness
       try {
         console.log("Initializing cart page...");
         await fetchAddresses();
+
+        // Ensure selectedAddress has valid coordinates
+        if (
+          selectedAddress &&
+          (!selectedAddress.latitude || !selectedAddress.longitude)
+        ) {
+          const fullAddress = `${selectedAddress.flatNo}, ${selectedAddress.landMark}, ${selectedAddress.address}, ${selectedAddress.pincode}`;
+          console.log(
+            "Fetching coordinates for selected address:",
+            fullAddress
+          );
+          const coordinates = await getCoordinates(fullAddress);
+          if (
+            coordinates &&
+            !isNaN(coordinates.lat) &&
+            !isNaN(coordinates.lng)
+          ) {
+            const updatedAddress = {
+              ...selectedAddress,
+              latitude: coordinates.lat,
+              longitude: coordinates.lng,
+            };
+            setSelectedAddress(updatedAddress);
+            setCoordinatesReady(true); // Mark coordinates as ready
+            // Optionally update backend with coordinates
+            try {
+              await axios.put(
+                `${BASE_URL}/user-service/updateAddress/${selectedAddress.id}`,
+                {
+                  ...updatedAddress,
+                  latitude: coordinates.lat.toString(),
+                  longitude: coordinates.lng.toString(),
+                  userId: customerId,
+                },
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+            } catch (error) {
+              console.error("Error updating address with coordinates:", error);
+            }
+          } else {
+            console.warn(
+              "Could not fetch valid coordinates for address:",
+              fullAddress
+            );
+            message.warning(
+              "Unable to fetch coordinates for the selected address."
+            );
+            setSelectedAddress(null); // Reset to avoid invalid coordinates
+            setCoordinatesReady(false);
+          }
+        } else if (
+          selectedAddress &&
+          selectedAddress.latitude &&
+          selectedAddress.longitude
+        ) {
+          setCoordinatesReady(true); // Coordinates already valid
+        } else {
+          setCoordinatesReady(false); // No valid address
+        }
+
         const [cartResponse, preference] = await Promise.all([
           fetchCartData(),
           fetchContainerPreference(),
@@ -1350,6 +1455,7 @@ const CartPage: React.FC = () => {
       } catch (error) {
         console.error("Error initializing cart page:", error);
         message.error("Failed to load cart data. Please try again.");
+        setCoordinatesReady(false);
       } finally {
         setIsLoading(false);
       }
@@ -1399,11 +1505,12 @@ const CartPage: React.FC = () => {
     const fullAddress = `${selectedAddress?.flatNo}, ${selectedAddress?.landMark}, ${selectedAddress?.address}, ${selectedAddress?.pincode}`;
     const coordinates = await getCoordinates(fullAddress);
 
-    if (!coordinates) {
+    if (!coordinates || isNaN(coordinates.lat) || isNaN(coordinates.lng)) {
       message.error(
         "Unable to find location coordinates. Please check the address."
       );
-      return;
+      setCoordinatesReady(false);
+      return { isWithin: false };
     }
 
     const withinRadius = await isWithinRadius(coordinates);
@@ -1416,7 +1523,7 @@ const CartPage: React.FC = () => {
           <>
             <p>
               Sorry! We're unable to deliver to this address as it is{" "}
-              {withinRadius.distanceInKm} km away, beyond our 20 km delivery
+              {withinRadius.distanceInKm} km away, beyond our 25 km delivery
               radius. Please select another saved address within the radius or
               add a new one to proceed. We appreciate your understanding!
             </p>
@@ -1438,13 +1545,8 @@ const CartPage: React.FC = () => {
         ),
         footer: null,
       });
-
-      const updatedWithinRadius = {
-        ...withinRadius,
-        isWithin: false,
-      };
-
-      return updatedWithinRadius;
+      setCoordinatesReady(false);
+      return { ...withinRadius, isWithin: false };
     }
 
     setSelectedAddress({
@@ -1452,6 +1554,7 @@ const CartPage: React.FC = () => {
       latitude: coordinates.lat,
       longitude: coordinates.lng,
     });
+    setCoordinatesReady(true); // Mark coordinates as ready
     return withinRadius;
   };
 
@@ -2531,14 +2634,18 @@ const CartPage: React.FC = () => {
               </div>
             </Modal>
           )}
+          {coordinatesReady &&
+          selectedAddress?.latitude &&
+          selectedAddress?.longitude ? (
+            <DeliveryFee
+              userLat={selectedAddress.latitude}
+              userLng={selectedAddress.longitude}
+              onFeeCalculated={(fee) => setDeliveryFee(fee)}
+            />
+          ) : null}
         </div>
       </div>
       <Footer />
-      <DeliveryFee
-        userLat={selectedAddress?.latitude}
-        userLng={selectedAddress?.longitude}
-        onFeeCalculated={(fee) => setDeliveryFee(fee)}
-      />
     </div>
   );
 };

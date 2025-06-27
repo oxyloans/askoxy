@@ -150,9 +150,15 @@ import LoansInvestmentsLandingPage from "./LoansInvestments/LoanInvestmentsLandi
 import RealEstate from "./Real Estate/Real Estate/RealEstate";
 import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
 import MetroLogin  from "./Pages/Auth/MetroLogin"
-
 import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
 
+import HomePage from "./Retailshop/Pages/Home";
+import ShopFormPage from "./Retailshop/Pages/ShopFormPage";
+import ShopListPage from "./Retailshop/Pages/ShopListPage";
+import CarnivalFormPage from "./Retailshop/Pages/CarnivalFormPage";
+import CarnivalListPage from "./Retailshop/Pages/CarnivalListPage";
+import ShopEditForm from "./Retailshop/components/ShopEditForm";
+import CarnivalEditPage from "./Retailshop/Pages/CarnivalEditPage";
 
 // *************************STUDY ABRAD****************************//
 import CoursesPage from "./StudyAbroad/Course";
@@ -203,6 +209,14 @@ const App: React.FC = () => {
         <ScrollToTop />
         <div className="App">
           <Routes>
+            
+            <Route path="/shopretail" element={<HomePage />} />
+            <Route path="/shop-form" element={<ShopFormPage />} />
+            <Route path="/shop-list" element={<ShopListPage />} />
+            <Route path="/shop-edit/:id" element={<ShopEditForm />} />
+            <Route path="/carnival-form" element={<CarnivalFormPage />} />
+            <Route path="/carnival-list" element={<CarnivalListPage />} />
+            <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             <Route path="services/freerudraksha" element={<Freerudraksha />} />
@@ -210,8 +224,7 @@ const App: React.FC = () => {
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
             <Route path="addblogs" element={<AddBlog />} />
-            <Route path="metroLogin" element={<MetroLogin />} />
-            
+            <Route path="metroLogin" element={<MetroLogin />} />
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />
             <Route path="services/bmvcoin" element={<BMVCOINmain />} />
@@ -295,7 +308,7 @@ const App: React.FC = () => {
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
-            <Route path = "/contactus" element={<ContactUs />}/>
+            <Route path="/contactus" element={<ContactUs />} />
             <Route path="/faqs" element={<RiceOfferFAQs />} />
             {/* study abrad */}
             <Route path="/studyabroad" element={<StudyAbroadLandingPage />} />

@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { FaLinkedinIn } from "react-icons/fa";
 
-// Import images
+// Images
 import Radha from "../assets/img/radha sir.png";
 import Rama from "../assets/img/rama mam.png";
 import Sneha from "../assets/img/sneha.png";
@@ -64,127 +64,85 @@ const teamMembers = [
   },
 ];
 
-const OurPeople = () => {
-  // Animation variants for container
-  const containerVariants = {
+const OurPeople: React.FC = () => {
+  const container = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.12,
-        delayChildren: 0.3,
-      },
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
     },
   };
 
-  // Animation variants for team cards
-  const cardVariants = {
+  const card = {
     hidden: { opacity: 0, y: 40 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-  };
-
-  // Animation for the header underline
-  const underlineVariants = {
-    hidden: { width: 0 },
-    visible: {
-      width: "120px",
-      transition: { duration: 0.8, delay: 0.4 },
+      transition: { duration: 0.5, ease: "easeOut" },
     },
   };
 
   return (
-    <section className="bg-gradient-to-b from-purple-50 to-white py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Header Section with improved styling */}
-      <div className="text-center mb-16 md:mb-24">
-        <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-800 mb-4"
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true, margin: "-50px" }}
-        >
-          Meet Our Executive Team
-        </motion.h2>
-
-        <div className="flex justify-center">
-          <motion.div
-            className="h-1.5 bg-purple-500 rounded-full"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={underlineVariants}
-          ></motion.div>
-        </div>
-
-        <motion.p
-          className="text-gray-600 mt-6 max-w-3xl mx-auto text-base sm:text-lg md:text-xl font-normal px-4"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-        >
-          The visionary leaders who combine decades of expertise to drive
-          innovation and excellence in everything we do.
-        </motion.p>
-      </div>
-
-      {/* Team Members Grid with improved responsiveness */}
+    <section className="bg-gradient-to-b from-purple-50 to-white py-16 px-4 lg:px-8">
+      {/* Section Header */}
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto"
-        variants={containerVariants}
+        className="text-center mb-12"
+        initial={{ opacity: 0, y: -20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 mb-3">
+          Meet Our Executive Team
+        </h2>
+        <div className="h-1.5 bg-purple-600 w-28 mx-auto rounded-full mb-4"></div>
+        <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+          The visionary leaders driving innovation and excellence at Oxy Group.
+        </p>
+      </motion.div>
+
+      {/* Team Members Grid */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto"
+        variants={container}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
+        viewport={{ once: true }}
       >
         {teamMembers.map((member, index) => (
           <motion.div
             key={index}
-            className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
-            variants={cardVariants}
-            whileHover={{
-              y: -8,
-              transition: { duration: 0.3 },
-            }}
+            className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+            variants={card}
           >
-            {/* Profile Image with gradient overlay */}
-            <div className="relative overflow-hidden h-64 sm:h-72">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-10"></div>
-              <motion.div
-                className="w-full h-full"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.5 }}
-              >
-                <img
-                  src={member.img}
-                  alt={member.name}
-                  className="w-full h-full object-cover object-center object-top"
-                  loading="lazy"
-                />
-              </motion.div>
+            {/* Image Container */}
+            <div className="relative overflow-hidden h-64">
+              <img
+                src={member.img}
+                alt={`${member.name} - ${member.role}`}
+                className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+                loading="lazy"
+              />
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
             </div>
 
-            {/* Info Card with improved styling */}
-            <div className="p-5 sm:p-6 text-center">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 truncate">
+            {/* Details */}
+            <div className="p-5 text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 {member.name}
               </h3>
-              <p className="text-purple-600 font-medium text-sm mb-4">
-                {member.role}
-              </p>
+              <p className="text-purple-700 text-sm mb-3">{member.role}</p>
 
-              {/* LinkedIn Link with better styling and accessibility */}
+              {/* LinkedIn Button */}
               <a
                 href={member.linkedin}
-                className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-50 text-indigo-600 hover:text-white hover:bg-indigo-600 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                aria-label={`${member.name}'s LinkedIn Profile`}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`LinkedIn profile of ${member.name}`}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300"
               >
-                <FaLinkedinIn className="text-lg sm:text-xl" />
+                <FaLinkedinIn size={18} />
               </a>
             </div>
           </motion.div>

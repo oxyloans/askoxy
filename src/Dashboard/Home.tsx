@@ -52,12 +52,17 @@ import O8 from "../assets/img/StudyAbroda.png";
 import O3 from "../assets/img/2offer.png";
 import O4 from "../assets/img/o4.png";
 import O5 from "../assets/img/tb1.png";
-import O6 from "../assets/img/26kg.png";
-import CB from "../assets/img/cashback offer png.png"
-import Cashew from "../assets/img/cashewoffer1.png"
-import Riceoffers from "../assets/img/rice offers.png"
+import O6 from "../assets/img/35kg1.png";
+import CB from "../assets/img/cashback offer png.png";
+import Cashew from "../assets/img/cashewoffer1.png";
+import Riceoffers from "../assets/img/rice offers.png";
 import O7 from "../assets/img/5offer.png";
 import O9 from "../assets/img/essentialsmart.png";
+import gold from "../assets/img/gold.png";
+import allitems from "../assets/img/all items.png";
+import grocerie from "../assets/img/Groceries.png";
+import rice from "../assets/img/rice.png";
+
 
 // Define interfaces for Offer and UserEligibleOffer
 interface Offer {
@@ -145,6 +150,7 @@ interface Item {
   quantity: number;
   itemMrp: number;
   units: string;
+  categoryName: string;
 }
 
 interface Category {
@@ -182,7 +188,7 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState("All Items");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const productsRef = useRef<HTMLDivElement>(null);
@@ -414,6 +420,17 @@ const Home: React.FC = () => {
       );
       const data: Category[] = response.data;
 
+      // Log API response to debug category names
+      console.log(
+        "API Categories:",
+        data.map((cat) => ({
+          categoryName: cat.categoryName,
+          itemCount: cat.itemsResponseDtoList.length,
+          categoryImage: cat.categoryImage,
+        }))
+      );
+
+      // Collect all unique items
       const uniqueItemsMap = new Map();
       data.forEach((category) => {
         category.itemsResponseDtoList.forEach((item) => {
@@ -425,7 +442,10 @@ const Home: React.FC = () => {
                   existing.itemName.trim().toLowerCase() === normalizedName
               )
             ) {
-              uniqueItemsMap.set(item.itemId, item);
+              uniqueItemsMap.set(item.itemId, {
+                ...item,
+                categoryName: category.categoryName,
+              });
             }
           }
         });
@@ -434,22 +454,94 @@ const Home: React.FC = () => {
       const uniqueItemsList = Array.from(uniqueItemsMap.values());
       const sortedUniqueItems = sortItemsByName(uniqueItemsList);
 
+      // Log unique items to verify category assignments
+      console.log(
+        "Unique Items:",
+        uniqueItemsList.map((item) => ({
+          itemName: item.itemName,
+          categoryName: item.categoryName,
+        }))
+      );
+
+      // Define rice categories (case-insensitive, accounting for spaces)
+      const riceCategories = [
+        "kolam",
+        "kolam rice",
+        "hmt",
+        "brown rice",
+        "sonamasoori",
+        "rice container",
+        "low gi",
+        "organic rice",
+        "basmati rice",
+        "basmati",
+      ].map((name) => name.toLowerCase());
+
+      // Filter items for each category
+      const allItems = sortedUniqueItems;
+      const goldItems = sortedUniqueItems.filter(
+        (item) => item.categoryName.trim().toLowerCase() === "gold"
+      );
+      const riceItems = sortedUniqueItems.filter((item) =>
+        riceCategories.includes(item.categoryName.trim().toLowerCase())
+      );
+      const groceryItems = sortedUniqueItems.filter(
+        (item) =>
+          item.categoryName.trim().toLowerCase() !== "gold" &&
+          !riceCategories.includes(item.categoryName.trim().toLowerCase())
+      );
+
+      // Log filtered items to verify correct categorization
+      console.log("All Items Count:", allItems.length);
+      console.log("Gold Items Count:", goldItems.length);
+      console.log("Rice Items Count:", riceItems.length);
+      console.log("Grocery Items Count:", groceryItems.length);
+      console.log(
+        "Grocery Items:",
+        groceryItems.map((item) => ({
+          itemName: item.itemName,
+          categoryName: item.categoryName,
+        }))
+      );
+
+      // Define default category images
+      const defaultCategoryImages: Record<string, string> = {
+        "All Items": ProductImg1, // Default image for "All Items"
+        Groceries: Cashew, // Use cashew image or another grocery-related image
+        Gold: CryptoImg1, // Gold-related image
+        Rice: Riceoffers, // Rice-related image
+      };
+
+      // Create fixed categories with images
       const allCategories: Category[] = [
         {
           categoryName: "All Items",
-          categoryImage: null,
-          itemsResponseDtoList: sortedUniqueItems,
+          categoryImage: allitems,
+          itemsResponseDtoList: allItems,
           subCategories: [],
         },
-        ...data.map((category) => ({
-          ...category,
-          itemsResponseDtoList: sortItemsByName(category.itemsResponseDtoList),
-          subCategories: category.subCategories || [],
-        })),
+        {
+          categoryName: "Groceries",
+          categoryImage: grocerie,
+          itemsResponseDtoList: groceryItems,
+          subCategories: [],
+        },
+        {
+          categoryName: "Gold",
+          categoryImage: gold,
+          itemsResponseDtoList: goldItems,
+          subCategories: [],
+        },
+        {
+          categoryName: "Rice",
+          categoryImage: rice,
+          itemsResponseDtoList: riceItems,
+          subCategories: [],
+        },
       ];
 
       setCategories(allCategories);
-      updateProducts(sortedUniqueItems);
+      updateProducts(allItems);
       categoriesFetched.current = true;
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -542,17 +634,16 @@ const Home: React.FC = () => {
       alt: "Products",
       path: "/main/dashboard/products",
     },
-   {
-  id: "Cashew Offer",
-  alt: "Products",
-  src: Cashew,
-  path: "/main/dashboard/products",
-  onClick: () => {
-    setActiveCategory("Cashew nuts upto ₹40 cashback");
-    navigate("/main/dashboard/products");
-  }
-}
-    ,
+    {
+      id: "Cashew Offer",
+      alt: "Products",
+      src: Cashew,
+      path: "/main/dashboard/products",
+      onClick: () => {
+        setActiveCategory("Groceries"); // Updated to align with new category
+        navigate("/main/dashboard/products");
+      },
+    },
     {
       id: "Cashback2",
       src: Riceoffers,
@@ -563,13 +654,13 @@ const Home: React.FC = () => {
       id: "o1",
       src: O6,
       alt: "Products",
-      path: "/main/dashboard/products?weight=10.0",
+      path: "/main/dashboard/products?weight=26.0",
     },
     {
       id: "o6",
       src: O9,
       alt: "Products",
-      path: "/main/dashboard/products?weight=26.0",
+      path: "/main/dashboard/products",
     },
     {
       id: "o2",
@@ -1308,66 +1399,76 @@ const Home: React.FC = () => {
         )}
       </Modal>
       {/* Header Images Section */}
- <div className="w-full py-1 md:py-2">
-  <div className="px-1 sm:px-2 md:px-3 lg:px-4 mx-auto max-w-7xl">
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 md:gap-2 lg:gap-3">
-      {headerImages.map((image) => (
-        <motion.div
-          key={image.id}
-          whileHover={{ 
-            scale: 1.05,
-            y: -5,
-            rotateY: 5
-          }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ 
-            duration: 0.3, 
-            ease: "easeOut",
-            type: "spring",
-            stiffness: 300,
-            damping: 20
-          }}
-          className="cursor-pointer overflow-hidden rounded-lg transition-all duration-300"
-          onHoverStart={() => setHoveredImage(image.id)}
-          onHoverEnd={() => setHoveredImage(null)}
-          onClick={() => navigate(image.path)}
-        >
-          <div className="relative w-full overflow-hidden rounded-lg">
-            <motion.img
-              src={image.src}
-              alt={image.alt || "Header image"}
-              className="w-full h-auto object-contain rounded-lg"
-              animate={{ 
-                scale: hoveredImage === image.id ? 1.02 : 1
-              }}
-              transition={{ 
-                duration: 0.4,
-                ease: "easeInOut"
-              }}
-              whileHover={{
-                filter: "brightness(1.1) contrast(1.05)"
-              }}
-              style={{
-                filter: hoveredImage === image.id ? "brightness(1.1) contrast(1.05)" : "brightness(1) contrast(1)"
-              }}
-            />
-            <motion.div
-              className="absolute inset-0 rounded-lg"
-              initial={{ opacity: 0 }}
-              animate={{ 
-                opacity: hoveredImage === image.id ? 0.1 : 0
-              }}
-              style={{
-                background: "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))"
-              }}
-              transition={{ duration: 0.3 }}
-            />
+      <div className="w-full py-1 md:py-2">
+        <div className="px-1 sm:px-2 md:px-3 lg:px-4 mx-auto max-w-7xl">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 md:gap-2 lg:gap-3">
+            {headerImages.map((image) => (
+              <motion.div
+                key={image.id}
+                whileHover={{
+                  scale: 1.05,
+                  y: -5,
+                  rotateY: 5,
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeOut",
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20,
+                }}
+                className="cursor-pointer overflow-hidden rounded-lg transition-all duration-300"
+                onHoverStart={() => setHoveredImage(image.id)}
+                onHoverEnd={() => setHoveredImage(null)}
+                onClick={() => {
+                  if (image.onClick) {
+                    image.onClick();
+                  } else {
+                    navigate(image.path);
+                  }
+                }}
+              >
+                <div className="relative w-full overflow-hidden rounded-lg">
+                  <motion.img
+                    src={image.src}
+                    alt={image.alt || "Header image"}
+                    className="w-full h-auto object-contain rounded-lg"
+                    animate={{
+                      scale: hoveredImage === image.id ? 1.02 : 1,
+                    }}
+                    transition={{
+                      duration: 0.4,
+                      ease: "easeInOut",
+                    }}
+                    whileHover={{
+                      filter: "brightness(1.1) contrast(1.05)",
+                    }}
+                    style={{
+                      filter:
+                        hoveredImage === image.id
+                          ? "brightness(1.1) contrast(1.05)"
+                          : "brightness(1) contrast(1)",
+                    }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 rounded-lg"
+                    initial={{ opacity: 0 }}
+                    animate={{
+                      opacity: hoveredImage === image.id ? 0.1 : 0,
+                    }}
+                    style={{
+                      background:
+                        "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))",
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <section ref={productsRef} className="mb-12">
@@ -1387,74 +1488,111 @@ const Home: React.FC = () => {
             </motion.button>
           </div>
 
-          <div className="mb-6 overflow-x-auto no-scrollbar">
-            <div className="flex space-x-2 pb-2">
-              {categories.map((category, index) => (
-                <motion.button
-                  key={category.categoryName}
-                  animate={
-                    activeCategory === category.categoryName
-                      ? "active"
-                      : "inactive"
-                  }
-                  variants={categoryVariants}
-                  whileHover={
-                    activeCategory !== category.categoryName
-                      ? { scale: 1.05 }
-                      : {}
-                  }
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleCategoryChange(category.categoryName)}
-                  className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap"
-                >
-                  {category.categoryName}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+          {/* Filter Tabs as Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
             <AnimatePresence>
-              {productsLoading ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <ProductSkeleton key={`skeleton-${index}`} index={index} />
-                ))
-              ) : displayProducts.length > 0 ? (
-                displayProducts.map((product, index) =>
-                  renderProductItem(product, index)
-                )
-              ) : (
-                <div className="col-span-full py-8 text-center">
-                  <p className="text-gray-500">
-                    No products found. Try a different search or category.
-                  </p>
-                </div>
-              )}
+              {categories.map((category, index) => (
+                <motion.div
+                  key={category.categoryName}
+                  custom={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  whileHover={{
+                    scale: 1.02,
+                    boxShadow: "0 4px 12px rgba(147, 51, 234, 0.1)",
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`bg-white rounded-xl shadow-sm overflow-hidden relative border border-gray-100 ${
+                    activeCategory === category.categoryName
+                      ? "border-purple-200"
+                      : ""
+                  } cursor-pointer`}
+                  onClick={() => handleCategoryChange(category.categoryName)}
+                >
+                  <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative">
+                    <motion.img
+                      src={
+                        category.categoryImage ||
+                        "https://via.placeholder.com/150"
+                      }
+                      alt={category.categoryName}
+                      className="w-full h-full object-contain"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 10,
+                      }}
+                    />
+                    {activeCategory === category.categoryName && (
+                      <motion.div
+                        className="absolute inset-0 bg-purple-600 bg-opacity-10 flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {/* <Star className="text-purple-600" size={24} /> */}
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="p-3 text-center">
+                    <h3 className="font-medium text-gray-800 text-sm hover:text-purple-600 transition-colors">
+                      {category.categoryName}
+                    </h3>
+                  </div>
+                </motion.div>
+              ))}
             </AnimatePresence>
           </div>
 
-          {!productsLoading && products.length > displayProducts.length && (
-            <div className="mt-8 text-center flex justify-center space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={loadMoreProducts}
-                className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
-              >
-                Load More
-                <TrendingUp size={16} className="ml-2" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
-                onClick={viewAllProducts}
-              >
-                View All
-                <ArrowRight size={16} className="ml-1" />
-              </motion.button>
+          {/* Product Items (Shown when a category is selected) */}
+          {activeCategory && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              <AnimatePresence>
+                {productsLoading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <ProductSkeleton key={`skeleton-${index}`} index={index} />
+                  ))
+                ) : displayProducts.length > 0 ? (
+                  displayProducts.map((product, index) =>
+                    renderProductItem(product, index)
+                  )
+                ) : (
+                  <div className="col-span-full py-8 text-center">
+                    <p className="text-gray-500">
+                      No products found for this category.
+                    </p>
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           )}
+
+          {/* Load More and View All Buttons */}
+          {activeCategory &&
+            !productsLoading &&
+            products.length > displayProducts.length && (
+              <div className="mt-8 text-center flex justify-center space-x-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={loadMoreProducts}
+                  className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
+                >
+                  Load More
+                  <TrendingUp size={16} className="ml-2" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+                  onClick={viewAllProducts}
+                >
+                  View All
+                  <ArrowRight size={16} className="ml-1" />
+                </motion.button>
+              </div>
+            )}
         </section>
 
         {/* Services Section */}

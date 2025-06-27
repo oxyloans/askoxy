@@ -2,30 +2,43 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import oxyloansLogo from '../assets/img/image1.png';
-import oxybricksLogo from '../assets/img/image2.png';
-import bmvcoinLogo from '../assets/img/image3.png';
-import oxyfoundationLogo from '../assets/img/image4.png';
-import xperthomes from '../assets/img/image5.png';
+import oxyloansLogo from "../assets/img/image1.png";
+import oxybricksLogo from "../assets/img/image2.png";
+import bmvcoinLogo from "../assets/img/image3.png";
+import oxyfoundationLogo from "../assets/img/image4.png";
+import xperthomes from "../assets/img/image5.png";
 
-// Custom arrow components
-const CustomPrevArrow = (props: any) => (
-  <button
-    {...props}
-    className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
-  >
-    ❮
-  </button>
-);
+// Custom Arrows - Hidden on mobile using Tailwind
+function CustomPrevArrow(props: any) {
+  const { onClick } = props;
+  return (
+    <div className="hidden sm:block">
+      <button
+        onClick={onClick}
+        className="absolute left-[-30px] top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800 text-3xl z-10 focus:outline-none"
+        aria-label="Previous Slide"
+      >
+        ❮
+      </button>
+    </div>
+  );
+}
 
-const CustomNextArrow = (props: any) => (
-  <button
-    {...props}
-    className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
-  >
-    ❯
-  </button>
-);
+function CustomNextArrow(props: any) {
+  const { onClick } = props;
+  return (
+    <div className="hidden sm:block">
+      <button
+        onClick={onClick}
+        className="absolute right-[-30px] top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800 text-3xl z-10 focus:outline-none"
+        aria-label="Next Slide"
+      >
+        ❯
+      </button>
+    </div>
+  );
+}
+
 
 const OxyGroupCarousel = () => {
   const companies = [
@@ -58,27 +71,18 @@ const OxyGroupCarousel = () => {
     autoplaySpeed: 2000,
     cssEase: "linear",
     pauseOnHover: false,
+    arrows: true, // Keep this true to enable your custom arrows
     nextArrow: <CustomNextArrow />,
     prevArrow: <CustomPrevArrow />,
     responsive: [
-      {
-        breakpoint: 1024,
-        settings: { slidesToShow: 3 },
-      },
-      {
-        breakpoint: 768,
-        settings: { slidesToShow: 2 },
-      },
-      {
-        breakpoint: 480,
-        settings: { slidesToShow: 1 },
-      },
+      { breakpoint: 1024, settings: { slidesToShow: 3, arrows: true } },
+      { breakpoint: 768, settings: { slidesToShow: 2, arrows: false } }, // ❌ Hide arrows on tablets
+      { breakpoint: 480, settings: { slidesToShow: 1, arrows: false } }, // ❌ Hide arrows on mobile
     ],
   };
 
   return (
     <section className="py-10 px-6 bg-gradient-to-b from-white via-white to-white text-center">
-      {/* Gradient Colored Heading */}
       <h3 className="text-2xl font-extrabold mb-10">
         <span className="text-blue-800">OXY</span>{" "}
         <span className="text-green-600">GROUP</span>{" "}
@@ -97,13 +101,11 @@ const OxyGroupCarousel = () => {
               >
                 <img
                   src={company.logo}
-                  alt={company.name}
+                  alt={`${company.name} Logo`}
                   className="mb-3 w-full h-auto max-w-full object-contain"
+                  loading="lazy"
                 />
               </a>
-              {/* <p className="font-medium text-base text-gray-800">
-                {company.name}
-              </p> */}
             </div>
           ))}
         </Slider>

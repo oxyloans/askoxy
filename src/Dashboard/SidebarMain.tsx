@@ -9,7 +9,7 @@ import {
   Users,
   MessageSquare,
   Coins,
-  ChevronLeft,
+  ChevronLeft,Layers,
   ChevronRight,
   LogOut,
   Book,
@@ -87,11 +87,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
       icon: <Coins size={20} />,
       label: "My Crypto",
     },
-    {
+   {
       to: "/main/dashboard/services",
-      icon: <Book size={18} />,
-      label: "Services & Blogs",
-    },
+      icon: <Layers size={18} />,
+      label: "Services & Blogs",
+    },
     
   ];
 

@@ -377,7 +377,7 @@ const HelpDeskDashboard: React.FC = () => {
       title: "Caller Name",
       dataIndex: "caller",
       key: "caller",
-      width: 200,
+      width: 180,
       render: (_: string, record: any) => {
         const behavior = record.customerBehaviour;
         const emojiLabel = emojiMap[behavior] || behavior;
@@ -405,7 +405,7 @@ const HelpDeskDashboard: React.FC = () => {
       title: "Comments",
       dataIndex: "comments",
       key: "comments",
-      width: 300,
+      width: 280,
       render: (text: string) => (
         <div className="max-h-16 overflow-y-auto">
           <strong className="text-sm">{text}</strong>
@@ -446,10 +446,13 @@ const HelpDeskDashboard: React.FC = () => {
       width: 120,
       render: (text: string) => (
         <span>
-          {new Date(text).toLocaleDateString("en-US", {
+          {new Date(text).toLocaleString("en-US", {
             year: "numeric",
             month: "short",
             day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
           })}
         </span>
       ),
