@@ -60,6 +60,8 @@ import MyWalletPage from "./kart/Wallet";
 import CartPage from "./kart/Cart";
 import MyOrders from "./kart/Myorders";
 import ProfilePage from "./kart/Profile";
+import BlogsPage from "./Dashboard/BlogPage";
+import ServicesPage from "./Dashboard/ServicesPage";
 import SubscriptionPage from "./kart/Subscription";
 import WriteToUs from "./kart/Writetous";
 import TicketHistoryPage from "./kart/Tickethistory";
@@ -262,9 +264,9 @@ const App: React.FC = () => {
               path="/loanmanagement"
               element={<LoanManagementLandingPage />}
             />
-            <Route path="/cas" element={<CASDashboard />} />
+            <Route path="/los" element={<CASDashboard />} />
             <Route
-              path="/cas/:useCaseId/:type"
+              path="/los/:useCaseId/:type"
               element={<CASRouteRenderer />}
             />
             <Route path="/cms" element={<CMSDashboard />} />
@@ -445,6 +447,8 @@ const App: React.FC = () => {
               />
               <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
               <Route path="dashboard/:tab" element={<DashboardMain />} />
+              <Route path="dashboard/myservices" element={<ServicesPage />} />
+              <Route path="dashboard/myblogs" element={<BlogsPage />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               <Route
                 path="services/freerudraksha"

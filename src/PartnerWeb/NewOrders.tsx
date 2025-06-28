@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Table,
   Tag,
@@ -72,10 +72,11 @@ const OrdersPage: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [rejectForm] = Form.useForm();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
   const [isExchangeModalOpen, setIsExchangeModalOpen] = useState(false);
   const [takingNewBag, setTakingNewBag] = useState<string | null>(null);
   const [newBagBarcode, setNewBagBarcode] = useState<string>("");
-  // const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [formData, setFormData] = useState({
     newBagBarcodes: "",
     returnBagWeight: "",
@@ -85,6 +86,7 @@ const OrdersPage: React.FC = () => {
     amountPaid: "",
   });
   const [showValidation, setShowValidation] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null); // Reference to the table container
 
   const loadOrders = async () => {
     try {
@@ -112,7 +114,6 @@ const OrdersPage: React.FC = () => {
         const filtered = fetchedExchangeOrders.filter(
           (order) => order.status === "EXCHANGEREQUESTED"
         );
-
         setFilteredExchangeOrders(filtered);
       } else if (status === "3") {
         const filtered = fetchedExchangeOrders.filter(
@@ -161,9 +162,52 @@ const OrdersPage: React.FC = () => {
     if (results.length === 0 && searchText) {
       message.info("No orders match your search");
     }
-
     setFilteredExchangeOrders(results);
   }, [searchText]);
+
+  // Restore scroll position after orders are loaded
+  useEffect(() => {
+    if (!loading && orders.length > 0) {
+      const savedOrderId = localStorage.getItem("orderId");
+      if (savedOrderId) {
+        // Check if the order is in the current filteredOrders
+        const targetRow = document.querySelector(
+          `[data-row-key="${savedOrderId}"]`
+        );
+        if (targetRow) {
+          targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          localStorage.removeItem("orderId");
+        } else {
+          // Try to find the order in the full orders list (for pagination)
+          const orderIndex = orders.findIndex(
+            (order) => order.orderId === savedOrderId
+          );
+          if (orderIndex !== -1) {
+            // Calculate the page number (1-based indexing for Ant Design Table)
+            const targetPage = Math.ceil((orderIndex + 1) / pageSize);
+            setCurrentPage(targetPage);
+            // Wait for the next render to ensure the Table updates to the correct page
+            setTimeout(() => {
+              const updatedRow = document.querySelector(
+                `[data-row-key="${savedOrderId}"]`
+              );
+              if (updatedRow) {
+                updatedRow.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+              localStorage.removeItem("orderId");
+            }, 0);
+          } else {
+            // Order not found in the full dataset
+            message.info("The previously viewed order is not available.");
+            localStorage.removeItem("orderId");
+          }
+        }
+      }
+    }
+  }, [loading, orders, filteredOrders]);
 
   const fetchDeliveryBoysHandler = async (order?: Order | ExchangeOrder) => {
     setDbLoading1(true);
@@ -191,11 +235,16 @@ const OrdersPage: React.FC = () => {
   const handleSearch1 = (value: string) => {
     setSearchText1(value);
   };
+
   const handleOrderDetails = (order: Order | ExchangeOrder) => {
     const orderId = (order as ExchangeOrder).orderId2
       ? (order as ExchangeOrder).orderId2
       : (order as Order).orderId;
+    // Save orderId and scroll position
     localStorage.setItem("orderId", orderId);
+    if (tableRef.current) {
+      localStorage.setItem("scrollPosition", window.scrollY.toString());
+    }
     navigate(`/home/orderDetails`);
   };
 
@@ -414,8 +463,8 @@ const OrdersPage: React.FC = () => {
       );
       message.success("Data submitted successfully!");
       setIsExchangeModalOpen(false);
-      setShowValidation(false); // Reset validation display
-      // Add onRefresh() if you have a refresh function
+      setShowValidation(false);
+      loadExchangeOrders();
     } catch (error: any) {
       message.error(error.message || "Something went wrong!");
     } finally {
@@ -837,15 +886,22 @@ const OrdersPage: React.FC = () => {
               }
             />
           ) : (
-            <Table
-              dataSource={filteredOrders}
-              columns={newOrderColumns}
-              rowKey="orderId"
-              pagination={{ pageSize: 50, showSizeChanger: false }}
-              className="max-w-full"
-              scroll={{ x: "max-content" }}
-              bordered
-            />
+            <div ref={tableRef}>
+              <Table
+                dataSource={filteredOrders}
+                columns={newOrderColumns}
+                rowKey="orderId"
+                pagination={{
+                  pageSize: pageSize,
+                  showSizeChanger: false,
+                  current: currentPage,
+                  onChange: (page) => setCurrentPage(page),
+                }}
+                className="max-w-full"
+                scroll={{ x: "max-content" }}
+                bordered
+              />
+            </div>
           )}
         </TabPane>
         <TabPane tab="Exchange Orders" key="exchange-orders">

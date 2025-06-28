@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Table,
   Tag,
@@ -58,6 +58,8 @@ const ExchangeOrdersTable: React.FC = () => {
   });
   const [showValidation, setShowValidation] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 50 });
+  const tableRef = useRef<HTMLDivElement>(null);
 
   // Fetch exchange orders on component mount
   useEffect(() => {
@@ -95,6 +97,53 @@ const ExchangeOrdersTable: React.FC = () => {
 
     setFilteredOrders(results);
   }, [searchText, exchangeOrders, selectedStatus]);
+
+  // Restore scroll position after orders are loaded
+  useEffect(() => {
+    if (!loading && filteredOrders.length > 0) {
+      const savedOrderId = localStorage.getItem("orderId");
+      if (savedOrderId) {
+        // Find the index of the order in filteredOrders
+        const orderIndex = filteredOrders.findIndex(
+          (order) => order.orderId2 === savedOrderId
+        );
+        if (orderIndex !== -1) {
+          const rowKey = `${filteredOrders[orderIndex].orderId}_${orderIndex}`;
+          const targetRow = document.querySelector(`[data-row-key="${rowKey}"]`);
+          if (targetRow) {
+            targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            localStorage.removeItem("orderId");
+          }
+        } else {
+          // Check the full exchangeOrders array for pagination
+          const fullOrderIndex = exchangeOrders.findIndex(
+            (order) => order.orderId2 === savedOrderId
+          );
+          if (fullOrderIndex !== -1) {
+            // Calculate the target page (1-based indexing for Ant Design Table)
+            const targetPage = Math.ceil((fullOrderIndex + 1) / pagination.pageSize);
+            setPagination((prev) => ({ ...prev, current: targetPage }));
+            // Wait for the table to update to the correct page
+            setTimeout(() => {
+              const updatedRowKey = `${exchangeOrders[fullOrderIndex].orderId}_${fullOrderIndex}`;
+              const updatedRow = document.querySelector(
+                `[data-row-key="${updatedRowKey}"]`
+              );
+              if (updatedRow) {
+                updatedRow.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+              localStorage.removeItem("orderId");
+            }, 0);
+          } else {
+            message.info(
+              "The previously viewed exchange order is not visible in the current view."
+            );
+            localStorage.removeItem("orderId");
+          }
+        }
+      }
+    }
+  }, [loading, filteredOrders, exchangeOrders, pagination.pageSize]);
 
   const fetchDeliveryBoysList = async (record?: ExchangeOrder) => {
     if (record) {
@@ -346,7 +395,7 @@ const ExchangeOrdersTable: React.FC = () => {
   };
 
   const handleCancel = () => {
-    setShowValidation(false)
+    setShowValidation(false);
     setFormData({
       newBagBarcodes: "",
       returnBagWeight: "",
@@ -408,7 +457,7 @@ const ExchangeOrdersTable: React.FC = () => {
   };
 
   const handleOk = async () => {
-    setShowValidation(true); 
+    setShowValidation(true);
 
     const errors: string[] = [];
 
@@ -449,7 +498,7 @@ const ExchangeOrdersTable: React.FC = () => {
       await reassignExchangeOrder(selectedRecord?.exchangeId || "", formData);
       message.success("Data submitted successfully!");
       setIsModalOpen(false);
-      setShowValidation(false); // Reset validation display
+      setShowValidation(false);
       onRefresh();
     } catch (error: any) {
       message.error(error.message || "Something went wrong!");
@@ -474,13 +523,6 @@ const ExchangeOrdersTable: React.FC = () => {
               className="rounded-lg"
             />
           </div>
-          {/* <Button
-            type="primary"
-            onClick={onRefresh}
-            className="!bg-blue-600 hover:!bg-blue-700 rounded-lg"
-          >
-            Refresh
-          </Button> */}
         </div>
       </div>
 
@@ -513,12 +555,17 @@ const ExchangeOrdersTable: React.FC = () => {
           <Spin size="large" />
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <div className="overflow-x-auto bg-white rounded-lg shadow" ref={tableRef}>
           <Table
             dataSource={filteredOrders}
             columns={columns}
             rowKey={(record, index) => `${record.orderId}_${index}`}
-            pagination={{ pageSize: 50, showSizeChanger: false }}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              showSizeChanger: false,
+              onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+            }}
             className="max-w-full"
             scroll={{ x: "max-content" }}
             bordered
@@ -731,7 +778,9 @@ const ExchangeOrdersTable: React.FC = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium">Amount Paid</span>
+                <span className="text-gray-700 font-medium">
+                  Amount Paid
+                </span>
               }
               required
               validateStatus={

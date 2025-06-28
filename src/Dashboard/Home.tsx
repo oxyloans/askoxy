@@ -1162,9 +1162,9 @@ const Home: React.FC = () => {
     navigate("/main/dashboard/products");
   };
 
-  const viewAllServices = () => {
-    navigate("/main/dashboard/services");
-  };
+ const viewAllServices = () => {
+    navigate("/main/dashboard/myservices");
+  };
 
   const handleCategoryChange = (categoryName: string) => {
     if (activeCategory === categoryName) return;

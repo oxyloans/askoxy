@@ -895,7 +895,30 @@ const ItemDisplayPage = () => {
                         <img
                           src={getAllImages()[currentImageIndex]?.imageUrl}
                           alt={itemDetails?.itemName}
-                          className="w-full h-full object-contain transform transition-transform hover:scale-105"
+                          onClick={() =>
+                            openFullscreen(
+                              {
+                                ...getAllImages()[currentImageIndex],
+                                id:
+                                  getAllImages()[currentImageIndex].imageId ||
+                                  "image-fallback",
+                              },
+                              currentImageIndex
+                            )
+                          }
+                          onMouseMove={(e) => {
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const x =
+                              ((e.clientX - rect.left) / rect.width) * 100;
+                            const y =
+                              ((e.clientY - rect.top) / rect.height) * 100;
+                            e.currentTarget.style.transformOrigin = `${x}% ${y}%`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transformOrigin = "center";
+                          }}
+                          className="w-full h-full object-contain cursor-zoom-in transition-transform duration-300 ease-in-out hover:scale-[2]"
                         />
 
                         {/* Image Navigation Controls */}
@@ -1126,7 +1149,9 @@ const ItemDisplayPage = () => {
               {/* Product Description - Spanning Full Width */}
               {itemDetails?.itemDescription && (
                 <div className="mt-4 w-full">
-                  <h3 className="font-medium text-gray-900 mb-2 font-bold">Description :</h3>
+                  <h3 className="font-bold text-purple-700 mb-2 font-bold">
+                    Description :
+                  </h3>
                   <p className="text-gray-600 text-sm leading-relaxed w-full">
                     {itemDetails.itemDescription}
                   </p>
@@ -1240,11 +1265,12 @@ const ItemDisplayPage = () => {
                               <span className="font-bold text-purple-600 text-sm">
                                 ₹{item.itemPrice}
                               </span>
-                              {item.itemMrp && item.itemMrp > item.itemPrice && (
-                                <span className="text-xs text-gray-500 line-through">
-                                  ₹{item.itemMrp}
-                                </span>
-                              )}
+                              {item.itemMrp &&
+                                item.itemMrp > item.itemPrice && (
+                                  <span className="text-xs text-gray-500 line-through">
+                                    ₹{item.itemMrp}
+                                  </span>
+                                )}
                             </div>
                           </div>
                         </div>

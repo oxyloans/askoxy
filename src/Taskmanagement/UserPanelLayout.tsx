@@ -117,12 +117,12 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
       },
       {
         key: "/assigned-task",
-        label: <Link to="/assigned-task">Manage Team Tasks</Link>,
+        label: <Link to="/assigned-task">Team Task Management</Link>,
         icon: <FaExchangeAlt className="text-orange-500" />,
       },
       {
         key: "/taskassigneduser",
-        label: <Link to="/taskassigneduser">My Assigned Tasks</Link>,
+        label: <Link to="/taskassigneduser">My Tasks</Link>,
         icon: <FaUsers className="text-red-500" />,
       },
     ];

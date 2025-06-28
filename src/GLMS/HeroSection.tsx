@@ -23,29 +23,31 @@ function HeroSection() {
         <div className="space-y-6 text-center lg:text-left animate-fade-in">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Global Lending Management Systems
+              AI-Powered Global Lending Transformation
             </span>
           </h1>
 
           <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
-            We are building <strong>Global Lending Management Solutions</strong>{" "}
-            with you — powered by <strong>60+ proven BFSI use cases</strong>,{" "}
-            <strong>50+ expert roles</strong>, and{" "}
-            <strong>AI-driven delivery models</strong>.
+            Introducing <strong>OxyAI</strong> — an intelligent platform
+            revolutionizing global lending.
             <br />
-            From origination to collections, shaped by{" "}
-            <strong>20+ global product companies</strong> like{" "}
-            <strong>FinOne</strong>, <strong>Temenos</strong>,{" "}
+            Built with <strong>60+ real-world BFSI use cases</strong>,
+            <strong> 50+ domain expert roles</strong>, and
+            <strong> AI-driven delivery accelerators</strong>.
+            <br />
+            Drawing expertise from <strong>
+              20+ global fintech leaders
+            </strong>{" "}
+            including <strong>FinOne</strong>, <strong>Temenos</strong>,{" "}
             <strong>Finastra</strong>, <strong>TCS BaNCS</strong>, and{" "}
             <strong>Avaloq</strong>.
             <br />
-            <strong>Mission:</strong> Modernize global lending with domain
-            depth, platform expertise & scalable talent.
+            <strong>Mission:</strong> Empower BFSI firms with scalable AI-led
+            solutions, deep domain knowledge, and ready-to-deploy talent.
             <br />
-            Free training for a <em>1M+ strong talent pool</em>.
-            <br />
-            ✅ Job-ready for top product companies
-            <br />✅ Hot prospect for <strong>100,000+ BFSI firms</strong>
+            ✅ Fast-track BFSI digital transformation
+            <br />✅ Job-ready opportunities for the next{" "}
+            <strong>1 million BFSI professionals</strong>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -77,7 +79,7 @@ function HeroSection() {
                 RadhaKrishna.T
               </h3>
               <p className="text-gray-600 text-md sm:text-lg">
-                CEO & Co-Founder
+                CEO & Co-Founder, OxyAI
               </p>
             </div>
             <div className="flex justify-center">

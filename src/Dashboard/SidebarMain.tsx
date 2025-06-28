@@ -9,10 +9,12 @@ import {
   Users,
   MessageSquare,
   Coins,
-  ChevronLeft,Layers,
+  ChevronLeft,
+  Layers,
   ChevronRight,
   LogOut,
   Book,
+  FileText,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -87,12 +89,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
       icon: <Coins size={20} />,
       label: "My Crypto",
     },
-   {
-      to: "/main/dashboard/services",
+    {
+      to: "/main/dashboard/myservices",
       icon: <Layers size={18} />,
-      label: "Services & Blogs",
-    },
-    
+      label: "My Services",
+    },
+    {
+      to: "/main/dashboard/myblogs",
+      icon: <FileText size={18} />,
+      label: "My Blogs",
+    },
   ];
 
   return (

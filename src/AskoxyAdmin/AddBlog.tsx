@@ -1,10 +1,13 @@
-
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "./Sider";
 import { message, Upload, Button, Modal } from "antd";
-import { UploadOutlined, CopyOutlined, FacebookOutlined, InstagramOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  CopyOutlined,
+  FacebookOutlined,
+  InstagramOutlined,
+} from "@ant-design/icons";
 import BASE_URL from "../Config";
 
 interface MediaItem {
@@ -42,7 +45,7 @@ const AddBlog: React.FC = () => {
     campaignDescription: "",
     socialMediaCaption: "",
     mediaUrls: [],
-    campaignTypeAddBy: "RAMA",
+    campaignTypeAddBy: "",
     campainInputType: "SERVICE",
   });
 
@@ -63,6 +66,7 @@ const AddBlog: React.FC = () => {
     facebook: "",
     instagram: "",
   });
+  const primaryType = localStorage.getItem("primaryType");
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -144,7 +148,6 @@ const AddBlog: React.FC = () => {
 
         if (response.data.uploadStatus === "UPLOADED") {
           const mediaType = isVideoFile(file) ? "video" : "image";
-
           setFormData((prev) => ({
             ...prev,
             mediaUrls: [
@@ -221,10 +224,16 @@ const AddBlog: React.FC = () => {
       status: item.status,
     }));
 
+    const disclaimerText = `### ✅ **Blog Disclaimer**
+    *This blog is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [team@askoxy.ai](mailto:team@askoxy.ai)*`;
+
+    const finalCampaignDescription =
+      (formData.campaignDescription || "") + disclaimerText;
+
     const requestPayload = {
       askOxyCampaignDto: [
         {
-          campaignDescription: formData.campaignDescription,
+          campaignDescription: finalCampaignDescription,
           campaignType: formData.campaignType,
           socialMediaCaption: formData.socialMediaCaption,
           campaignTypeAddBy: formData.campaignTypeAddBy,
@@ -258,7 +267,7 @@ const AddBlog: React.FC = () => {
           campaignDescription: "",
           socialMediaCaption: "",
           mediaUrls: [],
-          campaignTypeAddBy: "RAMA",
+          campaignTypeAddBy: "",
           campainInputType: "SERVICE",
         });
       } else {
@@ -289,9 +298,7 @@ const AddBlog: React.FC = () => {
     if (formData.socialMediaCaption.trim() === "") {
       setSocialMediaCaptionErrorMessage("Social Media Caption is required");
       isValid = false;
-    } else if (
-      formData.socialMediaCaption.length < 25
-    ) {
+    } else if (formData.socialMediaCaption.length < 25) {
       setSocialMediaCaptionErrorMessage(
         "Social Media Caption must be between 25 and 30 characters"
       );
@@ -567,18 +574,29 @@ const AddBlog: React.FC = () => {
               >
                 Blog Added By
               </label>
-              <select
-                id="campaignTypeAddBy"
-                name="campaignTypeAddBy"
-                value={formData.campaignTypeAddBy}
-                onChange={handleInputChange}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="RAMA">RAMA</option>
-                <option value="RADHA">RADHA</option>
-                <option value="SRIDHAR">SRIDHAR</option>
-              </select>
+              {primaryType === "HELPDESKSUPERADMIN" ? (
+                <select
+                  id="campaignTypeAddBy"
+                  name="campaignTypeAddBy"
+                  value={formData.campaignTypeAddBy}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="RADHA">RADHA</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  id="campaignTypeAddBy"
+                  name="campaignTypeAddBy"
+                  value={formData.campaignTypeAddBy}
+                  onChange={handleInputChange}
+                  placeholder="Enter your name"
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              )}
             </div>
 
             {typeErrorMessage && (
@@ -606,49 +624,49 @@ const AddBlog: React.FC = () => {
           </form>
         </div>
       </div>
- <Modal
-      title="Social Media Links"
-      open={isLinksModalVisible}
-      onCancel={() => setIsLinksModalVisible(false)}
-      footer={null}
-    >
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <FacebookOutlined className="text-blue-600 text-xl" />
-          <a
-            href={socialMediaLinks.facebook}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 truncate text-blue-600 underline hover:text-blue-800 transition-colors"
-          >
-            {socialMediaLinks.facebook}
-          </a>
-          <Button
-            icon={<CopyOutlined />}
-            onClick={() => handleCopyLink(socialMediaLinks.facebook)}
-          >
-            Copy
-          </Button>
+      <Modal
+        title="Social Media Links"
+        open={isLinksModalVisible}
+        onCancel={() => setIsLinksModalVisible(false)}
+        footer={null}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <FacebookOutlined className="text-blue-600 text-xl" />
+            <a
+              href={socialMediaLinks.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 truncate text-blue-600 underline hover:text-blue-800 transition-colors"
+            >
+              {socialMediaLinks.facebook}
+            </a>
+            <Button
+              icon={<CopyOutlined />}
+              onClick={() => handleCopyLink(socialMediaLinks.facebook)}
+            >
+              Copy
+            </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <InstagramOutlined className="text-pink-600 text-xl" />
+            <a
+              href={socialMediaLinks.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 truncate text-blue-600 underline hover:text-blue-800 transition-colors"
+            >
+              {socialMediaLinks.instagram}
+            </a>
+            <Button
+              icon={<CopyOutlined />}
+              onClick={() => handleCopyLink(socialMediaLinks.instagram)}
+            >
+              Copy
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <InstagramOutlined className="text-pink-600 text-xl" />
-          <a
-            href={socialMediaLinks.instagram}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 truncate text-blue-600 underline hover:text-blue-800 transition-colors"
-          >
-            {socialMediaLinks.instagram}
-          </a>
-          <Button
-            icon={<CopyOutlined />}
-            onClick={() => handleCopyLink(socialMediaLinks.instagram)}
-          >
-            Copy
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      </Modal>
     </div>
   );
 };

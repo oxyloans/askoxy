@@ -53,6 +53,8 @@ import {
   Package,
   Package2,
   BadgePercent,
+  Percent,
+  ShoppingCart,
 } from "lucide-react";
 
 import BASE_URL from "../Config";
@@ -927,70 +929,105 @@ const OrderDetailsPage: React.FC = () => {
             </Card>
           </div>
 
-          <div className="p-6 bg-gray-50 border-t">
-            <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center">
-              <ShoppingCartOutlined className="mr-3 text-blue-600" />
-              Order Items
-            </h2>
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {orderDetails.orderItems.map((item) => (
-                <div
-                  key={item.itemId}
-                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200"
-                >
-                  {/* Item header with more subtle color */}
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 py-3 px-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-gray-800 font-medium w-full pr-2 line-clamp-2">
-                        {item.itemName || "Unnamed Item"}
-                      </h3>
-                      <div className="bg-white p-1 rounded-full shadow-sm flex-shrink-0">
-                        <Package className="text-blue-500" size={16} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Item details */}
-                  <div className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center text-gray-700">
-                        <BadgePercent className="w-4 h-4 text-blue-500 mr-2" />
-                        <span className="font-medium">Price:</span>
-                        <span className="ml-auto font-semibold text-gray-800">
-                          ₹{(item.itemprice || 0).toFixed(0)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center text-gray-700">
-                        <Package2 className="text-blue-500 mr-2" size={16} />
-                        <span className="font-medium">Quantity:</span>
-                        <span className="ml-auto">{item.quantity || 0}</span>
-                      </div>
-
-                      <div className="flex items-center text-gray-700">
-                        <Scale className="text-blue-500 mr-2" size={16} />
-                        <span className="font-medium">Weight:</span>
-                        <span className="ml-auto">
-                          {item.weight || "N/A"} kgs
-                        </span>
-                      </div>
-
-                      {item.itemBarCode && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <div className="flex items-center justify-between">
-                            <Barcode className="text-gray-500" size={16} />
-                            <div className="bg-gray-100 text-blue-500 px-3 py-1 rounded-full text-xs font-medium">
-                              {item.itemBarCode}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <div className="p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 border-t border-gray-200">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg mr-4">
+                  <ShoppingCart className="text-white" size={24} />
                 </div>
-              ))}
+                Order Items
+                <span className="ml-4 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                  {orderDetails.orderItems.length} items
+                </span>
+              </h2>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 overflow-y">
+              <div className="max-h-96 overflow-y-auto">
+                <div className="p-4 space-y-3">
+                  {orderDetails.orderItems.map((item, index) => (
+                    <div
+                      key={item.itemId}
+                      className="bg-gradient-to-r from-white to-gray-50 rounded-lg hover:shadow-md hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-gray-100 p-5"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex items-center flex-1">
+                          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg mr-4 text-white font-bold text-sm">
+                            {String(index + 1).padStart(2, "0")}
+                          </div>
+                          <div className="bg-blue-50 p-2 rounded-lg mr-4">
+                            <Package className="text-blue-600" size={20} />
+                          </div>
+                          <h3 className="text-gray-900 font-bold text-lg leading-tight">
+                            {item.itemName || "Unnamed Item"}
+                          </h3>
+                        </div>
+
+                        <div className="flex flex-wrap gap-8 text-sm">
+                          <div className="flex items-center min-w-0">
+                            <div className="bg-emerald-100 p-1 rounded mr-2">
+                              <Percent className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                            </div>
+                            <span className="text-gray-500 mr-2 font-medium">
+                              Price:
+                            </span>
+                            <span className="font-bold text-emerald-700 text-base">
+                              ₹{(item.itemprice || 0).toFixed(0)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center min-w-0">
+                            <div className="bg-blue-100 p-1 rounded mr-2">
+                              <Package
+                                className="text-blue-600 flex-shrink-0"
+                                size={16}
+                              />
+                            </div>
+                            <span className="text-gray-500 mr-2 font-medium">
+                              Qty:
+                            </span>
+                            <span className="font-bold text-blue-700 text-base">
+                              {item.quantity || 0}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center min-w-0">
+                            <div className="bg-orange-100 p-1 rounded mr-2">
+                              <Scale
+                                className="text-orange-600 flex-shrink-0"
+                                size={16}
+                              />
+                            </div>
+                            <span className="text-gray-500 mr-2 font-medium">
+                              Weight:
+                            </span>
+                            <span className="font-bold text-orange-700 text-base">
+                              {item.weight || "N/A"} {item.itemUnit}
+                            </span>
+                          </div>
+
+                          {item.itemBarCode && (
+                            <div className="flex items-center min-w-0">
+                              <div className="bg-purple-100 p-1 rounded mr-2">
+                                <Barcode
+                                  className="text-purple-600 flex-shrink-0"
+                                  size={16}
+                                />
+                              </div>
+                              <span className="bg-gray-800 text-white px-3 py-1 rounded-md font-mono text-xs">
+                                {item.itemBarCode}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
+
           <div className="p-6 bg-gray-50 border-t">
             <h2 className="text-lg font-semibold text-purple-800 mb-4 flex items-center">
               <Info className="mr-3 text-blue-600" />

@@ -2,10 +2,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCMSRoutes } from "../Routes/useCmsRoutes";
-import { Menu, X } from "react-feather";
+import { Maximize2, Menu, Minimize2, RotateCcw, ThumbsUp, User, X } from "react-feather";
 import { message } from "antd";
 import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
-import { Sparkles } from "lucide-react";
+import { Sparkles, MessageCircle, Copy, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import BASE_URL from "../../../Config";
 
@@ -14,688 +14,1029 @@ interface Message {
   content: string;
   isImage?: boolean;
   timestamp?: Date;
-  sender?: "user" | "ai"; // Keep for backward compatibility
-  text?: string; // Keep for backward compatibility
+  sender?: "user" | "ai";
+  text?: string;
+  id?: string;
 }
 const CMSRouteRenderer: React.FC = () => {
   const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
-  const useCase = useCMSRoutes[useCaseId || ""];
-  const navigate = useNavigate();
-  const [chatOpen, setChatOpen] = useState(false); // Changed to false by default
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const [messageInput, setMessageInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const [hasAutoQuestionSent, setHasAutoQuestionSent] = useState(false);
-
-  const handleCMSClick = () => (window.location.href = "/cms");
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Function to limit response to 50 words
-  const limitToFiftyWords = (text: string): string => {
-    const words = text.split(" ");
-    if (words.length <= 2000) return text;
-
-    const limitedWords = words.slice(0, 2000);
-    const limitedText = limitedWords.join(" ");
-
-    // Ensure it ends with proper punctuation
-    if (
-      !limitedText.endsWith(".") &&
-      !limitedText.endsWith("!") &&
-      !limitedText.endsWith("?")
-    ) {
-      return limitedText + ".";
-    }
-    return limitedText;
-  };
-
-  // Auto-generate question based on use case
-  const generateAutoQuestion = (useCaseTitle: string, type: string) => {
-    const questions = [
-      `What would you like to know about  ${useCaseTitle}?`,
-      `How does ${useCaseTitle} help ${
-        type === "business" ? "businesses" : "systems"
-      }?`,
-      `What are the benefits of implementing ${useCaseTitle}?`,
-      `Can you explain how ${useCaseTitle} works?`,
-      `What makes ${useCaseTitle} unique in the market?`,
-    ];
-
-    // Select a random question
-    return questions[Math.floor(Math.random() * questions.length)];
-  };
-
-  // Auto-send question when use case is loaded
-  useEffect(() => {
-    if (
-      useCase &&
-      type &&
-      chatOpen &&
-      !hasAutoQuestionSent &&
-      messages.length === 0
-    ) {
-      const autoQuestion = generateAutoQuestion(useCase.title, type);
-
-      // Add auto question as user message
-      const autoUserMessage: Message = {
-        role: "user",
-        content: autoQuestion,
-        timestamp: new Date(),
-        sender: "user",
-        text: autoQuestion,
-      };
-
-      setMessages([autoUserMessage]);
-      setHasAutoQuestionSent(true);
-      simulateAIResponse(autoQuestion);
-    }
-  }, [useCase, type, chatOpen, hasAutoQuestionSent, messages.length]);
-
-  // Reset auto question flag when chat is reopened
-  useEffect(() => {
-    if (chatOpen && messages.length === 0) {
-      setHasAutoQuestionSent(false);
-    }
-  }, [chatOpen]);
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Handle scroll detection for header styling
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  if (!useCase || (type !== "business" && type !== "system")) {
-    return (
-      <div className="text-red-600 text-center mt-8">
-        Invalid use case or type
-      </div>
-    );
-  }
-  const handleInterest = () => {
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      sessionStorage.setItem("submitclicks", "true");
-      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
-    } else {
-      message.warning("Please login to submit your interest.");
-      sessionStorage.setItem("submitclicks", "true");
-      navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        "/main/services/a6b5/glms-open-source-hub-job-stree"
-      );
-    }
-  };
-
-  // API-based chat handler with 50-word limit
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-      sender: "user",
-      text: input.trim(),
-    };
-
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    setInput("");
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedMessages),
-      });
-
-      const data = await response.text();
-      const isImageUrl = data.startsWith("http");
-
-      // Limit API response to 50 words if it's text
-      const limitedData = isImageUrl ? data : limitToFiftyWords(data);
-
-      const assistantReply: Message = {
-        role: "assistant",
-        content: limitedData,
-        isImage: isImageUrl,
-        timestamp: new Date(),
-        sender: "ai",
-        text: limitedData,
-      };
-
-      setMessages([...updatedMessages, assistantReply]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      // Fallback to simulated response on API error
-      simulateAIResponse(input.trim());
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Form submission handler (combines both approaches)
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      // Try API first, fallback to simulation
-      handleSend();
-    }
-  };
-
-  const handleThumbsUp = (messageIndex: number) => {
-    console.log(`Thumbs up for message ${messageIndex}`);
-    // TODO: Implement feedback API call
-  };
-  // Enhanced AI response simulation with 50-word limit
-  const simulateAIResponse = (userMessage: string) => {
-    setIsTyping(true);
-
-    setTimeout(() => {
-      let aiResponse = "";
-      const lowerMessage = userMessage.toLowerCase();
-
-      if (lowerMessage.includes("price") || lowerMessage.includes("cost")) {
-        aiResponse =
-          "Our pricing is customized based on your specific needs and usage requirements. We offer flexible plans for different business sizes. Contact our sales team for detailed pricing options and personalized quotes. We ensure competitive rates with excellent value for your investment.";
-      } else if (
-        lowerMessage.includes("feature") ||
-        lowerMessage.includes("functionality") ||
-        lowerMessage.includes("key features")
-      ) {
-        aiResponse = `${useCase.title} includes comprehensive features for ${
-          type === "business" ? "business" : "system"
-        } requirements. Key capabilities include advanced analytics, seamless integration, robust security measures, and scalable architecture. The solution offers real-time monitoring, automated workflows, and user-friendly interfaces for optimal performance.`;
-      } else if (
-        lowerMessage.includes("demo") ||
-        lowerMessage.includes("trial")
-      ) {
-        aiResponse =
-          "You can request a demo or trial by clicking 'I'm Interested' button. Our team will schedule a personalized demonstration and set up a trial environment. Experience all features hands-on with guided support from our experts during the trial period.";
-      } else if (lowerMessage.includes("integration")) {
-        aiResponse =
-          "Our solution offers flexible integration options with various platforms through REST APIs, webhooks, and pre-built connectors. We support popular business tools and custom integrations. Our technical team provides comprehensive integration support and documentation for seamless implementation.";
-      } else if (lowerMessage.includes("support")) {
-        aiResponse =
-          "We provide comprehensive support including 24/7 technical assistance, detailed documentation, video tutorials, and dedicated account management. Our experienced support team ensures quick resolution of issues. We offer multiple support channels for your convenience and success.";
-      } else if (lowerMessage.includes("security")) {
-        aiResponse =
-          "Security is our top priority with enterprise-grade measures including end-to-end encryption, secure authentication, and regular security audits. We comply with industry standards like SOC 2 and GDPR. Your data protection and privacy are guaranteed with our robust security framework.";
-      } else if (
-        lowerMessage.includes("benefits") ||
-        lowerMessage.includes("help")
-      ) {
-        aiResponse = `${useCase.title} helps ${
-          type === "business" ? "businesses" : "systems"
-        } by streamlining operations, reducing costs, and improving efficiency. It automates complex processes, provides valuable insights, and enhances productivity. Users experience faster decision-making, better resource management, and improved overall performance with measurable results.`;
-      } else if (
-        lowerMessage.includes("how") &&
-        lowerMessage.includes("work")
-      ) {
-        aiResponse = `${useCase.title} works through intelligent automation and advanced algorithms to process data efficiently. The system analyzes requirements, executes tasks automatically, and provides real-time feedback. It integrates seamlessly with existing infrastructure while maintaining high performance and reliability standards.`;
-      } else if (
-        lowerMessage.includes("unique") ||
-        lowerMessage.includes("different")
-      ) {
-        aiResponse = `${useCase.title} stands out with its innovative approach, cutting-edge technology, and user-centric design. Our solution offers superior performance, scalability, and customization options. We provide exceptional customer support, competitive pricing, and continuous updates to ensure market-leading capabilities.`;
-      } else {
-        aiResponse = `Welcome to ${
-          useCase.title
-        }! This powerful solution is designed for ${
-          type === "business" ? "business" : "system"
-        } excellence. I'm here to help you understand features, pricing, demos, integrations, security, and benefits. Feel free to ask specific questions about our capabilities and how we can help you succeed.`;
-      }
-
-      // Limit response to 50 words
-      const limitedResponse = limitToFiftyWords(aiResponse);
-
-      // Add message in the new format
-      const newMessage: Message = {
-        role: "assistant",
-        content: limitedResponse,
-        timestamp: new Date(),
-        sender: "ai",
-        text: limitedResponse,
-      };
-
-      setMessages((prev) => [...prev, newMessage]);
-      setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
-  };
-  const handleThumbsDown = (messageIndex: number) => {
-    console.log(`Thumbs down for message ${messageIndex}`);
-    // TODO: Implement feedback API call
-  };
-
-  const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-  };
-
-  const handleCloseChat = () => {
-    setChatOpen(false);
-    setIsFullScreen(false);
-    // Reset auto question when chat is closed
-    setMessages([]);
-    setHasAutoQuestionSent(false);
-  };
-
-  const toggleChat = () => {
-    setChatOpen(!chatOpen);
-    if (!chatOpen) {
-      setIsFullScreen(false);
-    }
-  };
-
-  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-
-  const AIIcon = () => (
-    <svg
-      width="31"
-      height="30"
-      viewBox="0 0 31 30"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M0.30957 15C0.30957 23.2722 7.0374 30 15.3096 30C23.5817 30 30.3096 23.2722 30.3096 15C30.3019 6.72783 23.5741 0 15.3096 0C7.0374 0 0.30957 6.72783 0.30957 15Z"
-        fill="url(#paint0_radial_160_60080)"
-      />
-      <path
-        d="M13.6455 21.057C13.5983 21.057 13.551 21.057 13.5041 21.057C13.3933 21.0302 13.3542 20.9442 13.3261 20.8457C13.1889 20.3651 13.0727 19.877 12.9077 19.4059C12.4838 18.1958 11.6402 17.4199 10.4123 17.0635C10.0089 16.9463 9.6041 16.8339 9.2 16.7188C9.10624 16.6919 9.02452 16.6494 9 16.5427C9 16.4953 9 16.448 9 16.4004C9.02679 16.2892 9.1126 16.2503 9.2109 16.2223C9.66562 16.093 10.1253 15.9783 10.5732 15.8288C11.8221 15.4117 12.623 14.5571 12.9864 13.2898C13.1004 12.8925 13.2128 12.4945 13.3267 12.0972C13.3651 11.9637 13.4546 11.8902 13.5751 11.8904C13.6957 11.8904 13.7835 11.9643 13.8232 12.0979C13.9776 12.6167 14.0882 13.1501 14.2832 13.6546C14.729 14.8078 15.5631 15.5442 16.7491 15.8819C17.1493 15.9959 17.5495 16.1094 17.9493 16.2248C18.0905 16.2655 18.17 16.3604 18.1666 16.4774C18.1632 16.5932 18.0885 16.6785 17.9493 16.719C17.4492 16.8649 16.9386 16.9818 16.4503 17.16C15.2653 17.5924 14.5088 18.4375 14.1633 19.6524C14.0491 20.0538 13.9358 20.4552 13.8214 20.8566C13.7946 20.9508 13.7515 21.032 13.6455 21.057Z"
-        fill="white"
-      />
-      <path
-        d="M18.6208 14.2236C18.5925 14.2236 18.5641 14.2236 18.5359 14.2236C18.4695 14.2075 18.446 14.1559 18.4291 14.0968C18.3469 13.8084 18.2771 13.5156 18.1781 13.233C17.9238 12.5069 17.4176 12.0413 16.6809 11.8275C16.4388 11.7572 16.196 11.6898 15.9535 11.6207C15.8972 11.6046 15.8482 11.579 15.8335 11.515C15.8335 11.4866 15.8335 11.4582 15.8335 11.4297C15.8496 11.3629 15.9011 11.3396 15.96 11.3228C16.2329 11.2452 16.5087 11.1764 16.7774 11.0867C17.5267 10.8364 18.0073 10.3236 18.2254 9.5633C18.2937 9.32491 18.3612 9.08612 18.4295 8.84774C18.4526 8.7676 18.5062 8.7235 18.5786 8.72363C18.6509 8.72363 18.7036 8.76801 18.7274 8.84815C18.8201 9.15944 18.8864 9.47947 19.0034 9.78216C19.2709 10.4741 19.7714 10.9159 20.4829 11.1185C20.7231 11.1869 20.9632 11.255 21.2031 11.3243C21.2878 11.3487 21.3355 11.4056 21.3334 11.4758C21.3314 11.5453 21.2866 21.5965 21.2031 11.6208C20.903 11.7083 20.5967 11.7785 20.3037 11.8854C19.5927 12.1448 19.1388 12.6519 18.9315 13.3808C18.863 13.6217 18.795 13.8625 18.7264 14.1033C18.7103 14.1599 18.6844 14.2086 18.6208 14.2236Z"
-        fill="white"
-      />
-      <defs>
-        <radialGradient
-          id="paint0_radial_160_60080"
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(11 22.2236) rotate(-40.3331) scale(34.7635 34.7635)"
-        >
-          <stop offset="0.0705463" stopColor="#5433EB" />
-          <stop offset="0.667546" stopColor="#A533EB" />
-          <stop offset="1" stopColor="#5433EB" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-    </svg>
-  );
-  const SelectedComponent = useCase[type];
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sticky Header */}
-      <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-          isScrolled ? "bg-white/90 shadow-md" : "bg-white/80"
-        } backdrop-blur-lg`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 md:h-20">
-            <div onClick={handleInterest} className="cursor-pointer">
-              <img src={Askoxylogo} alt="Logo" className="h-12" />
-            </div>
-
-            <div className="hidden md:flex gap-3">
-              <button
-                onClick={handleCMSClick}
-                className="bg-indigo-100 text-blue-700 hover:bg-indigo-200 px-5 py-2 rounded-md transition"
-              >
-                Go To CMS
-              </button>
-              <button
-                onClick={toggleChat}
-                aria-label={chatOpen ? "Close AI Chat" : "Open AI Chat"}
-                className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-5 py-2 rounded-md transition flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>{chatOpen ? "Close AI Chat" : "AI Chat"}</span>
-              </button>
-              <button
-                onClick={handleInterest}
-                className="bg-green-100 text-green-700 hover:bg-green-200 px-5 py-2 rounded-md font-medium transition hover:scale-105"
-              >
-                I'm Interested
-              </button>
-            </div>
-
-            <div className="md:hidden">
-              <button onClick={toggleMobileMenu}>
-                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-
-          {mobileMenuOpen && (
-            <div className="md:hidden pb-4 pt-2 space-y-2">
-              <button
-                onClick={toggleChat}
-                aria-label={chatOpen ? "Close AI Chat" : "Open AI Chat"}
-                className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-5 py-2 rounded-md transition flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>{chatOpen ? "Close AI Chat" : "AI Chat"}</span>
-              </button>
-
-              <button
-                onClick={handleCMSClick}
-                className="w-full bg-indigo-100 text-blue-700 hover:bg-indigo-200 px-4 py-2 rounded-md transition text-sm"
-              >
-                Go To CMS
-              </button>
-              <button
-                onClick={handleInterest}
-                className="w-full bg-green-100 text-green-700 hover:bg-green-200 py-2 rounded-md font-medium transition text-sm"
-              >
-                I'm Interested
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto  p-4 sm:p-6">{SelectedComponent}</div>
-      </main>
-      <footer className="bg-gray-900 text-white py-4 text-center text-sm">
-        © {new Date().getFullYear()} Global Lending Management Solutions. All
-        rights reserved.
-      </footer>
-
-      {/* AI Assistant Chat Window */}
-      {chatOpen && (
-        <div
-          data-testid="chat-window"
-          className={`flex flex-col overflow-hidden rounded-xl bg-white shadow-2xl transition-all duration-300 ${
-            isFullScreen
-              ? "fixed inset-0 z-50 h-screen w-screen rounded-none"
-              : "fixed z-50 bg-white shadow-2xl " +
-                "bottom-4 left-4 right-4 h-[calc(100vh-120px)] max-h-[500px] " +
-                "xs:bottom-6 xs:left-6 xs:right-6 xs:h-[360px] " +
-                "sm:bottom-6 sm:left-6 sm:right-6 sm:h-[360px] " +
-                "md:bottom-6 md:right-6 md:left-auto md:w-[360px] md:h-[400px] " +
-                "lg:bottom-6 lg:right-6 lg:w-[360px] lg:h-[520px] " +
-                "xl:w-[380px] xl:h-[550px]"
-          }`}
-        >
-          {/* Chat Header */}
-          <div className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <p className="text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text">
-                CMS AI Assistant
-              </p>
-            </div>
-
-            <div className="flex items-center gap-1 sm:gap-2">
-              <button
-                type="button"
-                aria-label={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
-                onClick={toggleFullScreen}
-                className="flex items-center justify-center p-2 rounded-full text-gray-600 hover:bg-gray-100 transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              >
-                {isFullScreen ? (
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M8 3V8H3M21 8H16V3M16 21V16H21M3 16H8V21"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M15 3H21V9M9 21H3V15M21 3L14 10M3 21L10 14"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-
-              <button
-                type="button"
-                aria-label="Close AI Chat"
-                onClick={handleCloseChat}
-                className="flex items-center justify-center p-2 rounded-full text-gray-600 hover:bg-gray-100 transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M18 6L6 18M6 6L18 18"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Chat Body */}
-          <div className="flex grow flex-col overflow-hidden">
-            <div className="relative flex grow flex-col overflow-hidden bg-white">
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      msg.role === "user" || msg.sender === "user"
-                        ? "justify-end"
-                        : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`flex max-w-[85%] sm:max-w-[75%] ${
-                        msg.role === "user" || msg.sender === "user"
-                          ? "flex-row-reverse"
-                          : "flex-row"
-                      } items-start gap-2 sm:gap-3`}
-                    >
-                      {(msg.role === "assistant" || msg.sender === "ai") && (
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8">
-                            <AIIcon />
-                          </div>
-                        </div>
-                      )}
-                      <div className="flex flex-col">
-                        <div
-                          className={`rounded-lg p-2 sm:p-3 text-sm sm:text-base leading-relaxed ${
-                            msg.role === "assistant" || msg.sender === "ai"
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-blue-600 text-white"
-                          } shadow-sm`}
-                        >
-                          {msg.isImage ? (
-                            <img
-                              src={msg.content || msg.text}
-                              alt="AI Response"
-                              className="max-w-full h-auto rounded"
-                            />
-                          ) : (
-                            <ReactMarkdown className="break-words">
-                              {msg.content || msg.text || ""}
-                            </ReactMarkdown>
-                          )}
-                        </div>
-                        {(msg.role === "assistant" || msg.sender === "ai") && (
-                          <div className="flex items-center gap-1 mt-2">
-                            <button
-                              type="button"
-                              onClick={() => handleThumbsUp(index)}
-                              className="rounded-full p-1.5 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
-                              aria-label="Thumbs up"
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="text-gray-500"
-                              >
-                                <path
-                                  d="M7 11H3V20H7M7 11V20M7 11L11 3H11.6156C12.843 3 13.7808 4.09535 13.5917 5.3081L13.0161 9H18.0631C19.8811 9 21.2813 10.6041 21.0356 12.4053L20.3538 17.4053C20.1511 18.8918 18.8815 20 17.3813 20H7"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleThumbsDown(index)}
-                              className="rounded-full p-1.5 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
-                              aria-label="Thumbs down"
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="text-gray-500"
-                              >
-                                <path
-                                  d="M17 13H21L21 4H17M17 13L17 4M17 13L13.0282 21H12.4147C11.1917 21 10.2572 19.9046 10.4456 18.6919L11.0192 15L5.98994 15C4.17839 15 2.78316 13.3959 3.02793 11.5947L3.70735 6.59466C3.90933 5.1082 5.17443 4 6.66936 4H17"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Typing Indicator */}
-                {(isTyping || loading) && (
-                  <div className="flex justify-start">
-                    <div className="flex max-w-[85%] sm:max-w-[75%] flex-row items-start gap-2 sm:gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-6 h-6 sm:w-8 sm:h-8">
-                          <AIIcon />
-                        </div>
-                      </div>
-                      <div className="bg-gray-100 rounded-lg p-2 sm:p-3 shadow-sm">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div
-                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.1s" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.2s" }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          </div>
-
-          {/* Chat Input */}
-          <div className="p-2 sm:p-3 border-t border-gray-200 bg-white flex-shrink-0">
-            <form
-              onSubmit={handleSendMessage}
-              className="flex items-center justify-between gap-3 border border-gray-300 bg-gray-50 rounded-full px-4 py-2.5 sm:py-3 focus-within:ring-2 focus-within:ring-blue-500 shadow-sm"
-            >
-              <input
-                type="text"
-                name="message"
-                placeholder="Ask about this use case..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isTyping || loading}
-                className="flex-grow bg-transparent text-sm sm:text-base focus:outline-none placeholder-gray-500 disabled:cursor-not-allowed"
-                aria-label="Chat input"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || isTyping || loading}
-                aria-label="Send message"
-                className={`flex items-center justify-center rounded-full p-2.5 transition-all duration-200 ${
-                  input.trim() && !isTyping && !loading
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-300 text-gray-400 cursor-not-allowed"
-                } shadow-sm`}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M6 10L12 4M12 4L18 10M12 4V20"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
+   const useCase = useCMSRoutes[useCaseId || ""];
+   const navigate = useNavigate();
+ 
+   // Chat state
+   const [chatOpen, setChatOpen] = useState(false); // Changed to closed by default for better UX
+   const [isFullScreen, setIsFullScreen] = useState(false);
+   const [messages, setMessages] = useState<Message[]>([]);
+   const [input, setInput] = useState<string>("");
+   const [loading, setLoading] = useState<boolean>(false);
+   const [isTyping, setIsTyping] = useState(false);
+   const [questionSelected, setQuestionSelected] = useState(false);
+   const [showWelcome, setShowWelcome] = useState(true);
+ 
+   // UI state
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+   const [isScrolled, setIsScrolled] = useState(false);
+   const [isMinimized, setIsMinimized] = useState(false);
+   const [unreadCount, setUnreadCount] = useState(0);
+ 
+   // Refs
+   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+ 
+   // Enhanced predefined questions with icons
+   const predefinedQuestions = [
+     {
+       text: `What are the key features of ${
+         useCase?.title || "this use case"
+       }?`,
+       icon: "🎯",
+       category: "Features",
+     },
+     {
+       text: `How does ${useCase?.title || "this use case"} benefit ${
+         type === "business" ? "businesses" : "systems"
+       }?`,
+       icon: "💼",
+       category: "Benefits",
+     },
+     {
+       text: `Can you explain how ${useCase?.title || "this use case"} works?`,
+       icon: "⚙️",
+       category: "Process",
+     },
+     {
+       text: `What makes ${
+         useCase?.title || "this use case"
+       } unique in the market?`,
+       icon: "✨",
+       category: "Uniqueness",
+     },
+   ];
+ 
+   // Function to limit response to 50 words
+   const limitToFiftyWords = (text: string): string => {
+     const words = text.split(" ");
+     if (words.length <= 2000) return text;
+ 
+     const limitedWords = words.slice(0, 2000);
+     const limitedText = limitedWords.join(" ");
+ 
+     if (
+       !limitedText.endsWith(".") &&
+       !limitedText.endsWith("!") &&
+       !limitedText.endsWith("?")
+     ) {
+       return limitedText + "...";
+     }
+     return limitedText;
+   };
+ 
+   // Auto-resize textarea
+   const adjustTextareaHeight = () => {
+     if (textareaRef.current) {
+       textareaRef.current.style.height = "auto";
+       textareaRef.current.style.height =
+         Math.min(textareaRef.current.scrollHeight, 120) + "px";
+     }
+   };
+ 
+   // Scroll to bottom when messages change
+   useEffect(() => {
+     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+   }, [messages]);
+ 
+   // Handle scroll detection for header styling
+   useEffect(() => {
+     const handleScroll = () => {
+       setIsScrolled(window.scrollY > 10);
+     };
+     window.addEventListener("scroll", handleScroll);
+     return () => window.removeEventListener("scroll", handleScroll);
+   }, []);
+ 
+   // Add welcome message when chat opens
+   useEffect(() => {
+     if (chatOpen && messages.length === 0 && showWelcome) {
+       const welcomeMessage: Message = {
+         id: `welcome-${Date.now()}`,
+         role: "assistant",
+         content: `👋 Hello! I'm your ${
+           useCase?.title || "AI"
+         } assistant. I'm here to help you learn more about our solutions. What would you like to know?`,
+         timestamp: new Date(),
+         sender: "ai",
+         text: `👋 Hello! I'm your ${
+           useCase?.title || "AI"
+         } assistant. I'm here to help you learn more about our solutions. What would you like to know?`,
+       };
+       setMessages([welcomeMessage]);
+     }
+   }, [chatOpen, useCase, showWelcome]);
+ 
+   // Route validation
+   if (!useCase || (type !== "business" && type !== "system")) {
+     return (
+       <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center">
+         <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
+           <div className="text-6xl mb-4">⚠️</div>
+           <h2 className="text-2xl font-bold text-gray-800 mb-2">
+             Invalid Route
+           </h2>
+           <p className="text-gray-600">Invalid use case or type specified</p>
+         </div>
+       </div>
+     );
+   }
+ 
+   const handleInterest = () => {
+     const userId = localStorage.getItem("userId");
+     sessionStorage.setItem("submitclicks", "true");
+ 
+     if (userId) {
+       navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
+     } else {
+       message.warning("Please login to submit your interest.");
+       sessionStorage.setItem(
+         "redirectPath",
+         "/main/services/a6b5/glms-open-source-hub-job-stree"
+       );
+       navigate("/whatsappregister");
+     }
+   };
+ 
+   const handleCmsClick = () => {
+     window.location.href = "/cms";
+   };
+ 
+   // Enhanced question selection with better UX
+   const handleQuestionSelect = async (
+     questionObj: (typeof predefinedQuestions)[0]
+   ) => {
+     setInput(questionObj.text);
+     setQuestionSelected(true);
+     setShowWelcome(false);
+ 
+     const userMessage: Message = {
+       id: `user-${Date.now()}`,
+       role: "user",
+       content: questionObj.text,
+       timestamp: new Date(),
+       sender: "user",
+       text: questionObj.text,
+     };
+ 
+     const updatedMessages = [...messages, userMessage];
+     setMessages(updatedMessages);
+     setLoading(true);
+     setIsTyping(true);
+ 
+     try {
+       const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(updatedMessages),
+       });
+ 
+       const data = await response.text();
+       const isImageUrl = data.startsWith("http");
+       const limitedData = isImageUrl ? data : limitToFiftyWords(data);
+ 
+       const assistantReply: Message = {
+         id: `assistant-${Date.now()}`,
+         role: "assistant",
+         content: limitedData,
+         isImage: isImageUrl,
+         timestamp: new Date(),
+         sender: "ai",
+         text: limitedData,
+       };
+ 
+       setMessages([...updatedMessages, assistantReply]);
+       if (!chatOpen || isMinimized) {
+         setUnreadCount((prev) => prev + 1);
+       }
+     } catch (error) {
+       console.error("Chat error:", error);
+       const fallbackResponse: Message = {
+         id: `error-${Date.now()}`,
+         role: "assistant",
+         content:
+           "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
+         timestamp: new Date(),
+         sender: "ai",
+         text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
+       };
+       setMessages([...updatedMessages, fallbackResponse]);
+     } finally {
+       setLoading(false);
+       setIsTyping(false);
+       setInput("");
+     }
+   };
+ 
+   // Enhanced send handler
+   const handleSend = async () => {
+     if (!input.trim()) return;
+ 
+     const userMessage: Message = {
+       id: `user-${Date.now()}`,
+       role: "user",
+       content: input.trim(),
+       timestamp: new Date(),
+       sender: "user",
+       text: input.trim(),
+     };
+ 
+     const updatedMessages = [...messages, userMessage];
+     setMessages(updatedMessages);
+     setInput("");
+     setLoading(true);
+     setIsTyping(true);
+ 
+     try {
+       const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(updatedMessages),
+       });
+ 
+       const data = await response.text();
+       const isImageUrl = data.startsWith("http");
+       const limitedData = isImageUrl ? data : limitToFiftyWords(data);
+ 
+       const assistantReply: Message = {
+         id: `assistant-${Date.now()}`,
+         role: "assistant",
+         content: limitedData,
+         isImage: isImageUrl,
+         timestamp: new Date(),
+         sender: "ai",
+         text: limitedData,
+       };
+ 
+       setMessages([...updatedMessages, assistantReply]);
+       if (!chatOpen || isMinimized) {
+         setUnreadCount((prev) => prev + 1);
+       }
+     } catch (error) {
+       console.error("Chat error:", error);
+       const fallbackResponse: Message = {
+         id: `error-${Date.now()}`,
+         role: "assistant",
+         content:
+           "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
+         timestamp: new Date(),
+         sender: "ai",
+         text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
+       };
+       setMessages([...updatedMessages, fallbackResponse]);
+     } finally {
+       setLoading(false);
+       setIsTyping(false);
+     }
+   };
+ 
+   const handleSendMessage = (e: React.FormEvent) => {
+     e.preventDefault();
+     if (input.trim()) {
+       handleSend();
+     }
+   };
+ 
+   const handleKeyPress = (e: React.KeyboardEvent) => {
+     if (e.key === "Enter" && !e.shiftKey) {
+       e.preventDefault();
+       handleSend();
+     }
+   };
+ 
+   // Enhanced feedback handlers
+   const handleThumbsUp = (messageIndex: number) => {
+     console.log(`Thumbs up for message ${messageIndex}`);
+     message.success("Thanks for your feedback!");
+     // TODO: Implement feedback API call
+   };
+ 
+   const handleThumbsDown = (messageIndex: number) => {
+     console.log(`Thumbs down for message ${messageIndex}`);
+     message.info("Thanks for your feedback. We'll work on improving!");
+     // TODO: Implement feedback API call
+   };
+ 
+   const copyToClipboard = (text: string) => {
+     navigator.clipboard.writeText(text);
+     message.success("Copied to clipboard!");
+   };
+ 
+   const toggleFullScreen = () => {
+     setIsFullScreen(!isFullScreen);
+   };
+ 
+   const toggleMinimize = () => {
+     setIsMinimized(!isMinimized);
+   };
+ 
+   const handleOpenChat = () => {
+     setChatOpen(true);
+     setIsMinimized(false);
+     setUnreadCount(0);
+   };
+ 
+   const handleCloseChat = () => {
+     setChatOpen(false);
+     setIsFullScreen(false);
+     setIsMinimized(false);
+     setMessages([]);
+     setQuestionSelected(false);
+     setShowWelcome(true);
+     setUnreadCount(0);
+   };
+ 
+   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+ 
+   const clearChat = () => {
+     setMessages([]);
+     setQuestionSelected(false);
+     setShowWelcome(true);
+     // Add welcome message back
+     const welcomeMessage: Message = {
+       id: `welcome-${Date.now()}`,
+       role: "assistant",
+       content: `👋 Hello! I'm your ${
+         useCase?.title || "AI"
+       } assistant. I'm here to help you learn more about our solutions. What would you like to know?`,
+       timestamp: new Date(),
+       sender: "ai",
+       text: `👋 Hello! I'm your ${
+         useCase?.title || "AI"
+       } assistant. I'm here to help you learn more about our solutions. What would you like to know?`,
+     };
+     setMessages([welcomeMessage]);
+   };
+ 
+   const EnhancedAIIcon = () => (
+     <div className="relative">
+       <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+         <MessageCircle className="w-4 h-4 text-white" />
+       </div>
+     </div>
+   );
+ 
+   const UserIcon = () => (
+     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+       <User className="w-4 h-4 text-white" />
+     </div>
+   );
+ 
+   const SelectedComponent = useCase[type];
+ 
+   return (
+     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 relative">
+       {/* Enhanced Sticky Header */}
+       <header
+         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+           isScrolled
+             ? "bg-white/95 backdrop-blur-lg shadow-xl border-b border-gray-200/50"
+             : "bg-white/80 backdrop-blur-md shadow-lg"
+         }`}
+       >
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="flex justify-between items-center h-16 md:h-20">
+             <div onClick={handleInterest} className="cursor-pointer group">
+               <img
+                 src={Askoxylogo}
+                 alt="Logo"
+                 className="h-12 transition-transform group-hover:scale-105"
+               />
+             </div>
+ 
+             <div className="hidden md:flex gap-3">
+               <button
+                 onClick={handleCmsClick}
+                 className="bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-6 py-2.5 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+               >
+                 Go To CMS
+               </button>
+               <button
+                 onClick={handleOpenChat}
+                 className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-6 py-2.5 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 flex items-center gap-2 relative"
+               >
+                 <MessageCircle className="w-4 h-4" />
+                 <span>AI Assistant</span>
+                 {unreadCount > 0 && (
+                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                     {unreadCount}
+                   </span>
+                 )}
+               </button>
+               <button
+                 onClick={handleInterest}
+                 className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 px-6 py-2.5 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105"
+               >
+                 I'm Interested
+               </button>
+             </div>
+ 
+             <div className="md:hidden">
+               <button
+                 onClick={toggleMobileMenu}
+                 className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+               >
+                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+               </button>
+             </div>
+           </div>
+ 
+           {mobileMenuOpen && (
+             <div className="md:hidden pb-4 pt-2 space-y-3 animate-slide-down">
+               <button
+                 onClick={handleOpenChat}
+                 className="w-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 relative"
+               >
+                 <MessageCircle className="w-4 h-4" />
+                 <span>AI Assistant</span>
+                 {unreadCount > 0 && (
+                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                     {unreadCount}
+                   </span>
+                 )}
+               </button>
+               <button
+                 onClick={handleCmsClick}
+                 className="w-full bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-3 rounded-xl font-medium transition-all duration-200"
+               >
+                 Go To CMS
+               </button>
+               <button
+                 onClick={handleInterest}
+                 className="w-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 py-3 rounded-xl font-semibold transition-all duration-200"
+               >
+                 I'm Interested
+               </button>
+             </div>
+           )}
+         </div>
+       </header>
+ 
+       {/* Main Content */}
+       <main className="px-4 py-8 sm:px-6 lg:px-8">
+         <div className="max-w-7xl mx-auto">
+           <div className="bg-white rounded-xl  p-6 sm:p-8 border border-gray-200/50">
+             {SelectedComponent}
+           </div>
+         </div>
+       </main>
+ 
+       {/* Enhanced Footer */}
+       <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-8 mt-12">
+         <div className="max-w-7xl mx-auto px-4 text-center">
+           <p className="text-sm opacity-80">
+             © {new Date().getFullYear()} Global Lending Management Solutions.
+             All rights reserved.
+           </p>
+         </div>
+       </footer>
+ 
+       {/* Floating Chat Button (when chat is closed) */}
+       {!chatOpen && (
+         <button
+           onClick={handleOpenChat}
+           className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 group relative"
+           aria-label="Open AI Chat"
+         >
+           <MessageCircle className="w-6 h-6" />
+           {unreadCount > 0 && (
+             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-bounce font-bold">
+               {unreadCount}
+             </span>
+           )}
+           <div className="absolute right-full mr-4 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+             Chat with AI Assistant
+             <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
+           </div>
+         </button>
+       )}
+ 
+       {/* Enhanced AI Assistant Chat Window */}
+       {chatOpen && (
+         <div
+           ref={chatContainerRef}
+           className={`flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl transition-all duration-300 border border-gray-200/50 ${
+             isFullScreen
+               ? "fixed inset-0 z-50 h-screen w-screen rounded-none"
+               : isMinimized
+               ? "fixed bottom-6 right-6 z-50 w-80 h-16 rounded-2xl"
+               : "fixed z-50 rounded-2xl " +
+                 "bottom-6 left-4 right-4 h-[calc(100vh-120px)] max-h-[600px] " +
+                 "sm:bottom-6 sm:left-6 sm:right-6 sm:h-[500px] " +
+                 "md:bottom-6 md:right-6 md:left-auto md:w-[400px] md:h-[600px] " +
+                 "lg:bottom-6 lg:right-6 lg:w-[420px] lg:h-[650px]"
+           }`}
+         >
+           {/* Enhanced Chat Header */}
+           <div className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 shadow-sm">
+             {/* Left Section - AI Icon and Titles */}
+             <div className="flex items-center gap-3">
+               <EnhancedAIIcon />
+               <div>
+                 <p className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">
+                   AI Assistant
+                 </p>
+                 <p className="text-xs text-gray-500">
+                   {useCase.title
+                     ? `${useCase.title} Expert`
+                     : "Always here to help"}
+                 </p>
+               </div>
+             </div>
+ 
+             {/* Right Section - Action Buttons */}
+             <div className="flex items-center gap-2">
+               {/* Clear Chat Button */}
+               {!isMinimized && !isFullScreen && (
+                 <button
+                   onClick={clearChat}
+                   className="p-2 rounded-xl text-gray-600 hover:bg-gray-200 hover:text-purple-700 transition-all"
+                   aria-label="Clear Chat"
+                   title="Clear Chat"
+                 >
+                   <RotateCcw className="w-4 h-4" />
+                 </button>
+               )}
+ 
+               {/* Fullscreen / Minimize Toggle */}
+               {!isMinimized && (
+                 <>
+                   <button
+                     onClick={toggleFullScreen}
+                     className="p-2 rounded-xl text-gray-600 hover:bg-gray-200 hover:text-purple-700 transition-all"
+                     aria-label={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
+                     title={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
+                   >
+                     {isFullScreen ? (
+                       <Minimize2 className="w-4 h-4" />
+                     ) : (
+                       <Maximize2 className="w-4 h-4" />
+                     )}
+                   </button>
+ 
+                   {/* Close Chat Button */}
+                   <button
+                     onClick={handleCloseChat}
+                     className="p-2 rounded-xl text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all"
+                     aria-label="Close Chat"
+                     title="Close Chat"
+                   >
+                     <X className="w-4 h-4" />
+                   </button>
+                 </>
+               )}
+             </div>
+           </div>
+ 
+           {/* Chat Body */}
+           {!isMinimized && (
+             <div className="flex grow flex-col overflow-hidden">
+               <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                 {messages.map((msg, index) => (
+                   <div
+                     key={msg.id || index}
+                     className={`flex ${
+                       msg.role === "user" || msg.sender === "user"
+                         ? "justify-end"
+                         : "justify-start"
+                     } animate-fade-in-up`}
+                   >
+                     <div
+                       className={`flex max-w-[85%] ${
+                         msg.role === "user" || msg.sender === "user"
+                           ? "flex-row-reverse"
+                           : "flex-row"
+                       } items-start gap-3`}
+                     >
+                       {/* Avatar */}
+                       <div className="flex-shrink-0 mt-1">
+                         {msg.role === "assistant" || msg.sender === "ai" ? (
+                           <EnhancedAIIcon />
+                         ) : (
+                           <UserIcon />
+                         )}
+                       </div>
+ 
+                       <div className="flex flex-col">
+                         {/* Message Bubble */}
+                         <div
+                           className={`rounded-2xl p-4 text-sm leading-relaxed relative group ${
+                             msg.role === "assistant" || msg.sender === "ai"
+                               ? "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 shadow-md border border-gray-200/50"
+                               : "bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg"
+                           }`}
+                         >
+                           {msg.isImage ? (
+                             <img
+                               src={msg.content || msg.text}
+                               alt="AI Response"
+                               className="max-w-full h-auto rounded-xl"
+                             />
+                           ) : (
+                             <ReactMarkdown className="break-words prose prose-sm max-w-none">
+                               {msg.content || msg.text || ""}
+                             </ReactMarkdown>
+                           )}
+ 
+                           {/* Copy button */}
+                           <button
+                             onClick={() =>
+                               copyToClipboard(msg.content || msg.text || "")
+                             }
+                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-600 transition-all duration-200"
+                             aria-label="Copy message"
+                           >
+                             <Copy className="w-3 h-3" />
+                           </button>
+                         </div>
+ 
+                         {/* Timestamp */}
+                         <div
+                           className={`text-xs text-gray-500 mt-1 ${
+                             msg.role === "user" || msg.sender === "user"
+                               ? "text-right"
+                               : "text-left"
+                           }`}
+                         >
+                           {msg.timestamp?.toLocaleTimeString([], {
+                             hour: "2-digit",
+                             minute: "2-digit",
+                           })}
+                         </div>
+ 
+                         {/* Predefined Questions (only for welcome message) */}
+                         {(msg.role === "assistant" || msg.sender === "ai") &&
+                           index === 0 &&
+                           !questionSelected &&
+                           showWelcome && (
+                             <div className="mt-4 space-y-2">
+                               <p className="text-sm text-gray-600 font-medium">
+                                 Quick questions to get started:
+                               </p>
+                               <div className="grid gap-2">
+                                 {predefinedQuestions.map((question, qIndex) => (
+                                   <button
+                                     key={qIndex}
+                                     onClick={() =>
+                                       handleQuestionSelect(question)
+                                     }
+                                     className="text-left bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 text-blue-800 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-md hover:scale-[1.02] border border-blue-200/50 flex items-center gap-3"
+                                   >
+                                     <span className="text-lg">
+                                       {question.icon}
+                                     </span>
+                                     <div>
+                                       <div className="font-semibold text-xs text-blue-600 uppercase tracking-wide">
+                                         {question.category}
+                                       </div>
+                                       <div className="text-sm">
+                                         {question.text}
+                                       </div>
+                                     </div>
+                                   </button>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+ 
+                         {/* Feedback buttons for AI messages */}
+                         {(msg.role === "assistant" || msg.sender === "ai") &&
+                           index !== 0 && (
+                             <div className="flex items-center gap-2 mt-3">
+                               <button
+                                 onClick={() => handleThumbsUp(index)}
+                                 className="p-2 rounded-full hover:bg-green-100 text-gray-500 hover:text-green-600 transition-colors"
+                                 aria-label="Thumbs up"
+                               >
+                                 <ThumbsUp className="w-4 h-4" />
+                               </button>
+                               <button
+                                 onClick={() => handleThumbsDown(index)}
+                                 className="p-2 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors"
+                                 aria-label="Thumbs down"
+                               >
+                                 <svg
+                                   width="16"
+                                   height="16"
+                                   viewBox="0 0 24 24"
+                                   fill="none"
+                                   xmlns="http://www.w3.org/2000/svg"
+                                   className="text-gray-500"
+                                 >
+                                   <path
+                                     d="M17 13H21L21 4H17M17 13L17 4M17 13L13.0282 21H12.4147C11.1917 21 10.2572 19.9046 10.4456 18.6919L11.0192 15L5.98994 15C4.17839 15 2.78316 13.3959 3.02793 11.5947L3.70735 6.59466C3.90933 5.1082 5.17443 4 6.66936 4H17"
+                                     stroke="currentColor"
+                                     strokeWidth="2"
+                                     strokeLinejoin="round"
+                                   />
+                                 </svg>
+                               </button>
+                             </div>
+                           )}
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+ 
+                 {/* Typing Indicator */}
+                 {isTyping && (
+                   <div className="flex justify-start animate-fade-in-up">
+                     <div className="flex items-start gap-3 max-w-[85%]">
+                       <div className="flex-shrink-0 mt-1">
+                         <EnhancedAIIcon />
+                       </div>
+                       <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 shadow-md border border-gray-200/50">
+                         <div className="flex items-center gap-2">
+                           <span className="text-sm text-gray-600">
+                             AI is typing...
+                           </span>
+                           <div className="flex gap-1">
+                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                             <div
+                               className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                               style={{ animationDelay: "0.1s" }}
+                             ></div>
+                             <div
+                               className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                               style={{ animationDelay: "0.2s" }}
+                             ></div>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+ 
+                 <div ref={messagesEndRef} />
+               </div>
+ 
+               {/* Enhanced Input Area */}
+               <div className="border-t border-gray-200/50 bg-white/80 backdrop-blur-md p-4">
+                 <form
+                   onSubmit={handleSendMessage}
+                   className="flex items-start gap-3"
+                 >
+                   <div className="relative flex-1">
+                     <textarea
+                       ref={textareaRef}
+                       value={input}
+                       onChange={(e) => {
+                         setInput(e.target.value);
+                         adjustTextareaHeight();
+                       }}
+                       onKeyPress={handleKeyPress}
+                       placeholder="Type your message here..."
+                       className="w-full px-4 py-4 p-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all duration-200 text-sm leading-relaxed placeholder-gray-500"
+                       style={{ minHeight: "48px", maxHeight: "120px" }}
+                       disabled={loading}
+                     />
+                   </div>
+ 
+                   <button
+                     type="submit"
+                     disabled={!input.trim() || loading}
+                     className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 text-white rounded-2xl transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex-shrink-0 self-center"
+                     aria-label="Send message"
+                   >
+                     {loading ? (
+                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                     ) : (
+                       <Send className="w-5 h-5" />
+                     )}
+                   </button>
+                 </form>
+               </div>
+             </div>
+           )}
+         </div>
+       )}
+ 
+       {/* Enhanced Styles */}
+       <style>{`
+         @keyframes fade-in-up {
+           from {
+             opacity: 0;
+             transform: translateY(20px);
+           }
+           to {
+             opacity: 1;
+             transform: translateY(0);
+           }
+         }
+ 
+         @keyframes slide-down {
+           from {
+             opacity: 0;
+             transform: translateY(-10px);
+           }
+           to {
+             opacity: 1;
+             transform: translateY(0);
+           }
+         }
+ 
+         .animate-fade-in-up {
+           animation: fade-in-up 0.3s ease-out;
+         }
+ 
+         .animate-slide-down {
+           animation: slide-down 0.2s ease-out;
+         }
+ 
+         .scrollbar-thin {
+           scrollbar-width: thin;
+         }
+ 
+         .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+           background-color: #d1d5db;
+           border-radius: 6px;
+         }
+ 
+         .scrollbar-track-transparent::-webkit-scrollbar-track {
+           background-color: transparent;
+         }
+ 
+         .scrollbar-thin::-webkit-scrollbar {
+           width: 6px;
+         }
+ 
+         /* Enhanced hover effects */
+         .group:hover .opacity-0 {
+           opacity: 1;
+         }
+ 
+         /* Responsive typography */
+         @media (max-width: 640px) {
+           .prose {
+             font-size: 14px;
+           }
+         }
+ 
+         /* Loading animation improvements */
+         @keyframes bounce {
+           0%,
+           80%,
+           100% {
+             transform: scale(0);
+           }
+           40% {
+             transform: scale(1);
+           }
+         }
+ 
+         .animate-bounce {
+           animation: bounce 1.4s infinite ease-in-out both;
+         }
+ 
+         /* Custom gradient animations */
+         @keyframes gradient-x {
+           0%,
+           100% {
+             background-size: 200% 200%;
+             background-position: left center;
+           }
+           50% {
+             background-size: 200% 200%;
+             background-position: right center;
+           }
+         }
+ 
+         .animate-gradient-x {
+           animation: gradient-x 3s ease infinite;
+         }
+ 
+         /* Message bubble animations */
+         .message-bubble {
+           animation: fade-in-up 0.4s ease-out;
+         }
+ 
+         /* Improved focus states */
+         .focus\:ring-purple-500:focus {
+           box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+         }
+ 
+         /* Better mobile responsiveness */
+         @media (max-width: 768px) {
+           .fixed.bottom-6.left-4.right-4 {
+             bottom: 1rem;
+             left: 1rem;
+             right: 1rem;
+           }
+         }
+ 
+         /* Enhanced tooltip styles */
+         .tooltip {
+           position: relative;
+         }
+ 
+         .tooltip:hover::after {
+           content: attr(title);
+           position: absolute;
+           bottom: 100%;
+           left: 50%;
+           transform: translateX(-50%);
+           background: #1f2937;
+           color: white;
+           padding: 0.5rem;
+           border-radius: 0.5rem;
+           font-size: 0.75rem;
+           white-space: nowrap;
+           z-index: 1000;
+           opacity: 1;
+           transition: opacity 0.2s;
+         }
+ 
+         .tooltip::after {
+           opacity: 0;
+         }
+ 
+         /* Smooth transitions for all interactive elements */
+         * {
+           transition: all 0.2s ease-in-out;
+         }
+ 
+         /* Custom scrollbar for webkit browsers */
+         ::-webkit-scrollbar {
+           width: 8px;
+         }
+ 
+         ::-webkit-scrollbar-track {
+           background: transparent;
+         }
+ 
+         ::-webkit-scrollbar-thumb {
+           background: #d1d5db;
+           border-radius: 4px;
+         }
+ 
+         ::-webkit-scrollbar-thumb:hover {
+           background: #9ca3af;
+         }
+ 
+         /* Enhanced glassmorphism effect */
+         .backdrop-blur-xl {
+           backdrop-filter: blur(20px);
+         }
+ 
+         .backdrop-blur-lg {
+           backdrop-filter: blur(16px);
+         }
+ 
+         .backdrop-blur-md {
+           backdrop-filter: blur(12px);
+         }
+ 
+         /* Improved shadow effects */
+         .shadow-2xl {
+           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+         }
+ 
+         .shadow-xl {
+           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+             0 10px 10px -5px rgba(0, 0, 0, 0.04);
+         }
+ 
+         /* Enhanced gradient text */
+         .bg-clip-text {
+           -webkit-background-clip: text;
+           background-clip: text;
+         }
+ 
+         /* Improved button hover states */
+         button:hover {
+           transform: translateY(-1px);
+         }
+ 
+         button:active {
+           transform: translateY(0);
+         }
+ 
+         /* Enhanced mobile menu */
+         .animate-slide-down {
+           animation: slideDown 0.3s ease-out;
+         }
+ 
+         @keyframes slideDown {
+           from {
+             opacity: 0;
+             transform: translateY(-10px);
+             max-height: 0;
+           }
+           to {
+             opacity: 1;
+             transform: translateY(0);
+             max-height: 300px;
+           }
+         }
+       `}</style>
+     </div>
+   );
+ };
 export default CMSRouteRenderer;

@@ -5,8 +5,8 @@ import { Link } from "react-router-dom";
 const domains = [
   {
     id: "cas",
-    title: "Customer Acquisition System",
-    link: "/cas",
+    title: "Loan Origination System",
+    link: "/los",
     description:
       "Optimized workflows for onboarding and expanding your customer base efficiently.",
     icon: <Users size={28} className="text-blue-600" />,

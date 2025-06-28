@@ -69,25 +69,6 @@ interface Category {
   subCategories?: SubCategory[];
 }
 
-// Skeleton Loader Components
-const ProductSkeletonItem: React.FC = () => (
-  <div className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
-    <div className="h-40 bg-gray-200"></div>
-    <div className="p-3">
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-      <div className="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
-      <div className="flex justify-between items-center">
-        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
-        <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
-      </div>
-    </div>
-  </div>
-);
-
-const CategorySkeletonItem: React.FC = () => (
-  <div className="px-2 py-1 rounded-full bg-gray-200 animate-pulse w-24 h-8 mx-1"></div>
-);
-
 // OxyLoans Modal Component
 const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
@@ -177,17 +158,24 @@ const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 };
 
 const SkeletonLoader: React.FC = () => (
-  <>
-    {/* Skeleton for products grid */}
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-4">
-      {Array(10)
-        .fill(0)
-        .map((_, index) => (
-          <ProductSkeletonItem key={index} />
-        ))}
-    </div>
-  </>
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 px-4 py-6">
+    {Array.from({ length: 12 }).map((_, index) => (
+      <div
+        key={index}
+        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse"
+      >
+        <div className="aspect-square bg-gray-200"></div>
+        <div className="p-3 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-5 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-9 bg-gray-200 rounded mt-2"></div>
+        </div>
+      </div>
+    ))}
+  </div>
 );
+
 
 // FAQ Component
 const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
@@ -877,6 +865,40 @@ const Ricebags: React.FC = () => {
     }
   };
 
+const BannerSkeletonLoader: React.FC = () => {
+  const isSmallScreen = window.innerWidth < 768;
+  const imagesPerView = isSmallScreen ? 1 : 2;
+  const totalBanners = 8;
+  const extendedBanners = totalBanners + imagesPerView;
+
+  return (
+    <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
+      <div className="relative w-full overflow-hidden rounded-xl shadow-md">
+        <div
+          className="flex px-2"
+          style={{
+            width: `${(extendedBanners * 100) / imagesPerView}%`,
+            transition: "none",
+          }}
+        >
+          {Array.from({ length: extendedBanners }).map((_, index) => (
+            <div
+              key={index}
+              className="flex-shrink-0 w-full"
+              style={{
+                width: `${100 / extendedBanners}%`,
+                paddingRight: index !== extendedBanners - 1 ? "8px" : "0", // 8px = gap between banners
+              }}
+            >
+              <div className="w-full aspect-[16/4.5] bg-gray-200 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
   // Filter active category items
   const activeItems =
     filteredCategories.find((cat) => cat.categoryName === activeCategory)
@@ -952,17 +974,34 @@ const Ricebags: React.FC = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <SkeletonLoader />
+if (loading) {
+  return (
+    <div className="min-h-screen bg-gray-50 space-y-8 px-4 py-6">
+      {/* Banner Skeleton */}
+      <BannerSkeletonLoader />
+
+      {/* Category Skeleton */}
+      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex flex-col items-center space-y-2 bg-white p-3 rounded-lg shadow-sm animate-pulse"
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gray-200"></div>
+            <div className="w-3/4 h-3 bg-gray-200 rounded"></div>
+          </div>
+        ))}
       </div>
-    );
-  }
+
+      {/* Items Skeleton */}
+      <SkeletonLoader />
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen">
-      <div className="w-full max-w-6xl mx-auto">
+     <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
         <div
           className="relative w-full overflow-hidden"
           onMouseEnter={handleMouseEnter}

@@ -115,7 +115,7 @@ const Footer = () => {
                   href="mailto:support@globalloans.com"
                   className="hover:text-white transition duration-200"
                 >
-                  support@globalloans.com
+                  support@askoxy.ai
                 </a>
               </p>
               <p>

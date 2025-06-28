@@ -163,9 +163,19 @@ const CMSDashboard: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-10">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-            Collection Management System - Use Cases
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800">
+            Collection Management System (CMS)
           </h1>
+          <p className="mt-4 text-gray-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
+            The Collection Management System (CMS) is a smart and efficient
+            platform designed to help financial institutions manage and recover
+            overdue payments with ease. It automates the entire collections
+            workflow—from case assignment and customer segmentation to contact
+            scheduling and legal escalations. By prioritizing critical accounts
+            and tracking recovery activities in real-time, CMS reduces default
+            rates, ensures regulatory compliance, and enhances both operational
+            efficiency and customer engagement throughout the recovery process.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

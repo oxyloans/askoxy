@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   PieChart,
   Pie,
@@ -86,6 +86,7 @@ const MainPage: React.FC = () => {
   const [startDate, setStartDate] = useState<Dayjs | null>(null);
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [filterDate, setfilterDate] = useState<Dayjs | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null); // Reference to the table container
 
   const handleDateChange = (date: Dayjs) => {
     setfilterDate(date);
@@ -163,7 +164,6 @@ const MainPage: React.FC = () => {
 
       const summaryData = [
         { name: "New Orders", count: newOrders.length, status: "1" },
-
         { name: "Assigned Orders", count: assignedOrders.length, status: "3" },
         {
           name: "PickedUp Orders",
@@ -172,7 +172,9 @@ const MainPage: React.FC = () => {
         },
         {
           name: "Exchange Orders",
-          count: exchangeOrdersData.filter(order => order.status === 'EXCHANGEREQUESTED').length,
+          count: exchangeOrdersData.filter(
+            (order) => order.status === "EXCHANGEREQUESTED"
+          ).length,
           status: "Exchange",
         },
         {
@@ -208,6 +210,52 @@ const MainPage: React.FC = () => {
     fetchData();
     handleLogin();
   }, []);
+
+  // Restore scroll position after orders are loaded
+  useEffect(() => {
+    if (!loading && filteredOrders.length > 0) {
+      const savedOrderId = localStorage.getItem("orderId");
+      if (savedOrderId) {
+        const targetRow = document.querySelector(
+          `[data-row-key="${savedOrderId}"]`
+        );
+        if (targetRow) {
+          targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          localStorage.removeItem("orderId");
+        } else {
+          // Check if the order exists in the full orderDetails (for pagination)
+          const orderIndex = orderDetails.findIndex(
+            (order) => order.orderId === savedOrderId
+          );
+          if (orderIndex !== -1) {
+            // Calculate the page number (1-based indexing for Ant Design Table)
+            const targetPage = Math.ceil(
+              (orderIndex + 1) / pagination.pageSize
+            );
+            setPagination((prev) => ({ ...prev, current: targetPage }));
+            // Wait for the table to update to the correct page
+            setTimeout(() => {
+              const updatedRow = document.querySelector(
+                `[data-row-key="${savedOrderId}"]`
+              );
+              if (updatedRow) {
+                updatedRow.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+              localStorage.removeItem("orderId");
+            }, 0);
+          } else {
+            message.info(
+              "The previously viewed order is not visible in the current view."
+            );
+            localStorage.removeItem("orderId");
+          }
+        }
+      }
+    }
+  }, [loading, filteredOrders, orderDetails, pagination.pageSize]);
 
   const handleLogin = () => {
     const accessToken = localStorage.getItem("Token");
@@ -401,23 +449,6 @@ const MainPage: React.FC = () => {
     const buttonClasses =
       "relative overflow-hidden transition-all duration-300 ease-in-out w-10 md:w-auto px-2 flex justify-center items-center";
 
-    // if (status === "4") {
-    //   return (
-    //     <div className="group relative">
-    //       <Button
-    //         type="primary"
-    //         className="w-full md:w-auto px-2 bg-purple-500 hover:bg-gray-700 transition-all duration-300 flex items-center justify-center"
-    //         onClick={() => handleViewDetails(record)}
-    //       >
-    //         <div className="flex items-center">
-    //           <span className="group-hover:hidden">View</span>
-    //           <span className="hidden group-hover:block">ViewDetails</span>
-    //         </div>
-    //       </Button>
-    //     </div>
-    //   );
-    // }
-
     switch (status) {
       case "1":
         return (
@@ -555,39 +586,6 @@ const MainPage: React.FC = () => {
         );
       },
     },
-    // {
-    //   title: "Order Pincode",
-    //   key: "orderPincode",
-    //   width: 80,
-    //   sorter: (a, b) =>
-    //     String(a.orderAddress?.pincode || "").localeCompare(
-    //       String(b.orderAddress?.pincode || "")
-    //     ),
-
-    //   render: (record: Order) => (
-    //     <div className="flex items-center gap-2 mt-1 flex-col">
-    //       {record.orderAddress?.pincode ? (
-    //         <Typography.Text className="text-sm">
-    //           {record.orderAddress.pincode}
-    //         </Typography.Text>
-    //       ) : (
-    //         <Typography.Text className="text-gray-500">
-    //           Not provided
-    //         </Typography.Text>
-    //       )}
-    //       {record.orderAddress?.googleMapLink && (
-    //         <a
-    //           href={record.orderAddress.googleMapLink}
-    //           target="_blank"
-    //           rel="noopener noreferrer"
-    //           className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
-    //         >
-    //           <EnvironmentOutlined style={{ fontSize: "20px" }} />
-    //         </a>
-    //       )}
-    //     </div>
-    //   ),
-    // },
     {
       title: "Date & Items",
       key: "datetime",
@@ -644,7 +642,11 @@ const MainPage: React.FC = () => {
                         </Typography.Text>
                       )}
                       {item.quantity && <span>Qty: {item.quantity}</span>}
-                      {item.weight && <span>Weight: {item.weight}kgs</span>}
+                      {item.weight && (
+                        <span>
+                          Weight: {item.weight} {item.itemUnit}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -667,10 +669,8 @@ const MainPage: React.FC = () => {
       render: (text: string, record: Order) => {
         return (
           <div className="flex flex-col items-center gap-2">
-           
             <div className="flex flex-col md:flex-row items-center gap-2">
               {getActionButtons(text, record)}
-
               <div className="group relative">
                 <Button
                   type="primary"
@@ -686,22 +686,16 @@ const MainPage: React.FC = () => {
                 </Button>
               </div>
             </div>
-
             <div className="flex flex-col items-center gap-1">
               {record.deliveryBoyName && (
                 <div className="flex justify-between w-full gap-1 text-sm">
-                  <strong>asgn : </strong>{" "}
-                  <span>
-                    {record.deliveryBoyName}
-                  </span>
+                  <strong>asgn : </strong> <span>{record.deliveryBoyName}</span>
                 </div>
               )}
               {record.deliveryBoyMobile && (
                 <div className="flex justify-between w-full text-sm">
                   <strong>mbl:</strong>
-                  <span>
-                    {record.deliveryBoyMobile}
-                  </span>
+                  <span>{record.deliveryBoyMobile}</span>
                 </div>
               )}
             </div>
@@ -709,13 +703,19 @@ const MainPage: React.FC = () => {
         );
       },
     },
-
     {
       title: "Distance",
       key: "distance",
       width: 100,
       render: (record: Order) => (
         <div className="flex flex-col space-y-0.5 text-sm text-gray-600">
+          {record.deliveryFee && (
+            <div className="flex justify-between">
+             <strong>₹{Number(record.deliveryFee)} rupees</strong>
+              <span>: deliveryFee</span>
+            </div>
+          )}
+
           <div className="flex justify-between">
             <span>Miyapur:</span>
             <span>{record.distancefromMiyapur}</span>
@@ -1006,40 +1006,27 @@ const MainPage: React.FC = () => {
                     </Button>
                   </div>
                 )}
-
-                {/* <div className="flex justify-end w-full p-2">
-                  <Button
-                    onClick={() => {
-                      setFilteredOrders(orderDetails);
-                      setSelectedStatus(null);
-                      setStartDate(null);
-                      setEndDate(null);
-                    }}
-                    className="bg-blue-400 sm:w-auto"
-                  >
-                    Get All Orders
-                  </Button>
-                </div> */}
               </div>
-
-              <Table
-                columns={columns}
-                className="p-2"
-                dataSource={filteredOrders}
-                rowKey="orderId"
-                pagination={{
-                  current: pagination.current,
-                  pageSize: pagination.pageSize,
-                  responsive: true,
-                  showSizeChanger: false,
-                  onChange: (page, pageSize) =>
-                    setPagination({ current: page, pageSize }),
-                }}
-                loading={loading}
-                onChange={handleTableChange}
-                scroll={{ x: "max-content" }}
-                size={isMobile ? "small" : "middle"}
-              />
+              <div ref={tableRef}>
+                <Table
+                  columns={columns}
+                  className="p-2"
+                  dataSource={filteredOrders}
+                  rowKey="orderId"
+                  pagination={{
+                    current: pagination.current,
+                    pageSize: pagination.pageSize,
+                    responsive: true,
+                    showSizeChanger: false,
+                    onChange: (page, pageSize) =>
+                      setPagination({ current: page, pageSize }),
+                  }}
+                  loading={loading}
+                  onChange={handleTableChange}
+                  scroll={{ x: "max-content" }}
+                  size={isMobile ? "small" : "middle"}
+                />
+              </div>
             </Card>
           )}
         </Col>

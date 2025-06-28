@@ -457,11 +457,11 @@ const BlogDetails: React.FC = () => {
   };
 
   const nextImage = (campaignId: string, imageUrls: Image[]) => {
-    if (imageUrls && imageUrls.length > 1) {
+    if (imageUrls && imageUrls.length > 0) {
       setCurrentImageIndex((prev) => ({
         ...prev,
         [campaignId]:
-          prev[campaignId] === imageUrls.length - 1
+          (prev[campaignId] || 0) === imageUrls.length - 1
             ? 0
             : (prev[campaignId] || 0) + 1,
       }));
@@ -469,11 +469,11 @@ const BlogDetails: React.FC = () => {
   };
 
   const prevImage = (campaignId: string, imageUrls: Image[]) => {
-    if (imageUrls && imageUrls.length > 1) {
+    if (imageUrls && imageUrls.length > 0) {
       setCurrentImageIndex((prev) => ({
         ...prev,
         [campaignId]:
-          prev[campaignId] === 0
+          (prev[campaignId] || 0) === 0
             ? imageUrls.length - 1
             : (prev[campaignId] || 0) - 1,
       }));
@@ -656,11 +656,21 @@ const BlogDetails: React.FC = () => {
     navigate("/main/profile");
   };
 
+  const handleAddblog = () => {
+    if (userId) {
+      navigate("/main/addblogs");
+    } else {
+      message.info("please Login to add your blog");
+      sessionStorage.setItem("redirectPath", "/main/addblogs");
+      navigate("/whatsapplogin");
+    }
+  };
+
   const renderCampaign = (campaign: Campaign) => (
     <div
       key={campaign.campaignId}
-      className="w-full bg-white rounded-lg shadow-lg overflow-hidden mb-6 
-           max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl 
+      className="w-full bg-white rounded-lg shadow-lg overflow-hidden mb-6
+           max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl
            mx-auto"
     >
       <div className="p-4 border-b flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -713,12 +723,15 @@ const BlogDetails: React.FC = () => {
 
       <div className="flex flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 relative bg-gray-100 flex items-center justify-center">
-          {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
+          {campaign.imageUrls &&
+          campaign.imageUrls.length > 0 &&
+          campaign.imageUrls[currentImageIndex[campaign.campaignId] ?? 0]
+            ?.imageUrl ? (
             <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[400px]">
               <div className="w-full h-full flex items-center justify-center">
                 {isVideoUrl(
                   campaign.imageUrls[
-                    currentImageIndex[campaign.campaignId] || 0
+                    currentImageIndex[campaign.campaignId] ?? 0
                   ].imageUrl
                 ) ? (
                   <video
@@ -730,19 +743,19 @@ const BlogDetails: React.FC = () => {
                     <source
                       src={
                         campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] || 0
+                          currentImageIndex[campaign.campaignId] ?? 0
                         ].imageUrl
                       }
                       type={getVideoType(
                         campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] || 0
+                          currentImageIndex[campaign.campaignId] ?? 0
                         ].imageUrl
                       )}
                     />
                     <source
                       src={
                         campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] || 0
+                          currentImageIndex[campaign.campaignId] ?? 0
                         ].imageUrl
                       }
                       type="video/mp4"
@@ -750,7 +763,7 @@ const BlogDetails: React.FC = () => {
                     <source
                       src={
                         campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] || 0
+                          currentImageIndex[campaign.campaignId] ?? 0
                         ].imageUrl
                       }
                       type="video/webm"
@@ -761,11 +774,11 @@ const BlogDetails: React.FC = () => {
                   <img
                     src={
                       campaign.imageUrls[
-                        currentImageIndex[campaign.campaignId] || 0
+                        currentImageIndex[campaign.campaignId] ?? 0
                       ].imageUrl
                     }
                     alt={`${campaign.campaignType} - ${
-                      (currentImageIndex[campaign.campaignId] || 0) + 1
+                      (currentImageIndex[campaign.campaignId] ?? 0) + 1
                     }`}
                     className="w-full h-full object-contain"
                   />
@@ -777,10 +790,10 @@ const BlogDetails: React.FC = () => {
                     onClick={() =>
                       prevImage(campaign.campaignId, campaign.imageUrls)
                     }
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all sm:p-3 md:p-4"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
+                      className="w-6 h-6"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -793,10 +806,10 @@ const BlogDetails: React.FC = () => {
                     onClick={() =>
                       nextImage(campaign.campaignId, campaign.imageUrls)
                     }
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all sm:p-3 md:p-4"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
+                      className="w-6 h-6"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -805,7 +818,7 @@ const BlogDetails: React.FC = () => {
                       <polyline points="9,18 15,12 9,6"></polyline>
                     </svg>
                   </button>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 sm:bottom-4">
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
                     {campaign.imageUrls.map((_, index) => (
                       <button
                         key={index}
@@ -815,11 +828,11 @@ const BlogDetails: React.FC = () => {
                             [campaign.campaignId]: index,
                           }))
                         }
-                        className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${
+                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
                           index ===
-                          (currentImageIndex[campaign.campaignId] || 0)
-                            ? "bg-white"
-                            : "bg-white bg-opacity-50"
+                          (currentImageIndex[campaign.campaignId] ?? 0)
+                            ? "bg-white scale-125"
+                            : "bg-white bg-opacity-50 hover:bg-opacity-75"
                         }`}
                       />
                     ))}
@@ -1131,7 +1144,9 @@ const BlogDetails: React.FC = () => {
         <div className={`flex justify-end ${userId === null ? "mt-8" : ""}`}>
           <button
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all text-xs sm:text-sm"
-            onClick={() => navigate(userId ? "/main/addblogs" : "/addblogs")}
+            onClick={() => {
+              handleAddblog();
+            }}
           >
             Add New Blog
           </button>
@@ -1181,12 +1196,15 @@ const BlogDetails: React.FC = () => {
         >
           <div className="flex flex-col sm:flex-row h-[500px] sm:h-96">
             <div className="w-full sm:w-1/2 bg-gray-100 flex items-center justify-center relative">
-              {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
+              {campaign.imageUrls &&
+              campaign.imageUrls.length > 0 &&
+              campaign.imageUrls[currentImageIndex[campaign.campaignId] ?? 0]
+                ?.imageUrl ? (
                 <div className="relative w-full h-64 sm:h-full">
                   <div className="w-full h-full flex items-center justify-center">
                     {isVideoUrl(
                       campaign.imageUrls[
-                        currentImageIndex[campaign.campaignId] || 0
+                        currentImageIndex[campaign.campaignId] ?? 0
                       ].imageUrl
                     ) ? (
                       <video
@@ -1198,19 +1216,19 @@ const BlogDetails: React.FC = () => {
                         <source
                           src={
                             campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] || 0
+                              currentImageIndex[campaign.campaignId] ?? 0
                             ].imageUrl
                           }
                           type={getVideoType(
                             campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] || 0
+                              currentImageIndex[campaign.campaignId] ?? 0
                             ].imageUrl
                           )}
                         />
                         <source
                           src={
                             campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] || 0
+                              currentImageIndex[campaign.campaignId] ?? 0
                             ].imageUrl
                           }
                           type="video/mp4"
@@ -1218,7 +1236,7 @@ const BlogDetails: React.FC = () => {
                         <source
                           src={
                             campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] || 0
+                              currentImageIndex[campaign.campaignId] ?? 0
                             ].imageUrl
                           }
                           type="video/webm"
@@ -1229,11 +1247,11 @@ const BlogDetails: React.FC = () => {
                       <img
                         src={
                           campaign.imageUrls[
-                            currentImageIndex[campaign.campaignId] || 0
+                            currentImageIndex[campaign.campaignId] ?? 0
                           ].imageUrl
                         }
                         alt={`${campaign.campaignType} - ${
-                          (currentImageIndex[campaign.campaignId] || 0) + 1
+                          (currentImageIndex[campaign.campaignId] ?? 0) + 1
                         }`}
                         className="max-w-full max-h-full object-contain"
                       />
@@ -1245,10 +1263,10 @@ const BlogDetails: React.FC = () => {
                         onClick={() =>
                           prevImage(campaign.campaignId, campaign.imageUrls)
                         }
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
                       >
                         <svg
-                          className="w-4 h-4"
+                          className="w-6 h-6"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -1261,10 +1279,10 @@ const BlogDetails: React.FC = () => {
                         onClick={() =>
                           nextImage(campaign.campaignId, campaign.imageUrls)
                         }
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
                       >
                         <svg
-                          className="w-4 h-4"
+                          className="w-6 h-6"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -1273,7 +1291,7 @@ const BlogDetails: React.FC = () => {
                           <polyline points="9,18 15,12 9,6"></polyline>
                         </svg>
                       </button>
-                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
                         {campaign.imageUrls.map((_, index) => (
                           <button
                             key={index}
@@ -1283,11 +1301,11 @@ const BlogDetails: React.FC = () => {
                                 [campaign.campaignId]: index,
                               }))
                             }
-                            className={`w-1.5 h-1.5 rounded-full transition-all ${
+                            className={`w-2 h-2 rounded-full transition-all duration-200 ${
                               index ===
-                              (currentImageIndex[campaign.campaignId] || 0)
-                                ? "bg-white"
-                                : "bg-white bg-opacity-50"
+                              (currentImageIndex[campaign.campaignId] ?? 0)
+                                ? "bg-white scale-125"
+                                : "bg-white bg-opacity-50 hover:bg-opacity-75"
                             }`}
                           />
                         ))}

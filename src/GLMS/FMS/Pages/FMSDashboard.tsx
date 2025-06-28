@@ -258,9 +258,19 @@ const FMSDashboard: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-10">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-            Financial Management System - Use Cases
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800">
+            Financial Management System (FMS)
           </h1>
+          <p className="mt-4 text-gray-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
+            The Financial Management System (FMS) is a comprehensive solution
+            that helps organizations seamlessly manage their financial
+            operations. From planning and budgeting to accounting and financial
+            reporting, FMS delivers real-time insights into financial health and
+            performance. It streamlines workflows, ensures regulatory
+            compliance, and empowers leadership with accurate data for faster,
+            smarter decision-making—ultimately supporting long-term business
+            growth and stability.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

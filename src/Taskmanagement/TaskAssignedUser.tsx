@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
@@ -19,7 +19,6 @@ import type { TableProps } from "antd";
 const { Option } = Select;
 const { Title } = Typography;
 
-// Define the Task interface based on your actual API response structure
 interface Task {
   taskcontent: string;
   createdby: string;
@@ -30,60 +29,72 @@ interface Task {
   message: string;
 }
 
-interface TaskAssignedUserProps {
-  // Add any props if needed
-}
-
-const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
-  // List of users from your input
+const TaskAssignedUser: React.FC = () => {
   const userList = [
-    "GRISHMA",
-    "GUNA",
-    "GUNASHEKAR",
-    "SAIKUMAR",
-    "SREEJA",
-    "GADISAI",
-    "GUTTISAI",
-    "NARENDRA",
-    "MANEIAH",
-    "VARALAKSHMI",
-    "VIJAY",
-    "NIHARIKA",
-    "HARIPRIYA",
-    "VINODH",
-    "NAVEEN",
-    "SRIDHAR",
-    "SUBBU",
-    "UDAY",
-    "HARIBABU",
-    "SUDHEESH",
-    "ANUSHA",
-    "DIVYA",
-    "KARTHIK",
-    "RAMADEVI",
-    "BHARGAV",
-    "PRATHIBHA",
-    "JYOTHI",
-    "HEMA",
-    "RAMYAHR",
-    "SURESH",
-    "SUCHITHRA",
-    "ARUNA",
-    "VENKATESH",
-    "RAKESH",
-    "JHON",
-    "MOUNIKA",
-    "VANDANA",
-    "GOPAL",
-    "ANUSHAACCOUNT",
-    "RADHAKRISHNA",
-    "MADHU",
-    "RAVI",
-    "SAMPATH",
-    "CHANDU",
-    "SWATHI",
-    "SHANTHI",
-    "VISWA"
+    "akhila u",
+    "Anusha",
+    "Anusha Kowthavarapu",
+    "Arla Aruna Jyothi",
+    "Bhargav.M",
+    "Darelli nagarani",
+    "Dasi srilekha",
+    "Dharmapuri Sai Krishna",
+    "Divya",
+    "Divyajyothi",
+    "GOPALA KRISHNA MALLEBOINA",
+    "Grishma",
+    "Gudelli Gunashekar",
+    "Gudelli Jhansi Rani",
+    "Gutti Sai Kumar",
+    "g venkata karthik",
+    "Haribabu",
+    "Haripriya Yerreddula",
+    "Hemalatha",
+    "Kandhikatla Ram kumar",
+    "Krovi vamsi",
+    "Labhishetty Sreeja",
+    "M Vinod",
+    "Maneiah",
+    "Manikanta",
+    "Matta madhu venkata durga prasad",
+    "Megha",
+    "Mounika",
+    "Narendra Kumar Balijepalli",
+    "Nava Jyothi Pattedi",
+    "Naveen Pairala",
+    "Niharika Pokuri",
+    "Pragada Satya Madhavi",
+    "Prameela Kovvali",
+    "Prathibha",
+    "Raga Ramya",
+    "Ramadevi",
+    "Ramesh Reddy",
+    "RANGASAI",
+    "Ravikiran s",
+    "Sagarla suresh",
+    "Sai Kumar Gadi",
+    "Saikarthik Rathod",
+    "sandhya",
+    "Satyasri",
+    "Shanthi",
+    "Siddu venkata shiva narayana reddy",
+    "Srilekha Kailasapu",
+    "sridhar",
+    "SUBASH SURE",
+    "sudheesh",
+    "swathi",
+    "thulasi",
+    "thulasiboda",
+    "T.Tejaswini Reddy",
+    "Uday Reddy",
+    "UMA MAHESH",
+    "Vandanapu Indu",
+    "varalakshmi",
+    "Varre venkat",
+    "vijay dasari",
+    "Vishnu",
+    "Vishwateja Dharmapuri",
+    "Zubeidha Begum",
   ];
 
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -91,7 +102,6 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [displayUserList, setDisplayUserList] = useState<string[]>(userList);
 
-  // Function to fetch tasks for a selected user
   const fetchUserTasks = async (userName: string) => {
     if (!userName) {
       notification.warning({
@@ -102,7 +112,6 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
     }
 
     setLoading(true);
-
     try {
       const response = await axios.get(
         `${BASE_URL}/user-service/write/gettask/${userName}`
@@ -137,30 +146,19 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
     }
   };
 
-  // Handle user selection change
   const handleUserChange = (value: string) => {
     setSelectedUser(value);
-    // When a user is selected, filter the displayUserList to only show that user
-    if (value) {
-      setDisplayUserList([value]);
-    } else {
-      // If selection is cleared, show all users again
-      setDisplayUserList(userList);
-    }
+    setDisplayUserList([value]);
   };
 
-  // Handle when dropdown opens
   const handleDropdownOpen = (open: boolean) => {
     if (open) {
-      // When dropdown opens, show all users
       setDisplayUserList(userList);
     } else if (selectedUser) {
-      // When dropdown closes and there's a selection, filter to just that user
       setDisplayUserList([selectedUser]);
     }
   };
 
-  // Get status text and color based on status number
   const getStatusInfo = (status: number) => {
     switch (status) {
       case 1:
@@ -176,18 +174,11 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
     }
   };
 
-  // Function to get the last 4 digits of task ID
   const getLastFourDigits = (id: string) => {
     if (!id) return "N/A";
-
-    // If id is less than 4 characters, return the whole string
-    if (id.length <= 4) return id;
-
-    // Otherwise return the last 4 characters
-    return id.slice(-4);
+    return id.length <= 4 ? id : id.slice(-4);
   };
 
-  // Task table columns based on the actual response structure
   const columns: TableProps<Task>["columns"] = [
     {
       title: "S.No",
@@ -204,10 +195,7 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
       ellipsis: true,
       align: "center",
       render: (id) => {
-        // Show only last 4 digits of the task ID
         const shortId = getLastFourDigits(id);
-
-        // Add tooltip showing full ID on hover
         return (
           <Tooltip title={`Full ID: ${id}`}>
             <span>#{shortId}</span>
@@ -259,14 +247,15 @@ const TaskAssignedUser: React.FC<TaskAssignedUserProps> = () => {
         <Row gutter={16} className="mb-6">
           <Col xs={24} sm={12} md={8}>
             <Select
-              placeholder="Select a your name"
+              placeholder="Select your name"
               style={{ width: "100%" }}
               onChange={handleUserChange}
               value={selectedUser || undefined}
               showSearch
+              optionLabelProp="value"
               onDropdownVisibleChange={handleDropdownOpen}
               filterOption={(input, option) =>
-                (option?.children as unknown as string)
+                (option?.value as string)
                   .toLowerCase()
                   .includes(input.toLowerCase())
               }

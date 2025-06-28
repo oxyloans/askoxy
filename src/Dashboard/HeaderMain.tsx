@@ -3,7 +3,7 @@ import { ShoppingCart, UserCircle, X } from "lucide-react";
 import { FaBars, FaSearch, FaTimes } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
-import AskOxyLogo from "../assets/img/askoxylogoblack.png";
+import AskOxyLogo from "../assets/img/askoxylogonew.png";
 import { CartContext } from "../until/CartContext";
 import axios from "axios";
 
@@ -370,117 +370,112 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="bg-#5c3391 shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          {/* Main header row - always visible */}
-          <div className="flex items-center justify-between h-14 sm:h-20">
-            {/* Left: Logo & menu toggle */}
-            <div className="flex items-center">
-              <button
-                onClick={toggleSidebar}
-                className="md:hidden mr-2 p-2 text-gray-700 hover:text-gray-900"
-                aria-label="Toggle sidebar"
-              >
-                <FaBars className="w-5 h-5" />
-              </button>
+      <header
+        className="fixed top-0 left-0 right-0 z-[1000] h-[80px] w-full font-['Roboto'] border-b border-black/5 shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+        style={{
+          background: "linear-gradient(135deg, #5c3391 0%, #312c74 100%)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Left: Logo & Menu */}
+          <div className="flex items-center ml-[-20px]">
+            <button
+              onClick={toggleSidebar}
+              className="md:hidden mr-3 p-2 text-white hover:text-gray-200"
+              aria-label="Toggle sidebar"
+            >
+              <FaBars className="w-5 h-5" />
+            </button>
 
-              <img
-                src={AskOxyLogo}
-                className="h-8 w-auto sm:h-12 object-contain cursor-pointer"
-                alt="AskOxyLogo"
-                onClick={() => handleNavigation("/main/dashboard/home")}
-              />
-            </div>
+            <img
+              src={AskOxyLogo}
+              alt="AskOxyLogo"
+              onClick={() => handleNavigation("/main/dashboard/home")}
+              className="h-8 sm:h-12 w-auto object-contain cursor-pointer"
+            />
+          </div>
 
-            {/* Middle: Desktop search (hidden on mobile) */}
-            <div className="hidden sm:block flex-grow max-w-xl mx-4">
-              {/* {renderDesktopSearchBar()} */}
-              <SearchBar />
-            </div>
+          {/* Middle: Desktop Search */}
+          <div className="hidden sm:flex flex-grow max-w-xl mx-6">
+            <SearchBar />
+          </div>
 
-            {/* Right: Action Icons */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {/* Mobile search toggle button */}
-              <button
-                onClick={toggleSearch}
-                className="sm:hidden p-2 text-gray-600 hover:text-purple-500 transition-all duration-300"
-                aria-label="Toggle search"
-              >
-                <FaSearch className="w-5 h-5" />
-              </button>
+          {/* Right: Profile, Search, Cart */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Mobile Search Icon */}
+            <button
+              onClick={toggleSearch}
+              className="sm:hidden p-2 text-white hover:text-gray-200 transition"
+              aria-label="Toggle search"
+            >
+              <FaSearch className="w-5 h-5" />
+            </button>
 
-              {/* Profile button with text (for web view) */}
-              <button
-                onClick={() => handleNavigation("/main/profile")}
-                onMouseDown={() => setActiveButton("profile")}
-                onMouseUp={() => setActiveButton(null)}
-                onMouseLeave={() => setActiveButton(null)}
-                className={`p-2 text-gray-700 hover:bg-gray-50 rounded-full hover:text-green-600 transition-all duration-300 flex items-center 
-                  ${
-                    location.pathname === "/main/profile"
-                      ? "bg-green-50 text-green-600"
-                      : ""
-                  }`}
-                aria-label="Profile"
-              >
-                <UserCircle
-                  size={20}
-                  className={`transition-colors duration-300 
-                    ${
-                      location.pathname === "/main/profile"
-                        ? "text-green-600"
-                        : activeButton === "profile"
-                        ? "text-green-500"
-                        : "text-gray-700"
-                    }`}
-                />
-                <span className="ml-1 hidden sm:block text-sm font-medium">
-                  Profile
-                </span>
-              </button>
-
-              {/* Cart button with text (for web view) */}
-              <button
-                onClick={handleCartClick}
-                onMouseDown={() => setActiveButton("cart")}
-                onMouseUp={() => setActiveButton(null)}
-                onMouseLeave={() => setActiveButton(null)}
-                className={`relative flex items-center space-x-1 text-gray-700 hover:bg-gray-50 rounded-full p-1 sm:px-2 sm:py-1 
-              hover:text-purple-600 transition-all duration-300 hover:scale-105 active:scale-95 
-              ${
-                location.pathname === "/mycart"
-                  ? "bg-purple-50 text-purple-600"
-                  : ""
+            {/* Profile */}
+            <button
+              onClick={() => handleNavigation("/main/profile")}
+              onMouseDown={() => setActiveButton("profile")}
+              onMouseUp={() => setActiveButton(null)}
+              onMouseLeave={() => setActiveButton(null)}
+              className={`p-2 rounded-full transition flex items-center ${
+                location.pathname === "/main/profile"
+                  ? "bg-green-100 text-green-700"
+                  : "text-white hover:bg-white/10"
               }`}
-              >
-                <ShoppingCart
-                  size={16}
-                  className={`sm:w-6 sm:h-6 transition-colors duration-300 
-                ${
-                  location.pathname === "/main/mycart"
-                    ? "text-purple-600"
-                    : activeButton === "cart"
-                    ? "text-purple-500"
-                    : "text-gray-700"
+              aria-label="Profile"
+            >
+              <UserCircle
+                size={20}
+                className={`transition ${
+                  location.pathname === "/main/profile"
+                    ? "text-green-600"
+                    : activeButton === "profile"
+                    ? "text-green-500"
+                    : "text-white"
                 }`}
-                />
-                <span className="hidden sm:inline text-sm">Cart</span>
-                {count > 0 && (
-                  <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-xs rounded-full w-3 h-3 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs">
-                    {count}
-                  </span>
-                )}
-              </button>
-            </div>
+              />
+              <span className="ml-1 hidden sm:block text-sm font-medium">
+                Profile
+              </span>
+            </button>
+
+            {/* Cart */}
+            <button
+              onClick={handleCartClick}
+              onMouseDown={() => setActiveButton("cart")}
+              onMouseUp={() => setActiveButton(null)}
+              onMouseLeave={() => setActiveButton(null)}
+              className={`relative flex items-center space-x-1 rounded-full p-1 sm:px-2 sm:py-1 transition hover:scale-105 active:scale-95 ${
+                location.pathname === "/main/mycart"
+                  ? "bg-purple-100 text-purple-700"
+                  : "text-white hover:bg-white/10"
+              }`}
+              aria-label="Cart"
+            >
+              <ShoppingCart
+                size={16}
+                className={`sm:w-6 sm:h-6 transition ${
+                  location.pathname === "/main/mycart"
+                    ? "text-purple-700"
+                    : activeButton === "cart"
+                    ? "text-purple-400"
+                    : "text-white"
+                }`}
+              />
+              <span className="hidden sm:inline text-sm">Cart</span>
+              {count > 0 && (
+                <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                  {count}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
-
-      {/* Mobile search overlay (full screen) */}
       {isSearchVisible && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col animate-fadeIn sm:hidden">
-          {/* Search header */}
-          <div className="border-b border-gray-200 px-4 py-3 flex items-center shadow-sm">
+        <div className="fixed inset-0 bg-gradient-to-b from-purple-600 to-purple-800 z-50 flex flex-col sm:hidden animate-fadeIn">
+          {/* Search bar header */}
+          <div className="border-b border-gray-200 px-4 py-3 flex items-center bg-white shadow-sm">
             <form
               className="flex-1 flex items-center relative rounded-full bg-gray-100 px-4 py-2"
               onSubmit={handleSearchSubmit}
@@ -508,15 +503,17 @@ const Header: React.FC<HeaderProps> = ({
             </form>
             <button
               onClick={closeSearch}
-              className="ml-3 p-1 text-gray-500 hover:text-gray-700"
+              className="ml-3 p-1 text-white hover:text-gray-100"
               aria-label="Close search"
             >
               <X size={20} />
             </button>
           </div>
 
-          {/* Search results container */}
-          <div className="flex-1 overflow-y-auto">{renderSearchResults()}</div>
+          {/* Search results */}
+          <div className="flex-1 overflow-y-auto bg-white">
+            {renderSearchResults()}
+          </div>
         </div>
       )}
 

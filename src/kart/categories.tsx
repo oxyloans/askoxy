@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
@@ -87,9 +87,13 @@ const Categories: React.FC<CategoriesProps> = ({
 }) => {
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
-  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
+    null
+  );
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [userEligibleOffers, setUserEligibleOffers] = useState<UserEligibleOffer[]>([]);
+  const [userEligibleOffers, setUserEligibleOffers] = useState<
+    UserEligibleOffer[]
+  >([]);
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
   const [isFetchingOffers, setIsFetchingOffers] = useState(false);
   const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(() => {
@@ -112,25 +116,29 @@ const Categories: React.FC<CategoriesProps> = ({
     items: {},
     status: {},
   });
+  const [stockModal, setStockModal] = useState<{
+    visible: boolean;
+    content: string;
+  }>({
+    visible: false,
+    content: "",
+  });
 
   const location = useLocation();
 
   const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
-  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>("0");
-  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(null);
+  const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
+    "0"
+  );
+  const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
+    null
+  );
   const [disabledFilters, setDisabledFilters] = useState<{
     [key: string]: boolean;
   }>({});
 
-  // Sample offer images for demonstration
-  const offerImages = [
-    "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=800&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop",
-  ];
+  // Ref for scrolling to items section
+  const itemsRef = useRef<HTMLDivElement>(null);
 
   const weightFilters = [
     { label: "1 KG", value: "1.0" },
@@ -138,17 +146,6 @@ const Categories: React.FC<CategoriesProps> = ({
     { label: "10 KG", value: "10.0" },
     { label: "26 KG", value: "26.0" },
   ];
-
-  // Auto-slide effect for offers
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentOfferIndex((prevIndex) => 
-        prevIndex === offerImages.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [offerImages.length]);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -159,6 +156,26 @@ const Categories: React.FC<CategoriesProps> = ({
       setActiveWeightFilter(null);
     }
   }, [location.search]);
+
+  const handleCategoryClick = (categoryName: string) => {
+    // If the same category is clicked again, deselect it
+    if (categoryName === activeCategory) {
+      onCategoryClick(""); // Set no active category
+      return;
+    }
+
+    onCategoryClick(categoryName);
+
+    // Scroll to items section after a short delay
+    setTimeout(() => {
+      if (itemsRef.current) {
+        itemsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
+  };
 
   const handleWeightFilterClick = (value: string) => {
     if (activeWeightFilter === value) {
@@ -203,7 +220,8 @@ const Categories: React.FC<CategoriesProps> = ({
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      const customerCart: CartItem[] = response.data?.customerCartResponseList || [];
+      const customerCart: CartItem[] =
+        response.data?.customerCartResponseList || [];
       console.log("fetchCartData API response:", response.data);
 
       const cartItemsMap: Record<string, number> = customerCart.reduce(
@@ -211,7 +229,9 @@ const Categories: React.FC<CategoriesProps> = ({
           if (item.status === "ADD") {
             const quantity = item.cartQuantity ?? 0;
             acc[item.itemId] = (acc[item.itemId] ?? 0) + quantity;
-            console.log(`Item ${item.itemId}: quantity=${quantity}, status=${item.status}`);
+            console.log(
+              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`
+            );
           }
           return acc;
         },
@@ -419,20 +439,23 @@ const Categories: React.FC<CategoriesProps> = ({
           return true;
         }
 
-        const isExcluded = userEligibleOffers.some((eligibleOffer: UserEligibleOffer) => {
-          const eligibleWeight = normalizeWeight(eligibleOffer.weight);
-          if (eligibleWeight === null) {
-            console.warn(
-              `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`
-            );
-            return false;
+        const isExcluded = userEligibleOffers.some(
+          (eligibleOffer: UserEligibleOffer) => {
+            const eligibleWeight = normalizeWeight(eligibleOffer.weight);
+            if (eligibleWeight === null) {
+              console.warn(
+                `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`
+              );
+              return false;
+            }
+
+            const isEligible = eligibleOffer.eligible === true;
+            const isWeightMatch =
+              Math.abs(eligibleWeight - offerMinQtyKg) < 0.0001;
+
+            return isEligible && isWeightMatch;
           }
-
-          const isEligible = eligibleOffer.eligible === true;
-          const isWeightMatch = Math.abs(eligibleWeight - offerMinQtyKg) < 0.0001;
-
-          return isEligible && isWeightMatch;
-        });
+        );
 
         return !isExcluded;
       });
@@ -655,26 +678,28 @@ const Categories: React.FC<CategoriesProps> = ({
   const filteredCategories = categories.filter(
     (category) => category.categoryName.toLowerCase() !== "all items"
   );
-
-  // Skeleton loader component
-  const SkeletonLoader = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-      {[...Array(12)].map((_, index) => (
-        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-          <div className="aspect-square bg-gray-200"></div>
-          <div className="p-3 space-y-2">
+  
+const SkeletonLoader = () => (
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+    {Array.from({ length: 12 }).map((_, index) => (
+      <div
+        key={index}
+        className="flex flex-col justify-between bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse"
+      >
+        <div className="aspect-square bg-gray-200"></div>
+        <div className="flex flex-col flex-grow p-3 sm:p-4">
+          <div className="space-y-2">
             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            <div className="flex items-center space-x-2">
-              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-            </div>
-            <div className="h-8 bg-gray-200 rounded"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/3"></div>
           </div>
+          <div className="mt-2 h-5 bg-gray-200 rounded w-1/2"></div>
+          <div className="mt-auto pt-3 h-9 bg-gray-200 rounded"></div>
         </div>
-      ))}
-    </div>
-  );
+      </div>
+    ))}
+  </div>
+);
+
 
   return (
     <div className="bg-white shadow-lg px-3 sm:px-6 lg:px-6 py-3">
@@ -729,6 +754,15 @@ const Categories: React.FC<CategoriesProps> = ({
           <p className="text-gray-500">No offers available at the moment.</p>
         )}
       </Modal>
+      <Modal
+        title="Stock Information"
+        open={stockModal.visible}
+        onCancel={() => setStockModal({ visible: false, content: "" })}
+        footer={null}
+        centered
+      >
+        <p dangerouslySetInnerHTML={{ __html: stockModal.content }} />
+      </Modal>
 
       <Modal
         title="Special Offer!"
@@ -754,295 +788,317 @@ const Categories: React.FC<CategoriesProps> = ({
         />
       </Modal>
 
-      {/* Enhanced Categories Section - 7 per row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3 mb-6">
-        {filteredCategories.map((category, index) => (
-          <motion.button
-            key={index}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onCategoryClick(category.categoryName)}
-            className={`rounded-xl p-3 transition-all duration-300 text-center space-y-2 ${
-              activeCategory === category.categoryName
-                ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg scale-105"
-                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
-            }`}
-          >
-            {/* Category Image or Initial */}
-            <div className="relative mx-auto">
-              {category.categoryLogo || category.categoryImage ? (
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-white shadow-sm">
-                  <img
-                   src={category.categoryLogo || category.categoryImage || ""}
-                    alt={category.categoryName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.nextElementSibling!.classList.remove('hidden');
-                    }}
-                  />
-                  <div className="hidden w-full h-full bg-purple-100 flex items-center justify-center">
-                    <span className="text-purple-600 font-bold text-lg">
-                      {category.categoryName.charAt(0)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center border-2 border-white shadow-sm">
-                  <span className="text-purple-600 font-bold text-lg">
-                    {category.categoryName.charAt(0)}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Category Name */}
-            <p className="text-xs font-medium line-clamp-2 leading-tight">
-              {category.categoryName}
-            </p>
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Weight Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {weightFilters.map((filter) => (
-          <motion.button
-            key={filter.value}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleWeightFilterClick(filter.value)}
-            disabled={disabledFilters[filter.value]}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-              activeWeightFilter === filter.value
-                ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                : disabledFilters[filter.value]
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50 shadow-sm hover:shadow-md"
-            }`}
-          >
-            {filter.label}
-          </motion.button>
-        ))}
-        {activeWeightFilter && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            onClick={() => setActiveWeightFilter(null)}
-            className="px-3 py-2 bg-red-100 text-red-600 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
-          >
-            Clear Filter ×
-          </motion.button>
+    <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
+  {filteredCategories.map((category, index) => (
+    <motion.button
+      key={index}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => handleCategoryClick(category.categoryName)}
+      className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
+        activeCategory === category.categoryName
+          ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
+          : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+      }`}
+    >
+      {/* Category Image or Initial - Square with rounded corners */}
+      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
+        {category.categoryLogo || category.categoryImage ? (
+          <img
+            src={(category.categoryLogo || category.categoryImage) ?? ""}
+            alt={category.categoryName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.remove();
+              const span = document.createElement("span");
+              span.innerText = category.categoryName.charAt(0);
+              span.className =
+                "text-purple-600 font-bold text-[10px] sm:text-sm";
+              e.currentTarget.parentElement?.appendChild(span);
+            }}
+          />
+        ) : (
+          <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
+            {category.categoryName.charAt(0)}
+          </span>
         )}
       </div>
 
-      {/* Sub-categories */}
-      {getCurrentSubCategories().length > 0 && (
+      {/* Category Name - larger, bold, and active color */}
+      <p
+        className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+          activeCategory === category.categoryName
+            ? "text-purple-600"
+            : "text-gray-700"
+        }`}
+      >
+        {category.categoryName}
+      </p>
+    </motion.button>
+  ))}
+</div>
+
+      {/* Weight Filters Section */}
+      {activeCategory && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">Sub Categories</h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setActiveSubCategory(null)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                activeSubCategory === null
-                  ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                  : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50"
-              }`}
-            >
-              All
-            </button>
-            {getCurrentSubCategories().map((subCategory) => (
-              <button
-                key={subCategory.id}
-                onClick={() => setActiveSubCategory(subCategory.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  activeSubCategory === subCategory.id
-                    ? "bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg"
-                    : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50"
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {weightFilters.map((filter) => (
+              <motion.button
+                key={filter.value}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleWeightFilterClick(filter.value)}
+                disabled={disabledFilters[filter.value]}
+                className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  activeWeightFilter === filter.value
+                    ? "bg-purple-600 text-white shadow-lg"
+                    : disabledFilters[filter.value]
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50 hover:border-purple-300"
                 }`}
               >
-                {subCategory.name}
-              </button>
+                {filter.label}
+              </motion.button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Items Grid */}
-      {loading ? (
-        <SkeletonLoader />
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {getCurrentCategoryItems().map((item) => {
-            const isInCart = cartItems[item.itemId] > 0;
-            const isLoading = loadingItems.items[item.itemId] || false;
-            const loadingStatus = loadingItems.status[item.itemId] || "";
-            const discount = calculateDiscount(item.itemMrp, item.itemPrice);
-
-            return (
-              <motion.div
-                key={item.itemId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group"
+      {/* Subcategories Section */}
+      {getCurrentSubCategories().length > 0 && (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {getCurrentSubCategories().map((subCategory) => (
+              <motion.button
+                key={subCategory.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() =>
+                  setActiveSubCategory(
+                    activeSubCategory === subCategory.id ? null : subCategory.id
+                  )
+                }
+                className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  activeSubCategory === subCategory.id
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg"
+                    : "bg-white text-green-600 border border-green-200 hover:bg-green-50 hover:border-green-300"
+                }`}
               >
-                {/* Product Image */}
-                <div className="aspect-square relative overflow-hidden bg-gray-50">
-                  {item.itemImage ? (
-                    <img
-                      src={item.itemImage}
-                      alt={item.itemName}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onClick={() => onItemClick(item)}
-                    />
-                  ) : (
-                    <div
-                      className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center cursor-pointer"
-                      onClick={() => onItemClick(item)}
-                    >
-                      <span className="text-2xl text-purple-600 font-bold">
-                        {item.itemName.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Discount Badge */}
-                  {discount > 0 && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                      {discount}% OFF
-                    </div>
-                  )}
-                </div>
+                {subCategory.name}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      )}
 
-                {/* Product Details */}
-                <div className="p-3 space-y-2">
-                  {/* Product Name */}
-                  <h3
-                    className="font-medium text-gray-800 text-sm line-clamp-2 cursor-pointer hover:text-purple-600 transition-colors"
+      {/* Items Section */}
+      <div ref={itemsRef} className="mb-6">
+        {loading ? (
+          <SkeletonLoader />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            {getCurrentCategoryItems().map((item) => {
+              const discount = calculateDiscount(item.itemMrp, item.itemPrice);
+              const isInCart = cartItems[item.itemId] > 0;
+              const isLoading = loadingItems.items[item.itemId];
+              const loadingStatus = loadingItems.status[item.itemId];
+
+              return (
+                <div
+                  key={item.itemId}
+                  className="flex flex-col justify-between bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group"
+                >
+                  {/* Product Image */}
+                  <div
+                    className="aspect-square relative overflow-hidden bg-gray-50 cursor-pointer"
                     onClick={() => onItemClick(item)}
                   >
-                    {item.itemName}
-                  </h3>
-
-                  {/* Weight */}
-                  <p className="text-xs text-gray-500">
-                    {item.weight} {item.units}
-                  </p>
-
-                  {/* Price Section */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-bold text-purple-600">
-                      ₹{item.itemPrice}
-                    </span>
-                    {item.itemMrp > item.itemPrice && (
-                      <span className="text-sm text-gray-400 line-through">
-                        ₹{item.itemMrp}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Add to Cart / Quantity Controls */}
-                  <div className="mt-3">
-                    {!isInCart ? (
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleAddToCart(item)}
-                        disabled={isLoading}
-                        className="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            <span>Add to Cart</span>
-                          </>
-                        )}
-                      </motion.button>
+                    {item.itemImage ? (
+                      <img
+                        src={item.itemImage}
+                        alt={item.itemName}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            item.itemName
+                          )}&background=f3f4f6&color=6b7280&size=200`;
+                        }}
+                      />
                     ) : (
-                      <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleQuantityChange(item, false, "decrease")}
-                          disabled={isLoading && loadingStatus === "decrease"}
-                          className="w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center justify-center transition-colors disabled:opacity-50"
-                        >
-                          {isLoading && loadingStatus === "decrease" ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <span className="text-lg">-</span>
-                          )}
-                        </motion.button>
-                        
-                        <span className="px-3 py-1 bg-white rounded-md text-sm font-semibold text-purple-600 min-w-[40px] text-center">
-                          {cartItems[item.itemId] || 0}
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-200">
+                        <span className="text-purple-600 font-semibold text-lg">
+                          {item.itemName.charAt(0)}
                         </span>
-                        
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleQuantityChange(item, true, "increase")}
-                          disabled={
-                            (isLoading && loadingStatus === "increase") ||
-                            cartItems[item.itemId] >= item.quantity
-                          }
-                          className="w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center justify-center transition-colors disabled:opacity-50"
-                        >
-                          {isLoading && loadingStatus === "increase" ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <span className="text-lg">+</span>
-                          )}
-                        </motion.button>
+                      </div>
+                    )}
+
+                    {discount > 0 && (
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        {discount}% OFF
                       </div>
                     )}
                   </div>
 
-                  {/* Stock Info */}
-                  {item.quantity <= 5 && item.quantity > 0 && (
-                    <p className="text-xs text-orange-500 mt-1">
-                      Only {item.quantity} left in stock
-                    </p>
-                  )}
-                  
-                  {item.quantity === 0 && (
-                    <p className="text-xs text-red-500 mt-1">Out of stock</p>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+                  {/* Product Details */}
+                  <div className="flex flex-col flex-grow p-3 sm:p-4">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-sm sm:text-base text-gray-800 line-clamp-2">
+                        {item.itemName}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {item.weight} {item.units}
+                      </p>
+                    </div>
 
-      {/* Empty State */}
-      {!loading && getCurrentCategoryItems().length === 0 && (
-        <div className="text-center py-16">
-          <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-2">
-            <span className="text-4xl text-gray-400">📦</span>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg font-bold text-purple-600">
+                          ₹{item.itemPrice}
+                        </span>
+                        {item.itemMrp > item.itemPrice && (
+                          <span className="text-sm text-gray-400 line-through">
+                            ₹{item.itemMrp}
+                          </span>
+                        )}
+                      </div>
+                      {/* Stock Info Button */}
+                      {/* <button
+            className="text-xs text-blue-500 underline"
+            onClick={() =>
+              setStockModal({
+                visible: true,
+                content:
+                  item.quantity === 0
+                    ? `<strong>${item.itemName}</strong> is currently <span style="color:red;">out of stock</span>.`
+                    : `Only <strong>${item.quantity}</strong> left in stock for <strong>${item.itemName}</strong>.`,
+              })
+            }
+          >
+            Stock Info
+          </button> */}
+                    </div>
+
+                    <div className="flex-grow"></div>
+
+                    {/* Add to Cart or Quantity Selector */}
+                    <div className="pt-3 mt-auto">
+                      {!isInCart ? (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleAddToCart(item)}
+                          disabled={isLoading}
+                          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-3 rounded-lg font-medium text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                />
+                              </svg>
+                              <span>Add to Cart</span>
+                            </>
+                          )}
+                        </motion.button>
+                      ) : (
+                        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() =>
+                              handleQuantityChange(item, false, "decrease")
+                            }
+                            disabled={isLoading && loadingStatus === "decrease"}
+                            className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors disabled:opacity-50"
+                          >
+                            {isLoading && loadingStatus === "decrease" ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <span className="text-sm font-bold">−</span>
+                            )}
+                          </motion.button>
+
+                          <span className="px-3 py-1 bg-white rounded-md font-semibold text-purple-600 min-w-[2rem] text-center">
+                            {cartItems[item.itemId] || 0}
+                          </span>
+
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() =>
+                              handleQuantityChange(item, true, "increase")
+                            }
+                            disabled={isLoading && loadingStatus === "increase"}
+                            className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors disabled:opacity-50"
+                          >
+                            {isLoading && loadingStatus === "increase" ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <span className="text-sm font-bold">+</span>
+                            )}
+                          </motion.button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            No items found
-          </h3>
-          <p className="text-gray-500">
-            {activeWeightFilter
-              ? `No items available for ${activeWeightFilter}kg filter`
-              : "No items available in this category"}
-          </p>
-          {activeWeightFilter && (
-            <button
-              onClick={() => setActiveWeightFilter(null)}
-              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              Clear Filter
-            </button>
-          )}
-        </div>
-      )}
+        )}
+
+        {/* No Items Message */}
+        {!loading && getCurrentCategoryItems().length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg
+                className="w-12 h-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2M4 13h2m8-8v2m0 6V9.5m0 0L10 12l2-2.5z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              No items found
+            </h3>
+            <p className="text-gray-500">
+              {activeWeightFilter
+                ? `No items available for ${activeWeightFilter} kg weight filter.`
+                : "No items available in this category."}
+            </p>
+            {activeWeightFilter && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveWeightFilter(null)}
+                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Clear Weight Filter
+              </motion.button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -22,6 +22,7 @@ interface Order {
   choosedLocations: string;
   deliveryBoyMobile?:string;
   deliveryBoyName:string;
+  deliveryFee:Number;
 
 }
 
@@ -33,6 +34,7 @@ interface OrderItems {
   price: number;
   weight: string;
   itemQty?: number;
+  itemUnit:string;
 }
 
 interface Address {
