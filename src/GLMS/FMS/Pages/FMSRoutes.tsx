@@ -436,7 +436,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
                 className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-6 py-2.5 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 flex items-center gap-2 relative"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>AI Assistant</span>
+                <span>GenOxy</span>
                 {unreadCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
                     {unreadCount}
@@ -468,7 +468,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
                 className="w-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 relative"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>AI Assistant</span>
+                <span>GenOxy</span>
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {unreadCount}
@@ -525,7 +525,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
             </span>
           )}
           <div className="absolute right-full mr-4 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-            Chat with AI Assistant
+            Chat with GenOxy
             <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
           </div>
         </button>
@@ -554,7 +554,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
               <EnhancedAIIcon />
               <div>
                 <p className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">
-                  AI Assistant
+                  GenOxy
                 </p>
                 <p className="text-xs text-gray-500">
                   {useCase.title
@@ -768,7 +768,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
                       <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 shadow-md border border-gray-200/50">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-600">
-                            AI is typing...
+                            GenOxy is thinking...
                           </span>
                           <div className="flex gap-1">
                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>

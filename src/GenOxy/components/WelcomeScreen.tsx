@@ -1,5 +1,5 @@
 import { usePrompts } from "../hooks/usePrompts";
-import React, { ChangeEvent, KeyboardEvent } from "react";
+import React, { ChangeEvent,useState,useRef, KeyboardEvent } from "react";
 import { ArrowUp, Loader2, Sparkles, Paperclip, Mic } from "lucide-react";
 
 interface WelcomeScreenProps {
@@ -10,6 +10,14 @@ interface WelcomeScreenProps {
   loading: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
 }
+type SpeechRecognitionEvent = Event & {
+  results: SpeechRecognitionResultList;
+};
+type SpeechRecognitionErrorEvent = Event & {
+  error: string;
+  message?: string;
+};
+
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   input,
@@ -25,6 +33,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     handlePromptSelect,
     setShowDropdown,
   } = usePrompts(handleSend, setInput);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -34,14 +44,66 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
   };
 
-  const handleAttachFile = () => {
-    alert("File attachment feature would be implemented here!");
-  };
-
   const handleToggleVoice = () => {
-    alert("Voice input feature would be implemented here!");
-  };
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
+    if (!SpeechRecognition) {
+      alert("Speech Recognition not supported in this browser.");
+      return;
+    }
+
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => {
+      console.log("🎙️ Voice recording started...");
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join("")
+        .trim();
+
+      console.log("📝 Transcribed text:", transcript);
+
+      if (transcript) {
+        setInput(transcript); // ✅ Show in input box
+        setShowDropdown(false);
+      }
+
+      setIsRecording(false);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("❌ Voice recognition error:", event.error);
+      alert("Voice input failed: " + event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      console.log("🛑 Voice recognition stopped.");
+      setIsRecording(false);
+    };
+
+    recognition.start();
+  };
+  
+  
+ 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       <div className="absolute inset-0">
@@ -192,7 +254,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 onClick={handleToggleVoice}
                 title="Voice Input"
                 disabled={loading}
-                className="w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition ${
+                  isRecording
+                    ? "bg-red-100 text-red-600 animate-pulse" // Active mic
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                }`}
               >
                 <Mic className="w-5 h-5" />
               </button>

@@ -63,7 +63,6 @@ import allitems from "../assets/img/all items.png";
 import grocerie from "../assets/img/Groceries.png";
 import rice from "../assets/img/rice.png";
 
-
 // Define interfaces for Offer and UserEligibleOffer
 interface Offer {
   id: string;
@@ -151,6 +150,7 @@ interface Item {
   itemMrp: number;
   units: string;
   categoryName: string;
+  categoryType?: string;
 }
 
 interface Category {
@@ -188,7 +188,9 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    "All Items"
+  );
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const productsRef = useRef<HTMLDivElement>(null);
@@ -416,40 +418,38 @@ const Home: React.FC = () => {
     setProductsLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/showItemsForCustomrs`
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`
       );
-      const data: Category[] = response.data;
+      const data = response.data || [];
 
-      // Log API response to debug category names
-      console.log(
-        "API Categories:",
-        data.map((cat) => ({
-          categoryName: cat.categoryName,
-          itemCount: cat.itemsResponseDtoList.length,
-          categoryImage: cat.categoryImage,
-        }))
+      // Log raw API response for debugging
+      console.log("Raw API Response:", response.data);
+
+      // Collect all unique items grouped by categoryType
+      const uniqueItemsMap = new Map<string, Item>();
+      data.forEach(
+        (categoryGroup: { categoryType: string; categories: Category[] }) => {
+          categoryGroup.categories.forEach((category: Category) => {
+            category.itemsResponseDtoList.forEach((item: Item) => {
+              if (item.quantity > 0) {
+                const normalizedName = item.itemName.trim().toLowerCase();
+                if (
+                  !Array.from(uniqueItemsMap.values()).some(
+                    (existing: Item) =>
+                      existing.itemName.trim().toLowerCase() === normalizedName
+                  )
+                ) {
+                  uniqueItemsMap.set(item.itemId, {
+                    ...item,
+                    categoryName: category.categoryName || "Uncategorized",
+                    categoryType: categoryGroup.categoryType,
+                  });
+                }
+              }
+            });
+          });
+        }
       );
-
-      // Collect all unique items
-      const uniqueItemsMap = new Map();
-      data.forEach((category) => {
-        category.itemsResponseDtoList.forEach((item) => {
-          if (item.quantity > 0) {
-            const normalizedName = item.itemName.trim().toLowerCase();
-            if (
-              !Array.from(uniqueItemsMap.values()).some(
-                (existing) =>
-                  existing.itemName.trim().toLowerCase() === normalizedName
-              )
-            ) {
-              uniqueItemsMap.set(item.itemId, {
-                ...item,
-                categoryName: category.categoryName,
-              });
-            }
-          }
-        });
-      });
 
       const uniqueItemsList = Array.from(uniqueItemsMap.values());
       const sortedUniqueItems = sortItemsByName(uniqueItemsList);
@@ -457,94 +457,104 @@ const Home: React.FC = () => {
       // Log unique items to verify category assignments
       console.log(
         "Unique Items:",
-        uniqueItemsList.map((item) => ({
+        uniqueItemsList.map((item: Item) => ({
           itemName: item.itemName,
+          itemId: item.itemId,
           categoryName: item.categoryName,
+          categoryType: item.categoryType,
+          quantity: item.quantity,
         }))
       );
 
-      // Define rice categories (case-insensitive, accounting for spaces)
-      const riceCategories = [
-        "kolam",
-        "kolam rice",
-        "hmt",
-        "brown rice",
-        "sonamasoori",
-        "rice container",
-        "low gi",
-        "organic rice",
-        "basmati rice",
-        "basmati",
-      ].map((name) => name.toLowerCase());
-
-      // Filter items for each category
+      // Filter items by categoryType
       const allItems = sortedUniqueItems;
+      // Prioritize "Cashew nuts upto ₹40 cashback" in Groceries filter
+      const groceryItems = sortedUniqueItems
+        .filter((item: Item) => item.categoryType?.toLowerCase() === "grocery")
+        .sort((a, b) => {
+          const aIsCashew = a.categoryName
+            ?.toLowerCase()
+            .includes("cashew nuts");
+          const bIsCashew = b.categoryName
+            ?.toLowerCase()
+            .includes("cashew nuts");
+          if (aIsCashew && !bIsCashew) return -1;
+          if (!aIsCashew && bIsCashew) return 1;
+          return a.itemName.localeCompare(b.itemName);
+        });
+      const riceItems = sortedUniqueItems.filter(
+        (item: Item) => item.categoryType?.toLowerCase() === "rice"
+      );
       const goldItems = sortedUniqueItems.filter(
-        (item) => item.categoryName.trim().toLowerCase() === "gold"
-      );
-      const riceItems = sortedUniqueItems.filter((item) =>
-        riceCategories.includes(item.categoryName.trim().toLowerCase())
-      );
-      const groceryItems = sortedUniqueItems.filter(
-        (item) =>
-          item.categoryName.trim().toLowerCase() !== "gold" &&
-          !riceCategories.includes(item.categoryName.trim().toLowerCase())
+        (item: Item) => item.categoryType?.toLowerCase() === "gold"
       );
 
       // Log filtered items to verify correct categorization
       console.log("All Items Count:", allItems.length);
-      console.log("Gold Items Count:", goldItems.length);
-      console.log("Rice Items Count:", riceItems.length);
       console.log("Grocery Items Count:", groceryItems.length);
       console.log(
         "Grocery Items:",
-        groceryItems.map((item) => ({
+        groceryItems.map((item: Item) => ({
           itemName: item.itemName,
+          itemId: item.itemId,
           categoryName: item.categoryName,
         }))
       );
+      console.log("Rice Items Count:", riceItems.length);
+      console.log("Gold Items Count:", goldItems.length);
 
       // Define default category images
       const defaultCategoryImages: Record<string, string> = {
-        "All Items": ProductImg1, // Default image for "All Items"
-        Groceries: Cashew, // Use cashew image or another grocery-related image
-        Gold: CryptoImg1, // Gold-related image
-        Rice: Riceoffers, // Rice-related image
+        "All Items": allitems,
+        Groceries: grocerie,
+        Rice: rice,
+        Gold: gold,
       };
 
       // Create fixed categories with images
       const allCategories: Category[] = [
         {
           categoryName: "All Items",
-          categoryImage: allitems,
+          categoryImage: defaultCategoryImages["All Items"],
           itemsResponseDtoList: allItems,
           subCategories: [],
         },
         {
           categoryName: "Groceries",
-          categoryImage: grocerie,
+          categoryImage: defaultCategoryImages["Groceries"],
           itemsResponseDtoList: groceryItems,
           subCategories: [],
         },
         {
-          categoryName: "Gold",
-          categoryImage: gold,
-          itemsResponseDtoList: goldItems,
+          categoryName: "Rice",
+          categoryImage: defaultCategoryImages["Rice"],
+          itemsResponseDtoList: riceItems,
           subCategories: [],
         },
         {
-          categoryName: "Rice",
-          categoryImage: rice,
-          itemsResponseDtoList: riceItems,
+          categoryName: "Gold",
+          categoryImage: defaultCategoryImages["Gold"],
+          itemsResponseDtoList: goldItems,
           subCategories: [],
         },
       ];
 
+      // Log final categories
+      console.log(
+        "Final Categories:",
+        allCategories.map((cat) => ({
+          categoryName: cat.categoryName,
+          itemCount: cat.itemsResponseDtoList.length,
+        }))
+      );
+
       setCategories(allCategories);
       updateProducts(allItems);
+      setActiveCategory("All Items"); // Set default category
       categoriesFetched.current = true;
     } catch (error) {
       console.error("Error fetching categories:", error);
+      message.error("Failed to load categories. Please try again.");
     } finally {
       setProductsLoading(false);
       setLoading(false);
@@ -571,6 +581,7 @@ const Home: React.FC = () => {
         initialDataFetched.current = true;
       } catch (error) {
         console.error("Error fetching initial data:", error);
+        message.error("Failed to load initial data.");
       } finally {
         setLoading(false);
       }
@@ -640,7 +651,7 @@ const Home: React.FC = () => {
       src: Cashew,
       path: "/main/dashboard/products",
       onClick: () => {
-        setActiveCategory("Groceries"); // Updated to align with new category
+        setActiveCategory("Groceries");
         navigate("/main/dashboard/products");
       },
     },
@@ -1162,9 +1173,9 @@ const Home: React.FC = () => {
     navigate("/main/dashboard/products");
   };
 
- const viewAllServices = () => {
+  const viewAllServices = () => {
     navigate("/main/dashboard/myservices");
-  };
+  };
 
   const handleCategoryChange = (categoryName: string) => {
     if (activeCategory === categoryName) return;
@@ -1195,13 +1206,17 @@ const Home: React.FC = () => {
           itemImage: item.itemImage,
         }));
 
+      console.log(`Products for category ${categoryName}:`, productItems);
       setProducts(productItems);
       setDisplayCount(5);
       setSearchTerm("");
-
       setTimeout(() => {
         setProductsLoading(false);
       }, 300);
+    } else {
+      console.warn(`Category ${categoryName} not found`);
+      setProducts([]);
+      setProductsLoading(false);
     }
   };
 
@@ -1560,7 +1575,8 @@ const Home: React.FC = () => {
                 ) : (
                   <div className="col-span-full py-8 text-center">
                     <p className="text-gray-500">
-                      No products found for this category.
+                      No products found for this category. Please try another
+                      category or check back later.
                     </p>
                   </div>
                 )}

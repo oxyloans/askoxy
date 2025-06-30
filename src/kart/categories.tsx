@@ -11,7 +11,7 @@ interface Item {
   itemName: string;
   itemId: string;
   itemImage: null | string;
-  weight: string;
+  weight: number | string;
   itemPrice: number;
   quantity: number;
   itemMrp: number;
@@ -581,7 +581,7 @@ const Categories: React.FC<CategoriesProps> = ({
         if (goldBarItemIds.includes(item.itemId)) {
           return false;
         }
-        const itemWeight = parseFloat(item.weight).toFixed(1);
+        const itemWeight = parseFloat(String(item.weight)).toFixed(1);
         return itemWeight === activeWeightFilter;
       });
     }
@@ -678,28 +678,27 @@ const Categories: React.FC<CategoriesProps> = ({
   const filteredCategories = categories.filter(
     (category) => category.categoryName.toLowerCase() !== "all items"
   );
-  
-const SkeletonLoader = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-    {Array.from({ length: 12 }).map((_, index) => (
-      <div
-        key={index}
-        className="flex flex-col justify-between bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse"
-      >
-        <div className="aspect-square bg-gray-200"></div>
-        <div className="flex flex-col flex-grow p-3 sm:p-4">
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-          </div>
-          <div className="mt-2 h-5 bg-gray-200 rounded w-1/2"></div>
-          <div className="mt-auto pt-3 h-9 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
 
+  const SkeletonLoader = () => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+      {Array.from({ length: 12 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex flex-col justify-between bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse"
+        >
+          <div className="aspect-square bg-gray-200"></div>
+          <div className="flex flex-col flex-grow p-3 sm:p-4">
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+            </div>
+            <div className="mt-2 h-5 bg-gray-200 rounded w-1/2"></div>
+            <div className="mt-auto pt-3 h-9 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="bg-white shadow-lg px-3 sm:px-6 lg:px-6 py-3">
@@ -788,56 +787,56 @@ const SkeletonLoader = () => (
         />
       </Modal>
 
-    <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
-  {filteredCategories.map((category, index) => (
-    <motion.button
-      key={index}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => handleCategoryClick(category.categoryName)}
-      className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
-        activeCategory === category.categoryName
-          ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
-          : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
-      }`}
-    >
-      {/* Category Image or Initial - Square with rounded corners */}
-      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
-        {category.categoryLogo || category.categoryImage ? (
-          <img
-            src={(category.categoryLogo || category.categoryImage) ?? ""}
-            alt={category.categoryName}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.remove();
-              const span = document.createElement("span");
-              span.innerText = category.categoryName.charAt(0);
-              span.className =
-                "text-purple-600 font-bold text-[10px] sm:text-sm";
-              e.currentTarget.parentElement?.appendChild(span);
-            }}
-          />
-        ) : (
-          <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
-            {category.categoryName.charAt(0)}
-          </span>
-        )}
-      </div>
+      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
+        {filteredCategories.map((category, index) => (
+          <motion.button
+            key={index}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleCategoryClick(category.categoryName)}
+            className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
+              activeCategory === category.categoryName
+                ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
+                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+            }`}
+          >
+            {/* Category Image or Initial - Square with rounded corners */}
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
+              {category.categoryLogo || category.categoryImage ? (
+                <img
+                  src={(category.categoryLogo || category.categoryImage) ?? ""}
+                  alt={category.categoryName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.remove();
+                    const span = document.createElement("span");
+                    span.innerText = category.categoryName.charAt(0);
+                    span.className =
+                      "text-purple-600 font-bold text-[10px] sm:text-sm";
+                    e.currentTarget.parentElement?.appendChild(span);
+                  }}
+                />
+              ) : (
+                <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
+                  {category.categoryName.charAt(0)}
+                </span>
+              )}
+            </div>
 
-      {/* Category Name - larger, bold, and active color */}
-      <p
-        className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
-          activeCategory === category.categoryName
-            ? "text-purple-600"
-            : "text-gray-700"
-        }`}
-      >
-        {category.categoryName}
-      </p>
-    </motion.button>
-  ))}
-</div>
+            {/* Category Name - larger, bold, and active color */}
+            <p
+              className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+                activeCategory === category.categoryName
+                  ? "text-purple-600"
+                  : "text-gray-700"
+              }`}
+            >
+              {category.categoryName}
+            </p>
+          </motion.button>
+        ))}
+      </div>
 
       {/* Weight Filters Section */}
       {activeCategory && (

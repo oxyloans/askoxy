@@ -107,7 +107,7 @@ const CMSDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
@@ -120,20 +120,23 @@ const CMSDashboard: React.FC = () => {
               <img src={Askoxylogo} alt="Logo" className="h-12" />
             </div>
 
+            {/* Desktop Buttons */}
             <div className="hidden md:flex gap-3">
               <button
                 onClick={handleGLMSClick}
-                className="bg-indigo-100 text-blue-700 rounded hover:bg-indigo-200 text-blue px-5 py-2 rounded-md transition"
+                className="bg-indigo-100 text-blue-700 rounded-md hover:bg-indigo-200 px-5 py-2 transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
                 Go To GLMS
               </button>
               <button
                 onClick={handleInterest}
-                className="bg-green-100 text-green-700 rounded hover:bg-green-200 px-5 py-2 rounded-md font-medium transition hover:scale-105"
+                className="bg-green-100 text-green-700 rounded-md hover:bg-green-200 px-5 py-2 font-medium transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
               >
                 I'm Interested
               </button>
             </div>
+
+            {/* Mobile Menu Toggle */}
             <div className="md:hidden">
               <button onClick={toggleMobileMenu}>
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -141,17 +144,18 @@ const CMSDashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* Mobile Dropdown Buttons */}
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 pt-2 gap-3">
+            <div className="md:hidden py-4 flex flex-col gap-3">
               <button
                 onClick={handleGLMSClick}
-                className="bg-indigo-100 text-blue-700 rounded hover:bg-indigo-200 px-5 py-2 rounded-md transition"
+                className="bg-indigo-100 text-blue-700 rounded-md hover:bg-indigo-200 px-5 py-2 transition"
               >
                 Go To GLMS
               </button>
               <button
                 onClick={handleInterest}
-                className="w-full bg-green-100 text-green-700 rounded hover:bg-green-200 py-2 rounded-md font-medium transition"
+                className="bg-green-100 text-green-700 rounded-md hover:bg-green-200 py-2 transition font-medium"
               >
                 I'm Interested
               </button>
@@ -160,31 +164,36 @@ const CMSDashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-10">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800">
+      {/* Main Section */}
+      <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-12">
+        <div className="mb-12 text-center">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
             Collection Management System (CMS)
           </h1>
-          <p className="mt-4 text-gray-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
-            The Collection Management System (CMS) is a smart and efficient
-            platform designed to help financial institutions manage and recover
-            overdue payments with ease. It automates the entire collections
-            workflow—from case assignment and customer segmentation to contact
-            scheduling and legal escalations. By prioritizing critical accounts
-            and tracking recovery activities in real-time, CMS reduces default
-            rates, ensures regulatory compliance, and enhances both operational
-            efficiency and customer engagement throughout the recovery process.
+          <p className="mt-6 text-gray-700 max-w-3xl mx-auto text-base sm:text-lg leading-relaxed">
+            The <strong>Collection Management System (CMS)</strong> is an
+            intelligent platform that empowers financial institutions to manage
+            and recover overdue payments efficiently. It streamlines the entire
+            collection workflow — from case assignment and segmentation to
+            customer contact and legal escalation.
+            <br />
+            <br />
+            CMS boosts recovery rates by prioritizing critical accounts,
+            automating follow-ups, and offering real-time visibility into
+            collection activities. The result? Lower default risks, improved
+            compliance, and better customer experience across every recovery
+            stage.
           </p>
         </div>
 
+        {/* Use Case Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {useCases.map((useCase) => (
             <div
               key={useCase.path}
               className="p-6 bg-white border rounded-xl shadow hover:shadow-lg transition transform hover:-translate-y-1"
             >
-              <h2 className="text-xl font-semibold text-gray-800">
+              <h2 className="text-lg font-semibold text-gray-800">
                 {useCase.title}
               </h2>
               <p className="text-sm text-gray-600 mt-2">
@@ -193,13 +202,13 @@ const CMSDashboard: React.FC = () => {
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => navigate(`/cms/${useCase.path}/business`)}
-                  className="flex-1 px-4 py-2 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                  className="flex-1 px-4 py-2 text-sm bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 >
                   Business Use Case
                 </button>
                 <button
                   onClick={() => navigate(`/cms/${useCase.path}/system`)}
-                  className="flex-1 px-4 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+                  className="flex-1 px-4 py-2 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition focus:outline-none focus:ring-2 focus:ring-green-400"
                 >
                   System Use Case
                 </button>
@@ -216,6 +225,7 @@ const CMSDashboard: React.FC = () => {
       </footer>
     </div>
   );
+  
   
 };
 

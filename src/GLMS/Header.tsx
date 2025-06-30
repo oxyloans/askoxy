@@ -114,15 +114,15 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
                 <li key={link.id}>
                   <button
                     onClick={() => handleNavClick(link.id)}
-                    className={`relative px-2 py-1 text-base font-medium transition-all ${
+                    className={`relative px-2 py-1 text-base font-medium transition-all duration-150 ease-in-out rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                       activeLink === link.id
-                        ? "text-blue-600"
-                        : "text-gray-700 hover:text-blue-600"
+                        ? "text-blue-600 ring-blue-200"
+                        : "text-gray-700 hover:text-blue-600 hover:ring-blue-100"
                     }`}
                   >
                     {link.label}
                     {activeLink === link.id && (
-                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-full" />
+                      <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-600 rounded-full" />
                     )}
                   </button>
                 </li>
@@ -134,19 +134,19 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={handleInterest}
-              className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition hover:scale-105"
+              className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition hover:scale-105 focus:ring-2 focus:ring-purple-400"
             >
               I'm Interested
             </button>
             <button
               onClick={handleJobStreet}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition hover:scale-105"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition hover:scale-105 focus:ring-2 focus:ring-indigo-400"
             >
               Job Street
             </button>
             <button
               onClick={handleSignIn}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg transition hover:scale-105"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg transition hover:scale-105 focus:ring-2 focus:ring-emerald-400"
             >
               Sign In
             </button>

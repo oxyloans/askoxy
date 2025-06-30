@@ -17,23 +17,23 @@ const Footer = () => {
               Global Loans Management Systems
             </h4>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Modernizing loan management systems globally through domain
-              expertise and innovative technology solutions.
+              Modernizing loan systems globally with domain expertise and
+              AI-powered tech solutions.
             </p>
-            <div className="flex items-center space-x-4">
+            <div className="flex space-x-4">
               <a
                 href="https://www.facebook.com/ASKOXYAI"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="hover:text-white text-blue-600 transition duration-200"
+                className="text-blue-500 hover:text-white transition"
               >
                 <Facebook size={20} />
               </a>
               <a
                 href="#"
                 aria-label="Twitter"
-                className="hover:text-white text-sky-400 transition duration-200"
+                className="text-sky-400 hover:text-white transition"
               >
                 <Twitter size={20} />
               </a>
@@ -42,7 +42,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
-                className="hover:text-white text-blue-500 transition duration-200"
+                className="text-blue-400 hover:text-white transition"
               >
                 <Linkedin size={20} />
               </a>
@@ -51,7 +51,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="hover:text-white text-pink-500 transition duration-200"
+                className="text-pink-500 hover:text-white transition"
               >
                 <Instagram size={20} />
               </a>
@@ -65,8 +65,8 @@ const Footer = () => {
               {["Home", "Videos", "Use Cases", "Contact"].map((link) => (
                 <li key={link}>
                   <a
-                    href={`#${link.toLowerCase()}`}
-                    className="text-gray-400 hover:text-white transition duration-200"
+                    href={`#${link.toLowerCase().replace(" ", "")}`}
+                    className="text-gray-400 hover:text-white transition"
                   >
                     {link}
                   </a>
@@ -90,7 +90,7 @@ const Footer = () => {
                     href={service.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-white transition duration-200"
+                    className="text-gray-400 hover:text-white transition"
                   >
                     {service.name}
                   </a>
@@ -104,16 +104,13 @@ const Footer = () => {
             <h3 className="text-xl font-semibold mb-4">Contact</h3>
             <address className="not-italic text-gray-400 space-y-3 text-sm leading-relaxed">
               <p>
-                CC-02, Ground Floor, Indu Fortune Fields,
-                <br />
-                KPHB Colony, Hyderabad,
-                <br />
-                Telangana - 500085
+                CC-02, Ground Floor, Indu Fortune Fields, <br />
+                KPHB Colony, Hyderabad, Telangana - 500085
               </p>
               <p>
                 <a
-                  href="mailto:support@globalloans.com"
-                  className="hover:text-white transition duration-200"
+                  href="mailto:support@askoxy.ai"
+                  className="hover:text-white transition"
                 >
                   support@askoxy.ai
                 </a>
@@ -121,7 +118,7 @@ const Footer = () => {
               <p>
                 <a
                   href="tel:+916300873713"
-                  className="hover:text-white transition duration-200"
+                  className="hover:text-white transition"
                 >
                   +91 6300873713
                 </a>
@@ -134,14 +131,14 @@ const Footer = () => {
         <div className="border-t border-gray-800 my-6"></div>
 
         {/* Bottom Row */}
-        <div className="flex flex-col sm:flex-row justify-between items-center text-gray-400 text-sm gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-400 gap-4">
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} Global Lending Management
             Solutions. All rights reserved.
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center hover:text-white transition duration-200"
+            className="flex items-center hover:text-white transition"
             aria-label="Scroll to top"
           >
             <span className="mr-2">Back to top</span>

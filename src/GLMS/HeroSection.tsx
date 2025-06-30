@@ -19,76 +19,72 @@ function HeroSection() {
   return (
     <section className="relative bg-gradient-to-br from-white via-blue-50 to-purple-50 py-12 lg:py-20 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left Content */}
+        {/* LEFT CONTENT */}
         <div className="space-y-6 text-center lg:text-left animate-fade-in">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
+          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight text-gray-900">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               AI-Powered Global Lending Transformation
             </span>
           </h1>
 
           <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
-            Introducing <strong>OxyAI</strong> — an intelligent platform
+            Meet <strong>GenOxy</strong> — your intelligent platform for
             revolutionizing global lending.
+            <br className="hidden sm:block" />
+            Built with <strong>60+ BFSI use cases</strong>,{" "}
+            <strong>50+ expert roles</strong>, and
+            <strong> AI-driven accelerators</strong>, GenOxy draws on insights
+            from
+            <strong> FinOne</strong>, <strong>Temenos</strong>,{" "}
+            <strong>Finastra</strong>, <strong>TCS BaNCS</strong>, and more.
             <br />
-            Built with <strong>60+ real-world BFSI use cases</strong>,
-            <strong> 50+ domain expert roles</strong>, and
-            <strong> AI-driven delivery accelerators</strong>.
-            <br />
-            Drawing expertise from <strong>
-              20+ global fintech leaders
-            </strong>{" "}
-            including <strong>FinOne</strong>, <strong>Temenos</strong>,{" "}
-            <strong>Finastra</strong>, <strong>TCS BaNCS</strong>, and{" "}
-            <strong>Avaloq</strong>.
-            <br />
-            <strong>Mission:</strong> Empower BFSI firms with scalable AI-led
-            solutions, deep domain knowledge, and ready-to-deploy talent.
-            <br />
-            ✅ Fast-track BFSI digital transformation
-            <br />✅ Job-ready opportunities for the next{" "}
-            <strong>1 million BFSI professionals</strong>
+            <span className="mt-2 inline-block">
+              <strong>Mission:</strong> Empower BFSI firms with scalable AI-led
+              solutions & job-ready talent.
+            </span>
+            <ul className="list-disc list-inside mt-2 text-left lg:text-left ml-4">
+              <li>✅ Accelerate digital transformation</li>
+              <li>
+                ✅ Upskill <strong>1 million BFSI professionals</strong>
+              </li>
+            </ul>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <button
               onClick={handleClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 shadow-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
-              Get Started
-              <span className="flex items-center gap-1">
-                <Compass className="w-5 h-5" />
-                <ArrowRight className="w-5 h-5" />
-              </span>
+              <Compass className="w-5 h-5" />
+              <span>Get Started</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Right Content */}
+        {/* RIGHT CONTENT */}
         <div className="relative animate-slide-in flex justify-center items-center">
           <div className="relative p-6 w-full max-w-sm bg-white rounded-3xl shadow-xl text-center space-y-5">
             <div className="rounded-full overflow-hidden w-56 h-56 sm:w-64 sm:h-64 mx-auto bg-gradient-to-r from-blue-100 to-purple-100 shadow-md">
               <img
                 src={RadhakrishnaImg}
-                alt="Radhakrishna"
+                alt="RadhaKrishna, CEO of GenOxy"
                 className="w-full h-full object-cover rounded-full"
               />
             </div>
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900">
                 RadhaKrishna.T
               </h3>
-              <p className="text-gray-600 text-md sm:text-lg">
-                CEO & Co-Founder, OxyAI
-              </p>
+              <p className="text-gray-600 text-md">CEO & Co-Founder, GenOxy</p>
             </div>
             <div className="flex justify-center">
               <a
                 href="https://www.linkedin.com/in/oxyradhakrishna/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-2xl sm:text-3xl transition duration-300"
-                title="Connect on LinkedIn"
+                className="text-blue-600 hover:text-blue-800 text-2xl transition duration-300"
+                aria-label="LinkedIn profile of RadhaKrishna"
               >
                 <FaLinkedin />
               </a>

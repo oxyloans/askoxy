@@ -145,6 +145,7 @@ import JobStreet from "./GLMS/JobStreet/JobStreet";
 import OrdersByPincode from "./AskoxyAdmin/Pincodewiseorders";
 import Feedback from "./components/Feedback";
 
+
 import AIBlockchainAndItServices from "./AIBlockchainAndItSev/AIBlockchainAndItServices";
 import CACSService from "./CACSServices/CaCsServices";
 import GoldAndSilverAndDiamond from "./GoldAndSilverAndDiamonds/GoldAndSilverAndDiamonds";
@@ -174,6 +175,8 @@ import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
 import AskoxyAi from "./components/OpenAi";
 import GenOxy from "./GenOxy/Genoxy";
+import JobDetails from "./components/JobDetails";
+import AddJob from "./AskoxyAdmin/AddJob";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -225,6 +228,7 @@ const App: React.FC = () => {
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
+            <Route path="jobdetails" element={<JobDetails />} />
             <Route path="addblogs" element={<AddBlog />} />
             <Route path="metroLogin" element={<MetroLogin />} />
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
@@ -449,6 +453,7 @@ const App: React.FC = () => {
               <Route path="dashboard/:tab" element={<DashboardMain />} />
               <Route path="dashboard/myservices" element={<ServicesPage />} />
               <Route path="dashboard/myblogs" element={<BlogsPage />} />
+              <Route path="jobdetails" element={<JobDetails />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               <Route
                 path="services/freerudraksha"
@@ -618,6 +623,7 @@ const App: React.FC = () => {
               />
               <Route path="campaignsadd" element={<CampaignsAdd />} />
               <Route path="assignedData" element={<AssignedDataPage />} />
+              <Route path="addjobs" element={<AddJob />} />
               <Route
                 path="helpDeskUsers"
                 element={<HelpDeskUsersDashboard />}

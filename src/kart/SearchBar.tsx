@@ -24,8 +24,7 @@ interface SearchParams {
   page: number;
   size?: number;
   weight?: number;
-  itemName?: string;
-  categoryName?: string;
+  itemName?: string; // Changed from categoryName to itemName
 }
 
 const defaultSuggestions = [
@@ -38,14 +37,13 @@ const defaultSuggestions = [
 
 const SearchBar = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Added to check for incoming state
+  const location = useLocation();
   const [searchValue, setSearchValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Optional: Initialize searchValue from location state if navigated back with a value
   useEffect(() => {
     if (location.state?.selectedItemName) {
       setSearchValue(location.state.selectedItemName);
@@ -64,7 +62,6 @@ const SearchBar = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const lowercaseQuery = query.trim().toLowerCase();
-      // Map query to default suggestion case if it matches
       const matchedSuggestion = defaultSuggestions.find(
         (suggestion) => suggestion.toLowerCase() === lowercaseQuery
       );
@@ -88,8 +85,8 @@ const SearchBar = () => {
           results = flattenResponse(response.data);
         } catch (error) {
           console.warn("Weight search failed:", error);
-          params = { page: 0, size: 10, categoryName: normalizedQuery };
-          console.log("Fallback categoryName params:", params);
+          params = { page: 0, size: 10, itemName: normalizedQuery }; // Changed to itemName
+          console.log("Fallback itemName params:", params);
           const fallbackResponse = await axios.get(
             `${BASE_URL}/product-service/search`,
             {
@@ -101,22 +98,22 @@ const SearchBar = () => {
           results = flattenResponse(fallbackResponse.data);
         }
       } else {
-        params = { ...params, categoryName: normalizedQuery };
-        console.log("CategoryName search params:", params);
+        params = { ...params, itemName: normalizedQuery }; // Changed to itemName
+        console.log("itemName search params:", params);
         const response = await axios.get(`${BASE_URL}/product-service/search`, {
           params,
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        console.log("CategoryName raw response:", response.data);
+        console.log("itemName raw response:", response.data);
         results = flattenResponse(response.data);
       }
 
       // Apply Fuse.js for fuzzy, case-insensitive search
       if (!isNumericQuery && results.length > 0) {
         const fuse = new Fuse(results, {
-          keys: ["itemName", "categoryName"], // Include categoryName for broader matching
+          keys: ["itemName"], // Removed categoryName, focusing on itemName
           isCaseSensitive: false,
-          threshold: 0.3, // Tighter matching for more relevant results
+          threshold: 0.3,
           includeScore: true,
           shouldSort: true,
           minMatchCharLength: 1,
@@ -130,7 +127,7 @@ const SearchBar = () => {
       );
 
       console.log("Fetched and filtered results:", filteredSearchResults);
-      setSearchResults(filteredSearchResults); // Ensure state is updated
+      setSearchResults(filteredSearchResults);
       setIsSearching(false);
       return filteredSearchResults;
     } catch (error) {
@@ -162,7 +159,7 @@ const SearchBar = () => {
         .filter((item: any) => item.itemMrp > 0)
         .map((item: any) => ({
           itemId: item.itemId || "",
-          itemName: item.itemName || "", // Keep original case for display
+          itemName: item.itemName || "",
           itemMrp: item.itemMrp || 0,
           units: item.units || null,
           itemImage: item.itemImage || "",
@@ -204,7 +201,7 @@ const SearchBar = () => {
             savePercentage: null,
             itemPrice: 0,
             quantity: null,
-            categoryName: name,
+            categoryName: "", // Default suggestions now represent item names
           }))
         );
       } else {
@@ -228,7 +225,7 @@ const SearchBar = () => {
 
   const handleItemClick = async (item: SearchItem) => {
     setSearchValue(item.itemName);
-    setIsFocused(false); // Close suggestions immediately
+    setIsFocused(false);
 
     const isDefaultSuggestion = defaultSuggestions.some(
       (suggestion) => suggestion.toLowerCase() === item.itemName.toLowerCase()
@@ -237,16 +234,15 @@ const SearchBar = () => {
     if (isDefaultSuggestion) {
       try {
         const token = localStorage.getItem("accessToken");
-        // Use the exact case from defaultSuggestions
         const matchedSuggestion = defaultSuggestions.find(
           (suggestion) =>
             suggestion.toLowerCase() === item.itemName.toLowerCase()
         );
-        const categoryName = matchedSuggestion || item.itemName;
+        const itemName = matchedSuggestion || item.itemName; // Use itemName instead of categoryName
         const params: SearchParams = {
           page: 0,
           size: 10,
-          categoryName,
+          itemName, // Changed to itemName
         };
         const response = await axios.get(`${BASE_URL}/product-service/search`, {
           params,
@@ -256,19 +252,18 @@ const SearchBar = () => {
         navigate("search-main", {
           state: {
             searchResults: fetchedResults,
-            categoryName,
-            selectedItemName: item.categoryName,
+            itemName, // Changed to itemName
+            selectedItemName: item.itemName,
           },
         });
       } catch (error) {
-        console.error("Error fetching category items:", error);
+        console.error("Error fetching items:", error);
         setSearchResults([]);
         navigate("search-main", {
-          state: { searchResults: [], categoryName: item.categoryName },
+          state: { searchResults: [], itemName: item.itemName, selectedItemName: item.itemName },
         });
       }
     } else {
-      // Navigate to item details directly
       navigate(`/main/itemsdisplay/${item.itemId}`, {
         state: { item, selectedItemName: item.itemName },
       });
@@ -287,23 +282,22 @@ const SearchBar = () => {
           console.log("Input focused, isFocused:", true);
         }}
         onBlur={(e) => {
-          // Delay blur to allow click to register
           setTimeout(() => {
             if (document.activeElement !== inputRef.current) {
               setIsFocused(false);
               console.log("Input blurred, isFocused:", false);
             }
-          }, 100); // 200ms delay
+          }, 100);
         }}
         className="w-full pl-4 pr-12 py-2 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-purple-500"
-        placeholder="Search by name, category, or weight..."
+        placeholder="Search by name or weight..." // Updated placeholder
         aria-label="Search"
       />
       <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center">
         {searchValue && (
           <button
             type="button"
-            onClick={() => setSearchValue("")} // Clear the input
+            onClick={() => setSearchValue("")}
             className="p-1 text-gray-400 hover:text-red-500"
           >
             <FaTimes className="text-base" />
@@ -325,7 +319,7 @@ const SearchBar = () => {
               <div
                 key={item.itemId}
                 onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent default to avoid blur interference
+                  e.preventDefault();
                   handleItemClick(item);
                 }}
                 className="w-full text-left p-2 hover:bg-gray-100 cursor-pointer"
@@ -333,7 +327,7 @@ const SearchBar = () => {
                 <div className="flex justify-between">
                   <span>{item.itemName}</span>
                   <span className="text-gray-500 text-sm">
-                    {/* {item.categoryName} - {item.weight} {item.units || "kg"} */}
+                    {item.weight} {item.units || "kg"}
                   </span>
                 </div>
               </div>

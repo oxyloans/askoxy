@@ -121,7 +121,8 @@ const CASDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Header */}
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           isScrolled ? "bg-white/90 shadow-md" : "bg-white/80"
@@ -130,8 +131,10 @@ const CASDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-20">
             <div onClick={handleLogoClick} className="cursor-pointer">
-              <img src={Askoxylogo} alt="Logo" className="h-12" />
+              <img src={Askoxylogo} alt="Askoxy Logo" className="h-12" />
             </div>
+
+            {/* Desktop Navigation */}
             <div className="hidden md:flex gap-3">
               <button
                 onClick={handleGLMSClick}
@@ -141,11 +144,13 @@ const CASDashboard: React.FC = () => {
               </button>
               <button
                 onClick={handleInterest}
-                className="bg-green-100 text-green-700 rounded-lg hover:bg-green-200 px-5 py-2 font-medium transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="bg-green-100 text-green-700 rounded-lg hover:bg-green-200 px-5 py-2 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
               >
                 I'm Interested
               </button>
             </div>
+
+            {/* Mobile Menu Toggle */}
             <div className="md:hidden">
               <button onClick={toggleMobileMenu}>
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -153,8 +158,9 @@ const CASDashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 pt-2 flex flex-col gap-3">
+            <div className="md:hidden py-4 flex flex-col gap-3">
               <button
                 onClick={handleGLMSClick}
                 className="bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 px-5 py-2 transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -163,7 +169,7 @@ const CASDashboard: React.FC = () => {
               </button>
               <button
                 onClick={handleInterest}
-                className="bg-green-100 text-green-700 rounded-lg hover:bg-green-200 px-5 py-2 font-medium transition focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="bg-green-100 text-green-700 rounded-lg hover:bg-green-200 px-5 py-2 transition focus:outline-none focus:ring-2 focus:ring-green-400"
               >
                 I'm Interested
               </button>
@@ -172,30 +178,37 @@ const CASDashboard: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-10">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800">
+      {/* Main Content */}
+      <main className="flex-1 px-4 sm:px-6 md:px-10 max-w-7xl mx-auto py-12">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
             Loan Origination System (LOS)
           </h1>
-          <p className="mt-4 text-gray-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
-            The Loan Origination System (LOS) is a modern digital solution
-            designed to simplify and accelerate the entire loan process. From
-            the moment a customer applies for a loan to the final disbursement,
-            LOS automates every critical step—including data capture, credit
-            evaluation, approval workflows, document management, and compliance
-            checks. With its user-friendly interface and seamless tracking, LOS
-            enhances customer satisfaction, reduces manual errors, and ensures
-            faster loan approvals while meeting all regulatory standards.
+          <p className="mt-6 text-gray-700 max-w-3xl mx-auto text-base sm:text-lg leading-relaxed">
+            The <strong>Loan Origination System (LOS)</strong> is a modern
+            digital platform that simplifies and accelerates the loan process.
+            From the initial loan application to the final disbursement, LOS
+            automates every critical step — including{" "}
+            <strong>data capture</strong>, <strong>credit evaluation</strong>,
+            <strong>approval workflows</strong>,{" "}
+            <strong>document management</strong>, and{" "}
+            <strong>compliance checks</strong>.
+            <br />
+            <br />
+            With its intuitive interface and streamlined tracking capabilities,
+            LOS improves customer satisfaction, reduces errors, and ensures
+            faster loan approvals — all while maintaining regulatory compliance.
           </p>
         </div>
 
+        {/* Use Case Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {useCases.map((useCase) => (
             <div
               key={useCase.path}
               className="p-6 bg-white border rounded-xl shadow hover:shadow-lg transition transform hover:-translate-y-1"
             >
-              <h2 className="text-xl font-semibold text-gray-800">
+              <h2 className="text-lg font-semibold text-gray-800">
                 {useCase.title}
               </h2>
               <p className="text-sm text-gray-600 mt-2">
@@ -220,12 +233,14 @@ const CASDashboard: React.FC = () => {
         </div>
       </main>
 
+      {/* Footer */}
       <footer className="bg-gray-900 text-white py-4 text-center text-sm">
-        © {new Date().getFullYear()} Global Lending Management Solutions. All
-        rights reserved.
+        &copy; {new Date().getFullYear()} Global Lending Management Solutions.
+        All rights reserved.
       </footer>
     </div>
   );
+  
 };
 
 export default CASDashboard;

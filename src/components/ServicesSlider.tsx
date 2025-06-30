@@ -3,6 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { fetchCampaigns, Campaign } from "./servicesapi";
+import BASE_URL from "../Config";
+
+interface Job {
+  companyLogo: string;
+  jobDesignation:string;
+  id: string;
+  jobTitle: string;
+  companyName: string;
+  industry: string;
+  userId: string;
+  jobLocations: string;
+  jobType: string;
+  description: string;
+  benefits: string;
+  jobStatus: boolean;
+  skills: string;
+  salaryMin: number;
+  salaryMax: number;
+  qualification: number;
+  applicationDeadLine: number;
+  experience: string;
+  createdAt: number;
+  updatedAt: number;
+}
 
 const ServicesSlider: React.FC = () => {
   const [showAllServices, setShowAllServices] = useState(false);
@@ -11,8 +35,28 @@ const ServicesSlider: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const navigate = useNavigate();
 
-  // Check for access token
+  const [showAllJobs, setShowAllJobs] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+
   const accessToken = localStorage.getItem("accessToken");
+
+  const fetchJobs = async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid?userId=91d2f250-20d0-44a5-9b4e-2acb73118b98`,
+        {
+          method: "GET",
+          headers: {
+            accept: "*/*",
+          },
+        }
+      );
+      const jobsData = await response.json();
+      setJobs(jobsData);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+  };
 
   // Updated services with their respective paths
   const services = [
@@ -85,6 +129,8 @@ const ServicesSlider: React.FC = () => {
     ? blogCampaigns
     : blogCampaigns.slice(0, 3);
 
+  const displayedJobs = showAllJobs ? jobs : jobs.slice(0, 5);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -96,19 +142,22 @@ const ServicesSlider: React.FC = () => {
     const loadCampaigns = async () => {
       try {
         const campaigns = await fetchCampaigns();
-
         const campaignsWithIds = campaigns.map((campaign) => ({
           ...campaign,
           id: campaign.campaignId,
         }));
-
         setCampaigns(campaignsWithIds);
       } catch (err) {
         console.error("Error loading campaigns:", err);
       }
     };
 
+    const loadJobs = async () => {
+      await fetchJobs();
+    };
+
     loadCampaigns();
+    loadJobs(); // Add this line
   }, []);
 
   const handleServiceClick = (path: string) => {
@@ -124,25 +173,41 @@ const ServicesSlider: React.FC = () => {
       .slice(0, 30);
 
   const handleCampaignClick = (campaign: Campaign) => {
-  console.log(campaign);
-  
+    console.log(campaign);
+
     if (accessToken) {
       if (
         campaign.campainInputType === "SERVICE" ||
         campaign.campainInputType === "PRODUCT"
       ) {
-        navigate(`/main/services/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+        navigate(
+          `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
+            campaign.campaignType
+          )}`
+        );
       } else {
-        navigate(`/main/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+        navigate(
+          `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
+            campaign.campaignType
+          )}`
+        );
       }
     } else {
       if (
         campaign.campainInputType === "SERVICE" ||
         campaign.campainInputType === "PRODUCT"
       ) {
-        navigate(`/services/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+        navigate(
+          `/services/${campaign.campaignId.slice(-4)}/${slugify(
+            campaign.campaignType
+          )}`
+        );
       } else {
-        navigate(`/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+        navigate(
+          `/blog/${campaign.campaignId.slice(-4)}/${slugify(
+            campaign.campaignType
+          )}`
+        );
       }
     }
   };
@@ -156,6 +221,16 @@ const ServicesSlider: React.FC = () => {
         staggerChildren: 0.1,
       },
     },
+  };
+
+  const handleJobNavigate = (id: string | null) => {
+    console.log("service slider" + id);
+
+    if (!accessToken) {
+      navigate("/jobdetails", { state: { id } });
+    } else {
+      navigate("/main/jobdetails", { state: { id } });
+    }
   };
 
   const itemVariants = {
@@ -467,6 +542,142 @@ const ServicesSlider: React.FC = () => {
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">
               No blogs available at the moment.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <hr className="p-2 mt-16"></hr>
+      <div className="relative z-10">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-16">
+          <div className="mb-8 sm:mb-0 text-center sm:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+            >
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
+                Our <span className="text-yellow-500">Jobs</span>
+              </h2>
+              <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>
+            </motion.div>
+          </div>
+
+          {jobs.length > 3 && (
+            <motion.button
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.4)",
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => {
+                handleJobNavigate(null);
+              }} // Navigate to jobs page instead of showing all
+            >
+              View All Jobs
+              <span className="ml-2 inline-block">→</span>
+            </motion.button>
+          )}
+        </div>
+
+        {jobs.length > 0 ? (
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {displayedJobs.map((job, index) => {
+              const lightBackgroundColors = [
+                "bg-slate-50",
+                "bg-emerald-50",
+                "bg-violet-50",
+                "bg-rose-50",
+                "bg-amber-50",
+                "bg-cyan-50",
+                "bg-orange-50",
+                "bg-stone-50",
+              ];
+
+              const bgColor =
+                lightBackgroundColors[index % lightBackgroundColors.length];
+
+              return (
+                <motion.div
+                  key={job.id}
+                  variants={itemVariants}
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl 
+transition-all duration-300 transform hover:-translate-y-1 cursor-pointer 
+flex flex-col border border-gray-100 m-2"
+                  onClick={() => handleJobNavigate(job.id)}
+                >
+                  <div className="pt-6 pb-4 flex justify-center">
+                    <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
+                      <img
+                        src={
+                          job.companyLogo ||
+                          "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
+                        }
+                        className="max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src =
+                            "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Company Name */}
+                  <div className="flex justify-center px-4 pb-3">
+                     <div
+            className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
+          >
+            <span className="text-base font-semibold text-gray-700 text-center">
+              {job.companyName}
+            </span>
+          </div>
+        </div>
+
+        <div className="px-4 pb-1">
+          <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
+            {job.jobTitle}
+          </h3>
+        </div>
+
+        <div className="px-2 pb-2">
+          <div className="text-sm font-bold text-gray-700 text-center bg-gray-50 py-2 px-3 rounded-lg">
+            💼 {job.jobDesignation}
+          </div>
+        </div>
+
+        <div className="px-4 pb-3 space-y-1 text-center">
+          <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+            📍 Loc: {job.jobLocations}
+          </div>
+          <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+            ⏰ Exp: {job.experience}
+          </div>
+        </div>
+
+                  <div className="px-4 pb-5 mt-auto flex justify-center">
+                    <div
+                      className="bg-blue-100 text-blue-500 py-3 px-8 
+    rounded-full font-semibold text-base transition-all duration-200"
+                    >
+                      View Job
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        ) : (
+          <div className="text-center py-5">
+            <p className="text-gray-500 text-lg">
+              No jobs available at the moment.
             </p>
           </div>
         )}

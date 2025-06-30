@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 
 const domains = [
   {
-    id: "cas",
+    id: "los",
     title: "Loan Origination System",
     link: "/los",
     description:
       "Optimized workflows for onboarding and expanding your customer base efficiently.",
-    icon: <Users size={28} className="text-blue-600" />,
+    icon: <Users size={24} className="text-blue-600" />,
     useCases: [
       {
         id: "cas-1",
@@ -39,7 +39,7 @@ const domains = [
     link: "/cms",
     description:
       "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
-    icon: <CreditCard size={28} className="text-blue-600" />,
+    icon: <CreditCard size={24} className="text-blue-600" />,
     useCases: [
       {
         id: "col-1",
@@ -69,7 +69,7 @@ const domains = [
     link: "/fms",
     description:
       "End-to-end financial tracking, processing, and reporting for loan servicing.",
-    icon: <DollarSign size={28} className="text-blue-600" />,
+    icon: <DollarSign size={24} className="text-blue-600" />,
     useCases: [
       {
         id: "fms-1",
@@ -97,29 +97,31 @@ const domains = [
 
 const DomainSection = () => {
   return (
-    <section className="py-12 md:py-20 bg-gradient-to-br from-blue-50 to-green-50">
+    <section className="py-14 md:py-20 bg-gradient-to-br from-blue-50 to-green-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Global Lending Management Solutions
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-            Explore systems that streamline every phase of the loan lifecycle,
+          <p className="text-gray-600 max-w-2xl mx-auto text-base">
+            Explore systems that streamline every phase of the loan lifecycle —
             from origination to servicing.
           </p>
         </div>
 
+        {/* Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {domains.map((domain) => (
             <Link
               to={domain.link}
               key={domain.id}
-              className="bg-white rounded-xl shadow hover:shadow-2xl transition-all duration-300 group overflow-hidden cursor-pointer flex flex-col justify-between"
+              className="bg-white rounded-xl shadow hover:shadow-xl transition-all duration-300 group flex flex-col overflow-hidden"
             >
               <div className="p-6 flex flex-col h-full">
-                {/* Header */}
+                {/* Title & Icon */}
                 <div className="flex items-center mb-4">
-                  <div className="bg-blue-100 rounded-full p-2 mr-3">
+                  <div className="bg-blue-100 p-2 rounded-full mr-3">
                     {domain.icon}
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -128,14 +130,14 @@ const DomainSection = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 mb-5">
                   {domain.description}
                 </p>
 
                 {/* Use Cases */}
-                <div className="mb-4">
-                  <h4 className="font-medium text-gray-700 text-sm mb-2">
-                    Use Cases:
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                    Key Use Cases
                   </h4>
                   <ul className="space-y-2">
                     {domain.useCases.map((uc) => (
@@ -149,10 +151,10 @@ const DomainSection = () => {
                   </ul>
                 </div>
 
-                {/* Learn More */}
-                <div className="mt-auto text-blue-600 font-medium text-sm flex items-center group-hover:text-blue-800">
-                  Learn more
-                  <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {/* Learn More Link */}
+                <div className="mt-5 text-blue-600 text-sm font-medium flex items-center group-hover:text-blue-800">
+                  Learn More
+                  <ChevronRight className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             </Link>

@@ -46,12 +46,16 @@ import { Modal } from "antd";
 interface Item {
   itemName: string;
   itemId: string;
-  itemImage: null | string;
-  weight: string;
+  itemImage: string | null;
+  weight: number | string;
   itemPrice: number;
   quantity: number;
   itemMrp: number;
   units: string;
+  barcodeValue?: string;
+  itemDescription?: string;
+  saveAmount?: number;
+  savePercentage?: number;
   inStock?: boolean;
 }
 
@@ -176,7 +180,6 @@ const SkeletonLoader: React.FC = () => (
   </div>
 );
 
-
 // FAQ Component
 const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
@@ -255,7 +258,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           >
             Referral Program
           </button>
-        </div>
+       oloog</div>
 
         {/* Shadow when scrolled */}
         <div
@@ -707,6 +710,7 @@ const Ricebags: React.FC = () => {
       }
     }
   };
+
   // Sort items function: in-stock items first, out-of-stock items last
   const sortItemsByStock = (items: Item[]): Item[] => {
     return [...items].sort((a, b) => {
@@ -730,14 +734,26 @@ const Ricebags: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          BASE_URL + "/product-service/showItemsForCustomrs"
+          BASE_URL + "/product-service/showGroupItemsForCustomrs"
         );
-        const data: Category[] = response.data;
+        const data = response.data;
 
+        // Flatten the nested categories from all category groups
+        const allCategories: Category[] = data.flatMap((group: { categories: Category[] }) =>
+          group.categories.map((category: Category) => ({
+            ...category,
+            categoryImage: category.categoryImage || null,
+            itemsResponseDtoList: category.itemsResponseDtoList.map((item) => ({
+              ...item,
+              weight: item.weight.toString(), // Convert weight to string for consistency
+            })),
+            subCategories: category.subCategories || [],
+          }))
+        );
+
+        // Collect all unique items for "All Items" category
         const uniqueItemsMap = new Map<string, Item>();
-
-        // Collect all items and ensure uniqueness only by itemId
-        data.forEach((category) => {
+        allCategories.forEach((category) => {
           category.itemsResponseDtoList.forEach((item) => {
             if (!uniqueItemsMap.has(item.itemId)) {
               uniqueItemsMap.set(item.itemId, item);
@@ -745,31 +761,28 @@ const Ricebags: React.FC = () => {
           });
         });
 
-        // Convert map values to array for our "All Items" category
+        // Convert map values to array for "All Items" category
         const uniqueItemsList = Array.from(uniqueItemsMap.values());
 
         // Sort all items by stock status
         const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
 
-        // Create new categories with sorted "All Items", others remain unchanged
-        const allCategories: Category[] = [
+        // Create the final categories array with "All Items" first
+        const finalCategories: Category[] = [
           {
             categoryName: "All Items",
             categoryImage: null,
             itemsResponseDtoList: sortedUniqueItems,
             subCategories: [],
           },
-          ...data.map((category) => ({
+          ...allCategories.map((category) => ({
             ...category,
-            itemsResponseDtoList: sortItemsByStock(
-              category.itemsResponseDtoList
-            ),
-            subCategories: category.subCategories || [],
+            itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
           })),
         ];
 
-        setCategories(allCategories);
-        setFilteredCategories(allCategories);
+        setCategories(finalCategories);
+        setFilteredCategories(finalCategories);
       } catch (error) {
         console.error("Error fetching categories:", error);
       } finally {
@@ -796,7 +809,7 @@ const Ricebags: React.FC = () => {
       const filteredItems = category.itemsResponseDtoList.filter(
         (item) =>
           item.itemName.toLowerCase().includes(term) ||
-          (item.weight && item.weight.toLowerCase().includes(term))
+          (item.weight && item.weight.toString().toLowerCase().includes(term))
       );
 
       // Sort filtered items by stock status
@@ -865,44 +878,39 @@ const Ricebags: React.FC = () => {
     }
   };
 
-const BannerSkeletonLoader: React.FC = () => {
-  const isSmallScreen = window.innerWidth < 768;
-  const imagesPerView = isSmallScreen ? 1 : 2;
-  const totalBanners = 8;
-  const extendedBanners = totalBanners + imagesPerView;
+  const BannerSkeletonLoader: React.FC = () => {
+    const isSmallScreen = window.innerWidth < 768;
+    const imagesPerView = isSmallScreen ? 1 : 2;
+    const totalBanners = 8;
+    const extendedBanners = totalBanners + imagesPerView;
 
-  return (
-    <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
-      <div className="relative w-full overflow-hidden rounded-xl shadow-md">
-        <div
-          className="flex px-2"
-          style={{
-            width: `${(extendedBanners * 100) / imagesPerView}%`,
-            transition: "none",
-          }}
-        >
-          {Array.from({ length: extendedBanners }).map((_, index) => (
-            <div
-              key={index}
-              className="flex-shrink-0 w-full"
-              style={{
-                width: `${100 / extendedBanners}%`,
-                paddingRight: index !== extendedBanners - 1 ? "8px" : "0", // 8px = gap between banners
-              }}
-            >
-              <div className="w-full aspect-[16/4.5] bg-gray-200 rounded-xl" />
-            </div>
-          ))}
+    return (
+      <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
+        <div className="relative w-full overflow-hidden rounded-xl shadow-md">
+          <div
+            className="flex px-2"
+            style={{
+              width: `${(extendedBanners * 100) / imagesPerView}%`,
+              transition: "none",
+            }}
+          >
+            {Array.from({ length: extendedBanners }).map((_, index) => (
+              <div
+                key={index}
+                className="flex-shrink-0 w-full"
+                style={{
+                  width: `${100 / extendedBanners}%`,
+                  paddingRight: index !== extendedBanners - 1 ? "8px" : "0",
+                }}
+              >
+                <div className="w-full aspect-[16/4.5] bg-gray-200 rounded-xl" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-  // Filter active category items
-  const activeItems =
-    filteredCategories.find((cat) => cat.categoryName === activeCategory)
-      ?.itemsResponseDtoList || [];
+    );
+  };
 
   // App Store Modal Component
   const AppStoreModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
@@ -974,34 +982,34 @@ const BannerSkeletonLoader: React.FC = () => {
     );
   };
 
-if (loading) {
-  return (
-    <div className="min-h-screen bg-gray-50 space-y-8 px-4 py-6">
-      {/* Banner Skeleton */}
-      <BannerSkeletonLoader />
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 space-y-8 px-4 py-6">
+        {/* Banner Skeleton */}
+        <BannerSkeletonLoader />
 
-      {/* Category Skeleton */}
-      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="flex flex-col items-center space-y-2 bg-white p-3 rounded-lg shadow-sm animate-pulse"
-          >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gray-200"></div>
-            <div className="w-3/4 h-3 bg-gray-200 rounded"></div>
-          </div>
-        ))}
+        {/* Category Skeleton */}
+        <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center space-y-2 bg-white p-3 rounded-lg shadow-sm animate-pulse"
+            >
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gray-200"></div>
+              <div className="w-3/4 h-3 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Items Skeleton */}
+        <SkeletonLoader />
       </div>
-
-      {/* Items Skeleton */}
-      <SkeletonLoader />
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="min-h-screen">
-     <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
+      <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
         <div
           className="relative w-full overflow-hidden"
           onMouseEnter={handleMouseEnter}

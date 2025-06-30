@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DOMPurify from "dompurify";
-import { message, Modal } from "antd"; // Added Modal import for Special Offers modal
+import { message, Modal } from "antd";
 import {
   ShoppingCart,
   Home,
@@ -105,14 +105,13 @@ const ItemDisplayPage = () => {
     items: { [key: string]: boolean };
     status: { [key: string]: string };
   }>({
-    items: {}, // Stores boolean values for each item
-    status: {}, // Stores status strings for each item
+    items: {},
+    status: {},
   });
   const [modalData, setModalData] = useState<{
     images: GoldImage[];
     urls: string[];
   }>({ images: [], urls: [] });
-  // Added state for Special Offers modal
   const [offerModal, setOfferModal] = useState<{
     visible: boolean;
     content: string;
@@ -146,7 +145,6 @@ const ItemDisplayPage = () => {
 
   const apiKey = "";
 
-  // Added normalizeWeight function from categories.tsx
   const normalizeWeight = (value: any): number | null => {
     if (value === null || value === undefined) return null;
     const cleanedValue = String(value).replace(/[^0-9.]/g, "");
@@ -154,7 +152,6 @@ const ItemDisplayPage = () => {
     return isNaN(parsed) ? null : parsed;
   };
 
-  // New function to fetch item images
   const fetchItemImages = async (id: string) => {
     try {
       const response = await axios.get(
@@ -162,7 +159,7 @@ const ItemDisplayPage = () => {
       );
       console.log("Item images response:", response.data);
       setItemImages(response.data || []);
-      setCurrentImageIndex(0); // Reset to first image when new images are loaded
+      setCurrentImageIndex(0);
     } catch (error) {
       console.error("Error fetching item images:", error);
       setItemImages([]);
@@ -172,15 +169,19 @@ const ItemDisplayPage = () => {
   const fetchItemDetails = async (id: string) => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/showItemsForCustomrs`
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`
       );
-      const allItems = response.data.flatMap(
-        (category: any) => category.itemsResponseDtoList
+      const allItems = response.data.flatMap((group: any) =>
+        group.categories.flatMap((category: any) =>
+          category.itemsResponseDtoList.map((item: any) => ({
+            ...item,
+            category: category.categoryName,
+          }))
+        )
       );
       const item = allItems.find((item: Item) => item.itemId === id);
       if (item) {
         setItemDetails(item);
-        // Fetch images for this item
         await fetchItemImages(id);
       }
     } catch (error) {
@@ -198,7 +199,6 @@ const ItemDisplayPage = () => {
         fetchItemDetails(itemId);
       } else {
         setItemDetails(state.item);
-        // Fetch images even if item details are passed via state
         fetchItemImages(itemId);
       }
       fetchCartData("");
@@ -206,17 +206,15 @@ const ItemDisplayPage = () => {
     }
   }, [itemId, state]);
 
-  // Updated navigation handler for related items
   const handleRelatedItemClick = (item: Item) => {
-    setItemDetails(item); // Update item details immediately
-    fetchItemImages(item.itemId); // Fetch images for the new item
+    setItemDetails(item);
+    fetchItemImages(item.itemId);
     navigate(`/main/itemsdisplay/${item.itemId}`, {
       state: { item },
       replace: true,
     });
   };
 
-  // Updated fetchCartData function from categories.tsx to include Special Offers modal logic
   const fetchCartData = async (itemId: string) => {
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
@@ -277,7 +275,6 @@ const ItemDisplayPage = () => {
 
       const newDisplayedOffers = new Set(displayedOffers);
 
-      // Check for 2+1 Offer
       const twoPlusOneItems = customerCart.filter(
         (item) => item.status === "ADD" && item.cartQuantity >= 2
       );
@@ -308,7 +305,6 @@ const ItemDisplayPage = () => {
         }
       }
 
-      // Check for 5+2 Offer
       const fivePlusTwoItems = customerCart.filter(
         (item) =>
           item.status === "ADD" &&
@@ -337,7 +333,6 @@ const ItemDisplayPage = () => {
         }
       }
 
-      // Free Container Offer
       const containerOfferItems = customerCart.filter(
         (item) =>
           item.status === "ADD" &&
@@ -399,29 +394,30 @@ const ItemDisplayPage = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/showItemsForCustomrs`
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`
       );
 
       console.log("Fetched Categories:", response.data);
 
-      // Find the category that contains the selected item
-      const matchingCategory = response.data.find(
-        (category: any) =>
-          category.itemsResponseDtoList &&
-          Array.isArray(category.itemsResponseDtoList) &&
+      const matchingCategory = response.data
+        .flatMap((group: any) => group.categories)
+        .find((category: any) =>
           category.itemsResponseDtoList.some(
             (item: any) => item.itemId === itemDetails.itemId
           )
-      );
+        );
 
       if (
         matchingCategory &&
         Array.isArray(matchingCategory.itemsResponseDtoList)
       ) {
-        // Extract related items, excluding the selected one
         const categoryItems = matchingCategory.itemsResponseDtoList
           .filter((item: any) => item.itemId !== itemDetails.itemId)
-          .slice(0, 4); // Limit to 4 items
+          .slice(0, 4)
+          .map((item: any) => ({
+            ...item,
+            category: matchingCategory.categoryName,
+          }));
 
         console.log("Related Items:", categoryItems);
         setRelatedItems(categoryItems);
@@ -434,7 +430,6 @@ const ItemDisplayPage = () => {
     }
   };
 
-  // Update fetchRelatedItems when itemDetails changes
   useEffect(() => {
     if (itemDetails) {
       fetchRelatedItems();
@@ -477,7 +472,6 @@ const ItemDisplayPage = () => {
     }
   };
 
-  // Updated function to handle removing an item completely from the cart
   const handleRemoveItem = async (itemId: string) => {
     setLoadingItems((prev) => ({
       ...prev,
@@ -485,7 +479,6 @@ const ItemDisplayPage = () => {
     }));
 
     try {
-      // Find the cart item to remove
       const cartItemToRemove = cartData.find(
         (item) => item.itemId === itemId && item.status === "ADD"
       );
@@ -495,7 +488,6 @@ const ItemDisplayPage = () => {
         return;
       }
 
-      // Use the PATCH endpoint for removing items
       await axios.patch(
         `${BASE_URL}/cart-service/cart/minusCartItem`,
         { customerId, itemId },
@@ -515,7 +507,6 @@ const ItemDisplayPage = () => {
     }
   };
 
-  // Modified handleQuantityChange function
   const handleQuantityChange = async (item: Item, increment: boolean) => {
     const endpoint = increment
       ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
@@ -533,8 +524,6 @@ const ItemDisplayPage = () => {
 
     try {
       if (!increment && cartItems[item.itemId] <= 1) {
-        // Instead of using the DELETE endpoint, use minusCartItem
-        // to remove the last item
         await axios.patch(
           `${BASE_URL}/cart-service/cart/minusCartItem`,
           { customerId, itemId: item.itemId },
@@ -564,11 +553,11 @@ const ItemDisplayPage = () => {
               if (status === 200 || status === 204) {
                 console.log("PATCH treated as error but actually succeeded.");
               } else {
-                throw error; // Rethrow if the error is not handled
+                throw error;
               }
             } else {
               console.error("Network or unknown PATCH error:", error);
-              throw error; // Rethrow non-Axios errors
+              throw error;
             }
           }
         }
@@ -617,20 +606,17 @@ const ItemDisplayPage = () => {
       content: msg.text,
     }));
 
-    // Add new user message to the conversation
     previousMessages.push({
       role: "user",
       content: newMessage.text,
     });
 
-    // Function to get the last assistant's response safely
     const getLastAssistantMessage = (msgs: Message[]) => {
       return (
         [...msgs].reverse().find((msg) => msg.type === "received")?.text || ""
       );
     };
 
-    // Include last assistant response
     const lastAssistantMessage = getLastAssistantMessage(messages);
     if (lastAssistantMessage) {
       previousMessages.push({
@@ -695,7 +681,11 @@ const ItemDisplayPage = () => {
 
   const getStockStatus = (quantity: number) => {
     if (quantity === 0)
-      return { text: "Out of Stock", color: "bg-red-100 text-red-600" };
+      return {
+        text: "Out of Stock",
+        color:
+          "bg-red- Valuable insights from xAI team members, directly to your inbox 100 text-red-600",
+      };
     if (quantity <= 5)
       return {
         text: `Only ${quantity} left!`,
@@ -708,20 +698,16 @@ const ItemDisplayPage = () => {
     return cartItems[item.itemId] >= item.quantity;
   };
 
-  // Helper function to check if the item is explicitly added by the user
   const isItemUserAdded = (itemId: string): boolean => {
-    // Check if there is at least one cart entry for this item with status "ADD"
     return cartData.some(
       (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
     );
   };
 
-  // Added handler for closing Special Offers modal
   const handleOfferModalClose = () => {
     setOfferModal({ visible: false, content: "" });
   };
 
-  // Image navigation functions
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
       prev === 0 ? getAllImages().length - 1 : prev - 1
@@ -734,11 +720,9 @@ const ItemDisplayPage = () => {
     );
   };
 
-  // Function to get all images (existing + new from API)
   const getAllImages = () => {
     const images = [];
 
-    // Add existing item image if available
     if (itemDetails?.itemImage || itemDetails?.image) {
       images.push({
         imageId: "existing",
@@ -747,7 +731,6 @@ const ItemDisplayPage = () => {
       });
     }
 
-    // Add images from API
     if (itemImages && itemImages.length > 0) {
       images.push(...itemImages);
     }
@@ -755,7 +738,6 @@ const ItemDisplayPage = () => {
     return images;
   };
 
-  // Return both values instead of setting state inside
   const fetchGoldDetails = async (id: string) => {
     try {
       const [imagesResponse, urlsResponse] = await Promise.all([
@@ -805,19 +787,11 @@ const ItemDisplayPage = () => {
 
   const openFullscreen = (image: GoldImage, index: number): void => {
     setFullscreenImage({ ...image, index });
-    handleGoldPriceModalClose(); // Close the modal
+    handleGoldPriceModalClose();
   };
 
   const closeFullscreen = (): void => {
     setFullscreenImage(null);
-
-    setTimeout(() => {
-      setGoldPriceModal({
-        visible: true,
-        images: modalData.images,
-        urls: modalData.urls,
-      });
-    }, 100);
   };
 
   const handleComparePrices = async () => {
@@ -827,7 +801,6 @@ const ItemDisplayPage = () => {
     setGoldPriceModal({ visible: true, images, urls });
   };
 
-  // Define gold item IDs
   const goldItemIds = [
     "619bd23a-0267-46da-88da-30977037225a",
     "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
@@ -839,7 +812,6 @@ const ItemDisplayPage = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Added Special Offers Modal from categories.tsx */}
       <Modal
         title="Special Offer!"
         open={offerModal.visible}
@@ -859,13 +831,12 @@ const ItemDisplayPage = () => {
       >
         <div
           dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(offerModal.content), // <-- Sanitize the HTML here
+            __html: DOMPurify.sanitize(offerModal.content),
           }}
         />
       </Modal>
 
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        {/* Enhanced Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm mb-6">
           <button
             onClick={() => navigate("/main/dashboard/products")}
@@ -883,11 +854,9 @@ const ItemDisplayPage = () => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column - Product Details */}
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                {/* Enhanced Product Name Section */}
                 <div className="relative">
                   <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
                     {getAllImages().length > 0 ? (
@@ -921,7 +890,6 @@ const ItemDisplayPage = () => {
                           className="w-full h-full object-contain cursor-zoom-in transition-transform duration-300 ease-in-out hover:scale-[2]"
                         />
 
-                        {/* Image Navigation Controls */}
                         {getAllImages().length > 1 && (
                           <>
                             <button
@@ -968,7 +936,6 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
 
-                  {/* Compare Prices button - conditionally rendered for gold items */}
                   {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
                     <div className="flex justify-center mt-4">
                       <button
@@ -981,7 +948,6 @@ const ItemDisplayPage = () => {
                   )}
                 </div>
                 <div className="space-y-4">
-                  {/* Product Name */}
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                       {itemDetails?.itemName}
@@ -1001,7 +967,6 @@ const ItemDisplayPage = () => {
                     </div>
                   </div>
 
-                  {/* Price Section */}
                   <div className="space-y-2">
                     <div className="flex items-baseline space-x-3">
                       <span className="text-3xl font-bold text-purple-600">
@@ -1029,7 +994,6 @@ const ItemDisplayPage = () => {
                     </p>
                   </div>
 
-                  {/* Stock Status */}
                   {itemDetails && (
                     <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
                       <div
@@ -1042,7 +1006,6 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
 
-                  {/* Add to Cart Section */}
                   <div className="border-t pt-4">
                     {itemDetails && (
                       <div className="space-y-3">
@@ -1136,7 +1099,6 @@ const ItemDisplayPage = () => {
                     )}
                   </div>
 
-                  {/* Chat Button */}
                   <button
                     onClick={() => handleChatView(itemDetails?.itemName)}
                     className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all"
@@ -1146,7 +1108,6 @@ const ItemDisplayPage = () => {
                   </button>
                 </div>
               </div>
-              {/* Product Description - Spanning Full Width */}
               {itemDetails?.itemDescription && (
                 <div className="mt-4 w-full">
                   <h3 className="font-bold text-purple-700 mb-2 font-bold">
@@ -1160,7 +1121,6 @@ const ItemDisplayPage = () => {
             </div>
           </div>
 
-          {/* Right Column - Related Products or Chat Section */}
           <div className="lg:col-span-4">
             {showChatSection ? (
               <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -1321,7 +1281,6 @@ const ItemDisplayPage = () => {
                       className="w-full h-32 object-contain rounded-lg bg-gray-50 cursor-pointer transition-transform hover:scale-105"
                       onClick={() => openFullscreen(image, index)}
                     />
-                    {/* Fullscreen icon overlay */}
                     <div
                       className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                       onClick={() => openFullscreen(image, index)}
@@ -1364,14 +1323,12 @@ const ItemDisplayPage = () => {
         </div>
       </Modal>
 
-      {/* Fullscreen Image Modal */}
       {fullscreenImage && (
         <div
           className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-[9999]"
           onClick={closeFullscreen}
         >
           <div className="relative w-full h-full flex items-center justify-center p-4">
-            {/* Close button - Top Right */}
             <button
               className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-black bg-opacity-50 rounded-full p-2 transition-colors"
               onClick={closeFullscreen}
@@ -1380,28 +1337,23 @@ const ItemDisplayPage = () => {
               <X size={24} />
             </button>
 
-            {/* ESC key hint */}
             <div className="absolute top-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded text-sm">
               Press ESC to close
             </div>
 
-            {/* Fullscreen image */}
             <img
               src={fullscreenImage.imageUrl}
               alt={`Gold item ${fullscreenImage.index + 1} - Fullscreen`}
               className="max-w-full max-h-full object-contain"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
+              onClick={(e) => e.stopPropagation()}
             />
 
-            {/* Image counter */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               Image {fullscreenImage.index + 1} of {modalData.images.length}
             </div>
 
-            {/* Navigation arrows if multiple images */}
             {modalData.images.length > 1 && (
               <>
-                {/* Previous button */}
                 {fullscreenImage.index > 0 && (
                   <button
                     className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-3 transition-colors"
@@ -1433,7 +1385,6 @@ const ItemDisplayPage = () => {
                   </button>
                 )}
 
-                {/* Next button */}
                 {fullscreenImage.index < modalData.images.length - 1 && (
                   <button
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-3 transition-colors"

@@ -30,7 +30,7 @@ import {
 import { RiAdminLine, RiListUnordered, RiMapPin2Line } from "react-icons/ri";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { message } from "antd";
-import { MdPayment } from "react-icons/md";
+import { MdPayment, MdWork } from "react-icons/md";
 
 interface SidebarSubItem {
   title: string;
@@ -149,6 +149,13 @@ const Sidebar: React.FC = () => {
           title: "Add Blog",
           icon: <FaBlog className="text-green-400" />,
           link: "/admn/addblogs",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+
+        {
+          title: "Add Jobs",
+          icon: <MdWork className="text-green-400" />,
+          link: "/admn/addjobs",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
