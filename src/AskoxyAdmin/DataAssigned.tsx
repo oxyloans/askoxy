@@ -17,6 +17,9 @@ import {
   Col,
   Space,
   SelectProps,
+  Divider,
+  Form,
+  Tabs,
 } from "antd";
 import {
   CommentOutlined,
@@ -27,6 +30,10 @@ import {
   HomeOutlined,
   CalendarOutlined,
   WhatsAppOutlined,
+  WalletOutlined,
+  DollarOutlined,
+  MinusOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import BASE_URL from "../Config";
@@ -193,12 +200,18 @@ const DataAssigned: React.FC = () => {
   const [userOrders, setUserOrders] = useState<OrderData[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [userResponse, setUserResponse] = useState<string | undefined>();
-
-  // for getting user response
+  const type = localStorage.getItem("primaryType");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [walletRecord, setWalletRecord] = useState<UserData>();
   const handleUserResponseChange = (value: string) => {
     console.log("User Response:", value);
     setUserResponse(value);
   };
+  const [activeTab, setActiveTab] = useState("add");
+  const [reason, setReason] = useState("");
+  const [form] = Form.useForm();
 
   const deliveredOrdersCount = userOrders.filter(
     (order) => order.orderStatus === "4"
@@ -290,100 +303,6 @@ const DataAssigned: React.FC = () => {
 
   const showCommentsModal = async (record: UserData | null) => {
     setCommentsModalVisible(true);
-    // await fetchComments(record);
-  };
-
-  // const fetchComments = async (record: UserData | null): Promise<void> => {
-  //   console.log(record);
-
-  //   if (!record || !record.userId) return;
-
-  //   setLoadingComments(true);
-  //   try {
-  //     const response = await axios.post(
-  //       `${BASE_URL}/user-service/fetchAdminComments`,
-  //       { userId: record.userId },
-  //       { headers: { "Content-Type": "application/json" } }
-  //     );
-
-  //     if (response.data && typeof response.data === "object") {
-  //       setComments(response.data);
-  //     } else {
-  //       setComments([]);
-  //     }
-  //   } catch (error: any) {
-  //     if (error.response && error.response.status === 500) {
-  //       message.info("No comments found");
-  //     } else {
-  //       message.error(
-  //         "Failed to load comments...please try again after some time."
-  //       );
-  //     }
-  //     setComments([]);
-  //   } finally {
-  //     setLoadingComments(false);
-  //   }
-  // };
-
-  const handleSubmitComment = async (): Promise<void> => {
-    if (!userResponse?.trim()) {
-      message.warning("Please enter customer behaviour");
-      return;
-    }
-    if (!newComment.trim()) {
-      message.warning("Please enter a comment");
-      return;
-    }
-    setOrderId("");
-
-    let update = updatedBy;
-    const type = localStorage.getItem("primaryType");
-    if (type === "SELLER") {
-      update = "ADMIN";
-    }
-
-    let comment = newComment;
-
-    if (orderId) {
-      comment = `Regarding order Id ${orderId} ${newComment}`;
-    }
-    setSubmittingComment(true);
-    try {
-      await axios.patch(
-        `${BASE_URL}/user-service/adminUpdateComments`,
-        {
-          adminComments: comment,
-          commentsUpdateBy: update,
-          adminUserId: storedUniqueId,
-          userId: record?.userId,
-          customerBehaviour: userResponse,
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      message.success("Comment added successfully");
-      setNewComment("");
-      setUserResponse(undefined);
-      // await fetchComments(record);
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-      message.error("Failed to add comment");
-    } finally {
-      setSubmittingComment(false);
-      setNewComment("");
-    }
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const viewOrderDetails = (record: UserData) => {
@@ -499,7 +418,7 @@ const DataAssigned: React.FC = () => {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   display: "inline-block",
-                  width: "100%", // stay within the cell
+                  width: "100%",
                 }}
               >
                 {record.email ? (
@@ -516,9 +435,9 @@ const DataAssigned: React.FC = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 100,
+      width: 140,
       render: (_text, record) => (
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-1 w-full">
           <Button
             type="default"
             size="small"
@@ -526,18 +445,33 @@ const DataAssigned: React.FC = () => {
               setSelectedUser(record);
               showCommentsModal(record);
             }}
-            className="w-full rounded-md  border-blue-400 text-blue-600 hover:bg-blue-100"
+            className="w-full sm:w-auto whitespace-nowrap rounded-md border border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-colors text-xs px-2 py-1"
           >
             Comments
           </Button>
+
           <Button
             type="default"
             size="small"
             onClick={() => viewOrderDetails(record)}
-            className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
+            className="w-full sm:w-auto whitespace-nowrap rounded-md border border-green-400 text-green-600 hover:bg-green-50 hover:border-green-500 transition-colors text-xs px-2 py-1"
           >
             Orders
           </Button>
+
+          {type === "HELPDESKSUPERADMIN" && (
+            <Button
+              type="default"
+              size="small"
+              onClick={() => {
+                setIsModalOpen(true);
+                setWalletRecord(record);
+              }}
+              className="w-full sm:w-auto whitespace-nowrap rounded-md border border-purple-400 text-purple-600 hover:bg-purple-50 hover:border-purple-500 transition-colors text-xs px-2 py-1"
+            >
+              Load Wallet
+            </Button>
+          )}
         </div>
       ),
     },
@@ -659,6 +593,224 @@ const DataAssigned: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddWallet = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      message.error("Please enter a valid amount");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const payload = {
+        amountLoaded: parseFloat(amount),
+        customerId: walletRecord?.userId,
+      };
+
+      const response = await axios.patch(
+        `${BASE_URL}/order-service/walletLoadedAdmin`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success(
+          `Successfully loaded ₹${parseFloat(amount)} to ${
+            walletRecord?.userName
+          }'s wallet`
+        );
+        handleCancel();
+      } else {
+        message.error("Failed to load wallet. Please try again.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to load wallet";
+        message.error(errorMessage);
+      } else {
+        message.error("Network error. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveWallet = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      message.error("Please enter a valid amount");
+      return;
+    }
+
+    if (!reason || reason.trim() === "") {
+      message.error("Please provide a reason for deduction");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const payload = {
+        amountLoaded: parseFloat(amount),
+        customerId: walletRecord?.userId,
+        reason: reason.trim(),
+      };
+
+      const response = await axios.patch(
+        `${BASE_URL}/order-service/deductingWalletAmount`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success(
+          `Successfully deducted ₹${parseFloat(amount)} from ${
+            walletRecord?.userName
+          }'s wallet`
+        );
+        handleCancel();
+      } else {
+        message.error("Failed to deduct amount. Please try again.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to deduct amount";
+        message.error(errorMessage);
+      } else {
+        message.error("Network error. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (activeTab === "add") {
+      await handleAddWallet();
+    } else {
+      await handleRemoveWallet();
+    }
+  };
+
+  const isSubmitDisabled = () => {
+    if (!amount || parseFloat(amount) <= 0) return true;
+    if (activeTab === "remove" && (!reason || reason.trim() === ""))
+      return true;
+    return false;
+  };
+
+  const tabItems = [
+    {
+      key: "add",
+      label: (
+        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <PlusOutlined />
+          Add Amount
+        </span>
+      ),
+      children: (
+        <div>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              fontWeight: "500",
+              color: "#333",
+            }}
+          >
+            Amount to Add (₹) <span style={{ color: "#ff4d4f" }}>*</span>
+          </label>
+          <Input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Enter amount to add"
+            min="1"
+            step="0.01"
+            disabled={isLoading}
+            size="large"
+            prefix="₹"
+          />
+        </div>
+      ),
+    },
+    {
+      key: "remove",
+      label: (
+        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <MinusOutlined />
+          Remove Amount
+        </span>
+      ),
+      children: (
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: "500",
+                color: "#333",
+              }}
+            >
+              Amount to Remove (₹) <span style={{ color: "#ff4d4f" }}>*</span>
+            </label>
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount to remove"
+              min="1"
+              step="0.01"
+              disabled={isLoading}
+              size="large"
+              prefix="₹"
+            />
+          </div>
+
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: "500",
+                color: "#333",
+              }}
+            >
+              Reason for Deduction <span style={{ color: "#ff4d4f" }}>*</span>
+            </label>
+            <Input.TextArea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Please provide a reason for the deduction"
+              disabled={isLoading}
+              rows={3}
+              maxLength={500}
+              showCount
+            />
+          </div>
+        </Space>
+      ),
+    },
+  ];
+
+  const handleCancel = () => {
+    setAmount("");
+    setReason("");
+    setActiveTab("add");
+    form.resetFields();
+    setIsModalOpen(false);
   };
 
   const getStatusText = (status: string) => {
@@ -820,25 +972,6 @@ const DataAssigned: React.FC = () => {
         ),
       });
     }
-
-    // if (["3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
-    //   columns.splice(columns.length - 1, 0, {
-    //     title: "Delivery Boy Details",
-    //     dataIndex: "deliveryBoyName", // Add dataIndex to fix type error
-    //     key: "deliveryBoyDetails",
-    //     render: (text: string, record: OrderData) => (
-    //       <div>
-    //         <p>
-    //           <strong>Name:</strong> {record.deliveryBoyName || "N/A"}
-    //         </p>
-    //         <p>
-    //           <strong>Mobile:</strong> {record.deliveryBoyMobile || "N/A"}
-    //         </p>
-    //       </div>
-    //     ),
-    //   });
-    // }
-
     if (
       ["1", "2", "3", "4", "PickedUp"].includes(userOrders[0]?.orderStatus) &&
       userOrders[0]?.orderHistory?.length
@@ -909,11 +1042,11 @@ const DataAssigned: React.FC = () => {
 
   return (
     <Card className="shadow-lg rounded-lg border-0">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 order-1 sm:order-none">
           Assigned Users To Team
         </h1>
-        <div className="w-64">
+        <div className="w-full sm:w-64 order-2 sm:order-none">
           <Input
             placeholder="Search by mobile number"
             prefix={<SearchOutlined className="text-gray-400" />}
@@ -966,153 +1099,6 @@ const DataAssigned: React.FC = () => {
           className="my-12"
         />
       )}
-
-      {/* Comments Modal */}
-      {/* <Modal
-        zIndex={150}
-        title="HelpDesk Comments"
-        open={commentsModalVisible}
-        onCancel={() => {
-          setCommentsModalVisible(false);
-          setComments([]);
-          setOrderId("");
-          setNewComment("");
-        }}
-        footer={null}
-        width={550}
-      >
-        <div className="flex flex-col">
-        
-          <div className="mb-5">
-            <h3 className="text-base font-semibold text-gray-800 mb-3">
-              Recent Comments
-            </h3>
-
-            {loadingComments ? (
-              <div className="flex items-center justify-center py-6">
-                <Spin size="default" />
-                <span className="ml-3 text-gray-500">Loading comments...</span>
-              </div>
-            ) : comments && comments.length > 0 ? (
-              <div className="w-full max-w-xl max-h-80 overflow-y-auto border border-gray-200 rounded-lg shadow-sm bg-white">
-                {comments.map((comment, index) => {
-                  const initials = (comment.commentsUpdateBy || "Unknown")
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .toUpperCase();
-
-                  const colorOptions = [
-                    "bg-green-100 text-green-700",
-                    "bg-purple-100 text-purple-700",
-                    "bg-amber-100 text-amber-700",
-                    "bg-teal-100 text-teal-700",
-                    "bg-rose-100 text-rose-700",
-                    "bg-indigo-100 text-indigo-700",
-                  ];
-
-                  const colorIndex =
-                    comment.commentsUpdateBy?.length % colorOptions.length || 0;
-                  const avatarColor = colorOptions[colorIndex];
-
-                  return (
-                    <div
-                      key={index}
-                      className="border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="px-3 py-1.5 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center mb-0.5">
-                          <div
-                            className={`w-6 h-6 rounded-full ${avatarColor} flex items-center justify-center text-[10px] font-semibold mr-2`}
-                          >
-                            {initials}
-                          </div>
-                          <span className="font-medium text-sm text-gray-800">
-                            {comment.commentsUpdateBy || "Unknown"}
-                          </span>
-                          <span className="text-[10px] text-gray-400 ml-auto">
-                            {
-                              formatDate(comment.commentsCreatedDate).split(
-                                ","
-                              )[0]
-                            }
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 pl-8 mt-0.5 leading-snug">
-                          {comment.adminComments}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-                <svg
-                  className="w-6 h-6 text-gray-400 mx-auto mb-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <p className="text-sm text-gray-500">No comments available</p>
-              </div>
-            )}
-          </div>
-           <h3 className="text-base font-semibold text-gray-800 mb-3">
-                       User Response
-                     </h3>
-               <Select
-                 style={{ width: '100%' }}
-                 placeholder="Select a response"
-                 options={emojiOptions}
-                 value={userResponse}
-                 onChange={handleUserResponseChange}
-               />
-       
-          <div className="border-t border-gray-200 pt-4">
-            <div className="flex flex-col space-y-3">
-              <TextArea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Type your comment here..."
-                autoSize={{ minRows: 3, maxRows: 5 }}
-                className="text-sm rounded-lg border-gray-300"
-              />
-
-              <div className="flex justify-end gap-3 pt-2">
-                <Button
-                  size="middle"
-                  onClick={() => {
-                    setCommentsModalVisible(false);
-                    setComments([]);
-                    setNewComment("");
-                    setUserResponse(undefined);
-                  }}
-                  className="hover:bg-gray-100"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  size="middle"
-                  onClick={handleSubmitComment}
-                  loading={submittingComment}
-                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
-                >
-                  Submit
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal> */}
       <HelpDeskCommentsModal
         open={commentsModalVisible}
         onClose={() => setCommentsModalVisible(false)}
@@ -1298,6 +1284,89 @@ const DataAssigned: React.FC = () => {
             )}
           </>
         )}
+      </Modal>
+
+      <Modal
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <WalletOutlined style={{ color: "#722ed1" }} />
+            Manage Wallet
+          </div>
+        }
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={[
+          <Button key="cancel" onClick={handleCancel} disabled={isLoading}>
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={isLoading}
+            onClick={handleSubmit}
+            disabled={isSubmitDisabled()}
+            style={{ backgroundColor: "#722ed1", borderColor: "#722ed1" }}
+          >
+            {activeTab === "add" ? "Add Amount" : "Remove Amount"}
+          </Button>,
+        ]}
+        width={600}
+        destroyOnClose
+      >
+        <div style={{ marginBottom: "24px" }}>
+          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <UserOutlined style={{ color: "#666", fontSize: "16px" }} />
+              <div>
+                <span style={{ color: "#666", fontSize: "14px" }}>Name: </span>
+                <span style={{ fontWeight: "500", color: "#333" }}>
+                  {walletRecord?.userName}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <PhoneOutlined style={{ color: "#666", fontSize: "16px" }} />
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span style={{ color: "#666", fontSize: "14px" }}>
+                  Mobile:{" "}
+                </span>
+                <span style={{ fontWeight: "500", color: "#333" }}>
+                  {walletRecord?.countryCode
+                    ? `${walletRecord.countryCode} `
+                    : ""}
+                  {walletRecord?.mobileNumber
+                    ? walletRecord.mobileNumber
+                    : walletRecord?.whastappNumber}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <DollarOutlined style={{ color: "#666", fontSize: "16px" }} />
+              <div>
+                <span style={{ color: "#666", fontSize: "14px" }}>
+                  Current BMV Coins:{" "}
+                </span>
+                <span style={{ fontWeight: "500", color: "#333" }}>
+                  {walletRecord?.assignCoins}
+                </span>
+              </div>
+            </div>
+          </Space>
+        </div>
+
+        <Divider />
+
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+          type="card"
+          style={{ marginBottom: "16px" }}
+        />
       </Modal>
     </Card>
   );

@@ -3,13 +3,14 @@ import { Globe, X, MapPin, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import SALOGO from "../assets/img/sa.png";
-
+import { MessageCircle } from "lucide-react";
 interface StudyAbroadHeaderProps {
   onNavClick: (
     id: "home" | "universities" | "countries" | "testimonials"
   ) => void;
   activeLink: string;
   isMainPage?: boolean; // Add prop to determine which logo to show
+  onOpenChat?: () => void; // 👈 Add this prop
 }
 
 // Make the component pure with React.memo to prevent unnecessary re-renders
@@ -17,6 +18,7 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
   onNavClick,
   activeLink,
   isMainPage = false,
+  onOpenChat,
 }: StudyAbroadHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Initialize isScrolled based on current scroll position to prevent initial flash
@@ -26,6 +28,13 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
 
   // Use a ref to track the current scroll state without causing re-renders
   const scrollRef = React.useRef(isScrolled);
+  const openUkairaChat = () => {
+    if (onOpenChat) {
+      onOpenChat();
+    } else {
+      console.warn("onOpenChat not provided");
+    }
+  };
 
   // Optimized scroll handler with throttling instead of debouncing
   useEffect(() => {
@@ -214,6 +223,18 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
               onClick={handleClick}
             >
               <span className="relative z-10">Register Now</span>
+              <span
+                className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
+                style={{ transition: "transform 0.3s" }}
+              ></span>
+            </button>
+            <button
+              className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group flex items-center gap-2"
+              style={{ transition: "box-shadow 0.2s" }}
+              onClick={openUkairaChat}
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="relative z-10">Chat With UKAIRA</span>
               <span
                 className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
                 style={{ transition: "transform 0.3s" }}

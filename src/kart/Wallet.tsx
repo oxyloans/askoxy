@@ -9,7 +9,7 @@ interface Transaction {
   id: string;
   walletTxType: 1 | 2;
   amount: number;
-  referredTo: number;
+  refereedTo: number;
   date: string;
   method: string;
   description: string;
@@ -151,64 +151,83 @@ const MyWalletPage: React.FC = () => {
                 </div>
 
                 {isLoading ? (
-                  <div className="flex justify-center items-center h-48">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                  </div>
+  <div className="flex justify-center items-center h-48">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+  </div>
+) : (
+  <div className="space-y-4">
+    {filteredTransactions.length === 0 ? (
+      <div className="text-center py-8 text-gray-500">
+        No transactions found
+      </div>
+    ) : (
+      filteredTransactions.map((transaction) => (
+        <div
+          key={transaction.id}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
+        >
+          <div className="flex gap-4 items-start sm:items-center">
+            <div
+              className={`p-2 rounded-full ${
+                transaction.walletTxType === 1
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-red-100 text-red-600'
+              }`}
+            >
+              {transaction.walletTxType === 1 ? (
+                <ArrowUpRight className="w-5 h-5" />
+              ) : (
+                <ArrowDownRight className="w-5 h-5" />
+              )}
+            </div>
+
+            <div>
+              <p className="font-semibold text-gray-600 mb-1">
+                {transaction.walletTxPurpose === 2 && transaction.orderId ? (
+                  `Order ID : #${transaction.orderId}`
+                ) : transaction.walletTxPurpose === 3 ? (
+                  "Subscription"
+                ) : transaction.walletTxPurpose === 1 && transaction.refereedTo ? (
+                  `Referred To : #${transaction.refereedTo}`
                 ) : (
-                  <div className="space-y-4">
-                    {filteredTransactions.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        No transactions found
-                      </div>
-                    ) : (
-                      filteredTransactions.map((transaction) => (
-                        <div
-                          key={transaction.id}
-                          className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-full ${transaction.walletTxType === 1
-                                ? 'bg-green-100 text-green-600'
-                                : 'bg-red-100 text-red-600'
-                              }`}>
-                              {transaction.walletTxType === 1
-                                ? <ArrowUpRight className="w-5 h-5" />
-                                : <ArrowDownRight className="w-5 h-5" />
-                              }
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-600 mb-1 w-1/1"> {transaction.walletTxType === 1 ? transaction.walletTxPurpose === 2 ? `Order ID : #${transaction.orderId}` : transaction.walletTxPurpose === 3 ? "Subscription" : `Referred To : #${transaction.referredTo}` : "Debit"}</p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.walletTxDesc}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`font-semibold ${transaction.walletTxType === 1
-                                ? 'text-green-600'
-                                : 'text-red-600'
-                              }`}>
-                              {/* {transaction.type === '1' ? '+' : '-'} */}
-                              ₹{transaction.walletTxAmount}
-                            </p>
-                            {/* <span className={`text-xs px-2 py-1 rounded-full
-                             ${
-                              transaction.status === 'completed' 
-                                ? 'bg-green-100 text-green-700'
-                                : transaction.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-red-100 text-red-700'
-                            }
-                            `}
-                            >
-                              {transaction.walletTxBalance}
-                            </span> */}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  "Transaction"
                 )}
+              </p>
+
+              <div className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 mb-1">
+                {transaction.walletTxPurpose === 1
+                  ? "Referer"
+                  : transaction.walletTxPurpose === 2
+                  ? "Order"
+                  : transaction.walletTxPurpose === 3
+                  ? "Subscription"
+                  : "Debit"}
+              </div>
+
+              <p className="text-sm text-gray-600">
+                {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.walletTxDesc}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-left sm:text-right mt-3 sm:mt-0">
+            <p
+              className={`font-semibold ${
+                transaction.walletTxType === 1 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              ₹{transaction.walletTxAmount}
+            </p>
+            {/* Uncomment if walletTxBalance is needed */}
+            {/* <span className="text-xs text-gray-500">
+              Balance: ₹{transaction.walletTxBalance}
+            </span> */}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
               </div>
             </div>
           </main>

@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState,useRef, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DOMPurify from "dompurify";
 import { message, Modal } from "antd";
+import ReactMarkdown from "react-markdown"; // ✅ At top of file
+
 import {
   ShoppingCart,
   Home,
@@ -12,6 +14,7 @@ import {
   Package2,
   Star,
   Bot,
+  Send,
   X,
   MessageCircle,
   AlertCircle,
@@ -57,6 +60,9 @@ interface Message {
   id: number;
   text: string;
   type: "sent" | "received" | "system";
+  role: "user" | "assistant";
+  content: string;
+  isImage?: boolean;
 }
 
 interface GoldPriceUrl {
@@ -88,6 +94,7 @@ const ItemDisplayPage = () => {
     state?.item || null
   );
   const [itemImages, setItemImages] = useState<ItemImage[]>([]);
+  const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
@@ -101,6 +108,7 @@ const ItemDisplayPage = () => {
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
   const [showChatSection, setShowChatSection] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
     status: { [key: string]: string };
@@ -165,6 +173,13 @@ const ItemDisplayPage = () => {
       setItemImages([]);
     }
   };
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchItemDetails = async (id: string) => {
     try {
@@ -584,97 +599,206 @@ const ItemDisplayPage = () => {
     }
   };
 
+  // const handleSendMessage = async () => {
+  //   if (!inputMessage.trim()) return;
+
+  //   const newMessage = {
+  //     id: messages.length,
+  //     text: inputMessage,
+  //     type: "sent" as const,
+  //   };
+  //   setMessages((prev) => [...prev, newMessage]);
+  //   setInputMessage("");
+
+  //   const mapTypeToRole = (type: any) => {
+  //     if (type === "sent") return "user";
+  //     if (type === "received") return "assistant";
+  //     return "system";
+  //   };
+
+  //   const previousMessages = messages.map((msg) => ({
+  //     role: mapTypeToRole(msg.type),
+  //     content: msg.text,
+  //   }));
+
+  //   previousMessages.push({
+  //     role: "user",
+  //     content: newMessage.text,
+  //   });
+
+  //   const getLastAssistantMessage = (msgs: Message[]) => {
+  //     return (
+  //       [...msgs].reverse().find((msg) => msg.type === "received")?.text || ""
+  //     );
+  //   };
+
+  //   const lastAssistantMessage = getLastAssistantMessage(messages);
+  //   if (lastAssistantMessage) {
+  //     previousMessages.push({
+  //       role: "assistant",
+  //       content: lastAssistantMessage,
+  //     });
+  //   }
+
+  //   try {
+  //     const response = await axios.post(
+  //       "https://api.openai.com/v1/chat/completions",
+  //       {
+  //         model: "gpt-4-turbo",
+  //         messages: previousMessages,
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${apiKey}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         id: messages.length + 2,
+  //         text: response.data.choices[0].message.content,
+  //         type: "system" as const,
+  //       },
+  //     ]);
+  //   } catch (error) {
+  //     console.error("Error getting AI response:", error);
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         id: messages.length + 2,
+  //         text: "Sorry, I couldn't process your request at the moment.",
+  //         type: "system" as const,
+  //       },
+  //     ]);
+  //   }
+  // };
+
+  // const handleChatView = (value: any) => {
+  //   setShowChatSection(!showChatSection);
+  //   if (messages.length == 0) {
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         id: messages.length + 1,
+  //         text: `What would you like to know about ${value} this product?`,
+  //         type: "system" as const,
+  //       },
+  //     ]);
+  //   }
+  // };
+
+
+  const handleChatView = async (productName: string) => {
+    setShowChatSection(true);
+
+    const introMessage: Message = {
+      id: messages.length,
+     text: `Can you tell me about "${productName}"?`,
+content: `Can you tell me about "${productName}"?`,
+
+      type: "sent",
+      role: "user",
+    
+    };
+    
+
+    const updatedMessages = [introMessage];
+    setMessages(updatedMessages);
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMessages),
+      });
+
+      const data = await response.text();
+      const isImageUrl = data.startsWith("http");
+
+      const assistantReply: Message = {
+        role: "assistant",
+        content: data,
+        isImage: isImageUrl,
+        id: updatedMessages.length,
+        text: isImageUrl ? "" : data, // show text unless it's an image
+        type: "received",
+      };
+
+      setMessages([...updatedMessages, assistantReply]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages([
+        ...updatedMessages,
+        {
+          id: updatedMessages.length,
+          text: "❌ Sorry, I couldn't fetch product info right now.",
+          type: "system",
+          role: "assistant",
+          content: "❌ Sorry, I couldn't fetch product info right now.",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    const newMessage = {
-      id: messages.length,
-      text: inputMessage,
-      type: "sent" as const,
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setInputMessage("");
-
-    const mapTypeToRole = (type: any) => {
-      if (type === "sent") return "user";
-      if (type === "received") return "assistant";
-      return "system";
-    };
-
-    const previousMessages = messages.map((msg) => ({
-      role: mapTypeToRole(msg.type),
-      content: msg.text,
-    }));
-
-    previousMessages.push({
+    const userMsg: Message = {
       role: "user",
-      content: newMessage.text,
-    });
-
-    const getLastAssistantMessage = (msgs: Message[]) => {
-      return (
-        [...msgs].reverse().find((msg) => msg.type === "received")?.text || ""
-      );
+      content: inputMessage,
+      text: inputMessage,
+      id: messages.length,
+      type: "sent",
     };
 
-    const lastAssistantMessage = getLastAssistantMessage(messages);
-    if (lastAssistantMessage) {
-      previousMessages.push({
-        role: "assistant",
-        content: lastAssistantMessage,
-      });
-    }
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInputMessage("");
+    setLoading(true);
 
     try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4-turbo",
-          messages: previousMessages,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMessages),
+      });
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messages.length + 2,
-          text: response.data.choices[0].message.content,
-          type: "system" as const,
-        },
-      ]);
+      const data = await response.text();
+      const isImageUrl = data.startsWith("http");
+
+      const assistantReply: Message = {
+        role: "assistant",
+        content: data,
+        text: isImageUrl ? "" : data,
+        isImage: isImageUrl,
+        id: updatedMessages.length,
+        type: "received",
+      };
+
+      setMessages([...updatedMessages, assistantReply]);
     } catch (error) {
-      console.error("Error getting AI response:", error);
-      setMessages((prev) => [
-        ...prev,
+      console.error("Chat error:", error);
+      setMessages([
+        ...updatedMessages,
         {
-          id: messages.length + 2,
-          text: "Sorry, I couldn't process your request at the moment.",
-          type: "system" as const,
+          id: updatedMessages.length,
+          text: "❌ Something went wrong. Please try again.",
+          type: "system",
+          role: "assistant",
+          content: "❌ Something went wrong. Please try again.",
         },
       ]);
+    } finally {
+      setLoading(false);
     }
   };
-
-  const handleChatView = (value: any) => {
-    setShowChatSection(!showChatSection);
-    if (messages.length == 0) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messages.length + 1,
-          text: `What would you like to know about ${value} this product?`,
-          type: "system" as const,
-        },
-      ]);
-    }
-  };
-
+  
   const calculateDiscount = (mrp: number, price: number) => {
     return Math.round(((mrp - price) / mrp) * 100);
   };
@@ -1100,7 +1224,7 @@ const ItemDisplayPage = () => {
                   </div>
 
                   <button
-                    onClick={() => handleChatView(itemDetails?.itemName)}
+                    onClick={() => handleChatView(itemDetails?.itemName ?? "")}
                     className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all"
                   >
                     <Bot className="w-5 h-5" />
@@ -1123,9 +1247,10 @@ const ItemDisplayPage = () => {
 
           <div className="lg:col-span-4">
             {showChatSection ? (
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center space-x-2">
+              <div className="bg-white rounded-xl p-4 shadow-md w-full max-w-sm">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-md font-semibold flex items-center space-x-2">
                     <MessageCircle className="w-5 h-5" />
                     <span>Product Assistant</span>
                   </h3>
@@ -1136,7 +1261,6 @@ const ItemDisplayPage = () => {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-
                 <div className="border rounded-lg">
                   <div className="h-64 overflow-y-auto p-4 space-y-3">
                     {messages.map((message) => (
@@ -1149,7 +1273,7 @@ const ItemDisplayPage = () => {
                         }`}
                       >
                         <div
-                          className={`max-w-xs px-4 py-2 rounded-lg ${
+                          className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
                             message.type === "sent"
                               ? "bg-purple-600 text-white"
                               : message.type === "system"
@@ -1157,29 +1281,47 @@ const ItemDisplayPage = () => {
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          <p className="text-sm">{message.text}</p>
+                          <ReactMarkdown className="text-sm prose prose-sm max-w-none">
+                            {message.text}
+                          </ReactMarkdown>
                         </div>
                       </div>
                     ))}
+
+                    {/* Loading Indicator */}
+                    {loading && (
+                      <div className="text-center text-sm text-gray-500">
+                        AI is thinking...
+                      </div>
+                    )}
+
+                    {/* Auto-scroll anchor */}
+                    <div ref={chatEndRef} />
                   </div>
 
-                  <div className="border-t p-4">
-                    <div className="flex space-x-2">
+                  <div className="border-t mt-3 pt-3">
+                    <div className="flex items-center border rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-purple-500">
                       <input
                         type="text"
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        onKeyPress={(e) =>
+                        onKeyDown={(e) =>
                           e.key === "Enter" && handleSendMessage()
                         }
                         placeholder="Ask about this product..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 outline-none text-sm bg-transparent"
                       />
+
                       <button
                         onClick={handleSendMessage}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className={`ml-2 ${
+                          inputMessage.trim()
+                            ? "text-purple-600 hover:text-purple-800"
+                            : "text-gray-300 cursor-not-allowed"
+                        }`}
+                        disabled={loading || inputMessage.trim() === ""}
                       >
-                        Send
+                        <Send className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -1425,4 +1567,8 @@ const ItemDisplayPage = () => {
   );
 };
 
+
+
 export default ItemDisplayPage;
+
+

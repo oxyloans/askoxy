@@ -512,7 +512,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
       </footer>
 
       {/* Floating Chat Button (when chat is closed) */}
-      {!chatOpen && (
+      {/* {!chatOpen && (
         <button
           onClick={handleOpenChat}
           className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 group relative"
@@ -529,7 +529,7 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
             <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
           </div>
         </button>
-      )}
+      )} */}
 
       {/* Enhanced AI Assistant Chat Window */}
       {chatOpen && (

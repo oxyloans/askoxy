@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Send, X } from "lucide-react";
 import StudyAbroadHeader from "./StudyAbroadHeader";
 import StudyAbroadHeroSection from "./StudyAbroadHeroSection";
 import CountriesSection from "./CountriesSection";
@@ -6,7 +7,9 @@ import UniversitiesSection from "./UniversitiesSection";
 import TestimonialsSection from "./TestimonialsSection";
 import StudyAbroadFooter from "./StudyAbroadFooter";
 import CallToActionSection from "./CallToActionSection";
-
+import BASE_URL from "../Config";
+import ReactMarkdown from "react-markdown";
+import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
 // Add type definition for window.gtag if using analytics
 declare global {
   interface Window {
@@ -18,6 +21,11 @@ declare global {
       }
     ) => void;
   }
+}
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  isImage?: boolean;
 }
 
 // Main Study Abroad Landing Page Component
@@ -32,6 +40,72 @@ export default function StudyAbroadLandingPage() {
     lastInteraction: "",
     visitDuration: 0,
   });
+  const [showChat, setShowChat] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content:
+        "👋 Hello! I’m UKAIRA, your study abroad assistant. How can I help you?",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages]);
+
+  const handleSend = useCallback(
+    async (messageContent?: string) => {
+      const textToSend = messageContent || input.trim();
+      if (!textToSend) return;
+
+      const userMessage: Message = { role: "user", content: textToSend };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setInput("");
+      setLoading(true);
+
+      try {
+        const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedMessages),
+        });
+        const data = await response.text();
+
+        const isImageUrl = data.startsWith("http");
+        const assistantReply: Message = {
+          role: "assistant",
+          content: data,
+          isImage: isImageUrl,
+        };
+
+        setMessages([...updatedMessages, assistantReply]);
+      } catch (error) {
+        console.error("Chat error:", error);
+        setMessages([
+          ...updatedMessages,
+          {
+            role: "assistant",
+            content: "❌ Sorry, I encountered an error. Please try again.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [messages, input]
+  );
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !loading) {
+      handleSend();
+    }
+  };
 
   // Create refs for each section to enable smooth scrolling
   const homeRef = useRef<HTMLDivElement | null>(null);
@@ -323,12 +397,13 @@ export default function StudyAbroadLandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen" onClick={handleContentClick}>
-      <StudyAbroadHeader onNavClick={scrollToSection} activeLink={activeLink} />
+      <StudyAbroadHeader onNavClick={scrollToSection} activeLink={activeLink}
+       onOpenChat={() => setShowChat(true)} />
       <main className="flex-grow">
         <div ref={homeRef} id="home">
           <StudyAbroadHeroSection />
         </div>
-         <div ref={universitiesRef} id="universities">
+        <div ref={universitiesRef} id="universities">
           <UniversitiesSection />
         </div>
         <div ref={countriesRef} id="countries">
@@ -344,6 +419,90 @@ export default function StudyAbroadLandingPage() {
           <StudyAbroadFooter />
         </div>
       </main>
+      {showChat && (
+        <div className="fixed bottom-20 right-5 z-50 w-[360px] h-[520px] bg-white shadow-2xl rounded-xl border border-gray-200 dark:bg-gray-900 dark:border-gray-700 flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-600 bg-purple-50 dark:bg-gray-800 rounded-t-xl">
+            <h2 className="text-sm font-semibold text-purple-800 dark:text-white">
+              🧑‍🎓 UKAIRA Chat
+            </h2>
+            <button
+              onClick={() => setShowChat(false)}
+              className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Chat Body */}
+          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-gray-50 dark:bg-gray-800">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`max-w-[75%] px-4 py-2 text-sm rounded-2xl whitespace-pre-wrap shadow ${
+                    msg.role === "user"
+                      ? "bg-purple-600 text-white rounded-br-none"
+                      : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none"
+                  }`}
+                >
+                  {msg.isImage ? (
+                    <img
+                      src={msg.content}
+                      alt="Response"
+                      className="rounded-md max-w-full"
+                    />
+                  ) : msg.role === "assistant" ? (
+                    <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Typing indicator if loading */}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-sm px-4 py-2 rounded-2xl shadow rounded-bl-none">
+                  UKAIRA is thinking...
+                </div>
+              </div>
+            )}
+
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-3 border-t dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div className="relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Type a message..."
+                className="w-full py-2 pl-4 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                disabled={loading}
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || loading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
+                title="Send"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

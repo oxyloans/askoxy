@@ -89,10 +89,8 @@ const StockUpdate: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const filteredData = data.filter(
-          (item: ProductItem) => item.weight === 26
-        );
-        setProducts(filteredData);
+        // const filteredData = data;
+        setProducts(data);
       } else {
         message.error("Failed to fetch products");
       }

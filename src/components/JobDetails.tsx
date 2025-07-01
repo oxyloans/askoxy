@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
+import { submitInterest } from "./servicesapi";
+import { message } from "antd";
 
 interface Job {
   id: string;
@@ -45,6 +47,7 @@ const JobDetails: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     industry: "",
     jobType: "",
@@ -188,6 +191,29 @@ const JobDetails: React.FC = () => {
     return Array.from(uniqueSet).filter(
       (value) => value && value !== "undefined" && value !== "null"
     );
+  };
+
+  const handleClick = async (jobDesignation: string) => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      message.warning("Please login to submit your interest.");
+      navigate("/whatsappregister");
+    } else {
+      const whatsappNumber = localStorage.getItem("whatsappNumber");
+      const mobileNumber = localStorage.getItem("mobileNumber");
+      const finalMobileNumber = whatsappNumber || mobileNumber || null;
+      const success = await submitInterest(
+        jobDesignation,
+        finalMobileNumber,
+        userId,
+        "USER"
+      );
+      if (success) {
+        message.info("Your interest was submitted successfully!");
+      } else {
+        message.info("Failed to submit your interest. Please try again.");
+      }
+    }
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -358,7 +384,12 @@ const JobDetails: React.FC = () => {
               {job.companyName}
             </div>
           </div>
-          <button className="bg-white text-blue-600 px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-50 transition-all shadow">
+          <button
+            className="bg-white text-blue-600 px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-50 transition-all shadow"
+            onClick={() => {
+              handleClick(job.companyName);
+            }}
+          >
             Apply Now
           </button>
         </div>
@@ -480,7 +511,12 @@ const JobDetails: React.FC = () => {
       </div>
       {/* CTA Button */}
       <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
-        <button className="bg-white text-blue-600 px-6 py-2 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-all transform hover:scale-105 shadow">
+        <button
+          className="bg-white text-blue-600 px-6 py-2 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-all transform hover:scale-105 shadow"
+          onClick={() => {
+            handleClick(job.companyName);
+          }}
+        >
           🚀 Apply for this Position
         </button>
       </div>
