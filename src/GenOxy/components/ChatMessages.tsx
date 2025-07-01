@@ -3,7 +3,7 @@ import { Bot, User } from "lucide-react";
 import { parseMarkdown } from "../utils/markdown";
 import MessageActions from "./MessageActions";
 import { Message } from "../types/types";
-
+import MarkdownRenderer from "./MarkdownRenderer";
 interface ChatMessagesProps {
   messages: Message[];
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -71,12 +71,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             </div>
                           </div>
                         ) : (
-                          <div
-                            className="prose prose-sm max-w-none break-words text-gray-900 dark:text-white"
-                            dangerouslySetInnerHTML={{
-                              __html: parseMarkdown(msg.content),
-                            }}
-                          />
+                          // <div
+                          //   className="prose prose-sm max-w-none break-words text-gray-900 dark:text-white"
+                          //   dangerouslySetInnerHTML={{
+                          //     __html: parseMarkdown(msg.content),
+                          //   }}
+                          // />
+                          <MarkdownRenderer content={msg.content} />
                         )}
                         <MessageActions message={msg} index={idx} />
                       </div>

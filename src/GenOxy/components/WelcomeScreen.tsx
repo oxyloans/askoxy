@@ -81,7 +81,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       console.log("📝 Transcribed text:", transcript);
 
       if (transcript) {
-        setInput(transcript); // ✅ Show in input box
+        setInput(transcript); 
         setShowDropdown(false);
       }
 
@@ -106,7 +106,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
  
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
         {/* Floating Gradient Bubbles */}
         {[
           { left: "10%", top: "20%" },
@@ -115,7 +115,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ].map((pos, i) => (
           <div
             key={`g1-${i}`}
-            className="absolute w-4 h-4 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full animate-float-bubble"
+            className="absolute w-4 h-4 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full animate-bubble-float"
             style={{
               ...pos,
               animationDelay: `${i * 1.5}s`,
@@ -123,7 +123,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             }}
           >
             <div
-              className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full animate-ping"
+              className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full animate-bubble-pulse"
               style={{
                 animationDelay: `${i * 1.5}s`,
                 animationDuration: "3s",
@@ -136,14 +136,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         {Array.from({ length: 20 }).map((_, i) => (
           <div
             key={`snow-${i}`}
-            className="absolute rounded-full bg-white opacity-20 blur-sm animate-snow-up"
+            className="absolute rounded-full bg-white opacity-20 blur-sm animate-snow-fall"
             style={{
               width: `${8 + Math.random() * 8}px`,
               height: `${8 + Math.random() * 8}px`,
               left: `${Math.random() * 100}%`,
               bottom: `-${Math.random() * 50}px`,
-              animationDelay: `${i * 3}s`,
-              animationDuration: `${20 + i * 10}s`,
+              animationDelay: `${i * 2}s`,
+              animationDuration: `${25 + i * 6}s`,
             }}
           />
         ))}
@@ -156,7 +156,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ].map((pos, i) => (
           <div
             key={`g2-${i}`}
-            className="absolute w-5 h-5 bg-gradient-to-r from-pink-400/20 to-rose-400/20 rounded-full animate-float-bubble"
+            className="absolute w-5 h-5 bg-gradient-to-r from-pink-400/20 to-rose-400/20 rounded-full animate-bubble-float"
             style={{
               ...pos,
               animationDelay: `${2 + i}s`,
@@ -164,7 +164,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             }}
           >
             <div
-              className="w-full h-full bg-gradient-to-r from-pink-400/30 to-rose-400/30 rounded-full animate-ping"
+              className="w-full h-full bg-gradient-to-r from-pink-400/30 to-rose-400/30 rounded-full animate-bubble-pulse"
               style={{
                 animationDelay: `${2 + i}s`,
                 animationDuration: "3.5s",
@@ -180,7 +180,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ].map((pos, i) => (
           <div
             key={`g3-${i}`}
-            className="absolute w-6 h-6 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full animate-float-bubble"
+            className="absolute w-6 h-6 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full animate-bubble-float"
             style={{
               ...pos,
               animationDelay: `${3 + i}s`,
@@ -188,7 +188,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             }}
           >
             <div
-              className="w-full h-full bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full animate-ping"
+              className="w-full h-full bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full animate-bubble-pulse"
               style={{
                 animationDelay: `${3 + i}s`,
                 animationDuration: "4s",
@@ -196,6 +196,56 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             />
           </div>
         ))}
+
+        {/* Custom animations */}
+        <style >{`
+          @keyframes bubble-float {
+            0% {
+              transform: translateY(0) scale(1) rotate(0deg);
+            }
+            50% {
+              transform: translateY(-10px) scale(1.05) rotate(5deg);
+            }
+            100% {
+              transform: translateY(0) scale(1) rotate(0deg);
+            }
+          }
+
+          @keyframes bubble-pulse {
+            0%,
+            100% {
+              transform: scale(1);
+              opacity: 0.6;
+            }
+            50% {
+              transform: scale(1.15);
+              opacity: 1;
+            }
+          }
+
+          @keyframes snow-fall {
+            0% {
+              transform: translateY(0);
+              opacity: 0.5;
+            }
+            100% {
+              transform: translateY(-100vh);
+              opacity: 0;
+            }
+          }
+
+          .animate-bubble-float {
+            animation: bubble-float infinite ease-in-out;
+          }
+
+          .animate-bubble-pulse {
+            animation: bubble-pulse infinite ease-in-out;
+          }
+
+          .animate-snow-fall {
+            animation: snow-fall infinite linear;
+          }
+        `}</style>
       </div>
 
       {/* Main Content */}
@@ -317,9 +367,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
           {/* Related Questions Dropdown */}
           {showDropdown && relatedOptions.length > 0 && (
-            <div className="w-full px-3 sm:px-0 hidden sm:block">
-              <div className="max-h-[200px] overflow-y-auto sm:overflow-visible">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3">
+            <div className="w-full flex justify-center px-3 sm:px-0">
+              <div className="max-h-[200px] overflow-y-auto sm:overflow-visible  rounded-lg  px-4 py-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
                   {relatedOptions.map((question, index) => (
                     <button
                       key={index}
@@ -328,9 +378,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         handleSend(question);
                         setShowDropdown(false);
                       }}
-                      className="flex items-center px-3 py-2 bg-gray-800 border border-gray-700 rounded-full text-white hover:bg-gray-700 transition-all duration-300 text-xs sm:text-sm min-h-[40px]"
+                      className="flex items-center px-4 py-2 bg-gray-700 border border-gray-600 rounded-full text-white hover:bg-gray-600 transition duration-300 text-xs sm:text-sm min-h-[40px]"
                     >
-                      <span className="font-medium">{question}</span>
+                      <span className="font-medium truncate">{question}</span>
                     </button>
                   ))}
                 </div>
