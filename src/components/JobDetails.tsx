@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { submitInterest } from "./servicesapi";
+import { submitInterest, checkUserInterest } from "./servicesapi";
 import { message } from "antd";
 
 interface Job {
@@ -48,6 +48,7 @@ const JobDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     industry: "",
     jobType: "",
@@ -75,6 +76,27 @@ const JobDetails: React.FC = () => {
       },
     },
   };
+
+  useEffect(() => {
+    const checkAppliedJobs = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId && jobs.length > 0) {
+        const appliedJobsSet = new Set<string>();
+
+        // Check each job company name
+        for (const job of jobs) {
+          const hasApplied = await checkUserInterest(userId, job.companyName);
+          if (hasApplied) {
+            appliedJobsSet.add(job.companyName);
+          }
+        }
+
+        setAppliedJobs(appliedJobsSet);
+      }
+    };
+
+    checkAppliedJobs();
+  }, [jobs]);
 
   const getUniqueSkills = (): string[] => {
     const allSkills = jobs.flatMap((job) =>
@@ -193,7 +215,7 @@ const JobDetails: React.FC = () => {
     );
   };
 
-  const handleClick = async (jobDesignation: string) => {
+  const handleClick = async (jobDesignation: string, companyName: string) => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
       message.warning("Please login to submit your interest.");
@@ -211,6 +233,11 @@ const JobDetails: React.FC = () => {
       );
       if (success) {
         message.info("Your interest was submitted successfully!");
+        setAppliedJobs((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(companyName);
+          return newSet;
+        });
       } else {
         message.info("Failed to submit your interest. Please try again.");
       }
@@ -386,12 +413,19 @@ const JobDetails: React.FC = () => {
             </div>
           </div>
           <button
-            className="bg-white text-blue-600 px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-50 transition-all shadow"
+            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow ${
+              appliedJobs.has(job.companyName)
+                ? "bg-green-100 text-green-700 cursor-not-allowed"
+                : "bg-white text-blue-600 hover:bg-blue-50"
+            }`}
             onClick={() => {
-              handleClick(job.companyName);
+              if (!appliedJobs.has(job.companyName)) {
+                handleClick(job.companyName, job.companyName);
+              }
             }}
+            disabled={appliedJobs.has(job.companyName)}
           >
-            Apply Now
+            {appliedJobs.has(job.companyName) ? "✓ Applied" : "Apply Now"}
           </button>
         </div>
       </div>
@@ -513,12 +547,21 @@ const JobDetails: React.FC = () => {
       {/* CTA Button */}
       <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
         <button
-          className="bg-white text-blue-600 px-6 py-2 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-all transform hover:scale-105 shadow"
+          className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all transform hover:scale-105 shadow ${
+            appliedJobs.has(job.companyName)
+              ? "bg-green-100 text-green-700 cursor-not-allowed"
+              : "bg-white text-blue-600 hover:bg-blue-50"
+          }`}
           onClick={() => {
-            handleClick(job.companyName);
+            if (!appliedJobs.has(job.companyName)) {
+              handleClick(job.companyName, job.companyName);
+            }
           }}
+          disabled={appliedJobs.has(job.companyName)}
         >
-          🚀 Apply for this Position
+          {appliedJobs.has(job.companyName)
+            ? "✓ Applied for this Position"
+            : "🚀 Apply for this Position"}
         </button>
       </div>
     </div>

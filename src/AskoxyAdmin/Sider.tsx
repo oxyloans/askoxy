@@ -135,7 +135,7 @@ const Sidebar: React.FC = () => {
       ],
     },
     {
-      title: "Services & Blogs",
+      title: "Services/Blogs & Jobs",
       icon: <FaServer className="text-orange-400" />,
       roles: ["HELPDESKSUPERADMIN"],
       items: [

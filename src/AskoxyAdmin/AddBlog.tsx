@@ -80,7 +80,7 @@ const AddBlog: React.FC = () => {
     if (name === "socialMediaCaption") {
       if (value.length < 25) {
         setSocialMediaCaptionErrorMessage(
-          "Social Media Caption must be between 25 and 30 characters"
+          "Please enter a social media caption with at least 25 characters."
         );
       } else {
         setSocialMediaCaptionErrorMessage("");
@@ -261,7 +261,7 @@ const AddBlog: React.FC = () => {
           facebook: response.data.facebookCampaignUrl,
           instagram: response.data.instagramCampaignUrl,
         });
-        setIsLinksModalVisible(true);
+        // setIsLinksModalVisible(true);
         setFormData({
           campaignType: "",
           campaignDescription: "",
@@ -378,7 +378,7 @@ const AddBlog: React.FC = () => {
                 value={formData.socialMediaCaption}
                 onChange={handleInputChange}
                 rows={3}
-                placeholder="Enter social media caption for this blog post (25-30 characters)..."
+                placeholder="Please enter a social media caption with at least 25 characters."
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               ></textarea>
@@ -422,7 +422,7 @@ const AddBlog: React.FC = () => {
                 <p className="text-sm text-gray-600">
                   Upload images (JPG, PNG) and videos (MP4, AVI, MOV, WMV, FLV,
                   WEBM). Each file should be below{" "}
-                  <span className="font-bold">1MB</span>.
+                  <span className="font-bold">20MB</span>.
                 </p>
                 {isUploading && (
                   <div className="flex items-center text-sm text-gray-600">

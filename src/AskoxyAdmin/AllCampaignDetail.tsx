@@ -121,6 +121,7 @@ const AllCampaignsDetails: React.FC = () => {
             {
               askOxyCampaignDto: [
                 {
+                  campaignId: campaign.campaignId,
                   campaignType: campaign.campaignType,
                   campaignStatus: !campaign.campaignStatus,
                 },

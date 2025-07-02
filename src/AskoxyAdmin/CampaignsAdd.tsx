@@ -386,7 +386,7 @@ const CampaignsAdd: React.FC = () => {
               </label>
               <p className="text-sm text-gray-600">
                 upload multiple images at once, provided each image is below{" "}
-                <span className="font-bold">1Mb </span>
+                <span className="font-bold">20Mb </span>
                 and in <span className="font-bold">jpg/png </span> format.
               </p>
               {isUploading && (
