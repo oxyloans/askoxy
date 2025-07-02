@@ -786,7 +786,7 @@ const CheckoutPage: React.FC = () => {
     const data = {
       couponCode: couponCode,
       customerId: customerId,
-      subTotal: grandTotalAmount,
+      subTotal: grandTotal,
     };
     setCoupenLoading(true);
 
@@ -815,7 +815,7 @@ const CheckoutPage: React.FC = () => {
     const data = {
       couponCode: coupon.couponCode,
       customerId: customerId,
-      subTotal: grandTotalAmount,
+      subTotal: grandTotal,
     };
 
     try {
