@@ -9,7 +9,8 @@ import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
-import DeliveryFee from "./DeliveryFee";
+// import DeliveryFee from "./DeliveryFee";
+import { calculateDeliveryFee } from "./DeliveryFee";
 import { RiArrowDropDownLine } from "react-icons/ri";
 
 interface Address {
@@ -76,6 +77,7 @@ const CartPage: React.FC = () => {
   const [loadingItems, setLoadingItems] = useState<{ [key: string]: boolean }>(
     {}
   );
+  const [cartTotal, setCartTotal] = useState<number>(0);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [coordinatesReady, setCoordinatesReady] = useState<boolean>(false);
@@ -116,11 +118,12 @@ const CartPage: React.FC = () => {
   const [mobileNumbers, setMobileNumbers] = useState<string[]>([]);
   const [currentNumber, setCurrentNumber] = useState<string>("");
   const containerExistsRef = useRef<boolean>(false);
+  const [handlingFee, setHandlingFee] = useState<number | null>(0);
   //states for delivery fee
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
   //states for small cart fee and serivce charges
-  const [smallCartFee, setSmallCartFee] = useState<number>(0);
-  const [serviceFee, setServiceFee] = useState<number>(0);
+  // const [smallCartFee, setSmallCartFee] = useState<number>(0);
+  // const [serviceFee, setServiceFee] = useState<number>(0);
 
   const CONTAINER_ITEM_IDS = {
     HEAVY_BAG: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
@@ -177,23 +180,6 @@ const CartPage: React.FC = () => {
             latitude: coordinates.lat,
             longitude: coordinates.lng,
           };
-          // Optionally, update the address in the backend to save coordinates
-          try {
-            await axios.put(
-              `${BASE_URL}/user-service/updateAddress/${defaultAddress.id}`,
-              {
-                ...defaultAddress,
-                latitude: coordinates.lat.toString(),
-                longitude: coordinates.lng.toString(),
-                userId: customerId,
-              },
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-          } catch (error) {
-            console.error("Error updating address with coordinates:", error);
-          }
         } else {
           console.warn("Could not fetch coordinates for address:", fullAddress);
           message.warning(
@@ -714,6 +700,11 @@ const CartPage: React.FC = () => {
 
       if (response.data.customerCartResponseList) {
         const cartItems = response.data.customerCartResponseList;
+        const totalQuantity = cartItems.reduce(
+          (sum: number, item: CartItem) => sum + (item.cartQuantity || 0),
+          0
+        );
+
         console.log(
           `Fetched ${cartItems.length} items in cart, Total GST: ${response.data.totalGstAmountToPay}`
         );
@@ -744,10 +735,6 @@ const CartPage: React.FC = () => {
         setRegularCartItems(regularItemsMap);
         setFreeCartItems(freeItemsMap);
 
-        const totalQuantity = cartItems.reduce(
-          (sum: number, item: CartItem) => sum + (item.cartQuantity || 0),
-          0
-        );
         setCount(totalQuantity);
 
         const cartWithFreeItems = response.data?.customerCartResponseList || [];
@@ -785,6 +772,13 @@ const CartPage: React.FC = () => {
         }
 
         setCartData(cartWithFreeItems);
+        setCartTotal(
+          cartWithFreeItems.reduce(
+            (total: number, item: CartItem) =>
+              total + (item.itemPrice ? parseFloat(item.itemPrice) : 0),
+            0
+          )
+        );
         setTotalGstAmount(response.data.totalGstAmountToPay || 0); // Set the total GST amount
         return cartWithFreeItems;
       } else {
@@ -1471,35 +1465,26 @@ const CartPage: React.FC = () => {
     setCheckoutError(hasStockIssues);
   }, [cartData]);
 
-  //useEffect for the small cart fee and service charges
   useEffect(() => {
-    const cartAmount =
-      cartData
-        ?.filter((item) => item.status !== "FREE")
-        .reduce(
-          (acc, item) =>
-            acc +
-            parseFloat(item.itemPrice) * (regularCartItems[item.itemId] || 0),
-          0
-        ) || 0;
+    const fetchDeliveryFee = async () => {
+      if (
+        selectedAddress?.latitude !== undefined &&
+        selectedAddress?.longitude !== undefined &&
+        !isNaN(cartTotal)
+      ) {
+        const result = await calculateDeliveryFee(
+          selectedAddress.latitude,
+          selectedAddress.longitude,
+          cartTotal
+        );
+        setDeliveryFee(result.fee);
+        setHandlingFee(result.handlingFee);
+        console.log("Delivery fees calculated:", result);
+      }
+    };
 
-    let newSmallCartFee = 0;
-    let newServiceFee = 0;
-
-    if (cartAmount < 85) {
-      newSmallCartFee = 10;
-      newServiceFee = 10;
-    } else if (cartAmount < 199) {
-      newSmallCartFee = 5;
-      newServiceFee = 5;
-    } else if (cartAmount < 499) {
-      newSmallCartFee = 0;
-      newServiceFee = 0;
-    }
-
-    setSmallCartFee(newSmallCartFee);
-    setServiceFee(newServiceFee);
-  }, [cartData, regularCartItems]);
+    fetchDeliveryFee();
+  }, [selectedAddress, cartTotal]);
 
   const handleAddressChange = async (selectedAddress: Address) => {
     const fullAddress = `${selectedAddress?.flatNo}, ${selectedAddress?.landMark}, ${selectedAddress?.address}, ${selectedAddress?.pincode}`;
@@ -2073,8 +2058,11 @@ const CartPage: React.FC = () => {
                                 parseFloat(item.itemPrice) *
                                   (regularCartItems[item.itemId] || 0),
                               0
-                            ) || 0) + totalGstAmount
-                        ).toFixed(2)}
+                            ) || 0) +
+                          totalGstAmount +
+                          (cartData.length > 0 ? handlingFee || 0 : 0)
+                        ) // Only include handlingFee if cart has items
+                          .toFixed(2)}
                       </span>
                     </button>
                     {isItemTotalDropdownOpen && (
@@ -2103,14 +2091,12 @@ const CartPage: React.FC = () => {
                           <span>GST Charges</span>
                           <span>₹{(totalGstAmount || 0).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-gray-700 text-sm mt-1">
-                          <span>Small Cart Fee</span>
-                          <span>₹{(smallCartFee || 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-gray-700 text-sm mt-1">
-                          <span>Service Charges</span>
-                          <span>₹{(serviceFee || 0).toFixed(2)}</span>
-                        </div>
+                        {cartData.length > 0 && ( // Conditionally render handling fee
+                          <div className="flex justify-between text-gray-700 text-sm mt-1">
+                            <span>Handling Fee</span>
+                            <span>₹{(handlingFee || 0).toFixed(2)}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -2209,19 +2195,20 @@ const CartPage: React.FC = () => {
 
                           const deliveryFeeTotal =
                             cartData?.length > 0 ? deliveryFee || 0 : 0;
+                          const handlingFeeTotal =
+                            cartData?.length > 0 ? handlingFee || 0 : 0; // Only include handlingFee if cart has items
 
                           return (
                             itemTotal +
                             totalGstAmount +
                             deliveryFeeTotal +
-                            smallCartFee +
-                            serviceFee
+                            handlingFeeTotal
                           ).toFixed(2);
                         })() || "0.00"}
                       </span>
                     </div>
                   </div>
-                  
+
                   {cartData?.some((item) => item.quantity === 0) && (
                     <div className="mb-3 p-3 bg-red-100 text-red-700 rounded">
                       <p className="font-semibold">
@@ -2636,15 +2623,16 @@ const CartPage: React.FC = () => {
               </div>
             </Modal>
           )}
-          {coordinatesReady &&
+          {/* {coordinatesReady &&
           selectedAddress?.latitude &&
           selectedAddress?.longitude ? (
             <DeliveryFee
               userLat={selectedAddress.latitude}
               userLng={selectedAddress.longitude}
-              onFeeCalculated={(fee) => setDeliveryFee(fee)}
+              cartAmount={ cartTotal }
+              onFeeCalculated={(fee,handlingFee) =>handlingFeeCalculation(fee,handlingFee)}
             />
-          ) : null}
+          ) : null} */}
         </div>
       </div>
       <Footer />

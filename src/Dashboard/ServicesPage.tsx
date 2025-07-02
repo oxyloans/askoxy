@@ -63,48 +63,62 @@ const ServicesPage: React.FC = () => {
     () => [
       {
         title: "OxyLoans - RBI Approved P2P NBFC",
-        image: "https://i.ibb.co/PzFdf43v/oxyloasntemp-1-2ec07c0cd7c7e055e4c3.png",
-        description: "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
+        image:
+          "https://i.ibb.co/PzFdf43v/oxyloasntemp-1-2ec07c0cd7c7e055e4c3.png",
+        description:
+          "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
         path: `${accessToken ? "/main" : ""}/service/oxyloans-service`,
         icon: <HandCoins className="text-purple-600" size={24} />,
         category: "Finance",
       },
       {
         title: "Free Rudraksha",
-        image: "https://i.ibb.co/twztBkMv/freerudraksha-eeaaca3e8a028697e182.png",
-        description: "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
+        image:
+          "https://i.ibb.co/twztBkMv/freerudraksha-eeaaca3e8a028697e182.png",
+        description:
+          "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
         path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
         icon: <Gem className="text-purple-600" size={24} />,
         category: "Spiritual",
       },
       {
         title: "Free AI & Gen AI Training",
-        image: "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
-        description: "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
+        image:
+          "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
+        description:
+          "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
         path: `${accessToken ? "/main" : ""}/services/freeai-genai`,
         icon: <Cpu className="text-purple-600" size={24} />,
         category: "Jobs",
       },
       {
         title: "Free Rice Samples",
-        image: "https://i.ibb.co/ksdzrwLT/FREE-RICE-SAMPLES-AND-FREE-RICE-CONTAINER-3b40f8ed166a3fd17253.png",
-        description: "Request free rice samples along with a high-quality steel container for storage.",
-        path: `${accessToken ? "/main" : ""}/services/freesample-steelcontainer`,
+        image:
+          "https://i.ibb.co/ksdzrwLT/FREE-RICE-SAMPLES-AND-FREE-RICE-CONTAINER-3b40f8ed166a3fd17253.png",
+        description:
+          "Request free rice samples along with a high-quality steel container for storage.",
+        path: `${
+          accessToken ? "/main" : ""
+        }/services/freesample-steelcontainer`,
         icon: <Package className="text-purple-600" size={24} />,
         category: "Food",
       },
       {
         title: "Study Abroad",
-        image: "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
-        description: "Explore opportunities to study abroad with expert guidance and support.",
+        image:
+          "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
+        description:
+          "Explore opportunities to study abroad with expert guidance and support.",
         path: "/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,
         category: "Education",
       },
       {
         title: "Legal Knowledge Hub",
-        image: "https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png",
-        description: "Access expert legal advice and educational resources to navigate legal matters.",
+        image:
+          "https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png",
+        description:
+          "Access expert legal advice and educational resources to navigate legal matters.",
         path: `${accessToken ? "/main" : ""}/services/legalservice`,
         icon: <Scale className="text-purple-600" size={24} />,
         category: "Legal",
@@ -112,23 +126,28 @@ const ServicesPage: React.FC = () => {
       {
         title: "My Rotary",
         image: "https://i.ibb.co/SwfNXKhm/MY-ROTARY-2c24090250b109f80818.png",
-        description: "Join a network of leaders making a difference through Rotary initiatives and programs.",
+        description:
+          "Join a network of leaders making a difference through Rotary initiatives and programs.",
         path: `${accessToken ? "/main" : ""}/services/myrotary`,
         icon: <Users className="text-purple-600" size={24} />,
         category: "Community",
       },
       {
         title: "Manufacturing Services",
-        image: "https://i.ibb.co/8LmmPySx/Machines-manufacturing-services-f5f7abd54ec2b3373b0c.png",
-        description: "Explore advanced machinery and manufacturing services for industrial growth.",
+        image:
+          "https://i.ibb.co/8LmmPySx/Machines-manufacturing-services-f5f7abd54ec2b3373b0c.png",
+        description:
+          "Explore advanced machinery and manufacturing services for industrial growth.",
         path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
         icon: <Factory className="text-purple-600" size={24} />,
         category: "Industrial",
       },
       {
         title: "We Are Hiring",
-        image: "https://i.ibb.co/cK4w00Rd/Career-guidance-fe6ea3668fa6a02f6294.png",
-        description: "Explore exciting job opportunities and be a part of our growing team.",
+        image:
+          "https://i.ibb.co/cK4w00Rd/Career-guidance-fe6ea3668fa6a02f6294.png",
+        description:
+          "Explore exciting job opportunities and be a part of our growing team.",
         path: `${accessToken ? "/main" : ""}/services/we-are-hiring`,
         icon: <Briefcase className="text-purple-600" size={24} />,
         category: "Careers",
@@ -142,7 +161,8 @@ const ServicesPage: React.FC = () => {
       (item) =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()))
+        (item.category &&
+          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
 
@@ -156,19 +176,31 @@ const ServicesPage: React.FC = () => {
       .slice(0, 30);
 
   const handleCampaignClick = (campaign: Campaign) => {
-    if (campaign.campainInputType === "SERVICE" || campaign.campainInputType === "PRODUCT") {
-      navigate(`/main/services/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`);
+    if (
+      campaign.campainInputType === "SERVICE" ||
+      campaign.campainInputType === "PRODUCT"
+    ) {
+      navigate(
+        `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
+          campaign.campaignType
+        )}`
+      );
     }
   };
 
   const handleStudyAbroadClick = () => {
-    window.open("https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback");
+    window.open(
+      "https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback"
+    );
   };
 
   const handleOfferLetterClick = () => {
     if (!userId) {
       navigate("/whatsappregister");
-      sessionStorage.setItem("redirectPath", "/main/dashboard/offer-letter-samples");
+      sessionStorage.setItem(
+        "redirectPath",
+        "/main/dashboard/offer-letter-samples"
+      );
       message.warning("Please login to submit your interest.");
       return;
     }
@@ -186,7 +218,9 @@ const ServicesPage: React.FC = () => {
               <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
                 <div className="flex items-center justify-center">
                   <GraduationCap className="w-8 h-8 mb-2 text-purple-600 mr-3" />
-                  <h1 className="text-2xl font-bold text-purple-600">Study Abroad - Admissions</h1>
+                  <h1 className="text-2xl font-bold text-purple-600">
+                    Study Abroad - Admissions
+                  </h1>
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
@@ -194,7 +228,9 @@ const ServicesPage: React.FC = () => {
                   <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center mb-4">
                       <Award className="w-6 h-6 text-purple-600 mr-3" />
-                      <h2 className="text-xl font-semibold text-purple-600">Fullfill Your Dreams</h2>
+                      <h2 className="text-xl font-semibold text-purple-600">
+                        Fullfill Your Dreams
+                      </h2>
                     </div>
                     <ul className="space-y-3 text-gray-700">
                       <li className="flex items-center">
@@ -207,16 +243,22 @@ const ServicesPage: React.FC = () => {
                       </li>
                       <li className="flex items-center">
                         <Award className="w-4 h-4 mr-3 text-purple-600" />
-                        Get Offer Letter in 10 Minutes - Share preferences on ASKOXY.AI & get a sample offer letter.
+                        Get Offer Letter in 10 Minutes - Share preferences on
+                        ASKOXY.AI & get a sample offer letter.
                       </li>
                     </ul>
                   </div>
                   <div className="flex flex-col gap-4">
                     <p>
-                      <strong>Study Abroad:</strong> Get a 10-minute sample offer letter and enjoy up to 5% fee cashback!
+                      <strong>Study Abroad:</strong> Get a 10-minute sample
+                      offer letter and enjoy up to 5% fee cashback!
                     </p>
                     <p>
-                      Welcome! ASKOXY.AI fuels your study abroad journey with data-driven insights. Answer questions on country, university, course, budget, UG/PG & academics to get personalized recommendations, a ROI scorecard, a 10-min sample offer letter & up to 5% fee cashback.
+                      Welcome! ASKOXY.AI fuels your study abroad journey with
+                      data-driven insights. Answer questions on country,
+                      university, course, budget, UG/PG & academics to get
+                      personalized recommendations, a ROI scorecard, a 10-min
+                      sample offer letter & up to 5% fee cashback.
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -294,7 +336,7 @@ const ServicesPage: React.FC = () => {
           </div>
 
           {/* Services Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-4">
             {filteredItems(services).map((item, index) => (
               <div
                 key={index}
@@ -338,7 +380,9 @@ const ServicesPage: React.FC = () => {
             ))}
             {campaigns
               .filter(
-                (campaign) => campaign.campaignStatus !== false && campaign.campainInputType !== "BLOG"
+                (campaign) =>
+                  campaign.campaignStatus !== false &&
+                  campaign.campainInputType !== "BLOG"
               )
               .map((campaign) => (
                 <div

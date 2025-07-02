@@ -40,7 +40,7 @@ export default function StudyAbroadLandingPage() {
     lastInteraction: "",
     visitDuration: 0,
   });
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -397,8 +397,11 @@ export default function StudyAbroadLandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen" onClick={handleContentClick}>
-      <StudyAbroadHeader onNavClick={scrollToSection} activeLink={activeLink}
-       onOpenChat={() => setShowChat(true)} />
+      <StudyAbroadHeader
+        onNavClick={scrollToSection}
+        activeLink={activeLink}
+        onOpenChat={() => setShowChat(true)}
+      />
       <main className="flex-grow">
         <div ref={homeRef} id="home">
           <StudyAbroadHeroSection />
@@ -420,42 +423,32 @@ export default function StudyAbroadLandingPage() {
         </div>
       </main>
       {showChat && (
-        <div className="fixed bottom-20 right-5 z-50 w-[360px] h-[520px] bg-white shadow-2xl rounded-xl border border-gray-200 dark:bg-gray-900 dark:border-gray-700 flex flex-col">
+        <div className="fixed bottom-20 right-3 sm:right-5 z-50 w-full max-w-[360px] h-[80vh] sm:h-[510px] bg-white dark:bg-gray-900 shadow-xl rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col animate-fade-in">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-600 bg-purple-50 dark:bg-gray-800 rounded-t-xl">
-            <h2 className="text-sm font-semibold text-purple-800 dark:text-white">
-              🧑‍🎓 UKAIRA Chat
-            </h2>
+          <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-600 bg-purple-100 dark:bg-gray-800 rounded-t-xl">
+            <h2 className="text-sm font-semibold text-purple-800 dark:text-white">🧑‍🎓 UKAIRA Chat</h2>
             <button
               onClick={() => setShowChat(false)}
-              className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+              aria-label="Close chat"
+              className="text-gray-500 hover:text-red-500 transition-colors"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
 
           {/* Chat Body */}
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-gray-50 dark:bg-gray-800">
+          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-gray-50 dark:bg-gray-800 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
             {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+              <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[75%] px-4 py-2 text-sm rounded-2xl whitespace-pre-wrap shadow ${
+                  className={`max-w-[75%] px-4 py-2 text-sm rounded-2xl whitespace-pre-wrap shadow-md transition-all ${
                     msg.role === "user"
                       ? "bg-purple-600 text-white rounded-br-none"
                       : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none"
                   }`}
                 >
                   {msg.isImage ? (
-                    <img
-                      src={msg.content}
-                      alt="Response"
-                      className="rounded-md max-w-full"
-                    />
+                    <img src={msg.content} alt="Response" className="rounded-md max-w-full" />
                   ) : msg.role === "assistant" ? (
                     <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
                       {msg.content}
@@ -467,7 +460,6 @@ export default function StudyAbroadLandingPage() {
               </div>
             ))}
 
-            {/* Typing indicator if loading */}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-sm px-4 py-2 rounded-2xl shadow rounded-bl-none">
@@ -475,7 +467,6 @@ export default function StudyAbroadLandingPage() {
                 </div>
               </div>
             )}
-
             <div ref={chatEndRef} />
           </div>
 
@@ -487,15 +478,17 @@ export default function StudyAbroadLandingPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Type a message..."
-                className="w-full py-2 pl-4 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                placeholder="Type your message..."
+                className="w-full py-2 pl-4 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400"
                 disabled={loading}
+                aria-label="Type your message"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Send"
+                aria-label="Send message"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -503,6 +496,7 @@ export default function StudyAbroadLandingPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

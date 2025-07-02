@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import SALOGO from "../assets/img/sa.png";
 import { MessageCircle } from "lucide-react";
+import { Sparkles } from "lucide-react";
 interface StudyAbroadHeaderProps {
   onNavClick: (
     id: "home" | "universities" | "countries" | "testimonials"
@@ -229,16 +230,13 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
               ></span>
             </button>
             <button
-              className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group flex items-center gap-2"
-              style={{ transition: "box-shadow 0.2s" }}
               onClick={openUkairaChat}
+              className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-teal-500 text-white font-semibold py-2 px-6 rounded-full shadow-md group flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:scale-105"
+              aria-label="Open UKAIRA Chat"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span className="relative z-10">Chat With UKAIRA</span>
-              <span
-                className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
-                style={{ transition: "transform 0.3s" }}
-              ></span>
+              <Sparkles className="w-5 h-5 text-white z-10" />
+              <span className="relative z-10">Chat with UKAIRA</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-400 transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-in-out opacity-30"></span>
             </button>
           </div>
 
@@ -289,19 +287,24 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
               })}
               <li className="px-2 pt-4 space-y-3">
                 <button
-                  className="w-full bg-white text-purple-700 font-medium py-3 px-4 rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-md"
-                  style={{ transition: "border-color 0.2s, box-shadow 0.2s" }}
+                  className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group"
+                  style={{ transition: "box-shadow 0.2s" }}
+                  onClick={handleClick}
                 >
-                  <span className="flex items-center justify-center">
-                    Explore
-                    <ChevronDown size={16} className="ml-1" />
-                  </span>
+                  <span className="relative z-10">Register Now</span>
+                  <span
+                    className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-400 transform scale-x-0 group-hover:scale-x-100 origin-left"
+                    style={{ transition: "transform 0.3s" }}
+                  ></span>
                 </button>
                 <button
-                  className="w-full bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg"
-                  style={{ transition: "box-shadow 0.2s" }}
+                  onClick={openUkairaChat}
+                  className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-teal-500 text-white font-semibold py-2 px-6 rounded-full shadow-md group flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:scale-105"
+                  aria-label="Open UKAIRA Chat"
                 >
-                  Apply Now
+                  <Sparkles className="w-5 h-5 text-white z-10" />
+                  <span className="relative z-10">Chat with UKAIRA</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-400 transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-in-out opacity-30"></span>
                 </button>
               </li>
             </ul>

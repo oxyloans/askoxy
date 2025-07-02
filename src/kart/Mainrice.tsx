@@ -1086,7 +1086,7 @@ const Ricebags: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

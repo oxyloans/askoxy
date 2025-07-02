@@ -748,46 +748,56 @@ content: `Can you tell me about "${productName}"?`,
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
-
+  
+    // Message shown to user: only original inputMessage
     const userMsg: Message = {
       role: "user",
-      content: inputMessage,
+      content: inputMessage,   // user sees only original input
       text: inputMessage,
       id: messages.length,
       type: "sent",
     };
-
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+  
+    // Prepare messages for backend with appended " Minimum 20 Words"
+    const backendMessages = [
+      ...messages,
+      {
+        ...userMsg,
+        content: inputMessage + "Minimum 15 Words", // appended only for backend
+      },
+    ];
+  
+    // Update UI with original message only
+    setMessages([...messages, userMsg]);
     setInputMessage("");
     setLoading(true);
-
+  
     try {
       const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedMessages),
+        body: JSON.stringify(backendMessages),  // send modified content here
       });
-
+  
       const data = await response.text();
       const isImageUrl = data.startsWith("http");
-
+  
       const assistantReply: Message = {
         role: "assistant",
         content: data,
         text: isImageUrl ? "" : data,
         isImage: isImageUrl,
-        id: updatedMessages.length,
+        id: messages.length + 1,
         type: "received",
       };
-
-      setMessages([...updatedMessages, assistantReply]);
+  
+      setMessages(prev => [...prev, assistantReply]);
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages([
-        ...updatedMessages,
+      setMessages(prev => [
+        ...prev,
         {
-          id: updatedMessages.length,
+          id: messages.length + 1,
           text: "❌ Something went wrong. Please try again.",
           type: "system",
           role: "assistant",
@@ -798,6 +808,7 @@ content: `Can you tell me about "${productName}"?`,
       setLoading(false);
     }
   };
+  
   
   const calculateDiscount = (mrp: number, price: number) => {
     return Math.round(((mrp - price) / mrp) * 100);
@@ -1247,22 +1258,25 @@ content: `Can you tell me about "${productName}"?`,
 
           <div className="lg:col-span-4">
             {showChatSection ? (
-              <div className="bg-white rounded-xl p-4 shadow-md w-full max-w-sm">
+              <div className="w-full max-w-sm md:max-w-md bg-white rounded-xl shadow-lg p-4 transition-all duration-300">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold flex items-center space-x-2">
-                    <MessageCircle className="w-5 h-5" />
+                  <h3 className="text-md font-semibold flex items-center gap-2 text-gray-800">
+                    <MessageCircle className="w-5 h-5 text-purple-600" />
                     <span>Product Assistant</span>
                   </h3>
                   <button
                     onClick={() => setShowChatSection(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close chat"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="border rounded-lg">
-                  <div className="h-64 overflow-y-auto p-4 space-y-3">
+                {/* Chat Body */}
+                <div className="border rounded-lg flex flex-col h-[24rem] sm:h-[26rem]">
+                  {/* Messages Scroll Area */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {messages.map((message) => (
                       <div
                         key={message.id}
@@ -1273,7 +1287,7 @@ content: `Can you tell me about "${productName}"?`,
                         }`}
                       >
                         <div
-                          className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
+                          className={`max-w-xs md:max-w-sm px-4 py-2 rounded-lg text-sm leading-snug break-words ${
                             message.type === "sent"
                               ? "bg-purple-600 text-white"
                               : message.type === "system"
@@ -1281,13 +1295,12 @@ content: `Can you tell me about "${productName}"?`,
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          <ReactMarkdown className="text-sm prose prose-sm max-w-none">
+                          <ReactMarkdown className="prose prose-sm max-w-none">
                             {message.text}
                           </ReactMarkdown>
                         </div>
                       </div>
                     ))}
-
                     {/* Loading Indicator */}
                     {loading && (
                       <div className="text-center text-sm text-gray-500">
@@ -1299,8 +1312,8 @@ content: `Can you tell me about "${productName}"?`,
                     <div ref={chatEndRef} />
                   </div>
 
-                  <div className="border-t mt-3 pt-3">
-                    <div className="flex items-center border rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-purple-500">
+                  <div className="border-t px-3 py-2">
+                    <div className="flex items-center border rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-purple-500 transition-all">
                       <input
                         type="text"
                         value={inputMessage}
@@ -1309,17 +1322,19 @@ content: `Can you tell me about "${productName}"?`,
                           e.key === "Enter" && handleSendMessage()
                         }
                         placeholder="Ask about this product..."
-                        className="flex-1 outline-none text-sm bg-transparent"
+                        className="flex-1 text-sm outline-none bg-transparent placeholder-gray-400"
+                        aria-label="Ask about product"
                       />
 
                       <button
                         onClick={handleSendMessage}
-                        className={`ml-2 ${
+                        disabled={loading || inputMessage.trim() === ""}
+                        className={`ml-2 transition-colors ${
                           inputMessage.trim()
                             ? "text-purple-600 hover:text-purple-800"
                             : "text-gray-300 cursor-not-allowed"
                         }`}
-                        disabled={loading || inputMessage.trim() === ""}
+                        aria-label="Send message"
                       >
                         <Send className="w-5 h-5" />
                       </button>

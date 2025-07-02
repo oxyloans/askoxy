@@ -19,7 +19,8 @@ import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
-import DeliveryFee from "./DeliveryFee";
+// import DeliveryFee from "./DeliveryFee";
+import { calculateDeliveryFee } from "./DeliveryFee";
 
 interface CartItem {
   itemId: string;
@@ -104,6 +105,7 @@ const CheckoutPage: React.FC = () => {
   );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
+  const [handlingFee, setHandlingFee] = useState<number | null>(0);
   const [subGst, setSubGst] = useState(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [walletMessage, setWalletMessage] = useState<string>("");
@@ -566,48 +568,52 @@ const CheckoutPage: React.FC = () => {
 
         const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
 
-        // 🔁 Dynamic small cart fee logic
-        let smallCartFee = 0;
-        if (amountToPay < 85) {
-          smallCartFee = 10;
-        } else if (amountToPay < 199) {
-          smallCartFee = 5;
-        } else if (amountToPay < 499) {
-          smallCartFee = 0;
-        }
-
-        // Service fee
-        let serviceFee = 0;
-        if (amountToPay < 85) {
-          serviceFee = 10;
-        } else if (amountToPay < 199) {
-          serviceFee = 5;
-        } else if (amountToPay < 499) {
-          serviceFee = 0;
+        let deliveryFee = 0;
+        let handlingFee = 0;
+        if (
+          cartItems.length > 0 &&
+          selectedAddress?.latitude !== undefined &&
+          selectedAddress?.longitude !== undefined
+        ) {
+          const { fee, handlingFee: calculatedHandlingFee } =
+            await calculateDeliveryFee(
+              selectedAddress.latitude,
+              selectedAddress.longitude,
+              totalQuantity
+            );
+          deliveryFee = fee ?? 0;
+          handlingFee = calculatedHandlingFee;
+          console.log(
+            "Delivery Fee:",
+            fee,
+            "Handling Fee:",
+            calculatedHandlingFee
+          );
+        } else if (cartItems.length > 0) {
+          console.error("Latitude or Longitude is undefined");
         }
 
         setSubGst(gstAmount);
         setTotalAmount(amountToPay);
         setGrandTotal(amountToPay);
-        setSmallCartFee(smallCartFee);
-        setServiceFee(serviceFee);
+        setDeliveryFee(deliveryFee);
+        setHandlingFee(handlingFee);
 
         const totalWithGst = amountToPay + gstAmount;
         const totalWithFees =
           totalWithGst +
-          (cartItems.length > 0 ? deliveryFee ?? 0 : 0) +
-          smallCartFee +
-          serviceFee;
+          (cartItems.length > 0
+            ? deliveryFee + handlingFee + smallCartFee + serviceFee
+            : 0);
         setGrandTotalAmount(totalWithFees);
       } else {
         setCartData([]);
         setCount(0);
         setSubGst(0);
         setDeliveryFee(0);
+        setHandlingFee(0);
         setTotalAmount(0);
         setGrandTotal(0);
-        setSmallCartFee(0);
-        setServiceFee(0);
         setGrandTotalAmount(0);
       }
     } catch (error) {
@@ -648,38 +654,37 @@ const CheckoutPage: React.FC = () => {
           cartResponse.data.totalGstAmountToPay || "0"
         );
 
-        // 🔁 Dynamic small cart fee logic
-        let smallCartFee = 0;
-        if (amountToPay < 85) {
-          smallCartFee = 10;
-        } else if (amountToPay < 199) {
-          smallCartFee = 5;
-        } else if (amountToPay < 499) {
-          smallCartFee = 0;
-        }
-
-        // Service fee
-        let serviceFee = 0;
-        if (amountToPay < 85) {
-          serviceFee = 10;
-        } else if (amountToPay < 199) {
-          serviceFee = 5;
-        } else if (amountToPay < 499) {
-          serviceFee = 0;
+        let deliveryFee = 0;
+        let handlingFee = 0;
+        if (
+          cartItems.length > 0 &&
+          selectedAddress?.latitude !== undefined &&
+          selectedAddress?.longitude !== undefined
+        ) {
+          const { fee, handlingFee: calculatedHandlingFee } =
+            await calculateDeliveryFee(
+              selectedAddress.latitude,
+              selectedAddress.longitude,
+              totalQuantity
+            );
+          deliveryFee = fee ?? 0;
+          handlingFee = calculatedHandlingFee;
+        } else if (cartItems.length > 0) {
+          console.error("Latitude or Longitude is undefined");
         }
 
         setGrandTotal(amountToPay);
         setSubGst(gstAmount);
         setTotalAmount(amountToPay);
-        setSmallCartFee(smallCartFee);
-        setServiceFee(serviceFee);
+        setDeliveryFee(deliveryFee);
+        setHandlingFee(handlingFee);
 
         const totalWithGst = amountToPay + gstAmount;
         const totalWithFees =
           totalWithGst +
-          (cartItems.length > 0 ? deliveryFee ?? 0 : 0) +
-          smallCartFee +
-          serviceFee;
+          (cartItems.length > 0
+            ? deliveryFee + handlingFee + smallCartFee + serviceFee
+            : 0);
         setGrandTotalAmount(totalWithFees);
 
         try {
@@ -695,7 +700,7 @@ const CheckoutPage: React.FC = () => {
           setAfterWallet(usableAmount);
           setWalletMessage(walletResponse.data.message || "");
         } catch (walletError) {
-          console.error("Error fetching wallet data:", walletError);
+          console.error("Error fetching wallet amount:", walletError);
         }
 
         fetchTimeSlots();
@@ -709,9 +714,8 @@ const CheckoutPage: React.FC = () => {
         setGrandTotal(0);
         setSubGst(0);
         setDeliveryFee(0);
+        setHandlingFee(0);
         setTotalAmount(0);
-        setSmallCartFee(0);
-        setServiceFee(0);
         setGrandTotalAmount(0);
         setPricesLoading(false);
       }
@@ -720,6 +724,22 @@ const CheckoutPage: React.FC = () => {
       message.error("Failed to load checkout data");
       setPricesLoading(false);
     }
+  };
+
+  const handlingFeeCalculation = (
+    fee: number | null,
+    handlingFee: number | null
+  ) => {
+    if (fee === null || handlingFee === null) {
+      console.error("Invalid fee or handling fee received:", {
+        fee,
+        handlingFee,
+      });
+      message.error("Failed to calculate delivery fee.");
+      return;
+    }
+    setDeliveryFee(fee);
+    setHandlingFee(handlingFee);
   };
 
   const handleInterested = async () => {
@@ -856,8 +876,9 @@ const CheckoutPage: React.FC = () => {
 
   function grandTotalfunc() {
     const effectiveDeliveryFee = cartData.length > 0 ? deliveryFee ?? 0 : 0;
+    const effectiveHandlingFee = cartData.length > 0 ? handlingFee ?? 0 : 0;
     const baseTotal =
-      totalAmount + effectiveDeliveryFee + subGst + smallCartFee + serviceFee;
+      totalAmount + effectiveDeliveryFee + effectiveHandlingFee + subGst;
     let discountedTotal = baseTotal;
 
     if (coupenApplied && coupenDetails) {
@@ -995,7 +1016,16 @@ const CheckoutPage: React.FC = () => {
       setLoading(true);
 
       const finalWalletAmount = useWallet ? usedWalletAmount : 0;
-
+      console.log(
+        "Final Wallet Amount:",
+        finalWalletAmount,
+        "deliveryFee:",
+        deliveryFee,
+        "handlingFee:",
+        handlingFee,
+        "grandTotalAmount:",
+        grandTotalAmount
+      );
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
@@ -1009,8 +1039,6 @@ const CheckoutPage: React.FC = () => {
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
           couponValue: coupenDetails || 0,
           deliveryBoyFee: cartData.length > 0 ? deliveryFee ?? 0 : 0,
-          smallCartFee: cartData.length > 0 ? smallCartFee : 0,
-          serviceFee: cartData.length > 0 ? serviceFee : 0,
           amount: grandTotalAmount,
           subTotal: grandTotal,
           gstAmount: subGst,
@@ -1021,6 +1049,7 @@ const CheckoutPage: React.FC = () => {
           longitude: selectedAddress?.longitude,
           orderFrom: "WEB",
           paymentType: selectedPayment === "COD" ? 0 : 1,
+          handlingFee: handlingFee,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1761,16 +1790,20 @@ const CheckoutPage: React.FC = () => {
                         <span className="text-gray-600">GST</span>
                         <span>₹{subGst.toFixed(2)}</span>
                       </div>
-                      {cartData.length > 0 && (
+                      {cartData.length > 0 && deliveryFee !== null && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Delivery Fee</span>
-                          <span>
-                            {deliveryFee !== null
-                              ? `₹${deliveryFee.toFixed(2)}`
-                              : "Not serviceable"}
-                          </span>
+                          <span>₹{deliveryFee.toFixed(2)}</span>
                         </div>
                       )}
+                      {cartData.length > 0 &&
+                        handlingFee !== null &&
+                        handlingFee > 0 && (
+                          <div className="flex justify-between py-2">
+                            <span className="text-gray-600">Handling Fee</span>
+                            <span>₹{handlingFee.toFixed(2)}</span>
+                          </div>
+                        )}
                       {cartData.length > 0 && smallCartFee > 0 && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Small Cart Fee</span>
@@ -1779,7 +1812,7 @@ const CheckoutPage: React.FC = () => {
                       )}
                       {cartData.length > 0 && serviceFee > 0 && (
                         <div className="flex justify-between py-2">
-                          <span className="text-gray-600">Service Charges</span>
+                          <span className="text-gray-600">Service Fee</span>
                           <span>₹{serviceFee.toFixed(2)}</span>
                         </div>
                       )}
@@ -1900,12 +1933,6 @@ const CheckoutPage: React.FC = () => {
                         )}
                       </div>
                     )}
-
-                    <DeliveryFee
-                      userLat={selectedAddress?.latitude}
-                      userLng={selectedAddress?.longitude}
-                      onFeeCalculated={(fee) => setDeliveryFee(fee)}
-                    />
 
                     <motion.button
                       whileHover={{ scale: 1.02 }}

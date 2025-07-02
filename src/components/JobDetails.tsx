@@ -198,6 +198,7 @@ const JobDetails: React.FC = () => {
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsappregister");
+      sessionStorage.setItem("redirectPath", "/main/jobdetails");
     } else {
       const whatsappNumber = localStorage.getItem("whatsappNumber");
       const mobileNumber = localStorage.getItem("mobileNumber");

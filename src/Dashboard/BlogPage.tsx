@@ -61,7 +61,7 @@ const BlogsPage: React.FC = () => {
           <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-1 mx-auto sm:mx-0 rounded-full"></div> */}
 
           {blogCampaigns.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6 mb-4">
               {blogCampaigns.map((campaign) => {
                 const mediaUrl = campaign.imageUrls?.[0]?.imageUrl;
                 const showImage = mediaUrl && isImage(mediaUrl);

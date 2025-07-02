@@ -1,10 +1,12 @@
 import React, { useEffect } from "react";
 import { message } from "antd";
+import { supabase } from "./supabaseClient";
 
 interface DeliveryFeeProps {
   userLat?: number;
   userLng?: number;
-  onFeeCalculated: (fee: number | null) => void;
+  cartAmount: number;
+  onFeeCalculated: (fee: number | null, handlingFee: number | null) => void;
 }
 
 const getDistanceInKm = (
@@ -26,10 +28,49 @@ const getDistanceInKm = (
   return R * c;
 };
 
-const calculateDeliveryFee = (
-  userLat: number,
-  userLng: number
-): number | null => {
+const getFeeFromSlab = (
+  value: number,
+  slabs: any[],
+  valueKeys: string[],
+  distance: number | null = null
+): number => {
+  const matched = slabs.filter((slab) => {
+    const min = slab[valueKeys[0]];
+    const max = slab[valueKeys[1]];
+    const active = slab.active;
+
+    const distanceMatch =
+      distance === null ||
+      ((slab.min_km == null || distance >= slab.min_km) &&
+       (slab.max_km == null || distance < slab.max_km));
+
+    return active && value >= min && value < max && distanceMatch;
+  });
+
+  if (matched.length > 0) {
+    return matched.reduce((min, curr) => (curr.fee < min.fee ? curr : min)).fee;
+  }
+
+  return 0;
+};
+
+export const calculateDeliveryFee = async (
+  userLat: number ,
+  userLng: number,
+  cartAmount: number
+): Promise<{
+  fee: number | null;
+  distance: number;
+  note: string | null;
+  handlingFee: number;
+  grandTotal: number | null;
+  nearestStore?: {
+    id: string;
+    name: string;
+    lat: number;
+    lng: number;
+  };
+}> => {
   // Validate coordinates
   if (
     isNaN(userLat) ||
@@ -41,59 +82,130 @@ const calculateDeliveryFee = (
   ) {
     console.error("Invalid coordinates:", { userLat, userLng });
     message.error("Invalid location coordinates provided.");
-    return null;
+    return {
+      fee: null,
+      distance: 0,
+      note: "Invalid coordinates",
+      handlingFee: 0,
+      grandTotal: null,
+    };
   }
 
-  const storeLat = 17.485833; // Store coordinates
-  const storeLng = 78.424194;
+  // Fetch store points
+  const storeRes = await supabase
+    .from("store_locations")
+    .select("*")
+    .eq("active", true);
 
-  const distance = getDistanceInKm(storeLat, storeLng, userLat, userLng);
-  console.log(`Raw distance: ${distance.toFixed(2)} km`);
-
-  // Adjust with road buffer (30%)
-  const adjustedDistance = distance * 1.3;
-  console.log(`Adjusted distance: ${adjustedDistance.toFixed(2)} km`);
-
-  if (adjustedDistance > 25) {
-    console.log("Delivery not available: Adjusted distance exceeds 25 km");
-    return null; // Out of service range
+  if (storeRes.error || !storeRes.data.length) {
+    console.error("Store fetch error:", storeRes.error);
+    message.error("No active stores found.");
+    return {
+      fee: null,
+      distance: 0,
+      note: "No active stores found",
+      handlingFee: 0,
+      grandTotal: null,
+    };
   }
-  if (adjustedDistance <= 5) return 5; // ₹5 for first 5km
-  if (adjustedDistance > 20) return 30; // Fixed ₹30 for 20-25km
 
-  const extraDistance = adjustedDistance - 5;
-  const additionalFee = Math.ceil(extraDistance) * 2; // ₹2 per km for 5-20km
+  const storeDistances = storeRes.data.map((store) => {
+    const distance = getDistanceInKm(store.lat, store.lng, userLat, userLng) * 1.3;
+    return { ...store, distance };
+  });
 
-  const fee = Math.min(5 + additionalFee, 30);
-  console.log(`Calculated delivery fee: ₹${fee}`);
-  return fee;
+  const nearestStore = storeDistances.reduce((a, b) => (a.distance < b.distance ? a : b));
+  const roundedDistance = parseFloat(nearestStore.distance.toFixed(2));
+
+  // Fetch fees and config
+  const [deliveryRes, handlingRes, globalRes] = await Promise.all([
+    supabase.from("delivery_fees").select("*"),
+    supabase.from("handling_fees").select("*"),
+    supabase.from("global_config").select("*"),
+  ]);
+
+  if (deliveryRes.error || handlingRes.error || globalRes.error) {
+    console.error("Fee fetch error:", deliveryRes.error || handlingRes.error || globalRes.error);
+    message.error("Error loading fee configuration.");
+    return {
+      fee: null,
+      distance: roundedDistance,
+      note: "Error loading fee config",
+      handlingFee: 0,
+      grandTotal: null,
+    };
+  }
+
+  const globalMap: { [key: string]: number } = {};
+  globalRes.data.forEach(({ key, value }) => (globalMap[key] = parseFloat(value)));
+  const maxDistance = globalMap.max_distance_km ?? 25;
+
+  if (nearestStore.distance > maxDistance) {
+    message.error("Delivery not available: Location out of service range.");
+    return {
+      fee: null,
+      distance: roundedDistance,
+      note: "Out of service range",
+      handlingFee: 0,
+      grandTotal: null,
+    };
+  }
+
+  const deliveryFee = getFeeFromSlab(nearestStore.distance, deliveryRes.data, ["min_km", "max_km"]);
+  const handlingFee = getFeeFromSlab(cartAmount, handlingRes.data, ["min_cart", "max_cart"], nearestStore.distance);
+
+  const note = `From ${nearestStore.name} → ₹${deliveryFee} delivery + ₹${handlingFee} handling fee`;
+  const grandTotal = Math.round(cartAmount + deliveryFee + handlingFee);
+
+  console.log(`Calculated delivery fee: ₹${deliveryFee}, handling fee: ₹${handlingFee}, total: ₹${grandTotal}, combined fee: ₹${deliveryFee + handlingFee}`);
+
+  return {
+    fee: deliveryFee,
+    distance: roundedDistance,
+    note,
+    handlingFee,
+    grandTotal,
+    nearestStore: {
+      id: nearestStore.id,
+      name: nearestStore.name,
+      lat: nearestStore.lat,
+      lng: nearestStore.lng,
+    },
+  };
 };
 
 const DeliveryFee: React.FC<DeliveryFeeProps> = ({
   userLat,
   userLng,
+  cartAmount,
   onFeeCalculated,
 }) => {
   useEffect(() => {
-    if (userLat != null && userLng != null) {
-      console.log(
-        `Calculating delivery fee for coordinates: ${userLat}, ${userLng}`
-      );
-      const fee = calculateDeliveryFee(userLat, userLng);
-      onFeeCalculated(fee);
-      if (fee === null) {
-        message.error("Delivery not available for this location");
+    const fetchFee = async () => {
+      if (userLat != null && userLng != null) {
+        console.log(
+          `Calculating delivery fee for coordinates: ${userLat}, ${userLng}, cart amount: ₹${cartAmount}`
+        );
+        const result = await calculateDeliveryFee(userLat, userLng, cartAmount);
+        const totalFee = result.fee != null ? result.fee + result.handlingFee : null;
+        console.log(`Returning combined fee to onFeeCalculated: ₹${totalFee}`);
+        onFeeCalculated(result.fee, result.handlingFee);
+        if (result.fee === null) {
+          message.error(result.note || "Delivery not available for this location");
+        }
+      } else {
+        console.warn("Coordinates missing:", { userLat, userLng });
+        message.error(
+          "Please provide valid location coordinates to calculate delivery fee"
+        );
+        onFeeCalculated(null, null);
       }
-    } else {
-      console.warn("Coordinates missing:", { userLat, userLng });
-      onFeeCalculated(null); // Set to null instead of 0 to align with Cart.tsx checks
-      message.error(
-        "Please provide valid location coordinates to calculate delivery fee"
-      );
-    }
-  }, [userLat, userLng, onFeeCalculated]);
+    };
+
+    fetchFee();
+  }, [userLat, userLng, cartAmount, onFeeCalculated]);
 
   return null; // No UI rendering needed
 };
 
-export default DeliveryFee;
+// export default DeliveryFee;
