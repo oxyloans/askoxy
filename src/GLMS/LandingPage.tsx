@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Header from "./Header";
 import HeroSection from "./HeroSection";
 import VideoSection from "./VideoSection";
@@ -6,6 +6,13 @@ import DomainSection from "./DomainSection ";
 import Footer from "./Footer";
 import useScrollAnimation from "./useScrollAnimation";
 import "./Animation.css";
+import {
+  XMarkIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+} from "@heroicons/react/24/solid";
+import ReactMarkdown from "react-markdown";
+import { Send } from "lucide-react";
+import BASE_URL from "../Config";
 
 // Add type definition for window.gtag
 declare global {
@@ -20,65 +27,156 @@ declare global {
   }
 }
 
-// Main App Component
+// Define Message interface
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  isImage?: boolean;
+}
+
 export default function LandingPage() {
   useScrollAnimation();
-  
+
   // State to track active section
   const [activeLink, setActiveLink] = useState("home");
-  
+
   // State for tracking page events
   const [pageEvents, setPageEvents] = useState({
     pageLoaded: false,
     scrollCount: 0,
     lastInteraction: "",
-    visitDuration: 0
+    visitDuration: 0,
   });
 
-  // Create refs for each section to enable smooth scrolling
+  // State for chat
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content:
+        "👋 Welcome to GLMS Support, your assistant for Global Lending Management Systems queries. Ask me about loan processing, system features, or troubleshooting. How can I assist you today?",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages]);
+
+    const handleSend = useCallback(
+      async (messageContent?: string) => {
+        const textToSend = messageContent || input.trim();
+        if (!textToSend) return;
+  
+        const userMessage: Message = { role: "user", content: textToSend };
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
+        setInput("");
+        setLoading(true);
+  
+        try {
+          const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedMessages),
+          });
+          const data = await response.text();
+  
+          const isImageUrl = data.startsWith("http");
+          const assistantReply: Message = {
+            role: "assistant",
+            content: data,
+            isImage: isImageUrl,
+          };
+  
+          setMessages([...updatedMessages, assistantReply]);
+        } catch (error) {
+          console.error("Chat error:", error);
+          setMessages([
+            ...updatedMessages,
+            {
+              role: "assistant",
+              content: "❌ Sorry, I encountered an error. Please try again.",
+            },
+          ]);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [messages, input]
+    );
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !loading) {
+      handleSend();
+    }
+  };
+
+  // Handle chat icon click
+  const handleChatIconClick = () => {
+    setShowChat((prev) => {
+      const newShowChat = !prev;
+
+      // Track chat open/close event with GA4
+      if (typeof window.gtag === "function") {
+        window.gtag(
+          "event",
+          newShowChat ? "glms_chat_open" : "glms_chat_close",
+          {
+            content_type: "chat",
+            item_id: "ukaira_chat",
+            section_id: activeLink,
+          }
+        );
+      }
+
+      // Update page events
+      setPageEvents((prev) => ({
+        ...prev,
+        lastInteraction: `Chat ${
+          newShowChat ? "opened" : "closed"
+        } at ${new Date().toLocaleTimeString()}`,
+      }));
+
+      // Log to console
+      console.log("Chat interaction", {
+        action: newShowChat ? "opened" : "closed",
+        section: activeLink,
+        timestamp: new Date().toISOString(),
+      });
+
+      return newShowChat;
+    });
+  };
+
+  // Create refs for each section
   const homeRef = useRef<HTMLDivElement | null>(null);
   const videosRef = useRef<HTMLDivElement | null>(null);
   const usecasesRef = useRef<HTMLDivElement | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
 
-  // Set up session ID for tracking
-  useEffect(() => {
-    // Generate or retrieve session ID for GA4 tracking
-    if (!window.sessionStorage.getItem('session_id')) {
-      const sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 12)}`;
-      window.sessionStorage.setItem('session_id', sessionId);
-      
-      // Send session_start event to GA4
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'glms_session_start', {
-          engagement_time_msec: 0
-        });
-      }
-    }
-  }, []);
-
-  // Handle navigation scroll
+  // Scroll to section function
   const scrollToSection = (
     sectionId: "home" | "videos" | "usecases" | "contact"
   ) => {
     setActiveLink(sectionId);
-    
-    // Track the navigation event with GA4 naming convention
-    setPageEvents(prev => ({
+    setPageEvents((prev) => ({
       ...prev,
       lastInteraction: `Navigation to ${sectionId} section`,
-      scrollCount: prev.scrollCount + 1
+      scrollCount: prev.scrollCount + 1,
     }));
-    
-    // Send to GA4 - select_content event
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', 'select_contenttype', {
-        content_type: 'section',
+
+    if (typeof window.gtag === "function") {
+      window.gtag("event", "select_contenttype", {
+        content_type: "section",
         content_id: sectionId,
-        item_id: sectionId
+        item_id: sectionId,
       });
     }
-    
+
     const sectionRefs = {
       home: homeRef,
       videos: videosRef,
@@ -88,8 +186,7 @@ export default function LandingPage() {
 
     const targetRef = sectionRefs[sectionId];
     if (targetRef && targetRef.current) {
-      // Add offset for header height
-      const headerHeight = 64; // 16rem (h-16) in pixels
+      const headerHeight = 64;
       const yOffset = -headerHeight;
       const y =
         targetRef.current.getBoundingClientRect().top +
@@ -100,288 +197,73 @@ export default function LandingPage() {
     }
   };
 
-  // Set up scroll observation to update active link based on scroll position
-  useEffect(() => {
-    const observeScroll = () => {
-      const sections = [
-        { id: "home", ref: homeRef },
-        { id: "videos", ref: videosRef },
-        { id: "usecases", ref: usecasesRef },
-        { id: "contact", ref: contactRef },
-      ];
-
-      // Find which section is currently in view
-      for (const section of sections) {
-        if (section.ref.current) {
-          const rect = section.ref.current.getBoundingClientRect();
-          // If the section is in the viewport (with some offset for the header)
-          if (rect.top <= 100 && rect.bottom >= 100) {
-            if (activeLink !== section.id) {
-              setActiveLink(section.id);
-              // Track section view event with GA4 naming convention
-              const now = new Date();
-              setPageEvents(prev => ({
-                ...prev,
-                lastInteraction: `Viewed ${section.id} section at ${now.toLocaleTimeString()}`
-              }));
-              
-            }
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener("scroll", observeScroll);
-    return () => window.removeEventListener("scroll", observeScroll);
-  }, [activeLink]);
-
-  // Track scroll depth for GA4
-  useEffect(() => {
-    let lastScrollDepthTracked = 0;
-    const scrollDepthThresholds = [25, 50, 75, 100];
-    
-    const trackScrollDepth = () => {
-      // Calculate scroll depth as percentage
-      const windowHeight = window.innerHeight;
-      const documentHeight = Math.max(
-        document.body.scrollHeight, 
-        document.body.offsetHeight,
-        document.documentElement.clientHeight,
-        document.documentElement.scrollHeight, 
-        document.documentElement.offsetHeight
-      );
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      
-      const scrollPercentage = Math.floor((scrollTop / (documentHeight - windowHeight)) * 100);
-      
-      // Find the next threshold to track
-      const thresholdToTrack = scrollDepthThresholds.find(threshold => 
-        threshold > lastScrollDepthTracked && scrollPercentage >= threshold
-      );
-      
-      // Send scroll event to GA4
-      if (thresholdToTrack) {
-        lastScrollDepthTracked = thresholdToTrack;
-        
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', 'glms_scroll', {
-            percent_scrolled: thresholdToTrack,
-            content_type: 'page',
-            content_id: activeLink
-          });
-        }
-      }
-    };
-    
-    window.addEventListener('scroll', trackScrollDepth);
-    return () => window.removeEventListener('scroll', trackScrollDepth);
-  }, [activeLink]);
-
-  // Set initial active link based on URL hash
-  useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash && ["home", "videos", "usecases", "contact"].includes(hash)) {
-      setTimeout(() => {
-        scrollToSection(hash as "home" | "videos" | "usecases" | "contact");
-      }, 100);
-    }
-    
-    // Mark page as loaded and send to GA4
-    setPageEvents(prev => ({
-      ...prev,
-      pageLoaded: true,
-      lastInteraction: `Page loaded at ${new Date().toLocaleTimeString()}`
-    }));
-    
-    // Send to GA4 - page_view event with initial load data
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', 'glms_page_view');
-      
-      // Send first_visit event if this is potentially a new user
-      if (!localStorage.getItem('returning_visitor')) {
-        localStorage.setItem('returning_visitor', 'true');
-        window.gtag('event', 'glms_first_open', {
-          engagement_time_msec: 0
-        });
-      }
-    }
-    
-    // Log the page visit to console
-    console.log("Page visit started", {
-      timestamp: new Date().toISOString(),
-      referrer: document.referrer,
-      userAgent: navigator.userAgent
-    });
-  }, []);
-  
-  // Track visit duration
-  useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const duration = Math.floor((Date.now() - startTime) / 1000);
-      setPageEvents(prev => ({
-        ...prev,
-        visitDuration: duration
-      }));
-    }, 1000);
-    
-    // Capture page exit event and send to GA4
-    const handleBeforeUnload = () => {
-      const duration = Math.floor((Date.now() - startTime) / 1000);
-      
-      // Send user_engagement event to GA4
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'user_engagement_glms', {
-          engagement_time_msec: duration * 1000
-        });
-      }
-      
-      console.log("Page exit", {
-        duration: duration,
-        lastSection: activeLink,
-        interactionCount: pageEvents.scrollCount
-      });
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [activeLink, pageEvents.scrollCount]);
-  
-  // Add video progress tracking
-  const trackVideoProgress = (video: HTMLVideoElement) => {
-    const progressMarkers = [25, 50, 75, 100];
-    let lastProgressMarker = 0;
-    
-    const checkProgress = () => {
-      if (!video) return;
-      
-      const percentWatched = Math.floor((video.currentTime / video.duration) * 100);
-      const nextMarker = progressMarkers.find(marker => 
-        marker > lastProgressMarker && percentWatched >= marker
-      );
-      
-      if (nextMarker) {
-        lastProgressMarker = nextMarker;
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', nextMarker === 100 ? 'glms_video_complete' : 'glms_video_progress', {
-            video_title: video.id || 'unnamed_video',
-            video_provider: 'html5',
-            video_percent: nextMarker,
-            video_current_time: video.currentTime,
-            video_duration: video.duration
-          });
-        }
-      }
-    };
-    
-    video.addEventListener('timeupdate', checkProgress);
-  };
-  
-  // Set up video tracking when videos are in the DOM
-  useEffect(() => {
-    const videos = document.querySelectorAll('video');
-    videos.forEach(video => {
-      trackVideoProgress(video);
-      
-      // Track video start
-      video.addEventListener('play', () => {
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', 'glms_video_start', {
-            video_title: video.id || 'unnamed_video',
-            video_provider: 'html5',
-            video_current_time: video.currentTime,
-            video_duration: video.duration
-          });
-        }
-      });
-      
-      // Track video pause
-      video.addEventListener('pause', () => {
-        if (video.currentTime < video.duration) { // Only if not ended
-          if (typeof window.gtag === 'function') {
-            window.gtag('event', 'glms_video_pause', {
-              video_title: video.id || 'unnamed_video',
-              video_provider: 'html5',
-              video_current_time: video.currentTime,
-              video_duration: video.duration,
-              video_percent: Math.floor((video.currentTime / video.duration) * 100)
-            });
-          }
-        }
-      });
-    });
-  }, []);
-  
-  // Track click events
   const handleContentClick = (e: React.MouseEvent) => {
-    // Get information about what was clicked
     const target = e.target as HTMLElement;
     const targetType = target.tagName.toLowerCase();
-    const targetId = target.id || 'unknown';
-    const targetClass = target.className || 'unknown';
-    
-    setPageEvents(prev => ({
+    const targetId = target.id || "unknown";
+    const targetClass = target.className || "unknown";
+
+    setPageEvents((prev) => ({
       ...prev,
-      lastInteraction: `Clicked ${targetType}#${targetId} element`
+      lastInteraction: `Clicked ${targetType}#${targetId} element`,
     }));
-    
-    // Send click event to GA4 with appropriate naming
-    if (typeof window.gtag === 'function') {
-      // Determine the event type based on the element
-      if (targetType === 'button') {
-        window.gtag('event', 'select_contenttype', {
-          content_type: 'button',
+
+    if (typeof window.gtag === "function") {
+      if (targetType === "button") {
+        window.gtag("event", "select_contenttype", {
+          content_type: "button",
           item_id: targetId || targetClass,
-          section_id: activeLink
+          section_id: activeLink,
         });
-      } else if (targetType === 'a') {
+      } else if (targetType === "a") {
         const href = (target as HTMLAnchorElement).href;
-        // Check if this is an outbound link
-        const isExternal = href && href.indexOf(window.location.hostname) === -1;
-        
-        window.gtag('event', isExternal ? 'glms_clickforvideo' : 'select_contenttype', {
-          content_type: isExternal ? 'outbound_link' : 'internal_link',
-          item_id: href || targetId,
-          outbound: isExternal,
-          section_id: activeLink
-        });
-      } else if (targetType === 'video' || target.closest('video')) {
-        const video = target.closest('video') || target;
-        window.gtag('event', 'glms_video_start', {
-          video_title: video.id || 'unnamed_video',
+        const isExternal =
+          href && href.indexOf(window.location.hostname) === -1;
+
+        window.gtag(
+          "event",
+          isExternal ? "glms_clickforvideo" : "select_contenttype",
+          {
+            content_type: isExternal ? "outbound_link" : "internal_link",
+            item_id: href || targetId,
+            outbound: isExternal,
+            section_id: activeLink,
+          }
+        );
+      } else if (targetType === "video" || target.closest("video")) {
+        const video = target.closest("video") || target;
+        window.gtag("event", "glms_video_start", {
+          video_title: video.id || "unnamed_video",
           video_current_time: (video as HTMLVideoElement).currentTime,
           video_duration: (video as HTMLVideoElement).duration,
-          video_percent: Math.round(((video as HTMLVideoElement).currentTime / (video as HTMLVideoElement).duration) * 100)
+          video_percent: Math.round(
+            ((video as HTMLVideoElement).currentTime /
+              (video as HTMLVideoElement).duration) *
+              100
+          ),
         });
-      } else if (targetType === 'form' || target.closest('form')) {
-        const form = target.closest('form') || target;
-        window.gtag('event', 'glms_begin_form', {
-          form_id: form.id || 'unknown',
-          form_name: (form as HTMLFormElement).name || 'unnamed',
-          form_destination: (form as HTMLFormElement).action || 'unknown'
+      } else if (targetType === "form" || target.closest("form")) {
+        const form = target.closest("form") || target;
+        window.gtag("event", "glms_begin_form", {
+          form_id: form.id || "unknown",
+          form_name: (form as HTMLFormElement).name || "unnamed",
+          form_destination: (form as HTMLFormElement).action || "unknown",
         });
       } else {
-        // Generic element click
-        window.gtag('event', 'select_contenttype', {
+        window.gtag("event", "select_contenttype", {
           content_type: targetType,
           item_id: targetId || targetClass,
-          section_id: activeLink
+          section_id: activeLink,
         });
       }
     }
-    
-    // Log click event to console
+
     console.log("Element clicked", {
       element: targetType,
       id: targetId,
       class: targetClass,
       section: activeLink,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   };
 
@@ -402,17 +284,107 @@ export default function LandingPage() {
           <Footer />
         </div>
       </main>
-      
-      {/* Optional: Debug panel for events - remove in production */}
-      {/* {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs z-50">
-          <div>Active Section: {activeLink}</div>
-          <div>Visit Duration: {pageEvents.visitDuration}s</div>
-          <div>Scroll Count: {pageEvents.scrollCount}</div>
-          <div>Last Action: {pageEvents.lastInteraction}</div>
-          <div>Analytics: {typeof window.gtag === 'function' ? 'Enabled' : 'Disabled'}</div>
+
+      {/* Chat Icon Button */}
+      <button
+        onClick={handleChatIconClick}
+        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
+        aria-label="Toggle GLMS Support Chat"
+        title="Chat with GLMS Support"
+      >
+        <ChatBubbleOvalLeftEllipsisIcon className="w-7 h-7" />
+      </button>
+
+      {/* Chat Window */}
+      {showChat && (
+        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[90vw] max-w-[400px] h-[70vh] sm:h-[600px] md:h-[650px] bg-white dark:bg-gray-900 shadow-2xl rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col animate-slide-up transition-all duration-300">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-600 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-gray-800 dark:to-gray-700 rounded-t-2xl">
+            <div className="flex items-center space-x-2">
+              <h2 className="text-base font-bold text-purple-800 dark:text-white">
+                🧑‍💼 GLMS Support
+              </h2>
+              <span className="text-xs text-gray-500 dark:text-gray-300">
+                Powered by UKAIRA
+              </span>
+            </div>
+            <button
+              onClick={() => setShowChat(false)}
+              aria-label="Close chat"
+              className="text-gray-500 hover:text-red-500 transition-colors duration-200"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Chat Body */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50 dark:bg-gray-800 scrollbar-thin scrollbar-thumb-purple-400 dark:scrollbar-thumb-gray-500 scrollbar-track-gray-100 dark:scrollbar-track-gray-900">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                } animate-fade-in`}
+              >
+                <div
+                  className={`max-w-[80%] px-4 py-3 text-sm rounded-2xl whitespace-pre-wrap shadow-lg transition-all duration-200 ${
+                    msg.role === "user"
+                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-br-none"
+                      : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none"
+                  }`}
+                >
+                  {msg.isImage ? (
+                    <img
+                      src={msg.content}
+                      alt="Response"
+                      className="rounded-md max-w-full h-auto"
+                    />
+                  ) : msg.role === "assistant" ? (
+                    <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100">
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    <span className="text-white">{msg.content}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start animate-pulse">
+                <div className="bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-sm px-4 py-3 rounded-2xl shadow rounded-bl-none">
+                  GLMS Support is processing...
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Ask about GLMS features or issues..."
+                className="w-full py-3 pl-5 pr-12 text-sm border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 transition-all duration-200"
+                disabled={loading}
+                aria-label="Type your GLMS-related question"
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || loading}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                title="Send GLMS question"
+                aria-label="Send message"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 }

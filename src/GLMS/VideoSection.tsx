@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { PlayCircle, X } from "lucide-react";
 
@@ -64,26 +65,25 @@ const VideoSection = () => {
   }, [modalVideo]);
 
   return (
-    <section className="py-12 md:py-20 bg-gradient-to-br from-purple-50 to-yellow-50">
+    <section className="py-8 md:py-12 bg-gradient-to-br from-purple-50 to-yellow-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             See Our Platform in Action
           </h2>
-          <p className="text-gray-600 max-w-xl mx-auto text-sm sm:text-base">
-            Watch how GenOxy’s Global Loan Management System transforms banking
-            operations with real AI-powered use cases.
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+            Watch how GenOxy’s Global Loan Management System transforms banking operations with real AI-powered use cases.
           </p>
         </div>
 
         {/* Videos Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {displayedVideos.map((video) => (
             <div
               key={video.id}
               onClick={() => setModalVideo(video.embedUrl)}
-              className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition duration-300 cursor-pointer overflow-hidden"
+              className="group bg-white rounded-lg shadow hover:shadow-xl transition cursor-pointer overflow-hidden"
             >
               <div className="relative aspect-video">
                 <img
@@ -93,14 +93,14 @@ const VideoSection = () => {
                   className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <PlayCircle className="w-12 h-12 text-white" />
+                  <PlayCircle className="w-10 h-10 text-white" />
                 </div>
               </div>
-              <div className="p-5">
-                <h3 className="text-lg font-semibold text-gray-800">
+              <div className="p-4">
+                <h3 className="text-md font-semibold text-gray-800 line-clamp-2">
                   {video.title}
                 </h3>
-                <p className="text-sm text-gray-600 mt-2 line-clamp-3">
+                <p className="text-sm text-gray-600 mt-1 line-clamp-3">
                   {video.description}
                 </p>
               </div>
@@ -110,10 +110,10 @@ const VideoSection = () => {
 
         {/* View All Button */}
         {!showAll && videos.length > 3 && (
-          <div className="text-center mt-10">
+          <div className="text-center mt-8">
             <button
               onClick={() => setShowAll(true)}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full transition font-medium text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-purple-300"
+              className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-full transition focus:ring-2 focus:ring-purple-300"
             >
               View All Videos
             </button>
@@ -127,7 +127,7 @@ const VideoSection = () => {
             onClick={handleCloseModal}
           >
             <div
-              className="relative w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden animate-fadeIn"
+              className="relative w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden animate-fadeIn"
               onClick={(e) => e.stopPropagation()}
             >
               <button

@@ -9,6 +9,7 @@ import {
   InstagramOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import { useNavigate } from "react-router-dom";
 
 interface MediaItem {
   url: string;
@@ -46,7 +47,7 @@ const AddBlog: React.FC = () => {
     socialMediaCaption: "",
     mediaUrls: [],
     campaignTypeAddBy: "",
-    campainInputType: "SERVICE",
+    campainInputType: "BLOG",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +55,7 @@ const AddBlog: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [mediaErrorMessage, setMediaErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
-
+  const navigate = useNavigate();
   const [nameErrorMessage, setNameErrorMessage] = useState<string>("");
   const [descErrormessage, setDescErrorMessage] = useState<string>("");
   const [socialMediaCaptionErrorMessage, setSocialMediaCaptionErrorMessage] =
@@ -76,7 +77,6 @@ const AddBlog: React.FC = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
-    // Real-time validation for social media caption
     if (name === "socialMediaCaption") {
       if (value.length < 25) {
         setSocialMediaCaptionErrorMessage(
@@ -225,7 +225,7 @@ const AddBlog: React.FC = () => {
     }));
 
     const disclaimerText = `### ✅ **Blog Disclaimer**
-    *This blog is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [team@askoxy.ai](mailto:team@askoxy.ai)*`;
+    *This blog is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [support@askoxy.ai]`;
 
     const finalCampaignDescription =
       (formData.campaignDescription || "") + disclaimerText;
@@ -257,11 +257,10 @@ const AddBlog: React.FC = () => {
 
       if (response.data) {
         message.success("Blog Added Successfully...!");
-        setSocialMediaLinks({
-          facebook: response.data.facebookCampaignUrl,
-          instagram: response.data.instagramCampaignUrl,
-        });
-        // setIsLinksModalVisible(true);
+        // setSocialMediaLinks({
+        //   facebook: response.data.facebookCampaignUrl,
+        //   instagram: response.data.instagramCampaignUrl,
+        // });  
         setFormData({
           campaignType: "",
           campaignDescription: "",
@@ -270,6 +269,7 @@ const AddBlog: React.FC = () => {
           campaignTypeAddBy: "",
           campainInputType: "SERVICE",
         });
+        navigate("/admn/allcampaignsdetails");
       } else {
         setErrorMessage("Failed to add blog. Please try again.");
         message.error("Failed to add blog. Please try again.");
@@ -286,12 +286,12 @@ const AddBlog: React.FC = () => {
     let isValid = true;
 
     if (formData.campaignType.trim() === "") {
-      setNameErrorMessage("Campaign Name is required");
+      setNameErrorMessage("BLOG Name is required");
       isValid = false;
     }
 
     if (formData.campaignDescription.trim() === "") {
-      setDescErrorMessage("Campaign description is required");
+      setDescErrorMessage("BLOG description is required");
       isValid = false;
     }
 

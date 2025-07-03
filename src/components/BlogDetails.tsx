@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Input, message, Modal, Spin } from "antd";
+import { Button, Divider, Input, message, Modal, Spin } from "antd";
 import {
   DislikeFilled,
   DislikeOutlined,
@@ -20,6 +20,7 @@ import {
   Campaign,
   submitWriteToUsQuery,
 } from "./servicesapi";
+import { PlusIcon } from "lucide-react";
 
 const { TextArea } = Input;
 
@@ -415,7 +416,7 @@ const BlogDetails: React.FC = () => {
       email,
       finalMobileNumber,
       query,
-      campaignType,
+      "FREEAI",
       userId
     );
 
@@ -1141,18 +1142,32 @@ const BlogDetails: React.FC = () => {
       >
         {!userId && <Header1 />}
 
-        <div className={`flex justify-end ${userId === null ? "mt-8" : ""}`}>
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all text-xs sm:text-sm"
-            onClick={() => {
-              handleAddblog();
-            }}
-          >
-            Add New Blog
-          </button>
+        <div
+          className={`w-full rounded-lg bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-gray-200 px-3 md:px-6 py-1.5 ${
+            !userId ? "mt-8" : ""
+          }`}
+        >
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="text-center sm:text-left">
+              <h4 className="text-lg md:text-xl font-bold text-purple-800 tracking-tight">
+                Write Your Blog & Earn Rewards!
+              </h4>
+              <p className="text-sm text-purple-600 mt-0.5">
+                Share your thoughts with the world — Start earning BMV coins! 🚀
+              </p>
+            </div>
+
+            <button
+              onClick={handleAddblog}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 hover:scale-105 whitespace-nowrap"
+            >
+              <PlusIcon className="w-4 h-4" />
+              Add Blog Post
+            </button>
+          </div>
         </div>
       </div>
-
+      <Divider className="p-1" />
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">

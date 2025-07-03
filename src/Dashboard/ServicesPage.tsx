@@ -321,7 +321,7 @@ const ServicesPage: React.FC = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative mb-4">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
@@ -347,7 +347,7 @@ const ServicesPage: React.FC = () => {
                     navigate(item.path);
                   }
                 }}
-                className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-200"
               >
                 <div className="relative aspect-video overflow-hidden">
                   <img
@@ -387,7 +387,7 @@ const ServicesPage: React.FC = () => {
               .map((campaign) => (
                 <div
                   key={campaign.campaignId}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-200"
                   onClick={() => handleCampaignClick(campaign)}
                 >
                   <div className="relative aspect-video overflow-hidden bg-gray-50">

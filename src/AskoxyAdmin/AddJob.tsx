@@ -32,6 +32,7 @@ import BASE_URL from "../Config";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { parsePhoneNumber } from "react-phone-number-input";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -91,6 +92,7 @@ const workModes = [
   { value: "REMOTE", label: "Remote" },
   { value: "ONSITE", label: "On-site" },
   { value: "HYBRID", label: "Hybrid" },
+   { value: "FLEXBLE", label: "Flexble" },
 ];
 
 const qualifications = [
@@ -123,7 +125,7 @@ const AddJob: React.FC = () => {
   const [logoUploadType, setLogoUploadType] = useState<"upload" | "url">(
     "upload"
   );
-
+  const navigate = useNavigate();
   const [fullPhone, setFullPhone] = useState<string | undefined>();
   const [countryCode, setCountryCode] = useState<string>("");
   const [contactNumber, setContactNumber] = useState<string>("");
@@ -217,6 +219,7 @@ const AddJob: React.FC = () => {
       } else {
         throw new Error("Failed to post job");
       }
+      navigate("/admn/alljobdetails");
     } catch (error) {
       message.error("Failed to post job. Please try again.");
       console.error("Error posting job:", error);
@@ -784,8 +787,8 @@ const AddJob: React.FC = () => {
                   }
                   name="benefits"
                   rules={[
-                    { required: true, message: "Please enter job benefits" },
-                  ]}
+                    { required: false, message: "Please enter job benefits" },
+                  ]}  
                 >
                   <TextArea
                     placeholder="e.g., Flexible hours, Health insurance, Work from home"

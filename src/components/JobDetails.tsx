@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { MailIcon, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { submitInterest, checkUserInterest } from "./servicesapi";
-import { message } from "antd";
+import { submitInterest, checkUserInterest, submitWriteToUsQuery } from "./servicesapi";
+import { Button, message, Select } from "antd";
 
 interface Job {
   id: string;
@@ -31,6 +31,7 @@ interface Job {
   contactNumber: string;
   countryCode: string;
 }
+
 type FilterKey =
   | "industry"
   | "jobType"
@@ -38,6 +39,8 @@ type FilterKey =
   | "experience"
   | "salaryRange"
   | "skills";
+
+const { Option } = Select;
 
 const JobDetails: React.FC = () => {
   const location = useLocation();
@@ -57,6 +60,16 @@ const JobDetails: React.FC = () => {
     salaryRange: "",
     skills: "",
   });
+  const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
+  const mobileNumber = localStorage.getItem("mobileNumber");
+  const finalMobileNumber = whatsappNumber || mobileNumber || null;
+  const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+  const email = profileData.customerEmail || null;
+  const userId = localStorage.getItem("userId");
+  const [query, setQuery] = useState("");
+  const [queryError, setQueryError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     console.log("this is the id from state" + id);
@@ -216,10 +229,9 @@ const JobDetails: React.FC = () => {
   };
 
   const handleClick = async (jobDesignation: string, companyName: string) => {
-    const userId = localStorage.getItem("userId");
     if (!userId) {
       message.warning("Please login to submit your interest.");
-      navigate("/whatsappregister");
+      navigate("/whatsapplogin");
       sessionStorage.setItem("redirectPath", "/main/jobdetails");
     } else {
       const whatsappNumber = localStorage.getItem("whatsappNumber");
@@ -258,6 +270,52 @@ const JobDetails: React.FC = () => {
       skills: "",
     });
     setSearchTerm("");
+  };
+
+  const handlePopUOk = () => {
+    setIsOpen(false);
+    navigate("/main/profile");
+  };
+
+  const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return;
+    }
+
+    const success = await submitWriteToUsQuery(
+      email,
+      finalMobileNumber,
+      query,
+      "FREESAMPLE",
+      userId
+    );
+
+    if (success) {
+      // setSuccessOpen(true);
+      message.success("Query submitted successfully")
+      setIsOpen(false);
+    } else {
+      message.error("Failed to send query. Please try again.");
+    }
+  };
+
+  const handleWriteToUs = () => {
+    if (!userId) {
+      message.warning("Please login to submit your Query.");
+      navigate("/whatsapplogin");
+      sessionStorage.setItem("redirectPath", "/main/jobdetails");
+    }
+    if (
+      !email ||
+      email === "null" ||
+      !finalMobileNumber ||
+      finalMobileNumber === "null"
+    ) {
+      setIsprofileOpen(true);
+    } else {
+      setIsOpen(true);
+    }
   };
 
   const formatSalary = (min: number, max: number) => {
@@ -624,62 +682,79 @@ const JobDetails: React.FC = () => {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-8 flex flex-wrap gap-3 justify-center items-center">
-          {(
-            [
-              {
-                key: "industry",
-                label: "🏢 Industry",
-                values: getUniqueValues("industry"),
-              },
-              {
-                key: "jobType",
-                label: "💼 Job Type",
-                values: getUniqueValues("jobType"),
-              },
-              {
-                key: "location",
-                label: "📍 Location",
-                values: getUniqueValues("jobLocations"),
-              },
-              {
-                key: "experience",
-                label: "🎯 Experience",
-                values: getUniqueValues("experience"),
-              },
-              {
-                key: "salaryRange",
-                label: "💰 Salary",
-                values: getSalaryRanges().map((r) => r.label),
-              },
-              { key: "skills", label: "🛠 Skills", values: getUniqueSkills() },
-            ] as { key: FilterKey; label: string; values: string[] }[]
-          ).map(({ key, label, values }) => (
-            <select
-              key={key}
-              value={filters[key]}
-              onChange={(e) => handleFilterChange(key, e.target.value)}
-              className="min-w-44 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 focus:border-blue-500 focus:outline-none bg-gradient-to-r from-white to-gray-50 shadow-sm"
-            >
-              <option value="" className="text-gray-400">
-                {label}
-              </option>
-              {values.map((val, idx) => (
-                <option key={`${key}-${idx}`} value={val}>
-                  {val}
-                </option>
-              ))}
-            </select>
-          ))}
+        <div className="mb-2">
+          <div className="flex flex-wrap gap-3 justify-center items-center">
+            {(
+              [
+                {
+                  key: "industry",
+                  label: "🏢 Industry",
+                  values: getUniqueValues("industry"),
+                },
+                {
+                  key: "jobType",
+                  label: "💼 Job Type",
+                  values: getUniqueValues("jobType"),
+                },
+                {
+                  key: "location",
+                  label: "📍 Location",
+                  values: getUniqueValues("jobLocations"),
+                },
+                {
+                  key: "experience",
+                  label: "🎯 Experience",
+                  values: getUniqueValues("experience"),
+                },
+                {
+                  key: "salaryRange",
+                  label: "💰 Salary",
+                  values: getSalaryRanges().map((r) => r.label),
+                },
+                {
+                  key: "skills",
+                  label: "🛠 Skills",
+                  values: getUniqueSkills(),
+                },
+              ] as { key: FilterKey; label: string; values: string[] }[]
+            ).map(({ key, label, values }) => (
+              <div className="min-w-44">
+                <select
+                  key={key}
+                  value={filters[key]}
+                  onChange={(e) => handleFilterChange(key, e.target.value)}
+                  className="min-w-44 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 focus:border-blue-500 focus:outline-none bg-gradient-to-r from-white to-gray-50 shadow-sm"
+                >
+                  <option value="" className="text-gray-400">
+                    {label}
+                  </option>
+                  {values.map((val, idx) => (
+                    <option key={`${key}-${idx}`} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
 
-          {/* Clear Button */}
-          <button
-            onClick={clearFilters}
-            className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-600 text-sm hover:from-red-100 hover:to-pink-100 hover:border-red-300 rounded-xl px-5 py-2 font-medium shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            🗑 Clear
-          </button>
+            {/* Clear Button */}
+            <button
+              onClick={clearFilters}
+              className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm hover:from-red-600 hover:to-pink-600 rounded-xl px-5 py-2 font-medium transition-all duration-200"
+            >
+              🗑 Clear
+            </button>
+          </div>
+
+          <div className="flex justify-end mt-2">
+            <Button
+              onClick={handleWriteToUs}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+            >
+              <MailIcon className="w-4 h-4" />
+              Write to Us
+            </Button>
+          </div>
         </div>
 
         {selectedJob ? (
@@ -820,7 +895,7 @@ const JobDetails: React.FC = () => {
           <div className="text-center py-16 bg-white/60 backdrop-blur-sm rounded-3xl shadow-sm">
             <div className="text-8xl mb-6">🎯</div>
             <h3 className="text-2xl font-bold text-gray-700 mb-3">
-              No jobs match your criteria
+              No Jobs Found
             </h3>
             <p className="text-gray-500 text-lg mb-6">
               Try adjusting your filters or search terms to discover more
@@ -835,6 +910,105 @@ const JobDetails: React.FC = () => {
           </div>
         )}
       </div>
+
+      {isOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
+          <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+            <i
+              className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-600"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close"
+            />
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">
+              Write To Us
+            </h2>
+            <div className="mb-4">
+              <label
+                className="block text-sm text-gray-700 font-semibold mb-1"
+                htmlFor="phone"
+              >
+                Mobile Number
+              </label>
+              <input
+                type="text"
+                id="phone"
+                disabled={true}
+                value={finalMobileNumber || ""}
+                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="Enter your mobile number"
+              />
+            </div>
+            <div className="mb-4">
+              <label
+                className="block text-sm text-gray-700 font-semibold mb-1"
+                htmlFor="email"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email || ""}
+                disabled={true}
+                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="Enter your email"
+              />
+            </div>
+            <div className="mb-4">
+              <label
+                className="block text-sm text-gray-700 font-semibold mb-1"
+                htmlFor="query"
+              >
+                Query
+              </label>
+              <textarea
+                id="query"
+                rows={3}
+                className="block w-full text-gray-700 px-4 py-2 border-gray-900 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="Enter your query"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {queryError && (
+                <p className="text-red-500 text-sm mt-1">{queryError}</p>
+              )}
+            </div>
+            <div className="flex justify-center">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300"
+                onClick={handleWriteToUsSubmitButton}
+              >
+                Submit Query
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isprofileOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-blue-700">Alert!</h2>
+              <button
+                className="text-red-600 text-xl font-bold hover:text-red-700"
+                onClick={() => setIsprofileOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-center text-gray-700 mb-6">
+              Please fill your profile details.
+            </p>
+            <div className="flex justify-center">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                onClick={handlePopUOk}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

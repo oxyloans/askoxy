@@ -39,6 +39,7 @@ import {
 import dayjs, { Dayjs } from "dayjs";
 import BASE_URL from "../Config";
 import { Download } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -97,9 +98,8 @@ const Stats: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>("3days");
   const [selectedStatus, setSelectedStatus] = useState<string>("1");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
-  const [startDate, setStartDate] = useState<Dayjs>(
-    dayjs().subtract(3, "days")
-  );
+  const [startDate, setStartDate] = useState<Dayjs>(dayjs());
+  const navigate = useNavigate();
   const [csvLoader, setCsvLoader] = useState<boolean>(false);
   const [endDate, setEndDate] = useState<Dayjs>(dayjs());
 
@@ -361,21 +361,15 @@ const Stats: React.FC = () => {
       fill: chartColors[index % chartColors.length],
     })
   );
-
-  const paymentChartData = [
-    {
-      type: "COD",
-      count: stats.paymentDistribution.COD,
-      revenue: stats.paymentRevenue.COD,
-      fill: chartColors[0],
-    },
-    {
-      type: "Online",
-      count: stats.paymentDistribution.Online,
-      revenue: stats.paymentRevenue.Online,
-      fill: chartColors[1],
-    },
-  ].filter((item) => item.count > 0);
+  const handleViewDetails = (order: Order) => {
+    const userType = localStorage.getItem("primaryType");
+    if (userType === "HELPDESKSUPERADMIN") {
+      message.info("please login into partner for watch order details");
+      return;
+    }
+    localStorage.setItem("orderId", order.orderId);
+    navigate(`/home/orderDetails`);
+  };
 
   const topPincodes = Object.entries(stats.pincodeStats)
     .sort((a, b) => b[1].revenue - a[1].revenue)
@@ -532,7 +526,10 @@ const Stats: React.FC = () => {
       key: "orderDetails",
       render: (record: Order) => (
         <div>
-          <div className="font-mono text-lg font-medium">
+          <div
+            className="font-mono text-lg font-medium cursor-pointer hover:text-blue-600"
+            onClick={() => handleViewDetails(record)}
+          >
             #{record.orderId.slice(-4)}
           </div>
           <Tag

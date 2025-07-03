@@ -72,7 +72,7 @@ const gridImages = [
     id: "s8",
     src: mockImages.s8,
     route: "/glms",
-    title: "Software\nTraining",
+    title: "GLMS Development and Training",
   },
   {
     id: "s9",

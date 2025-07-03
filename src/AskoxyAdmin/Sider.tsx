@@ -27,8 +27,17 @@ import {
   FaBlog,
   FaBoxes,
 } from "react-icons/fa";
-import { RiAdminLine, RiListUnordered, RiMapPin2Line } from "react-icons/ri";
-import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
+import {
+  RiAdminLine,
+  RiBriefcaseLine,
+  RiListUnordered,
+  RiMapPin2Line,
+} from "react-icons/ri";
+import {
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
+  SolutionOutlined,
+} from "@ant-design/icons";
 import { message } from "antd";
 import { MdPayment, MdWork } from "react-icons/md";
 
@@ -158,6 +167,12 @@ const Sidebar: React.FC = () => {
           link: "/admn/addjobs",
           roles: ["HELPDESKSUPERADMIN"],
         },
+        // {
+        //   title: "All Job Details",
+        //   icon: <SolutionOutlined style={{ color: "#ffff" }} />,
+        //   link: "/admn/alljobdetails",
+        //   roles: ["HELPDESKSUPERADMIN"],
+        // },
         {
           title: "All Service & Blogs Details",
           icon: <RiListUnordered className="text-purple-400" />,

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect } from "react";
 
 import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
@@ -119,7 +119,7 @@ import ContactUs from "./kart/ContactUs";
 import Register from "./AskoxyAdmin/Register";
 import AssignedDataPage from "./AskoxyAdmin/AssignedData";
 import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
-import DataAssigned from "./AskoxyAdmin/DataAssigned";
+import DataAssigned from "./AskoxyAdmin/AskoxyUsers";
 import ReferredData from "./AskoxyAdmin/RefferedData";
 
 import FreeRiceBlog from "./components/FreeRice";
@@ -145,14 +145,13 @@ import JobStreet from "./GLMS/JobStreet/JobStreet";
 import OrdersByPincode from "./AskoxyAdmin/Pincodewiseorders";
 import Feedback from "./components/Feedback";
 
-
 import AIBlockchainAndItServices from "./AIBlockchainAndItSev/AIBlockchainAndItServices";
 import CACSService from "./CACSServices/CaCsServices";
 import GoldAndSilverAndDiamond from "./GoldAndSilverAndDiamonds/GoldAndSilverAndDiamonds";
 import LoansInvestmentsLandingPage from "./LoansInvestments/LoanInvestmentsLandingPage";
 import RealEstate from "./Real Estate/Real Estate/RealEstate";
 import Nyayagpt from "./Nyayagpt/Nyayagpt/Nyayagpt";
-import MetroLogin  from "./Pages/Auth/MetroLogin"
+import MetroLogin from "./Pages/Auth/MetroLogin";
 import Rice2RoboEcommers from "./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers";
 
 import HomePage from "./Retailshop/Pages/Home";
@@ -177,6 +176,8 @@ import AskoxyAi from "./components/OpenAi";
 import GenOxy from "./GenOxy/Genoxy";
 import JobDetails from "./components/JobDetails";
 import AddJob from "./AskoxyAdmin/AddJob";
+import VersionUpdate from "./PartnerWeb/VersionUpdate";
+import JobsAdminPage from "./AskoxyAdmin/Alljobdetials";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -190,7 +191,7 @@ const App: React.FC = () => {
       "/freerice",
       "/glms",
       "/miyapurmetro",
-      "/cas",
+      "/los",
       "/fms",
       "/cms",
       "/aiblockchainanditservices",
@@ -214,7 +215,6 @@ const App: React.FC = () => {
         <ScrollToTop />
         <div className="App">
           <Routes>
-            
             <Route path="/shopretail" element={<HomePage />} />
             <Route path="/shop-form" element={<ShopFormPage />} />
             <Route path="/shop-list" element={<ShopListPage />} />
@@ -608,6 +608,7 @@ const App: React.FC = () => {
               <Route path="orderReport" element={<OrderReport />} />
               <Route path="orderstats" element={<OrderStatsDashboard />} />
               <Route path="updatestock" element={<StockUpdate />} />
+              <Route path="versionUpdate" element={<VersionUpdate />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}
@@ -623,7 +624,7 @@ const App: React.FC = () => {
               />
               <Route path="campaignsadd" element={<CampaignsAdd />} />
               <Route path="assignedData" element={<AssignedDataPage />} />
-              <Route path="addjobs" element={<AddJob />} />
+              <Route path="addjobs" element={<AddJob />} />
               <Route
                 path="helpDeskUsers"
                 element={<HelpDeskUsersDashboard />}
@@ -642,6 +643,7 @@ const App: React.FC = () => {
                 element={<SuperAdminComments />}
               />
               <Route path="pincodeorders" element={<OrdersByPincode />} />
+              <Route path="alljobdetails" element={<JobsAdminPage />} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

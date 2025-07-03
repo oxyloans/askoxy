@@ -420,7 +420,7 @@ const AllCampaignsDetails: React.FC = () => {
       );
 
       if (response.data) {
-        message.success("Campaign updated successfully!");
+        message.success(`${formData.campainInputType} updated successfully!`);
         setIsSubmitting(false);
         setFormData({
           campaignType: "",

@@ -1,5 +1,11 @@
 import React from "react";
-import { Facebook, Twitter, Linkedin, Instagram, ArrowUp } from "lucide-react";
+import {
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
+  ArrowUp,
+} from "lucide-react";
 
 const Footer = () => {
   const scrollToTop = () => {
@@ -7,16 +13,16 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-gray-900 text-white pt-14 pb-10">
+    <footer className="bg-gray-900 text-white pt-10 pb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
           {/* Company Info */}
           <div>
-            <h4 className="text-2xl font-bold mb-4">
+            <h4 className="text-xl font-bold mb-3">
               Global Loans Management Systems
             </h4>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">
               Modernizing loan systems globally with domain expertise and
               AI-powered tech solutions.
             </p>
@@ -28,14 +34,14 @@ const Footer = () => {
                 aria-label="Facebook"
                 className="text-blue-500 hover:text-white transition"
               >
-                <Facebook size={20} />
+                <Facebook size={18} />
               </a>
               <a
                 href="#"
                 aria-label="Twitter"
                 className="text-sky-400 hover:text-white transition"
               >
-                <Twitter size={20} />
+                <Twitter size={18} />
               </a>
               <a
                 href="https://www.linkedin.com/company/82577404/admin/dashboard/"
@@ -44,7 +50,7 @@ const Footer = () => {
                 aria-label="LinkedIn"
                 className="text-blue-400 hover:text-white transition"
               >
-                <Linkedin size={20} />
+                <Linkedin size={18} />
               </a>
               <a
                 href="https://www.instagram.com/askoxy.ai_oxyrice/"
@@ -53,15 +59,15 @@ const Footer = () => {
                 aria-label="Instagram"
                 className="text-pink-500 hover:text-white transition"
               >
-                <Instagram size={20} />
+                <Instagram size={18} />
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-3 text-sm">
+            <h3 className="text-lg font-semibold mb-3">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
               {["Home", "Videos", "Use Cases", "Contact"].map((link) => (
                 <li key={link}>
                   <a
@@ -77,8 +83,8 @@ const Footer = () => {
 
           {/* Services */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">Our Services</h3>
-            <ul className="space-y-3 text-sm">
+            <h3 className="text-lg font-semibold mb-3">Our Services</h3>
+            <ul className="space-y-2 text-sm">
               {[
                 { name: "OXYLOANS", url: "https://oxyloans.com/" },
                 { name: "OXYBRICKS", url: "https://www.oxybricks.world/" },
@@ -101,8 +107,8 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">Contact</h3>
-            <address className="not-italic text-gray-400 space-y-3 text-sm leading-relaxed">
+            <h3 className="text-lg font-semibold mb-3">Contact</h3>
+            <address className="not-italic text-gray-400 space-y-2 text-sm leading-relaxed">
               <p>
                 CC-02, Ground Floor, Indu Fortune Fields, <br />
                 KPHB Colony, Hyderabad, Telangana - 500085
@@ -128,10 +134,10 @@ const Footer = () => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-800 my-6"></div>
+        <div className="border-t border-gray-800 mb-4"></div>
 
         {/* Bottom Row */}
-        <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-400 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center text-xs sm:text-sm text-gray-400 gap-3">
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} Global Lending Management
             Solutions. All rights reserved.

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header1 from "../components/Header";
 import Footer from "../components/Footer";
 import { fetchCampaigns, Campaign } from "../components/servicesapi";
+import { PlusIcon } from "lucide-react";
 
 const BlogsPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -50,15 +51,36 @@ const BlogsPage: React.FC = () => {
       campaign.campaignStatus !== false && campaign.campainInputType === "BLOG"
   );
 
+  const handleAddblog = () => {
+    navigate("/main/addblogs");
+  };
+
   return (
     <div className="min-h-screen">
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
-          {/* <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
-            Our <span className="text-yellow-500">Blogs</span>
-          </h2>
-          <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-1 mx-auto sm:mx-0 rounded-full"></div> */}
+          <div className="w-full rounded-lg bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-gray-200 px-3 md:px-6 py-1.5">
+            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div className="text-center sm:text-left">
+                <h4 className="text-lg md:text-xl font-bold text-purple-800 tracking-tight">
+                  Write Your Blog & Earn Rewards!
+                </h4>
+                <p className="text-sm text-purple-600 mt-0.5">
+                  Share your thoughts with the world — Start earning BMV coins!
+                  🚀
+                </p>
+              </div>
+
+              <button
+                onClick={handleAddblog}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 hover:scale-105 whitespace-nowrap"
+              >
+                <PlusIcon className="w-4 h-4" />
+                Add Blog Post
+              </button>
+            </div>
+          </div>
 
           {blogCampaigns.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6 mb-4">
@@ -70,7 +92,7 @@ const BlogsPage: React.FC = () => {
                 return (
                   <div
                     key={campaign.campaignId}
-                    className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                    className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-200"
                     onClick={() => handleCampaignClick(campaign)}
                   >
                     <div className="relative aspect-video overflow-hidden bg-gray-50">

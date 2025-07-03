@@ -2,25 +2,22 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogoblack.png";
-import { message } from "antd";
 
 interface HeaderProps {
-  onNavClick: (id: "home" | "videos" | "usecases" | "contact") => void;
+  onNavClick: (id: "home" | "videos" | "usecases") => void;
   activeLink: string;
 }
 
 const Header = ({ onNavClick, activeLink }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const LOGIN_URL = "/whatsapplogin";
 
   const navLinks = [
     { id: "home", label: "GLMS Home" },
     { id: "videos", label: "Videos" },
     { id: "usecases", label: "Use Cases" },
-    { id: "contact", label: "Contact" },
+ 
   ] as const;
 
   useEffect(() => {
@@ -51,18 +48,11 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
   };
 
   const handleSignIn = () => {
-    try {
-      setIsLoading(true);
-      const userId = localStorage.getItem("userId");
-      if (userId) {
-        navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
-      } else {
-        window.location.href = LOGIN_URL;
-      }
-    } catch (error) {
-      console.error("Sign in error:", error);
-    } finally {
-      setIsLoading(false);
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
+    } else {
+      window.location.href = "/whatsapplogin";
     }
   };
 
@@ -70,19 +60,8 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
     window.location.href = "/jobstreet";
   };
 
-  const handleInterest = () => {
-    const userId = localStorage.getItem("userId");
-    sessionStorage.setItem("submitclicks", "true");
-    if (userId) {
-      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
-    } else {
-      message.warning("Please login to submit your interest.");
-      sessionStorage.setItem(
-        "redirectPath",
-        "/main/services/a6b5/glms-open-source-hub-job-stree"
-      );
-      navigate("/whatsappregister");
-    }
+  const handleNomoGpt = () => {
+    navigate("/nomogpt");
   };
 
   return (
@@ -132,12 +111,12 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={handleInterest}
-              className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition hover:scale-105 focus:ring-2 focus:ring-purple-400"
+            {/* <button
+              onClick={handleNomoGpt}
+              className="bg-pink-600 hover:bg-pink-700 text-white py-2 px-4 rounded-lg transition hover:scale-105 focus:ring-2 focus:ring-pink-400"
             >
-              I'm Interested
-            </button>
+              NomoGPT
+            </button> */}
             <button
               onClick={handleJobStreet}
               className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition hover:scale-105 focus:ring-2 focus:ring-indigo-400"
@@ -186,7 +165,15 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
                   </button>
                 </li>
               ))}
-              <li className="px-4 pt-4">
+              {/* <li className="px-4 pt-4">
+                <button
+                  onClick={handleNomoGpt}
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-md transition"
+                >
+                  NomoGPT
+                </button>
+              </li> */}
+              <li className="px-4 pt-3">
                 <button
                   onClick={handleJobStreet}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-md transition"
@@ -194,20 +181,12 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
                   Job Street
                 </button>
               </li>
-              <li className="px-4 pt-3">
+              <li className="px-4 pt-3 pb-4">
                 <button
                   onClick={handleSignIn}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-md transition"
                 >
                   Sign In
-                </button>
-              </li>
-              <li className="px-4 pt-3 pb-4">
-                <button
-                  onClick={handleInterest}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-md transition"
-                >
-                  I'm Interested
                 </button>
               </li>
             </ul>

@@ -89,7 +89,7 @@ export const fetchLikesAndComments = async (
 };
 
 
-export const submitWriteToUsQuery = async (
+export const  submitWriteToUsQuery = async (
   email: string | null,
   mobileNumber: string | null,
   query: string,

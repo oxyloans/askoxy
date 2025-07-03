@@ -17,6 +17,8 @@ import {
   RetweetOutlined,
   FileTextOutlined,
   LineChartOutlined,
+  AppstoreOutlined,
+  CodeSandboxOutlined,
 } from "@ant-design/icons";
 import { FaChartBar, FaComments } from "react-icons/fa";
 
@@ -98,16 +100,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <QuestionCircleOutlined />,
       label: "All Queries",
     },
-    {
-      key: "/home/feedback",
-      icon: <FaComments />,
-      label: "User Feedback",
+       {
+      key: "/home/versionUpdate", 
+      icon: <CodeSandboxOutlined />,
+      label: "App Versions",
     },
-    {
-      key: "/home/scan-qr",
-      icon: <QrcodeOutlined />,
-      label: "Scan QR",
-    },
+    // {
+    //   key: "/home/feedback",
+    //   icon: <FaComments />,
+    //   label: "User Feedback",
+    // },
+    // {
+    //   key: "/home/scan-qr",
+    //   icon: <QrcodeOutlined />,
+    //   label: "Scan QR",
+    // },
   ];
 
   const handleLogout = () => {
