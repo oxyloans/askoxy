@@ -43,6 +43,7 @@ const CampaignDetails: React.FC = () => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
   const email = profileData.customerEmail || null;
+  const accessToken = localStorage.getItem("accessToken");
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState("");
@@ -87,7 +88,18 @@ const CampaignDetails: React.FC = () => {
     }
   }, [campaign]);
 
-  const handleWriteToUs = () => {
+  const handleWriteToUs = (campaign: Campaign) => {
+    if (!accessToken || !userId) {
+      message.warning("Please login to write to us.");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
+          campaign.campaignType
+        )}`
+      );
+      return;
+    }
     if (
       !email ||
       email === "null" ||
@@ -106,12 +118,11 @@ const CampaignDetails: React.FC = () => {
       return;
     }
 
-    const campaignType = campaign?.campaignType || "Unknown Campaign";
     const success = await submitWriteToUsQuery(
       email,
       finalMobileNumber,
       query,
-      campaignType,
+      "FREEAI",
       userId
     );
 
@@ -141,7 +152,6 @@ const CampaignDetails: React.FC = () => {
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 30);
-
 
   const handleSubmit = (isAlreadyInterested: boolean) => {
     sessionStorage.setItem("submitclicks", "true");
@@ -448,7 +458,7 @@ const CampaignDetails: React.FC = () => {
                   <button
                     className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f4a307] transition-all"
                     aria-label="Write To Us"
-                    onClick={handleWriteToUs}
+                    onClick={() => handleWriteToUs(campaign)}
                   >
                     Write To Us
                   </button>

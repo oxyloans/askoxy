@@ -177,6 +177,7 @@ import GenOxy from "./GenOxy/Genoxy";
 import JobDetails from "./components/JobDetails";
 import AddJob from "./AskoxyAdmin/AddJob";
 import VersionUpdate from "./PartnerWeb/VersionUpdate";
+import OfferImagesUpdate from "./PartnerWeb/OfferImagesUpdate";
 import JobsAdminPage from "./AskoxyAdmin/Alljobdetials";
 
 const App: React.FC = () => {
@@ -259,6 +260,7 @@ const App: React.FC = () => {
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />
+             <Route path="/myblogs" element={<BlogsPage />} />
             <Route
               path="/termsandconditions"
               element={<TermsAndConditions />}
@@ -609,6 +611,7 @@ const App: React.FC = () => {
               <Route path="orderstats" element={<OrderStatsDashboard />} />
               <Route path="updatestock" element={<StockUpdate />} />
               <Route path="versionUpdate" element={<VersionUpdate />} />
+              <Route path="updateoffers" element={<OfferImagesUpdate />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}

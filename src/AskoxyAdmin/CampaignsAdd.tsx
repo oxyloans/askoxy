@@ -144,10 +144,17 @@ const CampaignsAdd: React.FC = () => {
   };
 
   const submitCampaign = async () => {
+
+    const disclaimerText = `### ✅ *Disclaimer*
+    *This ${ formData.campainInputType} is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [support@askoxy.ai]`;
+
+    const finalCampaignDescription =
+      (formData.campaignDescription || "") + disclaimerText;
+
     const requestPayload = {
       askOxyCampaignDto: [
         {
-          campaignDescription: formData.campaignDescription,
+          campaignDescription: finalCampaignDescription,
           campaignType: formData.campaignType,
           campaignTypeAddBy: formData.campaignTypeAddBy,
           images: formData.imageUrl,

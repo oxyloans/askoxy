@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, Compass } from "lucide-react";
+import { ArrowRight, BookOpen, Briefcase, Compass, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RadhakrishnaImg from "../assets/img/radha sir.png";
 import { FaLinkedin } from "react-icons/fa";
@@ -16,6 +16,14 @@ function HeroSection() {
     }
   };
 
+  const handleExploreBlogs = () => {
+    navigate("/myblogs");
+  };
+
+  const handleApplyJobs = () => {
+    navigate("/jobdetails");
+  };
+
   return (
     <section className="relative bg-gradient-to-tr from-white via-blue-50 to-purple-100 py-16 lg:py-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-14 items-center">
@@ -28,27 +36,56 @@ function HeroSection() {
           </h1>
 
           <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
-            Meet <strong>NomoGPT</strong> — your intelligent platform for revolutionizing global lending.
+            Meet <strong>NomoGPT</strong> — your intelligent platform for
+            revolutionizing global lending.
             <br />
-            Built with <strong>60+ BFSI use cases</strong>, <strong>50+ expert roles</strong>, and <strong>AI-driven accelerators</strong>, NomoGPT draws on insights from
-            <strong> FinOne</strong>, <strong>Temenos</strong>, <strong>Finastra</strong>, and <strong>TCS BaNCS</strong>.
+            Built with <strong>60+ BFSI use cases</strong>,{" "}
+            <strong>50+ expert roles</strong>, and{" "}
+            <strong>AI-driven accelerators</strong>, NomoGPT draws on insights
+            from
+            <strong> FinOne</strong>, <strong>Temenos</strong>,{" "}
+            <strong>Finastra</strong>, and <strong>TCS BaNCS</strong>.
             <br className="hidden sm:block" />
-            <strong>Mission:</strong> Empower BFSI firms with scalable AI-led solutions & job-ready talent.
+            <strong>Mission:</strong> Empower BFSI firms with scalable AI-led
+            solutions & job-ready talent.
           </p>
 
           <ul className="list-disc list-inside text-left ml-2 sm:ml-4 text-gray-700 space-y-1">
             <li>✅ Accelerate digital transformation</li>
-            <li>✅ Upskill <strong>1 million BFSI professionals</strong></li>
+            <li>
+              ✅ Upskill <strong>1 million BFSI professionals</strong>
+            </li>
           </ul>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-start justify-center sm:justify-start mt-4">
+            {/* Button 1: Get Started */}
             <button
               onClick={handleClick}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400"
+              className="bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-full flex items-center gap-2 shadow hover:bg-blue-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 w-full sm:w-auto"
             >
-              <Compass className="w-5 h-5" />
+              <Compass className="w-4 h-4" />
               <span>Get Started</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            {/* Button 2: Explore Blogs */}
+            <button
+              onClick={handleExploreBlogs}
+              className="bg-pink-600 text-white text-sm font-medium py-2 px-4 rounded-full flex items-center gap-2 shadow hover:bg-pink-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400 w-full sm:w-auto"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Explore Blogs</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            {/* Button 3: Apply Jobs */}
+            <button
+              onClick={handleApplyJobs}
+              className="bg-green-600 text-white text-sm font-medium py-2 px-4 rounded-full flex items-center gap-2 shadow hover:bg-green-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400 w-full sm:w-auto"
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Apply Jobs</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -64,7 +101,9 @@ function HeroSection() {
               />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">RadhaKrishna.T</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                RadhaKrishna.T
+              </h3>
               <p className="text-gray-600 text-md">CEO & Co-Founder, GenOxy</p>
             </div>
             <div className="flex justify-center">

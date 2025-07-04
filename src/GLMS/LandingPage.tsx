@@ -67,48 +67,48 @@ export default function LandingPage() {
 
   useEffect(scrollToBottom, [messages]);
 
-    const handleSend = useCallback(
-      async (messageContent?: string) => {
-        const textToSend = messageContent || input.trim();
-        if (!textToSend) return;
-  
-        const userMessage: Message = { role: "user", content: textToSend };
-        const updatedMessages = [...messages, userMessage];
-        setMessages(updatedMessages);
-        setInput("");
-        setLoading(true);
-  
-        try {
-          const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedMessages),
-          });
-          const data = await response.text();
-  
-          const isImageUrl = data.startsWith("http");
-          const assistantReply: Message = {
+  const handleSend = useCallback(
+    async (messageContent?: string) => {
+      const textToSend = messageContent || input.trim();
+      if (!textToSend) return;
+
+      const userMessage: Message = { role: "user", content: textToSend };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setInput("");
+      setLoading(true);
+
+      try {
+        const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedMessages),
+        });
+        const data = await response.text();
+
+        const isImageUrl = data.startsWith("http");
+        const assistantReply: Message = {
+          role: "assistant",
+          content: data,
+          isImage: isImageUrl,
+        };
+
+        setMessages([...updatedMessages, assistantReply]);
+      } catch (error) {
+        console.error("Chat error:", error);
+        setMessages([
+          ...updatedMessages,
+          {
             role: "assistant",
-            content: data,
-            isImage: isImageUrl,
-          };
-  
-          setMessages([...updatedMessages, assistantReply]);
-        } catch (error) {
-          console.error("Chat error:", error);
-          setMessages([
-            ...updatedMessages,
-            {
-              role: "assistant",
-              content: "❌ Sorry, I encountered an error. Please try again.",
-            },
-          ]);
-        } finally {
-          setLoading(false);
-        }
-      },
-      [messages, input]
-    );
+            content: "❌ Sorry, I encountered an error. Please try again.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [messages, input]
+  );
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !loading) {
       handleSend();
@@ -288,11 +288,11 @@ export default function LandingPage() {
       {/* Chat Icon Button */}
       <button
         onClick={handleChatIconClick}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:p-4 bg-purple-600 text-white rounded-full shadow-2xl hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
         aria-label="Toggle GLMS Support Chat"
         title="Chat with GLMS Support"
       >
-        <ChatBubbleOvalLeftEllipsisIcon className="w-7 h-7" />
+        <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6 sm:w-7 sm:h-7" />
       </button>
 
       {/* Chat Window */}
