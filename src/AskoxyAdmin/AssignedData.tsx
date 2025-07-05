@@ -173,7 +173,7 @@ const AssignedDataPage: React.FC = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [uniqueId, setUniqueId] = useState<string>("");
-  //orderModal
+
   const [loader, setLoader] = useState<boolean>(false);
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [orderDetailsVisible, setOrderDetailsVisible] =
@@ -411,56 +411,6 @@ const AssignedDataPage: React.FC = () => {
     }
   };
 
-  // const handleSubmitComment = async (): Promise<void> => {
-  //   console.log("user response", userResponse);
-  //   if (!userResponse?.trim()) {
-  //     message.warning("Please enter customer behaviour");
-  //     return;
-  //   }
-  //   if (!newComment.trim()) {
-  //     message.warning("Please enter comment");
-  //     return;
-  //   }
-  //   setOrderId("");
-
-  //   let update = updatedBy;
-  //   const type = localStorage.getItem("primaryType");
-  //   if (type === "SELLER") {
-  //     update = "ADMIN";
-  //   }
-
-  //   let comment = newComment;
-
-  //   if (orderId) {
-  //     comment = `Regarding order Id ${orderId} ${newComment}`;
-  //   }
-  //   setSubmittingComment(true);
-  //   try {
-  //     await axios.patch(
-  //       `${BASE_URL}/user-service/adminUpdateComment`,
-  //       {
-  //         adminComments: comment,
-  //         commentsUpdateBy: update,
-  //         adminUserId: storedUniqueId,
-  //         userId: record?.userId,
-  //         customerBehaviour: userResponse,
-  //       },
-  //       { headers: { "Content-Type": "application/json" } }
-  //     );
-
-  //     message.success("Comment added successfully");
-  //     setNewComment("");
-  //     setUserResponse(undefined);
-  //     // await fetchComments(record);
-  //   } catch (error) {
-  //     console.error("Error submitting comment:", error);
-  //     message.error("Failed to add comment");
-  //   } finally {
-  //     setSubmittingComment(false);
-  //     setNewComment("");
-  //   }
-  // };
-
   const getColumnsForAllOrders = (orders: OrderData[]) => {
     const columns = [
       {
@@ -569,24 +519,6 @@ const AssignedDataPage: React.FC = () => {
       });
     }
 
-    // if (["3", "PickedUp"].includes(userOrders[0]?.orderStatus)) {
-    //   columns.splice(columns.length - 1, 0, {
-    //     title: "Delivery Boy Details",
-    //     dataIndex: "deliveryBoyName", // Add dataIndex to fix type error
-    //     key: "deliveryBoyDetails",
-    //     render: (text: string, record: OrderData) => (
-    //       <div>
-    //         <p>
-    //           <strong>Name:</strong> {record.deliveryBoyName || "N/A"}
-    //         </p>
-    //         <p>
-    //           <strong>Mobile:</strong> {record.deliveryBoyMobile || "N/A"}
-    //         </p>
-    //       </div>
-    //     ),
-    //   });
-    // }
-
     if (
       ["1", "2", "3", "4", "PickedUp"].includes(userOrders[0]?.orderStatus) &&
       userOrders[0]?.orderHistory?.length
@@ -660,17 +592,6 @@ const AssignedDataPage: React.FC = () => {
     fetchOrderDetails(record.userId);
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const getHelpDeskName = (assignedToId: string): string => {
     const helpDeskUser = helpDeskUsers.find(

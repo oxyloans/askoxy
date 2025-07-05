@@ -84,6 +84,7 @@ const Categories: React.FC<CategoriesProps> = ({
   updateCart,
   customerId,
   updateCartCount,
+  setActiveCategory,
 }) => {
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
@@ -109,6 +110,7 @@ const Categories: React.FC<CategoriesProps> = ({
   });
   const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
     status: { [key: string]: string };
@@ -124,8 +126,6 @@ const Categories: React.FC<CategoriesProps> = ({
     content: "",
   });
 
-  const location = useLocation();
-
   const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
   const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
     "0"
@@ -137,7 +137,6 @@ const Categories: React.FC<CategoriesProps> = ({
     [key: string]: boolean;
   }>({});
 
-  // Ref for scrolling to items section
   const itemsRef = useRef<HTMLDivElement>(null);
 
   const weightFilters = [
@@ -148,25 +147,104 @@ const Categories: React.FC<CategoriesProps> = ({
   ];
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
+   const queryParams = new URLSearchParams(location.search);
+const categoryFromQuery = queryParams.get("category") || location.state?.selectedCategory || null;
+
+    // Define filter groups
+     const riceCategories = [
+      'Organic Store',
+      'Basmati Rice',
+      'Sonamasoori',
+      'Combo Offers',
+      'Rice Container',
+      'Brown Rice',
+      'HMT',
+      'Low GI',
+      'Kolam Rice',
+    ];
+    const groceryCategories = [
+      'Cashew nuts upto ₹40 cashback',
+      'Essentials Mart',
+      'Health & Energy Nutritions',
+      'Baby care',
+      'Snacking',
+      'Juices',
+      'Bulb & Batteries',
+      'Indian Pickles',
+      'Monsoon Magic',
+      'Personal Care',
+      'Kitchen Elixirs',
+      'Atta & Flours',
+      'Dals & Pulses',
+      'Fresheners & Repellents',
+      'Home & Kitchen Appliances',
+      'Dry Fruits & Nuts',
+      'MediZone',
+      'Clean & Care',
+      'Pure Honey & Naturals',
+      'Stationary Store',
+      'Pooja Needs',
+      'Masalas & Spices',
+      'Packaged Foods',
+      'Women Hygiene',
+    ];
+    const goldCategories = ['GOLD'];
+
+    // Category mapping for query parameters
+    const categoryMapping: { [key: string]: string[] } = {
+      rice: riceCategories,
+      groceries: groceryCategories,
+      gold: goldCategories,
+      'all items': ['All Items'],
+      RICE: riceCategories,
+      GROCERIES: groceryCategories,
+      GOLD: goldCategories,
+      ALL_ITEMS: ['All Items'],
+    };
+
+    // Normalize category
+    let normalizedCategory = "all items";
+    if (categoryFromQuery) {
+      const trimmedQuery = categoryFromQuery.trim();
+      const lowerCaseQuery = trimmedQuery.toLowerCase();
+      // Check if the query is a group filter (rice, groceries, gold, all items)
+      if (categoryMapping[lowerCaseQuery]) {
+        normalizedCategory = lowerCaseQuery;
+      } else if (categories.some(cat => cat.categoryName.trim() === trimmedQuery)) {
+        // If it's a specific category, use the exact category name
+        normalizedCategory = categories.find(cat => cat.categoryName.trim() === trimmedQuery)!.categoryName;
+      }
+    }
+
+    console.log("Categories.tsx - Setting activeCategory to:", normalizedCategory);
+    setActiveCategory(normalizedCategory);
+
+    // Auto-scroll to items section
+    setTimeout(() => {
+      if (itemsRef.current) {
+        itemsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
+
     const weight = queryParams.get("weight");
-    if (weight && weightFilters.some((filter) => filter.value === weight)) {
+    if (weight && weightFilters.some(filter => filter.value === weight)) {
       setActiveWeightFilter(weight);
     } else {
       setActiveWeightFilter(null);
     }
-  }, [location.search]);
+  }, [location.search, categories, setActiveCategory]);
 
   const handleCategoryClick = (categoryName: string) => {
-    // If the same category is clicked again, deselect it
     if (categoryName === activeCategory) {
-      onCategoryClick(""); // Set no active category
-      return;
+      setActiveCategory("");
+      onCategoryClick("");
+    } else {
+      setActiveCategory(categoryName);
+      onCategoryClick(categoryName);
     }
-
-    onCategoryClick(categoryName);
-
-    // Scroll to items section after a short delay
     setTimeout(() => {
       if (itemsRef.current) {
         itemsRef.current.scrollIntoView({
@@ -183,14 +261,12 @@ const Categories: React.FC<CategoriesProps> = ({
     } else {
       setActiveWeightFilter(value);
     }
-
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "toggle_weight_filter", {
         filter_value: value,
         new_state: activeWeightFilter === value ? "off" : "on",
       });
     }
-
     setSelectedFilterKey("0");
     setSelectedFilter("ALL");
   };
@@ -198,7 +274,6 @@ const Categories: React.FC<CategoriesProps> = ({
   const fetchCartData = async (itemId: string = "") => {
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
-
     if (!userId || !accessToken) {
       setCartItems({});
       setCartData([]);
@@ -206,24 +281,20 @@ const Categories: React.FC<CategoriesProps> = ({
       localStorage.setItem("cartCount", "0");
       return;
     }
-
     if (itemId) {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [itemId]: true },
       }));
     }
-
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-
       const customerCart: CartItem[] =
         response.data?.customerCartResponseList || [];
       console.log("fetchCartData API response:", response.data);
-
       const cartItemsMap: Record<string, number> = customerCart.reduce(
         (acc: Record<string, number>, item: CartItem) => {
           if (item.status === "ADD") {
@@ -237,7 +308,6 @@ const Categories: React.FC<CategoriesProps> = ({
         },
         {}
       );
-
       const totalQuantity: number = customerCart.reduce(
         (sum: number, item: CartItem) => {
           const quantity = item.cartQuantity ?? 0;
@@ -245,21 +315,16 @@ const Categories: React.FC<CategoriesProps> = ({
         },
         0
       );
-
       console.log("fetchCartData: ", {
         cartItemsMap,
         totalQuantity,
         customerCart,
       });
-
       const goldBarItemIds = [
         "619bd23a-0267-46da-88da-30977037225a",
         "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
       ];
-
       const newDisplayedOffers = new Set(displayedOffers);
-
-      // Check for 2+1 Offer
       const twoPlusOneItems = customerCart.filter(
         (item) => item.status === "ADD" && item.cartQuantity >= 2
       );
@@ -292,8 +357,6 @@ const Categories: React.FC<CategoriesProps> = ({
           newDisplayedOffers.add(`2+1_${addItem.itemId}`);
         }
       }
-
-      // Check for 5+2 Offer
       const fivePlusTwoItems = customerCart.filter(
         (item) =>
           item.status === "ADD" &&
@@ -319,13 +382,11 @@ const Categories: React.FC<CategoriesProps> = ({
               freeItems.itemName
             } of ${normalizeWeight(
               freeItems.weight
-            )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
+            )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is applicable once.</i>`,
           });
           newDisplayedOffers.add(`5+2_${addItem.itemId}`);
         }
       }
-
-      // Free Container Offer
       const containerOfferItems = customerCart.filter(
         (item) =>
           item.status === "ADD" &&
@@ -354,7 +415,6 @@ const Categories: React.FC<CategoriesProps> = ({
           newDisplayedOffers.add(`container_${addItem.itemId}`);
         }
       }
-
       setCartItems(cartItemsMap);
       setCartData(customerCart);
       updateCart(cartItemsMap);
@@ -365,7 +425,6 @@ const Categories: React.FC<CategoriesProps> = ({
         JSON.stringify(Array.from(newDisplayedOffers))
       );
       setDisplayedOffers(newDisplayedOffers);
-
       if (itemId) {
         setLoadingItems((prev) => ({
           ...prev,
@@ -424,12 +483,11 @@ const Categories: React.FC<CategoriesProps> = ({
     const accessToken = localStorage.getItem("accessToken");
     setIsFetchingOffers(true);
     try {
-      const offersResponse = await axios.get(
+      const response = await axios.get(
         `${BASE_URL}/cart-service/cart/activeOffers`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      const activeOffers = offersResponse.data || [];
-
+      const activeOffers = response.data || [];
       const filteredOffers = activeOffers.filter((offer: Offer) => {
         const offerMinQtyKg = normalizeWeight(offer.minQtyKg);
         if (offerMinQtyKg === null) {
@@ -438,7 +496,6 @@ const Categories: React.FC<CategoriesProps> = ({
           );
           return true;
         }
-
         const isExcluded = userEligibleOffers.some(
           (eligibleOffer: UserEligibleOffer) => {
             const eligibleWeight = normalizeWeight(eligibleOffer.weight);
@@ -448,22 +505,17 @@ const Categories: React.FC<CategoriesProps> = ({
               );
               return false;
             }
-
             const isEligible = eligibleOffer.eligible === true;
             const isWeightMatch =
               Math.abs(eligibleWeight - offerMinQtyKg) < 0.0001;
-
             return isEligible && isWeightMatch;
           }
         );
-
         return !isExcluded;
       });
-
       setOffers(filteredOffers);
       setIsFetchingOffers(false);
       console.log("Filtered offers:", filteredOffers);
-
       if (filteredOffers.length > 0) {
         await fetchCartData();
       }
@@ -479,7 +531,6 @@ const Categories: React.FC<CategoriesProps> = ({
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
     const hasShownOffers = localStorage.getItem("hasShownOffers");
-
     if (userId && accessToken) {
       fetchCartData();
       if (!hasShownOffers) {
@@ -492,7 +543,6 @@ const Categories: React.FC<CategoriesProps> = ({
     const hasShownOffers = localStorage.getItem("hasShownOffers");
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
-
     if (
       userId &&
       accessToken &&
@@ -515,7 +565,6 @@ const Categories: React.FC<CategoriesProps> = ({
   const handleAddToCart = async (item: Item) => {
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-
     if (!accessToken || !userId) {
       message.warning("Please login to add items to the cart.");
       setTimeout(() => {
@@ -523,7 +572,6 @@ const Categories: React.FC<CategoriesProps> = ({
       }, 2000);
       return;
     }
-
     if (!checkProfileCompletion()) {
       Modal.error({
         title: "Profile Incomplete",
@@ -535,7 +583,6 @@ const Categories: React.FC<CategoriesProps> = ({
       }, 4000);
       return;
     }
-
     try {
       setLoadingItems((prev) => ({
         ...prev,
@@ -564,18 +611,83 @@ const Categories: React.FC<CategoriesProps> = ({
   };
 
   const getCurrentCategoryItems = () => {
-    const currentCategory =
-      categories.find((cat) => cat.categoryName === activeCategory) ||
-      categories[0];
-    if (!currentCategory) return [];
+    const riceCategories = [
+      'Organic Store',
+      'Basmati Rice',
+      'Sonamasoori',
+      'Combo Offers',
+      'Rice Container',
+      'Brown Rice',
+      'HMT',
+      'Low GI',
+      'Kolam Rice',
+    ];
+    const groceryCategories = [
+      'Cashew nuts upto ₹40 cashback',
+      'Essentials Mart',
+      'Health & Energy Nutritions',
+      'Baby care',
+      'Snacking',
+      'Juices',
+      'Bulb & Batteries',
+      'Indian Pickles',
+      'Monsoon Magic',
+      'Personal Care',
+      'Kitchen Elixirs',
+      'Atta & Flours',
+      'Dals & Pulses',
+      'Fresheners & Repellents',
+      'Home & Kitchen Appliances',
+      'Dry Fruits & Nuts',
+      'MediZone',
+      'Clean & Care',
+      'Pure Honey & Naturals',
+      'Stationary Store',
+      'Pooja Needs',
+      'Masalas & Spices',
+      'Packaged Foods',
+      'Women Hygiene',
+    ];
+    const goldCategories = ['GOLD'];
+
+    const categoryMap: { [key: string]: string[] } = {
+      rice: riceCategories,
+      groceries: groceryCategories,
+      gold: goldCategories,
+      'all items': ['All Items'],
+    };
 
     const goldBarItemIds = [
       "619bd23a-0267-46da-88da-30977037225a",
       "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
     ];
 
-    let items = currentCategory.itemsResponseDtoList;
+    const activeCategoryKey = (activeCategory || "all items").toLowerCase();
+    
+    let items: Item[] = [];
+    
+    // Handle group filters
+    if (categoryMap[activeCategoryKey]) {
+      const allowedCategories = categoryMap[activeCategoryKey];
+      // Aggregate items from all categories in the group
+      items = categories
+        .filter(cat => 
+          activeCategoryKey === "all items" 
+            ? cat.categoryName !== "All Items" 
+            : allowedCategories.includes(cat.categoryName)
+        )
+        .flatMap(cat => cat.itemsResponseDtoList || []);
+    } else {
+      // Handle specific category
+      const currentCategory = categories.find(cat => cat.categoryName === activeCategory);
+      if (!currentCategory) {
+        console.log("Categories.tsx - No current category found, returning empty array");
+        return [];
+      }
+      items = currentCategory.itemsResponseDtoList || [];
+    }
 
+    // Apply weight filter if active
     if (activeWeightFilter) {
       items = items.filter((item) => {
         if (goldBarItemIds.includes(item.itemId)) {
@@ -586,6 +698,7 @@ const Categories: React.FC<CategoriesProps> = ({
       });
     }
 
+    console.log("Categories.tsx - Filtered items for category", activeCategory, ":", items.map(item => item.itemName));
     return items;
   };
 
@@ -598,42 +711,33 @@ const Categories: React.FC<CategoriesProps> = ({
       message.warning("Sorry, Maximum quantity reached.");
       return;
     }
-
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
-
     if (!userId || !accessToken) {
       message.error("Please login to update cart.");
       return;
     }
-
     try {
       const endpoint = increment
         ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
         : `${BASE_URL}/cart-service/cart/minusCartItem`;
-
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: true },
         status: { ...prev.status, [item.itemId]: status },
       }));
-
       const payload = {
         customerId: userId,
         itemId: item.itemId,
       };
-
       await axios[increment ? "post" : "patch"](endpoint, payload, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-
       await fetchCartData(item.itemId);
-
       console.log(
         `handleQuantityChange: Item ${item.itemId}, increment: ${increment}, new cartItems: `,
         cartItems
       );
-
       message.success(
         increment
           ? "Item quantity increased"
@@ -674,10 +778,72 @@ const Categories: React.FC<CategoriesProps> = ({
     );
   };
 
-  // Filter out "All Items" category
-  const filteredCategories = categories.filter(
-    (category) => category.categoryName.toLowerCase() !== "all items"
-  );
+  // Filter categories based on the activeCategory
+  const getFilteredCategories = () => {
+    const groceryCategories = [
+      'Cashew nuts upto ₹40 cashback',
+      'Essentials Mart',
+      'Health & Energy Nutritions',
+      'Baby care',
+      'Snacking',
+      'Juices',
+      'Bulb & Batteries',
+      'Indian Pickles',
+      'Monsoon Magic',
+      'Personal Care',
+      'Kitchen Elixirs',
+      'Atta & Flours',
+      'Dals & Pulses',
+      'Fresheners & Repellents',
+      'Home & Kitchen Appliances',
+      'Dry Fruits & Nuts',
+      'MediZone',
+      'Clean & Care',
+      'Pure Honey & Naturals',
+      'Stationary Store',
+      'Pooja Needs',
+      'Masalas & Spices',
+      'Packaged Foods',
+      'Women Hygiene',
+    ];
+    const riceCategories = [
+      'Organic Store',
+      'Basmati Rice',
+      'Sonamasoori',
+      'Combo Offers',
+      'Rice Container',
+      'Brown Rice',
+      'HMT',
+      'Low GI',
+      'Kolam Rice',
+    ];
+    const goldCategories = ['GOLD'];
+
+    const categoryMap: { [key: string]: string[] } = {
+      groceries: groceryCategories,
+      rice: riceCategories,
+      gold: goldCategories,
+      'all items': ['All Items'],
+    };
+
+    // Handle null activeCategory
+    const activeCategoryKey = (activeCategory || "all items").toLowerCase();
+    if (activeCategoryKey === "all items") {
+      return categories.filter(category => category.categoryName !== "All Items");
+    }
+
+    // If activeCategory is a group filter (rice, groceries, gold), return the corresponding categories
+    if (categoryMap[activeCategoryKey]) {
+      return categories.filter(category =>
+        categoryMap[activeCategoryKey].includes(category.categoryName)
+      );
+    }
+
+    // If activeCategory is a specific category, return only that category
+    return categories.filter(category =>
+      category.categoryName === activeCategory
+    );
+  };
 
   const SkeletonLoader = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
@@ -713,7 +879,6 @@ const Categories: React.FC<CategoriesProps> = ({
           }
         `}
       </style>
-
       <Modal
         title="Available Offers"
         open={isOffersModalVisible}
@@ -762,7 +927,6 @@ const Categories: React.FC<CategoriesProps> = ({
       >
         <p dangerouslySetInnerHTML={{ __html: stockModal.content }} />
       </Modal>
-
       <Modal
         title="Special Offer!"
         open={offerModal.visible}
@@ -786,9 +950,8 @@ const Categories: React.FC<CategoriesProps> = ({
           }}
         />
       </Modal>
-
       <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
-        {filteredCategories.map((category, index) => (
+        {getFilteredCategories().map((category, index) => (
           <motion.button
             key={index}
             whileHover={{ scale: 1.02 }}
@@ -800,7 +963,6 @@ const Categories: React.FC<CategoriesProps> = ({
                 : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
             }`}
           >
-            {/* Category Image or Initial - Square with rounded corners */}
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
               {category.categoryLogo || category.categoryImage ? (
                 <img
@@ -823,8 +985,6 @@ const Categories: React.FC<CategoriesProps> = ({
                 </span>
               )}
             </div>
-
-            {/* Category Name - larger, bold, and active color */}
             <p
               className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
                 activeCategory === category.categoryName
@@ -837,8 +997,6 @@ const Categories: React.FC<CategoriesProps> = ({
           </motion.button>
         ))}
       </div>
-
-      {/* Weight Filters Section */}
       {activeCategory && (
         <div className="mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -863,8 +1021,6 @@ const Categories: React.FC<CategoriesProps> = ({
           </div>
         </div>
       )}
-
-      {/* Subcategories Section */}
       {getCurrentSubCategories().length > 0 && (
         <div className="mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -890,8 +1046,6 @@ const Categories: React.FC<CategoriesProps> = ({
           </div>
         </div>
       )}
-
-      {/* Items Section */}
       <div ref={itemsRef} className="mb-6">
         {loading ? (
           <SkeletonLoader />
@@ -902,13 +1056,11 @@ const Categories: React.FC<CategoriesProps> = ({
               const isInCart = cartItems[item.itemId] > 0;
               const isLoading = loadingItems.items[item.itemId];
               const loadingStatus = loadingItems.status[item.itemId];
-
               return (
                 <div
                   key={item.itemId}
                   className="flex flex-col justify-between bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group"
                 >
-                  {/* Product Image */}
                   <div
                     className="aspect-square relative overflow-hidden bg-gray-50 cursor-pointer"
                     onClick={() => onItemClick(item)}
@@ -932,15 +1084,12 @@ const Categories: React.FC<CategoriesProps> = ({
                         </span>
                       </div>
                     )}
-
                     {discount > 0 && (
                       <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                         {discount}% OFF
                       </div>
                     )}
                   </div>
-
-                  {/* Product Details */}
                   <div className="flex flex-col flex-grow p-3 sm:p-4">
                     <div className="space-y-1">
                       <h3 className="font-semibold text-sm sm:text-base text-gray-800 line-clamp-2">
@@ -950,7 +1099,6 @@ const Categories: React.FC<CategoriesProps> = ({
                         {item.weight} {item.units}
                       </p>
                     </div>
-
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-lg font-bold text-purple-600">
@@ -962,26 +1110,8 @@ const Categories: React.FC<CategoriesProps> = ({
                           </span>
                         )}
                       </div>
-                      {/* Stock Info Button */}
-                      {/* <button
-            className="text-xs text-blue-500 underline"
-            onClick={() =>
-              setStockModal({
-                visible: true,
-                content:
-                  item.quantity === 0
-                    ? `<strong>${item.itemName}</strong> is currently <span style="color:red;">out of stock</span>.`
-                    : `Only <strong>${item.quantity}</strong> left in stock for <strong>${item.itemName}</strong>.`,
-              })
-            }
-          >
-            Stock Info
-          </button> */}
                     </div>
-
                     <div className="flex-grow"></div>
-
-                    {/* Add to Cart or Quantity Selector */}
                     <div className="pt-3 mt-auto">
                       {!isInCart ? (
                         <motion.button
@@ -1029,11 +1159,9 @@ const Categories: React.FC<CategoriesProps> = ({
                               <span className="text-sm font-bold">−</span>
                             )}
                           </motion.button>
-
                           <span className="px-3 py-1 bg-white rounded-md font-semibold text-purple-600 min-w-[2rem] text-center">
                             {cartItems[item.itemId] || 0}
                           </span>
-
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -1058,8 +1186,6 @@ const Categories: React.FC<CategoriesProps> = ({
             })}
           </div>
         )}
-
-        {/* No Items Message */}
         {!loading && getCurrentCategoryItems().length === 0 && (
           <div className="text-center py-12">
             <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">

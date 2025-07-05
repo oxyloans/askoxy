@@ -258,7 +258,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           >
             Referral Program
           </button>
-       oloog</div>
+       </div>
 
         {/* Shadow when scrolled */}
         <div
@@ -768,18 +768,39 @@ const Ricebags: React.FC = () => {
         const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
 
         // Create the final categories array with "All Items" first
-        const finalCategories: Category[] = [
-          {
-            categoryName: "All Items",
-            categoryImage: null,
-            itemsResponseDtoList: sortedUniqueItems,
-            subCategories: [],
-          },
-          ...allCategories.map((category) => ({
-            ...category,
-            itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
-          })),
-        ];
+       const riceCategoryNames = [
+          'Combo Offers',
+  'Organic Store',
+  'Basmati Rice',
+  'Sonamasoori',
+  'Rice Container',
+  'Brown Rice',
+  'HMT',
+  'Low GI',
+  'Kolam Rice',
+];
+
+// Separate rice categories and others
+const riceCategories = allCategories.filter(cat => riceCategoryNames.includes(cat.categoryName));
+const otherCategories = allCategories.filter(cat => !riceCategoryNames.includes(cat.categoryName));
+
+// Create final categories with "All Items" first, then RICE, then others
+const finalCategories: Category[] = [
+  {
+    categoryName: "All Items",
+    categoryImage: null,
+    itemsResponseDtoList: sortedUniqueItems,
+    subCategories: [],
+  },
+  ...riceCategories.map(category => ({
+    ...category,
+    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
+  })),
+  ...otherCategories.map(category => ({
+    ...category,
+    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
+  })),
+];
 
         setCategories(finalCategories);
         setFilteredCategories(finalCategories);

@@ -272,11 +272,36 @@ const CoursesPage: React.FC<{
 
       if (response.data && response.data.countries) {
         const countriesData = response.data.countries;
-        const sortedCountries = [...countriesData].sort(
-          (a: Country, b: Country) => a.countryName.localeCompare(b.countryName)
-        );
-        setCountries(sortedCountries);
-        setFilteredCountries(sortedCountries);
+        const priorityOrder = [
+  { countryName: "United States", alias: "USA" },
+  { countryName: "United Kingdom", alias: "UK" },
+  { countryName: "Canada", alias: "CAN" },
+  { countryName: "Germany", alias: "GERMANY" },
+  { countryName: "Ireland", alias: "IRL" },
+  { countryName: "Australia", alias: "AU" }
+];
+
+const sortedCountries = [
+  ...priorityOrder
+    .map((priority) =>
+      countriesData.find(
+        (c) =>
+          c.countryName === priority.countryName ||
+          c.name === priority.alias
+      )
+    )
+    .filter((c): c is Country => c !== undefined),
+  ...countriesData.filter(
+    (c) =>
+      !priorityOrder.some(
+        (priority) =>
+          c.countryName === priority.countryName || c.name === priority.alias
+      )
+  ).sort((a, b) => a.countryName.localeCompare(b.countryName))
+];
+
+setCountries(sortedCountries);
+setFilteredCountries(sortedCountries);
         setAuthRequired(false);
 
         // Check if country was passed in state

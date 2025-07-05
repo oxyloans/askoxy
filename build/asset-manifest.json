@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.c4a69e3d.css",
-    "main.js": "/static/js/main.bd2df961.js",
+    "main.css": "/static/css/main.cb8a5d7a.css",
+    "main.js": "/static/js/main.d0c9e9ca.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
     "static/media/page1.png": "/static/media/page1.377acc651cd141d1516d.png",
@@ -80,8 +80,8 @@
     "static/media/testimonial16.png": "/static/media/testimonial16.c0b4f2d3618261aae6b0.png",
     "static/media/essentialsmart.png": "/static/media/essentialsmart.75a14b78a4821d3de860.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
+    "static/media/rice offers.png": "/static/media/rice offers.9459bd10c13aa2d74644.png",
     "static/media/35kg1.png": "/static/media/35kg1.be97a2698b296f701f04.png",
-    "static/media/rice offers.png": "/static/media/rice offers.baf0e43bf14d66e85890.png",
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.85705e5e99c29f138987.png",
     "static/media/cashewoffer1.png": "/static/media/cashewoffer1.c9cfa294e808a6f745a9.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
@@ -133,11 +133,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.c4a69e3d.css.map": "/static/css/main.c4a69e3d.css.map",
-    "main.bd2df961.js.map": "/static/js/main.bd2df961.js.map"
+    "main.cb8a5d7a.css.map": "/static/css/main.cb8a5d7a.css.map",
+    "main.d0c9e9ca.js.map": "/static/js/main.d0c9e9ca.js.map"
   },
   "entrypoints": [
-    "static/css/main.c4a69e3d.css",
-    "static/js/main.bd2df961.js"
+    "static/css/main.cb8a5d7a.css",
+    "static/js/main.d0c9e9ca.js"
   ]
 }

@@ -638,50 +638,70 @@ const Home: React.FC = () => {
     },
   };
 
-  const headerImages: HeaderImage[] = [
-    {
-      id: "Cashback1",
-      src: CB,
-      alt: "Products",
-      path: "/main/dashboard/products",
+ const headerImages: HeaderImage[] = [
+  {
+    id: "Cashback1",
+    src: CB,
+    alt: "Products",
+    path: "/main/dashboard/products",
+    onClick: () => {
+      navigate("/main/dashboard/products", {
+        state: { selectedCategory: "All Items" }, // default fallback
+      });
     },
-    {
-      id: "Cashew Offer",
-      alt: "Products",
-      src: Cashew,
-      path: "/main/dashboard/products",
-      onClick: () => {
-        setActiveCategory("Groceries");
-        navigate("/main/dashboard/products");
-      },
+  },
+  {
+    id: "Cashew Offer",
+    alt: "Products",
+    src: Cashew,
+    path: "/main/dashboard/products",
+    onClick: () => {
+      navigate("/main/dashboard/products", {
+        state: { selectedCategory: "Cashew nuts upto ₹40 cashback" },
+      });
     },
-    {
-      id: "Cashback2",
-      src: Riceoffers,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=5.0",
+  },
+ {
+  id: "Cashback2",
+  src: Riceoffers,
+  alt: "Products",
+  path: "/main/dashboard/products?type=RICE&weight=5.0",
+  onClick: () => {
+    navigate("/main/dashboard/products?type=RICE&weight=5.0");
+  }
+},
+  {
+    id: "o1",
+    src: O6,
+    alt: "Products",
+    path: "/main/dashboard/products?weight=26.0",
+    onClick: () => {
+      navigate("/main/dashboard/products?type=RICE&weight=26.0");
     },
-    {
-      id: "o1",
-      src: O6,
-      alt: "Products",
-      path: "/main/dashboard/products?weight=26.0",
+  },
+  {
+    id: "o6",
+    src: O9,
+    alt: "Products",
+    path: "/main/dashboard/products",
+    onClick: () => {
+      navigate("/main/dashboard/products", {
+        state: { selectedCategory: "Essentials Mart" },
+      });
     },
-    {
-      id: "o6",
-      src: O9,
-      alt: "Products",
-      path: "/main/dashboard/products",
+  },
+  {
+    id: "o2",
+    src: O8,
+    alt: "Study Abroad",
+    path: "/studyabroad",
+    onClick: () => {
+      navigate("/studyabroad");
     },
-    {
-      id: "o2",
-      src: O8,
-      alt: "Study Abroad",
-      path: "/studyabroad",
-    },
-  ];
+  },
+];
 
-  const handleItemClick = (item: Item | DashboardItem) => {
+const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
       navigate(`/main/itemsdisplay/${item.itemId}`, {
         state: {
@@ -1170,7 +1190,15 @@ const Home: React.FC = () => {
   }, [products, displayCount, searchTerm]);
 
   const viewAllProducts = () => {
-    navigate("/main/dashboard/products");
+    // Use the activeCategory directly without mapping to a single category
+    const normalizedCategory = activeCategory
+      ? activeCategory.toLowerCase()
+      : "all items";
+    navigate(
+      `/main/dashboard/products?category=${encodeURIComponent(
+        normalizedCategory
+      )}`
+    );
   };
 
   const viewAllServices = () => {
