@@ -150,18 +150,19 @@ const Categories: React.FC<CategoriesProps> = ({
    const queryParams = new URLSearchParams(location.search);
 const categoryFromQuery = queryParams.get("category") || location.state?.selectedCategory || null;
 
-    // Define filter groups
-     const riceCategories = [
-      'Organic Store',
-      'Basmati Rice',
-      'Sonamasoori',
-      'Combo Offers',
-      'Rice Container',
-      'Brown Rice',
-      'HMT',
-      'Low GI',
-      'Kolam Rice',
-    ];
+   const riceCategories = [
+  'Combo Offers',
+  ' Basmati Rice',
+  'Sonamasoori',
+  'Brown Rice',
+  'HMT',
+  'Low GI',
+  'Kolam Rice',
+  'Organic Rice',
+  'Rice Container',
+  'Organic Store',  // ✅ Newly added
+];
+
     const groceryCategories = [
       'Cashew nuts upto ₹40 cashback',
       'Essentials Mart',
@@ -237,7 +238,7 @@ const categoryFromQuery = queryParams.get("category") || location.state?.selecte
     }
   }, [location.search, categories, setActiveCategory]);
 
-  const handleCategoryClick = (categoryName: string) => {
+const handleCategoryClick = (categoryName: string) => {
     if (categoryName === activeCategory) {
       setActiveCategory("");
       onCategoryClick("");
@@ -612,16 +613,18 @@ const categoryFromQuery = queryParams.get("category") || location.state?.selecte
 
   const getCurrentCategoryItems = () => {
     const riceCategories = [
-      'Organic Store',
-      'Basmati Rice',
-      'Sonamasoori',
-      'Combo Offers',
-      'Rice Container',
-      'Brown Rice',
-      'HMT',
-      'Low GI',
-      'Kolam Rice',
-    ];
+  'Combo Offers',
+  ' Basmati Rice',
+  'Sonamasoori',
+  'Brown Rice',
+  'HMT',
+  'Low GI',
+  'Kolam Rice',
+  'Organic Rice',
+  'Rice Container',
+  'Organic Store',  // ✅ Newly added
+];
+
     const groceryCategories = [
       'Cashew nuts upto ₹40 cashback',
       'Essentials Mart',
@@ -806,17 +809,18 @@ const categoryFromQuery = queryParams.get("category") || location.state?.selecte
       'Packaged Foods',
       'Women Hygiene',
     ];
-    const riceCategories = [
-      'Organic Store',
-      'Basmati Rice',
-      'Sonamasoori',
-      'Combo Offers',
-      'Rice Container',
-      'Brown Rice',
-      'HMT',
-      'Low GI',
-      'Kolam Rice',
-    ];
+   const riceCategories = [
+  'Combo Offers',
+  ' Basmati Rice',
+  'Sonamasoori',
+  'Brown Rice',
+  'HMT',
+  'Low GI',
+  'Kolam Rice',
+  'Organic Rice',
+  'Rice Container',
+  'Organic Store',  // ✅ Newly added
+];
     const goldCategories = ['GOLD'];
 
     const categoryMap: { [key: string]: string[] } = {
@@ -951,51 +955,89 @@ const categoryFromQuery = queryParams.get("category") || location.state?.selecte
         />
       </Modal>
       <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
-        {getFilteredCategories().map((category, index) => (
-          <motion.button
-            key={index}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleCategoryClick(category.categoryName)}
-            className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
-              activeCategory === category.categoryName
-                ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
-                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
-            }`}
-          >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
-              {category.categoryLogo || category.categoryImage ? (
-                <img
-                  src={(category.categoryLogo || category.categoryImage) ?? ""}
-                  alt={category.categoryName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.remove();
-                    const span = document.createElement("span");
-                    span.innerText = category.categoryName.charAt(0);
-                    span.className =
-                      "text-purple-600 font-bold text-[10px] sm:text-sm";
-                    e.currentTarget.parentElement?.appendChild(span);
-                  }}
-                />
-              ) : (
-                <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
-                  {category.categoryName.charAt(0)}
-                </span>
-              )}
-            </div>
-            <p
-              className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
-                activeCategory === category.categoryName
-                  ? "text-purple-600"
-                  : "text-gray-700"
-              }`}
-            >
-              {category.categoryName}
-            </p>
-          </motion.button>
-        ))}
+       <>
+  {/* All Categories Button at the top */}
+  <motion.button
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={() => {
+      setActiveCategory("all items");
+      onCategoryClick("all items");
+      setTimeout(() => {
+        if (itemsRef.current) {
+          itemsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }}
+    className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
+      activeCategory?.toLowerCase() === "all items"
+        ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
+        : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+    }`}
+  >
+    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
+      <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
+        All
+      </span>
+    </div>
+    <p
+      className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+        activeCategory?.toLowerCase() === "all items"
+          ? "text-purple-600"
+          : "text-gray-700"
+      }`}
+    >
+      All Categories
+    </p>
+  </motion.button>
+
+  {/* Now only 1 loop for other categories */}
+  {getFilteredCategories().map((category, index) => (
+    <motion.button
+      key={index}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => handleCategoryClick(category.categoryName)}
+      className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
+        activeCategory === category.categoryName
+          ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
+          : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+      }`}
+    >
+      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
+        {category.categoryLogo || category.categoryImage ? (
+          <img
+            src={(category.categoryLogo || category.categoryImage) ?? ""}
+            alt={category.categoryName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.remove();
+              const span = document.createElement("span");
+              span.innerText = category.categoryName.charAt(0);
+              span.className =
+                "text-purple-600 font-bold text-[10px] sm:text-sm";
+              e.currentTarget.parentElement?.appendChild(span);
+            }}
+          />
+        ) : (
+          <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
+            {category.categoryName.charAt(0)}
+          </span>
+        )}
+      </div>
+      <p
+        className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+          activeCategory === category.categoryName
+            ? "text-purple-600"
+            : "text-gray-700"
+        }`}
+      >
+        {category.categoryName}
+      </p>
+    </motion.button>
+  ))}
+</>
       </div>
       {activeCategory && (
         <div className="mb-6">

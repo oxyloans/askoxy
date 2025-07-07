@@ -178,7 +178,7 @@ import JobDetails from "./components/JobDetails";
 import AddJob from "./AskoxyAdmin/AddJob";
 import VersionUpdate from "./PartnerWeb/VersionUpdate";
 import OfferImagesUpdate from "./PartnerWeb/OfferImagesUpdate";
-import JobsAdminPage from "./AskoxyAdmin/Alljobdetials";
+import JobsAdminPage from "./AskoxyAdmin/Alljobdetails";
 
 const App: React.FC = () => {
   const location = useLocation();

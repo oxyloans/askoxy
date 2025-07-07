@@ -3,7 +3,11 @@ import { motion } from "framer-motion";
 import { MailIcon, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { submitInterest, checkUserInterest, submitWriteToUsQuery } from "./servicesapi";
+import {
+  submitInterest,
+  checkUserInterest,
+  submitWriteToUsQuery,
+} from "./servicesapi";
 import { Button, message, Select } from "antd";
 
 interface Job {
@@ -78,7 +82,7 @@ const JobDetails: React.FC = () => {
       const job = jobs.find((job) => job.id === id);
       setSelectedJob(job || null);
     }
-  }, [id]);
+  }, [id, jobs]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -96,7 +100,6 @@ const JobDetails: React.FC = () => {
       if (userId && jobs.length > 0) {
         const appliedJobsSet = new Set<string>();
 
-        // Check each job company name
         for (const job of jobs) {
           const hasApplied = await checkUserInterest(userId, job.companyName);
           if (hasApplied) {
@@ -292,8 +295,7 @@ const JobDetails: React.FC = () => {
     );
 
     if (success) {
-      // setSuccessOpen(true);
-      message.success("Query submitted successfully")
+      message.success("Query submitted successfully");
       setIsOpen(false);
     } else {
       message.error("Failed to send query. Please try again.");
@@ -326,9 +328,29 @@ const JobDetails: React.FC = () => {
     return new Date(timestamp).toLocaleDateString();
   };
 
+  const autoFormatDescription = (text: string) => {
+    const lines = text.split("\n");
+
+    const formattedLines = lines.map((line) => {
+      const trimmed = line.trim();
+
+      const isLikelyHeading =
+        (/^[A-Z0-9\s&.,'()\-]+$/.test(trimmed) && trimmed.length > 0) ||
+        trimmed.endsWith(":") ||
+        (trimmed.length < 60 && /^[A-Z]/.test(trimmed));
+
+      if (isLikelyHeading) {
+        return `<span class="font-semibold text-gray-900 block mt-4 mb-1">${trimmed}</span>`;
+      }
+
+      return trimmed;
+    });
+
+    return formattedLines.join("\n");
+  };
+
   const handleJobSelect = (job: Job) => {
     setSelectedJob(job);
-    // Smooth scroll to top
     window.scrollTo({
       top: 400,
       behavior: "smooth",
@@ -368,13 +390,9 @@ const JobDetails: React.FC = () => {
           <h4 className="font-semibold text-lg text-purple-900 mb-1 line-clamp-1">
             {job.jobTitle}
           </h4>
-
-          {/* Company Name */}
           <p className="text-gray-700 text-sm font-medium mb-3 truncate">
             {job.companyName.toUpperCase()}.
           </p>
-
-          {/* Info Row */}
           <div className="flex flex-col items-start text-sm text-gray-500">
             <span className="flex items-center gap-1">
               ⏰ Exp: {job.experience}
@@ -402,7 +420,7 @@ const JobDetails: React.FC = () => {
                 job.companyLogo ||
                 "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
               }
-              className="max-w-full max-h-full object-contain"
+              className="w-40 h-20 object-contain transition-transform duration-300"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null;
@@ -412,7 +430,6 @@ const JobDetails: React.FC = () => {
             />
           </div>
         </div>
-
         <div className="flex justify-center items-center px-4 pb-3">
           <div
             className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
@@ -422,19 +439,16 @@ const JobDetails: React.FC = () => {
             </span>
           </div>
         </div>
-
         <div className="px-4 pb-1">
           <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
             {job.jobTitle}
           </h3>
         </div>
-
         <div className="px-2 pb-2">
           <div className="text-sm font-bold text-gray-700 text-center bg-gray-50 py-2 px-3 rounded-lg">
             💼 {job.jobDesignation}
           </div>
         </div>
-
         <div className="px-4 pb-3 space-y-1 text-center">
           <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
             📍 Loc: {job.jobLocations}
@@ -443,7 +457,6 @@ const JobDetails: React.FC = () => {
             ⏰ Exp: {job.experience}
           </div>
         </div>
-
         <div className="px-4 pb-5 mt-auto flex justify-center">
           <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200">
             View Job
@@ -455,17 +468,15 @@ const JobDetails: React.FC = () => {
 
   const JobDetailsComponent = ({ job }: { job: Job }) => (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6 my-8 border border-gray-100 space-y-6">
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-6 rounded-xl shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="space-y-1">
               <h1 className="text-2xl font-bold text-white">{job.jobTitle}</h1>
-              <h2 className="text-base font-semibold text-blue-100">
+              <h2 className="text-baseCS font-semibold text-blue-100">
                 {job.jobDesignation}
               </h2>
             </div>
-
             <div className="mt-3 inline-block bg-white text-blue-700 px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm border border-white/20">
               {job.companyName}
             </div>
@@ -487,8 +498,6 @@ const JobDetails: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Info Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { icon: "📍", label: "Location", value: job.jobLocations },
@@ -512,8 +521,6 @@ const JobDetails: React.FC = () => {
           </div>
         ))}
       </div>
-
-      {/* Secondary Info */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
           { label: "Industry", value: job.industry },
@@ -541,19 +548,19 @@ const JobDetails: React.FC = () => {
           </div>
         ))}
       </div>
-
-      {/* Description */}
-      <div className="bg-gray-50 p-5 rounded-2xl">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+      <div className="bg-gray-50 p-5 rounded-2xl h-64 flex flex-col">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center shrink-0">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
-          About the Role
+          Job Description
         </h3>
-        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-          {job.description}
-        </p>
+        <div
+          className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto pr-1"
+          style={{ flex: 1 }}
+          dangerouslySetInnerHTML={{
+            __html: autoFormatDescription(job.description),
+          }}
+        />
       </div>
-
-      {/* Skills */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
@@ -570,8 +577,6 @@ const JobDetails: React.FC = () => {
           ))}
         </div>
       </div>
-
-      {/* Benefits */}
       <div className="bg-gray-50 p-5 rounded-2xl">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
@@ -589,7 +594,6 @@ const JobDetails: React.FC = () => {
           ))}
         </div>
       </div>
-
       <div className="bg-blue-50 p-5 rounded-2xl">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
@@ -602,7 +606,6 @@ const JobDetails: React.FC = () => {
           </span>
         </div>
       </div>
-      {/* CTA Button */}
       <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
         <button
           className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all transform hover:scale-105 shadow ${
@@ -636,14 +639,11 @@ const JobDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-10 py-6 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl shadow-sm">
           <div className="mb-2 text-4xl sm:text-5xl">🎓</div>
-
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
             Find Your Dream Job
           </h1>
-
           <div className="flex flex-wrap justify-center gap-3 mt-4">
             <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
               <span className="text-xl">🚀</span>
@@ -665,8 +665,6 @@ const JobDetails: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Search Bar */}
         <div className="mb-6 relative">
           <div className="max-w-3xl mx-auto">
             <div className="relative">
@@ -681,7 +679,6 @@ const JobDetails: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="mb-2">
           <div className="flex flex-wrap gap-3 justify-center items-center">
             {(
@@ -736,8 +733,6 @@ const JobDetails: React.FC = () => {
                 </select>
               </div>
             ))}
-
-            {/* Clear Button */}
             <button
               onClick={clearFilters}
               className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm hover:from-red-600 hover:to-pink-600 rounded-xl px-5 py-2 font-medium transition-all duration-200"
@@ -745,7 +740,6 @@ const JobDetails: React.FC = () => {
               🗑 Clear
             </button>
           </div>
-
           <div className="flex justify-end mt-2">
             <Button
               onClick={handleWriteToUs}
@@ -756,128 +750,41 @@ const JobDetails: React.FC = () => {
             </Button>
           </div>
         </div>
-
         {selectedJob ? (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
-                  <div className="mb-6">
-                    <div className="space-y-2 max-h-100 overflow-y-auto">
-                      {filteredJobs
-                        .filter(
-                          (job) =>
-                            job.id !== selectedJob.id &&
-                            job.industry === selectedJob.industry
-                        )
-                        .slice(0, 4)
-                        .map((job) => (
-                          <JobCard key={job.id} job={job} isCompact />
-                        ))}
-                    </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="mt-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      Other Opportunities
+                    </h3>
+                    <button
+                      onClick={() => setSelectedJob(null)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    >
+                      🔍 View All
+                    </button>
                   </div>
-
-                  <div className="mt-8">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-800">
-                        Other Opportunities
-                      </h3>
-                      <button
-                        onClick={() => setSelectedJob(null)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                      >
-                        🔍 View All
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      {filteredJobs
-                        .filter((job) => {
-                          if (job.id === selectedJob?.id) return false;
-
-                          // Exclude jobs already shown in the similar jobs section above
-                          const similarJobIds = filteredJobs
-                            .filter(
-                              (j) =>
-                                j.id !== selectedJob.id &&
-                                j.industry === selectedJob.industry
-                            )
-                            .slice(0, 4)
-                            .map((j) => j.id);
-
-                          return !similarJobIds.includes(job.id);
-                        })
-                        .slice(0, 6)
-                        .map((job) => (
-                          <JobCard key={job.id} job={job} isCompact />
-                        ))}
-                    </div>
+                  <div className="space-y-2 max-h-100 overflow-y-auto">
+                    {filteredJobs
+                      .filter(
+                        (job) =>
+                          job.id !== selectedJob.id &&
+                          job.industry === selectedJob.industry
+                      )
+                      .slice(0, 8)
+                      .map((job) => (
+                        <JobCard key={job.id} job={job} isCompact />
+                      ))}
                   </div>
                 </div>
-              </div>
-              <div className="lg:col-span-2">
-                <JobDetailsComponent job={selectedJob} />
               </div>
             </div>
-
-            {(() => {
-              const remainingJobs = filteredJobs.filter((job) => {
-                // Exclude selected job
-                if (job.id === selectedJob?.id) return false;
-
-                // Get similar jobs (shown in top section of left sidebar)
-                const similarJobIds = filteredJobs
-                  .filter(
-                    (j) =>
-                      j.id !== selectedJob.id &&
-                      j.industry === selectedJob.industry
-                  )
-                  .slice(0, 4)
-                  .map((j) => j.id);
-
-                // Get other opportunities jobs (shown in bottom section of left sidebar)
-                const otherOpportunityIds = filteredJobs
-                  .filter((j) => {
-                    if (j.id === selectedJob?.id) return false;
-                    return !similarJobIds.includes(j.id);
-                  })
-                  .slice(0, 5) // Match the slice(0, 5) from "Other Opportunities"
-                  .map((j) => j.id);
-
-                // Exclude both similar jobs and other opportunity jobs
-                const allLeftSidebarJobIds = [
-                  ...similarJobIds,
-                  ...otherOpportunityIds,
-                ];
-                return !allLeftSidebarJobIds.includes(job.id);
-              });
-
-              return remainingJobs.length > 0 ? (
-                <div className="mt-12">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 relative">
-                      More Job Opportunities
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-                    </h2>
-                    <p className="text-gray-600 mt-4">
-                      Discover exciting career opportunities tailored for you
-                    </p>
-                  </div>
-
-                  <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {remainingJobs.map((job) => (
-                      <JobCard key={job.id} job={job} />
-                    ))}
-                  </motion.div>
-                </div>
-              ) : null;
-            })()}
-          </>
+            <div className="lg:col-span-2">
+              <JobDetailsComponent job={selectedJob} />
+            </div>
+          </div>
         ) : (
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
@@ -890,7 +797,46 @@ const JobDetails: React.FC = () => {
             ))}
           </motion.div>
         )}
+        {selectedJob &&
+          (() => {
+            const otherOpportunityIds = filteredJobs
+              .filter(
+                (job) =>
+                  job.id !== selectedJob.id &&
+                  job.industry === selectedJob.industry
+              )
+              .slice(0, 8)
+              .map((j) => j.id);
+            const remainingJobs = filteredJobs.filter(
+              (job) =>
+                job.id !== selectedJob?.id &&
+                !otherOpportunityIds.includes(job.id)
+            );
 
+            return remainingJobs.length > 0 ? (
+              <div className="mt-12">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 relative">
+                    More Job Opportunities
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  </h2>
+                  <p className="text-gray-600 mt-4">
+                    Discover exciting career opportunities tailored for you
+                  </p>
+                </div>
+                <motion.div
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {remainingJobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </motion.div>
+              </div>
+            ) : null;
+          })()}
         {filteredJobs.length === 0 && (
           <div className="text-center py-16 bg-white/60 backdrop-blur-sm rounded-3xl shadow-sm">
             <div className="text-8xl mb-6">🎯</div>
@@ -910,7 +856,6 @@ const JobDetails: React.FC = () => {
           </div>
         )}
       </div>
-
       {isOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
           <div className="relative bg-white rounded-lg shadow-md p-6 w-96">

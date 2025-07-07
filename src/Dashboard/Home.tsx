@@ -222,6 +222,14 @@ const Home: React.FC = () => {
     [setCount]
   );
 
+  const weightFilters = [
+  { label: "1 KG", value: "1.0" },
+  { label: "5 KG", value: "5.0" },
+  { label: "10 KG", value: "10.0" },
+  { label: "26 KG", value: "26.0" },
+];
+const [selectedWeight, setSelectedWeight] = useState<string | null>(null);
+
   const fetchCartData = useCallback(
     async (itemId: string = "") => {
       const userId = localStorage.getItem("userId");
@@ -1173,21 +1181,27 @@ const handleItemClick = (item: Item | DashboardItem) => {
     );
   };
 
-  useEffect(() => {
-    const validProducts = products.filter((product) => {
-      if (product.quantity === undefined || product.quantity <= 0) return false;
+useEffect(() => {
+  let validProducts = products.filter((product) => {
+    if (product.quantity === undefined || product.quantity <= 0) return false;
 
-      if (searchTerm.trim() !== "") {
-        return product.title.toLowerCase().includes(searchTerm.toLowerCase());
-      }
+    if (searchTerm.trim() !== "") {
+      return product.title.toLowerCase().includes(searchTerm.toLowerCase());
+    }
 
-      return true;
-    });
+    return true;
+  });
 
-    setDisplayProducts(
-      validProducts.slice(0, Math.min(displayCount, validProducts.length))
-    );
-  }, [products, displayCount, searchTerm]);
+ if (selectedWeight && activeCategory === "Rice") {
+  validProducts = validProducts.filter(
+    (product) =>
+      parseFloat(product.weight ?? "0") === parseFloat(selectedWeight)
+  );
+  }
+
+  setDisplayProducts(validProducts.slice(0, Math.min(displayCount, validProducts.length)));
+}, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
+
 
   const viewAllProducts = () => {
     // Use the activeCategory directly without mapping to a single category
@@ -1238,6 +1252,7 @@ const handleItemClick = (item: Item | DashboardItem) => {
       setProducts(productItems);
       setDisplayCount(5);
       setSearchTerm("");
+      setSelectedWeight(null); 
       setTimeout(() => {
         setProductsLoading(false);
       }, 300);
@@ -1588,6 +1603,27 @@ const handleItemClick = (item: Item | DashboardItem) => {
             </AnimatePresence>
           </div>
 
+          {activeCategory === "Rice" && (
+  <div className="mb-6 flex flex-wrap gap-3">
+    {weightFilters.map((filter) => (
+      <button
+        key={filter.value}
+        onClick={() =>
+          setSelectedWeight(
+            selectedWeight === filter.value ? null : filter.value
+          )
+        }
+        className={`px-3 py-1 rounded-full text-sm border transition ${
+          selectedWeight === filter.value
+            ? "bg-purple-600 text-white border-purple-600"
+            : "bg-white text-gray-700 border-gray-300"
+        }`}
+      >
+        {filter.label}
+      </button>
+    ))}
+  </div>
+)}
           {/* Product Items (Shown when a category is selected) */}
           {activeCategory && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">

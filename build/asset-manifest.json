@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.cb8a5d7a.css",
-    "main.js": "/static/js/main.d0c9e9ca.js",
+    "main.css": "/static/css/main.8d66181a.css",
+    "main.js": "/static/js/main.b62af055.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
     "static/media/page1.png": "/static/media/page1.377acc651cd141d1516d.png",
@@ -12,7 +12,7 @@
     "static/media/R2.png": "/static/media/R2.3cd78d49f9e9f3813127.png",
     "static/media/rd.png": "/static/media/rd.c6cdc69514fbb8484b3f.png",
     "static/media/heroimg3.png": "/static/media/heroimg3.9e623f6b9910c2a08a0d.9e623f6b9910c2a08a0d.png",
-    "static/media/megahero.png": "/static/media/megahero.f13cca3a3ad3ee8b4e09.png",
+    "static/media/megahero.png": "/static/media/megahero.0ffa008b3581d94e4cc0.png",
     "static/media/genai.png": "/static/media/genai.f75b009be753986cc852.png",
     "static/media/bmvcoin.png": "/static/media/bmvcoin.d4b8d7a173edac896cdc.png",
     "static/media/climatecrisis.png": "/static/media/climatecrisis.32cbe69d700774037890.png",
@@ -133,11 +133,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.cb8a5d7a.css.map": "/static/css/main.cb8a5d7a.css.map",
-    "main.d0c9e9ca.js.map": "/static/js/main.d0c9e9ca.js.map"
+    "main.8d66181a.css.map": "/static/css/main.8d66181a.css.map",
+    "main.b62af055.js.map": "/static/js/main.b62af055.js.map"
   },
   "entrypoints": [
-    "static/css/main.cb8a5d7a.css",
-    "static/js/main.d0c9e9ca.js"
+    "static/css/main.8d66181a.css",
+    "static/js/main.b62af055.js"
   ]
 }

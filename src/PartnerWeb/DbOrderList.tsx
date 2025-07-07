@@ -284,6 +284,61 @@ const DeliveryBoyOrders: React.FC = () => {
     }
   }, []);
 
+  // 👇 Move this outside your column definition, in the component file
+  const formatDeliveryTime = (timeStr: string) => {
+    if (!timeStr) return "N/A";
+
+    const [days = 0, hours = 0, minutes = 0] = timeStr.split(":").map(Number);
+
+    const parts: React.ReactNode[] = [];
+
+    if (days > 0) {
+      parts.push(
+        <React.Fragment key="days">
+          <span className="text-green-600 font-semibold">{days}</span> day
+          {days > 1 ? "s" : ""}
+        </React.Fragment>
+      );
+    }
+
+    if (hours > 0) {
+      parts.push(
+        <React.Fragment key="hours">
+          <span className="text-green-600 font-semibold">{hours}</span> hr
+          {hours > 1 ? "s" : ""}
+        </React.Fragment>
+      );
+    }
+
+    if (minutes > 0) {
+      parts.push(
+        <React.Fragment key="minutes">
+          <span className="text-green-600 font-semibold">{minutes}</span> min
+          {minutes > 1 ? "s" : ""}
+        </React.Fragment>
+      );
+    }
+
+    if (parts.length === 0) {
+      return (
+        <>
+          <span className="text-green-600 font-semibold">0</span> min
+        </>
+      );
+    }
+
+    return (
+      <>
+        {parts.map((part, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && " "}
+            {part}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
+
   const isPickedUpOrder = (order: Order): order is PickedUpOrder => {
     return "totalAmount" in order && order.orderStatus === "PickedUp";
   };
@@ -314,7 +369,7 @@ const DeliveryBoyOrders: React.FC = () => {
           <div className="flex flex-col">
             <Typography.Text
               strong
-              className="text-blue-600 cursor-pointer hover:underline"
+              className="text-blue-600 text-lg cursor-pointer hover:underline"
               onClick={() => handleOrderDetails(order)}
             >
               #{order.uniqueId || order.orderId.slice(-4)}
@@ -390,73 +445,21 @@ const DeliveryBoyOrders: React.FC = () => {
         ),
         dataIndex: "orderDate",
         key: "orderDate",
-        width: 110,
+        width: 140,
         ellipsis: true,
         render: (_: string, record: any) => {
-          const formatDeliveryTime = (timeStr: string) => {
-            if (!timeStr) return "N/A";
-
-            const [days = 0, hours = 0, minutes = 0] = timeStr
-              .split(":")
-              .map(Number);
-
-            const parts: React.ReactNode[] = [];
-
-            if (days > 0)
-              parts.push(
-                <React.Fragment key="days">
-                  <span className="text-green-600 font-semibold">{days}</span>{" "}
-                  day
-                  {days > 1 ? "s" : ""}
-                </React.Fragment>
-              );
-
-            if (hours > 0)
-              parts.push(
-                <React.Fragment key="hours">
-                  <span className="text-green-600 font-semibold">{hours}</span>{" "}
-                  hr{hours > 1 ? "s" : ""}
-                </React.Fragment>
-              );
-            if (minutes > 0)
-              parts.push(
-                <React.Fragment key="minutes">
-                  <span className="text-green-600 font-semibold">
-                    {minutes}
-                  </span>{" "}
-                  min{minutes > 1 ? "s" : ""}
-                </React.Fragment>
-              );
-
-            if (parts.length === 0)
-              return (
-                <>
-                  <span className="text-green-600 font-semibold">0</span> min
-                </>
-              );
-
-            return (
-              <>
-                {parts.map((part, index) => (
-                  <React.Fragment key={index}>
-                    {index > 0 && " "}
-                    {part}
-                  </React.Fragment>
-                ))}
-              </>
-            );
-          };
-
           return (
             <div className="text-gray-800">
-              <Text className="text-gray-700">
+              {/* Formatted Date */}
+              <div className="text-gray-700">
                 {new Date(record.orderDate).toLocaleDateString("en-US", {
                   day: "numeric",
-                  month: "numeric",
+                  month: "long",
                   year: "numeric",
                 })}
-              </Text>
-              <br />
+              </div>
+
+              {/* Delivery Time (if applicable) */}
               {type === "delivered" && record.deliveryTime?.trim() && (
                 <div className="text-sm text-gray-500 mt-1 leading-tight">
                   Delivered in
@@ -604,7 +607,7 @@ const DeliveryBoyOrders: React.FC = () => {
               onChange={(e) => handleSearchOrderId(e.target.value)}
               allowClear
             />
-          </div>  
+          </div>
         </div>
 
         {messages && (

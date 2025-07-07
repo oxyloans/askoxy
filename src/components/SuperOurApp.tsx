@@ -1,23 +1,23 @@
-import React from 'react';
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 // Import images for 9 grid items
-import s1 from '../assets/img/s1.png';
-import s2 from '../assets/img/s2.png';
-import s3 from '../assets/img/s3.png';
-import s4 from '../assets/img/s4.png';
-import s5 from '../assets/img/s5.png';
-import s6 from '../assets/img/s6.png';
-import s7 from '../assets/img/s7.png';
-import s8 from '../assets/img/s8.png';
-import s9 from '../assets/img/s9.png';
+import s1 from "../assets/img/s1.png";
+import s2 from "../assets/img/s2.png";
+import s3 from "../assets/img/s3.png";
+import s4 from "../assets/img/s4.png";
+import s5 from "../assets/img/s5.png";
+import s6 from "../assets/img/s6.png";
+import s7 from "../assets/img/s7.png";
+import s8 from "../assets/img/s8.png";
+import s9 from "../assets/img/s9.png";
 
 // Left side big image
-import leftImage from '../assets/img/megahero.png';
+import leftImage from "../assets/img/megahero.png";
 
 // Two background PNGs for decorative elements
-import purpleLines from '../assets/img/purplelines.png';
-import goldLines from '../assets/img/goldlines.png';
+import purpleLines from "../assets/img/purplelines.png";
+import goldLines from "../assets/img/goldlines.png";
 
 // Create mockImages object from the imported images
 const mockImages = {
@@ -41,6 +41,12 @@ const gridImages = [
     src: mockImages.s1,
     route: "/aiblockchainanditservices",
     title: "AI | Blockchain\n& IT Services",
+  },
+  {
+    id: "s8",
+    src: mockImages.s8,
+    route: "/glms",
+    title: "AI - Blogs, Jobs\n and Training",
   },
   {
     id: "s2",
@@ -68,12 +74,7 @@ const gridImages = [
     route: "/rice2roboecommers",
     title: "Rice 2 Robo\nECommerce",
   },
-  {
-    id: "s8",
-    src: mockImages.s8,
-    route: "/glms",
-    title: "GLMS Development and Training",
-  },
+
   {
     id: "s9",
     src: mockImages.s9,

@@ -14,7 +14,7 @@ import ReactMarkdown from "react-markdown";
 import { Send } from "lucide-react";
 import BASE_URL from "../Config";
 
-// Add type definition for window.gtag
+
 declare global {
   interface Window {
     gtag?: (

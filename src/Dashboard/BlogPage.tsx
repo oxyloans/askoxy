@@ -67,7 +67,7 @@ const BlogsPage: React.FC = () => {
                   Write Your Blog & Earn Rewards!
                 </h4>
                 <p className="text-sm text-purple-600 mt-0.5">
-                  Share your thoughts with the world — Start earning BMV coins!
+                  Share your thoughts with the world — Start earning BMVcoins!
                   🚀
                 </p>
               </div>

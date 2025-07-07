@@ -1071,7 +1071,7 @@ content: `Can you tell me about "${productName}"?`,
                     </div>
                   )}
 
-                  {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
+                  {/* {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
                     <div className="flex justify-center mt-4">
                       <button
                         onClick={handleComparePrices}
@@ -1080,7 +1080,7 @@ content: `Can you tell me about "${productName}"?`,
                         <span>Compare Prices</span>
                       </button>
                     </div>
-                  )}
+                  )} */}
                 </div>
                 <div className="space-y-4">
                   <div>

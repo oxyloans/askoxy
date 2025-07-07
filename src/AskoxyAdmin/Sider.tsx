@@ -167,12 +167,12 @@ const Sidebar: React.FC = () => {
           link: "/admn/addjobs",
           roles: ["HELPDESKSUPERADMIN"],
         },
-        // {
-        //   title: "All Job Details",
-        //   icon: <SolutionOutlined style={{ color: "#ffff" }} />,
-        //   link: "/admn/alljobdetails",
-        //   roles: ["HELPDESKSUPERADMIN"],
-        // },
+        {
+          title: "All Job Details",
+          icon: <SolutionOutlined style={{ color: "#ffff" }} />,
+          link: "/admn/alljobdetails",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
         {
           title: "All Service & Blogs Details",
           icon: <RiListUnordered className="text-purple-400" />,

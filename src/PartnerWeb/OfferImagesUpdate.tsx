@@ -35,6 +35,15 @@ interface OfferImage {
   id: string;
   imageUrl: string;
   status: boolean;
+  webNavigation: string | null;
+  mobileNavigation: string | null;
+  targetParam: string | null;
+}
+
+interface ImageFormData {
+  webNavigation: string;
+  mobileNavigation: string;
+  targetParam: string;
 }
 
 const UpdateOffers: React.FC = () => {
@@ -44,6 +53,12 @@ const UpdateOffers: React.FC = () => {
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [formData, setFormData] = useState({ paymentStatus: "", status: true });
+  const [imageFormData, setImageFormData] = useState<ImageFormData>({
+    webNavigation: "",
+    mobileNavigation: "",
+    targetParam: "",
+  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editingPayment, setEditingPayment] = useState<PaymentStatus | null>(
     null
   );
@@ -187,11 +202,27 @@ const UpdateOffers: React.FC = () => {
     }
   };
 
-  // Handle image upload
-  const handleImageUpload = async (file: File) => {
+  // Handle image upload with additional fields
+  const handleImageUpload = async () => {
+    if (!selectedFile) {
+      message.error("Please select an image");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("multiPart", file);
+    formData.append("multiPart", selectedFile);
     formData.append("fileType", "kyc");
+
+    // Pass null if fields are empty, otherwise pass the actual value
+    formData.append(
+      "webNavigation",
+      imageFormData.webNavigation.trim() || "null"
+    );
+    formData.append(
+      "mobileNavigation",
+      imageFormData.mobileNavigation.trim() || "null"
+    );
+    formData.append("targetParam", imageFormData.targetParam.trim() || "null");
 
     try {
       const response = await fetch(
@@ -205,6 +236,12 @@ const UpdateOffers: React.FC = () => {
       if (response.ok) {
         message.success("Image uploaded successfully");
         setImageModalVisible(false);
+        setSelectedFile(null);
+        setImageFormData({
+          webNavigation: "",
+          mobileNavigation: "",
+          targetParam: "",
+        });
         fetchOfferImages();
       } else {
         message.error("Failed to upload image");
@@ -216,7 +253,7 @@ const UpdateOffers: React.FC = () => {
 
   const uploadProps: UploadProps = {
     beforeUpload: (file) => {
-      handleImageUpload(file);
+      setSelectedFile(file);
       return false;
     },
     showUploadList: false,
@@ -273,27 +310,47 @@ const UpdateOffers: React.FC = () => {
       title: "Image",
       dataIndex: "imageUrl",
       key: "imageUrl",
-      render: (url) => (
-        <img
-          src={url}
-          alt="Offer"
-          className="w-16 h-16 object-cover rounded-lg shadow-sm"
-        />
-      ),
-    },
-    {
-      title: "Image URL",
-      dataIndex: "imageUrl",
-      key: "imageUrl",
+      width:150,
       render: (url) => (
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 truncate max-w-xs block"
+          className="cursor-pointer"
         >
-          {url}
+          <img
+            src={url}
+            alt="Offer"
+            className="w-16 h-16 object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          />
         </a>
+      ),
+    },
+    {
+      title: "Web Navigation",
+      dataIndex: "webNavigation",
+      key: "webNavigation",
+      width: 180,
+      render: (text) => (
+        <span className="text-gray-700">{text || "Not set"}</span>
+      ),
+    },
+    {
+      title: "Mobile Navigation",
+      dataIndex: "mobileNavigation",
+      key: "mobileNavigation",
+      width: 180,
+      render: (text) => (
+        <span className="text-gray-700">{text || "Not set"}</span>
+      ),
+    },
+    {
+      title: "Target Param",
+      dataIndex: "targetParam",
+      key: "targetParam",
+      width:180,
+      render: (text) => (
+        <span className="text-gray-700">{text || "Not set"}</span>
       ),
     },
     {
@@ -345,7 +402,7 @@ const UpdateOffers: React.FC = () => {
                 rowKey="id"
                 loading={loading}
                 pagination={{
-                  pageSize: 10,
+                  pageSize: 50,
                   showSizeChanger: true,
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} items`,
@@ -374,11 +431,12 @@ const UpdateOffers: React.FC = () => {
                 rowKey="id"
                 loading={loading}
                 pagination={{
-                  pageSize: 8,
+                  pageSize: 50,
                   showSizeChanger: true,
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} items`,
                 }}
+                scroll={{ x: 1200 }}
               />
             </Card>
           </TabPane>
@@ -457,18 +515,108 @@ const UpdateOffers: React.FC = () => {
         <Modal
           title="Upload Offer Image"
           open={imageModalVisible}
-          onCancel={() => setImageModalVisible(false)}
+          onCancel={() => {
+            setImageModalVisible(false);
+            setSelectedFile(null);
+            setImageFormData({
+              webNavigation: "",
+              mobileNavigation: "",
+              targetParam: "",
+            });
+          }}
           footer={null}
+          width={600}
         >
-          <div className="text-center py-8">
-            <Upload {...uploadProps}>
-              <Button icon={<UploadOutlined />} size="large">
-                Select Image
+          <div className="space-y-4">
+            <div className="text-center py-4">
+              <Upload {...uploadProps}>
+                <Button icon={<UploadOutlined />} size="large">
+                  {selectedFile ? "Change Image" : "Select Image"}
+                </Button>
+              </Upload>
+              {selectedFile && (
+                <p className="text-green-600 mt-2">
+                  Selected: {selectedFile.name}
+                </p>
+              )}
+              <p className="text-gray-500 mt-2">
+                Choose an offer image to upload{" "}
+                <span className="font-bold">(Below 1MB)</span>
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Web Navigation
+                </label>
+                <Input
+                  placeholder="Enter web navigation URL or path"
+                  value={imageFormData.webNavigation}
+                  onChange={(e) =>
+                    setImageFormData({
+                      ...imageFormData,
+                      webNavigation: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mobile Navigation
+                </label>
+                <Input
+                  placeholder="Enter mobile navigation URL or path"
+                  value={imageFormData.mobileNavigation}
+                  onChange={(e) =>
+                    setImageFormData({
+                      ...imageFormData,
+                      mobileNavigation: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Target Parameter
+                </label>
+                <Input
+                  placeholder="Enter target parameter"
+                  value={imageFormData.targetParam}
+                  onChange={(e) =>
+                    setImageFormData({
+                      ...imageFormData,
+                      targetParam: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                onClick={() => {
+                  setImageModalVisible(false);
+                  setSelectedFile(null);
+                  setImageFormData({
+                    webNavigation: "",
+                    mobileNavigation: "",
+                    targetParam: "",
+                  });
+                }}
+              >
+                Cancel
               </Button>
-            </Upload>
-            <p className="text-gray-500 mt-4">
-              Choose an offer image to upload <span className="font-bold">(Below 1MB).</span>
-            </p>
+              <Button
+                type="primary"
+                onClick={handleImageUpload}
+                disabled={!selectedFile}
+              >
+                Upload Image
+              </Button>
+            </div>
           </div>
         </Modal>
       </div>

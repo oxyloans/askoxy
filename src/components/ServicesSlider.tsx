@@ -7,7 +7,7 @@ import BASE_URL from "../Config";
 
 interface Job {
   companyLogo: string;
-  jobDesignation:string;
+  jobDesignation: string;
   id: string;
   jobTitle: string;
   companyName: string;
@@ -619,7 +619,7 @@ flex flex-col border border-gray-100 m-2"
                           job.companyLogo ||
                           "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                         }
-                        className="max-w-full max-h-full object-contain"
+                        className="w-40 h-20 object-contain transition-transform duration-300"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null;
@@ -632,35 +632,35 @@ flex flex-col border border-gray-100 m-2"
 
                   {/* Company Name */}
                   <div className="flex justify-center px-4 pb-3">
-                     <div
-            className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
-          >
-            <span className="text-base font-semibold text-gray-700 text-center">
-              {job.companyName}
-            </span>
-          </div>
-        </div>
+                    <div
+                      className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
+                    >
+                      <span className="text-base font-semibold text-gray-700 text-center">
+                        {job.companyName}
+                      </span>
+                    </div>
+                  </div>
 
-        <div className="px-4 pb-1">
-          <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
-            {job.jobTitle}
-          </h3>
-        </div>
+                  <div className="px-4 pb-1">
+                    <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
+                      {job.jobTitle}
+                    </h3>
+                  </div>
 
-        <div className="px-2 pb-2">
-          <div className="text-sm font-bold text-gray-700 text-center bg-gray-50 py-2 px-3 rounded-lg">
-            💼 {job.jobDesignation}
-          </div>
-        </div>
+                  <div className="px-2 pb-2">
+                    <div className="text-sm font-bold text-gray-700 text-center bg-gray-50 py-2 px-3 rounded-lg">
+                      💼 {job.jobDesignation}
+                    </div>
+                  </div>
 
-        <div className="px-4 pb-3 space-y-1 text-center">
-          <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
-            📍 Loc: {job.jobLocations}
-          </div>
-          <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
-            ⏰ Exp: {job.experience}
-          </div>
-        </div>
+                  <div className="px-4 pb-3 space-y-1 text-center">
+                    <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+                      📍 Loc: {job.jobLocations}
+                    </div>
+                    <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+                      ⏰ Exp: {job.experience}
+                    </div>
+                  </div>
 
                   <div className="px-4 pb-5 mt-auto flex justify-center">
                     <div

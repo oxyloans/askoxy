@@ -258,7 +258,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           >
             Referral Program
           </button>
-       </div>
+        </div>
 
         {/* Shadow when scrolled */}
         <div
@@ -541,6 +541,7 @@ const Ricebags: React.FC = () => {
   const autoSlideDelay = 5000; // wait 5 seconds between scrolls
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoSliding, setIsAutoSliding] = useState(true);
+  const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
 
   const bannerImages = [
     offer1,
@@ -572,6 +573,10 @@ const Ricebags: React.FC = () => {
     setCurrentImageIndex((prev) =>
       prev <= 0 ? maxIndex : prev - imagesPerView
     );
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
+    setActiveCategory(categoryName);
   };
 
   const goToImage = (index: number) => {
@@ -739,16 +744,19 @@ const Ricebags: React.FC = () => {
         const data = response.data;
 
         // Flatten the nested categories from all category groups
-        const allCategories: Category[] = data.flatMap((group: { categories: Category[] }) =>
-          group.categories.map((category: Category) => ({
-            ...category,
-            categoryImage: category.categoryImage || null,
-            itemsResponseDtoList: category.itemsResponseDtoList.map((item) => ({
-              ...item,
-              weight: item.weight.toString(), // Convert weight to string for consistency
-            })),
-            subCategories: category.subCategories || [],
-          }))
+        const allCategories: Category[] = data.flatMap(
+          (group: { categories: Category[] }) =>
+            group.categories.map((category: Category) => ({
+              ...category,
+              categoryImage: category.categoryImage || null,
+              itemsResponseDtoList: category.itemsResponseDtoList.map(
+                (item) => ({
+                  ...item,
+                  weight: item.weight.toString(), // Convert weight to string for consistency
+                })
+              ),
+              subCategories: category.subCategories || [],
+            }))
         );
 
         // Collect all unique items for "All Items" category
@@ -767,40 +775,49 @@ const Ricebags: React.FC = () => {
         // Sort all items by stock status
         const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
 
-        // Create the final categories array with "All Items" first
-       const riceCategoryNames = [
-          'Combo Offers',
-  'Organic Store',
-  'Basmati Rice',
-  'Sonamasoori',
-  'Rice Container',
-  'Brown Rice',
-  'HMT',
-  'Low GI',
-  'Kolam Rice',
+        const riceCategoryNames = [
+  "Combo Offers",
+  " Basmati Rice",
+  "Sonamasoori",
+  "Brown Rice",
+  "HMT",
+  "Low GI",
+  "Kolam Rice",
+  "Organic Rice",
+  "Rice Container",
+  "Organic Store",  // ✅ Newly added
 ];
 
-// Separate rice categories and others
-const riceCategories = allCategories.filter(cat => riceCategoryNames.includes(cat.categoryName));
-const otherCategories = allCategories.filter(cat => !riceCategoryNames.includes(cat.categoryName));
 
-// Create final categories with "All Items" first, then RICE, then others
-const finalCategories: Category[] = [
-  {
-    categoryName: "All Items",
-    categoryImage: null,
-    itemsResponseDtoList: sortedUniqueItems,
-    subCategories: [],
-  },
-  ...riceCategories.map(category => ({
-    ...category,
-    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
-  })),
-  ...otherCategories.map(category => ({
-    ...category,
-    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
-  })),
-];
+        // Separate rice categories and others
+        const riceCategories = allCategories.filter((cat) =>
+          riceCategoryNames.includes(cat.categoryName)
+        );
+        const otherCategories = allCategories.filter(
+          (cat) => !riceCategoryNames.includes(cat.categoryName)
+        );
+
+        // Create final categories with "All Items" first, then RICE, then others
+        const finalCategories: Category[] = [
+          {
+            categoryName: "All Items",
+            categoryImage: null,
+            itemsResponseDtoList: sortedUniqueItems,
+            subCategories: [],
+          },
+          ...riceCategories.map((category) => ({
+            ...category,
+            itemsResponseDtoList: sortItemsByStock(
+              category.itemsResponseDtoList
+            ),
+          })),
+          ...otherCategories.map((category) => ({
+            ...category,
+            itemsResponseDtoList: sortItemsByStock(
+              category.itemsResponseDtoList
+            ),
+          })),
+        ];
 
         setCategories(finalCategories);
         setFilteredCategories(finalCategories);
@@ -1069,17 +1086,22 @@ const finalCategories: Category[] = [
         </div>
       </div>
 
-      {/* Categories Component */}
       <Categories
-        categories={filteredCategories}
+        categories={
+          showAllCategories
+            ? categories
+            : filteredCategories.length > 0
+            ? filteredCategories
+            : categories
+        }
         activeCategory={activeCategory}
-        onCategoryClick={setActiveCategory}
+        onCategoryClick={handleCategoryClick}
         loading={loading}
         cart={cart}
         onItemClick={handleItemClick}
         updateCart={setCart}
         customerId={customerId}
-        updateCartCount={setCount}
+        updateCartCount={(count: number) => {}}
         setActiveCategory={setActiveCategory}
       />
 

@@ -2088,7 +2088,7 @@ const CartPage: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex justify-between text-gray-700 text-sm mt-1">
-                          <span>GST Charges</span>
+                          <span>Charges</span>
                           <span>₹{(totalGstAmount || 0).toFixed(2)}</span>
                         </div>
                         {cartData.length > 0 && ( // Conditionally render handling fee
@@ -2131,9 +2131,9 @@ const CartPage: React.FC = () => {
                         >
                           <div className="space-y-1.5">
                             <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-1">
-                              GST Breakdown
+                              Price Breakdown
                             </h4>
-                            {goldMakingCost > 0 && (
+                            {/* {goldMakingCost > 0 && (
                               <div className="flex justify-between items-center text-xs sm:text-sm">
                                 <span className="text-gray-600 font-medium">
                                   Gold Making Cost
@@ -2146,7 +2146,7 @@ const CartPage: React.FC = () => {
                                   })}
                                 </span>
                               </div>
-                            )}
+                            )} */}
                             {goldGst > 0 && (
                               <div className="flex justify-between items-center text-xs sm:text-sm">
                                 <span className="text-gray-600 font-medium">
@@ -2159,7 +2159,7 @@ const CartPage: React.FC = () => {
                                     maximumFractionDigits: 2,
                                   })}
                                 </span>
-                              </div>
+                              </div>  
                             )}
                             {quantity > 1 && (
                               <div className="text-xs text-gray-500 text-right">
