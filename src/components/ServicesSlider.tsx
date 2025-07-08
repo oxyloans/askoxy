@@ -43,7 +43,7 @@ const ServicesSlider: React.FC = () => {
   const fetchJobs = async () => {
     try {
       const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid?userId=91d2f250-20d0-44a5-9b4e-2acb73118b98`,
+        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
         {
           method: "GET",
           headers: {
@@ -52,7 +52,8 @@ const ServicesSlider: React.FC = () => {
         }
       );
       const jobsData = await response.json();
-      setJobs(jobsData);
+      const filteredJobs = jobsData.filter((job : Job) => job.jobStatus === true);
+      setJobs(filteredJobs);
     } catch (error) {
       console.error("Error fetching jobs:", error);
     }

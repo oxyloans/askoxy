@@ -230,7 +230,6 @@ const App: React.FC = () => {
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
             <Route path="jobdetails" element={<JobDetails />} />
-            <Route path="addblogs" element={<AddBlog />} />
             <Route path="metroLogin" element={<MetroLogin />} />
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />

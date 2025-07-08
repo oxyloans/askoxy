@@ -238,7 +238,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
         {/* Tabs */}
         <div className="flex border-b">
-          <button
+          {/* <button
             className={`flex-1 py-3 px-4 font-medium text-sm transition-colors ${
               activeTab === "container"
                 ? "border-b-2 border-purple-600 text-purple-800"
@@ -247,7 +247,7 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             onClick={() => setActiveTab("container")}
           >
             Free Steel Container Policy
-          </button>
+          </button> */}
           <button
             className={`flex-1 py-3 px-4 font-medium text-sm transition-colors ${
               activeTab === "referral"
@@ -549,7 +549,6 @@ const Ricebags: React.FC = () => {
     offer3,
     offer4,
     offer5,
-    offer6,
     offer7,
     offer8,
   ].map((src, i) => ({ src, alt: `Offer ${i + 1}` }));
@@ -674,9 +673,9 @@ const Ricebags: React.FC = () => {
       case 4:
         setShowAppModal(true);
         break;
-      case 5:
-        setShowFAQModal(true);
-        break;
+      // case 5:
+      //   setShowFAQModal(true);
+      //   break;
       case 6:
         setActiveCategory("Kolam Rice");
         scrollToSection("Kolam Rice");

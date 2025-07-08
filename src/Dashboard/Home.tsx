@@ -138,6 +138,7 @@ interface DashboardItem {
   quantity?: number;
   weight?: string;
   units?: string;
+  isCombo?: boolean;
 }
 
 interface Item {
@@ -213,6 +214,11 @@ const Home: React.FC = () => {
 
   // Existing states
   const [showOffersModal, setShowOffersModal] = useState(false);
+  const [comboAddOnModal, setComboAddOnModal] = useState({
+    visible: false,
+    items: [],
+  });
+  const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
 
   const updateCartCount = useCallback(
     (count: number) => {
@@ -223,12 +229,12 @@ const Home: React.FC = () => {
   );
 
   const weightFilters = [
-  { label: "1 KG", value: "1.0" },
-  { label: "5 KG", value: "5.0" },
-  { label: "10 KG", value: "10.0" },
-  { label: "26 KG", value: "26.0" },
-];
-const [selectedWeight, setSelectedWeight] = useState<string | null>(null);
+    { label: "1 KG", value: "1.0" },
+    { label: "5 KG", value: "5.0" },
+    { label: "10 KG", value: "10.0" },
+    { label: "26 KG", value: "26.0" },
+  ];
+  const [selectedWeight, setSelectedWeight] = useState<string | null>(null);
 
   const fetchCartData = useCallback(
     async (itemId: string = "") => {
@@ -646,70 +652,70 @@ const [selectedWeight, setSelectedWeight] = useState<string | null>(null);
     },
   };
 
- const headerImages: HeaderImage[] = [
-  {
-    id: "Cashback1",
-    src: CB,
-    alt: "Products",
-    path: "/main/dashboard/products",
-    onClick: () => {
-      navigate("/main/dashboard/products", {
-        state: { selectedCategory: "All Items" }, // default fallback
-      });
+  const headerImages: HeaderImage[] = [
+    {
+      id: "Cashback1",
+      src: CB,
+      alt: "Products",
+      path: "/main/dashboard/products",
+      onClick: () => {
+        navigate("/main/dashboard/products", {
+          state: { selectedCategory: "All Items" }, // default fallback
+        });
+      },
     },
-  },
-  {
-    id: "Cashew Offer",
-    alt: "Products",
-    src: Cashew,
-    path: "/main/dashboard/products",
-    onClick: () => {
-      navigate("/main/dashboard/products", {
-        state: { selectedCategory: "Cashew nuts upto ₹40 cashback" },
-      });
+    {
+      id: "Cashew Offer",
+      alt: "Products",
+      src: Cashew,
+      path: "/main/dashboard/products",
+      onClick: () => {
+        navigate("/main/dashboard/products", {
+          state: { selectedCategory: "Cashew nuts upto ₹40 cashback" },
+        });
+      },
     },
-  },
- {
-  id: "Cashback2",
-  src: Riceoffers,
-  alt: "Products",
-  path: "/main/dashboard/products?type=RICE&weight=5.0",
-  onClick: () => {
-    navigate("/main/dashboard/products?type=RICE&weight=5.0");
-  }
-},
-  {
-    id: "o1",
-    src: O6,
-    alt: "Products",
-    path: "/main/dashboard/products?weight=26.0",
-    onClick: () => {
-      navigate("/main/dashboard/products?type=RICE&weight=26.0");
+    {
+      id: "Cashback2",
+      src: Riceoffers,
+      alt: "Products",
+      path: "/main/dashboard/products?type=RICE&weight=5.0",
+      onClick: () => {
+        navigate("/main/dashboard/products?type=RICE&weight=5.0");
+      },
     },
-  },
-  {
-    id: "o6",
-    src: O9,
-    alt: "Products",
-    path: "/main/dashboard/products",
-    onClick: () => {
-      navigate("/main/dashboard/products", {
-        state: { selectedCategory: "Essentials Mart" },
-      });
+    {
+      id: "o1",
+      src: O6,
+      alt: "Products",
+      path: "/main/dashboard/products?weight=26.0",
+      onClick: () => {
+        navigate("/main/dashboard/products?type=RICE&weight=26.0");
+      },
     },
-  },
-  {
-    id: "o2",
-    src: O8,
-    alt: "Study Abroad",
-    path: "/studyabroad",
-    onClick: () => {
-      navigate("/studyabroad");
+    {
+      id: "o6",
+      src: O9,
+      alt: "Products",
+      path: "/main/dashboard/products",
+      onClick: () => {
+        navigate("/main/dashboard/products", {
+          state: { selectedCategory: "Essentials Mart" },
+        });
+      },
     },
-  },
-];
+    {
+      id: "o2",
+      src: O8,
+      alt: "Study Abroad",
+      path: "/studyabroad",
+      onClick: () => {
+        navigate("/studyabroad");
+      },
+    },
+  ];
 
-const handleItemClick = (item: Item | DashboardItem) => {
+  const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
       navigate(`/main/itemsdisplay/${item.itemId}`, {
         state: {
@@ -780,167 +786,220 @@ const handleItemClick = (item: Item | DashboardItem) => {
     return Math.round(((mrp - price) / mrp) * 100);
   };
 
-  const handleAddToCart = async (item: DashboardItem) => {
-    if (!item.itemId) return;
+ const handleAddToCart = async (item: DashboardItem) => {
+  if (!item.itemId) return;
 
-    const accessToken = localStorage.getItem("accessToken");
-    const userId = localStorage.getItem("userId");
+  const accessToken = localStorage.getItem("accessToken");
+  const userId = localStorage.getItem("userId");
 
-    if (!accessToken || !userId) {
-      message.warning("Please login to add items to the cart.");
-      setTimeout(() => {
-        navigate("/whatapplogin");
-      }, 2000);
-      return;
+  if (!accessToken || !userId) {
+    message.warning("Please login to add items to the cart.");
+    setTimeout(() => {
+      navigate("/whatapplogin");
+    }, 2000);
+    return;
+  }
+
+  if (!checkProfileCompletion()) {
+    Modal.error({
+      title: "Profile Incomplete",
+      content: "Please complete your profile to add items to the cart.",
+      onOk: () => navigate("/main/profile"),
+    });
+    setTimeout(() => {
+      navigate("/main/profile");
+    }, 4000);
+    return;
+  }
+
+  try {
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId as string]: true },
+    }));
+
+    const isCombo =
+      parseFloat(item.weight ?? "0") === 26 &&
+      item.units?.toLowerCase() === "kgs";
+
+    const requestBody: any = {
+      customerId: userId,
+      itemId: item.itemId,
+      quantity: 1,
+    };
+
+    // ✅ If it's a combo item (26KG), include status: "COMBO"
+    if (isCombo) {
+      requestBody.status = "COMBO";
     }
 
-    if (!checkProfileCompletion()) {
-      Modal.error({
-        title: "Profile Incomplete",
-        content: "Please complete your profile to add items to the cart.",
-        onOk: () => navigate("/main/profile"),
+    const response = await axios.post(
+      `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+      requestBody,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    await fetchCartData(item.itemId);
+    message.success(response.data.errorMessage);
+
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "add_to_cart", {
+        currency: "INR",
+        value: item.itemPrice,
+        items: [
+          {
+            item_id: item.itemId,
+            item_name: item.itemName,
+            price: item.itemPrice,
+            quantity: 1,
+            item_category: activeCategory || "General",
+          },
+        ],
       });
-      setTimeout(() => {
-        navigate("/main/profile");
-      }, 4000);
-      return;
     }
 
-    try {
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId as string]: true },
-      }));
+    setTimeout(async () => {
+      await handleItemAddedToCart(item);
+    }, 300);
 
-      const response = await axios.post(
-        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
-        { customerId: userId, itemId: item.itemId, quantity: 1 },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+    // ✅ Fetch and show optional combo add-ons if item is 26KG rice
+    if (isCombo) {
+      try {
+        const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
+        const comboData = res.data?.content || [];
+
+        const matchingCombo = comboData.find(
+          (combo: any) => combo.itemWeight === 26
+        );
+
+        if (matchingCombo && matchingCombo.items?.length) {
+          setComboAddOnModal({
+            visible: true,
+            items: matchingCombo.items.map((i: any) => ({
+              itemId: i.individualItemId,
+              itemName: i.itemName,
+              itemPrice: i.itemPrice,
+              itemImage: i.imageUrl,
+              weight: i.itemWeight,
+              units: i.units,
+              quantity: i.quantity ?? 1,
+              itemMrp: i.itemMrp ?? i.itemPrice,
+            })),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch combo offers:", error);
+      }
+    }
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    message.error("Error adding to cart.");
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId as string]: false },
+    }));
+  }
+};
+
+ const handleQuantityChange = async (
+  item: DashboardItem,
+  increment: boolean
+) => {
+  if (!item.itemId) return;
+
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    message.warning("Please login to update cart");
+    return;
+  }
+
+  if (
+    item.quantity !== undefined &&
+    cartItems[item.itemId] === item.quantity &&
+    increment
+  ) {
+    message.warning("Sorry, Maximum quantity reached.");
+    return;
+  }
+
+  if (!checkProfileCompletion()) {
+    Modal.error({
+      title: "Profile Incomplete",
+      content: "Please complete your profile to add items to the cart.",
+      onOk: () => navigate("/main/profile"),
+    });
+    setTimeout(() => {
+      navigate("/main/profile");
+    }, 4000);
+    return;
+  }
+
+  const status = increment ? "add" : "remove";
+
+  try {
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId as string]: true },
+      status: { ...prev.status, [item.itemId as string]: status },
+    }));
+
+    if (!increment && cartItems[item.itemId] <= 1) {
+      const targetCartId = cartData.find(
+        (cart) => cart.itemId === item.itemId
+      )?.cartId;
+
+      const response = await axios.delete(
+        `${BASE_URL}/cart-service/cart/remove`,
+        {
+          data: { id: targetCartId },
+        }
       );
 
-      await fetchCartData(item.itemId);
-      message.success(response.data.errorMessage);
+      if (response) {
+        message.success("Item removed from cart successfully.");
+      } else {
+        message.error("Sorry, Please try again");
+      }
+    } else {
+      const endpoint = increment
+        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+        : `${BASE_URL}/cart-service/cart/minusCartItem`;
 
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "add_to_cart", {
-          currency: "INR",
-          value: item.itemPrice,
-          items: [
-            {
-              item_id: item.itemId,
-              item_name: item.itemName,
-              price: item.itemPrice,
-              quantity: 1,
-              item_category: activeCategory || "General",
-            },
-          ],
-        });
+      const requestBody: any = {
+        customerId: userId,
+        itemId: item.itemId,
+      };
+
+      // ✅ If item is from a combo offer, add status: "COMBO"
+      if (item.isCombo) {
+        requestBody.status = "COMBO";
       }
 
+      const response = await axios.patch(endpoint, requestBody);
+
+      if (!response) {
+        message.error("Sorry, Please try again");
+      }
+    }
+
+    await fetchCartData(item.itemId);
+
+    if (increment) {
       setTimeout(async () => {
         await handleItemAddedToCart(item);
       }, 300);
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      message.error("Error adding to cart.");
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId as string]: false },
-      }));
     }
-  };
+  } catch (error) {
+    console.error("Error updating quantity:", error);
+    message.error("Error updating item quantity");
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId as string]: false },
+      status: { ...prev.status, [item.itemId as string]: "" },
+    }));
+  }
+};
 
-  const handleQuantityChange = async (
-    item: DashboardItem,
-    increment: boolean
-  ) => {
-    if (!item.itemId) return;
-
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      message.warning("Please login to update cart");
-      return;
-    }
-
-    if (
-      item.quantity !== undefined &&
-      cartItems[item.itemId] === item.quantity &&
-      increment
-    ) {
-      message.warning("Sorry, Maximum quantity reached.");
-      return;
-    }
-
-    if (!checkProfileCompletion()) {
-      Modal.error({
-        title: "Profile Incomplete",
-        content: "Please complete your profile to add items to the cart.",
-        onOk: () => navigate("/main/profile"),
-      });
-      setTimeout(() => {
-        navigate("/main/profile");
-      }, 4000);
-      return;
-    }
-
-    const status = increment ? "add" : "remove";
-
-    try {
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId as string]: true },
-        status: { ...prev.status, [item.itemId as string]: status },
-      }));
-
-      if (!increment && cartItems[item.itemId] <= 1) {
-        const targetCartId = cartData.find(
-          (cart) => cart.itemId === item.itemId
-        )?.cartId;
-
-        const response = await axios.delete(
-          `${BASE_URL}/cart-service/cart/remove`,
-          {
-            data: { id: targetCartId },
-          }
-        );
-
-        if (response) {
-          message.success("Item removed from cart successfully.");
-        } else {
-          message.error("Sorry, Please try again");
-        }
-      } else {
-        const endpoint = increment
-          ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
-          : `${BASE_URL}/cart-service/cart/minusCartItem`;
-
-        const response = await axios.patch(endpoint, {
-          customerId: userId,
-          itemId: item.itemId,
-        });
-
-        if (!response) {
-          message.error("Sorry, Please try again");
-        }
-      }
-
-      await fetchCartData(item.itemId);
-
-      if (increment) {
-        setTimeout(async () => {
-          await handleItemAddedToCart(item);
-        }, 300);
-      }
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      message.error("Error updating item quantity");
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId as string]: false },
-        status: { ...prev.status, [item.itemId as string]: "" },
-      }));
-    }
-  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -1181,27 +1240,28 @@ const handleItemClick = (item: Item | DashboardItem) => {
     );
   };
 
-useEffect(() => {
-  let validProducts = products.filter((product) => {
-    if (product.quantity === undefined || product.quantity <= 0) return false;
+  useEffect(() => {
+    let validProducts = products.filter((product) => {
+      if (product.quantity === undefined || product.quantity <= 0) return false;
 
-    if (searchTerm.trim() !== "") {
-      return product.title.toLowerCase().includes(searchTerm.toLowerCase());
+      if (searchTerm.trim() !== "") {
+        return product.title.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+
+      return true;
+    });
+
+    if (selectedWeight && activeCategory === "Rice") {
+      validProducts = validProducts.filter(
+        (product) =>
+          parseFloat(product.weight ?? "0") === parseFloat(selectedWeight)
+      );
     }
 
-    return true;
-  });
-
- if (selectedWeight && activeCategory === "Rice") {
-  validProducts = validProducts.filter(
-    (product) =>
-      parseFloat(product.weight ?? "0") === parseFloat(selectedWeight)
-  );
-  }
-
-  setDisplayProducts(validProducts.slice(0, Math.min(displayCount, validProducts.length)));
-}, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
-
+    setDisplayProducts(
+      validProducts.slice(0, Math.min(displayCount, validProducts.length))
+    );
+  }, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
 
   const viewAllProducts = () => {
     // Use the activeCategory directly without mapping to a single category
@@ -1252,7 +1312,7 @@ useEffect(() => {
       setProducts(productItems);
       setDisplayCount(5);
       setSearchTerm("");
-      setSelectedWeight(null); 
+      setSelectedWeight(null);
       setTimeout(() => {
         setProductsLoading(false);
       }, 300);
@@ -1604,26 +1664,26 @@ useEffect(() => {
           </div>
 
           {activeCategory === "Rice" && (
-  <div className="mb-6 flex flex-wrap gap-3">
-    {weightFilters.map((filter) => (
-      <button
-        key={filter.value}
-        onClick={() =>
-          setSelectedWeight(
-            selectedWeight === filter.value ? null : filter.value
-          )
-        }
-        className={`px-3 py-1 rounded-full text-sm border transition ${
-          selectedWeight === filter.value
-            ? "bg-purple-600 text-white border-purple-600"
-            : "bg-white text-gray-700 border-gray-300"
-        }`}
-      >
-        {filter.label}
-      </button>
-    ))}
-  </div>
-)}
+            <div className="mb-6 flex flex-wrap gap-3">
+              {weightFilters.map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() =>
+                    setSelectedWeight(
+                      selectedWeight === filter.value ? null : filter.value
+                    )
+                  }
+                  className={`px-3 py-1 rounded-full text-sm border transition ${
+                    selectedWeight === filter.value
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-gray-700 border-gray-300"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          )}
           {/* Product Items (Shown when a category is selected) */}
           {activeCategory && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -1850,6 +1910,223 @@ useEffect(() => {
       >
         <div className="p-0">
           <RiceOfferFAQs />
+        </div>
+      </Modal>
+
+      <Modal
+        open={comboAddOnModal.visible}
+        onCancel={() => {
+          setComboAddOnModal({ visible: false, items: [] });
+          setHasAddedComboAddOn(false);
+        }}
+        footer={null}
+        centered
+        title={
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-purple-700 mb-1">
+              Special Offer Add-on
+            </h3>
+            <p className="text-xs text-gray-600">
+              Choose your favorite add-on and save more!
+            </p>
+          </div>
+        }
+        className="special-offer-modal"
+        width={560}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+          {comboAddOnModal.items.map(
+            (addonItem: {
+              itemId: string;
+              itemName: string;
+              itemPrice: number;
+              itemMrp: number;
+              itemImage: string;
+              weight: number;
+              units: string;
+              quantity: number;
+            }) => {
+              const discountPercentage = addonItem.itemMrp
+                ? Math.round(
+                    ((addonItem.itemMrp - addonItem.itemPrice) /
+                      addonItem.itemMrp) *
+                      100
+                  )
+                : 0;
+              return (
+                <div
+                  key={addonItem.itemId}
+                  className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden"
+                >
+                  {/* Discount Badge */}
+                  {discountPercentage > 0 && (
+                    <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
+                      {discountPercentage}% OFF
+                    </div>
+                  )}
+
+                  {/* Selection Badge */}
+                  {hasAddedComboAddOn && (
+                    <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
+                      <svg
+                        className="w-2.5 h-2.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* Square Image Container */}
+                  <div className="relative mb-2">
+                    <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+                      {addonItem.itemImage ? (
+                        <img
+                          src={addonItem.itemImage}
+                          alt={addonItem.itemName}
+                          className="w-full h-full object-contain p-1.5"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            const parent = target.parentElement;
+                            if (parent) {
+                              const fallback =
+                                parent.querySelector(".fallback-icon");
+                              if (fallback) {
+                                (fallback as HTMLElement).style.display =
+                                  "flex";
+                              }
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
+                        style={{
+                          display: addonItem.itemImage ? "none" : "flex",
+                        }}
+                      >
+                        <svg
+                          className="w-10 h-10"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="text-center">
+                    <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
+                      {addonItem.itemName}
+                    </h4>
+
+                    {/* Price Section */}
+                    <div className="mb-3">
+                      <div className="flex items-center justify-center gap-1.5 mb-1">
+                        <span className="text-purple-600 font-bold text-lg">
+                          ₹{addonItem.itemPrice}
+                        </span>
+                        {addonItem.itemMrp &&
+                          addonItem.itemMrp > addonItem.itemPrice && (
+                            <span className="text-gray-500 text-xs line-through">
+                              ₹{addonItem.itemMrp}
+                            </span>
+                          )}
+                      </div>
+
+                      {/* Savings Info */}
+                      {addonItem.itemMrp &&
+                        addonItem.itemMrp > addonItem.itemPrice && (
+                          <div className="text-green-600 text-xs font-medium">
+                            You save ₹{addonItem.itemMrp - addonItem.itemPrice}
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Add Button */}
+                    <motion.button
+                      whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
+                      whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
+                      className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
+                        hasAddedComboAddOn
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg"
+                      }`}
+                      onClick={() => {
+                        if (!hasAddedComboAddOn) {
+                          handleAddToCart({
+                            itemId: addonItem.itemId,
+                            itemName: addonItem.itemName,
+                            itemPrice: addonItem.itemPrice,
+                            itemMrp: addonItem.itemMrp,
+                            weight: addonItem.weight.toString(),
+                            units: addonItem.units,
+                            quantity: addonItem.quantity,
+                            title: addonItem.itemName,
+                            image: addonItem.itemImage,
+                            description: "",
+                            path: "",
+                            icon: (
+                              <ShoppingBag
+                                className="text-purple-600"
+                                size={24}
+                              />
+                            ),
+                          });
+                          setHasAddedComboAddOn(true);
+                          setComboAddOnModal({ visible: false, items: [] });
+                        } else {
+                          message.warning(
+                            "You can only select one optional add-on."
+                          );
+                        }
+                      }}
+                      disabled={hasAddedComboAddOn}
+                    >
+                      {hasAddedComboAddOn ? (
+                        <span className="flex items-center justify-center gap-1.5">
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Add-on Selected
+                        </span>
+                      ) : (
+                        "Add Add-on"
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+              );
+            }
+          )}
+        </div>
+
+        {/* Modal Footer Info */}
+        <div className="text-center p-3 bg-gray-50 mx-3 mb-3 rounded-md">
+          <p className="text-xs text-gray-600">
+            <span className="font-medium">🎉 Special Offer:</span> Add any item
+            to your combo and enjoy exclusive discounts!
+          </p>
         </div>
       </Modal>
 

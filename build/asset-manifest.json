@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.8d66181a.css",
-    "main.js": "/static/js/main.b62af055.js",
+    "main.css": "/static/css/main.4101a564.css",
+    "main.js": "/static/js/main.bdb1027c.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
     "static/media/page1.png": "/static/media/page1.377acc651cd141d1516d.png",
@@ -59,7 +59,6 @@
     "static/media/off1.png": "/static/media/off1.94dba2863b6bdc7015f0.png",
     "static/media/off5.png": "/static/media/off5.4cec4d26908a07662120.png",
     "static/media/proudlender12.png": "/static/media/proudlender12.53db2d508da021efc032.png",
-    "static/media/off6.png": "/static/media/off6.268924b300f31c4749d7.png",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
     "static/media/testimonial2.png": "/static/media/testimonial2.dc032a3a054a9564a46e.png",
     "static/media/testimonial6.png": "/static/media/testimonial6.3c3ce71915f57569ef63.png",
@@ -81,10 +80,10 @@
     "static/media/essentialsmart.png": "/static/media/essentialsmart.75a14b78a4821d3de860.png",
     "static/media/testimonial7.png": "/static/media/testimonial7.e74c9fa7add24a567fad.png",
     "static/media/rice offers.png": "/static/media/rice offers.9459bd10c13aa2d74644.png",
-    "static/media/35kg1.png": "/static/media/35kg1.be97a2698b296f701f04.png",
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.85705e5e99c29f138987.png",
     "static/media/cashewoffer1.png": "/static/media/cashewoffer1.c9cfa294e808a6f745a9.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
+    "static/media/35kg1.png": "/static/media/35kg1.fb60d6f6ea45bc39495f.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
     "static/media/mapbw.png": "/static/media/mapbw.4094352cf827b2840ba6.png",
     "static/media/testimonial17.png": "/static/media/testimonial17.fb648ac71a729958a005.png",
@@ -133,11 +132,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.8d66181a.css.map": "/static/css/main.8d66181a.css.map",
-    "main.b62af055.js.map": "/static/js/main.b62af055.js.map"
+    "main.4101a564.css.map": "/static/css/main.4101a564.css.map",
+    "main.bdb1027c.js.map": "/static/js/main.bdb1027c.js.map"
   },
   "entrypoints": [
-    "static/css/main.8d66181a.css",
-    "static/js/main.b62af055.js"
+    "static/css/main.4101a564.css",
+    "static/js/main.bdb1027c.js"
   ]
 }

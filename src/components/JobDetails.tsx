@@ -157,7 +157,8 @@ const JobDetails: React.FC = () => {
         `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`
       );
       const data = await response.json();
-      setJobs(data);
+      const filteredJobs = data.filter((job: Job) => job.jobStatus === true);
+      setJobs(filteredJobs);
       const matchedJob = data.find((job: Job) => job.id === id);
       setSelectedJob(matchedJob || null);
       setFilteredJobs(data);
@@ -594,18 +595,30 @@ const JobDetails: React.FC = () => {
           ))}
         </div>
       </div>
+
       <div className="bg-blue-50 p-5 rounded-2xl">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
-          Contact Information
+          Support Details
         </h3>
-        <div className="flex items-center text-gray-700">
-          <span className="text-blue-600 mr-2 text-lg">📞</span>
-          <span className="text-sm font-medium">
-            {job.countryCode} {job.contactNumber}
-          </span>
+
+        <div className="flex items-center text-gray-700 space-x-6">
+          {/* Phone */}
+          <div className="flex items-center">
+            <span className="text-blue-600 mr-2 text-lg">📞</span>
+            <span className="text-sm font-medium">
+              {job.countryCode} {job.contactNumber}
+            </span>
+          </div>
+
+          {/* Email */}
+          <div className="flex items-center">
+            <span className="text-blue-600 mr-2 text-lg">📧</span>
+            <span className="text-sm font-medium">support@askoxy.ai</span>
+          </div>
         </div>
       </div>
+
       <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
         <button
           className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all transform hover:scale-105 shadow ${

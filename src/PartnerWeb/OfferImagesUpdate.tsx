@@ -310,7 +310,7 @@ const UpdateOffers: React.FC = () => {
       title: "Image",
       dataIndex: "imageUrl",
       key: "imageUrl",
-      width:150,
+      width: 160,
       render: (url) => (
         <a
           href={url}
@@ -330,7 +330,7 @@ const UpdateOffers: React.FC = () => {
       title: "Web Navigation",
       dataIndex: "webNavigation",
       key: "webNavigation",
-      width: 180,
+      width: 230,
       render: (text) => (
         <span className="text-gray-700">{text || "Not set"}</span>
       ),
@@ -339,7 +339,7 @@ const UpdateOffers: React.FC = () => {
       title: "Mobile Navigation",
       dataIndex: "mobileNavigation",
       key: "mobileNavigation",
-      width: 180,
+      width: 220,
       render: (text) => (
         <span className="text-gray-700">{text || "Not set"}</span>
       ),
@@ -348,7 +348,7 @@ const UpdateOffers: React.FC = () => {
       title: "Target Param",
       dataIndex: "targetParam",
       key: "targetParam",
-      width:180,
+      width: 220,
       render: (text) => (
         <span className="text-gray-700">{text || "Not set"}</span>
       ),
@@ -357,6 +357,7 @@ const UpdateOffers: React.FC = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 200,
       render: (status, record) => (
         <Switch
           checked={status}
@@ -403,7 +404,7 @@ const UpdateOffers: React.FC = () => {
                 loading={loading}
                 pagination={{
                   pageSize: 50,
-                  showSizeChanger: true,
+                  position: ["topRight", "bottomRight"],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} items`,
                 }}
@@ -432,7 +433,7 @@ const UpdateOffers: React.FC = () => {
                 loading={loading}
                 pagination={{
                   pageSize: 50,
-                  showSizeChanger: true,
+                  position: ["topRight", "bottomRight"],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} items`,
                 }}

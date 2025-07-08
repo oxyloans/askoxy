@@ -24,6 +24,10 @@ import {
   Gift,
   Zap,
   Send,
+  Globe,
+  Mail,
+  User,
+  Phone,
 } from "lucide-react";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
@@ -59,6 +63,10 @@ interface JobFormData {
   countryCode?: string;
   companyLogo?: string;
   logoUploadType?: "upload" | "url";
+  companyUrl: string;
+  jobSource: string;
+  companyEmail: string;
+  companyAddress: string;
 }
 
 const industries = [
@@ -92,7 +100,7 @@ const workModes = [
   { value: "REMOTE", label: "Remote" },
   { value: "ONSITE", label: "On-site" },
   { value: "HYBRID", label: "Hybrid" },
-   { value: "FLEXBLE", label: "Flexble" },
+  { value: "FLEXBLE", label: "Flexble" },
 ];
 
 const qualifications = [
@@ -114,6 +122,17 @@ const experience = [
   "5-10 years",
   "10+ years",
   "Not Required",
+];
+
+const jobSources = [
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "naukri", label: "Naukri.com" },
+  { value: "indeed", label: "Indeed" },
+  { value: "monster", label: "Monster" },
+  { value: "glassdoor", label: "Glassdoor" },
+  { value: "company_website", label: "Company Website" },
+  { value: "referral", label: "Employee Referral" },
+  { value: "other", label: "Other" },
 ];
 
 const AddJob: React.FC = () => {
@@ -179,13 +198,13 @@ const AddJob: React.FC = () => {
       const payload = {
         applicationDeadLine: formValues.applicationDeadLine?.toISOString(),
         jobTitle: formValues.jobTitle,
-        jobDesignation: formValues.jobDesignation, // NEW
+        jobDesignation: formValues.jobDesignation, 
         companyName: formValues.companyName,
         industry: formValues.industry,
         userId: userId,
         jobLocations: formValues.jobLocations?.join(","),
         jobType: formValues.jobType,
-        workMode: formValues.workMode, // NEW
+        workMode: formValues.workMode, 
         description: formValues.description,
         benefits: formValues.benefits,
         jobStatus: isActive,
@@ -201,6 +220,9 @@ const AddJob: React.FC = () => {
         contactNumber: contactNumber,
         countryCode: countryCode,
         companyLogo: formValues.companyLogo,
+        companyEmail: formValues.companyEmail,
+        // companyAddress: formValues.jobAddedBy,
+        jobSource: formValues.jobSource,
       };
 
       const response = await fetch(
@@ -296,7 +318,6 @@ const AddJob: React.FC = () => {
           }}
           className="space-y-8"
         >
-          {/* Basic Information */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-3xl">
             <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               <Building className="w-6 h-6 mr-3 text-blue-600" />
@@ -318,7 +339,7 @@ const AddJob: React.FC = () => {
                 >
                   <Input
                     placeholder="e.g., Digital Marketing Specialist"
-                    className="h-12 rounded-xl"
+                    className="rounded-lg"
                     size="large"
                   />
                 </Form.Item>
@@ -338,7 +359,7 @@ const AddJob: React.FC = () => {
                 >
                   <Input
                     placeholder="e.g., ASKOXY.AI"
-                    className="h-12 rounded-xl"
+                    className="rounded-lg"
                     size="large"
                   />
                 </Form.Item>
@@ -359,7 +380,7 @@ const AddJob: React.FC = () => {
                   <Select
                     placeholder="Select industry"
                     size="large"
-                    className="h-12 rounded-xl"
+                    className="rounded-lg"
                   >
                     {industries.map((industry) => (
                       <Option key={industry} value={industry}>
@@ -385,7 +406,7 @@ const AddJob: React.FC = () => {
                   <Select
                     placeholder="Select job type"
                     size="large"
-                    className="h-12 rounded-xl"
+                    className="rounded-lg"
                   >
                     {jobTypes.map((type) => (
                       <Option key={type.value} value={type.value}>
@@ -434,7 +455,7 @@ const AddJob: React.FC = () => {
                   }
                   name="workMode"
                   rules={[
-                    { required: true, message: "Please select work mode" },
+                    { required: false, message: "Please select work mode" },
                   ]}
                 >
                   <Select
@@ -450,11 +471,92 @@ const AddJob: React.FC = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col xs={24}>
+
+              {/* Email Field */}
+              <Col xs={24} lg={12}>
                 <Form.Item
                   label={
                     <span className="flex items-center font-semibold text-gray-700">
-                      <Building className="w-5 h-5 mr-2 text-blue-500" />
+                      <Mail className="w-5 h-5 mr-2 text-blue-500" />
+                      Company Email
+                    </span>
+                  }
+                  name="companyEmail"
+                  rules={[
+                    { required: true, message: "Please enter company email" },
+                    { type: "email", message: "Please enter a valid email" },
+                  ]}
+                >
+                  <Input
+                    placeholder="e.g., hr@company.com"
+                    className="h-12 rounded-xl"
+                    size="large"
+                  />
+                </Form.Item>
+              </Col>
+
+              {/* Job Source Field */}
+              <Col xs={24} lg={12}>
+                <Form.Item
+                  label={
+                    <span className="flex items-center font-semibold text-gray-700">
+                      <Globe className="w-5 h-5 mr-2 text-green-500" />
+                      Job Source
+                    </span>
+                  }
+                  name="jobSource"
+                  rules={[
+                    { required: true, message: "Please select job source" },
+                  ]}
+                >
+                  <Select
+                    placeholder="Select job source"
+                    size="large"
+                    className="h-12 rounded-xl"
+                  >
+                    {jobSources.map((source) => (
+                      <Option key={source.value} value={source.value}>
+                        {source.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Company URL Field (replaced Job Added By) */}
+              <Col xs={24} lg={12}>
+                <Form.Item
+                  label={
+                    <span className="flex items-center font-semibold text-gray-700">
+                      <Globe className="w-5 h-5 mr-2 text-purple-500" />
+                      Company URL
+                    </span>
+                  }
+                  name="companyUrl"
+                  rules={[
+                    {
+                      required: false,
+                      message: "Please enter company website URL",
+                    },
+                    {
+                      type: "url",
+                      message: "Please enter a valid URL",
+                    },
+                  ]}
+                >
+                  <Input
+                    placeholder="e.g., https://www.company.com"
+                    className="h-12 rounded-xl"
+                    size="large"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} lg={12}>
+                <Form.Item
+                  label={
+                    <span className="flex items-center font-semibold text-gray-700">
+                      <Phone className="w-5 h-5 mr-2 text-cyan-500" />
                       Contact Number
                     </span>
                   }
@@ -465,7 +567,6 @@ const AddJob: React.FC = () => {
                       message: "Please enter a valid phone number",
                     },
                   ]}
-                  className="w-full max-w-sm sm:max-w-md md:max-w-lg"
                 >
                   <PhoneInput
                     international
@@ -476,11 +577,37 @@ const AddJob: React.FC = () => {
                   />
                 </Form.Item>
               </Col>
+
               <Col xs={24}>
                 <Form.Item
                   label={
                     <span className="flex items-center font-semibold text-gray-700">
-                      <Building className="w-5 h-5 mr-2 text-purple-500" />
+                      <MapPin className="w-5 h-5 mr-2 text-emerald-500" />
+                      Company Address
+                    </span>
+                  }
+                  name="companyAddress"
+                  rules={[
+                    {
+                      required: false,
+                      message: "Please enter company address",
+                    },
+                  ]}
+                >
+                  <Input.TextArea
+                    placeholder="Enter company address (optional)"
+                    className="rounded-xl"
+                    size="large"
+                    rows={3}
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24}>
+                <Form.Item
+                  label={
+                    <span className="flex items-center font-semibold text-gray-700">
+                      <Building className="w-5 h-5 mr-2 text-indigo-500" />
                       Company Logo
                     </span>
                   }
@@ -565,6 +692,7 @@ const AddJob: React.FC = () => {
               <MapPin className="w-6 h-6 mr-3 text-green-600" />
               Location & Timeline
             </h3>
+
             <Row gutter={[32, 24]}>
               <Col xs={24} lg={12}>
                 <Form.Item
@@ -593,7 +721,7 @@ const AddJob: React.FC = () => {
                   name="applicationDeadLine"
                   rules={[
                     {
-                      required: true,
+                      required: false,
                       message: "Please select application deadline",
                     },
                   ]}
@@ -602,7 +730,7 @@ const AddJob: React.FC = () => {
                     showTime
                     size="large"
                     placeholder="Select deadline"
-                    className="h-12 rounded-xl"
+                    className="w-full rounded-lg"
                     disabledDate={disabledDate}
                   />
                 </Form.Item>
@@ -623,7 +751,7 @@ const AddJob: React.FC = () => {
                   name="qualification"
                   rules={[
                     {
-                      required: true,
+                      required: false,
                       message: "Please enter minimum qualification",
                     },
                   ]}
@@ -647,7 +775,7 @@ const AddJob: React.FC = () => {
                   label={
                     <span className="flex items-center font-semibold text-gray-700">
                       <GraduationCap className="w-5 h-5 mr-2 text-indigo-500" />
-                      Minimum Percentage
+                      Minimum Percentage(optional)
                     </span>
                   }
                   name="qualificationPercentage"
@@ -657,9 +785,7 @@ const AddJob: React.FC = () => {
                     min={0}
                     max={100}
                     size="large"
-                    className="w-full h-12 rounded-xl"
-                    formatter={(value) => `${value}%`}
-                    parser={(value) => value?.replace("%", "") as any}
+                    className="w-full rounded-lg"
                   />
                 </Form.Item>
               </Col>
@@ -703,7 +829,33 @@ const AddJob: React.FC = () => {
                     mode="tags"
                     placeholder="Enter skills (e.g., SEO, SEM, Google Ads)"
                     size="large"
-                    className="h-12 rounded-xl"
+                    className="rounded-xl"
+                    style={{ minHeight: "48px" }}
+                    tagRender={(props) => {
+                      const { label, closable, onClose } = props;
+                      return (
+                        <span
+                          className="inline-flex items-center px-2 py-1 mr-1 mb-1 text-sm bg-blue-100 text-blue-800 rounded-md"
+                          style={{
+                            maxWidth: "200px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {label}
+                          {closable && (
+                            <button
+                              type="button"
+                              onClick={onClose}
+                              className="ml-1 text-blue-600 hover:text-blue-800"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </span>
+                      );
+                    }}
                   />
                 </Form.Item>
               </Col>
@@ -727,7 +879,7 @@ const AddJob: React.FC = () => {
                   }
                   name="salaryMin"
                   rules={[
-                    { required: true, message: "Please enter minimum salary" },
+                    { required: false, message: "Please enter minimum salary" },
                   ]}
                 >
                   <InputNumber
@@ -736,7 +888,7 @@ const AddJob: React.FC = () => {
                     size="large"
                     className="w-full h-12 rounded-xl"
                     formatter={(value) =>
-                      `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                     }
                   />
                 </Form.Item>
@@ -751,7 +903,7 @@ const AddJob: React.FC = () => {
                   }
                   name="salaryMax"
                   rules={[
-                    { required: true, message: "Please enter maximum salary" },
+                    { required: false, message: "Please enter maximum salary" },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
                         if (!value || getFieldValue("salaryMin") <= value) {
@@ -772,7 +924,7 @@ const AddJob: React.FC = () => {
                     size="large"
                     className="w-full h-12 rounded-xl"
                     formatter={(value) =>
-                      `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                     }
                   />
                 </Form.Item>
@@ -788,7 +940,7 @@ const AddJob: React.FC = () => {
                   name="benefits"
                   rules={[
                     { required: false, message: "Please enter job benefits" },
-                  ]}  
+                  ]}
                 >
                   <TextArea
                     placeholder="e.g., Flexible hours, Health insurance, Work from home"
@@ -976,6 +1128,18 @@ const AddJob: React.FC = () => {
             <p>
               <strong>Contact:</strong> {formValues.countryCode}{" "}
               {formValues.contactNumber || "N/A"}
+            </p>
+            <p>
+              <strong>Company Email:</strong> {formValues.companyEmail || "N/A"}
+            </p>
+            <p>
+              <strong>Job Source:</strong>{" "}
+              {jobSources.find(
+                (source) => source.value === formValues.jobSource
+              )?.label || "N/A"}
+            </p>
+            <p>
+              <strong>Job Added By:</strong> {formValues.companyUrl || "N/A"}
             </p>
             {formValues.companyLogo && (
               <div>

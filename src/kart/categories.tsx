@@ -31,6 +31,16 @@ interface Category {
   itemsResponseDtoList: Item[];
   subCategories?: SubCategory[];
 }
+type ComboAddOnItem = {
+  itemId: string;
+  itemName: string;
+  itemPrice: number;
+  itemImage: string;
+  weight: number;
+  units: string;
+  quantity: number;  // ✅ now required
+  itemMrp: number;
+};
 
 interface Offer {
   id: string;
@@ -108,6 +118,14 @@ const Categories: React.FC<CategoriesProps> = ({
     visible: false,
     content: "",
   });
+const [comboAddOnModal, setComboAddOnModal] = useState<{
+  visible: boolean;
+  items: ComboAddOnItem[];
+}>({
+  visible: false,
+  items: [],
+});
+
   const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,6 +151,7 @@ const Categories: React.FC<CategoriesProps> = ({
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
     null
   );
+  const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
   const [disabledFilters, setDisabledFilters] = useState<{
     [key: string]: boolean;
   }>({});
@@ -147,60 +166,61 @@ const Categories: React.FC<CategoriesProps> = ({
   ];
 
   useEffect(() => {
-   const queryParams = new URLSearchParams(location.search);
-const categoryFromQuery = queryParams.get("category") || location.state?.selectedCategory || null;
+    const queryParams = new URLSearchParams(location.search);
+    const categoryFromQuery =
+      queryParams.get("category") || location.state?.selectedCategory || null;
 
-   const riceCategories = [
-  'Combo Offers',
-  ' Basmati Rice',
-  'Sonamasoori',
-  'Brown Rice',
-  'HMT',
-  'Low GI',
-  'Kolam Rice',
-  'Organic Rice',
-  'Rice Container',
-  'Organic Store',  // ✅ Newly added
-];
+    const riceCategories = [
+      "Combo Offers",
+      " Basmati Rice",
+      "Sonamasoori",
+      "Brown Rice",
+      "HMT",
+      "Low GI",
+      "Kolam Rice",
+      "Organic Rice",
+      "Rice Container",
+      "Organic Store", // ✅ Newly added
+    ];
 
     const groceryCategories = [
-      'Cashew nuts upto ₹40 cashback',
-      'Essentials Mart',
-      'Health & Energy Nutritions',
-      'Baby care',
-      'Snacking',
-      'Juices',
-      'Bulb & Batteries',
-      'Indian Pickles',
-      'Monsoon Magic',
-      'Personal Care',
-      'Kitchen Elixirs',
-      'Atta & Flours',
-      'Dals & Pulses',
-      'Fresheners & Repellents',
-      'Home & Kitchen Appliances',
-      'Dry Fruits & Nuts',
-      'MediZone',
-      'Clean & Care',
-      'Pure Honey & Naturals',
-      'Stationary Store',
-      'Pooja Needs',
-      'Masalas & Spices',
-      'Packaged Foods',
-      'Women Hygiene',
+      "Cashew nuts upto ₹40 cashback",
+      "Essentials Mart",
+      "Health & Energy Nutritions",
+      "Baby care",
+      "Snacking",
+      "Juices",
+      "Bulb & Batteries",
+      "Indian Pickles",
+      "Monsoon Magic",
+      "Personal Care",
+      "Kitchen Elixirs",
+      "Atta & Flours",
+      "Dals & Pulses",
+      "Fresheners & Repellents",
+      "Home & Kitchen Appliances",
+      "Dry Fruits & Nuts",
+      "MediZone",
+      "Clean & Care",
+      "Pure Honey & Naturals",
+      "Stationary Store",
+      "Pooja Needs",
+      "Masalas & Spices",
+      "Packaged Foods",
+      "Women Hygiene",
     ];
-    const goldCategories = ['GOLD'];
+    const goldCategories = ["GOLD"];
 
     // Category mapping for query parameters
     const categoryMapping: { [key: string]: string[] } = {
       rice: riceCategories,
       groceries: groceryCategories,
       gold: goldCategories,
-      'all items': ['All Items'],
+      "all items": ["All Items"],
       RICE: riceCategories,
       GROCERIES: groceryCategories,
       GOLD: goldCategories,
-      ALL_ITEMS: ['All Items'],
+      ALL_ITEMS: ["All Items"],
     };
 
     // Normalize category
@@ -211,13 +231,20 @@ const categoryFromQuery = queryParams.get("category") || location.state?.selecte
       // Check if the query is a group filter (rice, groceries, gold, all items)
       if (categoryMapping[lowerCaseQuery]) {
         normalizedCategory = lowerCaseQuery;
-      } else if (categories.some(cat => cat.categoryName.trim() === trimmedQuery)) {
+      } else if (
+        categories.some((cat) => cat.categoryName.trim() === trimmedQuery)
+      ) {
         // If it's a specific category, use the exact category name
-        normalizedCategory = categories.find(cat => cat.categoryName.trim() === trimmedQuery)!.categoryName;
+        normalizedCategory = categories.find(
+          (cat) => cat.categoryName.trim() === trimmedQuery
+        )!.categoryName;
       }
     }
 
-    console.log("Categories.tsx - Setting activeCategory to:", normalizedCategory);
+    console.log(
+      "Categories.tsx - Setting activeCategory to:",
+      normalizedCategory
+    );
     setActiveCategory(normalizedCategory);
 
     // Auto-scroll to items section
@@ -231,14 +258,40 @@ const categoryFromQuery = queryParams.get("category") || location.state?.selecte
     }, 100);
 
     const weight = queryParams.get("weight");
-    if (weight && weightFilters.some(filter => filter.value === weight)) {
+    if (weight && weightFilters.some((filter) => filter.value === weight)) {
       setActiveWeightFilter(weight);
     } else {
       setActiveWeightFilter(null);
     }
   }, [location.search, categories, setActiveCategory]);
 
-const handleCategoryClick = (categoryName: string) => {
+  const showComboAddOnOptions = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/product-service/combo-offers`
+      );
+      const data = response.data?.content || [];
+
+      const matchingCombo = data.find((combo: any) => combo.itemWeight === 26);
+      if (matchingCombo && Array.isArray(matchingCombo.items)) {
+        const optionalItems = matchingCombo.items.map((optItem: any) => ({
+          itemName: optItem.itemName,
+          itemId: optItem.individualItemId,
+          itemImage: optItem.imageUrl,
+          weight: optItem.itemWeight,
+          itemPrice: optItem.itemPrice,
+          quantity: 1,
+          itemMrp: optItem.itemMrp,
+          units: optItem.units,
+        }));
+        setComboAddOnModal({ visible: true, items: optionalItems });
+      }
+    } catch (error) {
+      console.error("Failed to load combo add-ons", error);
+    }
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
     if (categoryName === activeCategory) {
       setActiveCategory("");
       onCategoryClick("");
@@ -563,48 +616,101 @@ const handleCategoryClick = (categoryName: string) => {
     setActiveSubCategory(null);
   }, [activeCategory]);
 
-  const handleAddToCart = async (item: Item) => {
-    const accessToken = localStorage.getItem("accessToken");
-    const userId = localStorage.getItem("userId");
-    if (!accessToken || !userId) {
-      message.warning("Please login to add items to the cart.");
-      setTimeout(() => {
-        navigate("/whatapplogin");
-      }, 2000);
-      return;
+const handleAddToCart = async (item: Item & { status?: string }) => {
+  const accessToken = localStorage.getItem("accessToken");
+  const userId = localStorage.getItem("userId");
+
+  if (!accessToken || !userId) {
+    message.warning("Please login to add items to the cart.");
+    setTimeout(() => {
+      navigate("/whatapplogin");
+    }, 2000);
+    return;
+  }
+
+  if (!checkProfileCompletion()) {
+    Modal.error({
+      title: "Profile Incomplete",
+      content: "Please complete your profile to add items to the cart.",
+      onOk: () => navigate("/main/profile"),
+    });
+    setTimeout(() => {
+      navigate("/main/profile");
+    }, 4000);
+    return;
+  }
+
+  try {
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId]: true },
+    }));
+
+    // ✅ Check if this is a 26KG combo item
+    const isCombo =
+      parseFloat(item.weight?.toString()) === 26 &&
+      item.units?.toLowerCase() === "kgs";
+
+    const requestBody: any = {
+      customerId: userId,
+      itemId: item.itemId,
+      quantity: 1,
+    };
+
+if (item.status === "COMBO") {
+  requestBody.status = "COMBO";
+}
+
+    // ✅ Add item to cart
+    await axios.post(
+      `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+      requestBody,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    await fetchCartData(item.itemId);
+
+    // ✅ Check for 26KG Rice Combo logic
+    if (isCombo) {
+      try {
+        const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
+        const comboData = res.data?.content || [];
+
+        const matchingCombo = comboData.find(
+          (combo: any) => combo.itemWeight === 26
+        );
+
+        if (matchingCombo && matchingCombo.items?.length) {
+          // Show modal with optional add-ons
+          setComboAddOnModal({
+            visible: true,
+            items: matchingCombo.items.map((i: any) => ({
+              itemId: i.individualItemId,
+              itemName: i.itemName,
+              itemPrice: i.itemPrice,
+              itemImage: i.imageUrl,
+              weight: i.itemWeight,
+              units: i.units,
+              quantity: i.quantity ?? 1,
+              itemMrp: i.itemMrp ?? i.itemPrice,
+            })),
+          });
+        }
+      } catch (comboErr) {
+        console.error("Error fetching combo offers:", comboErr);
+      }
     }
-    if (!checkProfileCompletion()) {
-      Modal.error({
-        title: "Profile Incomplete",
-        content: "Please complete your profile to add items to the cart.",
-        onOk: () => navigate("/main/profile"),
-      });
-      setTimeout(() => {
-        navigate("/main/profile");
-      }, 4000);
-      return;
-    }
-    try {
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: true },
-      }));
-      await axios.post(
-        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
-        { customerId: userId, itemId: item.itemId, quantity: 1 },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      await fetchCartData(item.itemId);
-      message.success("Item added to cart successfully.");
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      message.error("Failed to add item to cart.");
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: false },
-      }));
-    }
-  };
+
+    message.success("Item added to cart successfully.");
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    message.error("Failed to add item to cart.");
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId]: false },
+    }));
+  }
+};
 
   const calculateDiscount = (mrp: number | string, price: number): number => {
     const mrpNum = typeof mrp === "string" ? parseFloat(mrp) : mrp;
@@ -613,51 +719,51 @@ const handleCategoryClick = (categoryName: string) => {
 
   const getCurrentCategoryItems = () => {
     const riceCategories = [
-  'Combo Offers',
-  ' Basmati Rice',
-  'Sonamasoori',
-  'Brown Rice',
-  'HMT',
-  'Low GI',
-  'Kolam Rice',
-  'Organic Rice',
-  'Rice Container',
-  'Organic Store',  // ✅ Newly added
-];
+      "Combo Offers",
+      " Basmati Rice",
+      "Sonamasoori",
+      "Brown Rice",
+      "HMT",
+      "Low GI",
+      "Kolam Rice",
+      "Organic Rice",
+      "Rice Container",
+      "Organic Store", // ✅ Newly added
+    ];
 
     const groceryCategories = [
-      'Cashew nuts upto ₹40 cashback',
-      'Essentials Mart',
-      'Health & Energy Nutritions',
-      'Baby care',
-      'Snacking',
-      'Juices',
-      'Bulb & Batteries',
-      'Indian Pickles',
-      'Monsoon Magic',
-      'Personal Care',
-      'Kitchen Elixirs',
-      'Atta & Flours',
-      'Dals & Pulses',
-      'Fresheners & Repellents',
-      'Home & Kitchen Appliances',
-      'Dry Fruits & Nuts',
-      'MediZone',
-      'Clean & Care',
-      'Pure Honey & Naturals',
-      'Stationary Store',
-      'Pooja Needs',
-      'Masalas & Spices',
-      'Packaged Foods',
-      'Women Hygiene',
+      "Cashew nuts upto ₹40 cashback",
+      "Essentials Mart",
+      "Health & Energy Nutritions",
+      "Baby care",
+      "Snacking",
+      "Juices",
+      "Bulb & Batteries",
+      "Indian Pickles",
+      "Monsoon Magic",
+      "Personal Care",
+      "Kitchen Elixirs",
+      "Atta & Flours",
+      "Dals & Pulses",
+      "Fresheners & Repellents",
+      "Home & Kitchen Appliances",
+      "Dry Fruits & Nuts",
+      "MediZone",
+      "Clean & Care",
+      "Pure Honey & Naturals",
+      "Stationary Store",
+      "Pooja Needs",
+      "Masalas & Spices",
+      "Packaged Foods",
+      "Women Hygiene",
     ];
-    const goldCategories = ['GOLD'];
+    const goldCategories = ["GOLD"];
 
     const categoryMap: { [key: string]: string[] } = {
       rice: riceCategories,
       groceries: groceryCategories,
       gold: goldCategories,
-      'all items': ['All Items'],
+      "all items": ["All Items"],
     };
 
     const goldBarItemIds = [
@@ -666,25 +772,29 @@ const handleCategoryClick = (categoryName: string) => {
     ];
 
     const activeCategoryKey = (activeCategory || "all items").toLowerCase();
-    
+
     let items: Item[] = [];
-    
+
     // Handle group filters
     if (categoryMap[activeCategoryKey]) {
       const allowedCategories = categoryMap[activeCategoryKey];
       // Aggregate items from all categories in the group
       items = categories
-        .filter(cat => 
-          activeCategoryKey === "all items" 
-            ? cat.categoryName !== "All Items" 
+        .filter((cat) =>
+          activeCategoryKey === "all items"
+            ? cat.categoryName !== "All Items"
             : allowedCategories.includes(cat.categoryName)
         )
-        .flatMap(cat => cat.itemsResponseDtoList || []);
+        .flatMap((cat) => cat.itemsResponseDtoList || []);
     } else {
       // Handle specific category
-      const currentCategory = categories.find(cat => cat.categoryName === activeCategory);
+      const currentCategory = categories.find(
+        (cat) => cat.categoryName === activeCategory
+      );
       if (!currentCategory) {
-        console.log("Categories.tsx - No current category found, returning empty array");
+        console.log(
+          "Categories.tsx - No current category found, returning empty array"
+        );
         return [];
       }
       items = currentCategory.itemsResponseDtoList || [];
@@ -701,63 +811,81 @@ const handleCategoryClick = (categoryName: string) => {
       });
     }
 
-    console.log("Categories.tsx - Filtered items for category", activeCategory, ":", items.map(item => item.itemName));
+    console.log(
+      "Categories.tsx - Filtered items for category",
+      activeCategory,
+      ":",
+      items.map((item) => item.itemName)
+    );
     return items;
   };
 
-  const handleQuantityChange = async (
-    item: Item,
-    increment: boolean,
-    status: string
-  ) => {
-    if (cartItems[item.itemId] === item.quantity && increment) {
-      message.warning("Sorry, Maximum quantity reached.");
-      return;
+ const handleQuantityChange = async (
+  item: Item,
+  increment: boolean,
+  status: string
+) => {
+  if (cartItems[item.itemId] === item.quantity && increment) {
+    message.warning("Sorry, Maximum quantity reached.");
+    return;
+  }
+
+  const userId = localStorage.getItem("userId");
+  const accessToken = localStorage.getItem("accessToken");
+  if (!userId || !accessToken) {
+    message.error("Please login to update cart.");
+    return;
+  }
+
+  try {
+    const endpoint = increment
+      ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+      : `${BASE_URL}/cart-service/cart/minusCartItem`;
+
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId]: true },
+      status: { ...prev.status, [item.itemId]: status },
+    }));
+
+    const payload: any = {
+      customerId: userId,
+      itemId: item.itemId,
+    };
+
+    // ✅ Include COMBO status in payload if applicable
+    if (status === "COMBO") {
+      payload.status = "COMBO";
     }
-    const userId = localStorage.getItem("userId");
-    const accessToken = localStorage.getItem("accessToken");
-    if (!userId || !accessToken) {
-      message.error("Please login to update cart.");
-      return;
-    }
-    try {
-      const endpoint = increment
-        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
-        : `${BASE_URL}/cart-service/cart/minusCartItem`;
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: true },
-        status: { ...prev.status, [item.itemId]: status },
-      }));
-      const payload = {
-        customerId: userId,
-        itemId: item.itemId,
-      };
-      await axios[increment ? "post" : "patch"](endpoint, payload, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      await fetchCartData(item.itemId);
-      console.log(
-        `handleQuantityChange: Item ${item.itemId}, increment: ${increment}, new cartItems: `,
-        cartItems
-      );
-      message.success(
-        increment
-          ? "Item quantity increased"
-          : cartItems[item.itemId] <= 1
-          ? "Item removed from cart successfully."
-          : "Item quantity decreased"
-      );
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      message.error("Error updating item quantity");
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: false },
-        status: { ...prev.status, [item.itemId]: "" },
-      }));
-    }
-  };
+
+    await axios[increment ? "post" : "patch"](endpoint, payload, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    await fetchCartData(item.itemId);
+
+    console.log(
+      `handleQuantityChange: Item ${item.itemId}, increment: ${increment}, new cartItems: `,
+      cartItems
+    );
+
+    message.success(
+      increment
+        ? "Item quantity increased"
+        : cartItems[item.itemId] <= 1
+        ? "Item removed from cart successfully."
+        : "Item quantity decreased"
+    );
+  } catch (error) {
+    console.error("Error updating quantity:", error);
+    message.error("Error updating item quantity");
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId]: false },
+      status: { ...prev.status, [item.itemId]: "" },
+    }));
+  }
+};
 
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
@@ -784,68 +912,70 @@ const handleCategoryClick = (categoryName: string) => {
   // Filter categories based on the activeCategory
   const getFilteredCategories = () => {
     const groceryCategories = [
-      'Cashew nuts upto ₹40 cashback',
-      'Essentials Mart',
-      'Health & Energy Nutritions',
-      'Baby care',
-      'Snacking',
-      'Juices',
-      'Bulb & Batteries',
-      'Indian Pickles',
-      'Monsoon Magic',
-      'Personal Care',
-      'Kitchen Elixirs',
-      'Atta & Flours',
-      'Dals & Pulses',
-      'Fresheners & Repellents',
-      'Home & Kitchen Appliances',
-      'Dry Fruits & Nuts',
-      'MediZone',
-      'Clean & Care',
-      'Pure Honey & Naturals',
-      'Stationary Store',
-      'Pooja Needs',
-      'Masalas & Spices',
-      'Packaged Foods',
-      'Women Hygiene',
+      "Cashew nuts upto ₹40 cashback",
+      "Essentials Mart",
+      "Health & Energy Nutritions",
+      "Baby care",
+      "Snacking",
+      "Juices",
+      "Bulb & Batteries",
+      "Indian Pickles",
+      "Monsoon Magic",
+      "Personal Care",
+      "Kitchen Elixirs",
+      "Atta & Flours",
+      "Dals & Pulses",
+      "Fresheners & Repellents",
+      "Home & Kitchen Appliances",
+      "Dry Fruits & Nuts",
+      "MediZone",
+      "Clean & Care",
+      "Pure Honey & Naturals",
+      "Stationary Store",
+      "Pooja Needs",
+      "Masalas & Spices",
+      "Packaged Foods",
+      "Women Hygiene",
     ];
-   const riceCategories = [
-  'Combo Offers',
-  ' Basmati Rice',
-  'Sonamasoori',
-  'Brown Rice',
-  'HMT',
-  'Low GI',
-  'Kolam Rice',
-  'Organic Rice',
-  'Rice Container',
-  'Organic Store',  // ✅ Newly added
-];
-    const goldCategories = ['GOLD'];
+    const riceCategories = [
+      "Combo Offers",
+      " Basmati Rice",
+      "Sonamasoori",
+      "Brown Rice",
+      "HMT",
+      "Low GI",
+      "Kolam Rice",
+      "Organic Rice",
+      "Rice Container",
+      "Organic Store", // ✅ Newly added
+    ];
+    const goldCategories = ["GOLD"];
 
     const categoryMap: { [key: string]: string[] } = {
       groceries: groceryCategories,
       rice: riceCategories,
       gold: goldCategories,
-      'all items': ['All Items'],
+      "all items": ["All Items"],
     };
 
     // Handle null activeCategory
     const activeCategoryKey = (activeCategory || "all items").toLowerCase();
     if (activeCategoryKey === "all items") {
-      return categories.filter(category => category.categoryName !== "All Items");
+      return categories.filter(
+        (category) => category.categoryName !== "All Items"
+      );
     }
 
     // If activeCategory is a group filter (rice, groceries, gold), return the corresponding categories
     if (categoryMap[activeCategoryKey]) {
-      return categories.filter(category =>
+      return categories.filter((category) =>
         categoryMap[activeCategoryKey].includes(category.categoryName)
       );
     }
 
     // If activeCategory is a specific category, return only that category
-    return categories.filter(category =>
-      category.categoryName === activeCategory
+    return categories.filter(
+      (category) => category.categoryName === activeCategory
     );
   };
 
@@ -955,89 +1085,94 @@ const handleCategoryClick = (categoryName: string) => {
         />
       </Modal>
       <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
-       <>
-  {/* All Categories Button at the top */}
-  <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={() => {
-      setActiveCategory("all items");
-      onCategoryClick("all items");
-      setTimeout(() => {
-        if (itemsRef.current) {
-          itemsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-    }}
-    className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
-      activeCategory?.toLowerCase() === "all items"
-        ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
-        : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
-    }`}
-  >
-    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
-      <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
-        All
-      </span>
-    </div>
-    <p
-      className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
-        activeCategory?.toLowerCase() === "all items"
-          ? "text-purple-600"
-          : "text-gray-700"
-      }`}
-    >
-      All Categories
-    </p>
-  </motion.button>
-
-  {/* Now only 1 loop for other categories */}
-  {getFilteredCategories().map((category, index) => (
-    <motion.button
-      key={index}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => handleCategoryClick(category.categoryName)}
-      className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
-        activeCategory === category.categoryName
-          ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
-          : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
-      }`}
-    >
-      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
-        {category.categoryLogo || category.categoryImage ? (
-          <img
-            src={(category.categoryLogo || category.categoryImage) ?? ""}
-            alt={category.categoryName}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.remove();
-              const span = document.createElement("span");
-              span.innerText = category.categoryName.charAt(0);
-              span.className =
-                "text-purple-600 font-bold text-[10px] sm:text-sm";
-              e.currentTarget.parentElement?.appendChild(span);
+        <>
+          {/* All Categories Button at the top */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              setActiveCategory("all items");
+              onCategoryClick("all items");
+              setTimeout(() => {
+                if (itemsRef.current) {
+                  itemsRef.current.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              }, 100);
             }}
-          />
-        ) : (
-          <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
-            {category.categoryName.charAt(0)}
-          </span>
-        )}
-      </div>
-      <p
-        className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
-          activeCategory === category.categoryName
-            ? "text-purple-600"
-            : "text-gray-700"
-        }`}
-      >
-        {category.categoryName}
-      </p>
-    </motion.button>
-  ))}
-</>
+            className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
+              activeCategory?.toLowerCase() === "all items"
+                ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
+                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+            }`}
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
+              <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
+                All
+              </span>
+            </div>
+            <p
+              className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+                activeCategory?.toLowerCase() === "all items"
+                  ? "text-purple-600"
+                  : "text-gray-700"
+              }`}
+            >
+              All Categories
+            </p>
+          </motion.button>
+
+          {/* Now only 1 loop for other categories */}
+          {getFilteredCategories().map((category, index) => (
+            <motion.button
+              key={index}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleCategoryClick(category.categoryName)}
+              className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
+                activeCategory === category.categoryName
+                  ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
+                  : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+              }`}
+            >
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
+                {category.categoryLogo || category.categoryImage ? (
+                  <img
+                    src={
+                      (category.categoryLogo || category.categoryImage) ?? ""
+                    }
+                    alt={category.categoryName}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.remove();
+                      const span = document.createElement("span");
+                      span.innerText = category.categoryName.charAt(0);
+                      span.className =
+                        "text-purple-600 font-bold text-[10px] sm:text-sm";
+                      e.currentTarget.parentElement?.appendChild(span);
+                    }}
+                  />
+                ) : (
+                  <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
+                    {category.categoryName.charAt(0)}
+                  </span>
+                )}
+              </div>
+              <p
+                className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+                  activeCategory === category.categoryName
+                    ? "text-purple-600"
+                    : "text-gray-700"
+                }`}
+              >
+                {category.categoryName}
+              </p>
+            </motion.button>
+          ))}
+        </>
       </div>
       {activeCategory && (
         <div className="mb-6">
@@ -1266,6 +1401,155 @@ const handleCategoryClick = (categoryName: string) => {
           </div>
         )}
       </div>
+<Modal
+  open={comboAddOnModal.visible}
+  onCancel={() => {
+    setComboAddOnModal({ visible: false, items: [] });
+    setHasAddedComboAddOn(false);
+  }}
+  footer={null}
+  centered
+  title={
+    <div className="text-center">
+      <h3 className="text-lg font-bold text-purple-700 mb-1">Special Offer Add-on</h3>
+      <p className="text-xs text-gray-600">Choose your favorite add-on and save more!</p>
+    </div>
+  }
+  className="special-offer-modal"
+  width={560}
+>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+    {comboAddOnModal.items.map((addonItem) => {
+      // Calculate discount percentage (assuming you have itemMRP field)
+      const discountPercentage = addonItem.itemMrp 
+        ? Math.round(((addonItem.itemMrp - addonItem.itemPrice) / addonItem.itemMrp) * 100)
+        : 0;
+      
+      return (
+        <div
+          key={addonItem.itemId}
+          className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden"
+        >
+          {/* Discount Badge */}
+          {discountPercentage > 0 && (
+            <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
+              {discountPercentage}% OFF
+            </div>
+          )}
+          
+          {/* Selection Badge */}
+          {hasAddedComboAddOn && (
+            <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
+              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+          )}
+
+          {/* Square Image Container */}
+          <div className="relative mb-2">
+            <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+              {addonItem.itemImage ? (
+                <img
+                  src={addonItem.itemImage}
+                  alt={addonItem.itemName}
+                  className="w-full h-full object-contain p-1.5"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = parent.querySelector('.fallback-icon');
+                      if (fallback) {
+                        (fallback as HTMLElement).style.display = 'flex';
+                      }
+                    }
+                  }}
+                />
+              ) : null}
+              <div
+                className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
+                style={{ display: addonItem.itemImage ? 'none' : 'flex' }}
+              >
+                <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Info */}
+          <div className="text-center">
+            <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
+              {addonItem.itemName}
+            </h4>
+            
+            {/* Price Section */}
+            <div className="mb-3">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="text-purple-600 font-bold text-lg">
+                  ₹{addonItem.itemPrice}
+                </span>
+                {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
+                  <span className="text-gray-500 text-xs line-through">
+                    ₹{addonItem.itemMrp}
+                  </span>
+                )}
+              </div>
+              
+              {/* Savings Info */}
+              {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
+                <div className="text-green-600 text-xs font-medium">
+                  You save ₹{addonItem.itemMrp - addonItem.itemPrice}
+                </div>
+              )}
+            </div>
+
+            {/* Add Button */}
+            <motion.button
+              whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
+              whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
+              className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
+                hasAddedComboAddOn
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg'
+              }`}
+              onClick={() => {
+                if (!hasAddedComboAddOn) {
+                 handleAddToCart({ ...(addonItem as Item), status: "COMBO" });
+                  setHasAddedComboAddOn(true);
+                  setComboAddOnModal({ visible: false, items: [] });
+                } else {
+                  message.warning("You can only select one optional add-on.");
+                }
+              }}
+              disabled={hasAddedComboAddOn}
+            >
+              {hasAddedComboAddOn ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Add-on Selected
+                </span>
+              ) : (
+                'Add Add-on'
+              )}
+            </motion.button>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+  
+  {/* Modal Footer Info */}
+  <div className="text-center p-3 bg-gray-50 mx-3 mb-3 rounded-md">
+    <p className="text-xs text-gray-600">
+      <span className="font-medium">🎉 Special Offer:</span> Add any item to your combo and enjoy exclusive discounts!
+    </p>
+  </div>
+</Modal>
+
     </div>
   );
 };
