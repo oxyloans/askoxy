@@ -2073,10 +2073,10 @@ const CartPage: React.FC = () => {
                     </button>
                     {isItemTotalDropdownOpen && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-600 mb-2">
+                        {/* <p className="text-sm text-gray-600 mb-2">
                           Askoxy.ai has no role to play in the taxes and charges
                           being levied by the government
-                        </p>
+                        </p> */}
                         <div className="flex justify-between text-gray-700 text-sm">
                           <span>Item Cost</span>
                           <span>

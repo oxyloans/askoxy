@@ -626,6 +626,14 @@ const AllCampaignsDetails: React.FC = () => {
       },
     },
     {
+      title: <div className="text-center">Added By</div>,
+      dataIndex: "campaignTypeAddBy",
+      key: "campaignTypeAddBy",
+      render: (text: string) => (
+        <div className="max-w-xs break-words">{text}</div>
+      ),
+    },
+    {
       title: <div className="text-center">Actions</div>,
       key: "actions",
       render: (_: any, campaign: Campaign) => (

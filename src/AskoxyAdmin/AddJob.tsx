@@ -221,7 +221,7 @@ const AddJob: React.FC = () => {
         countryCode: countryCode,
         companyLogo: formValues.companyLogo,
         companyEmail: formValues.companyEmail,
-        // companyAddress: formValues.jobAddedBy,
+        companyAddress: formValues.companyAddress,
         jobSource: formValues.jobSource,
       };
 

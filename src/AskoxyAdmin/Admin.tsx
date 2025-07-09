@@ -213,6 +213,7 @@ const Admin: React.FC = () => {
     "FREEAI",
     "FREESAMPLE",
     "FREERUDHRAKSHA",
+    "FREERUDRAKSHA",
     "FREE RUDHRAKSHA",
   ];
 

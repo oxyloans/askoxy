@@ -173,7 +173,7 @@ const ServicesPage: React.FC = () => {
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 30);
+      .slice(0, 50);
 
   const handleCampaignClick = (campaign: Campaign) => {
     if (

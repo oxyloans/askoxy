@@ -377,7 +377,7 @@ const BlogDetails: React.FC = () => {
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 30);
+      .slice(0, 50);
 
   const handleWriteToUs = (campaign: Campaign) => {
     if (!accessToken || !userId) {
@@ -621,9 +621,7 @@ const BlogDetails: React.FC = () => {
 
     const shareUrl = `${
       window.location.origin
-    }/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
-      campaign.campaignType
-    )}`;
+    }/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`;
 
     if (navigator.share) {
       navigator

@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.4101a564.css",
-    "main.js": "/static/js/main.bdb1027c.js",
+    "main.css": "/static/css/main.0319cef6.css",
+    "main.js": "/static/js/main.00a0d2f5.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
     "static/media/page1.png": "/static/media/page1.377acc651cd141d1516d.png",
@@ -83,7 +83,7 @@
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.85705e5e99c29f138987.png",
     "static/media/cashewoffer1.png": "/static/media/cashewoffer1.c9cfa294e808a6f745a9.png",
     "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
-    "static/media/35kg1.png": "/static/media/35kg1.fb60d6f6ea45bc39495f.png",
+    "static/media/35kg1.png": "/static/media/35kg1.10dd8dffe5cc62266f64.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
     "static/media/mapbw.png": "/static/media/mapbw.4094352cf827b2840ba6.png",
     "static/media/testimonial17.png": "/static/media/testimonial17.fb648ac71a729958a005.png",
@@ -132,11 +132,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.4101a564.css.map": "/static/css/main.4101a564.css.map",
-    "main.bdb1027c.js.map": "/static/js/main.bdb1027c.js.map"
+    "main.0319cef6.css.map": "/static/css/main.0319cef6.css.map",
+    "main.00a0d2f5.js.map": "/static/js/main.00a0d2f5.js.map"
   },
   "entrypoints": [
-    "static/css/main.4101a564.css",
-    "static/js/main.bdb1027c.js"
+    "static/css/main.0319cef6.css",
+    "static/js/main.00a0d2f5.js"
   ]
 }

@@ -611,84 +611,94 @@ const WhatsappLogin = () => {
     navigate(loginUrl);
   };
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 row">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-4 row">
       <div
         className={`max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
-        {/* Header */}
-        <div className="bg-purple-600 p-4 sm:p-4 lg:p-6 relative">
+<div className="bg-purple-600 p-4 sm:p-6 lg:p-8 relative rounded-lg shadow-lg mx-4 sm:mx-0 max-w-md sm:max-w-lg w-full">
+       {/* Close Button */}
+      <button
+        onClick={handleClose}
+        className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white touch-manipulation z-10"
+      >
+        <X className="w-4 h-4 sm:w-5 sm:h-5" />
+      </button>
+      
+      {/* Content Section */}
+      <div className="flex flex-col items-center gap-4 sm:gap-6 text-center pr-8 sm:pr-0">
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">
+          {primaryType === "STUDENT"
+            ? "Welcome to Study Abroad"
+            : "Welcome to ASKOXY.AI"}
+        </h2>
+        
+        {/* Button Row - Always horizontal */}
+        <div className="flex flex-row gap-2 sm:gap-3 justify-center w-full">
           <button
-            onClick={handleClose}
-            className="absolute right-2 sm:right-4 top-2 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white"
+            onClick={() => {
+              const loginPath =
+                primaryType === "STUDENT"
+                  ? "/whatsapplogin?primaryType=STUDENT"
+                  : "/whatsapplogin";
+              console.log("Redirect to:", loginPath);
+              // window.location.href = loginPath;
+            }}
+            className="bg-white text-purple-600 px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
           >
-            <X className="w-5 h-5 sm:w-5 sm:h-5" />
+            Login
           </button>
-          <div className="flex flex-col items-center gap-3">
-            <h2 className="text-2xl font-bold text-white text-center">
-              {primaryType === "STUDENT"
-                ? "Welcome to Study Abroad"
-                : "Welcome to ASKOXY.AI"}
-            </h2>
-            <div className="flex gap-4">
-              <button
-                onClick={() => {
-                  const loginPath =
-                    primaryType === "STUDENT"
-                      ? "/whatsapplogin?primaryType=STUDENT"
-                      : "/whatsapplogin";
-                  window.location.href = loginPath;
-                }}
-                className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
-              >
-                Login
-              </button>
-              <button
-                onClick={handleRegisterRedirectClick}
-                className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
-              >
-                Register
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={handleRegisterRedirectClick}
+            className="bg-transparent border-2 border-white text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
+          >
+            Register
+          </button>
         </div>
+      </div>
+    </div>
 
-        {/* Erice Customer Alert - Only show for CUSTOMER users */}
-        {showEriceAlert && primaryType === "CUSTOMER" && (
-          <div className="mx-4 mt-2">
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-2 relative">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                {!showEnglish ? (
-                  <>
-                    <p className="font-bold">ERICE కస్టమర్లకు గమనిక</p>
-                    <p className="text-xs mt-1">
-                      మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్
-                      అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు
-                      WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-bold">Attention Erice Customers</p>
-                    <p className="text-xs mt-1">
-                      Your data has been migrated. Log in using the SMS option.
-                      If your mobile and WhatsApp numbers are the same, you can
-                      also log in via WhatsApp.
-                    </p>
-                  </>
-                )}
-              </div>
-              <button
-                onClick={() => setShowEnglish(!showEnglish)}
-                className="text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded transition-colors flex-shrink-0"
-              >
-                {showEnglish ? "తెలుగు" : "English"}
-              </button>
-            </div>
-          </div>
-        )}
+{showEriceAlert && primaryType === "CUSTOMER" && (
+  <div className="mx-2 xs:mx-3 sm:mx-4 mt-2">
+    <div className="bg-amber-50 border border-amber-200 text-amber-800 px-2 xs:px-3 sm:px-4 py-2 sm:py-3 rounded-lg relative">
+      <div className="flex items-start gap-2 sm:pr-16">
+        <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          {!showEnglish ? (
+            <>
+              <p className="font-bold text-xs sm:text-sm">ERICE కస్టమర్లకు గమనిక</p>
+              <p className="text-xs mt-1 leading-relaxed break-words">
+                మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్
+                అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు
+                WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-bold text-xs sm:text-sm">Attention Erice Customers</p>
+              <p className="text-xs mt-1 leading-relaxed break-words">
+                Your data has been migrated. Log in using the SMS option.
+                If your mobile and WhatsApp numbers are the same, you can
+                also log in via WhatsApp.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Language Toggle Button */}
+      <div className="mt-2 flex justify-end sm:mt-0 sm:absolute sm:right-3 sm:top-3">
+        <button
+          onClick={() => setShowEnglish(!showEnglish)}
+          className="text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded transition-colors whitespace-nowrap min-h-[28px] touch-manipulation z-10"
+        >
+          {showEnglish ? "తెలుగు" : "English"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Success Message */}
         {showSuccessPopup && (

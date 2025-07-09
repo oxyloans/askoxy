@@ -173,39 +173,45 @@ const JobDetails: React.FC = () => {
     let filtered = [...jobs];
 
     if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (job) =>
-          job.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.skills.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.jobLocations.toLowerCase().includes(searchTerm.toLowerCase())
+          job.jobTitle?.toLowerCase().includes(lowerSearch) ||
+          job.companyName?.toLowerCase().includes(lowerSearch) ||
+          job.skills?.toLowerCase().includes(lowerSearch) ||
+          job.industry?.toLowerCase().includes(lowerSearch) ||
+          job.jobLocations?.toLowerCase().includes(lowerSearch)
       );
     }
 
     if (filters.industry) {
-      filtered = filtered.filter((job) => job.industry === filters.industry);
+      filtered = filtered.filter((job) =>
+        job.industry?.toLowerCase().includes(filters.industry.toLowerCase())
+      );
     }
 
     if (filters.jobType) {
-      filtered = filtered.filter((job) => job.jobType === filters.jobType);
+      filtered = filtered.filter((job) =>
+        job.jobType?.toLowerCase().includes(filters.jobType.toLowerCase())
+      );
     }
 
     if (filters.location) {
-      filtered = filtered.filter(
-        (job) => job.jobLocations === filters.location
+      filtered = filtered.filter((job) =>
+        job.jobLocations?.toLowerCase().includes(filters.location.toLowerCase())
       );
     }
 
     if (filters.experience) {
-      filtered = filtered.filter(
-        (job) => job.experience === filters.experience
+      filtered = filtered.filter((job) =>
+        job.experience?.toLowerCase().includes(filters.experience.toLowerCase())
       );
     }
 
     if (filters.salaryRange) {
       const selectedRange = getSalaryRanges().find(
-        (range) => range.label === filters.salaryRange
+        (range) =>
+          range.label.toLowerCase() === filters.salaryRange.toLowerCase()
       );
       if (selectedRange) {
         filtered = filtered.filter(
@@ -218,7 +224,7 @@ const JobDetails: React.FC = () => {
 
     if (filters.skills) {
       filtered = filtered.filter((job) =>
-        job.skills.toLowerCase().includes(filters.skills.toLowerCase())
+        job.skills?.toLowerCase().includes(filters.skills.toLowerCase())
       );
     }
 
@@ -226,10 +232,32 @@ const JobDetails: React.FC = () => {
   };
 
   const getUniqueValues = (key: keyof Job): string[] => {
-    const uniqueSet = new Set(jobs.map((job) => String(job[key])));
-    return Array.from(uniqueSet).filter(
-      (value) => value && value !== "undefined" && value !== "null"
-    );
+    const valueMap = new Map<string, string>(); // lowercase -> original (formatted)
+
+    jobs.forEach((job) => {
+      const rawValue = job[key];
+      if (!rawValue) return;
+
+      const items = String(rawValue)
+        .split(",") // Split by comma
+        .map((item) => item.trim()) // Trim spaces
+        .filter(
+          (item) =>
+            item &&
+            item.toLowerCase() !== "undefined" &&
+            item.toLowerCase() !== "null"
+        );
+
+      items.forEach((item) => {
+        const normalized = item.toLowerCase();
+        if (!valueMap.has(normalized)) {
+          // Store only the first seen original casing
+          valueMap.set(normalized, item);
+        }
+      });
+    });
+
+    return Array.from(valueMap.values());
   };
 
   const handleClick = async (jobDesignation: string, companyName: string) => {
@@ -404,7 +432,7 @@ const JobDetails: React.FC = () => {
           </div>
         </motion.div>
       );
-    }
+    } 
 
     return (
       <motion.div
@@ -549,7 +577,7 @@ const JobDetails: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className="bg-gray-50 p-5 rounded-2xl h-64 flex flex-col">
+      <div className="bg-gray-50 p-5 rounded-2xl h-[500px] flex flex-col">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center shrink-0">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
           Job Description
@@ -562,6 +590,7 @@ const JobDetails: React.FC = () => {
           }}
         />
       </div>
+
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
@@ -596,17 +625,17 @@ const JobDetails: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-blue-50 p-5 rounded-2xl">
+      <div className="bg-blue-50 p-4 sm:p-5 rounded-2xl">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
           <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
           Support Details
         </h3>
 
-        <div className="flex items-center text-gray-700 space-x-6">
+        <div className="flex flex-col sm:flex-row sm:items-center text-gray-700 space-y-3 sm:space-y-0 sm:space-x-6">
           {/* Phone */}
           <div className="flex items-center">
             <span className="text-blue-600 mr-2 text-lg">📞</span>
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium break-all">
               {job.countryCode} {job.contactNumber}
             </span>
           </div>
@@ -614,7 +643,9 @@ const JobDetails: React.FC = () => {
           {/* Email */}
           <div className="flex items-center">
             <span className="text-blue-600 mr-2 text-lg">📧</span>
-            <span className="text-sm font-medium">support@askoxy.ai</span>
+            <span className="text-sm font-medium break-all">
+              support@askoxy.ai
+            </span>
           </div>
         </div>
       </div>
@@ -693,7 +724,16 @@ const JobDetails: React.FC = () => {
           </div>
         </div>
         <div className="mb-2">
-          <div className="flex flex-wrap gap-3 justify-center items-center">
+          <style>{`
+        .ant-select-selection-placeholder {
+          color: #374151 !important;
+          font-weight: 500 !important;
+        }
+        .ant-select-selection-item {
+          color: #374151 !important;
+        }
+      `}</style>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-3">
             {(
               [
                 {
@@ -728,35 +768,51 @@ const JobDetails: React.FC = () => {
                 },
               ] as { key: FilterKey; label: string; values: string[] }[]
             ).map(({ key, label, values }) => (
-              <div className="min-w-44">
-                <select
-                  key={key}
-                  value={filters[key]}
-                  onChange={(e) => handleFilterChange(key, e.target.value)}
-                  className="min-w-44 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 focus:border-blue-500 focus:outline-none bg-gradient-to-r from-white to-gray-50 shadow-sm"
+              <div key={key} className="w-full">
+                <Select
+                  value={filters[key] || undefined}
+                  onChange={(value) => handleFilterChange(key, value)}
+                  placeholder={label}
+                  className="w-full rounded-lg"
+                  style={{
+                    width: "100%",
+                    color: "#374151",
+                  }}
+                  size="middle"
+                  allowClear
                 >
-                  <option value="" className="text-gray-400">
-                    {label}
-                  </option>
                   {values.map((val, idx) => (
-                    <option key={`${key}-${idx}`} value={val}>
+                    <Option key={`${key}-${idx}`} value={val}>
                       {val}
-                    </option>
+                    </Option>
                   ))}
-                </select>
+                </Select>
               </div>
             ))}
-            <button
-              onClick={clearFilters}
-              className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm hover:from-red-600 hover:to-pink-600 rounded-xl px-5 py-2 font-medium transition-all duration-200"
-            >
-              🗑 Clear
-            </button>
           </div>
-          <div className="flex justify-end mt-2">
+
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <Button
+              onClick={clearFilters}
+              danger
+              className="w-full sm:w-auto color"
+              style={{
+                background: "linear-gradient(to right, #ef4444, #ec4899)",
+                border: "none",
+                color: "white",
+              }}
+            >
+              🗑 Clear Filters  
+            </Button>
+
             <Button
               onClick={handleWriteToUs}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+              type="primary"
+              className="w-full sm:w-auto flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(to right, #3b82f6, #9333ea)",
+                border: "none",
+              }}
             >
               <MailIcon className="w-4 h-4" />
               Write to Us
@@ -786,7 +842,7 @@ const JobDetails: React.FC = () => {
                           job.id !== selectedJob.id &&
                           job.industry === selectedJob.industry
                       )
-                      .slice(0, 8)
+                      .slice(0, 9)
                       .map((job) => (
                         <JobCard key={job.id} job={job} isCompact />
                       ))}
@@ -800,7 +856,7 @@ const JobDetails: React.FC = () => {
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -818,7 +874,7 @@ const JobDetails: React.FC = () => {
                   job.id !== selectedJob.id &&
                   job.industry === selectedJob.industry
               )
-              .slice(0, 8)
+              .slice(0, 9)
               .map((j) => j.id);
             const remainingJobs = filteredJobs.filter(
               (job) =>
@@ -838,7 +894,7 @@ const JobDetails: React.FC = () => {
                   </p>
                 </div>
                 <motion.div
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"

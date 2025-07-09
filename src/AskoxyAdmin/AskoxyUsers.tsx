@@ -40,6 +40,7 @@ import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
+import WalletUploadModal from "./BulkUserWalletLoad";
 const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
@@ -205,10 +206,7 @@ const DataAssigned: React.FC = () => {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [walletRecord, setWalletRecord] = useState<UserData>();
-  const handleUserResponseChange = (value: string) => {
-    console.log("User Response:", value);
-    setUserResponse(value);
-  };
+  const [walletModalVisible, setWalletModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState("add");
   const [reason, setReason] = useState("");
   const [form] = Form.useForm();
@@ -1040,26 +1038,41 @@ const DataAssigned: React.FC = () => {
     return columns;
   };
 
+  const handleOpenModal = () => setWalletModalVisible(true);
+  const handleCloseModal = () => setWalletModalVisible(false);
+
   return (
     <Card className="shadow-lg rounded-lg border-0">
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 order-1 sm:order-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Right Side: Heading */}
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 text-right">
           Assigned Users To Team
         </h1>
-        <div className="w-full sm:w-64 order-2 sm:order-none">
-          <Input
-            placeholder="Search by mobile number"
-            prefix={<SearchOutlined className="text-gray-400" />}
-            value={searchTerm}
-            onChange={(e) => handleChange(e.target.value)}
-            allowClear
-            className="rounded-md"
-          />
-          {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+           {type === "HELPDESKSUPERADMIN" && (
+            <Button
+              type="primary"
+              onClick={handleOpenModal}
+              className="w-full sm:w-auto"
+            >
+              Bulk User Wallet Load
+            </Button>
+          )}
+          <div className="w-full sm:w-64">
+            <Input
+              placeholder="Search by mobile number"
+              prefix={<SearchOutlined className="text-gray-400" />}
+              value={searchTerm}
+              onChange={(e) => handleChange(e.target.value)}
+              allowClear
+              className="rounded-md"
+            />
+            {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
+          </div>
         </div>
       </div>
       <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4"></div>
-
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <Spin size="large" tip="Loading your assigned users..." />
@@ -1285,7 +1298,6 @@ const DataAssigned: React.FC = () => {
           </>
         )}
       </Modal>
-
       <Modal
         title={
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1368,6 +1380,11 @@ const DataAssigned: React.FC = () => {
           style={{ marginBottom: "16px" }}
         />
       </Modal>
+      <WalletUploadModal
+        walletModalVisible={walletModalVisible}
+        handleCloseModal={() => setWalletModalVisible(false)}
+      />
+      ;
     </Card>
   );
 };

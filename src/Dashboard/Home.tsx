@@ -78,6 +78,18 @@ interface Offer {
   offerCreatedAt: number;
 }
 
+interface AddOnItem {
+  itemId: string;
+  itemName: string;
+  itemImage: string | null;
+  itemPrice: number;
+  itemMrp: number;
+  weight: string;
+  units: string;
+  quantity: number;
+  status: string;
+}
+
 interface UserEligibleOffer {
   offerName: string;
   eligible: boolean;
@@ -139,6 +151,7 @@ interface DashboardItem {
   weight?: string;
   units?: string;
   isCombo?: boolean;
+  status?: string;
 }
 
 interface Item {
@@ -196,6 +209,7 @@ const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const productsRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+    const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
   const navigate = useNavigate();
   const categoriesFetched = useRef(false);
   const initialDataFetched = useRef(false);
@@ -214,11 +228,13 @@ const Home: React.FC = () => {
 
   // Existing states
   const [showOffersModal, setShowOffersModal] = useState(false);
-  const [comboAddOnModal, setComboAddOnModal] = useState({
+  const [comboAddOnModal, setComboAddOnModal] = useState<{
+    visible: boolean;
+    items: AddOnItem[];
+  }>({
     visible: false,
     items: [],
   });
-  const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
 
   const updateCartCount = useCallback(
     (count: number) => {
@@ -786,129 +802,141 @@ const Home: React.FC = () => {
     return Math.round(((mrp - price) / mrp) * 100);
   };
 
- const handleAddToCart = async (item: DashboardItem) => {
-  if (!item.itemId) return;
+  const handleAddToCart = async (item: DashboardItem) => {
+    if (!item.itemId) return;
 
-  const accessToken = localStorage.getItem("accessToken");
-  const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
 
-  if (!accessToken || !userId) {
-    message.warning("Please login to add items to the cart.");
-    setTimeout(() => {
-      navigate("/whatapplogin");
-    }, 2000);
-    return;
-  }
-
-  if (!checkProfileCompletion()) {
-    Modal.error({
-      title: "Profile Incomplete",
-      content: "Please complete your profile to add items to the cart.",
-      onOk: () => navigate("/main/profile"),
-    });
-    setTimeout(() => {
-      navigate("/main/profile");
-    }, 4000);
-    return;
-  }
-
-  try {
-    setLoadingItems((prev) => ({
-      ...prev,
-      items: { ...prev.items, [item.itemId as string]: true },
-    }));
-
-    const isCombo =
-      parseFloat(item.weight ?? "0") === 26 &&
-      item.units?.toLowerCase() === "kgs";
-
-    const requestBody: any = {
-      customerId: userId,
-      itemId: item.itemId,
-      quantity: 1,
-    };
-
-    // ✅ If it's a combo item (26KG), include status: "COMBO"
-    if (isCombo) {
-      requestBody.status = "COMBO";
+    if (!accessToken || !userId) {
+      message.warning("Please login to add items to the cart.");
+      setTimeout(() => {
+        navigate("/whatapplogin");
+      }, 2000);
+      return;
     }
 
-    const response = await axios.post(
-      `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
-      requestBody,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+    if (!checkProfileCompletion()) {
+      Modal.error({
+        title: "Profile Incomplete",
+        content: "Please complete your profile to add items to the cart.",
+        onOk: () => navigate("/main/profile"),
+      });
+      setTimeout(() => {
+        navigate("/main/profile");
+      }, 4000);
+      return;
+    }
+
+    try {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId as string]: true },
+      }));
+
+      const isCombo =
+        item.status === "COMBO" ||
+        (parseFloat(item.weight ?? "0") === 26 &&
+          item.units?.toLowerCase() === "kgs");
+
+      const requestBody: any = {
+        customerId: userId,
+        itemId: item.itemId,
+        quantity: 1,
+      };
+
+      if (isCombo) {
+        requestBody.status = "COMBO";
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+        requestBody,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      await fetchCartData(item.itemId);
+      message.success(response.data.errorMessage);
+
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "add_to_cart", {
+          currency: "INR",
+          value: item.itemPrice,
+          items: [
+            {
+              item_id: item.itemId,
+              item_name: item.itemName,
+              price: item.itemPrice,
+              quantity: 1,
+              item_category: activeCategory || "General",
+            },
+          ],
+        });
+      }
+
+      setTimeout(async () => {
+        await handleItemAddedToCart(item);
+      }, 300);
+
+   // ✅ Prevent re-opening modal if already added
+if (isCombo && hasAddedComboAddOn) {
+  return; // Skip fetching modal again
+}
+
+if (isCombo && !hasAddedComboAddOn) {
+  try {
+    const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
+    const comboData = res.data?.content || [];
+
+    const matchingCombo = comboData.find(
+      (combo: any) => combo.itemWeight === 26
     );
 
-    await fetchCartData(item.itemId);
-    message.success(response.data.errorMessage);
-
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "add_to_cart", {
-        currency: "INR",
-        value: item.itemPrice,
-        items: [
-          {
-            item_id: item.itemId,
-            item_name: item.itemName,
-            price: item.itemPrice,
-            quantity: 1,
-            item_category: activeCategory || "General",
-          },
-        ],
+    if (matchingCombo && matchingCombo.items?.length) {
+      setComboAddOnModal({
+        visible: true,
+        items: matchingCombo.items.map((i: any) => ({
+          itemId: i.individualItemId,
+          itemName: i.itemName,
+          itemPrice: i.itemPrice,
+          itemImage: i.imageUrl,
+          weight: i.itemWeight,
+          units: i.units,
+          quantity: i.quantity ?? 1,
+          itemMrp: i.itemMrp ?? i.itemPrice,
+          status: "COMBO",
+          title: i.itemName,
+          image: i.imageUrl,
+          description: "",
+          path: "",
+          icon: <ShoppingBag className="text-purple-600" size={24} />,
+        })),
       });
     }
-
-    setTimeout(async () => {
-      await handleItemAddedToCart(item);
-    }, 300);
-
-    // ✅ Fetch and show optional combo add-ons if item is 26KG rice
-    if (isCombo) {
-      try {
-        const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
-        const comboData = res.data?.content || [];
-
-        const matchingCombo = comboData.find(
-          (combo: any) => combo.itemWeight === 26
-        );
-
-        if (matchingCombo && matchingCombo.items?.length) {
-          setComboAddOnModal({
-            visible: true,
-            items: matchingCombo.items.map((i: any) => ({
-              itemId: i.individualItemId,
-              itemName: i.itemName,
-              itemPrice: i.itemPrice,
-              itemImage: i.imageUrl,
-              weight: i.itemWeight,
-              units: i.units,
-              quantity: i.quantity ?? 1,
-              itemMrp: i.itemMrp ?? i.itemPrice,
-            })),
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch combo offers:", error);
-      }
-    }
   } catch (error) {
-    console.error("Error adding to cart:", error);
-    message.error("Error adding to cart.");
-    setLoadingItems((prev) => ({
-      ...prev,
-      items: { ...prev.items, [item.itemId as string]: false },
-    }));
+    console.error("Failed to fetch combo offers:", error);
   }
-};
+}
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      message.error("Error adding to cart.");
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId as string]: false },
+      }));
+    }
+  };
 
- const handleQuantityChange = async (
+const handleQuantityChange = async (
   item: DashboardItem,
   increment: boolean
 ) => {
   if (!item.itemId) return;
 
   const userId = localStorage.getItem("userId");
-  if (!userId) {
+  const accessToken = localStorage.getItem("accessToken");
+
+  if (!userId || !accessToken) {
     message.warning("Please login to update cart");
     return;
   }
@@ -952,6 +980,7 @@ const Home: React.FC = () => {
         `${BASE_URL}/cart-service/cart/remove`,
         {
           data: { id: targetCartId },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -970,12 +999,15 @@ const Home: React.FC = () => {
         itemId: item.itemId,
       };
 
-      // ✅ If item is from a combo offer, add status: "COMBO"
-      if (item.isCombo) {
+      if (item.status === "COMBO") {
         requestBody.status = "COMBO";
       }
 
-      const response = await axios.patch(endpoint, requestBody);
+      const method = increment ? "post" : "patch";
+
+      const response = await axios[method](endpoint, requestBody, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       if (!response) {
         message.error("Sorry, Please try again");
@@ -992,6 +1024,7 @@ const Home: React.FC = () => {
   } catch (error) {
     console.error("Error updating quantity:", error);
     message.error("Error updating item quantity");
+  } finally {
     setLoadingItems((prev) => ({
       ...prev,
       items: { ...prev.items, [item.itemId as string]: false },
@@ -999,7 +1032,6 @@ const Home: React.FC = () => {
     }));
   }
 };
-
 
   const cardVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -1916,9 +1948,9 @@ const Home: React.FC = () => {
       <Modal
         open={comboAddOnModal.visible}
         onCancel={() => {
-          setComboAddOnModal({ visible: false, items: [] });
-          setHasAddedComboAddOn(false);
-        }}
+    setComboAddOnModal({ visible: false, items: [] });
+    setHasAddedComboAddOn(false);
+  }}
         footer={null}
         centered
         title={
@@ -1935,190 +1967,184 @@ const Home: React.FC = () => {
         width={560}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
-          {comboAddOnModal.items.map(
-            (addonItem: {
-              itemId: string;
-              itemName: string;
-              itemPrice: number;
-              itemMrp: number;
-              itemImage: string;
-              weight: number;
-              units: string;
-              quantity: number;
-            }) => {
-              const discountPercentage = addonItem.itemMrp
-                ? Math.round(
-                    ((addonItem.itemMrp - addonItem.itemPrice) /
-                      addonItem.itemMrp) *
-                      100
-                  )
-                : 0;
-              return (
-                <div
-                  key={addonItem.itemId}
-                  className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden"
-                >
-                  {/* Discount Badge */}
-                  {discountPercentage > 0 && (
-                    <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
-                      {discountPercentage}% OFF
-                    </div>
-                  )}
+          {comboAddOnModal.items.map((addonItem) => {
+            // Calculate discount percentage (assuming you have itemMRP field)
+            const discountPercentage = addonItem.itemMrp
+              ? Math.round(
+                  ((addonItem.itemMrp - addonItem.itemPrice) /
+                    addonItem.itemMrp) *
+                    100
+                )
+              : 0;
 
-                  {/* Selection Badge */}
-                  {hasAddedComboAddOn && (
-                    <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
+            return (
+              <div
+                key={addonItem.itemId}
+                className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden"
+              >
+                {/* Discount Badge */}
+                {discountPercentage > 0 && (
+                  <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
+                    {discountPercentage}% OFF
+                  </div>
+                )}
+
+                {/* Selection Badge */}
+                {hasAddedComboAddOn && (
+                  <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
+                    <svg
+                      className="w-2.5 h-2.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+
+                {/* Square Image Container */}
+                <div className="relative mb-2">
+                  <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+                    {addonItem.itemImage ? (
+                      <img
+                        src={addonItem.itemImage}
+                        alt={addonItem.itemName}
+                        className="w-full h-full object-contain p-1.5"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const fallback =
+                              parent.querySelector(".fallback-icon");
+                            if (fallback) {
+                              (fallback as HTMLElement).style.display = "flex";
+                            }
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
+                      style={{ display: addonItem.itemImage ? "none" : "flex" }}
+                    >
                       <svg
-                        className="w-2.5 h-2.5"
+                        className="w-10 h-10"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
                         <path
                           fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
                           clipRule="evenodd"
                         />
                       </svg>
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  {/* Square Image Container */}
-                  <div className="relative mb-2">
-                    <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
-                      {addonItem.itemImage ? (
-                        <img
-                          src={addonItem.itemImage}
-                          alt={addonItem.itemName}
-                          className="w-full h-full object-contain p-1.5"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                            const parent = target.parentElement;
-                            if (parent) {
-                              const fallback =
-                                parent.querySelector(".fallback-icon");
-                              if (fallback) {
-                                (fallback as HTMLElement).style.display =
-                                  "flex";
-                              }
-                            }
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
-                        style={{
-                          display: addonItem.itemImage ? "none" : "flex",
-                        }}
-                      >
+                {/* Product Info */}
+                <div className="text-center">
+                  <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
+                    {addonItem.itemName}
+                  </h4>
+
+                  {/* Price Section */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <span className="text-purple-600 font-bold text-lg">
+                        ₹{addonItem.itemPrice}
+                      </span>
+                      {addonItem.itemMrp &&
+                        addonItem.itemMrp > addonItem.itemPrice && (
+                          <span className="text-gray-500 text-xs line-through">
+                            ₹{addonItem.itemMrp}
+                          </span>
+                        )}
+                    </div>
+
+                    {/* Savings Info */}
+                    {addonItem.itemMrp &&
+                      addonItem.itemMrp > addonItem.itemPrice && (
+                        <div className="text-green-600 text-xs font-medium">
+                          You save ₹{addonItem.itemMrp - addonItem.itemPrice}
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Add Button */}
+                  <motion.button
+                    whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
+                    whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
+                    className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
+                      hasAddedComboAddOn
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg"
+                    }`}
+                    onClick={() => {
+                      if (!hasAddedComboAddOn) {
+                        handleAddToCart({
+                          itemId: addonItem.itemId,
+                          itemName: addonItem.itemName,
+                          itemImage: addonItem.itemImage,
+                          itemPrice: addonItem.itemPrice,
+                          itemMrp: addonItem.itemMrp,
+                          weight: addonItem.weight,
+                          quantity: addonItem.quantity,
+                          units: addonItem.units,
+                          status: "COMBO",
+                          title: addonItem.itemName,
+                          image:
+                            addonItem.itemImage ||
+                            "https://via.placeholder.com/150",
+                          description: `₹${addonItem.itemPrice}`,
+                          path: "",
+                          icon: (
+                            <ShoppingBag
+                              className="text-purple-600"
+                              size={24}
+                            />
+                          ),
+                        });
+                        setHasAddedComboAddOn(true);
+                         setTimeout(() => {
+      setComboAddOnModal({ visible: false, items: [] });
+    }, 500);
+                      } else {
+                        message.warning(
+                          "You can only select one optional add-on."
+                        );
+                      }
+                    }}
+                    disabled={hasAddedComboAddOn}
+                  >
+                    {hasAddedComboAddOn ? (
+                      <span className="flex items-center justify-center gap-1.5">
                         <svg
-                          className="w-10 h-10"
+                          className="w-3 h-3"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
                           <path
                             fillRule="evenodd"
-                            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                             clipRule="evenodd"
                           />
                         </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="text-center">
-                    <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
-                      {addonItem.itemName}
-                    </h4>
-
-                    {/* Price Section */}
-                    <div className="mb-3">
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        <span className="text-purple-600 font-bold text-lg">
-                          ₹{addonItem.itemPrice}
-                        </span>
-                        {addonItem.itemMrp &&
-                          addonItem.itemMrp > addonItem.itemPrice && (
-                            <span className="text-gray-500 text-xs line-through">
-                              ₹{addonItem.itemMrp}
-                            </span>
-                          )}
-                      </div>
-
-                      {/* Savings Info */}
-                      {addonItem.itemMrp &&
-                        addonItem.itemMrp > addonItem.itemPrice && (
-                          <div className="text-green-600 text-xs font-medium">
-                            You save ₹{addonItem.itemMrp - addonItem.itemPrice}
-                          </div>
-                        )}
-                    </div>
-
-                    {/* Add Button */}
-                    <motion.button
-                      whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
-                      whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
-                      className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
-                        hasAddedComboAddOn
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg"
-                      }`}
-                      onClick={() => {
-                        if (!hasAddedComboAddOn) {
-                          handleAddToCart({
-                            itemId: addonItem.itemId,
-                            itemName: addonItem.itemName,
-                            itemPrice: addonItem.itemPrice,
-                            itemMrp: addonItem.itemMrp,
-                            weight: addonItem.weight.toString(),
-                            units: addonItem.units,
-                            quantity: addonItem.quantity,
-                            title: addonItem.itemName,
-                            image: addonItem.itemImage,
-                            description: "",
-                            path: "",
-                            icon: (
-                              <ShoppingBag
-                                className="text-purple-600"
-                                size={24}
-                              />
-                            ),
-                          });
-                          setHasAddedComboAddOn(true);
-                          setComboAddOnModal({ visible: false, items: [] });
-                        } else {
-                          message.warning(
-                            "You can only select one optional add-on."
-                          );
-                        }
-                      }}
-                      disabled={hasAddedComboAddOn}
-                    >
-                      {hasAddedComboAddOn ? (
-                        <span className="flex items-center justify-center gap-1.5">
-                          <svg
-                            className="w-3 h-3"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Add-on Selected
-                        </span>
-                      ) : (
-                        "Add Add-on"
-                      )}
-                    </motion.button>
-                  </div>
+                        Add-on Selected
+                      </span>
+                    ) : (
+                      "Add Add-on"
+                    )}
+                  </motion.button>
                 </div>
-              );
-            }
-          )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Modal Footer Info */}

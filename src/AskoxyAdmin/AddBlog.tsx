@@ -68,6 +68,7 @@ const AddBlog: React.FC = () => {
     instagram: "",
   });
   const primaryType = localStorage.getItem("primaryType");
+  const userId = localStorage.getItem("userId");
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -256,11 +257,10 @@ const AddBlog: React.FC = () => {
       );
 
       if (response.data) {
-        message.success("Blog Added Successfully...!");
-        // setSocialMediaLinks({
-        //   facebook: response.data.facebookCampaignUrl,
-        //   instagram: response.data.instagramCampaignUrl,
-        // });  
+        message.success(
+          "Your blog was added successfully. Thank you for sharing your thoughts!"
+        );
+
         setFormData({
           campaignType: "",
           campaignDescription: "",
@@ -269,7 +269,13 @@ const AddBlog: React.FC = () => {
           campaignTypeAddBy: "",
           campainInputType: "SERVICE",
         });
-        navigate("/admn/allcampaignsdetails");
+        if (primaryType === "HELPDESKSUPERADMIN") {
+          navigate("/admn/allcampaignsdetails");
+        } else {
+          if (userId) {
+            navigate("/main/dashboard/myblogs");
+          }
+        }
       } else {
         setErrorMessage("Failed to add blog. Please try again.");
         message.error("Failed to add blog. Please try again.");

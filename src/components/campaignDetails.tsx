@@ -151,7 +151,7 @@ const CampaignDetails: React.FC = () => {
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 30);
+      .slice(0, 50);
 
   const handleSubmit = (isAlreadyInterested: boolean) => {
     sessionStorage.setItem("submitclicks", "true");

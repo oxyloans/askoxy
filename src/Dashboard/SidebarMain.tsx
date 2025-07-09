@@ -92,17 +92,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
     },
     {
       to: "/main/dashboard/myservices",
-      icon: <Layers size={18} />,
+      icon: <Layers size={20} />,
       label: "My Services",
     },
     {
       to: "/main/dashboard/myblogs",
-      icon: <FileText size={18} />,
+      icon: <FileText size={20} />,
       label: "My Blogs",
     },
     {
       to: "/main/jobDetails",
-      icon: <Briefcase size={18} />,
+      icon: <Briefcase size={20} />,
       label: "My Jobs",
     },
   ];

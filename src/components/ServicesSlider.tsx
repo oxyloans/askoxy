@@ -52,7 +52,9 @@ const ServicesSlider: React.FC = () => {
         }
       );
       const jobsData = await response.json();
-      const filteredJobs = jobsData.filter((job : Job) => job.jobStatus === true);
+      const filteredJobs = jobsData.filter(
+        (job: Job) => job.jobStatus === true
+      );
       setJobs(filteredJobs);
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -171,7 +173,7 @@ const ServicesSlider: React.FC = () => {
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 30);
+      .slice(0, 50);
 
   const handleCampaignClick = (campaign: Campaign) => {
     console.log(campaign);
@@ -224,9 +226,14 @@ const ServicesSlider: React.FC = () => {
     },
   };
 
+  const handleBlogNavigation = () => {
+    if (!accessToken) {
+      navigate("/myblogs");
+    } else {
+      navigate("/main/dashboard/myblogs");
+    }
+  };
   const handleJobNavigate = (id: string | null) => {
-    console.log("service slider" + id);
-
     if (!accessToken) {
       navigate("/jobdetails", { state: { id } });
     } else {
@@ -444,11 +451,11 @@ const ServicesSlider: React.FC = () => {
               }}
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => setShowAllBlogs(!showAllBlogs)}
+              onClick={() => handleBlogNavigation()}
             >
               {showAllBlogs ? "Show Less" : "View All Blogs"}
               <span className="ml-2 inline-block">
-                {showAllBlogs ? "↑" : "↓"}
+                {showAllBlogs ? "→" : "→"}
               </span>
             </motion.button>
           )}
@@ -531,7 +538,7 @@ const ServicesSlider: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
-                  onClick={() => setShowAllBlogs(true)}
+                  onClick={() => handleBlogNavigation()}
                 >
                   View all blogs
                   <span className="ml-2">→</span>
