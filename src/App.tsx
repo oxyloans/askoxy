@@ -615,6 +615,7 @@ const App: React.FC = () => {
               <Route path="addReference" element={<AddReference />} />
             </Route>
             {/* Partner end */}
+            
             {/* ----------Admin Routes Start---------- */}
             <Route path="/admin" element={<Login />} />
             <Route path="/adminRegister" element={<Register />} />

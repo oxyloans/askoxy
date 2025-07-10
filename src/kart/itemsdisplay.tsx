@@ -498,9 +498,7 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
   try {
     const weight = parseFloat(String(item.weight ?? "0"));
     const isComboItem =
-      item.status === "COMBO" ||
-      (item.units?.toLowerCase() === "kgs" &&
-        [1, 5, 10, 26].includes(weight));
+      item.status === "COMBO" 
 
     const requestBody: any = {
       customerId: userId,
@@ -520,7 +518,7 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
 
     await fetchCartData(item.itemId);
 
-    if (isComboItem) {
+    if (!isComboItem) {
       try {
         const res = await axios.get(
           `${BASE_URL}/product-service/getComboInfo/${item.itemId}`

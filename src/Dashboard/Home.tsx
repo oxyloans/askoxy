@@ -850,9 +850,7 @@ const [currentSet, setCurrentSet] = useState(0);
 
       const weight = parseFloat(item.weight ?? "0");
 const isCombo =
-  item.status === "COMBO" ||
-  (item.units?.toLowerCase() === "kgs" &&
-    [1, 5, 10, 26].includes(weight));
+  item.status === "COMBO"
 
 
       const requestBody: any = {
@@ -899,7 +897,7 @@ const isCombo =
         return; // Skip fetching modal again
       }
 
-     if (isCombo && !hasAddedComboAddOn) {
+     if (!isCombo && !hasAddedComboAddOn) {
   try {
     const res = await axios.get(
       `${BASE_URL}/product-service/getComboInfo/${item.itemId}`

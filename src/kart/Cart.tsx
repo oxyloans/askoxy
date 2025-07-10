@@ -44,6 +44,7 @@ interface CartItem {
   goldMakingCost?: number;
   goldGst?: number;
   goldMakingCostAndGst?: number;
+  combo?: boolean;
 }
 
 interface AddressFormData {
@@ -1843,146 +1844,136 @@ const CartPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {item.quantity !== 0 ? (
-                      isFreeItem(item) ? (
-                        <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-                          <p className="text-green-600 font-bold text-base mb-2">
-                            FREE Item
-                          </p>
-                          <div className="flex items-center justify-between md:justify-end w-full">
-                            <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
-                                disabled={true}
-                                aria-label="Decrease quantity (disabled)"
-                              >
-                                <span className="font-medium">-</span>
-                              </motion.button>
+{item.quantity !== 0 ? (
+  item.status === "ADD" ? (
+    // ✅ ENABLE for pure ADD item
+    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+      <div className="flex items-center justify-between md:justify-end w-full">
+        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
+            onClick={() => handleDecrease(item)}
+            disabled={loadingItems[item.itemId]}
+          >
+            <span className="font-medium">-</span>
+          </motion.button>
 
-                              <div className="px-4">
-                                <span className="font-medium text-purple-700">
-                                  {freeCartItems[item.itemId] || 0}
-                                </span>
-                              </div>
+          <div className="px-4">
+            {loadingItems[item.itemId] ? (
+              <Loader2 className="animate-spin text-purple-600" />
+            ) : (
+              <span className="font-medium text-purple-700">
+                {regularCartItems[item.itemId] || 0}
+              </span>
+            )}
+          </div>
 
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
-                                disabled={true}
-                                aria-label="Increase quantity (disabled)"
-                              >
-                                <span className="font-medium">+</span>
-                              </motion.button>
-                            </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
+              (regularCartItems[item.itemId] || 0) >= item.quantity
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
+            onClick={() => {
+              if ((regularCartItems[item.itemId] || 0) < item.quantity) {
+                handleIncrease(item);
+              }
+            }}
+            disabled={
+              (regularCartItems[item.itemId] || 0) >= item.quantity ||
+              loadingItems[item.itemId]
+            }
+          >
+            <span className="font-medium">+</span>
+          </motion.button>
+        </div>
 
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
-                              onClick={async () => {
-                                await removeCartItem(item);
-                              }}
-                              aria-label="Delete item from cart"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
-                          </div>
-                          <div className="w-full flex justify-end">
-                            <p className="text-green-600 font-semibold">
-                              Total: ₹0.00
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-                          <div className="flex items-center justify-between md:justify-end w-full">
-                            <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
-                                onClick={() => handleDecrease(item)}
-                                disabled={loadingItems[item.itemId]}
-                                aria-label="Decrease quantity"
-                              >
-                                <span className="font-medium">-</span>
-                              </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
+          onClick={async () => {
+            await removeCartItem(item);
+          }}
+        >
+          <Trash2 size={16} />
+        </motion.button>
+      </div>
 
-                              <div className="px-4">
-                                {loadingItems[item.itemId] ? (
-                                  <Loader2 className="animate-spin text-purple-600" />
-                                ) : (
-                                  <span className="font-medium text-purple-700">
-                                    {regularCartItems[item.itemId] || 0}
-                                  </span>
-                                )}
-                              </div>
+      <div className="w-full flex justify-end">
+        <p className="text-purple-700 font-bold text-base">
+          Total: ₹
+          {(
+            parseFloat(item.itemPrice) * (regularCartItems[item.itemId] || 0)
+          ).toFixed(2)}
+        </p>
+      </div>
+    </div>
+  ) : (
+    // ❌ DISABLE for FREE or COMBO or anything else
+    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+     <p className="text-green-600 font-bold text-base mb-2">
+  {item.status === "FREE" ? "FREE Item" : "Combo Item"}
+</p>
+      <div className="flex items-center justify-between md:justify-end w-full">
+        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <span className="font-medium">-</span>
+          </motion.button>
+          <div className="px-4">
+            <span className="font-medium text-purple-700">
+              {item.cartQuantity}
+            </span>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <span className="font-medium">+</span>
+          </motion.button>
+        </div>
 
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-                                  regularCartItems[item.itemId] >= item.quantity
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }`}
-                                onClick={() => {
-                                  if (
-                                    regularCartItems[item.itemId] <
-                                    item.quantity
-                                  ) {
-                                    handleIncrease(item);
-                                  }
-                                }}
-                                disabled={
-                                  regularCartItems[item.itemId] >=
-                                    item.quantity || loadingItems[item.itemId]
-                                }
-                                aria-label="Increase quantity"
-                              >
-                                <span className="font-medium">+</span>
-                              </motion.button>
-                            </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
+          onClick={async () => {
+            await removeCartItem(item);
+          }}
+        >
+          <Trash2 size={16} />
+        </motion.button>
+      </div>
 
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
-                              onClick={async () => {
-                                await removeCartItem(item);
-                              }}
-                              aria-label="Delete item from cart"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
-                          </div>
+      <div className="w-full flex justify-end">
+        <p className="text-green-600 font-semibold">
+          Total: ₹
+          {(parseFloat(item.itemPrice) * item.cartQuantity).toFixed(2)}
+        </p>
+      </div>
+    </div>
+  )
+) : (
+  <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
+    <p className="text-red-600 font-bold text-base mb-2">Out of Stock</p>
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
+      onClick={async () => {
+        await removeCartItem(item);
+      }}
+    >
+      <Trash2 size={16} className="mr-1" />
+      Delete
+    </motion.button>
+  </div>
+)}
 
-                          <div className="w-full flex justify-end">
-                            <p className="text-purple-700 font-bold text-base">
-                              Total: ₹
-                              {(
-                                parseFloat(item.itemPrice) *
-                                (regularCartItems[item.itemId] || 0)
-                              ).toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    ) : (
-                      <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-                        <p className="text-red-600 font-bold text-base mb-2">
-                          Out of Stock
-                        </p>
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
-                          onClick={async () => {
-                            await removeCartItem(item);
-                          }}
-                          aria-label="Delete item from cart"
-                        >
-                          <Trash2 size={16} className="mr-1" />
-                          Delete
-                        </motion.button>
-                      </div>
-                    )}
                   </div>
                 ))
               )}
@@ -2073,10 +2064,10 @@ const CartPage: React.FC = () => {
                     </button>
                     {isItemTotalDropdownOpen && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        {/* <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-gray-600 mb-2">
                           Askoxy.ai has no role to play in the taxes and charges
                           being levied by the government
-                        </p> */}
+                        </p>
                         <div className="flex justify-between text-gray-700 text-sm">
                           <span>Item Cost</span>
                           <span>

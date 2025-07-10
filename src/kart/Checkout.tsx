@@ -559,12 +559,13 @@ const CheckoutPage: React.FC = () => {
         setCount(totalQuantity);
 
         const amountToPay = cartItems
-          .filter((item: CartItem) => item.status === "ADD")
+          .filter((item: CartItem) => ["ADD", "COMBO"].includes(item.status))
           .reduce(
             (sum: number, item: CartItem) =>
               sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
             0
           );
+        console.log("this is the amout to pay" + amountToPay);
 
         const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
 
