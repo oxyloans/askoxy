@@ -209,7 +209,7 @@ const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const productsRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
-    const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
+  const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
   const navigate = useNavigate();
   const categoriesFetched = useRef(false);
   const initialDataFetched = useRef(false);
@@ -228,13 +228,15 @@ const Home: React.FC = () => {
 
   // Existing states
   const [showOffersModal, setShowOffersModal] = useState(false);
-  const [comboAddOnModal, setComboAddOnModal] = useState<{
-    visible: boolean;
-    items: AddOnItem[];
-  }>({
-    visible: false,
-    items: [],
-  });
+const [comboAddOnModal, setComboAddOnModal] = useState<{
+  visible: boolean;
+  items: AddOnItem[];
+  itemCount: number;
+}>({
+  visible: false,
+  items: [],
+  itemCount: 0,
+});
 
   const updateCartCount = useCallback(
     (count: number) => {
@@ -620,6 +622,10 @@ const Home: React.FC = () => {
     fetchInitialData();
   }, [fetchCartData, fetchCategories]);
 
+
+
+const [currentSet, setCurrentSet] = useState(0);
+
   // New useEffect to trigger offers modal
   useEffect(() => {
     const hasShownOffers = localStorage.getItem("hasShownOffers");
@@ -731,6 +737,14 @@ const Home: React.FC = () => {
     },
   ];
 
+ useEffect(() => {
+  const totalSets = Math.ceil(headerImages.length / 3);
+  const interval = setInterval(() => {
+    setCurrentSet((prev) => (prev + 1) % totalSets);
+  }, 6000); // Flip every 20 seconds
+  return () => clearInterval(interval);
+}, [headerImages]);
+
   const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
       navigate(`/main/itemsdisplay/${item.itemId}`, {
@@ -834,10 +848,12 @@ const Home: React.FC = () => {
         items: { ...prev.items, [item.itemId as string]: true },
       }));
 
-      const isCombo =
-        item.status === "COMBO" ||
-        (parseFloat(item.weight ?? "0") === 26 &&
-          item.units?.toLowerCase() === "kgs");
+      const weight = parseFloat(item.weight ?? "0");
+const isCombo =
+  item.status === "COMBO" ||
+  (item.units?.toLowerCase() === "kgs" &&
+    [1, 5, 10, 26].includes(weight));
+
 
       const requestBody: any = {
         customerId: userId,
@@ -878,43 +894,45 @@ const Home: React.FC = () => {
         await handleItemAddedToCart(item);
       }, 300);
 
-   // ✅ Prevent re-opening modal if already added
-if (isCombo && hasAddedComboAddOn) {
-  return; // Skip fetching modal again
+      // ✅ Prevent re-opening modal if already added
+      if (isCombo && hasAddedComboAddOn) {
+        return; // Skip fetching modal again
+      }
+
+     if (isCombo && !hasAddedComboAddOn) {
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+    );
+    const comboData = res.data;
+
+  if (comboData && comboData.items?.length > 0) {
+  const itemCount = comboData.items.length;
+
+  setComboAddOnModal({
+    visible: true,
+    items: comboData.items.map((i: any) => ({
+      itemId: i.individualItemId,
+      itemName: i.itemName,
+      itemPrice: i.itemPrice,
+      itemMrp: i.itemMrp ?? i.itemPrice,
+      itemImage: i.imageUrl,
+      weight: i.itemWeight,
+      units: i.units,
+      quantity: i.quantity ?? 1,
+      status: "COMBO",
+      title: i.itemName,
+      image: i.imageUrl,
+      description: "",
+      path: "",
+      icon: <ShoppingBag className="text-purple-600" size={24} />,
+    })),
+    itemCount, // pass count to customize modal layout
+  });
 }
 
-if (isCombo && !hasAddedComboAddOn) {
-  try {
-    const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
-    const comboData = res.data?.content || [];
-
-    const matchingCombo = comboData.find(
-      (combo: any) => combo.itemWeight === 26
-    );
-
-    if (matchingCombo && matchingCombo.items?.length) {
-      setComboAddOnModal({
-        visible: true,
-        items: matchingCombo.items.map((i: any) => ({
-          itemId: i.individualItemId,
-          itemName: i.itemName,
-          itemPrice: i.itemPrice,
-          itemImage: i.imageUrl,
-          weight: i.itemWeight,
-          units: i.units,
-          quantity: i.quantity ?? 1,
-          itemMrp: i.itemMrp ?? i.itemPrice,
-          status: "COMBO",
-          title: i.itemName,
-          image: i.imageUrl,
-          description: "",
-          path: "",
-          icon: <ShoppingBag className="text-purple-600" size={24} />,
-        })),
-      });
-    }
   } catch (error) {
-    console.error("Failed to fetch combo offers:", error);
+    console.error("Failed to fetch combo info:", error);
   }
 }
     } catch (error) {
@@ -927,111 +945,119 @@ if (isCombo && !hasAddedComboAddOn) {
     }
   };
 
-const handleQuantityChange = async (
-  item: DashboardItem,
-  increment: boolean
-) => {
-  if (!item.itemId) return;
+const gridCols =
+  comboAddOnModal.itemCount === 1
+    ? "grid-cols-1"
+    : comboAddOnModal.itemCount === 2
+    ? "grid-cols-2"
+    : "grid-cols-3";
 
-  const userId = localStorage.getItem("userId");
-  const accessToken = localStorage.getItem("accessToken");
 
-  if (!userId || !accessToken) {
-    message.warning("Please login to update cart");
-    return;
-  }
+  const handleQuantityChange = async (
+    item: DashboardItem,
+    increment: boolean
+  ) => {
+    if (!item.itemId) return;
 
-  if (
-    item.quantity !== undefined &&
-    cartItems[item.itemId] === item.quantity &&
-    increment
-  ) {
-    message.warning("Sorry, Maximum quantity reached.");
-    return;
-  }
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
 
-  if (!checkProfileCompletion()) {
-    Modal.error({
-      title: "Profile Incomplete",
-      content: "Please complete your profile to add items to the cart.",
-      onOk: () => navigate("/main/profile"),
-    });
-    setTimeout(() => {
-      navigate("/main/profile");
-    }, 4000);
-    return;
-  }
+    if (!userId || !accessToken) {
+      message.warning("Please login to update cart");
+      return;
+    }
 
-  const status = increment ? "add" : "remove";
+    if (
+      item.quantity !== undefined &&
+      cartItems[item.itemId] === item.quantity &&
+      increment
+    ) {
+      message.warning("Sorry, Maximum quantity reached.");
+      return;
+    }
 
-  try {
-    setLoadingItems((prev) => ({
-      ...prev,
-      items: { ...prev.items, [item.itemId as string]: true },
-      status: { ...prev.status, [item.itemId as string]: status },
-    }));
-
-    if (!increment && cartItems[item.itemId] <= 1) {
-      const targetCartId = cartData.find(
-        (cart) => cart.itemId === item.itemId
-      )?.cartId;
-
-      const response = await axios.delete(
-        `${BASE_URL}/cart-service/cart/remove`,
-        {
-          data: { id: targetCartId },
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-
-      if (response) {
-        message.success("Item removed from cart successfully.");
-      } else {
-        message.error("Sorry, Please try again");
-      }
-    } else {
-      const endpoint = increment
-        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
-        : `${BASE_URL}/cart-service/cart/minusCartItem`;
-
-      const requestBody: any = {
-        customerId: userId,
-        itemId: item.itemId,
-      };
-
-      if (item.status === "COMBO") {
-        requestBody.status = "COMBO";
-      }
-
-      const method = increment ? "post" : "patch";
-
-      const response = await axios[method](endpoint, requestBody, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+    if (!checkProfileCompletion()) {
+      Modal.error({
+        title: "Profile Incomplete",
+        content: "Please complete your profile to add items to the cart.",
+        onOk: () => navigate("/main/profile"),
       });
+      setTimeout(() => {
+        navigate("/main/profile");
+      }, 4000);
+      return;
+    }
 
-      if (!response) {
-        message.error("Sorry, Please try again");
+    const status = increment ? "add" : "remove";
+
+    try {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId as string]: true },
+        status: { ...prev.status, [item.itemId as string]: status },
+      }));
+
+      if (!increment && cartItems[item.itemId] <= 1) {
+        const targetCartId = cartData.find(
+          (cart) => cart.itemId === item.itemId
+        )?.cartId;
+
+        const response = await axios.delete(
+          `${BASE_URL}/cart-service/cart/remove`,
+          {
+            data: { id: targetCartId },
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        if (response) {
+          message.success("Item removed from cart successfully.");
+        } else {
+          message.error("Sorry, Please try again");
+        }
+      } else {
+        const endpoint = increment
+          ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+          : `${BASE_URL}/cart-service/cart/minusCartItem`;
+
+        const requestBody: any = {
+          customerId: userId,
+          itemId: item.itemId,
+        };
+
+        if (item.status === "COMBO") {
+          requestBody.status = "COMBO";
+        }
+
+        const method = increment ? "post" : "patch";
+
+        const response = await axios[method](endpoint, requestBody, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!response) {
+          message.error("Sorry, Please try again");
+        }
       }
-    }
 
-    await fetchCartData(item.itemId);
+      await fetchCartData(item.itemId);
 
-    if (increment) {
-      setTimeout(async () => {
-        await handleItemAddedToCart(item);
-      }, 300);
+      if (increment) {
+        setTimeout(async () => {
+          await handleItemAddedToCart(item);
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      message.error("Error updating item quantity");
+    } finally {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId as string]: false },
+        status: { ...prev.status, [item.itemId as string]: "" },
+      }));
     }
-  } catch (error) {
-    console.error("Error updating quantity:", error);
-    message.error("Error updating item quantity");
-  } finally {
-    setLoadingItems((prev) => ({
-      ...prev,
-      items: { ...prev.items, [item.itemId as string]: false },
-      status: { ...prev.status, [item.itemId as string]: "" },
-    }));
-  }
-};
+  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -1549,76 +1575,66 @@ const handleQuantityChange = async (
         )}
       </Modal>
       {/* Header Images Section */}
-      <div className="w-full py-1 md:py-2">
-        <div className="px-1 sm:px-2 md:px-3 lg:px-4 mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 md:gap-2 lg:gap-3">
-            {headerImages.map((image) => (
-              <motion.div
-                key={image.id}
+<div className="w-full py-1 md:py-2">
+  <div className="px-1 sm:px-2 md:px-3 lg:px-4 mx-auto max-w-7xl">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 md:gap-2 lg:gap-3">
+      {headerImages
+        .slice(currentSet * 3, currentSet * 3 + 3)
+        .map((image) => (
+          <motion.div
+            key={image.id}
+            initial={{ rotateX: 90, opacity: 0 }}
+            animate={{ rotateX: 0, opacity: 1 }}
+            exit={{ rotateX: -90, opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="cursor-pointer overflow-hidden rounded-lg transition-transform duration-700 transform-style-preserve-3d"
+            onClick={() => {
+              if (image.onClick) {
+                image.onClick();
+              } else {
+                navigate(image.path);
+              }
+            }}
+          >
+            <div className="relative w-full overflow-hidden rounded-lg">
+              <motion.img
+                src={image.src}
+                alt={image.alt || "Header image"}
+                className="w-full h-auto object-contain rounded-lg backface-hidden"
+                animate={{
+                  scale: hoveredImage === image.id ? 1.02 : 1,
+                }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
                 whileHover={{
-                  scale: 1.05,
-                  y: -5,
-                  rotateY: 5,
+                  filter: "brightness(1.1) contrast(1.05)",
                 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{
-                  duration: 0.3,
-                  ease: "easeOut",
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20,
+                style={{
+                  filter:
+                    hoveredImage === image.id
+                      ? "brightness(1.1) contrast(1.05)"
+                      : "brightness(1) contrast(1)",
                 }}
-                className="cursor-pointer overflow-hidden rounded-lg transition-all duration-300"
-                onHoverStart={() => setHoveredImage(image.id)}
-                onHoverEnd={() => setHoveredImage(null)}
-                onClick={() => {
-                  if (image.onClick) {
-                    image.onClick();
-                  } else {
-                    navigate(image.path);
-                  }
+                onMouseEnter={() => setHoveredImage(image.id)}
+                onMouseLeave={() => setHoveredImage(null)}
+              />
+              <motion.div
+                className="absolute inset-0 rounded-lg"
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: hoveredImage === image.id ? 0.1 : 0,
                 }}
-              >
-                <div className="relative w-full overflow-hidden rounded-lg">
-                  <motion.img
-                    src={image.src}
-                    alt={image.alt || "Header image"}
-                    className="w-full h-auto object-contain rounded-lg"
-                    animate={{
-                      scale: hoveredImage === image.id ? 1.02 : 1,
-                    }}
-                    transition={{
-                      duration: 0.4,
-                      ease: "easeInOut",
-                    }}
-                    whileHover={{
-                      filter: "brightness(1.1) contrast(1.05)",
-                    }}
-                    style={{
-                      filter:
-                        hoveredImage === image.id
-                          ? "brightness(1.1) contrast(1.05)"
-                          : "brightness(1) contrast(1)",
-                    }}
-                  />
-                  <motion.div
-                    className="absolute inset-0 rounded-lg"
-                    initial={{ opacity: 0 }}
-                    animate={{
-                      opacity: hoveredImage === image.id ? 0.1 : 0,
-                    }}
-                    style={{
-                      background:
-                        "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))",
-                    }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
+                style={{
+                  background:
+                    "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))",
+                }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+          </motion.div>
+        ))}
+    </div>
+  </div>
+</div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <section ref={productsRef} className="mb-12">
@@ -1639,7 +1655,7 @@ const handleQuantityChange = async (
           </div>
 
           {/* Filter Tabs as Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 mb-6">
             <AnimatePresence>
               {categories.map((category, index) => (
                 <motion.div
@@ -1650,21 +1666,21 @@ const handleQuantityChange = async (
                   exit={{ opacity: 0 }}
                   whileHover={{
                     scale: 1.02,
-                    boxShadow: "0 4px 12px rgba(147, 51, 234, 0.1)",
+                    boxShadow: "0 3px 10px rgba(147, 51, 234, 0.1)",
                   }}
                   whileTap={{ scale: 0.98 }}
-                  className={`bg-white rounded-xl shadow-sm overflow-hidden relative border border-gray-100 ${
+                  className={`bg-white rounded-lg shadow-sm overflow-hidden relative border border-gray-100 ${
                     activeCategory === category.categoryName
                       ? "border-purple-200"
                       : ""
                   } cursor-pointer`}
                   onClick={() => handleCategoryChange(category.categoryName)}
                 >
-                  <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative">
+                  <div className="aspect-square mb-2 overflow-hidden rounded-md bg-gray-50 relative">
                     <motion.img
                       src={
                         category.categoryImage ||
-                        "https://via.placeholder.com/150"
+                        "https://via.placeholder.com/120"
                       }
                       alt={category.categoryName}
                       className="w-full h-full object-contain"
@@ -1681,12 +1697,12 @@ const handleQuantityChange = async (
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        {/* <Star className="text-purple-600" size={24} /> */}
+                        {/* <Star className="text-purple-600" size={20} /> */}
                       </motion.div>
                     )}
                   </div>
-                  <div className="p-3 text-center">
-                    <h3 className="font-medium text-gray-800 text-sm hover:text-purple-600 transition-colors">
+                  <div className="p-2 text-center">
+                    <h3 className="font-bold text-gray-800 text-md hover:text-purple-600 transition-colors">
                       {category.categoryName}
                     </h3>
                   </div>
@@ -1948,9 +1964,9 @@ const handleQuantityChange = async (
       <Modal
         open={comboAddOnModal.visible}
         onCancel={() => {
-    setComboAddOnModal({ visible: false, items: [] });
-    setHasAddedComboAddOn(false);
-  }}
+         setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+          setHasAddedComboAddOn(false);
+        }}
         footer={null}
         centered
         title={
@@ -1964,9 +1980,9 @@ const handleQuantityChange = async (
           </div>
         }
         className="special-offer-modal"
-        width={560}
+       width={comboAddOnModal.itemCount === 1 ? 300 : comboAddOnModal.itemCount === 2 ? 500 : 700}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+       <div className={`grid gap-4 ${gridCols}`}>
           {comboAddOnModal.items.map((addonItem) => {
             // Calculate discount percentage (assuming you have itemMRP field)
             const discountPercentage = addonItem.itemMrp
@@ -2111,9 +2127,9 @@ const handleQuantityChange = async (
                           ),
                         });
                         setHasAddedComboAddOn(true);
-                         setTimeout(() => {
-      setComboAddOnModal({ visible: false, items: [] });
-    }, 500);
+                        setTimeout(() => {
+                        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+                        }, 500);
                       } else {
                         message.warning(
                           "You can only select one optional add-on."

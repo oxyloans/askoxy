@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import checkProfileCompletion from "../until/ProfileCheck";
 import BASE_URL from "../Config";
+import { ShoppingBag } from "lucide-react";
 
 interface Item {
   itemName: string;
@@ -31,15 +32,22 @@ interface Category {
   itemsResponseDtoList: Item[];
   subCategories?: SubCategory[];
 }
-type ComboAddOnItem = {
+
+type AddOnItem = {
   itemId: string;
   itemName: string;
   itemPrice: number;
+  itemMrp: number;
   itemImage: string;
   weight: number;
   units: string;
-  quantity: number;  // ✅ now required
-  itemMrp: number;
+  quantity: number;
+  title: string;
+  image: string;
+  description: string;
+  path: string;
+  status: string;
+  icon: JSX.Element;
 };
 
 interface Offer {
@@ -120,10 +128,12 @@ const Categories: React.FC<CategoriesProps> = ({
   });
 const [comboAddOnModal, setComboAddOnModal] = useState<{
   visible: boolean;
-  items: ComboAddOnItem[];
+  items: AddOnItem[];
+  itemCount: number;
 }>({
   visible: false,
   items: [],
+  itemCount: 0,
 });
 
   const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
@@ -265,31 +275,6 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
     }
   }, [location.search, categories, setActiveCategory]);
 
-  const showComboAddOnOptions = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/product-service/combo-offers`
-      );
-      const data = response.data?.content || [];
-
-      const matchingCombo = data.find((combo: any) => combo.itemWeight === 26);
-      if (matchingCombo && Array.isArray(matchingCombo.items)) {
-        const optionalItems = matchingCombo.items.map((optItem: any) => ({
-          itemName: optItem.itemName,
-          itemId: optItem.individualItemId,
-          itemImage: optItem.imageUrl,
-          weight: optItem.itemWeight,
-          itemPrice: optItem.itemPrice,
-          quantity: 1,
-          itemMrp: optItem.itemMrp,
-          units: optItem.units,
-        }));
-        setComboAddOnModal({ visible: true, items: optionalItems });
-      }
-    } catch (error) {
-      console.error("Failed to load combo add-ons", error);
-    }
-  };
 
   const handleCategoryClick = (categoryName: string) => {
     if (categoryName === activeCategory) {
@@ -646,10 +631,11 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
       items: { ...prev.items, [item.itemId]: true },
     }));
 
-    // ✅ Check if this is a 26KG combo item
-    const isCombo =
-      parseFloat(item.weight?.toString()) === 26 &&
-      item.units?.toLowerCase() === "kgs";
+const weight = parseFloat(String(item.weight ?? "0"));
+const isCombo =
+  item.status === "COMBO" ||
+  (item.units?.toLowerCase() === "kgs" &&
+    [1, 5, 10, 26].includes(weight));
 
     const requestBody: any = {
       customerId: userId,
@@ -670,36 +656,41 @@ if (item.status === "COMBO") {
 
     await fetchCartData(item.itemId);
 
-    // ✅ Check for 26KG Rice Combo logic
-    if (isCombo) {
-      try {
-        const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
-        const comboData = res.data?.content || [];
+if (isCombo) {
+  try {
+    const response = await axios.get(`${BASE_URL}/product-service/getComboInfo/${item.itemId}`);
+    const comboItems = response.data?.items || [];
 
-        const matchingCombo = comboData.find(
-          (combo: any) => combo.itemWeight === 26
-        );
+    if (comboItems.length > 0) {
+      const itemCount = comboItems.length;
 
-        if (matchingCombo && matchingCombo.items?.length) {
-          // Show modal with optional add-ons
-          setComboAddOnModal({
-            visible: true,
-            items: matchingCombo.items.map((i: any) => ({
-              itemId: i.individualItemId,
-              itemName: i.itemName,
-              itemPrice: i.itemPrice,
-              itemImage: i.imageUrl,
-              weight: i.itemWeight,
-              units: i.units,
-              quantity: i.quantity ?? 1,
-              itemMrp: i.itemMrp ?? i.itemPrice,
-            })),
-          });
-        }
-      } catch (comboErr) {
-        console.error("Error fetching combo offers:", comboErr);
-      }
+      setComboAddOnModal({
+        visible: true,
+        items: comboItems.map((i: any) => ({
+          itemId: i.individualItemId,
+          itemName: i.itemName,
+          itemPrice: i.itemPrice,
+          itemMrp: i.itemMrp ?? i.itemPrice,
+          itemImage: i.imageUrl,
+          weight: i.itemWeight,
+          units: i.units,
+          quantity: i.quantity ?? 1,
+          status: "COMBO",
+          title: i.itemName,
+          image: i.imageUrl,
+          description: "",
+          path: "",
+          icon: <ShoppingBag className="text-purple-600" size={24} />,
+        })),
+        itemCount,
+      });
+
+      return;
     }
+  } catch (comboErr) {
+    console.error("Error fetching combo offer:", comboErr);
+  }
+}
 
     message.success("Item added to cart successfully.");
   } catch (error) {
@@ -951,6 +942,8 @@ if (item.status === "COMBO") {
     ];
     const goldCategories = ["GOLD"];
 
+
+
     const categoryMap: { [key: string]: string[] } = {
       groceries: groceryCategories,
       rice: riceCategories,
@@ -999,6 +992,12 @@ if (item.status === "COMBO") {
       ))}
     </div>
   );
+      const gridCols =
+  comboAddOnModal.itemCount === 1
+    ? "grid-cols-1"
+    : comboAddOnModal.itemCount === 2
+    ? "grid-cols-2"
+    : "grid-cols-3";
 
   return (
     <div className="bg-white shadow-lg px-3 sm:px-6 lg:px-6 py-3">
@@ -1031,6 +1030,7 @@ if (item.status === "COMBO") {
         style={{ maxWidth: "600px" }}
         bodyStyle={{ maxHeight: "60vh", padding: "16px" }}
       >
+        
         {isFetchingOffers ? (
           <div className="flex justify-center">
             <Loader2 className="animate-spin text-purple-600" />
@@ -1404,7 +1404,7 @@ if (item.status === "COMBO") {
 <Modal
   open={comboAddOnModal.visible}
   onCancel={() => {
-    setComboAddOnModal({ visible: false, items: [] });
+    setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
     setHasAddedComboAddOn(false);
   }}
   footer={null}
@@ -1416,9 +1416,15 @@ if (item.status === "COMBO") {
     </div>
   }
   className="special-offer-modal"
-  width={560}
+ width={
+    comboAddOnModal.itemCount === 1
+      ? 300
+      : comboAddOnModal.itemCount === 2
+      ? 500
+      : 700
+  }
 >
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+<div className={`grid gap-4 ${gridCols} justify-items-center`}>
     {comboAddOnModal.items.map((addonItem) => {
       // Calculate discount percentage (assuming you have itemMRP field)
       const discountPercentage = addonItem.itemMrp 
@@ -1518,7 +1524,7 @@ if (item.status === "COMBO") {
                 if (!hasAddedComboAddOn) {
                  handleAddToCart({ ...(addonItem as Item), status: "COMBO" });
                   setHasAddedComboAddOn(true);
-                  setComboAddOnModal({ visible: false, items: [] });
+                 setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
                 } else {
                   message.warning("You can only select one optional add-on.");
                 }

@@ -200,7 +200,6 @@ const DataAssigned: React.FC = () => {
   const [loader, setLoader] = useState<boolean>(false);
   const [userOrders, setUserOrders] = useState<OrderData[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [userResponse, setUserResponse] = useState<string | undefined>();
   const type = localStorage.getItem("primaryType");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [amount, setAmount] = useState("");

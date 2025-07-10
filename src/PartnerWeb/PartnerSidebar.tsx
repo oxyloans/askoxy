@@ -20,6 +20,7 @@ import {
   AppstoreOutlined,
   CodeSandboxOutlined,
   SyncOutlined,
+  LinkOutlined,
 } from "@ant-design/icons";
 import { FaChartBar, FaComments } from "react-icons/fa";
 
@@ -110,6 +111,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "/home/updateoffers",
       icon: <SyncOutlined />,
       label: "Update offers & payments",
+    },
+    {
+      key: "/home/addReference",
+      icon: <LinkOutlined />,
+      label: "Add Reference",
     },
     // {
     //   key: "/home/feedback",

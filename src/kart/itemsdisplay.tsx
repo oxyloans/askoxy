@@ -5,6 +5,7 @@ import DOMPurify from "dompurify";
 import { message, Modal } from "antd";
 import ReactMarkdown from "react-markdown"; 
 import { motion } from "framer-motion";
+import { ShoppingBag } from "lucide-react";
 
 import {
   ShoppingCart,
@@ -118,12 +119,14 @@ const ItemDisplayPage = () => {
     items: {},
     status: {},
   });
-  const [comboAddOnModal, setComboAddOnModal] = useState<{
+const [comboAddOnModal, setComboAddOnModal] = useState<{
   visible: boolean;
   items: any[];
+  itemCount: number;
 }>({
   visible: false,
   items: [],
+  itemCount: 0,
 });
 
 const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
@@ -223,7 +226,7 @@ const fetchComboAddOns = async () => {
     const addOns = comboItems.flatMap((combo: any) => combo.items || []);
 
     if (addOns.length > 0) {
-      setComboAddOnModal({ visible: true, items: addOns });
+      setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
     }
   } catch (err) {
     console.error("Error fetching combo offers:", err);
@@ -493,10 +496,11 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
   }));
 
   try {
+    const weight = parseFloat(String(item.weight ?? "0"));
     const isComboItem =
-      parseFloat(item.weight?.toString()) === 26 &&
-      item.units?.toLowerCase() === "kgs" &&
-      item.status !== "COMBO";
+      item.status === "COMBO" ||
+      (item.units?.toLowerCase() === "kgs" &&
+        [1, 5, 10, 26].includes(weight));
 
     const requestBody: any = {
       customerId: userId,
@@ -518,33 +522,39 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
 
     if (isComboItem) {
       try {
-        const res = await axios.get(`${BASE_URL}/product-service/combo-offers`);
-        const comboData = res.data?.content || [];
-
-        const matchingCombo = comboData.find(
-          (combo: any) =>
-            parseFloat(combo.itemWeight?.toString()) === 26 &&
-            combo.units?.toLowerCase() === "kgs"
+        const res = await axios.get(
+          `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
         );
+        const comboItems = res.data?.items || [];
 
-        if (matchingCombo && matchingCombo.items?.length) {
+        if (comboItems.length > 0) {
+          const formattedItems = comboItems.map((i: any) => ({
+            itemId: i.individualItemId,
+            itemName: i.itemName,
+            itemPrice: i.itemPrice,
+            itemMrp: i.itemMrp ?? i.itemPrice,
+            itemImage: i.imageUrl,
+            weight: i.itemWeight,
+            units: i.units,
+            quantity: i.quantity ?? 1,
+            status: "COMBO",
+            title: i.itemName,
+            image: i.imageUrl,
+            description: "",
+            path: "",
+            icon: <ShoppingBag className="text-purple-600" />,
+          }));
+
           setComboAddOnModal({
             visible: true,
-            items: matchingCombo.items.map((i: any) => ({
-              itemId: i.individualItemId,
-              itemName: i.itemName,
-              itemPrice: i.itemPrice,
-              itemImage: i.imageUrl,
-              weight: i.itemWeight,
-              units: i.units,
-              quantity: i.quantity ?? 1,
-              itemMrp: i.itemMrp ?? i.itemPrice,
-              status: "COMBO",
-            })),
+            items: formattedItems,
+            itemCount: formattedItems.length,
           });
+
+          return;
         }
-      } catch (comboErr) {
-        console.error("Error fetching combo offers:", comboErr);
+      } catch (error) {
+        console.error("Error fetching combo info:", error);
       }
     }
 
@@ -559,6 +569,7 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
     }));
   }
 };
+
 
   const handleRemoveItem = async (itemId: string) => {
     setLoadingItems((prev) => ({
@@ -762,6 +773,15 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
   //     ]);
   //   }
   // };
+
+  const gridCols =
+  comboAddOnModal.itemCount === 1
+    ? "grid-cols-1"
+    : comboAddOnModal.itemCount === 2
+    ? "grid-cols-2"
+    : comboAddOnModal.itemCount <= 4
+    ? "grid-cols-2 md:grid-cols-3"
+    : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
 
 
   const handleChatView = async (productName: string) => {
@@ -1654,7 +1674,7 @@ content: `Can you tell me about "${productName}"?`,
     <Modal
       open={comboAddOnModal.visible}
       onCancel={() => {
-        setComboAddOnModal({ visible: false, items: [] });
+        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
         setHasAddedComboAddOn(false);
       }}
       footer={null}
@@ -1666,9 +1686,15 @@ content: `Can you tell me about "${productName}"?`,
         </div>
       }
       className="special-offer-modal"
-      width={560}
+      width={
+    comboAddOnModal.itemCount === 1
+      ? 300
+      : comboAddOnModal.itemCount === 2
+      ? 500
+      : 700
+  }
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+      <div className={`grid gap-4 ${gridCols}`}>
         {comboAddOnModal.items.map((addonItem) => {
           // Calculate discount percentage (assuming you have itemMRP field)
           const discountPercentage = addonItem.itemMrp 
@@ -1768,7 +1794,7 @@ content: `Can you tell me about "${productName}"?`,
                     if (!hasAddedComboAddOn) {
                      handleAddToCart({ ...(addonItem as Item), status: "COMBO" });
                       setHasAddedComboAddOn(true);
-                      setComboAddOnModal({ visible: false, items: [] });
+                   setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
                     } else {
                       message.warning("You can only select one optional add-on.");
                     }
