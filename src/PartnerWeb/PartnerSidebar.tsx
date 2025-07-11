@@ -82,21 +82,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "Items List",
     },
     {
+      key: "/home/orderstats",
+      icon: <LineChartOutlined />,
+      label: "Orders stats",
+    },
+    {
       key: "/home/orderReport",
       icon: <FileTextOutlined />,
       label: "Orders Report",
     },
-
     {
       key: "/home/updatestock",
       icon: <FaChartBar className="text-blue-500" />,
       label: "Stock Update",
     },
-    {
-      key: "/home/orderstats",
-      icon: <LineChartOutlined />,
-      label: "Orders stats",
-    },
+
     {
       key: "/home/queryManagement",
       icon: <QuestionCircleOutlined />,

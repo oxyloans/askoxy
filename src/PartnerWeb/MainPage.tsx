@@ -711,7 +711,7 @@ const MainPage: React.FC = () => {
         <div className="flex flex-col space-y-0.5 text-sm text-gray-600">
           {record.deliveryFee && (
             <div className="flex justify-between">
-             <strong>₹{Number(record.deliveryFee)} rupees</strong>
+              <strong>₹{Number(record.deliveryFee)} rupees</strong>
               <span>: deliveryFee</span>
             </div>
           )}
@@ -742,8 +742,14 @@ const MainPage: React.FC = () => {
     dayjs(item.orderDate, ["DD-MM-YYYY", "YYYY-MM-DD"]).isSame(dayjs(), "day")
   );
 
+  const scrollToTable = () => {
+    if (tableRef.current) {
+      tableRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
-    <div className="pt-4">
+    <div className="pt-2">
       <Row gutter={[16, 16]}>
         <Col xs={24} md={24} lg={24} className="flex flex-col md:flex-row">
           <div className="w-full md:w-2/5 md:pr-4 mb-4 md:mb-0 flex flex-col gap-4">
@@ -761,6 +767,7 @@ const MainPage: React.FC = () => {
                   setSelectedStatus(null);
                   setStartDate(null);
                   setEndDate(null);
+                  scrollToTable();
                 }}
               >
                 <div className="flex justify-between items-center">
@@ -798,6 +805,7 @@ const MainPage: React.FC = () => {
                 className="h-full transform hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl"
                 onClick={() => {
                   setFilteredOrders(todayOrdersCount);
+                  scrollToTable();
                 }}
               >
                 <div className="flex justify-between items-center">
@@ -877,7 +885,10 @@ const MainPage: React.FC = () => {
                 key={item.status}
                 className="w-full md:w-1/3 mb-4 md:mb-0 cursor-pointer"
                 role="button"
-                onClick={() => handleStatusFilter(item.status)}
+                onClick={() => {
+                  handleStatusFilter(item.status);
+                  scrollToTable();
+                }}
               >
                 <Card
                   bodyStyle={{

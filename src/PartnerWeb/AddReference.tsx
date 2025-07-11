@@ -132,7 +132,7 @@ const AddReference: React.FC = () => {
           : "Something went wrong while adding reference";
 
       message.error(errorMessage);
-    } finally { 
+    } finally {
       setReferenceLoading(false);
     }
   };
@@ -213,7 +213,7 @@ const AddReference: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-700 text-sm sm:text-base">
-                    userRegisterDate:
+                    Registration Date:
                   </span>
                   <p className="text-gray-900 text-sm sm:text-base break-all">
                     {new Date(userData.userRegisterDate).toLocaleDateString(

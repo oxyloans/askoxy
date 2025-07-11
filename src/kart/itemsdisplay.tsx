@@ -187,13 +187,19 @@ const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
       setItemImages([]);
     }
   };
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+ const scrollToBottom = () => {
+    if (chatEndRef.current) {
+      const chatContainer = chatEndRef.current.parentElement; // Get the parent container with overflow-y-auto
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom of the chat container
+      }
+    }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+
+   useEffect(() => {
+     scrollToBottom();
+   }, [messages]);
 
   const fetchItemDetails = async (id: string) => {
     try {
@@ -782,60 +788,62 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
     : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
 
 
-  const handleChatView = async (productName: string) => {
-    setShowChatSection(true);
-
-    const introMessage: Message = {
-      id: messages.length,
-     text: `Can you tell me about "${productName}"?`,
-content: `Can you tell me about "${productName}"?`,
-
-      type: "sent",
-      role: "user",
-    
-    };
-    
-
-    const updatedMessages = [introMessage];
-    setMessages(updatedMessages);
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedMessages),
-      });
-
-      const data = await response.text();
-      const isImageUrl = data.startsWith("http");
-
-      const assistantReply: Message = {
-        role: "assistant",
-        content: data,
-        isImage: isImageUrl,
-        id: updatedMessages.length,
-        text: isImageUrl ? "" : data, // show text unless it's an image
-        type: "received",
+   const handleChatView = async (productName: string) => {
+      // Save current scroll position
+      const currentScrollPosition = window.scrollY;
+      setShowChatSection(true);
+  
+      const introMessage: Message = {
+        id: messages.length,
+        text: `Can you tell me about "${productName}"?`,
+        content: `Can you tell me about "${productName}"?`,
+  
+        type: "sent",
+        role: "user",
       };
-
-      setMessages([...updatedMessages, assistantReply]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      setMessages([
-        ...updatedMessages,
-        {
-          id: updatedMessages.length,
-          text: "❌ Sorry, I couldn't fetch product info right now.",
-          type: "system",
+  
+      const updatedMessages = [introMessage];
+      setMessages(updatedMessages);
+      setLoading(true);
+  
+      try {
+        const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedMessages),
+        });
+  
+        const data = await response.text();
+        const isImageUrl = data.startsWith("http");
+  
+        const assistantReply: Message = {
           role: "assistant",
-          content: "❌ Sorry, I couldn't fetch product info right now.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+          content: data,
+          isImage: isImageUrl,
+          id: updatedMessages.length,
+          text: isImageUrl ? "" : data, // show text unless it's an image
+          type: "received",
+        };
+  
+        setMessages([...updatedMessages, assistantReply]);
+      } catch (error) {
+        console.error("Chat error:", error);
+        setMessages([
+          ...updatedMessages,
+          {
+            id: updatedMessages.length,
+            text: "❌ Sorry, I couldn't fetch product info right now.",
+            type: "system",
+            role: "assistant",
+            content: "❌ Sorry, I couldn't fetch product info right now.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+        // Restore scroll position after chat is opened
+        window.scrollTo(0, currentScrollPosition);
+      }
+    };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -1365,7 +1373,7 @@ content: `Can you tell me about "${productName}"?`,
                   </button>
                 </div>
                 {/* Chat Body */}
-                <div className="border rounded-lg flex flex-col h-[24rem] sm:h-[26rem]">
+               <div className="border rounded-lg flex flex-col h-[24rem] sm:h-[26rem] overflow-hidden">
                   {/* Messages Scroll Area */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {messages.map((message) => (

@@ -376,7 +376,7 @@ const Header: React.FC<HeaderProps> = ({
           background: "linear-gradient(135deg, #5c3391 0%, #312c74 100%)",
         }}
       >
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-8xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Left: Logo & Menu */}
           <div className="flex items-center ml-[-20px]">
             <button
