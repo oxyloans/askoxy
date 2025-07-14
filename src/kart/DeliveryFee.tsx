@@ -42,7 +42,7 @@ const getFeeFromSlab = (
     const distanceMatch =
       distance === null ||
       ((slab.min_km == null || distance >= slab.min_km) &&
-       (slab.max_km == null || distance < slab.max_km));
+        (slab.max_km == null || distance < slab.max_km));
 
     return active && value >= min && value < max && distanceMatch;
   });
@@ -66,6 +66,7 @@ export const calculateDeliveryFee = async (
   grandTotal: number | null;
   walletApplicable: boolean;
   minOrderForWallet: number;
+  minOrderAmount: number;
   nearestStore?: {
     id: string;
     name: string;
@@ -91,6 +92,7 @@ export const calculateDeliveryFee = async (
       grandTotal: null,
       walletApplicable: false,
       minOrderForWallet: 500,
+      minOrderAmount: 499,
     };
   }
 
@@ -110,11 +112,13 @@ export const calculateDeliveryFee = async (
       grandTotal: null,
       walletApplicable: false,
       minOrderForWallet: 500,
+      minOrderAmount: 499,
     };
   }
 
   const storeDistances = storeRes.data.map((store) => {
-    const distance = getDistanceInKm(store.lat, store.lng, userLat, userLng) * 1.3;
+    const distance =
+      getDistanceInKm(store.lat, store.lng, userLat, userLng) * 1.3;
     return { ...store, distance };
   });
 
@@ -130,7 +134,10 @@ export const calculateDeliveryFee = async (
   ]);
 
   if (deliveryRes.error || handlingRes.error || globalRes.error) {
-    console.error("Fee fetch error:", deliveryRes.error || handlingRes.error || globalRes.error);
+    console.error(
+      "Fee fetch error:",
+      deliveryRes.error || handlingRes.error || globalRes.error
+    );
     message.error("Error loading fee configuration.");
     return {
       fee: null,
@@ -140,13 +147,17 @@ export const calculateDeliveryFee = async (
       grandTotal: null,
       walletApplicable: false,
       minOrderForWallet: 500,
+      minOrderAmount: 499,
     };
   }
 
   const globalMap: { [key: string]: number } = {};
-  globalRes.data.forEach(({ key, value }) => (globalMap[key] = parseFloat(value)));
+  globalRes.data.forEach(
+    ({ key, value }) => (globalMap[key] = parseFloat(value))
+  );
   const maxDistance = globalMap.max_distance_km ?? 25;
   const minOrderForWallet = globalMap.min_order_for_wallet_use ?? 500;
+  const minOrderAmount = globalMap.min_order_Amount ?? 499;
 
   if (nearestStore.distance > maxDistance) {
     message.error("Delivery not available: Location out of service range.");
@@ -158,22 +169,34 @@ export const calculateDeliveryFee = async (
       grandTotal: null,
       walletApplicable: false,
       minOrderForWallet,
+      minOrderAmount,
     };
   }
 
-  const deliveryFee = getFeeFromSlab(nearestStore.distance, deliveryRes.data, ["min_km", "max_km"]);
+  const deliveryFee = getFeeFromSlab(nearestStore.distance, deliveryRes.data, [
+    "min_km",
+    "max_km",
+  ]);
 
   // 🟢 Skip handling fee if cartAmount >= 500
-  const handlingFee = cartAmount >= minOrderForWallet
-    ? 0
-    : getFeeFromSlab(cartAmount, handlingRes.data, ["min_cart", "max_cart"], nearestStore.distance);
+  const handlingFee =
+    cartAmount >= minOrderForWallet
+      ? 0
+      : getFeeFromSlab(
+          cartAmount,
+          handlingRes.data,
+          ["min_cart", "max_cart"],
+          nearestStore.distance
+        );
 
   const note = `From ${nearestStore.name} → ₹${deliveryFee} delivery + ₹${handlingFee} handling fee`;
   const grandTotal = Math.round(cartAmount + deliveryFee + handlingFee);
   const walletApplicable = cartAmount >= minOrderForWallet;
+  // const minOrderAmount = cartAmount >= minOrderAmount;
 
-
-  console.log(`Calculated delivery fee: ₹${deliveryFee}, handling fee: ₹${handlingFee}, total: ₹${grandTotal},walletApplicable: ${walletApplicable},cartAmount: ${cartAmount}`);
+  console.log(
+    `Calculated delivery fee: ₹${deliveryFee}, handling fee: ₹${handlingFee}, total: ₹${grandTotal},walletApplicable: ${walletApplicable},cartAmount: ${cartAmount}`
+  );
 
   return {
     fee: deliveryFee,
@@ -183,6 +206,7 @@ export const calculateDeliveryFee = async (
     grandTotal,
     walletApplicable,
     minOrderForWallet,
+    minOrderAmount,
     nearestStore: {
       id: nearestStore.id,
       name: nearestStore.name,
@@ -205,11 +229,14 @@ const DeliveryFee: React.FC<DeliveryFeeProps> = ({
           `Calculating delivery fee for coordinates: ${userLat}, ${userLng}, cart amount: ₹${cartAmount}`
         );
         const result = await calculateDeliveryFee(userLat, userLng, cartAmount);
-        const totalFee = result.fee != null ? result.fee + result.handlingFee : null;
+        const totalFee =
+          result.fee != null ? result.fee + result.handlingFee : null;
         console.log(`Returning combined fee to onFeeCalculated: ₹${totalFee}`);
         onFeeCalculated(result.fee, result.handlingFee);
         if (result.fee === null) {
-          message.error(result.note || "Delivery not available for this location");
+          message.error(
+            result.note || "Delivery not available for this location"
+          );
         }
       } else {
         console.warn("Coordinates missing:", { userLat, userLng });

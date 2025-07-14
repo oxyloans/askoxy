@@ -99,7 +99,7 @@ const UserLogin: React.FC = () => {
         localStorage.setItem("accessToken", token);
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
         if (id) localStorage.setItem("userId", id);
-        if (name) localStorage.setItem("userName", name);
+        if (name) localStorage.setItem("Name", name);
         if (primaryType) localStorage.setItem("primaryType", primaryType);
 
         // Handle different user types
@@ -297,14 +297,13 @@ const UserLogin: React.FC = () => {
               </Form.Item>
 
               {error && (
-                <Alert
-                  message={error}
-                  type="error"
-                  showIcon
-                  className="mt-4 rounded-md"
-                  closable
-                  onClose={() => setError(null)}
-                />
+                <div className="flex justify-center w-full px-4 mt-4">
+                  <div className="max-w-md w-full">
+                    <p className="text-red-700 bg-red-100 px-4 py-2 rounded-md text-sm text-center break-words">
+                      {error}
+                    </p>
+                  </div>
+                </div>
               )}
 
               <Divider className="my-6">

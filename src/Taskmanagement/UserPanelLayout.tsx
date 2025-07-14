@@ -37,7 +37,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const screens = useBreakpoint();
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string>("User");
+  const [userName, setUserName] = useState<string>("");
   const location = useLocation();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
 
@@ -52,7 +52,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     window.addEventListener("resize", handleResize);
 
     // Get userName from local storage
-    const storedUserName = localStorage.getItem("userName") || "User";
+    const storedUserName = localStorage.getItem("Name") || "";
     setUserName(storedUserName);
 
     // Check if current path is under a submenu and open it

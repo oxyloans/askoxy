@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { message, Alert, Modal } from "antd";
+import { message, Modal } from "antd";
 import Footer from "../components/Footer";
 import {
   ArrowLeft,
@@ -137,6 +137,7 @@ const CheckoutPage: React.FC = () => {
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [walletApplicable, setWalletApplicable] = useState(false);
   const [minOrderForWallet, setMinOrderForWallet] = useState(500);
+  const [minOrderAmount, setMinOrderAmount] = useState(499);
   const [couponsLoading, setCouponsLoading] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [showOtherOptions, setShowOtherOptions] = useState(false);
@@ -583,14 +584,16 @@ const CheckoutPage: React.FC = () => {
             handlingFee: calculatedHandlingFee,
             walletApplicable: walletFlag,
             minOrderForWallet: minWallet,
+            minOrderAmount: minOrderamnt,
           } = await calculateDeliveryFee(
             selectedAddress.latitude,
             selectedAddress.longitude,
             amountToPay
           );
-         
+
           setWalletApplicable(walletFlag);
           setMinOrderForWallet(minWallet);
+          setMinOrderAmount(minOrderamnt);
           deliveryFee = fee ?? 0;
           handlingFee = calculatedHandlingFee;
           console.log(
@@ -601,7 +604,9 @@ const CheckoutPage: React.FC = () => {
             "Wallet Applicable:",
             walletFlag,
             "Min Order For Wallet:",
-            minWallet
+            minWallet,
+            "Min Order For place order:",
+            minOrderamnt
           );
         } else if (cartItems.length > 0) {
           console.error("Latitude or Longitude is undefined");
@@ -924,41 +929,45 @@ const CheckoutPage: React.FC = () => {
     setAfterWallet(walletAmount - newUsedWalletAmount);
     setGrandTotalAmount(discountedTotal);
   }
-const handleCheckboxToggle = () => {
-  if (!walletApplicable || walletAmount === 0 || totalAmount < minOrderForWallet) {
-    message.warning(
-      `Wallet not applicable. Minimum cart amount should be ₹${minOrderForWallet}`
-    );
-    return;
-  }
+  const handleCheckboxToggle = () => {
+    if (
+      !walletApplicable ||
+      walletAmount === 0 ||
+      totalAmount < minOrderForWallet
+    ) {
+      message.warning(
+        `Wallet not applicable. Minimum cart amount should be ₹${minOrderForWallet}`
+      );
+      return;
+    }
 
-  const newUseWallet = !useWallet;
+    const newUseWallet = !useWallet;
 
-  const baseAmount =
-    totalAmount +
-    (cartData.length > 0 ? deliveryFee ?? 0 : 0) +
-    (cartData.length > 0 ? handlingFee ?? 0 : 0) +
-    subGst -
-    (coupenApplied && coupenDetails ? coupenDetails : 0);
+    const baseAmount =
+      totalAmount +
+      (cartData.length > 0 ? deliveryFee ?? 0 : 0) +
+      (cartData.length > 0 ? handlingFee ?? 0 : 0) +
+      subGst -
+      (coupenApplied && coupenDetails ? coupenDetails : 0);
 
-  const walletToApply = Math.min(walletAmount, baseAmount);
+    const walletToApply = Math.min(walletAmount, baseAmount);
 
-  Modal.confirm({
-    title: newUseWallet ? "Apply Wallet?" : "Remove Wallet?",
-    content: newUseWallet
-      ? `Use ₹${walletToApply.toFixed(2)} from your wallet?`
-      : `Remove wallet usage of ₹${usedWalletAmount.toFixed(2)}?`,
-    okText: "Yes",
-    cancelText: "No",
-    onOk: () => {
-      setUseWallet(newUseWallet);
-      setUsedWalletAmount(newUseWallet ? walletToApply : 0);
-      setAfterWallet(walletAmount - (newUseWallet ? walletToApply : 0));
-      setGrandTotalAmount(baseAmount - (newUseWallet ? walletToApply : 0));
-      message.success(newUseWallet ? "Wallet Applied" : "Wallet Removed");
-    },
-  });
-};
+    Modal.confirm({
+      title: newUseWallet ? "Apply Wallet?" : "Remove Wallet?",
+      content: newUseWallet
+        ? `Use ₹${walletToApply.toFixed(2)} from your wallet?`
+        : `Remove wallet usage of ₹${usedWalletAmount.toFixed(2)}?`,
+      okText: "Yes",
+      cancelText: "No",
+      onOk: () => {
+        setUseWallet(newUseWallet);
+        setUsedWalletAmount(newUseWallet ? walletToApply : 0);
+        setAfterWallet(walletAmount - (newUseWallet ? walletToApply : 0));
+        setGrandTotalAmount(baseAmount - (newUseWallet ? walletToApply : 0));
+        message.success(newUseWallet ? "Wallet Applied" : "Wallet Removed");
+      },
+    });
+  };
 
   useEffect(() => {
     grandTotalfunc();
@@ -1935,14 +1944,16 @@ const handleCheckboxToggle = () => {
                     </div>
 
                     {walletApplicable && totalAmount >= minOrderForWallet ? (
-  <p className="text-sm text-green-600 mt-1">
-    Wallet applicable! You can use ₹{walletAmount.toFixed(2)}.
-  </p>
-) : (
-  <p className="text-sm text-red-500 mt-1">
-    Wallet not applicable. Minimum order amount ₹{minOrderForWallet} required.
-  </p>
-)}
+                      <p className="text-sm text-green-600 mt-1">
+                        Wallet applicable! You can use ₹
+                        {walletAmount.toFixed(2)}.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-red-500 mt-1">
+                        Wallet not applicable. Minimum order amount ₹
+                        {minOrderForWallet} required.
+                      </p>
+                    )}
 
                     <div className="flex items-center space-x-2 mt-3">
                       <input
@@ -1956,10 +1967,21 @@ const handleCheckboxToggle = () => {
                         htmlFor="useWallet"
                         className="text-sm text-gray-700"
                       >
-                         Use Wallet Balance (₹{walletAmount.toFixed(2)})
+                        Use Wallet Balance (₹{walletAmount.toFixed(2)})
                       </label>
                     </div>
-
+                    <div className="mt-3">
+                      {grandTotalAmount < minOrderAmount && (
+                        <label
+                          htmlFor="exchangePolicy"
+                          className="text-sm text-red-500"
+                        >
+                          We kindly request you to add few more items, as the
+                          minimum order amount is ₹{minOrderAmount} to place
+                          order.
+                        </label>
+                      )}
+                    </div>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -1969,7 +1991,8 @@ const handleCheckboxToggle = () => {
                         !selectedAddress ||
                         !selectedTimeSlot ||
                         cartData.length === 0 ||
-                        deliveryFee === null
+                        deliveryFee === null ||
+                        grandTotalAmount < minOrderAmount
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >

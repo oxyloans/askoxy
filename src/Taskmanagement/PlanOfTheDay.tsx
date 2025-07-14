@@ -104,7 +104,7 @@ const PlanOfTheDay: React.FC = () => {
       localStorage.getItem("userId") || "b83ed56b-fd00-4a3c-8104-18a143a086af";
     setUserId(storedUserId);
 
-    const storedUserName = localStorage.getItem("userName") || "";
+    const storedUserName = localStorage.getItem("Name") || "";
     setUserName(storedUserName);
 
     // Check if user has already submitted a plan for today
@@ -181,7 +181,7 @@ const PlanOfTheDay: React.FC = () => {
         `${BASE_URL}/user-service/write/userTaskUpdate`,
         {
           planOftheDay: values.planOftheDay,
-          taskAssinedBy: localStorage.getItem("userName"),
+          taskAssinedBy: localStorage.getItem("Name"),
           taskTeam: values.taskTeam,
           userId: userId,
         }
