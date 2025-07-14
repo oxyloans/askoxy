@@ -55,7 +55,7 @@ const getFeeFromSlab = (
 };
 
 export const calculateDeliveryFee = async (
-  userLat: number ,
+  userLat: number,
   userLng: number,
   cartAmount: number
 ): Promise<{
@@ -64,6 +64,8 @@ export const calculateDeliveryFee = async (
   note: string | null;
   handlingFee: number;
   grandTotal: number | null;
+  walletApplicable: boolean;
+  minOrderForWallet: number;
   nearestStore?: {
     id: string;
     name: string;
@@ -71,7 +73,6 @@ export const calculateDeliveryFee = async (
     lng: number;
   };
 }> => {
-  // Validate coordinates
   if (
     isNaN(userLat) ||
     isNaN(userLng) ||
@@ -88,10 +89,11 @@ export const calculateDeliveryFee = async (
       note: "Invalid coordinates",
       handlingFee: 0,
       grandTotal: null,
+      walletApplicable: false,
+      minOrderForWallet: 500,
     };
   }
 
-  // Fetch store points
   const storeRes = await supabase
     .from("store_locations")
     .select("*")
@@ -106,6 +108,8 @@ export const calculateDeliveryFee = async (
       note: "No active stores found",
       handlingFee: 0,
       grandTotal: null,
+      walletApplicable: false,
+      minOrderForWallet: 500,
     };
   }
 
@@ -114,10 +118,11 @@ export const calculateDeliveryFee = async (
     return { ...store, distance };
   });
 
-  const nearestStore = storeDistances.reduce((a, b) => (a.distance < b.distance ? a : b));
+  const nearestStore = storeDistances.reduce((a, b) =>
+    a.distance < b.distance ? a : b
+  );
   const roundedDistance = parseFloat(nearestStore.distance.toFixed(2));
 
-  // Fetch fees and config
   const [deliveryRes, handlingRes, globalRes] = await Promise.all([
     supabase.from("delivery_fees").select("*"),
     supabase.from("handling_fees").select("*"),
@@ -133,12 +138,15 @@ export const calculateDeliveryFee = async (
       note: "Error loading fee config",
       handlingFee: 0,
       grandTotal: null,
+      walletApplicable: false,
+      minOrderForWallet: 500,
     };
   }
 
   const globalMap: { [key: string]: number } = {};
   globalRes.data.forEach(({ key, value }) => (globalMap[key] = parseFloat(value)));
   const maxDistance = globalMap.max_distance_km ?? 25;
+  const minOrderForWallet = globalMap.min_order_for_wallet_use ?? 500;
 
   if (nearestStore.distance > maxDistance) {
     message.error("Delivery not available: Location out of service range.");
@@ -148,16 +156,24 @@ export const calculateDeliveryFee = async (
       note: "Out of service range",
       handlingFee: 0,
       grandTotal: null,
+      walletApplicable: false,
+      minOrderForWallet,
     };
   }
 
   const deliveryFee = getFeeFromSlab(nearestStore.distance, deliveryRes.data, ["min_km", "max_km"]);
-  const handlingFee = getFeeFromSlab(cartAmount, handlingRes.data, ["min_cart", "max_cart"], nearestStore.distance);
+
+  // 🟢 Skip handling fee if cartAmount >= 500
+  const handlingFee = cartAmount >= minOrderForWallet
+    ? 0
+    : getFeeFromSlab(cartAmount, handlingRes.data, ["min_cart", "max_cart"], nearestStore.distance);
 
   const note = `From ${nearestStore.name} → ₹${deliveryFee} delivery + ₹${handlingFee} handling fee`;
   const grandTotal = Math.round(cartAmount + deliveryFee + handlingFee);
+  const walletApplicable = cartAmount >= minOrderForWallet;
 
-  console.log(`Calculated delivery fee: ₹${deliveryFee}, handling fee: ₹${handlingFee}, total: ₹${grandTotal}, combined fee: ₹${deliveryFee + handlingFee}`);
+
+  console.log(`Calculated delivery fee: ₹${deliveryFee}, handling fee: ₹${handlingFee}, total: ₹${grandTotal},walletApplicable: ${walletApplicable},cartAmount: ${cartAmount}`);
 
   return {
     fee: deliveryFee,
@@ -165,6 +181,8 @@ export const calculateDeliveryFee = async (
     note,
     handlingFee,
     grandTotal,
+    walletApplicable,
+    minOrderForWallet,
     nearestStore: {
       id: nearestStore.id,
       name: nearestStore.name,

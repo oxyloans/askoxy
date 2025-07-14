@@ -760,7 +760,7 @@ const [currentSet, setCurrentSet] = useState(0);
       {
         id: "1",
         title: "OxyLoans",
-        image: ServiceImg1,
+        image: "https://iili.io/FENcMAb.md.png",
         description: "Earn up to 24% P.A. on your investments",
         path: "/main/service/oxyloans-service",
         icon: <HandCoins className="text-purple-600" size={24} />,
@@ -769,7 +769,7 @@ const [currentSet, setCurrentSet] = useState(0);
         id: "2",
         title: "Study Abroad",
         image:
-          "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
+          "https://iili.io/FGn6wdu.md.png",
         description: "Complete guidance for international education",
         path: "/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,
@@ -777,7 +777,7 @@ const [currentSet, setCurrentSet] = useState(0);
       {
         id: "3",
         title: "Free Rudraksha",
-        image: RudrakshaImage,
+        image: "https://iili.io/FEwOOdv.md.png",
         description: "Receive a sacred Rudraksha bead",
         path: "/main/services/freerudraksha",
         icon: <Gem className="text-purple-600" size={24} />,
@@ -1782,75 +1782,63 @@ const gridCols =
         </section>
 
         {/* Services Section */}
-        <section className="mb-12">
-          <div className="flex items-center mb-4 gap-10">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center">
-              <Settings className="text-purple-600 mr-2" size={20} />
-              Our Services
-            </h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 mb-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
-              onClick={viewAllServices}
-            >
-              View All
-              <ArrowRight size={16} className="ml-1" />
-            </motion.button>
-          </div>
+<section className="mb-12">
+  <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+    <h2 className="text-xl font-bold text-gray-800 flex items-center">
+      <Settings className="text-purple-600 mr-2" size={20} />
+      Our Services
+    </h2>
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+      onClick={viewAllServices}
+    >
+      View All
+      <ArrowRight size={16} className="ml-1" />
+    </motion.button>
+  </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {loading
-              ? Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={`skeleton-service-${index}`}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
-                  >
-                    <div className="h-40 bg-gray-200"></div>
-                    <div className="p-4">
-                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  </div>
-                ))
-              : services.map((service, index) => (
-                  <motion.div
-                    key={service.id}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                    variants={serviceCardVariants}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                    onClick={() => navigate(service.path)}
-                  >
-                    <div className="aspect-video relative overflow-hidden bg-gray-100">
-                      <img
-                        src={service.image}
-                        alt={service.title}
-                        className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-purple-900 to-transparent opacity-40"></div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <h3 className="text-white font-bold text-lg drop-shadow-md">
-                          {service.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-gray-700 text-sm">
-                        {service.description}
-                      </p>
-                      <button className="mt-3 text-purple-600 font-medium text-sm flex items-center">
-                        Learn More
-                        <ChevronRight size={16} className="ml-1" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    {loading
+      ? Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={`skeleton-service-${index}`}
+            className="rounded-xl overflow-hidden animate-pulse bg-transparent"
+          >
+            <div className="h-40 bg-gray-200"></div>
+            <div className="p-4 text-center">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
           </div>
-        </section>
+        ))
+      : services.map((service, index) => (
+          <motion.div
+            key={service.id}
+            custom={index}
+            initial="hidden"
+            animate="visible"
+            whileHover="hover"
+            variants={serviceCardVariants}
+            className="rounded-xl overflow-hidden bg-transparent cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+            onClick={() => navigate(service.path)}
+          >
+            <div className="aspect-video overflow-hidden">
+              <img
+                src={service.image}
+                alt={service.title}
+                className="w-full h-full object-contain transition-transform duration-300"
+              />
+            </div>
+            <div className="p-4 text-center">
+              <h3 className="text-gray-900 font-bold text-lg">
+                {service.title}
+              </h3>
+            </div>
+          </motion.div>
+        ))}
+  </div>
+</section>
 
         {/* Digital Services Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">

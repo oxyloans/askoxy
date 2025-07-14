@@ -137,6 +137,16 @@ const WhatsappLogin = () => {
   }, [navigate, location, primaryType]);
 
   useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor;
+
+    if (/android/i.test(userAgent)) {
+      window.location.href = "https://play.google.com/store/apps/details?id=com.askoxy.customer";
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !('MSStream' in window)) {
+      window.location.href = "https://apps.apple.com/app/askoxy-ai/id123456789";
+    }
+  }, []);
+
+  useEffect(() => {
     if (resendDisabled) {
       const timer = setInterval(() => {
         setResendTimer((prev) => {

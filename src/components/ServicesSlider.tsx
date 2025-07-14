@@ -43,7 +43,7 @@ const ServicesSlider: React.FC = () => {
   const fetchJobs = async () => {
     try {
       const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
+        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid?userId=91d2f250-20d0-44a5-9b4e-2acb73118b98`,
         {
           method: "GET",
           headers: {
@@ -52,10 +52,7 @@ const ServicesSlider: React.FC = () => {
         }
       );
       const jobsData = await response.json();
-      const filteredJobs = jobsData.filter(
-        (job: Job) => job.jobStatus === true
-      );
-      setJobs(filteredJobs);
+      setJobs(jobsData);
     } catch (error) {
       console.error("Error fetching jobs:", error);
     }
@@ -64,59 +61,48 @@ const ServicesSlider: React.FC = () => {
   // Updated services with their respective paths
   const services = [
     {
-      image:
-        "https://i.ibb.co/PzFdf43v/oxyloasntemp-1-2ec07c0cd7c7e055e4c3.png",
+      image: "https://iili.io/FENcMAb.md.png",
       title: "Invest & Earn",
       path: "/service/oxyloans-service",
     },
     {
-      image: "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
+      image: "https://iili.io/FGn6wdu.md.png",
       title: "Study Abroad",
       path: "/studyabroad",
     },
     {
-      image:
-        "https://i.ibb.co/ksdzrwLT/FREE-RICE-SAMPLES-AND-FREE-RICE-CONTAINER-3b40f8ed166a3fd17253.png",
-      title: "Free Rice Samples & Steel Container",
-      path: "/services/freesample-steelcontainer",
-    },
-    {
-      image: "https://i.ibb.co/twztBkMv/freerudraksha-eeaaca3e8a028697e182.png",
+      image: "https://iili.io/FEwOOdv.md.png",
       title: "Free Rudraksha",
       path: "/services/freerudraksha",
     },
     {
-      image:
-        "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
+      image: "https://iili.io/FGCrmbV.md.png",
       title: "Free AI & GEN AI Training",
       path: "/services/freeai-genai",
     },
     {
-      image:
-        "https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png",
+      image: "https://iili.io/FGomRzF.md.png",
       title: "Legal Knowledge Hub",
       path: "/services/legalservice",
     },
     {
-      image: "https://i.ibb.co/SwfNXKhm/MY-ROTARY-2c24090250b109f80818.png",
+      image: "https://iili.io/FGxS97j.md.png",
       title: "My Rotary",
       path: "/services/myrotary",
     },
     {
-      image:
-        "https://i.ibb.co/8LmmPySx/Machines-manufacturing-services-f5f7abd54ec2b3373b0c.png",
+      image: "https://iili.io/FGxUkKX.md.png",
       title: "Machines Manufacturing Services",
       path: "/services/machines-manufacturing",
     },
     {
-      image:
-        "https://i.ibb.co/cK4w00Rd/Career-guidance-fe6ea3668fa6a02f6294.png",
+      image: "https://iili.io/FGxPrnR.md.png",
       title: "Career Guidance",
       path: "/services/we-are-hiring",
     },
   ];
 
-  const displayedServices = showAllServices ? services : services.slice(0, 3);
+  const displayedServices = showAllServices ? services : services.slice(0, 4);
 
   const blogCampaigns = campaigns.filter(
     (campaign) =>
@@ -130,9 +116,19 @@ const ServicesSlider: React.FC = () => {
 
   const displayedBlogs = showAllBlogs
     ? blogCampaigns
-    : blogCampaigns.slice(0, 3);
+    : blogCampaigns.slice(0, 4);
 
   const displayedJobs = showAllJobs ? jobs : jobs.slice(0, 5);
+
+  // Combine manual services and API services for unified display
+  const allServices = showAllServices 
+    ? [...services, ...nonBlogCampaigns.map(campaign => ({
+        image: campaign.imageUrls?.[0]?.imageUrl || "",
+        title: campaign.campaignType,
+        path: "", // Will be handled by click handler
+        campaign: campaign
+      }))]
+    : services.slice(0, 4);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -160,12 +156,17 @@ const ServicesSlider: React.FC = () => {
     };
 
     loadCampaigns();
-    loadJobs(); // Add this line
+    loadJobs();
   }, []);
 
-  const handleServiceClick = (path: string) => {
-    navigate(path);
+  const handleServiceClick = (service: any) => {
+    if (service.campaign) {
+      handleCampaignClick(service.campaign);
+    } else {
+      navigate(service.path);
+    }
   };
+
   const slugify = (text: string) =>
     text
       .toLowerCase()
@@ -173,7 +174,7 @@ const ServicesSlider: React.FC = () => {
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 50);
+      .slice(0, 30);
 
   const handleCampaignClick = (campaign: Campaign) => {
     console.log(campaign);
@@ -226,14 +227,9 @@ const ServicesSlider: React.FC = () => {
     },
   };
 
-  const handleBlogNavigation = () => {
-    if (!accessToken) {
-      navigate("/myblogs");
-    } else {
-      navigate("/main/dashboard/myblogs");
-    }
-  };
   const handleJobNavigate = (id: string | null) => {
+    console.log("service slider" + id);
+
     if (!accessToken) {
       navigate("/jobdetails", { state: { id } });
     } else {
@@ -251,17 +247,7 @@ const ServicesSlider: React.FC = () => {
   };
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-white via-purple-50 to-purple-100 min-h-[70vh] overflow-hidden relative">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-72 h-72 bg-purple-200 rounded-full opacity-20 transform translate-x-1/3 -translate-y-1/3 animate-pulse"></div>
-      <div
-        className="absolute bottom-0 left-0 w-56 h-56 bg-purple-200 rounded-full opacity-20 transform -translate-x-1/3 translate-y-1/3 animate-pulse"
-        style={{ animationDelay: "1s" }}
-      ></div>
-
-      {/* Decorative patterns */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMzMjJiNDAiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMC0xMHY2aDZ2LTZoLTZ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50"></div>
-
+    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white min-h-[70vh]">
       <div className="relative z-10">
         {/* SERVICES SECTION */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-16">
@@ -277,7 +263,6 @@ const ServicesSlider: React.FC = () => {
               <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>
             </motion.div>
           </div>
-
           <motion.button
             whileHover={{
               scale: 1.05,
@@ -293,67 +278,63 @@ const ServicesSlider: React.FC = () => {
             </span>
           </motion.button>
         </div>
-
+        
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="animate-pulse bg-white rounded-2xl shadow-md h-80 p-6"
+                className="animate-pulse bg-white rounded-2xl shadow-md h-64 p-4"
               >
-                <div className="w-full h-56 bg-gray-200 rounded-xl mb-4"></div>
+                <div className="w-full h-48 bg-gray-200 rounded-xl mb-2"></div>
                 <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
               </div>
             ))}
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            {displayedServices.map((service, index) => (
+            {allServices.map((service, index) => (
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="group flex flex-col items-center p-6 rounded-2xl bg-white cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-2"
-                onClick={() => handleServiceClick(service.path)}
+                className="group flex flex-col items-center p-4 transition-all duration-300 transform hover:-translate-y-2"
+                onClick={() => handleServiceClick(service)}
                 role="button"
                 tabIndex={0}
                 onKeyPress={(e) =>
-                  e.key === "Enter" && handleServiceClick(service.path)
+                  e.key === "Enter" && handleServiceClick(service)
                 }
               >
-                {/* Clean image container with proper alignment */}
-                <div className="w-full h-52 flex items-center justify-center mb-4">
+                <div className="w-full h-48 flex items-center justify-center mb-3">
                   <div className="relative w-full h-full flex items-center justify-center">
                     <img
                       src={service.image}
                       alt={service.title}
-                      className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition-transform duration-500 drop-shadow-md"
+                      className="w-full h-full object-contain rounded-lg transform group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />
                   </div>
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md">
+                    {/* <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md">
                       <ExternalLink size={14} className="text-gray-600" />
-                    </div>
+                    </div> */}
                   </div>
                 </div>
-
                 <h3 className="text-center text-lg font-semibold text-gray-800 group-hover:text-[#3c1973] transition-colors duration-300">
                   {service.title}
                 </h3>
-                <div className="w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-yellow-400 to-blue-500 mt-2 transition-all duration-300 rounded-full"></div>
               </motion.div>
             ))}
           </motion.div>
         )}
-
-        {/* Show More Button for Services */}
-        {!showAllServices && displayedServices.length < services.length && (
-          <div className="mt-12 text-center">
+        
+        {!showAllServices && allServices.length < (services.length + nonBlogCampaigns.length) && (
+          <div className="mt-8 text-center">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -363,66 +344,6 @@ const ServicesSlider: React.FC = () => {
               View all services
               <span className="ml-2">→</span>
             </motion.button>
-          </div>
-        )}
-
-        {showAllServices && nonBlogCampaigns.length > 0 && (
-          <div className="mt-24">
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {nonBlogCampaigns.map((campaign) => (
-                <motion.div
-                  key={campaign.campaignId}
-                  variants={itemVariants}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
-                    transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
-                  onClick={() => handleCampaignClick(campaign)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && handleCampaignClick(campaign)
-                  }
-                >
-                  <div className="relative aspect-video overflow-hidden bg-gray-50">
-                    {campaign.imageUrls &&
-                      campaign.imageUrls.length > 0 &&
-                      campaign.imageUrls
-                        .filter((media) =>
-                          /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(media.imageUrl)
-                        )
-                        .map((image, index) => (
-                          <img
-                            key={index}
-                            src={image.imageUrl}
-                            alt={`${campaign.campaignType}-${index}`}
-                            className="w-full h-full object-contain"
-                            loading="lazy"
-                          />
-                        ))}
-
-                    {campaign.campaignType && (
-                      <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
-                        <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
-                          {campaign.campaignType.slice(0, 12)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex-grow flex flex-col">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
-                      {campaign.campaignType}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
-                      {campaign.campaignDescription}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
           </div>
         )}
       </div>
@@ -451,11 +372,11 @@ const ServicesSlider: React.FC = () => {
               }}
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => handleBlogNavigation()}
+              onClick={() => setShowAllBlogs(!showAllBlogs)}
             >
               {showAllBlogs ? "Show Less" : "View All Blogs"}
               <span className="ml-2 inline-block">
-                {showAllBlogs ? "→" : "→"}
+                {showAllBlogs ? "↑" : "↓"}
               </span>
             </motion.button>
           )}
@@ -464,7 +385,7 @@ const ServicesSlider: React.FC = () => {
         {blogCampaigns.length > 0 ? (
           <>
             <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -487,7 +408,7 @@ const ServicesSlider: React.FC = () => {
                       e.key === "Enter" && handleCampaignClick(campaign)
                     }
                   >
-                    <div className="relative aspect-video overflow-hidden bg-gray-50">
+                    <div className="relative aspect-video overflow-hidden">
                       {isImage ? (
                         <img
                           src={mediaUrl}
@@ -538,7 +459,7 @@ const ServicesSlider: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
-                  onClick={() => handleBlogNavigation()}
+                  onClick={() => setShowAllBlogs(true)}
                 >
                   View all blogs
                   <span className="ml-2">→</span>
@@ -581,7 +502,7 @@ const ServicesSlider: React.FC = () => {
               className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
               onClick={() => {
                 handleJobNavigate(null);
-              }} // Navigate to jobs page instead of showing all
+              }}
             >
               View All Jobs
               <span className="ml-2 inline-block">→</span>
@@ -621,13 +542,13 @@ flex flex-col border border-gray-100 m-2"
                   onClick={() => handleJobNavigate(job.id)}
                 >
                   <div className="pt-6 pb-4 flex justify-center">
-                    <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
+                    <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 p-2">
                       <img
                         src={
                           job.companyLogo ||
                           "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                         }
-                        className="w-40 h-20 object-contain transition-transform duration-300"
+                        className="max-w-full max-h-full object-contain"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null;
@@ -638,7 +559,6 @@ flex flex-col border border-gray-100 m-2"
                     </div>
                   </div>
 
-                  {/* Company Name */}
                   <div className="flex justify-center px-4 pb-3">
                     <div
                       className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
@@ -671,10 +591,7 @@ flex flex-col border border-gray-100 m-2"
                   </div>
 
                   <div className="px-4 pb-5 mt-auto flex justify-center">
-                    <div
-                      className="bg-blue-100 text-blue-500 py-3 px-8 
-    rounded-full font-semibold text-base transition-all duration-200"
-                    >
+                    <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200">
                       View Job
                     </div>
                   </div>

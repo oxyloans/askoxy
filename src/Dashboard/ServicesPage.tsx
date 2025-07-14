@@ -64,7 +64,7 @@ const ServicesPage: React.FC = () => {
       {
         title: "OxyLoans - RBI Approved P2P NBFC",
         image:
-          "https://i.ibb.co/PzFdf43v/oxyloasntemp-1-2ec07c0cd7c7e055e4c3.png",
+          "https://iili.io/FENcMAb.md.png",
         description:
           "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
         path: `${accessToken ? "/main" : ""}/service/oxyloans-service`,
@@ -74,7 +74,7 @@ const ServicesPage: React.FC = () => {
       {
         title: "Free Rudraksha",
         image:
-          "https://i.ibb.co/twztBkMv/freerudraksha-eeaaca3e8a028697e182.png",
+          "https://iili.io/FEwOOdv.md.png",
         description:
           "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
         path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
@@ -84,7 +84,7 @@ const ServicesPage: React.FC = () => {
       {
         title: "Free AI & Gen AI Training",
         image:
-          "https://i.ibb.co/99ymgm8d/Free-AI-and-Gen-ai-training-4090c6b7d5ff1eb374bd.png",
+          "https://iili.io/FGCrmbV.md.png",
         description:
           "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
         path: `${accessToken ? "/main" : ""}/services/freeai-genai`,
@@ -92,21 +92,9 @@ const ServicesPage: React.FC = () => {
         category: "Jobs",
       },
       {
-        title: "Free Rice Samples",
-        image:
-          "https://i.ibb.co/ksdzrwLT/FREE-RICE-SAMPLES-AND-FREE-RICE-CONTAINER-3b40f8ed166a3fd17253.png",
-        description:
-          "Request free rice samples along with a high-quality steel container for storage.",
-        path: `${
-          accessToken ? "/main" : ""
-        }/services/freesample-steelcontainer`,
-        icon: <Package className="text-purple-600" size={24} />,
-        category: "Food",
-      },
-      {
         title: "Study Abroad",
         image:
-          "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
+          "https://iili.io/FGn6wdu.md.png",
         description:
           "Explore opportunities to study abroad with expert guidance and support.",
         path: "/studyabroad",
@@ -116,7 +104,7 @@ const ServicesPage: React.FC = () => {
       {
         title: "Legal Knowledge Hub",
         image:
-          "https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png",
+          "https://iili.io/FGomRzF.md.png",
         description:
           "Access expert legal advice and educational resources to navigate legal matters.",
         path: `${accessToken ? "/main" : ""}/services/legalservice`,
@@ -125,7 +113,7 @@ const ServicesPage: React.FC = () => {
       },
       {
         title: "My Rotary",
-        image: "https://i.ibb.co/SwfNXKhm/MY-ROTARY-2c24090250b109f80818.png",
+        image: "https://iili.io/FGxS97j.md.png",
         description:
           "Join a network of leaders making a difference through Rotary initiatives and programs.",
         path: `${accessToken ? "/main" : ""}/services/myrotary`,
@@ -135,7 +123,7 @@ const ServicesPage: React.FC = () => {
       {
         title: "Manufacturing Services",
         image:
-          "https://i.ibb.co/8LmmPySx/Machines-manufacturing-services-f5f7abd54ec2b3373b0c.png",
+          "https://iili.io/FGxUkKX.md.png",
         description:
           "Explore advanced machinery and manufacturing services for industrial growth.",
         path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
@@ -145,7 +133,7 @@ const ServicesPage: React.FC = () => {
       {
         title: "We Are Hiring",
         image:
-          "https://i.ibb.co/cK4w00Rd/Career-guidance-fe6ea3668fa6a02f6294.png",
+          "https://iili.io/FGxPrnR.md.png",
         description:
           "Explore exciting job opportunities and be a part of our growing team.",
         path: `${accessToken ? "/main" : ""}/services/we-are-hiring`,
@@ -173,7 +161,7 @@ const ServicesPage: React.FC = () => {
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 50);
+      .slice(0, 30);
 
   const handleCampaignClick = (campaign: Campaign) => {
     if (
@@ -211,8 +199,78 @@ const ServicesPage: React.FC = () => {
     <div className="min-h-screen">
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-2 lg:p-4">
-          {/* Study Abroad Section */}
+        <div className="p-2 lg:p-2">
+
+          {/* Search Bar */}
+          <div className="relative mb-2">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Services Grid */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+  {filteredItems(services).map((item, index) => (
+    <div
+      key={index}
+      onClick={() => {
+        if (item.path.startsWith("https")) {
+          window.open(item.path, "_blank");
+        } else {
+          navigate(item.path);
+        }
+      }}
+      className="group cursor-pointer flex flex-col items-center text-center"
+    >
+      <div className="mb-2">
+        <img
+          src={item.image}
+          alt={item.title}
+          className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+        />
+      </div>
+      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+        {item.title}
+      </h3>
+    </div>
+  ))}
+  {campaigns
+    .filter(
+      (campaign) =>
+        campaign.campaignStatus !== false &&
+        campaign.campainInputType !== "BLOG"
+    )
+    .map((campaign) => (
+      <div
+        key={campaign.campaignId}
+        className="group cursor-pointer flex flex-col items-center text-center"
+        onClick={() => handleCampaignClick(campaign)}
+      >
+        <div className="mb-2">
+          {campaign.imageUrls && campaign.imageUrls.length > 0 && (
+            <img
+              src={campaign.imageUrls[0].imageUrl}
+              alt={`${campaign.campaignType}`}
+              className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+            />
+          )}
+        </div>
+                 <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+          {campaign.campaignType}
+        </h3>
+      </div>
+    ))}
+</div>
+
+ {/* Study Abroad Section */}
           <div className="bg-white flex items-center justify-center p-4">
             <div className="w-full max-w-6xl bg-gray-50 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
               <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
@@ -318,104 +376,6 @@ const ServicesPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Services Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-4">
-            {filteredItems(services).map((item, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  if (item.path.startsWith("https")) {
-                    window.open(item.path, "_blank");
-                  } else {
-                    navigate(item.path);
-                  }
-                }}
-                className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-200"
-              >
-                <div className="relative aspect-video overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-contain bg-gray-50"
-                  />
-                  {item.category && (
-                    <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
-                      <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
-                        {item.category}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 flex-grow flex flex-col">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
-                      {item.icon}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {campaigns
-              .filter(
-                (campaign) =>
-                  campaign.campaignStatus !== false &&
-                  campaign.campainInputType !== "BLOG"
-              )
-              .map((campaign) => (
-                <div
-                  key={campaign.campaignId}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-200"
-                  onClick={() => handleCampaignClick(campaign)}
-                >
-                  <div className="relative aspect-video overflow-hidden bg-gray-50">
-                    {campaign.imageUrls && campaign.imageUrls.length > 0 && (
-                      <img
-                        src={campaign.imageUrls[0].imageUrl}
-                        alt={`${campaign.campaignType}`}
-                        className="w-full h-full object-contain"
-                      />
-                    )}
-                    {campaign.campaignType && (
-                      <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
-                        <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
-                          {campaign.campaignType.slice(0, 10)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex-grow flex flex-col">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
-                      {campaign.campaignType}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
-                      {campaign.campaignDescription}
-                    </p>
-                  </div>
-                </div>
-              ))}
           </div>
           <Footer />
         </div>

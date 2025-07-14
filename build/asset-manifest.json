@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.15c8c04f.css",
-    "main.js": "/static/js/main.43daf417.js",
+    "main.css": "/static/css/main.50e1ab99.css",
+    "main.js": "/static/js/main.60b83a97.js",
     "static/media/WEBSITE (1).png": "/static/media/WEBSITE (1).08fd6c066321613c5c2e.png",
     "static/media/3 (1).png": "/static/media/3 (1).0058c7f2aba70644523b.png",
     "static/media/page1.png": "/static/media/page1.377acc651cd141d1516d.png",
@@ -71,7 +71,6 @@
     "static/media/testimonial10.png": "/static/media/testimonial10.747b1e0971dcd647ebf6.png",
     "static/media/testimonial4.png": "/static/media/testimonial4.a73b5729148966400f00.png",
     "static/media/testimonial12.png": "/static/media/testimonial12.286ba33639c91c19bbad.png",
-    "static/media/oxyloasntemp (1).png": "/static/media/oxyloasntemp (1).2ec07c0cd7c7e055e4c3.png",
     "static/media/testimonial5.png": "/static/media/testimonial5.a5222d1ffb471b23a637.png",
     "static/media/testimonial11.png": "/static/media/testimonial11.cad9c3d9bc6d080632e7.png",
     "static/media/testimonial3.png": "/static/media/testimonial3.476c5d3dd4d7bb72145c.png",
@@ -82,7 +81,6 @@
     "static/media/rice offers.png": "/static/media/rice offers.9459bd10c13aa2d74644.png",
     "static/media/StudyAbroda.png": "/static/media/StudyAbroda.85705e5e99c29f138987.png",
     "static/media/cashewoffer1.png": "/static/media/cashewoffer1.c9cfa294e808a6f745a9.png",
-    "static/media/freerudraksha.png": "/static/media/freerudraksha.eeaaca3e8a028697e182.png",
     "static/media/35kg1.png": "/static/media/35kg1.fe4c9492a838ef91209d.png",
     "static/media/testimonial18.png": "/static/media/testimonial18.ef7e93d70ef5796b63e4.png",
     "static/media/mapbw.png": "/static/media/mapbw.4094352cf827b2840ba6.png",
@@ -132,11 +130,11 @@
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
-    "main.15c8c04f.css.map": "/static/css/main.15c8c04f.css.map",
-    "main.43daf417.js.map": "/static/js/main.43daf417.js.map"
+    "main.50e1ab99.css.map": "/static/css/main.50e1ab99.css.map",
+    "main.60b83a97.js.map": "/static/js/main.60b83a97.js.map"
   },
   "entrypoints": [
-    "static/css/main.15c8c04f.css",
-    "static/js/main.43daf417.js"
+    "static/css/main.50e1ab99.css",
+    "static/js/main.60b83a97.js"
   ]
 }
