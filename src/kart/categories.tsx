@@ -4,9 +4,8 @@ import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import checkProfileCompletion from "../until/ProfileCheck";
 import BASE_URL from "../Config";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag,ChevronLeft,ChevronRight } from "lucide-react";
 
 interface Item {
   itemName: string;
@@ -31,6 +30,7 @@ interface Category {
   categoryLogo?: string;
   itemsResponseDtoList: Item[];
   subCategories?: SubCategory[];
+  categoryType: string; // ✅ NEW
 }
 
 type AddOnItem = {
@@ -153,11 +153,16 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
     visible: false,
     content: "",
   });
-
+  const scrollContainerRef = useRef(null);
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+const [isDragging, setIsDragging] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
   const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
     "0"
   );
+  const categoryTypes = ["ALL", "RICE", "GOLD", "GROCERY", "FESTIVAL"];
+const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
     null
   );
@@ -226,36 +231,12 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
       rice: riceCategories,
       groceries: groceryCategories,
       gold: goldCategories,
-      "all items": ["All Items"],
       RICE: riceCategories,
       GROCERIES: groceryCategories,
       GOLD: goldCategories,
-      ALL_ITEMS: ["All Items"],
     };
 
-    // Normalize category
-    let normalizedCategory = "all items";
-    if (categoryFromQuery) {
-      const trimmedQuery = categoryFromQuery.trim();
-      const lowerCaseQuery = trimmedQuery.toLowerCase();
-      // Check if the query is a group filter (rice, groceries, gold, all items)
-      if (categoryMapping[lowerCaseQuery]) {
-        normalizedCategory = lowerCaseQuery;
-      } else if (
-        categories.some((cat) => cat.categoryName.trim() === trimmedQuery)
-      ) {
-        // If it's a specific category, use the exact category name
-        normalizedCategory = categories.find(
-          (cat) => cat.categoryName.trim() === trimmedQuery
-        )!.categoryName;
-      }
-    }
 
-    console.log(
-      "Categories.tsx - Setting activeCategory to:",
-      normalizedCategory
-    );
-    setActiveCategory(normalizedCategory);
 
     // Auto-scroll to items section
     setTimeout(() => {
@@ -276,23 +257,42 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
   }, [location.search, categories, setActiveCategory]);
 
 
-  const handleCategoryClick = (categoryName: string) => {
-    if (categoryName === activeCategory) {
-      setActiveCategory("");
-      onCategoryClick("");
-    } else {
-      setActiveCategory(categoryName);
-      onCategoryClick(categoryName);
+const handleCategoryClick = (categoryName: string) => {
+  if (categoryName === activeCategory) {
+    setActiveCategory("");
+    onCategoryClick("");
+  } else {
+    setActiveCategory(categoryName);
+    onCategoryClick(categoryName);
+  }
+  setTimeout(() => {
+    if (itemsRef.current) {
+      itemsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    setTimeout(() => {
-      if (itemsRef.current) {
-        itemsRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    }, 100);
+  }, 100);
+};
+
+   
+  const scrollLeft = () => {
+  if (scrollContainerRef.current) {
+    (scrollContainerRef.current as HTMLDivElement).scrollBy({ left: -200, behavior: 'smooth' });
+  }
+};
+
+const scrollRight = () => {
+  if (scrollContainerRef.current) {
+    (scrollContainerRef.current as HTMLDivElement).scrollBy({ left: 200, behavior: 'smooth' });
+  }
+};
+
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth);
+    }
   };
+
 
   const handleWeightFilterClick = (value: string) => {
     if (activeWeightFilter === value) {
@@ -613,27 +613,14 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
     return;
   }
 
-  if (!checkProfileCompletion()) {
-    Modal.error({
-      title: "Profile Incomplete",
-      content: "Please complete your profile to add items to the cart.",
-      onOk: () => navigate("/main/profile"),
-    });
-    setTimeout(() => {
-      navigate("/main/profile");
-    }, 4000);
-    return;
-  }
-
   try {
     setLoadingItems((prev) => ({
       ...prev,
       items: { ...prev.items, [item.itemId]: true },
     }));
 
-const weight = parseFloat(String(item.weight ?? "0"));
-const isCombo =
-  item.status === "COMBO" 
+    const weight = parseFloat(String(item.weight ?? "0"));
+    const isCombo = item.status === "COMBO";
 
     const requestBody: any = {
       customerId: userId,
@@ -641,9 +628,9 @@ const isCombo =
       quantity: 1,
     };
 
-if (item.status === "COMBO") {
-  requestBody.status = "COMBO";
-}
+    if (isCombo) {
+      requestBody.status = "COMBO";
+    }
 
     // ✅ Add item to cart
     await axios.post(
@@ -654,41 +641,43 @@ if (item.status === "COMBO") {
 
     await fetchCartData(item.itemId);
 
-if (!isCombo) {
-  try {
-    const response = await axios.get(`${BASE_URL}/product-service/getComboInfo/${item.itemId}`);
-    const comboItems = response.data?.items || [];
+    if (!isCombo) {
+      try {
+        const response = await axios.get(
+          `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+        );
+        const comboItems = response.data?.items || [];
 
-    if (comboItems.length > 0) {
-      const itemCount = comboItems.length;
+        if (comboItems.length > 0) {
+          const itemCount = comboItems.length;
 
-      setComboAddOnModal({
-        visible: true,
-        items: comboItems.map((i: any) => ({
-          itemId: i.individualItemId,
-          itemName: i.itemName,
-          itemPrice: i.itemPrice,
-          itemMrp: i.itemMrp ?? i.itemPrice,
-          itemImage: i.imageUrl,
-          weight: i.itemWeight,
-          units: i.units,
-          quantity: i.quantity ?? 1,
-          status: "COMBO",
-          title: i.itemName,
-          image: i.imageUrl,
-          description: "",
-          path: "",
-          icon: <ShoppingBag className="text-purple-600" size={24} />,
-        })),
-        itemCount,
-      });
+          setComboAddOnModal({
+            visible: true,
+            items: comboItems.map((i: any) => ({
+              itemId: i.individualItemId,
+              itemName: i.itemName,
+              itemPrice: i.itemPrice,
+              itemMrp: i.itemMrp ?? i.itemPrice,
+              itemImage: i.imageUrl,
+              weight: i.itemWeight,
+              units: i.units,
+              quantity: i.quantity ?? 1,
+              status: "COMBO",
+              title: i.itemName,
+              image: i.imageUrl,
+              description: "",
+              path: "",
+              icon: <ShoppingBag className="text-purple-600" size={24} />,
+            })),
+            itemCount,
+          });
 
-      return;
+          return;
+        }
+      } catch (comboErr) {
+        console.error("Error fetching combo offer:", comboErr);
+      }
     }
-  } catch (comboErr) {
-    console.error("Error fetching combo offer:", comboErr);
-  }
-}
 
     message.success("Item added to cart successfully.");
   } catch (error) {
@@ -701,113 +690,52 @@ if (!isCombo) {
   }
 };
 
+
   const calculateDiscount = (mrp: number | string, price: number): number => {
     const mrpNum = typeof mrp === "string" ? parseFloat(mrp) : mrp;
     return Math.round(((mrpNum - price) / mrpNum) * 100);
   };
+const getCurrentCategoryItems = () => {
+  const goldBarItemIds = [
+    "619bd23a-0267-46da-88da-30977037225a",
+    "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
+  ];
 
-  const getCurrentCategoryItems = () => {
-    const riceCategories = [
-      "Combo Offers",
-      " Basmati Rice",
-      "Sonamasoori",
-      "Brown Rice",
-      "HMT",
-      "Low GI",
-      "Kolam Rice",
-      "Organic Rice",
-      "Rice Container",
-      "Organic Store", // ✅ Newly added
-    ];
+  let items: Item[] = [];
 
-    const groceryCategories = [
-      "Cashew nuts upto ₹40 cashback",
-      "Essentials Mart",
-      "Health & Energy Nutritions",
-      "Baby care",
-      "Snacking",
-      "Juices",
-      "Bulb & Batteries",
-      "Indian Pickles",
-      "Monsoon Magic",
-      "Personal Care",
-      "Kitchen Elixirs",
-      "Atta & Flours",
-      "Dals & Pulses",
-      "Fresheners & Repellents",
-      "Home & Kitchen Appliances",
-      "Dry Fruits & Nuts",
-      "MediZone",
-      "Clean & Care",
-      "Pure Honey & Naturals",
-      "Stationary Store",
-      "Pooja Needs",
-      "Masalas & Spices",
-      "Packaged Foods",
-      "Women Hygiene",
-    ];
-    const goldCategories = ["GOLD"];
+  if (activeCategory && activeCategory !== "") {
+  // Specific category clicked
+  const currentCategory = categories.find(
+    (cat) => cat.categoryName === activeCategory
+  );
+  if (currentCategory) {
+    items = currentCategory.itemsResponseDtoList || [];
+  }
+} else if (activeCategoryType === "ALL") {
+  // Show all items from all categories
+  items = categories.flatMap((cat) => cat.itemsResponseDtoList || []);
+} else {
+  // Filter by categoryType like RICE, GOLD
+  items = categories
+    .filter(
+      (cat) => cat.categoryType?.toUpperCase() === activeCategoryType
+    )
+    .flatMap((cat) => cat.itemsResponseDtoList || []);
+}
 
-    const categoryMap: { [key: string]: string[] } = {
-      rice: riceCategories,
-      groceries: groceryCategories,
-      gold: goldCategories,
-      "all items": ["All Items"],
-    };
+  // ✅ Apply weight filter
+  if (activeWeightFilter) {
+    items = items.filter((item) => {
+      if (goldBarItemIds.includes(item.itemId)) return false;
+      const itemWeight = parseFloat(String(item.weight)).toFixed(1);
+      return itemWeight === activeWeightFilter;
+    });
+  }
 
-    const goldBarItemIds = [
-      "619bd23a-0267-46da-88da-30977037225a",
-      "4fca7ab8-bfc6-446a-9405-1aba1912d90a",
-    ];
+  return items;
+};
 
-    const activeCategoryKey = (activeCategory || "all items").toLowerCase();
 
-    let items: Item[] = [];
-
-    // Handle group filters
-    if (categoryMap[activeCategoryKey]) {
-      const allowedCategories = categoryMap[activeCategoryKey];
-      // Aggregate items from all categories in the group
-      items = categories
-        .filter((cat) =>
-          activeCategoryKey === "all items"
-            ? cat.categoryName !== "All Items"
-            : allowedCategories.includes(cat.categoryName)
-        )
-        .flatMap((cat) => cat.itemsResponseDtoList || []);
-    } else {
-      // Handle specific category
-      const currentCategory = categories.find(
-        (cat) => cat.categoryName === activeCategory
-      );
-      if (!currentCategory) {
-        console.log(
-          "Categories.tsx - No current category found, returning empty array"
-        );
-        return [];
-      }
-      items = currentCategory.itemsResponseDtoList || [];
-    }
-
-    // Apply weight filter if active
-    if (activeWeightFilter) {
-      items = items.filter((item) => {
-        if (goldBarItemIds.includes(item.itemId)) {
-          return false;
-        }
-        const itemWeight = parseFloat(String(item.weight)).toFixed(1);
-        return itemWeight === activeWeightFilter;
-      });
-    }
-
-    console.log(
-      "Categories.tsx - Filtered items for category",
-      activeCategory,
-      ":",
-      items.map((item) => item.itemName)
-    );
-    return items;
-  };
 
  const handleQuantityChange = async (
   item: Item,
@@ -884,6 +812,19 @@ if (!isCombo) {
     return category?.subCategories || [];
   };
 
+  // Add these handler functions:
+const handleMouseDown = () => {
+  setIsDragging(false);
+};
+
+const handleMouseMove = () => {
+  setIsDragging(true);
+};
+
+const handleMouseUp = () => {
+  setTimeout(() => setIsDragging(false), 100);
+};
+
   const handleOffersModalClose = () => {
     setIsOffersModalVisible(false);
   };
@@ -898,77 +839,16 @@ if (!isCombo) {
     );
   };
 
-  // Filter categories based on the activeCategory
-  const getFilteredCategories = () => {
-    const groceryCategories = [
-      "Cashew nuts upto ₹40 cashback",
-      "Essentials Mart",
-      "Health & Energy Nutritions",
-      "Baby care",
-      "Snacking",
-      "Juices",
-      "Bulb & Batteries",
-      "Indian Pickles",
-      "Monsoon Magic",
-      "Personal Care",
-      "Kitchen Elixirs",
-      "Atta & Flours",
-      "Dals & Pulses",
-      "Fresheners & Repellents",
-      "Home & Kitchen Appliances",
-      "Dry Fruits & Nuts",
-      "MediZone",
-      "Clean & Care",
-      "Pure Honey & Naturals",
-      "Stationary Store",
-      "Pooja Needs",
-      "Masalas & Spices",
-      "Packaged Foods",
-      "Women Hygiene",
-    ];
-    const riceCategories = [
-      "Combo Offers",
-      " Basmati Rice",
-      "Sonamasoori",
-      "Brown Rice",
-      "HMT",
-      "Low GI",
-      "Kolam Rice",
-      "Organic Rice",
-      "Rice Container",
-      "Organic Store", // ✅ Newly added
-    ];
-    const goldCategories = ["GOLD"];
+const getFilteredCategories = () => {
+  if (activeCategoryType === "ALL") {
+    return categories;
+  }
 
+  return categories.filter(
+    (category) => category.categoryType?.toUpperCase() === activeCategoryType
+  );
+};
 
-
-    const categoryMap: { [key: string]: string[] } = {
-      groceries: groceryCategories,
-      rice: riceCategories,
-      gold: goldCategories,
-      "all items": ["All Items"],
-    };
-
-    // Handle null activeCategory
-    const activeCategoryKey = (activeCategory || "all items").toLowerCase();
-    if (activeCategoryKey === "all items") {
-      return categories.filter(
-        (category) => category.categoryName !== "All Items"
-      );
-    }
-
-    // If activeCategory is a group filter (rice, groceries, gold), return the corresponding categories
-    if (categoryMap[activeCategoryKey]) {
-      return categories.filter((category) =>
-        categoryMap[activeCategoryKey].includes(category.categoryName)
-      );
-    }
-
-    // If activeCategory is a specific category, return only that category
-    return categories.filter(
-      (category) => category.categoryName === activeCategory
-    );
-  };
 
   const SkeletonLoader = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
@@ -1010,6 +890,30 @@ if (!isCombo) {
           }
         `}
       </style>
+      {/* CategoryType Filter */}
+<div className="w-full px-4 mb-4 mt-4 border-b border-gray-300">
+  <div className="flex space-x-4 overflow-x-auto">
+    {categoryTypes.map((type) => (
+      <motion.button
+        key={type}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => {
+          setActiveCategoryType(type);
+          setActiveCategory(""); // Clear selected category
+        }}
+        className={`whitespace-nowrap px-5 py-2 text-sm font-medium border-b-2 transition-all duration-300 ${
+          activeCategoryType === type
+            ? "border-purple-600 text-purple-600"
+            : "border-transparent text-gray-500 hover:text-purple-600 hover:border-purple-300"
+        }`}
+      >
+        {type}
+      </motion.button>
+    ))}
+  </div>
+</div>
+
       <Modal
         title="Available Offers"
         open={isOffersModalVisible}
@@ -1082,96 +986,105 @@ if (!isCombo) {
           }}
         />
       </Modal>
-      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 mb-6">
-        <>
-          {/* All Categories Button at the top */}
+<div className="relative w-full mb-4">
+      {/* Left Arrow */}
+      {showLeftArrow && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={scrollLeft}
+          className="absolute left-2 top-1/2 transform -translate-y-1/2 z-20 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-colors"
+        >
+          <ChevronLeft size={20} className="text-gray-600" />
+        </motion.button>
+      )}
+
+      {/* Right Arrow */}
+      {showRightArrow && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={scrollRight}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-colors"
+        >
+          <ChevronRight size={20} className="text-gray-600" />
+        </motion.button>
+      )}
+
+      {/* Gradient Overlays */}
+      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+
+      {/* Scrollable Content */}
+      <div
+        ref={scrollContainerRef}
+        className="flex space-x-3 overflow-x-auto scrollbar-hide py-2 px-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onScroll={handleScroll}
+      >
+
+        {/* Category Items */}
+        {getFilteredCategories().map((category, index) => (
           <motion.button
+            key={index}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setActiveCategory("all items");
-              onCategoryClick("all items");
-              setTimeout(() => {
-                if (itemsRef.current) {
-                  itemsRef.current.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }
-              }, 100);
-            }}
-            className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
-              activeCategory?.toLowerCase() === "all items"
-                ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
-                : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
+            onClick={() => handleCategoryClick(category.categoryName)}
+            className={`flex-shrink-0 flex flex-col items-center justify-center text-center p-2 sm:p-3 transition-all duration-300 space-y-1 sm:space-y-2 min-w-[70px] sm:min-w-[80px] ${
+              activeCategory === category.categoryName
+                ? "border-b-2 border-purple-500"
+                : ""
             }`}
           >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
-              <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
-                All
-              </span>
-            </div>
-            <p
-              className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
-                activeCategory?.toLowerCase() === "all items"
-                  ? "text-purple-600"
-                  : "text-gray-700"
-              }`}
-            >
-              All Categories
-            </p>
-          </motion.button>
-
-          {/* Now only 1 loop for other categories */}
-          {getFilteredCategories().map((category, index) => (
-            <motion.button
-              key={index}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleCategoryClick(category.categoryName)}
-              className={`flex flex-col items-center justify-center text-center rounded-xl p-2 sm:p-3 transition-all duration-300 space-y-1 ${
-                activeCategory === category.categoryName
-                  ? "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-600 border border-purple-300 shadow-md"
-                  : "bg-white text-gray-700 hover:bg-purple-50 border border-purple-100 shadow-sm hover:shadow-md"
-              }`}
-            >
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 border border-white shadow-sm flex items-center justify-center">
-                {category.categoryLogo || category.categoryImage ? (
-                  <img
-                    src={
-                      (category.categoryLogo || category.categoryImage) ?? ""
-                    }
-                    alt={category.categoryName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.remove();
-                      const span = document.createElement("span");
-                      span.innerText = category.categoryName.charAt(0);
-                      span.className =
-                        "text-purple-600 font-bold text-[10px] sm:text-sm";
-                      e.currentTarget.parentElement?.appendChild(span);
-                    }}
-                  />
-                ) : (
-                  <span className="text-purple-600 font-bold text-[12px] sm:text-sm">
-                    {category.categoryName.charAt(0)}
-                  </span>
-                )}
-              </div>
-              <p
-                className={`text-[12px] sm:text-sm font-bold leading-tight text-center line-clamp-2 ${
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex items-center justify-center transition-all duration-300 ${
+              activeCategory === category.categoryName
+                ? "bg-gradient-to-br from-purple-100 to-purple-200 border border-purple-300"
+                : "bg-gray-100 border border-gray-200"
+            }`}>
+              {category.categoryLogo || category.categoryImage ? (
+                <img
+                  src={(category.categoryLogo || category.categoryImage) ?? ""}
+                  alt={category.categoryName}
+                  className="w-full h-full object-cover rounded-md"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.remove();
+                    const span = document.createElement("span");
+                    span.innerText = category.categoryName.charAt(0);
+                    span.className = `font-bold text-xs sm:text-sm ${
+                      activeCategory === category.categoryName
+                        ? "text-purple-600"
+                        : "text-gray-600"
+                    }`;
+                    e.currentTarget.parentElement?.appendChild(span);
+                  }}
+                />
+              ) : (
+                <span className={`font-bold text-xs sm:text-sm ${
                   activeCategory === category.categoryName
                     ? "text-purple-600"
-                    : "text-gray-700"
-                }`}
-              >
-                {category.categoryName}
-              </p>
-            </motion.button>
-          ))}
-        </>
+                    : "text-gray-600"
+                }`}>
+                  {category.categoryName.charAt(0)}
+                </span>
+              )}
+            </div>
+            <p className={`text-xs font-medium leading-tight text-center line-clamp-2 ${
+              activeCategory === category.categoryName
+                ? "text-purple-600"
+                : "text-gray-700"
+            }`}>
+              {category.categoryName.length > 10 
+                ? category.categoryName.substring(0, 10) + "..."
+                : category.categoryName}
+            </p>
+          </motion.button>
+        ))}
       </div>
+    </div>
       {activeCategory && (
         <div className="mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">

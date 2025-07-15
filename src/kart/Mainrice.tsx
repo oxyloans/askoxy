@@ -71,6 +71,7 @@ interface Category {
   categoryLogo?: string;
   itemsResponseDtoList: Item[];
   subCategories?: SubCategory[];
+  categoryType: string; // ✅ NEW
 }
 
 // OxyLoans Modal Component
@@ -511,7 +512,6 @@ const Ricebags: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string>("All Items");
   const [isHovered, setIsHovered] = useState(false);
   const [activeTab, setActiveTab] = useState("video");
   const [showScholarshipModal, setShowScholarshipModal] = useState(false);
@@ -530,6 +530,8 @@ const Ricebags: React.FC = () => {
   const [showOffersModal, setShowOffersModal] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [showOxyLoansModal, setShowOxyLoansModal] = useState(false);
+  const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
+const [activeCategory, setActiveCategory] = useState<string>("");
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const navigate = useNavigate();
@@ -542,6 +544,9 @@ const Ricebags: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoSliding, setIsAutoSliding] = useState(true);
   const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
+  const [offerImages, setOfferImages] = useState<
+    { imageUrl: string; webNavigation: string | null }[]
+  >([]);
 
   const bannerImages = [
     offer1,
@@ -553,7 +558,7 @@ const Ricebags: React.FC = () => {
     offer8,
   ].map((src, i) => ({ src, alt: `Offer ${i + 1}` }));
 
-  const extendedImages = [
+ const extendedImages = [
     ...bannerImages,
     ...bannerImages.slice(0, imagesPerView),
   ];
@@ -594,6 +599,22 @@ const Ricebags: React.FC = () => {
       state: { item },
     });
   };
+
+  // useEffect(() => {
+  //   const fetchBannerImages = async () => {
+  //     try {
+  //       const res = await axios.get(
+  //         BASE_URL + "/product-service/getOfferImages"
+  //       );
+  //       const banners = res.data.filter((img: any) => img.status);
+  //       setOfferImages(banners);
+  //     } catch (err) {
+  //       console.error("Error fetching banner images:", err);
+  //     }
+  //   };
+
+  //   fetchBannerImages();
+  // }, []);
 
   useEffect(() => {
     if (!isAutoSliding) return;
@@ -653,38 +674,9 @@ const Ricebags: React.FC = () => {
   const { count, setCount } = context;
 
   const handleBannerClick = (index: number) => {
-    switch (index) {
-      case 0:
-        setActiveCategory("Essentials Mart");
-        scrollToSection("Essentials Mart");
-        break;
-      case 1:
-        setActiveCategory("GOLD");
-        scrollToSection("GOLD");
-        break;
-      case 2:
-        setActiveCategory("Kitchen Elixirs");
-        scrollToSection("Kitchen Elixirs");
-        break;
-      case 3:
-        setActiveCategory("Snacking");
-        scrollToSection("Snacking");
-        break;
-      case 4:
-        setShowAppModal(true);
-        break;
-      // case 5:
-      //   setShowFAQModal(true);
-      //   break;
-      case 6:
-        setActiveCategory("Kolam Rice");
-        scrollToSection("Kolam Rice");
-        break;
-      case 7:
-        setShowOxyLoansModal(true);
-        break;
-      default:
-        break;
+    const clickedBanner = offerImages[index % offerImages.length];
+    if (clickedBanner?.webNavigation) {
+      navigate(clickedBanner.webNavigation);
     }
   };
 
@@ -742,16 +734,16 @@ const Ricebags: React.FC = () => {
         );
         const data = response.data;
 
-        // Flatten the nested categories from all category groups
         const allCategories: Category[] = data.flatMap(
-          (group: { categories: Category[] }) =>
+          (group: { categories: Category[]; categoryType: string }) =>
             group.categories.map((category: Category) => ({
               ...category,
+              categoryType: group.categoryType?.toUpperCase() || "OTHERS", // ✅ Inject categoryType from group
               categoryImage: category.categoryImage || null,
               itemsResponseDtoList: category.itemsResponseDtoList.map(
                 (item) => ({
                   ...item,
-                  weight: item.weight.toString(), // Convert weight to string for consistency
+                  weight: item.weight.toString(),
                 })
               ),
               subCategories: category.subCategories || [],
@@ -775,18 +767,17 @@ const Ricebags: React.FC = () => {
         const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
 
         const riceCategoryNames = [
-  "Combo Offers",
-  " Basmati Rice",
-  "Sonamasoori",
-  "Brown Rice",
-  "HMT",
-  "Low GI",
-  "Kolam Rice",
-  "Organic Rice",
-  "Rice Container",
-  "Organic Store",  // ✅ Newly added
-];
-
+          "Combo Offers",
+          " Basmati Rice",
+          "Sonamasoori",
+          "Brown Rice",
+          "HMT",
+          "Low GI",
+          "Kolam Rice",
+          "Organic Rice",
+          "Rice Container",
+          "Organic Store", // ✅ Newly added
+        ];
 
         // Separate rice categories and others
         const riceCategories = allCategories.filter((cat) =>
@@ -796,27 +787,26 @@ const Ricebags: React.FC = () => {
           (cat) => !riceCategoryNames.includes(cat.categoryName)
         );
 
-        // Create final categories with "All Items" first, then RICE, then others
-        const finalCategories: Category[] = [
-          {
-            categoryName: "All Items",
-            categoryImage: null,
-            itemsResponseDtoList: sortedUniqueItems,
-            subCategories: [],
-          },
-          ...riceCategories.map((category) => ({
-            ...category,
-            itemsResponseDtoList: sortItemsByStock(
-              category.itemsResponseDtoList
-            ),
-          })),
-          ...otherCategories.map((category) => ({
-            ...category,
-            itemsResponseDtoList: sortItemsByStock(
-              category.itemsResponseDtoList
-            ),
-          })),
-        ];
+const finalCategories: Category[] = [
+  // ❌ REMOVE THIS BLOCK
+  // {
+  //   categoryName: "All Items",
+  //   categoryImage: null,
+  //   itemsResponseDtoList: sortedUniqueItems,
+  //   subCategories: [],
+  //   categoryType: "ALL",
+  // },
+
+  ...riceCategories.map((category) => ({
+    ...category,
+    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
+  })),
+  ...otherCategories.map((category) => ({
+    ...category,
+    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
+  })),
+];
+
 
         setCategories(finalCategories);
         setFilteredCategories(finalCategories);
@@ -922,7 +912,7 @@ const Ricebags: React.FC = () => {
     const extendedBanners = totalBanners + imagesPerView;
 
     return (
-      <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0">
+      <div className="w-full max-w-6xl mx-auto mt-[-1px] pt-0 mb-4">
         <div className="relative w-full overflow-hidden rounded-xl shadow-md">
           <div
             className="flex px-2"
@@ -1067,14 +1057,14 @@ const Ricebags: React.FC = () => {
             {extendedImages.map((image, index) => (
               <div
                 key={index}
-                className="flex-shrink-0"
+                className="flex-shrink-0 px-1 sm:px-2" // 👈 Added horizontal spacing between banners
                 style={{ width: `${100 / extendedImages.length}%` }}
-                onClick={() => handleBannerClick(index % bannerImages.length)}
+                onClick={() => handleBannerClick(index % offerImages.length)}
                 onTouchStart={handleBannerTouchStart}
                 onTouchMove={handleBannerTouchMove}
                 onTouchEnd={handleBannerTouchEnd}
               >
-                <img
+                 <img
                   src={image.src}
                   alt={image.alt || `Offer ${index + 1}`}
                   className="w-full h-auto object-cover"
@@ -1100,7 +1090,7 @@ const Ricebags: React.FC = () => {
         onItemClick={handleItemClick}
         updateCart={setCart}
         customerId={customerId}
-        updateCartCount={(count: number) => {}}
+        updateCartCount={(count) => setCount(count)}
         setActiveCategory={setActiveCategory}
       />
 

@@ -17,6 +17,22 @@ export interface Campaign {
   campainInputType: string;
 }
 
+export interface AppliedJob {
+  id: string;
+  userId: string;
+  jobId: string;
+  coverLetter: string | null;
+  noticePeriod: string | null;
+  applicationStatus: string | null;
+  resumeUrl: string;
+  mobileNumber: string | null;
+  userName: string | null;
+  appliedAt: number;
+  updatedAt: number;
+  message: string | null;
+  status: boolean;
+}
+
 interface Comment {
   mainComment: string;
   mainCommentId: string;
@@ -88,8 +104,7 @@ export const fetchLikesAndComments = async (
   };
 };
 
-
-export const  submitWriteToUsQuery = async (
+export const submitWriteToUsQuery = async (
   email: string | null,
   mobileNumber: string | null,
   query: string,
@@ -206,9 +221,18 @@ export const submitUserInteraction = async (
       campaignId: interaction.campaignId,
       userId: interaction.userId,
       interavtionType: interaction.interavtionType,
-      likeStatus: interaction.interavtionType === "LIKEORDISLIKE" ? interaction.likeStatus : null,
-      subscribed: interaction.interavtionType === "SUBSCRIBE" ? interaction.subscribed : null,
-      userComments: interaction.interavtionType === "COMMENTS" ? interaction.userComments : null,
+      likeStatus:
+        interaction.interavtionType === "LIKEORDISLIKE"
+          ? interaction.likeStatus
+          : null,
+      subscribed:
+        interaction.interavtionType === "SUBSCRIBE"
+          ? interaction.subscribed
+          : null,
+      userComments:
+        interaction.interavtionType === "COMMENTS"
+          ? interaction.userComments
+          : null,
     };
 
     const response = await axios.post(
@@ -242,5 +266,23 @@ export const submitSubComment = async (
   } catch (error) {
     console.error("Error submitting sub-comment:", error);
     return false;
+  }
+};
+
+export const fetchAppliedJobsByUserId = async (
+  userId: string | null
+): Promise<AppliedJob[]> => {
+  try {
+    const response = await axios.get<AppliedJob[]>(
+      `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
+      {
+        params: { userId },
+        headers: { accept: "*/*" },
+      }
+    );
+    return response.data || [];
+  } catch (error) {
+    console.error("Failed to fetch applied jobs:", error);
+    return [];
   }
 };

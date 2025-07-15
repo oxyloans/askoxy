@@ -3,12 +3,9 @@ import { motion } from "framer-motion";
 import { MailIcon, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import {
-  submitInterest,
-  checkUserInterest,
-  submitWriteToUsQuery,
-} from "./servicesapi";
+import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { Button, message, Select } from "antd";
+import JobApplicationModal from "./JobApplyModal";
 
 interface Job {
   id: string;
@@ -55,7 +52,7 @@ const JobDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     industry: "",
     jobType: "",
@@ -74,6 +71,11 @@ const JobDetails: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [applyselectedJob, setApplySelectedJob] = useState<{
+    jobDesignation: string;
+    companyName: string;
+  } | null>(null);
 
   useEffect(() => {
     console.log("this is the id from state" + id);
@@ -84,6 +86,18 @@ const JobDetails: React.FC = () => {
     }
   }, [id, jobs]);
 
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const appliedJobs = await fetchAppliedJobsByUserId(userId);
+      const jobIdSet = new Set(appliedJobs.map((job) => job.jobId));
+      setAppliedJobIds(jobIdSet);
+    };
+
+    if (!isModalOpen) {
+      fetchJobs();
+    }
+  }, [userId, isModalOpen]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -93,26 +107,6 @@ const JobDetails: React.FC = () => {
       },
     },
   };
-
-  useEffect(() => {
-    const checkAppliedJobs = async () => {
-      const userId = localStorage.getItem("userId");
-      if (userId && jobs.length > 0) {
-        const appliedJobsSet = new Set<string>();
-
-        for (const job of jobs) {
-          const hasApplied = await checkUserInterest(userId, job.companyName);
-          if (hasApplied) {
-            appliedJobsSet.add(job.companyName);
-          }
-        }
-
-        setAppliedJobs(appliedJobsSet);
-      }
-    };
-
-    checkAppliedJobs();
-  }, [jobs]);
 
   const getUniqueSkills = (): string[] => {
     const allSkills = jobs.flatMap((job) =>
@@ -260,31 +254,14 @@ const JobDetails: React.FC = () => {
     return Array.from(valueMap.values());
   };
 
-  const handleClick = async (jobDesignation: string, companyName: string) => {
+  const handleClick = (jobDesignation: string, companyName: string) => {
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsapplogin");
       sessionStorage.setItem("redirectPath", "/main/jobdetails");
     } else {
-      const whatsappNumber = localStorage.getItem("whatsappNumber");
-      const mobileNumber = localStorage.getItem("mobileNumber");
-      const finalMobileNumber = whatsappNumber || mobileNumber || null;
-      const success = await submitInterest(
-        jobDesignation,
-        finalMobileNumber,
-        userId,
-        "USER"
-      );
-      if (success) {
-        message.info("Your interest was submitted successfully!");
-        setAppliedJobs((prev) => {
-          const newSet = new Set(prev);
-          newSet.add(companyName);
-          return newSet;
-        });
-      } else {
-        message.info("Failed to submit your interest. Please try again.");
-      }
+      setApplySelectedJob({ jobDesignation, companyName });
+      setIsModalOpen(true);
     }
   };
 
@@ -432,7 +409,7 @@ const JobDetails: React.FC = () => {
           </div>
         </motion.div>
       );
-    } 
+    }
 
     return (
       <motion.div
@@ -512,18 +489,18 @@ const JobDetails: React.FC = () => {
           </div>
           <button
             className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow ${
-              appliedJobs.has(job.companyName)
+              appliedJobIds.has(job.id)
                 ? "bg-green-100 text-green-700 cursor-not-allowed"
                 : "bg-white text-blue-600 hover:bg-blue-50"
             }`}
             onClick={() => {
-              if (!appliedJobs.has(job.companyName)) {
-                handleClick(job.companyName, job.companyName);
+              if (!appliedJobIds.has(job.id)) {
+                handleClick(job.jobDesignation, job.companyName);
               }
             }}
-            disabled={appliedJobs.has(job.companyName)}
+            disabled={appliedJobIds.has(job.id)}
           >
-            {appliedJobs.has(job.companyName) ? "✓ Applied" : "Apply Now"}
+            {appliedJobIds.has(job.id) ? "✓ Applied" : "Apply Now"}
           </button>
         </div>
       </div>
@@ -653,18 +630,18 @@ const JobDetails: React.FC = () => {
       <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
         <button
           className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all transform hover:scale-105 shadow ${
-            appliedJobs.has(job.companyName)
+            appliedJobIds.has(job.id)
               ? "bg-green-100 text-green-700 cursor-not-allowed"
               : "bg-white text-blue-600 hover:bg-blue-50"
           }`}
           onClick={() => {
-            if (!appliedJobs.has(job.companyName)) {
-              handleClick(job.companyName, job.companyName);
+            if (!appliedJobIds.has(job.id)) {
+              handleClick(job.jobDesignation, job.companyName);
             }
           }}
-          disabled={appliedJobs.has(job.companyName)}
+          disabled={appliedJobIds.has(job.id)}
         >
-          {appliedJobs.has(job.companyName)
+          {appliedJobIds.has(job.id)
             ? "✓ Applied for this Position"
             : "🚀 Apply for this Position"}
         </button>
@@ -802,7 +779,7 @@ const JobDetails: React.FC = () => {
                 color: "white",
               }}
             >
-              🗑 Clear Filters  
+              🗑 Clear Filters
             </Button>
 
             <Button
@@ -997,6 +974,7 @@ const JobDetails: React.FC = () => {
           </div>
         </div>
       )}
+
       {isprofileOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
@@ -1022,6 +1000,16 @@ const JobDetails: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      {applyselectedJob && (
+        <JobApplicationModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          jobDesignation={applyselectedJob.jobDesignation}
+          companyName={applyselectedJob.companyName}
+          jobId={selectedJob?.id || ""}
+          userId={userId || ""}
+        />
       )}
     </div>
   );

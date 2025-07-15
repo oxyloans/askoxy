@@ -43,7 +43,7 @@ const ServicesSlider: React.FC = () => {
   const fetchJobs = async () => {
     try {
       const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid?userId=91d2f250-20d0-44a5-9b4e-2acb73118b98`,
+        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
         {
           method: "GET",
           headers: {
@@ -52,8 +52,14 @@ const ServicesSlider: React.FC = () => {
         }
       );
       const jobsData = await response.json();
-      setJobs(jobsData);
+      if (Array.isArray(jobsData)) {
+        setJobs(jobsData);
+      } else {
+        console.warn("Jobs API did not return an array:", jobsData);
+        setJobs([]);
+      }
     } catch (error) {
+      setJobs([]);
       console.error("Error fetching jobs:", error);
     }
   };
@@ -118,16 +124,23 @@ const ServicesSlider: React.FC = () => {
     ? blogCampaigns
     : blogCampaigns.slice(0, 4);
 
-  const displayedJobs = showAllJobs ? jobs : jobs.slice(0, 5);
+  const displayedJobs = Array.isArray(jobs)
+    ? showAllJobs
+      ? jobs
+      : jobs.slice(0, 5)
+    : [];
 
   // Combine manual services and API services for unified display
-  const allServices = showAllServices 
-    ? [...services, ...nonBlogCampaigns.map(campaign => ({
-        image: campaign.imageUrls?.[0]?.imageUrl || "",
-        title: campaign.campaignType,
-        path: "", // Will be handled by click handler
-        campaign: campaign
-      }))]
+  const allServices = showAllServices
+    ? [
+        ...services,
+        ...nonBlogCampaigns.map((campaign) => ({
+          image: campaign.imageUrls?.[0]?.imageUrl || "",
+          title: campaign.campaignType,
+          path: "", // Will be handled by click handler
+          campaign: campaign,
+        })),
+      ]
     : services.slice(0, 4);
 
   useEffect(() => {
@@ -227,6 +240,14 @@ const ServicesSlider: React.FC = () => {
     },
   };
 
+  const handleBlogNavigate = () => {
+    if (!accessToken) {
+      navigate("/myblogs");
+    } else {
+      navigate("/main/dashboard/myblogs");
+    }
+  };
+
   const handleJobNavigate = (id: string | null) => {
     console.log("service slider" + id);
 
@@ -278,7 +299,7 @@ const ServicesSlider: React.FC = () => {
             </span>
           </motion.button>
         </div>
-        
+
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
@@ -332,20 +353,21 @@ const ServicesSlider: React.FC = () => {
             ))}
           </motion.div>
         )}
-        
-        {!showAllServices && allServices.length < (services.length + nonBlogCampaigns.length) && (
-          <div className="mt-8 text-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
-              onClick={() => setShowAllServices(true)}
-            >
-              View all services
-              <span className="ml-2">→</span>
-            </motion.button>
-          </div>
-        )}
+
+        {!showAllServices &&
+          allServices.length < services.length + nonBlogCampaigns.length && (
+            <div className="mt-8 text-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
+                onClick={() => setShowAllServices(true)}
+              >
+                View all services
+                <span className="ml-2">→</span>
+              </motion.button>
+            </div>
+          )}
       </div>
 
       <hr className="p-2 mt-16"></hr>
@@ -372,11 +394,11 @@ const ServicesSlider: React.FC = () => {
               }}
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => setShowAllBlogs(!showAllBlogs)}
+              onClick={() => handleBlogNavigate()}
             >
               {showAllBlogs ? "Show Less" : "View All Blogs"}
               <span className="ml-2 inline-block">
-                {showAllBlogs ? "↑" : "↓"}
+                {showAllBlogs ? "→" : "→"}
               </span>
             </motion.button>
           )}
@@ -459,7 +481,7 @@ const ServicesSlider: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
-                  onClick={() => setShowAllBlogs(true)}
+                  onClick={() => handleBlogNavigate()}
                 >
                   View all blogs
                   <span className="ml-2">→</span>

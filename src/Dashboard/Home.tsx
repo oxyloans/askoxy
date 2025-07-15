@@ -686,24 +686,22 @@ const [currentSet, setCurrentSet] = useState(0);
         });
       },
     },
-    {
-      id: "Cashew Offer",
-      alt: "Products",
-      src: Cashew,
-      path: "/main/dashboard/products",
-      onClick: () => {
-        navigate("/main/dashboard/products", {
-          state: { selectedCategory: "Cashew nuts upto ₹40 cashback" },
-        });
-      },
-    },
-    {
+        {
       id: "Cashback2",
       src: Riceoffers,
       alt: "Products",
       path: "/main/dashboard/products?type=RICE&weight=5.0",
       onClick: () => {
         navigate("/main/dashboard/products?type=RICE&weight=5.0");
+      },
+    },
+    {
+      id: "Cashew Offer",
+      alt: "Products",
+      src: Cashew,
+      path: "/main/dashboard/products",
+      onClick: () => {
+        navigate("/main/dashboard/products?type=RICE&weight=10.0",);
       },
     },
     {

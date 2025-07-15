@@ -71,8 +71,14 @@ const UpdateOffers: React.FC = () => {
         `${BASE_URL}/order-service/getCodAndOnlinePaymetStatus`
       );
       const data = await response.json();
-      setPaymentData(data);
+      if (Array.isArray(data)) {
+        setPaymentData(data);
+      } else {
+        message.error("Invalid payment data received");
+        setPaymentData([]); // or handle gracefully
+      }
     } catch (error) {
+      setPaymentData([]);
       message.error("Failed to fetch payment data");
     } finally {
       setLoading(false);
@@ -87,8 +93,14 @@ const UpdateOffers: React.FC = () => {
         `${BASE_URL}/product-service/getOfferImages`
       );
       const data = await response.json();
-      setOfferImages(data);
+      if (Array.isArray(data)) {
+        setOfferImages(data);
+      } else {
+        message.error("Invalid offer image data received");
+        setOfferImages([]);
+      }
     } catch (error) {
+      setOfferImages([]);
       message.error("Failed to fetch offer images");
     } finally {
       setLoading(false);

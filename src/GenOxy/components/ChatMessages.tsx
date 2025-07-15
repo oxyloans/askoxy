@@ -50,7 +50,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl px-5 py-4 shadow-lg border border-gray-200 dark:border-gray-700 relative">
+                      <div className="rounded-2xl px-5 py-4 shadow-lg border border-gray-200 te relative">
                         {msg.isImage ? (
                           <div className="relative group/image">
                             <img
