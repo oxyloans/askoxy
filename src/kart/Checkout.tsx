@@ -1971,7 +1971,7 @@ const CheckoutPage: React.FC = () => {
                       </label>
                     </div>
                     <div className="mt-3">
-                      {grandTotalAmount < minOrderAmount && (
+                      {grandTotal < minOrderAmount && (
                         <label
                           htmlFor="exchangePolicy"
                           className="text-sm text-red-500"
@@ -1992,7 +1992,7 @@ const CheckoutPage: React.FC = () => {
                         !selectedTimeSlot ||
                         cartData.length === 0 ||
                         deliveryFee === null ||
-                        grandTotalAmount < minOrderAmount
+                        grandTotal < minOrderAmount
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >

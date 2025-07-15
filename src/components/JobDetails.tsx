@@ -472,23 +472,302 @@ const JobDetails: React.FC = () => {
     );
   };
 
-  const JobDetailsComponent = ({ job }: { job: Job }) => (
-    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6 my-8 border border-gray-100 space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-6 rounded-xl shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold text-white">{job.jobTitle}</h1>
-              <h2 className="text-baseCS font-semibold text-blue-100">
-                {job.jobDesignation}
-              </h2>
+  const JobDetailsComponent = ({ job }: { job: Job }) => {
+    // Helper function to check if a value is empty or null
+    const isEmpty = (value: any): boolean => {
+      return (
+        value === null ||
+        value === undefined ||
+        value === "" ||
+        (typeof value === "string" && value.trim() === "")
+      );
+    };
+
+    // Helper function to check if array-like string has content
+    const hasArrayContent = (value: any): boolean => {
+      if (isEmpty(value)) return false;
+      const items = value
+        .split(",")
+        .filter((item: string) => item.trim() !== "");
+      return items.length > 0;
+    };
+
+    // Helper function to check if salary values are valid
+    const hasValidSalary = (min: any, max: any): boolean => {
+      const minSalary = parseFloat(min) || 0;
+      const maxSalary = parseFloat(max) || 0;
+      return minSalary > 0 || maxSalary > 0;
+    };
+
+    const formatDescription = (description: string): string => {
+      if (isEmpty(description)) return "";
+
+      // Split by common bullet point indicators and line breaks
+      const lines = description
+        .split(/\n|•|·|\*|-|\d+\.|\d+\)/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+      // If we have multiple meaningful lines, format as bullet points
+      if (lines.length > 1) {
+        return lines.map((line) => `• ${line}`).join("\n");
+      }
+
+      // If it's a single block of text, return as is
+      return description;
+    };
+
+    return (
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6 my-8 border border-gray-100 space-y-6">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-6 rounded-xl shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-bold text-white">
+                  {job.jobTitle || "Job Title Not Available"}
+                </h1>
+                {!isEmpty(job.jobDesignation) && (
+                  <h2 className="text-baseCS font-semibold text-blue-100">
+                    {job.jobDesignation}
+                  </h2>
+                )}
+              </div>
+              {!isEmpty(job.companyName) && (
+                <div className="mt-3 inline-block bg-white text-blue-700 px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm border border-white/20">
+                  {job.companyName}
+                </div>
+              )}
             </div>
-            <div className="mt-3 inline-block bg-white text-blue-700 px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm border border-white/20">
-              {job.companyName}
+            <button
+              className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow ${
+                appliedJobIds.has(job.id)
+                  ? "bg-green-100 text-green-700 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
+              onClick={() => {
+                if (!appliedJobIds.has(job.id)) {
+                  handleClick(job.jobDesignation, job.companyName);
+                }
+              }}
+              disabled={appliedJobIds.has(job.id)}
+            >
+              {appliedJobIds.has(job.id) ? "✓ Applied" : "Apply Now"}
+            </button>
+          </div>
+        </div>
+
+        {/* Info Grid 1 - Fixed layout to prevent wrapping */}
+        {(() => {
+          const infoItems = [
+            { icon: "📍", label: "Location", value: job?.jobLocations },
+            { icon: "💼", label: "Type", value: job?.jobType },
+            { icon: "⏰", label: "Experience", value: job?.experience },
+            {
+              icon: "💰",
+              label: "Salary",
+              value: hasValidSalary(job.salaryMin, job.salaryMax)
+                ? formatSalary(job.salaryMin, job.salaryMax)
+                : null,
+            },
+          ].filter((info) => !isEmpty(info.value));
+
+          if (infoItems.length === 0) return null;
+
+          // Calculate grid columns based on number of items
+          const gridColsClass =
+            {
+              1: "grid-cols-1",
+              2: "grid-cols-2",
+              3: "grid-cols-3",
+              4: "grid-cols-4",
+            }[infoItems.length] || "grid-cols-4";
+
+          const smGridColsClass =
+            {
+              1: "sm:grid-cols-1",
+              2: "sm:grid-cols-2",
+              3: "sm:grid-cols-3",
+              4: "sm:grid-cols-4",
+            }[infoItems.length] || "sm:grid-cols-4";
+
+          return (
+            <div className={`grid ${gridColsClass} ${smGridColsClass} gap-4`}>
+              {infoItems.map((info, idx) => (
+                <div
+                  key={idx}
+                  className="bg-blue-50 p-4 rounded-lg text-center hover:shadow transition min-w-0"
+                >
+                  <div className="text-xl mb-1">{info.icon}</div>
+                  <div className="text-xs text-gray-500">{info.label}</div>
+                  <div className="text-sm font-medium text-gray-800 break-words hyphens-auto">
+                    {info.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* Info Grid 2 - 5 column layout with dynamic width */}
+        {(() => {
+          const infoItems = [
+            { label: "Industry", value: job.industry },
+            { label: "Education", value: job.qualifications },
+            { label: "Work Mode", value: job.workMode },
+            {
+              label: "Deadline",
+              value: job.applicationDeadLine
+                ? formatDate(job.applicationDeadLine)
+                : null,
+              className: "text-red-600",
+            },
+            {
+              label: "Posted",
+              value: job.createdAt ? formatDate(job.createdAt) : null,
+            },
+          ].filter((info) => !isEmpty(info.value));
+
+          if (infoItems.length === 0) return null;
+
+          // Calculate grid columns based on number of items
+          const gridColsClass =
+            {
+              1: "grid-cols-1",
+              2: "grid-cols-2",
+              3: "grid-cols-3",
+              4: "grid-cols-4",
+              5: "grid-cols-5",
+            }[infoItems.length] || "grid-cols-5";
+
+          const smGridColsClass =
+            {
+              1: "sm:grid-cols-1",
+              2: "sm:grid-cols-2",
+              3: "sm:grid-cols-3",
+              4: "sm:grid-cols-4",
+              5: "sm:grid-cols-5",
+            }[infoItems.length] || "sm:grid-cols-5";
+
+          return (
+            <div className={`grid ${gridColsClass} ${smGridColsClass} gap-4`}>
+              {infoItems.map((info, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-50 p-3 rounded-lg text-center hover:shadow transition min-w-0"
+                >
+                  <div className="text-xs text-gray-600 mb-1">{info.label}</div>
+                  <div
+                    className={`text-sm font-medium break-words hyphens-auto ${
+                      info.className ? info.className : "text-gray-800"
+                    }`}
+                  >
+                    {info.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* Job Description - Only show if description exists */}
+        {!isEmpty(job.description) && (
+          <div className="max-h-[500px] flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center shrink-0">
+              <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
+              Job Description
+            </h3>
+            <div
+              className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto pr-1"
+              dangerouslySetInnerHTML={{
+                __html: autoFormatDescription(
+                  formatDescription(job.description)
+                ),
+              }}
+            />
+          </div>
+        )}
+
+        {/* Skills Section - Only show if skills exist */}
+        {hasArrayContent(job.skills) && (
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
+              Required Skills
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {job.skills
+                .split(",")
+                .filter((skill) => skill.trim() !== "")
+                .map((skill, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition"
+                  >
+                    {skill.trim()}
+                  </span>
+                ))}
             </div>
           </div>
+        )}
+
+        {/* Benefits Section - Only show if benefits exist */}
+        {hasArrayContent(job.benefits) && (
+          <div className="bg-gray-50 p-5 rounded-2xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+              <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
+              Benefits & Perks
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {job.benefits
+                .split(",")
+                .filter((benefit) => benefit.trim() !== "")
+                .map((benefit, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center text-sm text-gray-700"
+                  >
+                    <span className="text-green-500 mr-2 text-base">✓</span>
+                    {benefit.trim()}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Support Details - Only show if contact info exists */}
+        {(!isEmpty(job.contactNumber) || !isEmpty(job.countryCode)) && (
+          <div className="bg-blue-50 p-4 sm:p-5 rounded-2xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+              <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
+              Support Details
+            </h3>
+
+            <div className="flex flex-col sm:flex-row sm:items-center text-gray-700 space-y-3 sm:space-y-0 sm:space-x-6">
+              {/* Phone - Only show if contact number exists */}
+              {!isEmpty(job.contactNumber) && (
+                <div className="flex items-center">
+                  <span className="text-blue-600 mr-2 text-lg">📞</span>
+                  <span className="text-sm font-medium break-all">
+                    {!isEmpty(job.countryCode) ? `${job.countryCode} ` : ""}
+                    {job.contactNumber}
+                  </span>
+                </div>
+              )}
+
+              {/* Email - Always show as it's hardcoded */}
+              <div className="flex items-center">
+                <span className="text-blue-600 mr-2 text-lg">📧</span>
+                <span className="text-sm font-medium break-all">
+                  support@askoxy.ai
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
           <button
-            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow ${
+            className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all transform hover:scale-105 shadow ${
               appliedJobIds.has(job.id)
                 ? "bg-green-100 text-green-700 cursor-not-allowed"
                 : "bg-white text-blue-600 hover:bg-blue-50"
@@ -500,154 +779,14 @@ const JobDetails: React.FC = () => {
             }}
             disabled={appliedJobIds.has(job.id)}
           >
-            {appliedJobIds.has(job.id) ? "✓ Applied" : "Apply Now"}
+            {appliedJobIds.has(job.id)
+              ? "✓ Applied for this Position"
+              : "🚀 Apply for this Position"}
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { icon: "📍", label: "Location", value: job.jobLocations },
-          { icon: "💼", label: "Type", value: job.jobType },
-          { icon: "⏰", label: "Experience", value: job.experience },
-          {
-            icon: "💰",
-            label: "Salary",
-            value: formatSalary(job.salaryMin, job.salaryMax),
-          },
-        ].map((info, idx) => (
-          <div
-            key={idx}
-            className="bg-blue-50 p-4 rounded-lg text-center hover:shadow transition min-w-0"
-          >
-            <div className="text-xl mb-1">{info.icon}</div>
-            <div className="text-xs text-gray-500">{info.label}</div>
-            <div className="text-sm font-medium text-gray-800 break-words hyphens-auto">
-              {info.value}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-        {[
-          { label: "Industry", value: job.industry },
-          { label: "Education", value: job.qualifications },
-          { label: "Work Mode", value: job.workMode },
-          {
-            label: "Deadline",
-            value: formatDate(job.applicationDeadLine),
-            className: "text-red-600",
-          },
-          { label: "Posted", value: formatDate(job.createdAt) },
-        ].map((info, idx) => (
-          <div
-            key={idx}
-            className="bg-gray-50 p-3 rounded-lg text-center hover:shadow transition"
-          >
-            <div className="text-xs text-gray-600 mb-1">{info.label}</div>
-            <div
-              className={`text-sm font-medium ${
-                info.className ? info.className : "text-gray-800"
-              }`}
-            >
-              {info.value}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="bg-gray-50 p-5 rounded-2xl h-[500px] flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center shrink-0">
-          <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
-          Job Description
-        </h3>
-        <div
-          className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto pr-1"
-          style={{ flex: 1 }}
-          dangerouslySetInnerHTML={{
-            __html: autoFormatDescription(job.description),
-          }}
-        />
-      </div>
-
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
-          Required Skills
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {job.skills.split(",").map((skill, index) => (
-            <span
-              key={index}
-              className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition"
-            >
-              {skill.trim()}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div className="bg-gray-50 p-5 rounded-2xl">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-          <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
-          Benefits & Perks
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {job.benefits.split(",").map((benefit, index) => (
-            <div
-              key={index}
-              className="flex items-center text-sm text-gray-700"
-            >
-              <span className="text-green-500 mr-2 text-base">✓</span>
-              {benefit.trim()}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-blue-50 p-4 sm:p-5 rounded-2xl">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-          <span className="w-2.5 h-2.5 bg-blue-600 rounded-full mr-3"></span>
-          Support Details
-        </h3>
-
-        <div className="flex flex-col sm:flex-row sm:items-center text-gray-700 space-y-3 sm:space-y-0 sm:space-x-6">
-          {/* Phone */}
-          <div className="flex items-center">
-            <span className="text-blue-600 mr-2 text-lg">📞</span>
-            <span className="text-sm font-medium break-all">
-              {job.countryCode} {job.contactNumber}
-            </span>
-          </div>
-
-          {/* Email */}
-          <div className="flex items-center">
-            <span className="text-blue-600 mr-2 text-lg">📧</span>
-            <span className="text-sm font-medium break-all">
-              support@askoxy.ai
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="text-center bg-gradient-to-r from-blue-600 to-blue-500 p-6 rounded-2xl">
-        <button
-          className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all transform hover:scale-105 shadow ${
-            appliedJobIds.has(job.id)
-              ? "bg-green-100 text-green-700 cursor-not-allowed"
-              : "bg-white text-blue-600 hover:bg-blue-50"
-          }`}
-          onClick={() => {
-            if (!appliedJobIds.has(job.id)) {
-              handleClick(job.jobDesignation, job.companyName);
-            }
-          }}
-          disabled={appliedJobIds.has(job.id)}
-        >
-          {appliedJobIds.has(job.id)
-            ? "✓ Applied for this Position"
-            : "🚀 Apply for this Position"}
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (

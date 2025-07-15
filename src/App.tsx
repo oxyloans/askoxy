@@ -15,6 +15,7 @@ import LegalService from "./components/Services/LegalService";
 import MyRotaryServices from "./components/Services/MyRotary";
 import HiringService from "./components/Services/HiringService";
 import DesignTemplatesPage from "./Templates/Templatehome";
+import CAServicesItems from "./components/CAServicesItems";
 import UniversityPromoCard from "./Templates/UniversityPromoCard";
 import PromoCard from "./Templates/PromoCard";
 import RiceOfferFAQs from "./Dashboard/Faqs";
@@ -456,6 +457,7 @@ const App: React.FC = () => {
               <Route path="dashboard/myservices" element={<ServicesPage />} />
               <Route path="dashboard/myblogs" element={<BlogsPage />} />
               <Route path="jobdetails" element={<JobDetails />} />
+              <Route path="caserviceitems" element={<CAServicesItems/>}/>
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               <Route
                 path="services/freerudraksha"

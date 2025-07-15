@@ -54,7 +54,8 @@ const [isLoading, setIsLoading] = useState<boolean>(false);
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/3385/ca-services"; // your desired path
+      // const redirectPath = "/main/services/3385/ca-services"; // your desired path
+      const redirectPath = "/main/caserviceitems"; 
 
       if (userId) {
         // User is already logged in
