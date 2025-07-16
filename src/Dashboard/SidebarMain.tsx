@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("mobileNumber");
     localStorage.removeItem("whatsappNumber");
-    localStorage.clear();
+    // localStorage.clear();
     localStorage.setItem("entryPoint", entryPoint); // Preserve entry point
 
     navigate(entryPoint);

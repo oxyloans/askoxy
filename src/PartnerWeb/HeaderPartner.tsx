@@ -27,8 +27,12 @@ const PartnerHeader: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.clear();
+    localStorage.removeItem("partner_orderId");
+    localStorage.removeItem("partner_orderparams");
+    localStorage.removeItem("partner_dbName");
+    localStorage.removeItem("partner_dbId");
+    localStorage.removeItem("partner_Token");
+    localStorage.removeItem("partner_scrollPosition");
     navigate("/partnerLogin");
   };
 

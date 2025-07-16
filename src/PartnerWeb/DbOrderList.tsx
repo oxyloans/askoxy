@@ -158,7 +158,7 @@ const DeliveryBoyOrders: React.FC = () => {
       // Set delivery boy name from any available order
       const name =
         assignedData[0]?.deliveryBoyName ||
-        localStorage.getItem("dbName") ||
+        localStorage.getItem("partner_dbName") ||
         "Delivery Partner";
 
       setDeliveryBoyName(name);
@@ -246,7 +246,7 @@ const DeliveryBoyOrders: React.FC = () => {
       return;
     }
 
-    const deliveryBoyId = localStorage.getItem("dbId");
+    const deliveryBoyId = localStorage.getItem("partner_dbId");
     if (deliveryBoyId) {
       fetchDeliveredOrders(
         deliveryBoyId,
@@ -257,7 +257,7 @@ const DeliveryBoyOrders: React.FC = () => {
   };
 
   const handleOrderDetails = (order: Order | DeliveredOrderResponse) => {
-    localStorage.setItem("orderId", order.orderId);
+    localStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
   const handleSearchOrderId = (value: string) => {
@@ -277,7 +277,7 @@ const DeliveryBoyOrders: React.FC = () => {
   }, [deliveredOrders]);
 
   useEffect(() => {
-    const deliveryBoyId = localStorage.getItem("dbId");
+    const deliveryBoyId = localStorage.getItem("partner_dbId");
 
     if (deliveryBoyId) {
       fetchOrders(deliveryBoyId);

@@ -119,7 +119,7 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     }
 
     let commentBy = updatedBy;
-    if (localStorage.getItem("primaryType") === "SELLER") {
+    if (localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN") {
       commentBy = "ADMIN";
     }
 

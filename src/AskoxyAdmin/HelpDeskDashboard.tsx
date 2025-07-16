@@ -185,7 +185,7 @@ const HelpDeskDashboard: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    const uniqueId = localStorage.getItem("uniquId");
+    const uniqueId = localStorage.getItem("admin_uniquId");
 
     const requestData = {
       adminCommentsId: record.id,

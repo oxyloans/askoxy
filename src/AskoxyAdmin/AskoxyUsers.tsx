@@ -189,9 +189,9 @@ const DataAssigned: React.FC = () => {
   const [newComment, setNewComment] = useState<string>("");
   const [submittingComment, setSubmittingComment] = useState<boolean>(false);
   const [record, setRecord] = useState<UserData | null>(null);
-  const updatedBy = localStorage.getItem("userName")?.toUpperCase();
+  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
   const [orderId, setOrderId] = useState<string>("");
-  const storedUniqueId = localStorage.getItem("uniquId");
+  const storedUniqueId = localStorage.getItem("admin_uniquId");
   const [error, setError] = useState<string | null>(null);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
@@ -200,7 +200,7 @@ const DataAssigned: React.FC = () => {
   const [loader, setLoader] = useState<boolean>(false);
   const [userOrders, setUserOrders] = useState<OrderData[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const type = localStorage.getItem("primaryType");
+  const type = localStorage.getItem("admin_primaryType");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -266,7 +266,7 @@ const DataAssigned: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const storedUniqueId = localStorage.getItem("uniquId");
+      const storedUniqueId = localStorage.getItem("admin_uniquId");
 
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/user-service/allOxyUsersAssignedToHelpDesk`,

@@ -181,6 +181,7 @@ import VersionUpdate from "./PartnerWeb/VersionUpdate";
 import OfferImagesUpdate from "./PartnerWeb/OfferImagesUpdate";
 import JobsAdminPage from "./AskoxyAdmin/Alljobdetails";
 import AddReference from "./PartnerWeb/AddReference";
+import UserAppliedJob from "./AskoxyAdmin/UserAppliedJobs";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -232,6 +233,7 @@ const App: React.FC = () => {
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
             <Route path="jobdetails" element={<JobDetails />} />
+            <Route path="caserviceitems" element={<CAServicesItems />} />
             <Route path="metroLogin" element={<MetroLogin />} />
             <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
             <Route path="services/myrotary" element={<MyRotaryServices />} />
@@ -261,7 +263,7 @@ const App: React.FC = () => {
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route path="/jobstreet" element={<JobStreet />} />
-             <Route path="/myblogs" element={<BlogsPage />} />
+            <Route path="/myblogs" element={<BlogsPage />} />
             <Route
               path="/termsandconditions"
               element={<TermsAndConditions />}
@@ -457,7 +459,7 @@ const App: React.FC = () => {
               <Route path="dashboard/myservices" element={<ServicesPage />} />
               <Route path="dashboard/myblogs" element={<BlogsPage />} />
               <Route path="jobdetails" element={<JobDetails />} />
-              <Route path="caserviceitems" element={<CAServicesItems/>}/>
+              <Route path="caserviceitems" element={<CAServicesItems />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               <Route
                 path="services/freerudraksha"
@@ -617,7 +619,6 @@ const App: React.FC = () => {
               <Route path="addReference" element={<AddReference />} />
             </Route>
             {/* Partner end */}
-            
             {/* ----------Admin Routes Start---------- */}
             <Route path="/admin" element={<Login />} />
             <Route path="/adminRegister" element={<Register />} />
@@ -651,6 +652,7 @@ const App: React.FC = () => {
               />
               <Route path="pincodeorders" element={<OrdersByPincode />} />
               <Route path="alljobdetails" element={<JobsAdminPage />} />
+              <Route path="userAppliedJobs" element={<UserAppliedJob />} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

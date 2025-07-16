@@ -168,7 +168,7 @@ const OrdersPage: React.FC = () => {
   // Restore scroll position after orders are loaded
   useEffect(() => {
     if (!loading && orders.length > 0) {
-      const savedOrderId = localStorage.getItem("orderId");
+      const savedOrderId = localStorage.getItem("partner_orderId");
       if (savedOrderId) {
         // Check if the order is in the current filteredOrders
         const targetRow = document.querySelector(
@@ -176,7 +176,7 @@ const OrdersPage: React.FC = () => {
         );
         if (targetRow) {
           targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-          localStorage.removeItem("orderId");
+          localStorage.removeItem("partner_orderId");
         } else {
           // Try to find the order in the full orders list (for pagination)
           const orderIndex = orders.findIndex(
@@ -197,12 +197,12 @@ const OrdersPage: React.FC = () => {
                   block: "center",
                 });
               }
-              localStorage.removeItem("orderId");
+              localStorage.removeItem("partner_orderId");
             }, 0);
           } else {
             // Order not found in the full dataset
             message.info("The previously viewed order is not available.");
-            localStorage.removeItem("orderId");
+            localStorage.removeItem("partner_orderId");
           }
         }
       }
@@ -241,9 +241,9 @@ const OrdersPage: React.FC = () => {
       ? (order as ExchangeOrder).orderId2
       : (order as Order).orderId;
     // Save orderId and scroll position
-    localStorage.setItem("orderId", orderId);
+    localStorage.setItem("partner_orderId", orderId);
     if (tableRef.current) {
-      localStorage.setItem("scrollPosition", window.scrollY.toString());
+      localStorage.setItem("partner_scrollPosition", window.scrollY.toString());
     }
     navigate(`/home/orderDetails`);
   };

@@ -214,14 +214,14 @@ const MainPage: React.FC = () => {
   // Restore scroll position after orders are loaded
   useEffect(() => {
     if (!loading && filteredOrders.length > 0) {
-      const savedOrderId = localStorage.getItem("orderId");
+      const savedOrderId = localStorage.getItem("partner_orderId");
       if (savedOrderId) {
         const targetRow = document.querySelector(
           `[data-row-key="${savedOrderId}"]`
         );
         if (targetRow) {
           targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-          localStorage.removeItem("orderId");
+          localStorage.removeItem("partner_orderId");
         } else {
           // Check if the order exists in the full orderDetails (for pagination)
           const orderIndex = orderDetails.findIndex(
@@ -244,13 +244,13 @@ const MainPage: React.FC = () => {
                   block: "center",
                 });
               }
-              localStorage.removeItem("orderId");
+              localStorage.removeItem("partner_orderId");
             }, 0);
           } else {
             message.info(
               "The previously viewed order is not visible in the current view."
             );
-            localStorage.removeItem("orderId");
+            localStorage.removeItem("partner_orderId");
           }
         }
       }
@@ -258,7 +258,7 @@ const MainPage: React.FC = () => {
   }, [loading, filteredOrders, orderDetails, pagination.pageSize]);
 
   const handleLogin = () => {
-    const accessToken = localStorage.getItem("Token");
+    const accessToken = localStorage.getItem("partner_Token");
     if (!accessToken) {
       navigate("/partnerLogin");
     }
@@ -342,7 +342,7 @@ const MainPage: React.FC = () => {
   };
 
   const handleViewDetails = (order: Order) => {
-    localStorage.setItem("orderId", order.orderId);
+    localStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 

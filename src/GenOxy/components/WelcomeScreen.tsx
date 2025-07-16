@@ -1,5 +1,11 @@
 import { usePrompts } from "../hooks/usePrompts";
-import React, { ChangeEvent,useState,useRef, KeyboardEvent } from "react";
+import React, {
+  ChangeEvent,
+  useState,
+  useRef,
+  KeyboardEvent,
+  useEffect,
+} from "react";
 import { ArrowUp, Loader2, Sparkles, Paperclip, Mic } from "lucide-react";
 
 interface WelcomeScreenProps {
@@ -12,12 +18,12 @@ interface WelcomeScreenProps {
 }
 type SpeechRecognitionEvent = Event & {
   results: SpeechRecognitionResultList;
+  resultIndex: number;
 };
 type SpeechRecognitionErrorEvent = Event & {
   error: string;
   message?: string;
 };
-
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   input,
@@ -44,6 +50,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
   };
 
+useEffect(() => {
+  const textarea = textareaRef.current;
+  if (textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+
+    // Scroll to the bottom if content overflows
+    textarea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+}, [input]);
+
+
   const handleToggleVoice = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
@@ -62,8 +80,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.interimResults = true;
+    recognition.continuous = true;
 
     recognitionRef.current = recognition;
 
@@ -73,19 +91,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript)
-        .join("")
-        .trim();
+      let transcript = "";
 
-      console.log("📝 Transcribed text:", transcript);
-
-      if (transcript) {
-        setInput(transcript); 
-        setShowDropdown(false);
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          transcript += result[0].transcript + " ";
+        }
       }
 
-      setIsRecording(false);
+      if (transcript.trim()) {
+        setInput((prev) => (prev.trim() + " " + transcript.trim()).trim());
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -101,11 +118,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     recognition.start();
   };
-  
-  
- 
+
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="fixed inset-0 overflow-y-auto pointer-events-auto z-0 bg-white dark:bg-gray-900">
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
         {/* Floating Gradient Bubbles */}
         {[
@@ -198,7 +213,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ))}
 
         {/* Custom animations */}
-        <style >{`
+        <style>{`
           @keyframes bubble-float {
             0% {
               transform: translateY(0) scale(1) rotate(0deg);
@@ -249,7 +264,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl mx-auto w-full pointer-events-auto">
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-24 mx-auto  w-full pointer-events-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="relative mb-6">
@@ -268,52 +283,42 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {/* Chat Input Box */}
-        <div className="w-full max-w-3xl mb-8 sm:mb-10">
+        <div className="w-full max-w-3xl sticky bottom-0 z-10 bg-white dark:bg-gray-900 px-3 py-3">
           <div className="relative group">
+            {isRecording && (
+              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-xs shadow-lg animate-pulse">
+                🎤 Recording... Tap mic to stop
+              </div>
+            )}
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
 
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex items-center px-4 py-2 sm:py-3 sm:px-6 gap-3">
-              {/* File Attach */}
-              {/* <button
-                onClick={handleAttachFile}
-                title="Attach file"
-                disabled={loading}
-                className="w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition flex-shrink-0"
-              >
-                <Paperclip className="w-5 h-5" />
-              </button> */}
-
-              {/* Textarea */}
+            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex items-end px-4 py-2 sm:py-3 sm:px-6 gap-3">
               <textarea
                 ref={textareaRef}
                 value={input}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
-                  setInput(e.target.value);
-                  setShowDropdown(false);
-                }}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                  setInput(e.target.value)
+                }
                 onKeyDown={handleKeyPress}
-                placeholder="Ask me anything..."
+                placeholder="Type your message..."
                 disabled={loading}
                 rows={1}
-                className="flex-1 resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base sm:text-lg leading-[1.4] p-3 m-0"
-                style={{ minHeight: "50px", maxHeight: "120px" }}
+                className="flex-1 resize-none overflow-auto bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base sm:text-lg leading-[1.4] p-3 m-0 max-h-48"
               />
 
-              {/* Mic */}
               <button
                 onClick={handleToggleVoice}
                 title="Voice Input"
                 disabled={loading}
                 className={`w-10 h-10 flex items-center justify-center rounded-xl transition ${
                   isRecording
-                    ? "bg-red-100 text-red-600 animate-pulse" // Active mic
+                    ? "bg-red-100 text-red-600 animate-pulse"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                 }`}
               >
                 <Mic className="w-5 h-5" />
               </button>
 
-              {/* Send */}
               <button
                 onClick={async () => {
                   await handleSend();
@@ -338,7 +343,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {/* Suggestion Prompts */}
-        <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 flex flex-col gap-4 sm:gap-6">
+        <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 flex flex-col gap-6 sm:gap-8">
           <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:flex sm:flex-wrap sm:justify-center">
             {suggestionPrompts.map((prompt, idx) => (
               <button

@@ -98,7 +98,7 @@ const StudentSidebar: React.FC<SidebarProps> = ({
 
   const handleSignout = () => {
     const entryPoint = localStorage.getItem("entryPoint") || "/";
-    localStorage.clear();
+    // localStorage.clear();
     localStorage.setItem("entryPoint", entryPoint);
     navigate(entryPoint);
   };

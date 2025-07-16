@@ -199,9 +199,9 @@ const DeliveryBoyList: React.FC = () => {
 
   const handleViewOrders = (boy: DeliveryBoy) => {
     // message.info(`Viewing orders for ${boy.firstName} ${boy.lastName}`);
-    localStorage.setItem("dbId", boy.userId);
+    localStorage.setItem("partner_dbId", boy.userId);
     const name = boy.firstName + boy.lastName;
-    localStorage.setItem("dbName", name);
+    localStorage.setItem("partner_dbName", name);
 
     navigate(`/home/dbOrderList`);
   };

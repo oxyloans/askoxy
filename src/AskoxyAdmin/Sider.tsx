@@ -37,6 +37,7 @@ import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   SolutionOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdPayment, MdWork } from "react-icons/md";
@@ -72,13 +73,13 @@ const Sidebar: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
-  const primaryType = localStorage.getItem("primaryType");
+  const primaryType = localStorage.getItem("admin_primaryType");
 
   const handleLogout = () => {
-    localStorage.removeItem("primaryType");
-    localStorage.removeItem("uniquId");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("acToken");
+    localStorage.removeItem("admin_primaryType");
+    localStorage.removeItem("admin_uniquId");
+    localStorage.removeItem("admin_userName");
+    localStorage.removeItem("admin_acToken");
     navigate("/admin");
   };
 
@@ -171,6 +172,12 @@ const Sidebar: React.FC = () => {
           title: "All Job Details",
           icon: <SolutionOutlined style={{ color: "#ffff" }} />,
           link: "/admn/alljobdetails",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "Applied Jobs by Users",
+          icon: <UserOutlined style={{ color: "#ffff" }} />,
+          link: "/admn/userAppliedJobs",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
@@ -279,12 +286,15 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     const checkAccessToken = () => {
-      const uniquId = localStorage.getItem("uniquId");
+      const uniquId = localStorage.getItem("admin_uniquId");
 
       if (!uniquId) {
         message.info("Your session has expired. Please log in again.");
+        localStorage.removeItem("admin_primaryType");
+        localStorage.removeItem("admin_uniquId");
+        localStorage.removeItem("admin_userName");
+        localStorage.removeItem("admin_acToken");
         navigate("/admin");
-        localStorage.clear();
       }
     };
 
@@ -637,7 +647,7 @@ const Sidebar: React.FC = () => {
             <div className="flex items-center px-3 py-3 text-sm text-white bg-gray-700 rounded-lg">
               <FaUserCircle className="mr-3 text-blue-400 text-lg" />
               <span className="font-semibold">
-                {localStorage.getItem("userName")?.toUpperCase()}
+                {localStorage.getItem("admin_userName")?.toUpperCase()}
               </span>
             </div>
           </div>

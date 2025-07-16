@@ -41,13 +41,10 @@ const AllQueries: React.FC = () => {
   const [comments, setComments] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
-  // const userId = localStorage.getItem("userId");
 
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken");
-
       const requestPayload = {
         askOxyOfers:
           askOxyOffersFilter ||

@@ -150,7 +150,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   };
 
   const handleSignOut = (): void => {
-    localStorage.clear();
+    // localStorage.clear();
     sessionStorage.clear();
     window.location.href = "/userlogin";
   };

@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import Header from "./Header";
 import BASE_URL from "../Config";
+import { message } from "antd";
+import { useNavigate } from "react-router-dom";
 
 // Type definitions
 interface Agreement {
@@ -46,136 +48,6 @@ const CITY_CLASSIFICATIONS: CityClassification = {
     B: ["Vijayawada", "Greater Visakhapatnam", "Guntur", "Nellore"],
     C: ["Other Cities"],
   },
-  "ARUNACHAL PRADESH": { A: [], B: [], C: ["All cities"] },
-  ASSAM: { A: [], B: ["Guwahati"], C: ["Other Cities"] },
-  BIHAR: { A: [], B: ["Patna"], C: ["Other Cities"] },
-  CHANDIGARH: { A: [], B: ["Chandigarh"], C: [] },
-  CHHATTISGARH: {
-    A: [],
-    B: ["Durg-Bhilai Nagar", "Raipur"],
-    C: ["Other Cities"],
-  },
-  "DADRA & NAGAR HAVELI": { A: [], B: [], C: ["All cities"] },
-  "DAMAN & DIU": { A: [], B: [], C: ["All cities"] },
-  DELHI: { A: ["Delhi"], B: [], C: [] },
-  GOA: { A: [], B: [], C: ["All cities"] },
-  GUJARAT: {
-    A: ["Ahmedabad"],
-    B: ["Rajkot", "Jamnagar", "Bhavnagar", "Vadodara", "Surat"],
-    C: ["Other Cities"],
-  },
-  HARYANA: { A: [], B: ["Faridabad", "Gurgaon"], C: ["Other Cities"] },
-  "HIMACHAL PRADESH": { A: [], B: [], C: ["All cities"] },
-  "JAMMU & KASHMIR": { A: [], B: ["Srinagar", "Jammu"], C: ["Other Cities"] },
-  JHARKHAND: {
-    A: [],
-    B: ["Jamshedpur", "Dhanbad", "Ranchi", "Bokro Stell City"],
-    C: ["Other Cities"],
-  },
-  KARNATAKA: {
-    A: ["Bengaluru"],
-    B: ["Belgaum", "Hubli-Dharwad", "Mangalore", "Mysore", "Gulbarga"],
-    C: ["Other Cities"],
-  },
-  KERALA: {
-    A: [],
-    B: [
-      "Kozhikode",
-      "Kochi",
-      "Thiruvanathapuram",
-      "Thrissur",
-      "Malappuram",
-      "Kannur",
-      "Kollam",
-    ],
-    C: ["Other Cities"],
-  },
-  LAKSHADWEEP: { A: [], B: [], C: ["All cities"] },
-  "MADHYA PRADESH": {
-    A: [],
-    B: ["Gwalior", "Indore", "Bhopal", "Jabalpur", "Ujjain"],
-    C: ["Other Cities"],
-  },
-  MAHARASHTRA: {
-    A: ["Greater Mumbai", "Pune"],
-    B: [
-      "Amravati",
-      "Nagpur",
-      "Aurangabad",
-      "Nashik",
-      "Bhiwandi",
-      "Solapur",
-      "Kolhapur",
-      "Vasai-Virar City",
-      "Malegaon",
-      "Nansws-Waghala",
-      "Sangli",
-    ],
-    C: ["Other Cities"],
-  },
-  MANIPUR: { A: [], B: [], C: ["All cities"] },
-  MEGHALAYA: { A: [], B: [], C: ["All cities"] },
-  MIZORAM: { A: [], B: [], C: ["All cities"] },
-  NAGALAND: { A: [], B: [], C: ["All cities"] },
-  ODISHA: {
-    A: [],
-    B: ["Cuttack", "Bhubaneswar", "Rourkela"],
-    C: ["Other Cities"],
-  },
-  PUDUCHERRY: { A: [], B: ["Puducherry/ Pondicherry"], C: [] },
-  PUNJAB: {
-    A: [],
-    B: ["Amritsar", "Jalandhar", "Ludhiana"],
-    C: ["Other Cities"],
-  },
-  RAJASTHAN: {
-    A: [],
-    B: ["Bikaner", "Jaipur", "Jodhpur", "Kota", "Ajmer"],
-    C: ["Other Cities"],
-  },
-  SIKKIM: { A: [], B: [], C: ["All cities"] },
-  "TAMIL NADU": {
-    A: ["Chennai"],
-    B: [],
-    C: [
-      "Salem",
-      "Tiruppur",
-      "Coimbatore",
-      "Tiruchirappalli",
-      "Madurai",
-      "Erode",
-      "Other Cities",
-    ],
-  },
-  TELANGANA: { A: ["Hyderabad"], B: [], C: ["Warangal", "Other Cities"] },
-  TRIPURA: { A: [], B: [], C: ["All cities"] },
-  "UTTAR PRADESH": {
-    A: [],
-    B: [
-      "Moradabad",
-      "Meerut",
-      "Ghaziabad",
-      "Aligarh",
-      "Agra",
-      "Bareilly",
-      "Lucknow",
-      "Kanpur",
-      "Allahabad",
-      "Gorakhpur",
-      "Varanasi",
-      "Saharanpur",
-      "Noida",
-      "Firozabad",
-      "Jhansi",
-    ],
-    C: ["Other Cities"],
-  },
-  UTTARAKHAND: { A: [], B: ["Dehradun"], C: ["Other Cities"] },
-  "WEST BENGAL": {
-    A: ["Kolkata"],
-    B: ["Asansol", "Siliguri", "Durgapur"],
-    C: ["Other Cities"],
-  },
 };
 
 export default function CAServicesApp() {
@@ -185,6 +57,7 @@ export default function CAServicesApp() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
+  const navigate = useNavigate();
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(
     null
   );
@@ -195,6 +68,9 @@ export default function CAServicesApp() {
   // Loading states
   const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [apiLoadingStates, setApiLoadingStates] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   // Filter states
   const [selectedState, setSelectedState] = useState<string | null>(null);
@@ -205,11 +81,15 @@ export default function CAServicesApp() {
   const [showStateModal, setShowStateModal] = useState(false);
   const [showCityModal, setShowCityModal] = useState(false);
 
-  const userId = localStorage.getItem("userId");
   // Navigation states
   const [currentView, setCurrentView] = useState<
     "CATEGORIES" | "SUBCATEGORIES" | "AGREEMENTS"
   >("CATEGORIES");
+
+  // Get userId from localStorage
+  const getUserId = () => {
+    return localStorage.getItem("userId");
+  };
 
   // Fetch all data initially
   useEffect(() => {
@@ -271,7 +151,7 @@ export default function CAServicesApp() {
       setCategories(categoriesArray);
     } catch (error) {
       console.error("Error fetching data:", error);
-      alert("Failed to load data. Please try again.");
+      // alert("Failed to load data. Please try again.");
     } finally {
       setInitialLoading(false);
     }
@@ -411,6 +291,74 @@ export default function CAServicesApp() {
     return `₹${price.toLocaleString("en-IN")}`;
   };
 
+  // API call for "I'm Interested" functionality
+  const handleInterestedClick = async (agreement: Agreement) => {
+    const currentUserId = getUserId();
+
+    if (!currentUserId) {
+      message.info("Please log in to express interest in this service.");
+      sessionStorage.setItem("redirectPath", "/main/caserviceitems");
+      navigate("/whatsapplogin");
+      return;
+    }
+
+    if (!agreement.id) {
+      message.error("Service ID not found. Please try again.");
+      return;
+    }
+
+    const agreementId = agreement.id;
+
+    // Set loading state for this specific agreement
+    setApiLoadingStates((prev) => ({ ...prev, [agreementId]: true }));
+
+    try {
+      const response = await fetch(
+        BASE_URL + "/product-service/cacsinterested",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            cacsAggrementId: agreementId,
+            userId: currentUserId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === true) {
+        message.success(
+          "Thank you for your interest! We have recorded your interest in this service."
+        );
+
+        handleServiceSelection(agreement);
+      } else if (data.status === false) {
+        message.info("You have already participated in this service. Thank you....!");
+      } else {
+        message.error(
+          "There was an issue recording your interest. Please try again."
+        );
+      }
+    } catch (error) { 
+      console.error("Error calling cacsinterested API:", error);
+      message.error("Failed to record your interest. Please try again later.");
+    } finally {
+      // Remove loading state for this specific agreement
+      setApiLoadingStates((prev) => {
+        const newStates = { ...prev };  
+        delete newStates[agreementId];
+        return newStates;
+      });
+    }
+  };
+
   const handleServiceSelection = (agreement: Agreement) => {
     const serviceName = agreement.agreementName;
     const categoryName = selectedCategory?.name;
@@ -445,59 +393,58 @@ Price: ${formatPrice(price)}`;
 
 Please provide more details about this service and confirm the pricing.`;
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918978455447?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
+    // const encodedMessage = encodeURIComponent(message);
+    // const whatsappUrl = `https://wa.me/918978455447?text=${encodedMessage}`;
+    // window.open(whatsappUrl, "_blank");
   };
 
-  const handleGeneralWhatsAppContact = () => {
-    const categoryName = selectedCategory?.name;
-    const subCategoryName = selectedSubCategory || "";
+  //   const handleGeneralWhatsAppContact = () => {
+  //     const categoryName = selectedCategory?.name;
+  //     const subCategoryName = selectedSubCategory || "";
 
-    let message = `Hello, I'm interested in your CA services.
+  //     let message = `Hello, I'm interested in your CA services.
 
-Category: ${categoryName}`;
+  // Category: ${categoryName}`;
 
-    if (subCategoryName) {
-      message += `
-Subcategory: ${subCategoryName}`;
-    }
+  //     if (subCategoryName) {
+  //       message += `
+  // Subcategory: ${subCategoryName}`;
+  //     }
 
-    if (selectedCity && selectedState) {
-      message += `
-Location: ${selectedCity}, ${selectedState}`;
-    }
+  //     if (selectedCity && selectedState) {
+  //       message += `
+  // Location: ${selectedCity}, ${selectedState}`;
+  //     }
 
-    message += `
+  //     message += `
 
-Please provide more details about your services and pricing.`;
+  // Please provide more details about your services and pricing.`;
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918978455447?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
-  };
+  //     const encodedMessage = encodeURIComponent(message);
+  //     const whatsappUrl = `https://wa.me/918978455447?text=${encodedMessage}`;
+  //     window.open(whatsappUrl, "_blank");
+  //   };
 
-  if (initialLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600 font-medium">
-            Loading services...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  //   if (initialLoading) {
+  //     return (
+  //       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //         <div className="text-center">
+  //           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+  //           <p className="mt-4 text-lg text-gray-600 font-medium">
+  //             Loading services...
+  //           </p>
+  //         </div>
+  //       </div>
+  //     );
+  //   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div>{!userId && <Header />}</div>
-      {/* Simple navigation with back button and text */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 relative">
+      <div>{!getUserId() && <Header />}</div>
+
+      <div className="max-w-7xl mx-auto px-1 mt-8 sm:px-6 lg:px-8 py-4 relative">
         {currentView !== "CATEGORIES" && (
           <div className="relative flex items-center justify-center mb-4">
-            {/* Back Button */}
             <button
               onClick={handleBackNavigation}
               className="absolute left-0 flex items-center text-gray-600 hover:text-gray-800"
@@ -513,7 +460,7 @@ Please provide more details about your services and pricing.`;
             </span>
           </div>
         )}
-      </div>  
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Compact Location & Service Info Bar */}
@@ -673,7 +620,7 @@ Please provide more details about your services and pricing.`;
           <div>
             {/* Two Column Layout */}
             <div className="max-w-6xl mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 {filteredAgreements.length === 0 ? (
                   <div className="col-span-full text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
                     <div className="max-w-sm mx-auto">
@@ -713,12 +660,22 @@ Please provide more details about your services and pricing.`;
 
                         {/* WhatsApp Button in same container */}
                         <div
-                          className="bg-green-100 hover:bg-green-200 cursor-pointer transition-all rounded-lg px-3 py-2 flex items-center gap-2"
-                          onClick={() => handleServiceSelection(agreement)}
+                          className={`bg-green-100 hover:bg-green-200 cursor-pointer transition-all rounded-lg px-3 py-2 flex items-center gap-2 ${
+                            apiLoadingStates[agreement.id || ""]
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={() => handleInterestedClick(agreement)}
                         >
-                          <i className="fab fa-whatsapp text-green-600 text-lg"></i>
+                          {apiLoadingStates[agreement.id || ""] ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                          ) : (
+                            <i className="fab fa-whatsapp text-green-600 text-lg"></i>
+                          )}
                           <span className="text-sm font-semibold text-green-800">
-                            Contact
+                            {apiLoadingStates[agreement.id || ""]
+                              ? "Processing..."
+                              : "Contact"}
                           </span>
                         </div>
                       </div>

@@ -93,7 +93,7 @@ const CallerHistoryPage: React.FC = () => {
   const fetchReportData = async (date: Moment | null) => {
     setReportLoading(true);
     try {
-      const userId = localStorage.getItem("uniquId");
+      const userId = localStorage.getItem("admin_uniquId");
       if (!userId) {
         message.error("Unable to find userId, please re-login");
         throw new Error("User ID not found in localStorage");

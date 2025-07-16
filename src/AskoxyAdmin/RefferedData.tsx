@@ -96,7 +96,7 @@ const ReferredData: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<ReferralData | null>(
     null
   );
-  const updatedBy = localStorage.getItem("userName")?.toUpperCase() || "ADMIN";
+  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase() || "ADMIN";
 
   useEffect(() => {
     fetchReferrals();
@@ -206,7 +206,7 @@ const ReferredData: React.FC = () => {
         {
           adminComments: newComment,
           commentsUpdateBy: updatedBy,
-          adminUserId: localStorage.getItem("uniquId"),
+          adminUserId: localStorage.getItem("admin_uniquId"),
           userId: selectedRecord?.referrer,
           customerBehaviour: userResponse,
         },
@@ -722,7 +722,7 @@ const ReferredData: React.FC = () => {
         onClose={() => setCommentsModalVisible(false)}
         userId={selectedRecord?.referrer}
         updatedBy={updatedBy}
-        storedUniqueId={localStorage.getItem("uniquId")}
+        storedUniqueId={localStorage.getItem("admin_uniquId")}
         record={selectedRecord}
         BASE_URL={BASE_URL}
       />

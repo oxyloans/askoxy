@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Form,
   Input,
@@ -32,6 +32,27 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleAutoLoginforAdmin = () => {
+      const id = localStorage.getItem("admin_uniquId");
+      const primaryType = localStorage.getItem("admin_primaryType");
+      const acToken = localStorage.getItem("admin_acToken");
+
+      if (id && primaryType && acToken) {
+        if (primaryType === "HELPDESKSUPERADMIN") {
+          navigate("/admn/helpdashboard");
+        } else if (primaryType === "HELPDESKADMIN") {
+          navigate("/admn/dashboard");
+        } else {
+          navigate("/admn/dashboard");
+        }
+      } else {
+        navigate("/admin");
+      }
+    };
+    handleAutoLoginforAdmin();
+  }, []);
 
   const handleLogin = async (): Promise<void> => {
     setLoading(true);
@@ -67,23 +88,33 @@ const Login: React.FC = () => {
 
       if (response.data.status === "Login Successful") {
         const { token, id, primaryType, name } = response.data;
+        if (
+          primaryType === "HELPDESKSUPERADMIN" ||
+          primaryType === "HELPDESKADMIN"
+        ) {
+          localStorage.setItem("admin_acToken", token);
+          localStorage.setItem("admin_uniquId", id);
+          localStorage.setItem("admin_primaryType", primaryType);
+          localStorage.setItem("admin_userName", name);
 
-        localStorage.setItem("acToken", token);
-        localStorage.setItem("uniquId", id);
-        localStorage.setItem("primaryType", primaryType);
-        localStorage.setItem("userName", name);
-
-        message.success({
-          content: "Login successful! Redirecting to dashboard...",
-          icon: <LoginOutlined />,
-          className: "custom-message-success",
-        });
-        if (primaryType === "HELPDESKSUPERADMIN") {
-          navigate("/admn/helpdashboard");
-        } else if (primaryType === "HELPDESKADMIN") {
-          navigate("/admn/dashboard");
+          message.success({
+            content: "Login successful! Redirecting to dashboard...",
+            icon: <LoginOutlined />,
+            className: "custom-message-success",
+          });
+          if (primaryType === "HELPDESKSUPERADMIN") {
+            navigate("/admn/helpdashboard");
+          } else if (primaryType === "HELPDESKADMIN") {
+            navigate("/admn/dashboard");
+          } else {
+            navigate("/admn/dashboard");
+          }
         } else {
-          navigate("/admn/dashboard");
+          message.error({
+            content: "Your not Supposed to Login to the SuperAdmin",
+            icon: <LoginOutlined />,
+            className: "custom-message-error",
+          });
         }
       } else {
         setError(response.data.errorMessage || "Invalid email or password");

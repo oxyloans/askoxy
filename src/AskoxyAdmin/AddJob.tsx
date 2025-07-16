@@ -159,7 +159,7 @@ const AddJob: React.FC = () => {
   const handleImageUpload = async (file: File) => {
     setUploading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken"); // Adjust based on your token storage
+      const accessToken = localStorage.getItem("accessToken"); 
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
 
@@ -193,7 +193,7 @@ const AddJob: React.FC = () => {
   const handleConfirm = useCallback(async () => {
     if (!formValues) return;
     setLoading(true);
-    const userId = localStorage.getItem("uniquId");
+    const userId = localStorage.getItem("admin_uniquId");
     try {
       const payload = {
         applicationDeadLine: formValues.applicationDeadLine?.toISOString(),

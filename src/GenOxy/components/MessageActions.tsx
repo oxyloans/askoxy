@@ -18,21 +18,61 @@ const MessageActions: React.FC<MessageActionsProps> = ({ message, index }) => {
   const [downloadingImage, setDownloadingImage] = useState<string | null>(null);
   const [readingAloudId, setReadingAloudId] = useState<string | null>(null);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Copied to clipboard!");
-    });
-  };
+const copyToClipboard = (text: string) => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        alert("Copied to clipboard!");
+      })
+      .catch((err) => {
+        alert("Failed to copy text: " + err);
+      });
+  } else {
+    // Fallback for older browsers
+    // Create a temporary textarea to select and copy
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed"; // Avoid scrolling to bottom
+    textarea.style.left = "-9999px"; // Off-screen
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
 
-  const shareContent = (text: string) => {
-    if (navigator.share) {
-      navigator
-        .share({ text })
-        .catch((error) => alert("Sharing failed: " + error));
-    } else {
-      alert("Sharing is not supported on this browser.");
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        alert("Copied to clipboard!");
+      } else {
+        alert("Failed to copy text.");
+      }
+    } catch (err) {
+      alert("Copy not supported");
     }
-  };
+
+    document.body.removeChild(textarea);
+  }
+};
+
+
+ const shareContent = async (text: string) => {
+   if (!navigator.share) {
+     alert("Sharing is not supported on this browser.");
+     return;
+   }
+   try {
+     await navigator.share({
+       title: "Shared from MyApp",
+       text,
+       // url: window.location.href, // optional
+     });
+   } catch (error: any) {
+     if (error.name !== "AbortError") {
+       alert("Sharing failed: " + error.message);
+     }
+   }
+ };
+
 
   const readAloud = (text: string, id: string) => {
     if (!("speechSynthesis" in window)) {

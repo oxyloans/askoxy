@@ -67,7 +67,7 @@ const AddBlog: React.FC = () => {
     facebook: "",
     instagram: "",
   });
-  const primaryType = localStorage.getItem("primaryType");
+  const primaryType = localStorage.getItem("admin_primaryType");
   const userId = localStorage.getItem("userId");
 
   const handleInputChange = (

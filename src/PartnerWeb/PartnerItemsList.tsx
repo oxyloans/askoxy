@@ -46,7 +46,7 @@ const PartnerItemsList: React.FC = () => {
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const accessToken = JSON.parse(localStorage.getItem("Token") || "{}");
+  const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
   const [statusFilter, setStatusFilter] = useState("all");
   const [urls, setUrls] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState<string>("");

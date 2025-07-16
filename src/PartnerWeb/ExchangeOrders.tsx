@@ -101,7 +101,7 @@ const ExchangeOrdersTable: React.FC = () => {
   // Restore scroll position after orders are loaded
   useEffect(() => {
     if (!loading && filteredOrders.length > 0) {
-      const savedOrderId = localStorage.getItem("orderId");
+      const savedOrderId = localStorage.getItem("partner_orderId");
       if (savedOrderId) {
         // Find the index of the order in filteredOrders
         const orderIndex = filteredOrders.findIndex(
@@ -112,7 +112,7 @@ const ExchangeOrdersTable: React.FC = () => {
           const targetRow = document.querySelector(`[data-row-key="${rowKey}"]`);
           if (targetRow) {
             targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-            localStorage.removeItem("orderId");
+            localStorage.removeItem("partner_orderId");
           }
         } else {
           // Check the full exchangeOrders array for pagination
@@ -132,13 +132,13 @@ const ExchangeOrdersTable: React.FC = () => {
               if (updatedRow) {
                 updatedRow.scrollIntoView({ behavior: "smooth", block: "center" });
               }
-              localStorage.removeItem("orderId");
+              localStorage.removeItem("partner_orderId");
             }, 0);
           } else {
             message.info(
               "The previously viewed exchange order is not visible in the current view."
             );
-            localStorage.removeItem("orderId");
+            localStorage.removeItem("partner_orderId");
           }
         }
       }
@@ -170,7 +170,7 @@ const ExchangeOrdersTable: React.FC = () => {
   }, [isModalOpen]);
 
   const handleViewDetails = (order: ExchangeOrder) => {
-    localStorage.setItem("orderId", order.orderId2);
+    localStorage.setItem("partner_orderId", order.orderId2);
     navigate(`/home/orderDetails`);
   };
 

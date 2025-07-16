@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, CheckCircle } from "lucide-react";
 import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
 import { useNavigate } from "react-router-dom";
+import { message } from "antd";
 function CacsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const LOGIN_URL = "/whatsapplogin";
   const navigate = useNavigate();
   const rotatingWords = [
@@ -48,22 +49,24 @@ const [isLoading, setIsLoading] = useState<boolean>(false);
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-
-  const handleSignIn = () => {
+  const handleSignIn = (text: string) => {
     try {
       setIsLoading(true);
-
+      let redirectPath = "/main/caserviceitems";
       const userId = localStorage.getItem("userId");
-      // const redirectPath = "/main/services/3385/ca-services"; // your desired path
-      const redirectPath = "/main/caserviceitems"; 
-
-      if (userId) {
-        // User is already logged in
-        navigate(redirectPath);
+      if (text === "items") {
+        if (userId) {
+          navigate(redirectPath);
+        } else {
+          navigate("/caserviceitems");
+        }
       } else {
-        // Save redirect path before redirecting to login
-        sessionStorage.setItem("redirectPath", redirectPath);
-        window.location.href = LOGIN_URL;
+        redirectPath = "/main/services/3385/ca-services";
+        if (userId) {
+          navigate(redirectPath);
+        } else {
+          navigate("/services/3385/ca-services");
+        }
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -71,8 +74,6 @@ const [isLoading, setIsLoading] = useState<boolean>(false);
       setIsLoading(false);
     }
   };
-  
-  
 
   return (
     <section className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8 sm:py-12 lg:py-16 xl:py-20 overflow-hidden min-h-screen flex items-center">
@@ -181,7 +182,7 @@ const [isLoading, setIsLoading] = useState<boolean>(false);
             {/* Enhanced CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start mt-8 sm:mt-10">
               <button
-                onClick={handleSignIn}
+                onClick={() => handleSignIn("items")}
                 className="group bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-full flex items-center justify-center gap-2 sm:gap-3 hover:from-cyan-600 hover:to-blue-700 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm sm:text-base"
               >
                 Explore Services
@@ -189,7 +190,7 @@ const [isLoading, setIsLoading] = useState<boolean>(false);
               </button>
 
               <button
-                onClick={handleSignIn}
+                onClick={() => handleSignIn("noItems")}
                 className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-2 sm:gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 border border-white/20 hover:border-white/40 text-sm sm:text-base"
               >
                 Free Consultation

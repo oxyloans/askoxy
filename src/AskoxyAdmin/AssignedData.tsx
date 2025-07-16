@@ -186,14 +186,11 @@ const AssignedDataPage: React.FC = () => {
   const [commentsModalVisible, setCommentsModalVisible] =
     useState<boolean>(false);
   const navigate = useNavigate();
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [newComment, setNewComment] = useState<string>("");
-  const [submittingComment, setSubmittingComment] = useState<boolean>(false);
   const [record, setRecord] = useState<UserData | null>(null);
-  const updatedBy = localStorage.getItem("userName")?.toUpperCase();
+  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
   const [orderId, setOrderId] = useState<string>("");
-  const storedUniqueId = localStorage.getItem("uniquId");
+  const storedUniqueId = localStorage.getItem("admin_uniquId");
   const [error, setError] = useState<string | null>(null);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [userResponse, setUserResponse] = useState<string | undefined>();
@@ -231,7 +228,7 @@ const AssignedDataPage: React.FC = () => {
     : "User not placed any order";
 
   useEffect(() => {
-    const storedUniqueId = localStorage.getItem("uniquId");
+    const storedUniqueId = localStorage.getItem("admin_uniquId");
     if (storedUniqueId) {
       setUniqueId(storedUniqueId);
     } else {

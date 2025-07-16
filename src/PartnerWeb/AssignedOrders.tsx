@@ -76,7 +76,7 @@ const AssignedOrders: React.FC = () => {
   };
 
   const handleOrderDetails = (order: Order) => {
-    localStorage.setItem("orderId", order.orderId);
+    localStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 

@@ -24,7 +24,12 @@ const PartnerHome: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem("partner_orderId");
+    localStorage.removeItem("partner_orderparams");
+    localStorage.removeItem("partner_dbName");
+    localStorage.removeItem("partner_dbId");
+    localStorage.removeItem("partner_Token");
+    localStorage.removeItem("partner_scrollPosition");
     navigate("/partnerLogin");
   };
 
@@ -35,7 +40,7 @@ const PartnerHome: React.FC = () => {
   };
 
   useEffect(() => {
-    const tokenString = localStorage.getItem("Token");
+    const tokenString = localStorage.getItem("partner_Token");
     if (!tokenString) {
       navigate("/partnerLogin");
       return;
@@ -43,7 +48,6 @@ const PartnerHome: React.FC = () => {
     const tokenObj = JSON.parse(tokenString);
     if (!tokenObj || tokenObj.primaryType !== "SELLER") {
       navigate("/partnerLogin");
-      localStorage.clear();
     }
   }, []);
 

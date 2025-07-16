@@ -1094,8 +1094,8 @@ const OrdersByPincode: React.FC = () => {
         open={commentsModalVisible}
         onClose={() => setCommentsModalVisible(false)}
         userId={selectedUserId}
-        updatedBy={localStorage.getItem("userName")?.toUpperCase()}
-        storedUniqueId={localStorage.getItem("uniquId")}
+        updatedBy={localStorage.getItem("admin_userName")?.toUpperCase()}
+        storedUniqueId={localStorage.getItem("admin_uniquId")}
         record={""}
         BASE_URL={BASE_URL}
       />

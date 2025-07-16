@@ -84,7 +84,7 @@ const AllOrders: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedParams = localStorage.getItem("orderparams");
+    const storedParams = localStorage.getItem("partner_orderparams");
 
     if (storedParams) {
       const parsedParams = new URLSearchParams(storedParams);
@@ -137,7 +137,7 @@ const AllOrders: React.FC = () => {
         params.append("status", currentStatus);
       }
 
-      localStorage.setItem("orderparams", params.toString());
+      localStorage.setItem("partner_orderparams", params.toString());
 
       const response = await axios.get<Order[]>(
         `${BASE_URL}/order-service/date-range?${params.toString()}`
@@ -179,7 +179,7 @@ const AllOrders: React.FC = () => {
   };
 
   const handleOrderDetails = (order: Order) => {
-    localStorage.setItem("orderId", order.orderId);
+    localStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 

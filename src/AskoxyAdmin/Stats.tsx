@@ -362,12 +362,12 @@ const Stats: React.FC = () => {
     })
   );
   const handleViewDetails = (order: Order) => {
-    const userType = localStorage.getItem("primaryType");
+    const userType = localStorage.getItem("admin_primaryType");
     if (userType === "HELPDESKSUPERADMIN") {
       message.info("please login into partner for watch order details");
       return;
     }
-    localStorage.setItem("orderId", order.orderId);
+    localStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 

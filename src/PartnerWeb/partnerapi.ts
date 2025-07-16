@@ -75,7 +75,7 @@ interface DeliveryBoy {
 
 export type { Order, OrderItems, Address, ExchangeOrder, DeliveryBoy };
 
-const accessToken = JSON.parse(localStorage.getItem("Token") || "{}");
+const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
 
 export const fetchOrdersByStatus = async (status: string): Promise<Order[]> => {
   try {

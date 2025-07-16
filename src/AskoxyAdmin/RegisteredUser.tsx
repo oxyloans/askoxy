@@ -194,7 +194,7 @@ const RegisteredUser: React.FC = () => {
     useState<boolean>(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>("");
-  const updatedBy = localStorage.getItem("userName")?.toUpperCase();
+  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
   // const [updatedBy, setUpdatedBy] = useState<string>("admin");
   const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [submittingComment, setSubmittingComment] = useState<boolean>(false);
@@ -203,7 +203,7 @@ const RegisteredUser: React.FC = () => {
   const [mobileNumber1, setMobileNumber1] = useState("");
   const [whatsappNumber1, setWhatsappNumber1] = useState("");
   const [userId1, setUserId1] = useState("");
-  const userType = localStorage.getItem("primaryType");
+  const userType = localStorage.getItem("admin_primaryType");
   const [storedUniqueId, setStoredUniqueId] = useState<string | null>("");
   const [helpDeskUsers, setHelpDeskUsers] = useState<HelpDeskUser[]>([]);
   const [selectedTimeFrame, setSelectedTimeFrame] =
@@ -418,7 +418,7 @@ const RegisteredUser: React.FC = () => {
   };
 
   useEffect(() => {
-    const storedUniqueId = localStorage.getItem("uniquId");
+    const storedUniqueId = localStorage.getItem("admin_uniquId");
     setStoredUniqueId(storedUniqueId);
     fetchCounts();
   }, []);
@@ -995,88 +995,7 @@ const RegisteredUser: React.FC = () => {
 
   const showCommentsModal = async (record: UserData | null): Promise<void> => {
     setCommentsModalVisible(true);
-    // await fetchComments(record);
   };
-
-  // const fetchComments = async (record: UserData | null): Promise<void> => {
-  //   if (!record || !record.id) return;
-
-  //   setLoadingComments(true);
-  //   try {
-  //     const response = await axios.post(
-  //       `${BASE_URL}/user-service/fetchAdminComment`,
-  //       { userId: record.id },
-  //       { headers: { "Content-Type": "application/json" } }
-  //     );
-
-  //     if (response.data && typeof response.data === "object") {
-  //       setComments(response.data);
-  //     } else {
-  //       setComments([]);
-  //     }
-  //   } catch (error: any) {
-  //     if (error.response && error.response.status === 500) {
-  //       message.info("No comments found");
-  //     } else {
-  //       message.error(
-  //         "Failed to load comments...please try again after some time."
-  //       );
-  //     }
-  //     setComments([]);
-  //   } finally {
-  //     setLoadingComments(false);
-  //   }
-  // };
-
-  // Submit new comment
-  // const handleSubmitComment = async (): Promise<void> => {
-  //   if (!userResponse?.trim()) {
-  //     message.warning("Please enter customer behaviour");
-  //     return;
-  //   }
-  //   if (!newComment.trim()) {
-  //     message.warning("Please enter a comment");
-  //     return;
-  //   }
-  //   setOrderId("");
-
-  //   let update = updatedBy;
-  //   const type = localStorage.getItem("primaryType");
-  //   if (type === "SELLER") {
-  //     update = "ADMIN";
-  //   }
-
-  //   let comment = newComment;
-
-  //   if (orderId) {
-  //     comment = `Regarding order Id ${orderId} ${newComment}`;
-  //   }
-  //   setSubmittingComment(true);
-  //   try {
-  //     await axios.patch(
-  //       `${BASE_URL}/user-service/adminUpdateComments`,
-  //       {
-  //         adminComments: comment,
-  //         adminUserId: storedUniqueId,
-  //         commentsUpdateBy: update,
-  //         userId: record?.id,
-  //         customerBehaviour: userResponse,
-  //       },
-  //       { headers: { "Content-Type": "application/json" } }
-  //     );
-
-  //     message.success("Comment added successfully");
-  //     setNewComment("");
-  //     setUserResponse(undefined);
-  //     // await fetchComments(record);
-  //   } catch (error) {
-  //     console.error("Error submitting comment:", error);
-  //     message.error("Failed to add comment");
-  //   } finally {
-  //     setSubmittingComment(false);
-  //     setNewComment("");
-  //   }
-  // };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "N/A";

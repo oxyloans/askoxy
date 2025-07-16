@@ -377,8 +377,7 @@ const CampaignDetails: React.FC = () => {
     if (userId) {
       navigate("/main/caserviceitems");
     } else {
-      navigate("/whatsapplogin");
-      sessionStorage.setItem("redirectPath", "/main/caserviceitems");
+      navigate("/caserviceitems");
     }
   };
 

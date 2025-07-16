@@ -155,7 +155,7 @@ const JobApplicationModal: React.FC<Props> = ({
         </Form.Item>
 
         <Form.Item
-          label="User Name"
+          label="Name"
           name="userName"
           rules={[{ required: true, message: "Please enter your name" }]}
         >

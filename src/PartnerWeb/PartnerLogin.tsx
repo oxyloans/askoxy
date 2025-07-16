@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
 
   const checkAutoLogin = async () => {
     try {
-      const token = localStorage.getItem("Token");
+      const token = localStorage.getItem("partner_Token");
       if (token) {
         navigate("/home");
       }
@@ -68,7 +68,7 @@ const LoginPage: React.FC = () => {
 
       if (response.data) {
         if (response.data.primaryType === "SELLER") {
-          localStorage.setItem("Token", JSON.stringify(response.data));
+          localStorage.setItem("partner_Token", JSON.stringify(response.data));
           message.success("Login Successful! Welcome to AskOxy.AI Partner!");
           navigate("/home");
         } else {

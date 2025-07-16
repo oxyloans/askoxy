@@ -179,12 +179,12 @@ const OrderDetailsPage: React.FC = () => {
   const [orderDetails, setOrderDetails] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = JSON.parse(localStorage.getItem("Token") || "{}");
+  const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
   // const { orderId, orderStatus } = useParams<{
   //   orderId: string;
   //   orderStatus: string;
   // }>();
-  const orderId = localStorage.getItem("orderId");
+  const orderId = localStorage.getItem("partner_orderId");
   const [orderStatus, setOrderStatus] = useState<string>();
   const [rejectForm] = Form.useForm();
   const [confirmLoading, setConfirmLoading] = useState(false);
