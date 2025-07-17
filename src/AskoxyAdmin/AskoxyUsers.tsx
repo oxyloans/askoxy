@@ -20,6 +20,7 @@ import {
   Divider,
   Form,
   Tabs,
+  Collapse,
 } from "antd";
 import {
   CommentOutlined,
@@ -34,6 +35,7 @@ import {
   DollarOutlined,
   MinusOutlined,
   PlusOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import BASE_URL from "../Config";
@@ -41,9 +43,9 @@ import { ColumnsType } from "antd/es/table";
 import moment from "moment";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 import WalletUploadModal from "./BulkUserWalletLoad";
-const { TextArea } = Input;
-const { Text } = Typography;
-const { Option } = Select;
+
+const { Title, Text } = Typography;
+const { Panel } = Collapse;
 
 const emojiOptions: SelectProps["options"] = [
   { label: "😊 Polite", value: "POLITE" },
@@ -172,6 +174,25 @@ interface HelpDeskUser {
   lastFourDigitsUserId: string;
 }
 
+interface WalletTransaction {
+  walletTxType: number;
+  walletTxAmount: number;
+  walletTxBalance: number;
+  walletTxPurpose: number;
+  refereedTo: string | null;
+  customerId: string;
+  orderId: string | null;
+  walletTxDesc: string;
+  createdAt: number;
+  paymentId: string | null;
+}
+
+interface WalletData {
+  walletAmount: number;
+  walletTransactions: WalletTransaction[];
+  status: boolean;
+}
+
 const DataAssigned: React.FC = () => {
   const [userData, setUserData] = useState<UserData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -181,13 +202,8 @@ const DataAssigned: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [uniqueId, setUniqueId] = useState<string>("");
   const [helpDeskUsers, setHelpDeskUsers] = useState<HelpDeskUser[]>([]);
-
   const [commentsModalVisible, setCommentsModalVisible] =
     useState<boolean>(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loadingComments, setLoadingComments] = useState<boolean>(false);
-  const [newComment, setNewComment] = useState<string>("");
-  const [submittingComment, setSubmittingComment] = useState<boolean>(false);
   const [record, setRecord] = useState<UserData | null>(null);
   const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
   const [orderId, setOrderId] = useState<string>("");
@@ -209,6 +225,139 @@ const DataAssigned: React.FC = () => {
   const [activeTab, setActiveTab] = useState("add");
   const [reason, setReason] = useState("");
   const [form] = Form.useForm();
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [walletLoading, setWalletLoading] = useState<boolean>(false);
+  const [isButtonsEnabled, setIsButtonsEnabled] = useState<boolean>(
+    type === "HELPDESKSUPERADMIN"
+  );
+
+  const fetchWalletData = async (customerId: string): Promise<void> => {
+    setWalletLoading(true);
+    try {
+      const response = await fetch(
+        `${BASE_URL}/order-service/customerWalletData`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ customerId }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch wallet data");
+      }
+
+      const data: WalletData = await response.json();
+      setWalletData(data);
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+      message.error("Failed to load wallet data");
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  const getTransactionType = (type: number): string => {
+    return type === 1 ? "Credit" : "Debit";
+  };
+
+  // Format transaction purpose
+  const getTransactionPurpose = (purpose: number): string => {
+    const purposes: { [key: number]: string } = {
+      1: "Purchase",
+      2: "Admin Load",
+      3: "Refund",
+      4: "Cashback/Coupon",
+      5: "Other",
+    };
+    return purposes[purpose] || "Unknown";
+  };
+
+  const enhancedIsSubmitDisabled = (): boolean => {
+    return !isButtonsEnabled || isLoading || isSubmitDisabled();
+  };
+  const formatDate = (timestamp: number | string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const walletColumns: ColumnsType<WalletTransaction> = [
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (timestamp: number) => formatDate(timestamp),
+      sorter: (a: WalletTransaction, b: WalletTransaction) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      defaultSortOrder: "descend",
+      width: 150,
+    },
+    {
+      title: "Type",
+      dataIndex: "walletTxType",
+      key: "walletTxType",
+      render: (type: number) => (
+        <span
+          style={{
+            color: type === 1 ? "#52c41a" : "#ff4d4f",
+            fontWeight: "bold",
+          }}
+        >
+          {getTransactionType(type)}
+        </span>
+      ),
+      filters: [
+        { text: "Credit", value: 1 },
+        { text: "Debit", value: 2 },
+      ],
+      onFilter: (value: any, record: WalletTransaction) =>
+        record.walletTxType === value,
+      width: 80,
+    },
+    {
+      title: "Amount",
+      dataIndex: "walletTxAmount",
+      key: "walletTxAmount",
+      render: (amount: number) => `₹${amount.toFixed(2)}`,
+      sorter: (a: WalletTransaction, b: WalletTransaction) =>
+        a.walletTxAmount - b.walletTxAmount,
+      width: 100,
+    },
+    {
+      title: "Balance",
+      dataIndex: "walletTxBalance",
+      key: "walletTxBalance",
+      render: (balance: number) => `₹${balance.toFixed(2)}`,
+      width: 100,
+    },
+    {
+      title: "Purpose",
+      dataIndex: "walletTxPurpose",
+      key: "walletTxPurpose",
+      render: (purpose: number) => getTransactionPurpose(purpose),
+      width: 120,
+    },
+    {
+      title: "Description",
+      dataIndex: "walletTxDesc",
+      key: "walletTxDesc",
+      ellipsis: true,
+      width: 200,
+    },
+    {
+      title: "Order ID",
+      dataIndex: "orderId",
+      key: "orderId",
+      render: (orderId: string | null) => orderId || "-",
+      width: 100,
+    },
+  ];
 
   const deliveredOrdersCount = userOrders.filter(
     (order) => order.orderStatus === "4"
@@ -329,6 +478,12 @@ const DataAssigned: React.FC = () => {
       message.error("Failed to load order details");
       setLoader(false);
     }
+  };
+
+  const handleModalOpen = (record: UserData) => {
+    fetchWalletData(record.userId);
+    setIsModalOpen(true);
+    setWalletRecord(record);
   };
 
   const getHelpDeskName = (assignedToId: string): string => {
@@ -456,19 +611,18 @@ const DataAssigned: React.FC = () => {
             Orders
           </Button>
 
-          {type === "HELPDESKSUPERADMIN" && (
-            <Button
-              type="default"
-              size="small"
-              onClick={() => {
-                setIsModalOpen(true);
-                setWalletRecord(record);
-              }}
-              className="w-full sm:w-auto whitespace-nowrap rounded-md border border-purple-400 text-purple-600 hover:bg-purple-50 hover:border-purple-500 transition-colors text-xs px-2 py-1"
-            >
-              Load Wallet
-            </Button>
-          )}
+          {/* {type === "HELPDESKSUPERADMIN" && ( */}
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              handleModalOpen(record);
+            }}
+            className="w-full sm:w-auto whitespace-nowrap rounded-md border border-purple-400 text-purple-600 hover:bg-purple-50 hover:border-purple-500 transition-colors text-xs px-2 py-1"
+          >
+            {type === "HELPDESKSUPERADMIN" ? "Load wallet" : "View Wallet"}
+          </Button>
+          {/* )} */}
         </div>
       ),
     },
@@ -1039,7 +1193,6 @@ const DataAssigned: React.FC = () => {
   };
 
   const handleOpenModal = () => setWalletModalVisible(true);
-  const handleCloseModal = () => setWalletModalVisible(false);
 
   return (
     <Card className="shadow-lg rounded-lg border-0">
@@ -1316,13 +1469,13 @@ const DataAssigned: React.FC = () => {
             type="primary"
             loading={isLoading}
             onClick={handleSubmit}
-            disabled={isSubmitDisabled()}
+            disabled={enhancedIsSubmitDisabled()}
             style={{ backgroundColor: "#722ed1", borderColor: "#722ed1" }}
           >
             {activeTab === "add" ? "Add Amount" : "Remove Amount"}
           </Button>,
         ]}
-        width={600}
+        width={900}
         destroyOnClose
       >
         <div style={{ marginBottom: "24px" }}>
@@ -1349,9 +1502,7 @@ const DataAssigned: React.FC = () => {
                   {walletRecord?.countryCode
                     ? `${walletRecord.countryCode} `
                     : ""}
-                  {walletRecord?.mobileNumber
-                    ? walletRecord.mobileNumber
-                    : walletRecord?.whastappNumber}
+                  {walletRecord?.mobileNumber || walletRecord?.whastappNumber}
                 </span>
               </div>
             </div>
@@ -1369,6 +1520,86 @@ const DataAssigned: React.FC = () => {
             </div>
           </Space>
         </div>
+
+        <Divider />
+
+        {/* Wallet Amount and Transaction History */}
+        {walletLoading ? (
+          <div style={{ textAlign: "center", padding: "20px" }}>
+            <Spin size="large" />
+            <p style={{ marginTop: "10px" }}>Loading wallet data...</p>
+          </div>
+        ) : walletData ? (
+          <div style={{ marginBottom: "24px" }}>
+            <Card
+              size="small"
+              style={{
+                backgroundColor: "#f6ffed",
+                border: "1px solid #b7eb8f",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <Title level={4} style={{ margin: 0, color: "#52c41a" }}>
+                    Wallet Balance: ₹{walletData.walletAmount?.toFixed(2) || 0}
+                  </Title>
+                  <Text type="secondary">Current available balance</Text>
+                </div>
+                <DollarOutlined
+                  style={{ fontSize: "32px", color: "#52c41a" }}
+                />
+              </div>
+            </Card>
+
+            <Collapse
+              ghost
+              expandIcon={({ isActive }) => (
+                <DownOutlined rotate={isActive ? 180 : 0} />
+              )}
+            >
+              <Panel
+                header={
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <WalletOutlined style={{ color: "#722ed1" }} />
+                    <span style={{ fontWeight: "500" }}>
+                      Transaction History (
+                      {walletData.walletTransactions?.length || 0} transactions)
+                    </span>
+                  </div>
+                }
+                key="1"
+              >
+                <Table
+                  columns={walletColumns}
+                  dataSource={walletData.walletTransactions || []}
+                  rowKey={(record: WalletTransaction, index?: number) =>
+                    `${record.customerId}-${record.createdAt}-${index}`
+                  }
+                  pagination={{
+                    pageSize: 10,
+                    showTotal: (total: number, range: [number, number]) =>
+                      `${range[0]}-${range[1]} of ${total} transactions`,
+                  }}
+                  size="small"
+                  scroll={{ x: 800 }}
+                />
+              </Panel>
+            </Collapse>
+          </div>
+        ) : null}
 
         <Divider />
 

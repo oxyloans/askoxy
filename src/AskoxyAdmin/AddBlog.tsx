@@ -225,7 +225,7 @@ const AddBlog: React.FC = () => {
       status: item.status,
     }));
 
-    const disclaimerText = `### ✅ **Blog Disclaimer**
+    const disclaimerText = `\n\n### ✅ **Blog Disclaimer**
     *This blog is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [support@askoxy.ai]`;
 
     const finalCampaignDescription =

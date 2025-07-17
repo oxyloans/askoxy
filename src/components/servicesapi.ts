@@ -272,6 +272,9 @@ export const submitSubComment = async (
 export const fetchAppliedJobsByUserId = async (
   userId: string | null
 ): Promise<AppliedJob[]> => {
+  if (!userId) {
+    return [];
+  }
   try {
     const response = await axios.get<AppliedJob[]>(
       `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
