@@ -1,15 +1,15 @@
 import { Dashboard } from "@mui/icons-material";
 import axios from "axios";
 import {
- 
+ Users,
   Check,
-  
+  Coins,
   Copy,
   HelpCircle,
-  
- 
+  ShoppingCart,
+ TrendingUp,
   SendHorizonal,
- 
+ ArrowRight,
   X,
 } from "lucide-react";
 import React, { useEffect, useState, useRef } from "react";
@@ -228,44 +228,136 @@ const Tabview = () => {
   );
 
   const BMVInfoModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4 relative">
+     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
         <button
           onClick={() => setShowBmvModal(false)}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors z-10"
           aria-label="Close modal"
         >
           <X size={20} />
         </button>
-
-        <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-xl font-bold text-purple-700">
-            How to use BMVCoins?
-          </h2>
-        </div>
-
-        <div className="text-gray-700 space-y-3">
-          <p>
-            You can collect BMVCoins and use them to get discounts on rice bags,
-            as well as other products and services.
-          </p>
-          <div className="bg-purple-50 p-3 rounded-lg">
-            <p className="font-medium">Current value:</p>
-            <p>1,000 BMVCoins = ₹10 discount</p>
+        
+        <div className="p-6 sm:p-8">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Coins className="text-purple-600" size={28} />
+              <h2 className="text-2xl sm:text-3xl font-bold text-purple-700">
+                Welcome to BMVCoins
+              </h2>
+            </div>
           </div>
-          <p className="font-medium">Important information:</p>
-          <ul className="list-disc list-inside space-y-1">
-            <li>A minimum of 20,000 BMVCoins is required for redemption.</li>
-            <li>The discount value may change in the future.</li>
-          </ul>
-        </div>
 
-        <button
-          onClick={() => setShowBmvModal(false)}
-          className="mt-6 w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          Got it
-        </button>
+          {/* What are BMVCoins */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <span className="text-xl">💡</span>
+              What are BMVCoins?
+            </h3>
+            <p className="text-gray-700 mb-3">
+              BMVCoins are digital reward tokens powered by <strong>OXYCHAIN</strong>, our private blockchain.
+              They work like cashback points for your purchases.
+            </p>
+            <div className="bg-purple-50 p-4 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Current Value:</span>
+                <span className="text-purple-700 font-bold">1000 BMVCoins = ₹20</span>
+              </div>
+              <div className="text-sm text-gray-600">₹0.02 per coin</div>
+            </div>
+            <ul className="mt-3 space-y-1 text-gray-700">
+              <li className="flex items-start gap-2">
+                <span className="text-green-500 mt-1">✅</span>
+                Use on <strong>non-GST items</strong> like cash
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-500 mt-1">✅</span>
+                Track your coin balance anytime from your <strong>AskOxy dashboard</strong>
+              </li>
+            </ul>
+          </div>
+
+          {/* How to Use */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <span className="text-xl">💸</span>
+              How to Use Your BMVCoins
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                <span className="text-green-500 mt-1">✅</span>
+                <div>
+                  <strong>Redeem when you reach ₹200 (10,000 coins)</strong>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <Users className="text-blue-500 mt-1" size={16} />
+                <div>
+                  <strong>Transfer or receive</strong> coins with friends and family on AskOxy
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                <span className="text-purple-500 mt-1">📊</span>
+                <div>
+                  View transactions and coin status in your profile
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* What's Next */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <TrendingUp className="text-orange-500" size={20} />
+              What's Next?
+            </h3>
+            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-4 rounded-lg">
+              <p className="text-gray-700 mb-2">
+                We're working to list BMVCoins on exchanges soon.
+              </p>
+              <p className="text-gray-700 mb-2">
+                Once listed, today's ₹0.02 coin could grow into ₹1+.
+              </p>
+              <p className="text-sm text-gray-600 italic">
+                (Projected value – no guarantee. Loyalty matters!)
+              </p>
+            </div>
+          </div>
+
+          {/* Keep Shopping */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <ShoppingCart className="text-green-500" size={20} />
+              Keep Shopping. Keep Earning.
+            </h3>
+            <p className="text-gray-700 mb-2">
+              Use BMVCoins to save every day.
+            </p>
+            <p className="text-sm text-gray-600">
+              Powered by <strong>OXYCHAIN</strong>. Backed by your trust.
+            </p>
+          </div>
+
+          {/* Note */}
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>Note:</strong> BMVCoins are bonus rewards. Prices remain competitive even without them.
+            </p>
+            <p className="text-sm text-gray-600">
+              Use wisely — earn, redeem, and grow with AskOxy!
+            </p>
+          </div>
+
+          {/* Close Button */}
+          <button
+            onClick={() => setShowBmvModal(false)}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            Got it
+            <ArrowRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );

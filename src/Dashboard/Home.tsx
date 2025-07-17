@@ -193,6 +193,7 @@ const Home: React.FC = () => {
   const [hoveredImage, setHoveredImage] = useState<string | number | null>(
     null
   );
+  const [isHovered, setIsHovered] = useState(false); // NEW: State to track hover status
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const IMAGES_PER_SET = 3;
@@ -676,7 +677,7 @@ const Home: React.FC = () => {
       boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
     },
     hover: {
-      scale: 1.10,
+      scale: 1.1,
       boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
       transition: {
         type: "spring",
@@ -747,12 +748,13 @@ const Home: React.FC = () => {
 
   const totalSets = Math.ceil(headerImages.length / IMAGES_PER_SET);
   useEffect(() => {
+    if (isHovered) return; // NEW: Skip interval if an image is being hovered
     const interval = setInterval(() => {
       setCurrentSet((prev) => (prev + 1) % totalSets);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [headerImages.length]);
+  }, [headerImages.length, isHovered]);
 
   const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
@@ -1323,16 +1325,32 @@ const Home: React.FC = () => {
     );
   }, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
 
+  // *** Updated viewAllProducts function ***
   const viewAllProducts = () => {
     const selectedCategory = activeCategory || "All Items";
-    const selectedType = activeCategoryType || "ALL";
+    // NEW: Define a mapping of category names to their corresponding category types
+    const categoryTypeMap: Record<string, string> = {
+      "All Items": "ALL",
+      Groceries: "GROCERY",
+      Rice: "RICE",
+      Gold: "GOLD",
+      Festival: "FESTIVAL",
+    };
 
-    navigate(
-      `/main/dashboard/products?type=${encodeURIComponent(selectedType)}`,
-      {
-        state: { selectedCategory },
-      }
-    );
+    // NEW: Get the category type based on the active category
+    const selectedType = categoryTypeMap[selectedCategory] || "ALL";
+
+    // NEW: Construct query parameters to include type and weight (if applicable)
+    const queryParams = new URLSearchParams();
+    queryParams.append("type", selectedType.toUpperCase());
+    if (selectedWeight && selectedCategory === "Rice") {
+      queryParams.append("weight", selectedWeight);
+    }
+
+    // NEW: Navigate to the products page with the correct query parameters
+    navigate(`/main/dashboard/products?${queryParams.toString()}`, {
+      state: { selectedCategory },
+    });
   };
 
   const viewAllServices = () => {
@@ -1348,6 +1366,17 @@ const Home: React.FC = () => {
     const category = categories.find(
       (cat) => cat.categoryName === categoryName
     );
+    // NEW: Define a mapping of category names to their corresponding category types
+    const categoryTypeMap: Record<string, string> = {
+      "All Items": "ALL",
+      Groceries: "GROCERY",
+      Rice: "RICE",
+      Gold: "GOLD",
+      Festival: "FESTIVAL",
+    };
+
+    // NEW: Update the active category type based on the selected category
+    setActiveCategoryType(categoryTypeMap[categoryName] || "ALL");
 
     if (category) {
       const productItems = category.itemsResponseDtoList
@@ -1373,7 +1402,14 @@ const Home: React.FC = () => {
       setDisplayCount(5);
       setSearchTerm("");
       setSelectedWeight(null);
+      // NEW: Scroll to the products section smoothly after category change
       setTimeout(() => {
+        if (productsRef.current) {
+          productsRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
         setProductsLoading(false);
       }, 300);
     } else {
@@ -1605,6 +1641,8 @@ const Home: React.FC = () => {
                         minHeight: "160px",
                       }}
                       onClick={image.onClick}
+                      onHoverStart={() => setIsHovered(true)} // NEW: Set isHovered to true on hover start
+                      onHoverEnd={() => setIsHovered(false)}
                       whileHover={{
                         scale: 1.05, // ✅ Small scale to give hover effect
                         rotateY: 0, // ✅ Prevent flipping on hover

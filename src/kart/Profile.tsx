@@ -10,15 +10,13 @@ import {
   FaPen,
 } from "react-icons/fa";
 import { Loader2, AlertCircle, X, CheckCircle2 } from "lucide-react";
-import PhoneInput, { parsePhoneNumber } from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
+import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import Footer from "../components/Footer";
 
 import axios from "axios";
 import { isWithinRadius } from "./LocationCheck";
 import BASE_URL from "../Config";
-
-
 
 interface Address {
   id?: string;
@@ -55,11 +53,12 @@ const ProfilePage = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [whatsappVerificationCode, setWhatsappVerificationCode] = useState("");
   const [isWhatsappVerified, setIsWhatsappVerified] = useState(false);
-  const [isMobileNumberVerified,setIsMobileNumberVerified] = useState(false)
-  const [showWhatsappVerificationModal, setShowWhatsappVerificationModal] = useState(false);
+  const [isMobileNumberVerified, setIsMobileNumberVerified] = useState(false);
+  const [showWhatsappVerificationModal, setShowWhatsappVerificationModal] =
+    useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const [verifyLoader,setVerifyLoader] = useState(false)
+  const [verifyLoader, setVerifyLoader] = useState(false);
   const [addressFormData, setAddressFormData] = useState<Address>({
     flatNo: "",
     landmark: "",
@@ -94,26 +93,25 @@ const ProfilePage = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [editStatus, setEditStatus] = useState(true);
-  const [salt,setSalt] = useState();
-  const [whatsappOtpSession,setWhatsappOtpSession] = useState()
- 
+  const [salt, setSalt] = useState();
+  const [whatsappOtpSession, setWhatsappOtpSession] = useState();
+
   const token = localStorage.getItem("token") || "";
   const loginMethod = localStorage.getItem("loginMethod") || "";
   const isFromWhatsApp = loginMethod === "whatsapp";
-
 
   useEffect(() => {
     // Determine login method and set numbers accordingly
     if (loginMethod === "whatsapp") {
       const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         whatsappNumber: whatsappNumber,
         mobileNumber: "", // Clear mobile number
       }));
     } else if (loginMethod === "mobile") {
       const mobileNumber = localStorage.getItem("mobileNumber") || "";
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         mobileNumber: mobileNumber,
         whatsappNumber: "", // Clear WhatsApp number
@@ -123,16 +121,16 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const phoneNumber = formData.mobileNumber || formData.whatsappNumber;
-    
+
     if (phoneNumber) {
       try {
         const phoneNumberS = parsePhoneNumber(phoneNumber);
         console.log("phoneNumberS.country", phoneNumberS?.countryCallingCode);
-        
-        const detectedCountryCode = phoneNumberS?.countryCallingCode 
-          ? `+${phoneNumberS.countryCallingCode}` 
+
+        const detectedCountryCode = phoneNumberS?.countryCallingCode
+          ? `+${phoneNumberS.countryCallingCode}`
           : "+91"; // Default to India if unable to detect
-        
+
         setCountryCode(detectedCountryCode);
         setIsMethodDisabled(true); // Disable method selection when number is entered
       } catch (error) {
@@ -146,19 +144,18 @@ const ProfilePage = () => {
     }
   }, [formData.mobileNumber, formData.whatsappNumber]);
 
-
   useEffect(() => {
     if (isFromWhatsApp) {
       setFormData((prev) => ({
         ...prev,
         whatsappNumber: localStorage.getItem("whatsappNumber") || "",
-        mobileNumber: "",  // mobileNumber should be empty if from WhatsApp
+        mobileNumber: "", // mobileNumber should be empty if from WhatsApp
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
         mobileNumber: localStorage.getItem("mobileNumber") || "",
-        whatsappNumber: "",  // whatsappNumber should be empty if from Mobile login
+        whatsappNumber: "", // whatsappNumber should be empty if from Mobile login
       }));
     }
   }, [isFromWhatsApp]);
@@ -167,14 +164,14 @@ const ProfilePage = () => {
     // Determine login method and set numbers accordingly
     if (loginMethod === "whatsapp") {
       const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         whatsappNumber: whatsappNumber,
         mobileNumber: "", // Clear mobile number
       }));
     } else if (loginMethod === "mobile") {
       const mobileNumber = localStorage.getItem("mobileNumber") || "";
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         mobileNumber: mobileNumber,
         whatsappNumber: "", // Clear WhatsApp number
@@ -182,7 +179,7 @@ const ProfilePage = () => {
     }
   }, [loginMethod]);
 
-useEffect(() => {
+  useEffect(() => {
     if (customerId) {
       fetchProfileData();
       fetchAddresses();
@@ -190,7 +187,7 @@ useEffect(() => {
     setCartCount(parseInt(localStorage.getItem("cartCount") || "0"));
   }, [customerId]);
 
- const fetchProfileData = async () => {
+  const fetchProfileData = async () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
@@ -217,10 +214,10 @@ useEffect(() => {
       };
 
       setFormData(profileData);
-      
+
       // Determine WhatsApp verification status
       setIsWhatsappVerified(data.whatsappVerified);
-      setIsMobileNumberVerified(data.mobileVerified)
+      setIsMobileNumberVerified(data.mobileVerified);
     } catch (error) {
       setError("Error fetching profile data");
     } finally {
@@ -231,17 +228,17 @@ useEffect(() => {
   const sendWhatsappOTP = async () => {
     try {
       setIsLoading(true);
-      if(formData.whatsappNumber==""){
-        setError('Please enter whatsapp number')
-        return
+      if (formData.whatsappNumber == "") {
+        setError("Please enter whatsapp number");
+        return;
       }
-      
+
       const response = await axios.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
-          chatId: formData.whatsappNumber.replace(countryCode,""),
+          chatId: formData.whatsappNumber.replace(countryCode, ""),
           countryCode: countryCode,
-          id:customerId
+          id: customerId,
         },
         {
           headers: {
@@ -251,16 +248,19 @@ useEffect(() => {
       );
 
       if (response.data) {
-          if(response.data.whatsappOtpSession==null || response.data.salt==null){
-            setError("This whatsapp number is already in use")
-          }else{
-        setSalt(response.data.salt)
-        setWhatsappOtpSession(response.data.whatsappOtpSession)
-        setSuccessMessage("OTP sent to your WhatsApp number");
-        setTimeout(()=>{
-        setShowWhatsappVerificationModal(true);
-         },1000)
-          }
+        if (
+          response.data.whatsappOtpSession == null ||
+          response.data.salt == null
+        ) {
+          setError("This whatsapp number is already in use");
+        } else {
+          setSalt(response.data.salt);
+          setWhatsappOtpSession(response.data.whatsappOtpSession);
+          setSuccessMessage("OTP sent to your WhatsApp number");
+          setTimeout(() => {
+            setShowWhatsappVerificationModal(true);
+          }, 1000);
+        }
       } else {
         setError("Failed to send OTP");
       }
@@ -277,12 +277,12 @@ useEffect(() => {
       const response = await axios.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
-          chatId: formData.whatsappNumber.replace(countryCode,""),
+          chatId: formData.whatsappNumber.replace(countryCode, ""),
           countryCode: countryCode,
-          id:customerId,
+          id: customerId,
           whatsappOtp: whatsappVerificationCode,
-          whatsappOtpSession:whatsappOtpSession,
-          salt:salt
+          whatsappOtpSession: whatsappOtpSession,
+          salt: salt,
         },
         {
           headers: {
@@ -330,42 +330,35 @@ useEffect(() => {
     // First Name validation
     if (!formData.userFirstName.trim()) {
       errors.userFirstName = "First name is required";
-
     } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
       errors.userFirstName = "First name should only contain letters";
-  
     }
 
-    
-    if(formData.alterMobileNumber.trim()!==""){
-
-    // Alternate mobile number validation
-    if (!formData.alterMobileNumber.trim()) {
-      errors.alterMobileNumber = "Alternate mobile number is required";
-      
-    } else if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
-      errors.alterMobileNumber = "Please enter a valid 10-digit mobile number";
-
-    }else if(formData.alterMobileNumber === formData.mobileNumber){
-      errors.alterMobileNumber = "Alternate and Mobile number must be different.";
-      errors.mobileNumber = "Alternate and Mobile number must be different.";
-   
-    }else if(formData.alterMobileNumber === formData.whatsappNumber){
-      errors.alterMobileNumber = "Alternate and WhatsApp number must be different.";
-      errors.whatsappNumber = "Alternate and WhatsApp number must be different.";
-     
+    if (formData.alterMobileNumber.trim() !== "") {
+      // Alternate mobile number validation
+      if (!formData.alterMobileNumber.trim()) {
+        errors.alterMobileNumber = "Alternate mobile number is required";
+      } else if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
+        errors.alterMobileNumber =
+          "Please enter a valid 10-digit mobile number";
+      } else if (formData.alterMobileNumber === formData.mobileNumber) {
+        errors.alterMobileNumber =
+          "Alternate and Mobile number must be different.";
+        errors.mobileNumber = "Alternate and Mobile number must be different.";
+      } else if (formData.alterMobileNumber === formData.whatsappNumber) {
+        errors.alterMobileNumber =
+          "Alternate and WhatsApp number must be different.";
+        errors.whatsappNumber =
+          "Alternate and WhatsApp number must be different.";
+      }
     }
-  }
 
     // Mobile number validation
     if (!formData.mobileNumber.trim()) {
       errors.mobileNumber = "Mobile number is required";
-      
     } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
       errors.mobileNumber = "Please enter a valid 10-digit mobile number";
-   
     }
-
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -404,7 +397,7 @@ useEffect(() => {
       const payload = {
         ...formData,
         whatsappNumber: formData.whatsappNumber,
-        mobileNumber: formData.mobileNumber.replace(countryCode,"")
+        mobileNumber: formData.mobileNumber.replace(countryCode, ""),
       };
 
       await axios.patch(`${BASE_URL}/user-service/profileUpdate`, payload, {
@@ -415,29 +408,29 @@ useEffect(() => {
       });
 
       // Track profile update event with TypeScript-safe implementation
-    if (typeof window !== "undefined" && window.gtag) {
-      // Create a type-safe list of fields that are not empty
-      const updatedFields = Object.entries(payload)
-        .filter(([_, value]) => value !== '')
-        .map(([key, _]) => key);
-      
-      window.gtag("event", "profile_update", {
-        method: "form_submission",
-        fields_updated: updatedFields.join(',')
-      });
-    }
+      if (typeof window !== "undefined" && window.gtag) {
+        // Create a type-safe list of fields that are not empty
+        const updatedFields = Object.entries(payload)
+          .filter(([_, value]) => value !== "")
+          .map(([key, _]) => key);
+
+        window.gtag("event", "profile_update", {
+          method: "form_submission",
+          fields_updated: updatedFields.join(","),
+        });
+      }
 
       setSuccessMessage("Profile updated successfully!");
       setEditStatus(true);
       localStorage.setItem("profileData", JSON.stringify(payload));
-    } catch (error:any) {
-      setError(error.response.data || "Error updating profile. Please try again.");
+    } catch (error: any) {
+      setError(
+        error.response.data || "Error updating profile. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
-
-
 
   // Auto-hide messages after 5 seconds
   React.useEffect(() => {
@@ -491,13 +484,13 @@ useEffect(() => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-         // Track address update event
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "update_address", {
-          address_type: addressFormData.addressType,
-          editing: true
-        });
-      }
+        // Track address update event
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "update_address", {
+            address_type: addressFormData.addressType,
+            editing: true,
+          });
+        }
 
         setSuccessMessage("Address updated successfully!");
       } else {
@@ -506,11 +499,11 @@ useEffect(() => {
         });
 
         // Track new address addition event
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "add_address", {
-          address_type: addressFormData.addressType
-        });
-      }
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "add_address", {
+            address_type: addressFormData.addressType,
+          });
+        }
         setSuccessMessage("Address added successfully!");
       }
 
@@ -642,19 +635,21 @@ useEffect(() => {
           <div className="border-b border-gray-200 mb-2">
             <div className="flex space-x-8">
               <button
-                className={`pb-4 px-4 ${activeTab === "personal"
-                  ? "border-b-2 border-purple-600 text-purple-600 font-semibold"
-                  : "text-gray-500"
-                  }`}
+                className={`pb-4 px-4 ${
+                  activeTab === "personal"
+                    ? "border-b-2 border-purple-600 text-purple-600 font-semibold"
+                    : "text-gray-500"
+                }`}
                 onClick={() => setActiveTab("personal")}
               >
                 Personal Information
               </button>
               <button
-                className={`pb-4 px-4 ${activeTab === "addresses"
-                  ? "border-b-2 border-purple-600 text-purple-600 font-semibold"
-                  : "text-gray-500"
-                  }`}
+                className={`pb-4 px-4 ${
+                  activeTab === "addresses"
+                    ? "border-b-2 border-purple-600 text-purple-600 font-semibold"
+                    : "text-gray-500"
+                }`}
                 onClick={() => setActiveTab("addresses")}
               >
                 Address
@@ -682,10 +677,11 @@ useEffect(() => {
                         })
                       }
                       className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${validationErrors.userFirstName
-                          ? "border-red-500 ring-1 ring-red-500"
-                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                        }`}
+                                     ${
+                                       validationErrors.userFirstName
+                                         ? "border-red-500 ring-1 ring-red-500"
+                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                                     }`}
                       placeholder="Enter your first name"
                       disabled={editStatus}
                     />
@@ -698,7 +694,7 @@ useEffect(() => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Last Name 
+                      Last Name
                     </label>
                     <input
                       type="text"
@@ -711,10 +707,11 @@ useEffect(() => {
                         })
                       }
                       className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${validationErrors.userLastName
-                          ? "border-red-500 ring-1 ring-red-500"
-                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                        }`}
+                                     ${
+                                       validationErrors.userLastName
+                                         ? "border-red-500 ring-1 ring-red-500"
+                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                                     }`}
                       placeholder="Enter your last name"
                       disabled={editStatus}
                     />
@@ -727,7 +724,7 @@ useEffect(() => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Email Address 
+                      Email Address
                     </label>
                     <input
                       type="email"
@@ -739,10 +736,11 @@ useEffect(() => {
                         })
                       }
                       className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${validationErrors.customerEmail
-                          ? "border-red-500 ring-1 ring-red-500"
-                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                        }`}
+                                     ${
+                                       validationErrors.customerEmail
+                                         ? "border-red-500 ring-1 ring-red-500"
+                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                                     }`}
                       placeholder="Enter your email"
                       disabled={editStatus}
                     />
@@ -756,7 +754,6 @@ useEffect(() => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Alternate Mobile Number{" "}
-                     
                       <span className="text-xs text-gray-500 ml-1">
                         (If unavailable, we'll contact this number)
                       </span>
@@ -773,10 +770,11 @@ useEffect(() => {
                         })
                       }
                       className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${validationErrors.alterMobileNumber
-                          ? "border-red-500 ring-1 ring-red-500"
-                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                        }`}
+                                     ${
+                                       validationErrors.alterMobileNumber
+                                         ? "border-red-500 ring-1 ring-red-500"
+                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                                     }`}
                       placeholder="Enter alternate number"
                       disabled={editStatus}
                     />
@@ -789,57 +787,80 @@ useEffect(() => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Primary Mobile Number {isFromWhatsApp ? "" : <span className="text-red-500">*</span>}
+                      Primary Mobile Number{" "}
+                      {isFromWhatsApp ? (
+                        ""
+                      ) : (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <input
-                    type="tel"
+                      type="tel"
                       value={formData.mobileNumber}
                       disabled={isMobileNumberVerified}
-                      onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value || "" })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          mobileNumber: e.target.value || "",
+                        })
+                      }
                       className={`w-full px-4 py-3 rounded-lg border transition-all
-          ${validationErrors.mobileNumber ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-purple-500"}
+          ${
+            validationErrors.mobileNumber
+              ? "border-red-500 ring-1 ring-red-500"
+              : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+          }
         `}
                       placeholder="Enter Primary Mobile Number"
                     />
                     {validationErrors.mobileNumber && (
-                      <p className="text-red-500 text-sm">{validationErrors.mobileNumber}</p>
+                      <p className="text-red-500 text-sm">
+                        {validationErrors.mobileNumber}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  WhatsApp Number 
-                </label>
-                <div className="flex items-center space-x-2">
-                  <PhoneInput
-                    defaultCountry="IN"
-                    disabled={isWhatsappVerified} // Disable input only during OTP verification
-                    international={true} // Allow country change for WhatsApp
-                    value={formData.whatsappNumber}
-                    onChange={(value) => {
-                      setFormData({ ...formData, whatsappNumber: value || "" });
-                      setIsWhatsappVerified(false);
-                    }}
-                    className={`flex-grow px-4 py-3 rounded-lg border transition-all
-                      ${validationErrors.whatsappNumber ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-purple-500"}
+                    <label className="text-sm font-medium text-gray-700">
+                      WhatsApp Number
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <PhoneInput
+                        defaultCountry="IN"
+                        disabled={isWhatsappVerified} // Disable input only during OTP verification
+                        international={true} // Allow country change for WhatsApp
+                        value={formData.whatsappNumber}
+                        onChange={(value) => {
+                          setFormData({
+                            ...formData,
+                            whatsappNumber: value || "",
+                          });
+                          setIsWhatsappVerified(false);
+                        }}
+                        className={`flex-grow px-4 py-3 rounded-lg border transition-all
+                      ${
+                        validationErrors.whatsappNumber
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                      }
                     `}
-                    placeholder="Enter WhatsApp number"
-                  />
-                  {!isWhatsappVerified && (
-                    <button
-                      onClick={sendWhatsappOTP}
-                      className="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                    >
-                      Send OTP
-                    </button>
-                  )}
-                </div>
-                {validationErrors.whatsappNumber && (
-                  <p className="text-red-500 text-sm">
-                    {validationErrors.whatsappNumber}
-                  </p>
-                )}
-              </div>
+                        placeholder="Enter WhatsApp number"
+                      />
+                      {!isWhatsappVerified && (
+                        <button
+                          onClick={sendWhatsappOTP}
+                          className="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        >
+                          Send OTP
+                        </button>
+                      )}
+                    </div>
+                    {validationErrors.whatsappNumber && (
+                      <p className="text-red-500 text-sm">
+                        {validationErrors.whatsappNumber}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-4">

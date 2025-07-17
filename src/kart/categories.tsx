@@ -1308,158 +1308,160 @@ const getFilteredCategories = () => {
   </div>
 
   {/* Combo Add-On Modal */}
-  <Modal
-    open={comboAddOnModal.visible}
-    onCancel={() => {
-      setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
-      setHasAddedComboAddOn(false);
-    }}
-    footer={null}
-    centered
-    title={
-      <div className="text-center">
-        <h3 className="text-base sm:text-lg font-bold text-purple-700 mb-1">Special Offer Add-on</h3>
-        <p className="text-xs text-gray-600">Choose your favorite add-on and save more!</p>
-      </div>
-    }
-    className="special-offer-modal"
-    width="95%"
-    style={{ maxWidth: "95vw" }}
-  >
-    <div className={`grid gap-3 sm:gap-4 ${
-      comboAddOnModal.itemCount === 1 
-        ? 'grid-cols-1 max-w-xs mx-auto' 
-        : comboAddOnModal.itemCount === 2 
-        ? 'grid-cols-1 sm:grid-cols-2' 
-        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-    } justify-items-center`}>
-      {comboAddOnModal.items.map((addonItem) => {
-        const discountPercentage = addonItem.itemMrp 
-          ? Math.round(((addonItem.itemMrp - addonItem.itemPrice) / addonItem.itemMrp) * 100)
-          : 0;
-        
-        return (
-          <div
-            key={addonItem.itemId}
-            className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden w-full max-w-xs"
-          >
-            {/* Discount Badge */}
-            {discountPercentage > 0 && (
-              <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
-                {discountPercentage}% OFF
-              </div>
-            )}
-            
-            {/* Selection Badge */}
-            {hasAddedComboAddOn && (
-              <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
-                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+<Modal
+  open={comboAddOnModal.visible}
+  onCancel={() => {
+    setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+    setHasAddedComboAddOn(false);
+  }}
+  footer={null}
+  centered
+  title={
+    <div className="text-center">
+      <h3 className="text-base sm:text-lg font-bold text-purple-700 mb-1">Special Offer Add-on</h3>
+      <p className="text-xs text-gray-600">Choose your favorite add-on and save more!</p>
+    </div>
+  }
+  className="special-offer-modal"
+  width={comboAddOnModal.itemCount === 1 ? "320px" : comboAddOnModal.itemCount === 2 ? "600px" : "900px"}
+  style={{ maxWidth: "95vw" }}
+>
+  <div className={`grid gap-2 sm:gap-3 ${
+    comboAddOnModal.itemCount === 1 
+      ? 'grid-cols-1 max-w-xs mx-auto' 
+      : comboAddOnModal.itemCount === 2 
+      ? 'grid-cols-1 sm:grid-cols-2' 
+      : comboAddOnModal.itemCount <= 4
+      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'
+      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+  } justify-items-center`}>
+    {comboAddOnModal.items.map((addonItem) => {
+      const discountPercentage = addonItem.itemMrp 
+        ? Math.round(((addonItem.itemMrp - addonItem.itemPrice) / addonItem.itemMrp) * 100)
+        : 0;
+      
+      return (
+        <div
+          key={addonItem.itemId}
+          className="bg-white border-2 border-purple-100 rounded-lg p-2 sm:p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden w-full max-w-[280px]"
+        >
+          {/* Discount Badge */}
+          {discountPercentage > 0 && (
+            <div className="absolute top-1.5 left-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
+              {discountPercentage}% OFF
+            </div>
+          )}
+          
+          {/* Selection Badge */}
+          {hasAddedComboAddOn && (
+            <div className="absolute top-1.5 right-1.5 bg-purple-600 text-white rounded-full p-1 z-10">
+              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+          )}
+
+          {/* Image Container */}
+          <div className="relative mb-2">
+            <div className="w-2/3 sm:w-3/4 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+              {addonItem.itemImage ? (
+                <img
+                  src={addonItem.itemImage}
+                  alt={addonItem.itemName}
+                  className="w-full h-full object-contain p-1.5"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = parent.querySelector('.fallback-icon');
+                      if (fallback) {
+                        (fallback as HTMLElement).style.display = 'flex';
+                      }
+                    }
+                  }}
+                />
+              ) : null}
+              <div
+                className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
+                style={{ display: addonItem.itemImage ? 'none' : 'flex' }}
+              >
+                <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                 </svg>
               </div>
-            )}
-
-            {/* Image Container */}
-            <div className="relative mb-2">
-              <div className="w-3/4 sm:w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
-                {addonItem.itemImage ? (
-                  <img
-                    src={addonItem.itemImage}
-                    alt={addonItem.itemName}
-                    className="w-full h-full object-contain p-1.5"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent) {
-                        const fallback = parent.querySelector('.fallback-icon');
-                        if (fallback) {
-                          (fallback as HTMLElement).style.display = 'flex';
-                        }
-                      }
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
-                  style={{ display: addonItem.itemImage ? 'none' : 'flex' }}
-                >
-                  <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Info */}
-            <div className="text-center">
-              <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
-                {addonItem.itemName}
-              </h4>
-              
-              {/* Price Section */}
-              <div className="mb-3">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <span className="text-purple-600 font-bold text-base sm:text-lg">
-                    ₹{addonItem.itemPrice}
-                  </span>
-                  {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
-                    <span className="text-gray-500 text-xs line-through">
-                      ₹{addonItem.itemMrp}
-                    </span>
-                  )}
-                </div>
-                
-                {/* Savings Info */}
-                {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
-                  <div className="text-green-600 text-xs font-medium">
-                    You save ₹{addonItem.itemMrp - addonItem.itemPrice}
-                  </div>
-                )}
-              </div>
-
-              {/* Add Button */}
-              <motion.button
-                whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
-                whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
-                className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
-                  hasAddedComboAddOn
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg'
-                }`}
-                onClick={() => {
-                  if (!hasAddedComboAddOn) {
-                    handleAddToCart({ ...(addonItem as Item), status: "COMBO" });
-                    setHasAddedComboAddOn(true);
-                    setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
-                  } else {
-                    message.warning("You can only select one optional add-on.");
-                  }
-                }}
-                disabled={hasAddedComboAddOn}
-              >
-                {hasAddedComboAddOn ? (
-                  <span className="flex items-center justify-center gap-1.5">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Add-on Selected
-                  </span>
-                ) : (
-                  'Add Add-on'
-                )}
-              </motion.button>
             </div>
           </div>
-        );
-      })}
-    </div>
-    
-    {/* Modal Footer Info */}
-    <div className="text-center p-3 bg-gray-50 mx-1 sm:mx-3 mb-1 sm:mb-3 rounded-md mt-4">
-      <p className="text-xs text-gray-600">
-        <span className="font-medium">🎉 Special Offer:</span> Add any item to your combo and enjoy exclusive discounts!
-      </p>
+
+          {/* Product Info */}
+          <div className="text-center">
+            <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
+              {addonItem.itemName}
+            </h4>
+            
+            {/* Price Section */}
+            <div className="mb-2">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="text-purple-600 font-bold text-base sm:text-lg">
+                  ₹{addonItem.itemPrice}
+                </span>
+                {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
+                  <span className="text-gray-500 text-xs line-through">
+                    ₹{addonItem.itemMrp}
+                  </span>
+                )}
+              </div>
+              
+              {/* Savings Info */}
+              {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
+                <div className="text-green-600 text-xs font-medium">
+                  You save ₹{addonItem.itemMrp - addonItem.itemPrice}
+                </div>
+              )}
+            </div>
+
+            {/* Add Button */}
+            <motion.button
+              whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
+              whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
+              className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
+                hasAddedComboAddOn
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg'
+              }`}
+              onClick={() => {
+                if (!hasAddedComboAddOn) {
+                  handleAddToCart({ ...(addonItem as Item), status: "COMBO" });
+                  setHasAddedComboAddOn(true);
+                  setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+                } else {
+                  message.warning("You can only select one optional add-on.");
+                }
+              }}
+              disabled={hasAddedComboAddOn}
+            >
+              {hasAddedComboAddOn ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Add-on Selected
+                </span>
+              ) : (
+                'Add Add-on'
+              )}
+            </motion.button>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+  
+  {/* Modal Footer Info */}
+  <div className="text-center p-2 sm:p-3 bg-gray-50 mx-1 sm:mx-2 mb-1 sm:mb-2 rounded-md mt-3">
+    <p className="text-xs text-gray-600">
+      <span className="font-medium">🎉 Special Offer:</span> Add any item to your combo and enjoy exclusive discounts!
+    </p>
   </div>
 </Modal>
 
