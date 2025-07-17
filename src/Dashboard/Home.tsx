@@ -51,11 +51,12 @@ import O2 from "../assets/img/o2.png";
 import O8 from "../assets/img/StudyAbroda.png";
 import O3 from "../assets/img/2offer.png";
 import O4 from "../assets/img/o4.png";
-import O5 from "../assets/img/tb1.png";
+import O5 from "../assets/img/cashewoffer1.png";
 import O6 from "../assets/img/35kg1.png";
 import CB from "../assets/img/cashback offer png.png";
-import Cashew from "../assets/img/cashewoffer1.png";
+import Cashew from "../assets/img/rakhi1.png";
 import Riceoffers from "../assets/img/rice offers.png";
+import festive from "../assets/img/festive.png";
 import O7 from "../assets/img/5offer.png";
 import O9 from "../assets/img/essentialsmart.png";
 import gold from "../assets/img/gold.png";
@@ -194,6 +195,7 @@ const Home: React.FC = () => {
   );
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  const IMAGES_PER_SET = 3;
   const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
     status: { [key: string]: string };
@@ -202,6 +204,7 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategoryType, setActiveCategoryType] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string | null>(
     "All Items"
   );
@@ -228,15 +231,15 @@ const Home: React.FC = () => {
 
   // Existing states
   const [showOffersModal, setShowOffersModal] = useState(false);
-const [comboAddOnModal, setComboAddOnModal] = useState<{
-  visible: boolean;
-  items: AddOnItem[];
-  itemCount: number;
-}>({
-  visible: false,
-  items: [],
-  itemCount: 0,
-});
+  const [comboAddOnModal, setComboAddOnModal] = useState<{
+    visible: boolean;
+    items: AddOnItem[];
+    itemCount: number;
+  }>({
+    visible: false,
+    items: [],
+    itemCount: 0,
+  });
 
   const updateCartCount = useCallback(
     (count: number) => {
@@ -520,7 +523,11 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
       const goldItems = sortedUniqueItems.filter(
         (item: Item) => item.categoryType?.toLowerCase() === "gold"
       );
-
+      const rakhiItems = sortedUniqueItems.filter(
+        (item: Item) =>
+          item.categoryType?.toLowerCase() === "festival" &&
+          item.categoryName?.toLowerCase() === "rakhi"
+      );
       // Log filtered items to verify correct categorization
       console.log("All Items Count:", allItems.length);
       console.log("Grocery Items Count:", groceryItems.length);
@@ -541,6 +548,7 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
         Groceries: grocerie,
         Rice: rice,
         Gold: gold,
+        Rakhi: festive,
       };
 
       // Create fixed categories with images
@@ -567,6 +575,12 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
           categoryName: "Gold",
           categoryImage: defaultCategoryImages["Gold"],
           itemsResponseDtoList: goldItems,
+          subCategories: [],
+        },
+        {
+          categoryName: "Festival", // show "Festival" but fetches RAKHI items
+          categoryImage: defaultCategoryImages["Rakhi"],
+          itemsResponseDtoList: rakhiItems,
           subCategories: [],
         },
       ];
@@ -622,9 +636,7 @@ const [comboAddOnModal, setComboAddOnModal] = useState<{
     fetchInitialData();
   }, [fetchCartData, fetchCategories]);
 
-
-
-const [currentSet, setCurrentSet] = useState(0);
+  const [currentSet, setCurrentSet] = useState(0);
 
   // New useEffect to trigger offers modal
   useEffect(() => {
@@ -664,7 +676,7 @@ const [currentSet, setCurrentSet] = useState(0);
       boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
     },
     hover: {
-      scale: 1.05,
+      scale: 1.10,
       boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
       transition: {
         type: "spring",
@@ -678,54 +690,52 @@ const [currentSet, setCurrentSet] = useState(0);
     {
       id: "Cashback1",
       src: CB,
-      alt: "Products",
+      alt: "Cashback Offer",
       path: "/main/dashboard/products",
       onClick: () => {
         navigate("/main/dashboard/products", {
-          state: { selectedCategory: "All Items" }, // default fallback
+          state: { selectedCategory: "All Items" },
         });
       },
     },
-        {
-      id: "Cashback2",
+    {
+      id: "Cashew Offer",
+      src: Cashew,
+      alt: "Cashew Offer",
+      path: "/main/dashboard/products?category=RAKHI",
+      onClick: () => {
+        navigate("/main/dashboard/products?category=RAKHI");
+      },
+    },
+    {
+      id: "Rice Offer",
       src: Riceoffers,
-      alt: "Products",
+      alt: "Rice Offer",
       path: "/main/dashboard/products?type=RICE&weight=5.0",
       onClick: () => {
         navigate("/main/dashboard/products?type=RICE&weight=5.0");
       },
     },
     {
-      id: "Cashew Offer",
-      alt: "Products",
-      src: Cashew,
-      path: "/main/dashboard/products",
+      id: "26kg Offer",
+      src: O5,
+      alt: "26kg Offer",
+      path: "/main/dashboard/products?weight=10.0",
       onClick: () => {
-        navigate("/main/dashboard/products?type=RICE&weight=10.0",);
+        navigate("/main/dashboard/products?type=RICE&weight=10.0");
       },
     },
     {
-      id: "o1",
+      id: "26kg Offer",
       src: O6,
-      alt: "Products",
+      alt: "26kg Offer",
       path: "/main/dashboard/products?weight=26.0",
       onClick: () => {
         navigate("/main/dashboard/products?type=RICE&weight=26.0");
       },
     },
     {
-      id: "o6",
-      src: O9,
-      alt: "Products",
-      path: "/main/dashboard/products",
-      onClick: () => {
-        navigate("/main/dashboard/products", {
-          state: { selectedCategory: "Essentials Mart" },
-        });
-      },
-    },
-    {
-      id: "o2",
+      id: "Study Abroad",
       src: O8,
       alt: "Study Abroad",
       path: "/studyabroad",
@@ -735,13 +745,14 @@ const [currentSet, setCurrentSet] = useState(0);
     },
   ];
 
- useEffect(() => {
-  const totalSets = Math.ceil(headerImages.length / 3);
-  const interval = setInterval(() => {
-    setCurrentSet((prev) => (prev + 1) % totalSets);
-  }, 6000); // Flip every 20 seconds
-  return () => clearInterval(interval);
-}, [headerImages]);
+  const totalSets = Math.ceil(headerImages.length / IMAGES_PER_SET);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSet((prev) => (prev + 1) % totalSets);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [headerImages.length]);
 
   const handleItemClick = (item: Item | DashboardItem) => {
     if ("itemId" in item && item.itemId) {
@@ -766,8 +777,7 @@ const [currentSet, setCurrentSet] = useState(0);
       {
         id: "2",
         title: "Study Abroad",
-        image:
-          "https://iili.io/FGn6wdu.md.png",
+        image: "https://iili.io/FGn6wdu.md.png",
         description: "Complete guidance for international education",
         path: "/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,
@@ -847,9 +857,7 @@ const [currentSet, setCurrentSet] = useState(0);
       }));
 
       const weight = parseFloat(item.weight ?? "0");
-const isCombo =
-  item.status === "COMBO"
-
+      const isCombo = item.status === "COMBO";
 
       const requestBody: any = {
         customerId: userId,
@@ -895,42 +903,41 @@ const isCombo =
         return; // Skip fetching modal again
       }
 
-     if (!isCombo && !hasAddedComboAddOn) {
-  try {
-    const res = await axios.get(
-      `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
-    );
-    const comboData = res.data;
+      if (!isCombo && !hasAddedComboAddOn) {
+        try {
+          const res = await axios.get(
+            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+          );
+          const comboData = res.data;
 
-  if (comboData && comboData.items?.length > 0) {
-  const itemCount = comboData.items.length;
+          if (comboData && comboData.items?.length > 0) {
+            const itemCount = comboData.items.length;
 
-  setComboAddOnModal({
-    visible: true,
-    items: comboData.items.map((i: any) => ({
-      itemId: i.individualItemId,
-      itemName: i.itemName,
-      itemPrice: i.itemPrice,
-      itemMrp: i.itemMrp ?? i.itemPrice,
-      itemImage: i.imageUrl,
-      weight: i.itemWeight,
-      units: i.units,
-      quantity: i.quantity ?? 1,
-      status: "COMBO",
-      title: i.itemName,
-      image: i.imageUrl,
-      description: "",
-      path: "",
-      icon: <ShoppingBag className="text-purple-600" size={24} />,
-    })),
-    itemCount, // pass count to customize modal layout
-  });
-}
-
-  } catch (error) {
-    console.error("Failed to fetch combo info:", error);
-  }
-}
+            setComboAddOnModal({
+              visible: true,
+              items: comboData.items.map((i: any) => ({
+                itemId: i.individualItemId,
+                itemName: i.itemName,
+                itemPrice: i.itemPrice,
+                itemMrp: i.itemMrp ?? i.itemPrice,
+                itemImage: i.imageUrl,
+                weight: i.itemWeight,
+                units: i.units,
+                quantity: i.quantity ?? 1,
+                status: "COMBO",
+                title: i.itemName,
+                image: i.imageUrl,
+                description: "",
+                path: "",
+                icon: <ShoppingBag className="text-purple-600" size={24} />,
+              })),
+              itemCount, // pass count to customize modal layout
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch combo info:", error);
+        }
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
       message.error("Error adding to cart.");
@@ -941,13 +948,12 @@ const isCombo =
     }
   };
 
-const gridCols =
-  comboAddOnModal.itemCount === 1
-    ? "grid-cols-1"
-    : comboAddOnModal.itemCount === 2
-    ? "grid-cols-2"
-    : "grid-cols-3";
-
+  const gridCols =
+    comboAddOnModal.itemCount === 1
+      ? "grid-cols-1"
+      : comboAddOnModal.itemCount === 2
+      ? "grid-cols-2"
+      : "grid-cols-3";
 
   const handleQuantityChange = async (
     item: DashboardItem,
@@ -1318,14 +1324,14 @@ const gridCols =
   }, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
 
   const viewAllProducts = () => {
-    // Use the activeCategory directly without mapping to a single category
-    const normalizedCategory = activeCategory
-      ? activeCategory.toLowerCase()
-      : "all items";
+    const selectedCategory = activeCategory || "All Items";
+    const selectedType = activeCategoryType || "ALL";
+
     navigate(
-      `/main/dashboard/products?category=${encodeURIComponent(
-        normalizedCategory
-      )}`
+      `/main/dashboard/products?type=${encodeURIComponent(selectedType)}`,
+      {
+        state: { selectedCategory },
+      }
     );
   };
 
@@ -1571,66 +1577,53 @@ const gridCols =
         )}
       </Modal>
       {/* Header Images Section */}
-<div className="w-full py-1 md:py-2">
-  <div className="px-1 sm:px-2 md:px-3 lg:px-4 mx-auto max-w-7xl">
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 md:gap-2 lg:gap-3">
-      {headerImages
-        .slice(currentSet * 3, currentSet * 3 + 3)
-        .map((image) => (
-          <motion.div
-            key={image.id}
-            initial={{ rotateX: 90, opacity: 0 }}
-            animate={{ rotateX: 0, opacity: 1 }}
-            exit={{ rotateX: -90, opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="cursor-pointer overflow-hidden rounded-lg transition-transform duration-700 transform-style-preserve-3d"
-            onClick={() => {
-              if (image.onClick) {
-                image.onClick();
-              } else {
-                navigate(image.path);
-              }
-            }}
-          >
-            <div className="relative w-full overflow-hidden rounded-lg">
-              <motion.img
-                src={image.src}
-                alt={image.alt || "Header image"}
-                className="w-full h-auto object-contain rounded-lg backface-hidden"
-                animate={{
-                  scale: hoveredImage === image.id ? 1.02 : 1,
-                }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                whileHover={{
-                  filter: "brightness(1.1) contrast(1.05)",
-                }}
-                style={{
-                  filter:
-                    hoveredImage === image.id
-                      ? "brightness(1.1) contrast(1.05)"
-                      : "brightness(1) contrast(1)",
-                }}
-                onMouseEnter={() => setHoveredImage(image.id)}
-                onMouseLeave={() => setHoveredImage(null)}
-              />
-              <motion.div
-                className="absolute inset-0 rounded-lg"
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: hoveredImage === image.id ? 0.1 : 0,
-                }}
-                style={{
-                  background:
-                    "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))",
-                }}
-                transition={{ duration: 0.3 }}
-              />
+      <div className="w-full py-2">
+        <div className="px-2 sm:px-3 md:px-4 lg:px-5 mx-auto max-w-7xl">
+          {/* ✅ Wrapper to fix first image gap */}
+          <div className="relative" style={{ minHeight: "180px" }}>
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3"
+              style={{ perspective: 1000 }}
+            >
+              <AnimatePresence mode="wait">
+                {headerImages
+                  .slice(
+                    currentSet * IMAGES_PER_SET,
+                    currentSet * IMAGES_PER_SET + IMAGES_PER_SET
+                  )
+                  .map((image, idx) => (
+                    <motion.div
+                      key={`${image.id}-${currentSet}-${idx}`}
+                      initial={{ rotateY: 90, opacity: 0 }}
+                      animate={{ rotateY: 0, opacity: 1 }}
+                      exit={{ rotateY: -90, opacity: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="cursor-pointer overflow-hidden rounded-lg"
+                      style={{
+                        transformStyle: "preserve-3d",
+                        backfaceVisibility: "hidden",
+                        minHeight: "160px",
+                      }}
+                      onClick={image.onClick}
+                      whileHover={{
+                        scale: 1.05, // ✅ Small scale to give hover effect
+                        rotateY: 0, // ✅ Prevent flipping on hover
+                        transition: { duration: 0.3 },
+                      }}
+                    >
+                      <img
+                        src={image.src}
+                        alt={image.alt || "Header"}
+                        className="w-full h-full object-contain rounded-lg"
+                        style={{ height: "160px" }}
+                      />
+                    </motion.div>
+                  ))}
+              </AnimatePresence>
             </div>
-          </motion.div>
-        ))}
-    </div>
-  </div>
-</div>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <section ref={productsRef} className="mb-12">
@@ -1780,63 +1773,63 @@ const gridCols =
         </section>
 
         {/* Services Section */}
-<section className="mb-12">
-  <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
-    <h2 className="text-xl font-bold text-gray-800 flex items-center">
-      <Settings className="text-purple-600 mr-2" size={20} />
-      Our Services
-    </h2>
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
-      onClick={viewAllServices}
-    >
-      View All
-      <ArrowRight size={16} className="ml-1" />
-    </motion.button>
-  </div>
-
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-    {loading
-      ? Array.from({ length: 3 }).map((_, index) => (
-          <div
-            key={`skeleton-service-${index}`}
-            className="rounded-xl overflow-hidden animate-pulse bg-transparent"
-          >
-            <div className="h-40 bg-gray-200"></div>
-            <div className="p-4 text-center">
-              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
-            </div>
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <Settings className="text-purple-600 mr-2" size={20} />
+              Our Services
+            </h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+              onClick={viewAllServices}
+            >
+              View All
+              <ArrowRight size={16} className="ml-1" />
+            </motion.button>
           </div>
-        ))
-      : services.map((service, index) => (
-          <motion.div
-            key={service.id}
-            custom={index}
-            initial="hidden"
-            animate="visible"
-            whileHover="hover"
-            variants={serviceCardVariants}
-            className="rounded-xl overflow-hidden bg-transparent cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-lg"
-            onClick={() => navigate(service.path)}
-          >
-            <div className="aspect-video overflow-hidden">
-              <img
-                src={service.image}
-                alt={service.title}
-                className="w-full h-full object-contain transition-transform duration-300"
-              />
-            </div>
-            <div className="p-4 text-center">
-              <h3 className="text-gray-900 font-bold text-lg">
-                {service.title}
-              </h3>
-            </div>
-          </motion.div>
-        ))}
-  </div>
-</section>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {loading
+              ? Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={`skeleton-service-${index}`}
+                    className="rounded-xl overflow-hidden animate-pulse bg-transparent"
+                  >
+                    <div className="h-40 bg-gray-200"></div>
+                    <div className="p-4 text-center">
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                    </div>
+                  </div>
+                ))
+              : services.map((service, index) => (
+                  <motion.div
+                    key={service.id}
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="hover"
+                    variants={serviceCardVariants}
+                    className="rounded-xl overflow-hidden bg-transparent cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+                    onClick={() => navigate(service.path)}
+                  >
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-contain transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4 text-center">
+                      <h3 className="text-gray-900 font-bold text-lg">
+                        {service.title}
+                      </h3>
+                    </div>
+                  </motion.div>
+                ))}
+          </div>
+        </section>
 
         {/* Digital Services Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
@@ -1948,7 +1941,7 @@ const gridCols =
       <Modal
         open={comboAddOnModal.visible}
         onCancel={() => {
-         setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+          setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
           setHasAddedComboAddOn(false);
         }}
         footer={null}
@@ -1964,9 +1957,15 @@ const gridCols =
           </div>
         }
         className="special-offer-modal"
-       width={comboAddOnModal.itemCount === 1 ? 300 : comboAddOnModal.itemCount === 2 ? 500 : 700}
+        width={
+          comboAddOnModal.itemCount === 1
+            ? 300
+            : comboAddOnModal.itemCount === 2
+            ? 500
+            : 700
+        }
       >
-       <div className={`grid gap-4 ${gridCols}`}>
+        <div className={`grid gap-4 ${gridCols}`}>
           {comboAddOnModal.items.map((addonItem) => {
             // Calculate discount percentage (assuming you have itemMRP field)
             const discountPercentage = addonItem.itemMrp
@@ -2112,7 +2111,11 @@ const gridCols =
                         });
                         setHasAddedComboAddOn(true);
                         setTimeout(() => {
-                        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+                          setComboAddOnModal({
+                            visible: false,
+                            items: [],
+                            itemCount: 0,
+                          });
                         }, 500);
                       } else {
                         message.warning(

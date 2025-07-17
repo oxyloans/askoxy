@@ -30,6 +30,7 @@ interface CallerItem {
   createdDate: string;
   caller: string;
   id: string;
+  isActive: boolean | null;
 }
 
 interface UserData {
@@ -396,6 +397,17 @@ const HelpDeskDashboard: React.FC = () => {
                   {emojiLabel}
                 </Tag>
               </div>
+            )}
+            {record.isActive !== null && (
+              <Tag
+                className={`w-fit  rounded font-medium ${
+                  record.isActive
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {record.isActive ? "Active" : "Not Active"}
+              </Tag>
             )}
           </div>
         );

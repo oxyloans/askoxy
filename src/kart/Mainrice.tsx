@@ -531,11 +531,15 @@ const Ricebags: React.FC = () => {
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [showOxyLoansModal, setShowOxyLoansModal] = useState(false);
   const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
-const [activeCategory, setActiveCategory] = useState<string>("");
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const selectedType = queryParams.get("type");
+  const selectedCategory = queryParams.get("category");
+  const selectedWeight = queryParams.get("weight");
   const minSwipeDistance = 50;
   const isSmallScreen = window.innerWidth < 768;
   const imagesPerView = isSmallScreen ? 1 : 2;
@@ -558,7 +562,7 @@ const [activeCategory, setActiveCategory] = useState<string>("");
     offer8,
   ].map((src, i) => ({ src, alt: `Offer ${i + 1}` }));
 
- const extendedImages = [
+  const extendedImages = [
     ...bannerImages,
     ...bannerImages.slice(0, imagesPerView),
   ];
@@ -674,9 +678,38 @@ const [activeCategory, setActiveCategory] = useState<string>("");
   const { count, setCount } = context;
 
   const handleBannerClick = (index: number) => {
-    const clickedBanner = offerImages[index % offerImages.length];
-    if (clickedBanner?.webNavigation) {
-      navigate(clickedBanner.webNavigation);
+    switch (index) {
+      case 0:
+        setActiveCategory("Essentials Mart");
+        scrollToSection("Essentials Mart");
+        break;
+      case 1:
+        setActiveCategory("GOLD");
+        scrollToSection("GOLD");
+        break;
+      case 2:
+        setActiveCategory("Kitchen Elixirs");
+        scrollToSection("Kitchen Elixirs");
+        break;
+      case 3:
+        setActiveCategory("Snacking");
+        scrollToSection("Snacking");
+        break;
+      case 4:
+        setShowAppModal(true);
+        break;
+      // case 5:
+      //   setShowFAQModal(true);
+      //   break;
+      case 6:
+        setActiveCategory("Kolam Rice");
+        scrollToSection("Kolam Rice");
+        break;
+      case 7:
+        setShowOxyLoansModal(true);
+        break;
+      default:
+        break;
     }
   };
 
@@ -787,26 +820,29 @@ const [activeCategory, setActiveCategory] = useState<string>("");
           (cat) => !riceCategoryNames.includes(cat.categoryName)
         );
 
-const finalCategories: Category[] = [
-  // ❌ REMOVE THIS BLOCK
-  // {
-  //   categoryName: "All Items",
-  //   categoryImage: null,
-  //   itemsResponseDtoList: sortedUniqueItems,
-  //   subCategories: [],
-  //   categoryType: "ALL",
-  // },
+        const finalCategories: Category[] = [
+          // ❌ REMOVE THIS BLOCK
+          // {
+          //   categoryName: "All Items",
+          //   categoryImage: null,
+          //   itemsResponseDtoList: sortedUniqueItems,
+          //   subCategories: [],
+          //   categoryType: "ALL",
+          // },
 
-  ...riceCategories.map((category) => ({
-    ...category,
-    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
-  })),
-  ...otherCategories.map((category) => ({
-    ...category,
-    itemsResponseDtoList: sortItemsByStock(category.itemsResponseDtoList),
-  })),
-];
-
+          ...riceCategories.map((category) => ({
+            ...category,
+            itemsResponseDtoList: sortItemsByStock(
+              category.itemsResponseDtoList
+            ),
+          })),
+          ...otherCategories.map((category) => ({
+            ...category,
+            itemsResponseDtoList: sortItemsByStock(
+              category.itemsResponseDtoList
+            ),
+          })),
+        ];
 
         setCategories(finalCategories);
         setFilteredCategories(finalCategories);
@@ -1057,14 +1093,14 @@ const finalCategories: Category[] = [
             {extendedImages.map((image, index) => (
               <div
                 key={index}
-                className="flex-shrink-0 px-1 sm:px-2" // 👈 Added horizontal spacing between banners
+                className="flex-shrink-0 px-1 sm:px-2"
                 style={{ width: `${100 / extendedImages.length}%` }}
-                onClick={() => handleBannerClick(index % offerImages.length)}
+                onClick={() => handleBannerClick(index % bannerImages.length)}
                 onTouchStart={handleBannerTouchStart}
                 onTouchMove={handleBannerTouchMove}
                 onTouchEnd={handleBannerTouchEnd}
               >
-                 <img
+                <img
                   src={image.src}
                   alt={image.alt || `Offer ${index + 1}`}
                   className="w-full h-auto object-cover"
@@ -1084,6 +1120,9 @@ const finalCategories: Category[] = [
             : categories
         }
         activeCategory={activeCategory}
+        selectedType={selectedType || "ALL"}
+        selectedCategory={selectedCategory || null}
+        selectedWeight={selectedWeight || null}
         onCategoryClick={handleCategoryClick}
         loading={loading}
         cart={cart}

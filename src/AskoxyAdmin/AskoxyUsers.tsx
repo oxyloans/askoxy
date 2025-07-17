@@ -901,6 +901,7 @@ const DataAssigned: React.FC = () => {
                   <p>
                     <strong>{item.productName}</strong>
                   </p>
+                  <p>Qnt: {item.quantity}</p>
                   {item.containerStatus && (
                     <p className="text-green-500 text-bold text-sm ">
                       <strong>{item.containerStatus}</strong>
@@ -1049,7 +1050,7 @@ const DataAssigned: React.FC = () => {
         </h1>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-           {type === "HELPDESKSUPERADMIN" && (
+          {type === "HELPDESKSUPERADMIN" && (
             <Button
               type="primary"
               onClick={handleOpenModal}
