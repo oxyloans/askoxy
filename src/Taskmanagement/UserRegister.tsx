@@ -119,8 +119,8 @@ const UserRegister: React.FC = () => {
     setError(null);
 
     try {
-      // Store name in local storage before API call
-      localStorage.setItem("Name", name);
+      // Store name in session storage before API call
+      sessionStorage.setItem("Name", name);
 
       // Make sure all required data is prepared
       const requestData = {

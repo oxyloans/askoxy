@@ -52,7 +52,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     window.addEventListener("resize", handleResize);
 
     // Get userName from local storage
-    const storedUserName = localStorage.getItem("Name") || "";
+    const storedUserName = sessionStorage.getItem("Name") || "";
     setUserName(storedUserName);
 
     // Check if current path is under a submenu and open it
@@ -130,7 +130,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const primaryType = localStorage.getItem("primaryType");
+    const primaryType = sessionStorage.getItem("primaryType");
 
     if (
       !primaryType ||
@@ -150,7 +150,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   };
 
   const handleSignOut = (): void => {
-    // localStorage.clear();
+    // sessionStorage.clear();
     sessionStorage.clear();
     window.location.href = "/userlogin";
   };

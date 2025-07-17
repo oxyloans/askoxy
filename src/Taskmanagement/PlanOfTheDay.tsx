@@ -101,10 +101,10 @@ const PlanOfTheDay: React.FC = () => {
     setCurrentDate(today.toLocaleDateString("en-US", options));
 
     const storedUserId =
-      localStorage.getItem("userId") || "b83ed56b-fd00-4a3c-8104-18a143a086af";
+      sessionStorage.getItem("userId") || "";
     setUserId(storedUserId);
 
-    const storedUserName = localStorage.getItem("Name") || "";
+    const storedUserName = sessionStorage.getItem("Name") || "";
     setUserName(storedUserName);
 
     // Check if user has already submitted a plan for today
@@ -181,14 +181,14 @@ const PlanOfTheDay: React.FC = () => {
         `${BASE_URL}/user-service/write/userTaskUpdate`,
         {
           planOftheDay: values.planOftheDay,
-          taskAssinedBy: localStorage.getItem("Name"),
+          taskAssinedBy: sessionStorage.getItem("Name"),
           taskTeam: values.taskTeam,
           userId: userId,
         }
       );
 
       if (response.data.success) {
-        localStorage.setItem("taskId", response.data.id);
+        sessionStorage.setItem("taskId", response.data.id);
 
         setSubmissionSuccess(true);
 

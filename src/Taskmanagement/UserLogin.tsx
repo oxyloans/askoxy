@@ -59,8 +59,8 @@ const UserLogin: React.FC = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    const type = localStorage.getItem("primaryType");
+    const token = sessionStorage.getItem("accessToken");
+    const type = sessionStorage.getItem("primaryType");
     if (token && type === "EMPLOYEE") {
       navigate("/userPanelLayout");
     }
@@ -96,11 +96,11 @@ const UserLogin: React.FC = () => {
         const { token, refreshToken, id, name, primaryType } = response.data;
 
         // Store user info in localStorage
-        localStorage.setItem("accessToken", token);
-        if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-        if (id) localStorage.setItem("userId", id);
-        if (name) localStorage.setItem("Name", name);
-        if (primaryType) localStorage.setItem("primaryType", primaryType);
+        sessionStorage.setItem("accessToken", token);
+        if (refreshToken) sessionStorage.setItem("refreshToken", refreshToken);
+        if (id) sessionStorage.setItem("userId", id);
+        if (name) sessionStorage.setItem("Name", name);
+        if (primaryType) sessionStorage.setItem("primaryType", primaryType);
 
         // Handle different user types
         if (primaryType === "EMPLOYEE") {

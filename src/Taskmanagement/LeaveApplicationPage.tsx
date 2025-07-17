@@ -54,7 +54,7 @@ const LeaveApplicationPage: React.FC = () => {
 
   useEffect(() => {
     // Get username from localStorage
-    const name = localStorage.getItem("Name");
+    const name = sessionStorage.getItem("Name");
     if (name) {
       setUserName(name);
     }
@@ -125,8 +125,8 @@ const LeaveApplicationPage: React.FC = () => {
 
     try {
       // Get username and userId from localStorage
-      const username = localStorage.getItem("Name");
-      const userId = localStorage.getItem("userId");
+      const username = sessionStorage.getItem("Name");
+      const userId = sessionStorage.getItem("userId");
 
       if (!username || !userId) {
         message.error("User information not found. Please login again.");

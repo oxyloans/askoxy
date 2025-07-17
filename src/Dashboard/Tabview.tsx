@@ -1,31 +1,23 @@
 import { Dashboard } from "@mui/icons-material";
 import axios from "axios";
 import {
-  Bot,
+ 
   Check,
-  Coins,
+  
   Copy,
   HelpCircle,
-  Info,
-  Settings,
+  
+ 
   SendHorizonal,
-  ShoppingBag,
+ 
   X,
 } from "lucide-react";
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import DashboardMain from "./Dashboardmain";
+
 import BASE_URL from "../Config";
 import BMVICON from "../assets/img/bmvlogo.png"; // Make sure to import the BMVICON
 
-interface DashboardItem {
-  title: string;
-  image: string;
-  description: string;
-  path: string;
-  icon: React.ReactNode;
-  category?: string;
-}
 
 const Tabview = () => {
   const [multichainId, setMultichainId] = useState("");
@@ -427,53 +419,33 @@ const Tabview = () => {
 
   return (
     <div
-      className={`
-   top-0 w-100% z-10 bg-white px-4 py-2 
-   transition-shadow duration-300
-   ${isScrolled ? "shadow-md" : ""}
-  `}
+      className={`top-0 w-full z-10 bg-white px-4 py-2 transition-shadow duration-300 ${
+        isScrolled ? "shadow-md" : ""
+      }`}
     >
       <div className="flex justify-center">
-        <div className="w-full max-w-2xl overflow-x-auto items-center">
-          {/* <div className="grid grid-cols-2 pt-4 md:grid-cols-4 gap-2 md:gap-4 justify-center ">
-            <TabButton
-              tab="products"
-              icon={<ShoppingBag size={20} />}
-              label="Products"
-            />
-            <TabButton
-              tab="services"
-              icon={<Settings size={20} />}
-              label="Services"
-            />
-            <TabButton
-              tab="freegpts"
-              icon={<Bot size={20} />}
-              label="Free GPTs"
-            />
-            <TabButton
-              tab="bmvcoin"
-              icon={<Coins size={20} />}
-              label="Cryptocurrency"
-            />
-          </div> */}
+        <div className="w-full max-w-2xl overflow-x-auto flex items-center">
+          {/* Optional: Tab buttons go here if needed */}
         </div>
       </div>
 
       {isVisible && (
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mt-4 w-full">
           {/* Blockchain ID Section */}
-          <div className="flex items-center overflow-hidden gap-2 bg-white p-3 rounded-lg shadow-lg w-full md:w-auto mt-4">
+   
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 bg-white p-3 rounded-lg shadow-lg w-full sm:w-auto text-center">
+            {/* Blockchain ID Text */}
             <button
-              className="text-sm font-medium text-purple-600"
+              className="text-sm font-medium text-purple-600 break-words text-center"
               onClick={() => window.open("http://bmv.money:2750/")}
             >
               Blockchain ID: {multichainId}
             </button>
 
+            {/* Copy Button with Text */}
             <button
               onClick={handleCopyMultichainId}
-              className="p-1 bg-white border border-purple-600 text-purple-600 hover:bg-purple-100 rounded transition-colors"
+              className="flex items-center gap-1 px-3 py-1 bg-white border border-purple-600 text-purple-600 hover:bg-purple-100 rounded transition-colors text-sm"
               aria-label="Copy multichain ID"
             >
               {isCopied ? (
@@ -481,45 +453,43 @@ const Tabview = () => {
               ) : (
                 <Copy className="w-4 h-4" />
               )}
+              <span>{isCopied ? "Copied" : "Copy"}</span>
             </button>
           </div>
 
-          {/* BMV Coins Section - Updated with clickable image and transfer button */}
-          <div className="bg-white p-3 rounded-lg shadow-lg w-full md:w-auto">
-            <div className="flex items-center justify-end">
+          {/* BMV Coins Section */}
+          <div className="bg-white p-3 rounded-lg shadow-lg w-full sm:w-auto flex flex-col items-center sm:items-start">
+            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 w-full">
               <div
-                className="flex items-center cursor-pointer mr-4"
+                className="flex items-center cursor-pointer justify-center"
                 onClick={() => setShowBmvModal(true)}
               >
                 <img
                   src={BMVICON}
                   alt="BMV Coin"
-                  className="h-8 mr-2 hover:opacity-80 transition-opacity"
+                  className="h-6 sm:h-8 mr-2 hover:opacity-80 transition-opacity"
                 />
-                <span className="text-m font-bold text-purple-600 mr-1">
+                <span className="text-sm sm:text-base font-bold text-purple-600">
                   {bmvCoin}
                 </span>
-                <HelpCircle size={18} className="text-purple-600 ml-1" />
+                <HelpCircle size={16} className="text-purple-600 ml-1" />
               </div>
 
-              {/* New Transfer Button */}
               <button
                 onClick={() => setShowTransferModal(true)}
-                className="p-2 bg-white border border-purple-600 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors flex items-center"
+                className="p-2 bg-white border border-purple-600 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors flex items-center text-xs sm:text-sm justify-center"
                 aria-label="Transfer BMV Coins"
               >
                 <SendHorizonal className="w-4 h-4 mr-1" />
-                <span className="text-xs">Transfer</span>
+                <span>Transfer</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* BMV Info Modal */}
+      {/* Modals */}
       {showBmvModal && <BMVInfoModal />}
-
-      {/* Transfer Modal */}
       {showTransferModal && <TransferModal />}
     </div>
   );

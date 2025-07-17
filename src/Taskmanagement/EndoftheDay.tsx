@@ -131,7 +131,7 @@ const TaskUpdate: React.FC = () => {
   const [fileInputKey, setFileInputKey] = useState<number>(Date.now()); // Key to reset file input
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
+    const storedUserId = sessionStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId);
       fetchAllPendingTasks(storedUserId);
@@ -315,10 +315,10 @@ const TaskUpdate: React.FC = () => {
       const docId = response.data.id;
       setDocumentId(docId);
 
-      // Store in local storage with a timestamp
-      localStorage.setItem("taskDocumentId", docId);
-      localStorage.setItem("taskDocumentTimestamp", new Date().toISOString());
-      localStorage.setItem("taskDocumentName", file.name);
+      // Store in session storage with a timestamp
+      sessionStorage.setItem("taskDocumentId", docId);
+      sessionStorage.setItem("taskDocumentTimestamp", new Date().toISOString());
+      sessionStorage.setItem("taskDocumentName", file.name);
 
       message.success("Document uploaded successfully!");
       setUploadStatus("uploaded");

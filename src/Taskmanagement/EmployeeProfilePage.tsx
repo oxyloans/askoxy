@@ -20,7 +20,7 @@ const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
   const [error, setError] = useState("");
   const [showToast, setShowToast] = useState(false);
 
-  const userId = localStorage.getItem("userId") || "";
+  const userId = sessionStorage.getItem("userId") || "";
 
   // Clear success message after delay
   useEffect(() => {

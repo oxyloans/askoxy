@@ -116,11 +116,11 @@ const AllStatusPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("general");
   const [searchText, setSearchText] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const taskId = localStorage.getItem("taskId");
+  const taskId = sessionStorage.getItem("taskId");
 
   useEffect(() => {
     // Get userId from localStorage
-    const storedUserId = localStorage.getItem("userId");
+    const storedUserId = sessionStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId);
     }

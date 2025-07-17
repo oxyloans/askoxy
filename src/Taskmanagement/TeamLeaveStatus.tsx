@@ -36,7 +36,7 @@ const LeaveStatus: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const userId = localStorage.getItem("userId");
+  const userId = sessionStorage.getItem("userId");
 
   useEffect(() => {
     const fetchLeaveData = async () => {
