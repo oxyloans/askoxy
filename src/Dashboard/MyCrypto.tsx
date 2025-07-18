@@ -560,7 +560,7 @@ const MyCrypto: React.FC = () => {
               </h2>
             </div>
             <p className="text-gray-700 text-sm mb-3">
-              We're working to list BMVCoins on exchanges soon.
+              We're working to list BMVCOINS on exchanges soon.
             </p>
             <div className="bg-white p-3 rounded-lg">
               <div className="flex items-center justify-between text-sm">
@@ -611,7 +611,7 @@ const MyCrypto: React.FC = () => {
           {/* Important Note */}
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
             <p className="text-xs text-gray-600 text-center leading-relaxed">
-              <strong>Note:</strong> BMVCoins are bonus rewards. Prices remain
+              <strong>Note:</strong> BMVCOINS are bonus rewards. Prices remain
               competitive even without them. Use wisely — earn, redeem, and grow
               with AskOxy!
             </p>
@@ -655,7 +655,7 @@ const MyCrypto: React.FC = () => {
           <div className="p-3 rounded-full bg-purple-100">
             <SendHorizonal className="h-6 w-6 text-purple-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800">Transfer BMVCoins</h2>
+          <h2 className="text-xl font-bold text-gray-800">Transfer BMVCOINS</h2>
         </div>
 
         {/* Show different content based on transfer status */}
@@ -669,12 +669,12 @@ const MyCrypto: React.FC = () => {
             </h3>
             <p className="text-gray-700 mb-4">
               You have successfully transferred {transferDetails.amount}{" "}
-              BMVCoins to {transferDetails.recipientMobile}.
+              BMVCOINS to {transferDetails.recipientMobile}.
             </p>
             <div className="bg-gray-50 p-4 rounded-lg mb-4">
               <p className="text-gray-500 mb-1">Updated Balance:</p>
               <p className="text-2xl font-bold text-purple-700">
-                {bmvCoin} BMVCoins
+                {bmvCoin} BMVCOINS
               </p>
             </div>
           </div>
@@ -717,11 +717,11 @@ const MyCrypto: React.FC = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                    BMVCoins
+                    BMVCOINS
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm mt-1">
-                  Available: {bmvCoin} BMVCoins
+                  Available: {bmvCoin} BMVCOINS
                 </p>
               </div>
 
@@ -760,7 +760,7 @@ const MyCrypto: React.FC = () => {
                     Processing...
                   </span>
                 ) : (
-                  "Transfer BMVCoins"
+                  "Transfer BMVCOINS"
                 )}
               </button>
             </div>
@@ -880,7 +880,7 @@ const MyCrypto: React.FC = () => {
                               : transfer.txMobileNumber}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {transfer.amountTransfer} BMVCoins
+                            {transfer.amountTransfer} BMVCOINS
                           </p>
                         </div>
                       </div>
@@ -934,33 +934,33 @@ const MyCrypto: React.FC = () => {
     const faqs = [
       {
         id: "what-are-bmvcoins",
-        question: "What are BMVCoins?",
+        question: "What are BMVCOINS?",
         answer:
-          "BMVCoins are digital reward tokens powered by OXYCHAIN blockchain. They work like cashback points for your purchases, with a current value of ₹0.02 per coin.",
+          "BMVCOINS are digital reward tokens powered by OXYCHAIN blockchain. They work like cashback points for your purchases, with a current value of ₹0.02 per coin.",
       },
       {
         id: "how-to-earn",
-        question: "How do I earn BMVCoins?",
+        question: "How do I earn BMVCOINS?",
         answer:
-          "You earn BMVCoins through purchases on AskOxy platform. They are automatically credited to your account as bonus rewards.",
+          "You earn BMVCOINS through purchases on AskOxy platform. They are automatically credited to your account as bonus rewards.",
       },
       {
         id: "how-to-use",
-        question: "How can I use BMVCoins?",
+        question: "How can I use BMVCOINS?",
         answer:
-          "You can use BMVCoins on non-GST items like cash. The minimum redemption threshold is ₹200 (10,000 coins). You can also transfer coins to other users.",
+          "You can use BMVCOINS on non-GST items like cash. The minimum redemption threshold is ₹200 (10,000 coins). You can also transfer coins to other users.",
       },
       {
         id: "transfer-coins",
-        question: "Can I transfer BMVCoins to others?",
+        question: "Can I transfer BMVCOINS to others?",
         answer:
-          "Yes! You can transfer BMVCoins to any registered AskOxy user using their mobile number. All transfers are final and cannot be reversed.",
+          "Yes! You can transfer BMVCOINS to any registered AskOxy user using their mobile number. All transfers are final and cannot be reversed.",
       },
       {
         id: "future-value",
-        question: "Will BMVCoins increase in value?",
+        question: "Will BMVCOINS increase in value?",
         answer:
-          "We're working to list BMVCoins on exchanges. While current value is ₹0.02 per coin, projected value could be ₹1+ per coin. However, this is a projection with no guarantee.",
+          "We're working to list BMVCOINS on exchanges. While current value is ₹0.02 per coin, projected value could be ₹1+ per coin. However, this is a projection with no guarantee.",
       },
     ];
 

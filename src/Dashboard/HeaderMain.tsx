@@ -3,12 +3,12 @@ import { ShoppingCart, UserCircle, X } from "lucide-react";
 import { FaBars, FaSearch, FaTimes } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
-import AskOxyLogo from "../assets/img/askoxylogonew.png";
+import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import { CartContext } from "../until/CartContext";
 import axios from "axios";
 
 import BASE_URL from "../Config";
-import { message } from "antd";
+
 import SearchBar from "../kart/SearchBar";
 
 interface HeaderProps {

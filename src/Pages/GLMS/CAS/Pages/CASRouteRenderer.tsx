@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { message } from "antd";
 import { useCaseRoutes } from "../Routes/useCaseRoutes";
-import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Menu, X } from "react-feather";
 import ReactMarkdown from "react-markdown";
-import BASE_URL from "../../../../Config"
+import BASE_URL from "../../../../Config";
 import { Sparkles } from "lucide-react";
 interface Message {
   role: "user" | "assistant";

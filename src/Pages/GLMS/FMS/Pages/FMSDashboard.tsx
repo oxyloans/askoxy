@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Menu, X } from "react-feather";
 
 const useCases = [
@@ -164,43 +163,44 @@ const useCases = [
   },
 ];
 
- 
 const FMSDashboard: React.FC = () => {
   const navigate = useNavigate();
-   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
-    const handleInterest = () => {
-       const userId = localStorage.getItem("userId");
-       if (userId) {
-         sessionStorage.setItem("submitclicks", "true");
-         navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
-       } else {
-         message.warning("Please login to submit your interest.");
-         sessionStorage.setItem("submitclicks", "true");
-         navigate("/whatsappregister");
-         sessionStorage.setItem("redirectPath", "/main/services/a6b5/glms-open-source-hub-job-stree");
-       }
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const handleInterest = () => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      sessionStorage.setItem("submitclicks", "true");
+      navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
+    } else {
+      message.warning("Please login to submit your interest.");
+      sessionStorage.setItem("submitclicks", "true");
+      navigate("/whatsappregister");
+      sessionStorage.setItem(
+        "redirectPath",
+        "/main/services/a6b5/glms-open-source-hub-job-stree"
+      );
+    }
   };
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-  
-    const handleLogoClick = () => (window.location.href = "/");
-    const handleGLMSClick = () => (window.location.href = "/glms");
-    useEffect(() => {
-      const handleScroll = () => setIsScrolled(window.scrollY > 10);
-      window.addEventListener("scroll", handleScroll);
-  
-      // Google Analytics page view event
-      if (window.gtag) {
-        window.gtag("event", "js_page_view", {
-          page_title: "FMS Use Case Page",
-          page_location: window.location.href,
-          page_path: window.location.pathname,
-        });
-      }
-  
-      return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-   
+
+  const handleLogoClick = () => (window.location.href = "/");
+  const handleGLMSClick = () => (window.location.href = "/glms");
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+
+    // Google Analytics page view event
+    if (window.gtag) {
+      window.gtag("event", "js_page_view", {
+        page_title: "FMS Use Case Page",
+        page_location: window.location.href,
+        page_path: window.location.pathname,
+      });
+    }
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">

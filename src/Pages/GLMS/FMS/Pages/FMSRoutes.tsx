@@ -3,12 +3,12 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFMSRoutes } from "../Routes/useFMSRoutes";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Menu, X } from "react-feather";
 import { Sparkles } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
-import BASE_URL from "../../../../Config"
+import BASE_URL from "../../../../Config";
 
 interface Message {
   role: "user" | "assistant";
@@ -400,7 +400,7 @@ const FMSRouteRenderer: React.FC = () => {
 
           {mobileMenuOpen && (
             <div className="md:hidden pb-4 pt-2 space-y-2">
-               <button
+              <button
                 onClick={toggleChat}
                 aria-label={chatOpen ? "Close AI Chat" : "Open AI Chat"}
                 className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-5 py-2 rounded-md transition flex items-center gap-2"

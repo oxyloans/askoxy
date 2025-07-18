@@ -1,5 +1,3 @@
-
-
 import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -23,7 +21,7 @@ import {
   User,
 } from "lucide-react";
 
-import AskOxyLogo from "../../assets/img/askoxylogoblack.png";
+import AskOxyLogo from "../../assets/img/askoxylogonew.png";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -68,29 +66,28 @@ const QualificationSpecializationGPT: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-   const riceTopics = [
-     {
-       id: 1,
-       title: "Support for International Students",
-       content: "Discover useful tips!",
-     },
-     {
-       id: 2,
-       title: "Qualification & Specialization",
-       content: "Seek expert guidance!",
-     },
-     {
-       id: 3,
-       title: "continuing education while abroad",
-       content: "Learn funding strategies.",
-     },
-     {
-       id: 4,
-       title: "Universities in usa",
-       content: "Find tailored solutions.",
-     },
-   ];
-
+  const riceTopics = [
+    {
+      id: 1,
+      title: "Support for International Students",
+      content: "Discover useful tips!",
+    },
+    {
+      id: 2,
+      title: "Qualification & Specialization",
+      content: "Seek expert guidance!",
+    },
+    {
+      id: 3,
+      title: "continuing education while abroad",
+      content: "Learn funding strategies.",
+    },
+    {
+      id: 4,
+      title: "Universities in usa",
+      content: "Find tailored solutions.",
+    },
+  ];
 
   // Auto-resize textarea
   useEffect(() => {
@@ -236,10 +233,10 @@ const QualificationSpecializationGPT: React.FC = () => {
 
     try {
       const userId = localStorage.getItem("userId");
-     
- const apiUrl = `http://65.0.147.157:9001/api/student-service/user/classification?prompt=${encodeURIComponent(
-   queryInput
- )}${userId ? `&userId=${userId}` : ""}`;
+
+      const apiUrl = `http://65.0.147.157:9001/api/student-service/user/classification?prompt=${encodeURIComponent(
+        queryInput
+      )}${userId ? `&userId=${userId}` : ""}`;
       const response = await axios.post(apiUrl);
 
       setMessages((prev) => [
@@ -328,11 +325,11 @@ const QualificationSpecializationGPT: React.FC = () => {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-                            onClick={() => navigate(-1)}
-                            className="p-2 hover:bg-gray-100 rounded-full"
-                          >
-                            <ArrowLeft className="h-6 w-6" />
-                          </button>
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -570,18 +567,18 @@ const QualificationSpecializationGPT: React.FC = () => {
               </div>
 
               {/* Send Button */}
-            <button
-                            onClick={() => handleSend(input)}
-                            disabled={isLoading || !input.trim()}
-                            className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                            aria-label="Send message"
-                          >
-                            {isLoading ? (
-                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                            ) : (
-                              <Send className="w-6 h-5" />
-                            )}
-                          </button>
+              <button
+                onClick={() => handleSend(input)}
+                disabled={isLoading || !input.trim()}
+                className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                aria-label="Send message"
+              >
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <Send className="w-6 h-5" />
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -640,5 +637,3 @@ const QualificationSpecializationGPT: React.FC = () => {
 };
 
 export default QualificationSpecializationGPT;
-
-

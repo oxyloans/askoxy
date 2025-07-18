@@ -244,7 +244,7 @@ const Tabview = () => {
             <div className="flex items-center justify-center gap-2 mb-2">
               <Coins className="text-purple-600" size={28} />
               <h2 className="text-2xl sm:text-3xl font-bold text-purple-700">
-                Welcome to BMVCoins
+                Welcome to BMVCOINS
               </h2>
             </div>
           </div>
@@ -253,16 +253,16 @@ const Tabview = () => {
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <span className="text-xl">💡</span>
-              What are BMVCoins?
+              What are BMVCOINS?
             </h3>
             <p className="text-gray-700 mb-3">
-              BMVCoins are digital reward tokens powered by <strong>OXYCHAIN</strong>, our private blockchain.
+              BMVCOINS are digital reward tokens powered by <strong>OXYCHAIN</strong>, our private blockchain.
               They work like cashback points for your purchases.
             </p>
             <div className="bg-purple-50 p-4 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Current Value:</span>
-                <span className="text-purple-700 font-bold">1000 BMVCoins = ₹20</span>
+                <span className="text-purple-700 font-bold">1000 BMVCOINS = ₹20</span>
               </div>
               <div className="text-sm text-gray-600">₹0.02 per coin</div>
             </div>
@@ -282,7 +282,7 @@ const Tabview = () => {
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <span className="text-xl">💸</span>
-              How to Use Your BMVCoins
+              How to Use BMVCOINS?
             </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
@@ -314,7 +314,7 @@ const Tabview = () => {
             </h3>
             <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-4 rounded-lg">
               <p className="text-gray-700 mb-2">
-                We're working to list BMVCoins on exchanges soon.
+                We're working to list BMVCOINS on exchanges soon.
               </p>
               <p className="text-gray-700 mb-2">
                 Once listed, today's ₹0.02 coin could grow into ₹1+.
@@ -332,7 +332,7 @@ const Tabview = () => {
               Keep Shopping. Keep Earning.
             </h3>
             <p className="text-gray-700 mb-2">
-              Use BMVCoins to save every day.
+              Use BMVCOINS to save every day.
             </p>
             <p className="text-sm text-gray-600">
               Powered by <strong>OXYCHAIN</strong>. Backed by your trust.
@@ -342,7 +342,7 @@ const Tabview = () => {
           {/* Note */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <p className="text-sm text-gray-600 mb-2">
-              <strong>Note:</strong> BMVCoins are bonus rewards. Prices remain competitive even without them.
+              <strong>Note:</strong> BMVCOINS are bonus rewards. Prices remain competitive even without them.
             </p>
             <p className="text-sm text-gray-600">
               Use wisely — earn, redeem, and grow with AskOxy!
@@ -383,7 +383,7 @@ const Tabview = () => {
             <SendHorizonal className="h-6 w-6 text-purple-600" />
           </div>
           <h2 className="text-xl font-bold text-purple-700">
-            Transfer BMVCoins
+            Transfer BMVCOINS
           </h2>
         </div>
 
@@ -396,7 +396,7 @@ const Tabview = () => {
               Transfer Successful!
             </p>
             <p className="text-sm text-gray-500 mt-2 mb-4">
-              {transferDetails.amount} BMVCoins transferred to{" "}
+              {transferDetails.amount} BMVCOINS transferred to{" "}
               {transferDetails.recipientMobile}
             </p>
             <button
@@ -500,7 +500,7 @@ const Tabview = () => {
                   Processing...
                 </span>
               ) : (
-                "Transfer BMVCoins"
+                "Transfer BMVCOINS"
               )}
             </button>
           </form>

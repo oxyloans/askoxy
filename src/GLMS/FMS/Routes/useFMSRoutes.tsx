@@ -58,137 +58,169 @@ const DummyComponent: React.FC<{ title: string }> = ({ title }) => (
 
 export const useFMSRoutes: Record<
   string,
-  { title: string; business: JSX.Element; system: JSX.Element }
+  {
+    title: string;
+    business: JSX.Element;
+    system: JSX.Element;
+    image?: string;
+  }
 > = {
   // New routes from FMSDashboard
   "asset-details": {
     title: "Asset Details",
     business: <MaintainAssetDetails />,
     system: <AssetDetailsUseCase />,
+    image: "",
   },
   "allocation-contract": {
     title: "Allocation Contract",
     business: <PDCPrinting />,
     system: <PdcPrintingUseCase />,
+    image: "",
   },
   "installment-prepayment": {
     title: "Installment Prepayment",
     business: <InstallmentPrepayment />,
     system: <WfInstallmentPrepaymentUseCase />,
+    image: "",
   },
   "case-reallocation": {
     title: "Case Reallocation",
     business: <NPAGrading />,
     system: <WfNpaGradingUseCase />,
+    image: "",
   },
   "npa-provisioning": {
     title: "NPA Provisioning",
     business: <NPAProvisioning />,
     system: <WfNpaProvisioningUseCase />,
+    image: "",
   },
   "settlement-knockoff": {
     title: "Settlements - Knock Off",
     business: <SettlementsKnockOff />,
     system: <WfSettlementsKnockOffUseCase />,
+    image: "",
   },
   "cheque-processing": {
     title: "Cheque Processing",
     business: <SettlementsChequeProcessing />,
     system: <WfSettlementsChequeProcessingUseCase />,
+    image: "",
   },
   "settlement-advisory": {
     title: "Settlement Advisory",
     business: <SettlementsManualAdvise />,
     system: <WfSettlementsManualAdviceUseCase />,
+    image: "",
   },
   "foreclosure-management": {
     title: "Foreclosure Management",
     business: <TerminationForeclosureClosure />,
     system: <WFTerminationForeclosureClosureUseCase />,
+    image: "https://i.ibb.co/GjWcDnY/termination-foreclosure.png",
   },
   "finance-viewer": {
     title: "Finance Viewer",
     business: <FinanceDetailsViewer />,
     system: <WfFmsFinanceViewerUseCase />,
+    image: "",
   },
   "floating-review": {
     title: "Floating Review Process",
     business: <FloatingReviewProcess />,
     system: <WfFmsFloatingReviewProcessUseCase />,
+    image: "",
   },
   "daily-workplan": {
     title: "Agent Work Plan",
     business: <SettlementsReceipts />,
     system: <WfFmsSettlementsReceiptsUseCase />,
+    image: "",
   },
   "settlements-payment": {
     title: "Settlements - Payment",
     business: <SettlementsPayments />,
     system: <WfFmsSettlementsPaymentsUseCase />,
+    image: "",
   },
   "settlements-waiveoff": {
     title: "Settlements - Waive Off",
     business: <SettlementsWaiveOff />,
     system: <WfFmsSettlementsWaiveOffUseCase />,
+    image: "",
   },
   "eod-bod-process": {
     title: "EOD / BOD Process",
     business: <EodBodDisplay />,
     system: <WfFmsEodBodUseCase />,
+    image: "https://i.ibb.co/dwhb3S8y/eod-bod.png",
   },
   "account-closure": {
     title: "Account Closure",
     business: <AccountClosureDisplay />,
     system: <SystemUseCaseClosureAccount />,
+    image: "https://i.ibb.co/TxX82fBM/workflow-clousre-account-clousre.png",
   },
   "account-status": {
     title: "Account Status",
     business: <ViewAccountStatusDisplay />,
     system: <WFClosureViewAccountStatusUseCase />,
+    image: "",
   },
   "document-master": {
     title: "Document Master",
     business: <DocumentMasterDisplay />,
     system: <WFDocumentMasterUseCase />,
+    image: "https://i.ibb.co/jk8ywqYL/document-master.png",
   },
   "bulk-prepayment": {
     title: "Bulk Prepayment",
     business: <FinanceReschedulingDisplay />,
     system: <WFFinanceReschedulingBulkPrepaymentUseCase />,
+    image: "https://i.ibb.co/ymY8fBs6/29.png",
   },
   "due-date-change": {
     title: "Due Date Change",
     business: <FinanceReschedulingDueDateDisplay />,
     system: <WFFinanceReschedulingDueDateChangeUseCase />,
+    image: "https://i.ibb.co/TqBYG6yQ/Finance-Rescheduling-Due-date-change.png",
   },
   "profit-rate-change": {
     title: "Profit Rate Change",
     business: <FinanceReschedulingProfitRateChange />,
     system: <WFFinanceReschedulingProfitRateChangeUseCase />,
+    image: "https://i.ibb.co/zVk0PwQB/Finance-Rescheduling-rate-of-intrest.png",
   },
   "tenure-change": {
     title: "Tenure Change",
     business: <FinanceReschedulingTenureChange />,
     system: <WFFinanceReschedulingTenureChangeUseCase />,
+    image:
+      "https://i.ibb.co/B2H7yCRk/Work-Flow-Finance-Rescheduling-Tenure-Change.png",
   },
   "post-disbursal-edit": {
     title: "Post Disbursal Edit",
     business: <PostDisbursalEdit />,
     system: <WFPostDisbursalEditUseCaseUpdated />,
+    image: "",
   },
   "deferral-constitution": {
     title: "Deferral - Constitution Wise",
     business: <RepaymentDeferralConstitutionBased />,
     system: <WFRepaymentDeferralConstitutionWiseUseCase />,
+    image: "",
   },
   "deferral-financewise": {
     title: "Deferral - Finance Wise",
     business: <RepaymentDeferralFinanceWise />,
     system: <WFRepaymentDeferralFinanceWiseUseCase />,
+    image: "https://i.ibb.co/SXDC5zTj/32.png",
   },
   "deferral-portfolio": {
     title: "Deferral - Portfolio Wise",
     business: <RepaymentDeferralBatchWise />,
     system: <WfRepaymentDeferralPortfolioWiseUseCase />,
+    image: "",
   },
 };

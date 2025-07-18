@@ -163,13 +163,7 @@ function AIBlockchainHeroSection() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
 
-              <button
-                onClick={handleSignIn}
-                className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20"
-              >
-                Free Consultation
-                <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              </button>
+      
             </div>
           </div>
 

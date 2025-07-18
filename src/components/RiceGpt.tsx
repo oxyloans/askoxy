@@ -1,17 +1,14 @@
-
 import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import {
   Plus,
-  
   Copy,
   Volume2,
   VolumeX,
   Share2,
   X,
-  
   MessageCircle,
   Check,
   ArrowLeft,
@@ -20,7 +17,7 @@ import {
   User,
 } from "lucide-react";
 
-import AskOxyLogo from "../../assets/img/askoxylogoblack.png";
+import AskOxyLogo from "../../assets/img/askoxylogonew.png";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -235,7 +232,8 @@ const RiceGpt: React.FC = () => {
 
     try {
       const userId = localStorage.getItem("userId");
-      const apiUrl = `https://meta.oxyloans.com/api/student-service/user/Erice?userId=${userId}&prompt=${encodeURIComponent(queryInput
+      const apiUrl = `https://meta.oxyloans.com/api/student-service/user/Erice?userId=${userId}&prompt=${encodeURIComponent(
+        queryInput
       )}`;
       const response = await axios.post(apiUrl);
 
@@ -324,12 +322,12 @@ const RiceGpt: React.FC = () => {
       <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-           <button
-                           onClick={() => navigate(-1)}
-                           className="p-2 hover:bg-gray-100 rounded-full"
-                         >
-                           <ArrowLeft className="h-6 w-6" />
-                         </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -345,8 +343,6 @@ const RiceGpt: React.FC = () => {
               <span className="hidden sm:inline">New Chat</span>
             </button>
           </div>
-
-         
         </div>
       </div>
 
@@ -639,5 +635,3 @@ const RiceGpt: React.FC = () => {
 };
 
 export default RiceGpt;
-
-

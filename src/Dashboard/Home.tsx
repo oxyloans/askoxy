@@ -751,7 +751,7 @@ const Home: React.FC = () => {
     if (isHovered) return; // NEW: Skip interval if an image is being hovered
     const interval = setInterval(() => {
       setCurrentSet((prev) => (prev + 1) % totalSets);
-    }, 5000);
+    }, 4500);
 
     return () => clearInterval(interval);
   }, [headerImages.length, isHovered]);
@@ -1612,21 +1612,23 @@ const Home: React.FC = () => {
           <p className="text-gray-500">No offers available at the moment.</p>
         )}
       </Modal>
+
       {/* Header Images Section */}
       <div className="w-full py-2">
         <div className="px-2 sm:px-3 md:px-4 lg:px-5 mx-auto max-w-7xl">
-          {/* ✅ Wrapper to fix first image gap */}
           <div className="relative" style={{ minHeight: "180px" }}>
             <div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3"
+              className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3"
               style={{ perspective: 1000 }}
             >
               <AnimatePresence mode="wait">
                 {headerImages
                   .slice(
-                    currentSet * IMAGES_PER_SET,
-                    currentSet * IMAGES_PER_SET + IMAGES_PER_SET
+                    currentSet * (isMobile ? 1 : IMAGES_PER_SET),
+                    currentSet * (isMobile ? 1 : IMAGES_PER_SET) +
+                      (isMobile ? 1 : IMAGES_PER_SET)
                   )
+
                   .map((image, idx) => (
                     <motion.div
                       key={`${image.id}-${currentSet}-${idx}`}
@@ -1634,26 +1636,28 @@ const Home: React.FC = () => {
                       animate={{ rotateY: 0, opacity: 1 }}
                       exit={{ rotateY: -90, opacity: 0 }}
                       transition={{ duration: 0.5 }}
-                      className="cursor-pointer overflow-hidden rounded-lg"
+                      className="cursor-pointer overflow-hidden rounded-lg flex items-center justify-center"
                       style={{
                         transformStyle: "preserve-3d",
                         backfaceVisibility: "hidden",
-                        minHeight: "160px",
+                        height: isMobile ? "100px" : "160px",
                       }}
                       onClick={image.onClick}
-                      onHoverStart={() => setIsHovered(true)} // NEW: Set isHovered to true on hover start
-                      onHoverEnd={() => setIsHovered(false)}
+                      onMouseEnter={() => setIsHovered(true)}
+                      onMouseLeave={() => setIsHovered(false)}
                       whileHover={{
-                        scale: 1.05, // ✅ Small scale to give hover effect
-                        rotateY: 0, // ✅ Prevent flipping on hover
+                        scale: 1.2,
+                        rotateY: 0,
                         transition: { duration: 0.3 },
                       }}
                     >
                       <img
                         src={image.src}
                         alt={image.alt || "Header"}
-                        className="w-full h-full object-contain rounded-lg"
-                        style={{ height: "160px" }}
+                        className="max-h-full max-w-full object-contain rounded-lg"
+                        style={{
+                          borderRadius: "12px",
+                        }}
                       />
                     </motion.div>
                   ))}

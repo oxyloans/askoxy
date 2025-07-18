@@ -2,20 +2,50 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import oxyloansLogo from "../assets/img/image1.png";
-import oxybricksLogo from "../assets/img/image2.png";
-import bmvcoinLogo from "../assets/img/image4.png";
-import oxyfoundationLogo from "../assets/img/image5.png";
+import s1 from "../assets/img/s1.png";
+import s2 from "../assets/img/s2.png";
+import s3 from "../assets/img/s3.png";
+import s4 from "../assets/img/s4.png";
+import s5 from "../assets/img/s5.png";
+import s6 from "../assets/img/s6.png";
+import s7 from "../assets/img/s7.png";
+import s8 from "../assets/img/s8.png";
+import s9 from "../assets/img/s9.png";
 
 const companies = [
-  { logo: oxyloansLogo, name: "OXY Loans", link: "https://oxyloans.com/" },
-  { logo: oxybricksLogo, name: "OXY Bricks", link: "https://oxybricks.world/" },
-  { logo: bmvcoinLogo, name: "BMV Money", link: "https://bmv.money/" },
   {
-    logo: oxyfoundationLogo,
-    name: "OXY Foundation",
-    link: "https://www.xperthomez.com/",
+    logo: s1,
+    name: "AI | Blockchain & IT Services",
+    link: "https://www.askoxy.ai/aiblockchainanditservices",
   },
+  {
+    logo: s2,
+    name: "AI - Blogs, Jobs and Training",
+    link: "https://www.askoxy.ai/glms",
+  },
+  {
+    logo: s3,
+    name: "CA | CS Services",
+    link: "https://www.askoxy.ai/caandcsservices",
+  },
+  {
+    logo: s4,
+    name: "Gold, Silver & Diamonds",
+    link: "https://www.askoxy.ai/goldandsilveranddiamonds",
+  },
+  {
+    logo: s5,
+    name: "Loans & Investments",
+    link: "https://www.askoxy.ai/loansinvestments",
+  },
+  { logo: s6, name: "Nyaya Gpt", link: "https://www.askoxy.ai/nyayagpt" },
+  { logo: s7, name: "Real Estate", link: "https://www.askoxy.ai/realestate" },
+  {
+    logo: s8,
+    name: "Rice 2 Robo ECommerce",
+    link: "https://www.askoxy.ai/rice2roboecommers",
+  },
+  { logo: s9, name: "Study Abroad", link: "https://www.askoxy.ai/studyabroad" },
 ];
 
 const GoldAndSilverAndOurServicesCarousel = () => {

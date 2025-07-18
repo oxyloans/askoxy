@@ -3,14 +3,13 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFMSRoutes } from "../Routes/useFMSRoutes";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Menu, X } from "react-feather";
 import { Sparkles } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
 import BASE_URL from "../../../Config";
 import {
-  
   Send,
   Maximize2,
   Minimize2,
@@ -28,11 +27,11 @@ interface Message {
   timestamp?: Date;
   sender?: "user" | "ai"; // Keep for backward compatibility
   text?: string; // Keep for backward compatibility
- 
-    id?: string;
+
+  id?: string;
 }
 const FMSRouteRenderer: React.FC = () => {
-const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
+  const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
   const useCase = useFMSRoutes[useCaseId || ""];
   const navigate = useNavigate();
 
@@ -56,7 +55,15 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  // New state for mode toggle
+  const [currentMode, setCurrentMode] = useState(type || "business");
+  // Enhanced predefined questions with icons
 
+  // Handle mode switch
+  const handleModeSwitch = (mode: "business" | "system") => {
+    setCurrentMode(mode);
+    navigate(`/los/${useCaseId}/${mode}`);
+  };
   // Enhanced predefined questions with icons
   const predefinedQuestions = [
     {
@@ -416,24 +423,51 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-20">
+            {/* Logo */}
             <div onClick={handleInterest} className="cursor-pointer group">
               <img
                 src={Askoxylogo}
                 alt="Logo"
-                className="h-12 transition-transform group-hover:scale-105"
+                className="h-10 md:h-12 transition-transform group-hover:scale-105"
               />
             </div>
 
-            <div className="hidden md:flex gap-3">
+            {/* Desktop Menu */}
+            <div className="hidden md:flex gap-2 lg:gap-3 items-center">
+              {/* Mode Switch */}
+              <div className="flex bg-gray-100 rounded-full p-1 text-sm">
+                <button
+                  onClick={() => handleModeSwitch("business")}
+                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-full font-medium transition-all ${
+                    currentMode === "business"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  Business
+                </button>
+                <button
+                  onClick={() => handleModeSwitch("system")}
+                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-full font-medium transition-all ${
+                    currentMode === "system"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  System
+                </button>
+              </div>
+
+              {/* Buttons */}
               <button
                 onClick={handleFmsClick}
-                className="bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-6 py-2.5 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                className="bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md"
               >
                 Go To FMS
               </button>
               <button
                 onClick={handleOpenChat}
-                className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-6 py-2.5 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 flex items-center gap-2 relative"
+                className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md flex items-center gap-2 relative"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>GenOxy</span>
@@ -445,27 +479,54 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
               </button>
               <button
                 onClick={handleInterest}
-                className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 px-6 py-2.5 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105"
+                className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md"
               >
                 I'm Interested
               </button>
             </div>
 
+            {/* Mobile Menu Toggle */}
             <div className="md:hidden">
               <button
                 onClick={toggleMobileMenu}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
           </div>
 
+          {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 pt-2 space-y-3 animate-slide-down">
+            <div className="md:hidden pt-2 pb-4 space-y-3 animate-slide-down">
+              {/* Mobile Mode Switch */}
+              <div className="flex bg-gray-100 rounded-full p-1 mx-2 text-sm">
+                <button
+                  onClick={() => handleModeSwitch("business")}
+                  className={`flex-1 px-3 py-2 rounded-full font-medium transition-all ${
+                    currentMode === "business"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  Business
+                </button>
+                <button
+                  onClick={() => handleModeSwitch("system")}
+                  className={`flex-1 px-3 py-2 rounded-full font-medium transition-all ${
+                    currentMode === "system"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  System
+                </button>
+              </div>
+
+              {/* Mobile Buttons */}
               <button
                 onClick={handleOpenChat}
-                className="w-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 relative"
+                className="w-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 relative"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>GenOxy</span>
@@ -477,13 +538,13 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
               </button>
               <button
                 onClick={handleFmsClick}
-                className="w-full bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-3 rounded-xl font-medium transition-all duration-200"
+                className="w-full bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-3 rounded-xl text-sm font-medium"
               >
                 Go To FMS
               </button>
               <button
                 onClick={handleInterest}
-                className="w-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 py-3 rounded-xl font-semibold transition-all duration-200"
+                className="w-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 px-4 py-3 rounded-xl text-sm font-semibold"
               >
                 I'm Interested
               </button>
@@ -493,10 +554,45 @@ const { useCaseId, type } = useParams<{ useCaseId: string; type: string }>();
       </header>
 
       {/* Main Content */}
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-xl  p-6 sm:p-8 border border-gray-200/50">
-            {SelectedComponent}
+      {/* <main className="px-4 py-8 sm:px-6 lg:px-8">
+             <div className="max-w-7xl mx-auto">
+               <div className="bg-white rounded-xl  p-6 sm:p-8 border border-gray-200/50">
+                 {SelectedComponent}
+               </div>
+             </div>
+           </main> */}
+      <main className="min-h-screen bg-gray-50  rounded-xl shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          <div
+            className="grid grid-cols-1 lg:grid-cols-7 gap-0 lg:gap-0"
+            // style={{ height: `calc(100vh - 64px)` }} // Optional, but not necessary if height set in children
+          >
+            {/* Left Side: Full Image Area (2/7) - Sticky with fixed height */}
+            <div
+              className="lg:col-span-2 hidden lg:block sticky top-[64px]"
+              // style={{ height: `calc(100vh - 64px)` }}
+            >
+              <img
+                src={useCase.image}
+                alt={`${useCase.title} Illustration`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Right Side: Component Area (5/7) - Scrollable */}
+            <div
+              className="lg:col-span-5  px-3 py-4 sm:px-6 lg:px-8 overflow-y-auto"
+              style={{ height: `calc(100vh)` }}
+            >
+              {/* <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
+                     {useCase.title} -{" "}
+                     {currentMode === "business" ? "Business" : "System"} View
+                   </h2> */}
+
+              <div className=" p-6 rounded-xl shadow-sm border border-gray-100">
+                {SelectedComponent}
+              </div>
+            </div>
           </div>
         </div>
       </main>

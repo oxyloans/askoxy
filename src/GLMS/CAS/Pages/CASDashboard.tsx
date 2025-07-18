@@ -1,11 +1,7 @@
-
-
-
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Menu, X } from "react-feather";
 
 const useCases = [
@@ -240,7 +236,6 @@ const CASDashboard: React.FC = () => {
       </footer>
     </div>
   );
-  
 };
 
 export default CASDashboard;

@@ -56,6 +56,7 @@ type SummaryData = {
   name: string;
   count: number;
   status: string;
+  amount: number;
 };
 
 const { Text } = Typography;
@@ -163,12 +164,23 @@ const MainPage: React.FC = () => {
       const exchangeOrdersData = await fetchExchangeOrders();
 
       const summaryData = [
-        { name: "New Orders", count: newOrders.length, status: "1" },
-        { name: "Assigned Orders", count: assignedOrders.length, status: "3" },
+        {
+          name: "New Orders",
+          count: newOrders.length,
+          status: "1",
+          amount: calculateOrdersTotal(newOrders),
+        },
+        {
+          name: "Assigned Orders",
+          count: assignedOrders.length,
+          status: "3",
+          amount: calculateOrdersTotal(assignedOrders),
+        },
         {
           name: "PickedUp Orders",
           count: pickedUpOrders.length,
           status: "PickedUp",
+          amount: calculateOrdersTotal(pickedUpOrders),
         },
         {
           name: "Exchange Orders",
@@ -176,11 +188,13 @@ const MainPage: React.FC = () => {
             (order) => order.status === "EXCHANGEREQUESTED"
           ).length,
           status: "Exchange",
+          amount: 0, // Exchange orders might not have amounts or calculate differently
         },
         {
           name: "Delivered Orders",
           count: deliveredOrders.length,
           status: "4",
+          amount: calculateOrdersTotal(deliveredOrders),
         },
       ];
 
@@ -205,7 +219,6 @@ const MainPage: React.FC = () => {
       setExchangeLoading(false);
     }
   };
-
   useEffect(() => {
     fetchData();
     handleLogin();
@@ -280,6 +293,23 @@ const MainPage: React.FC = () => {
     }
   };
 
+  const calculateOrderTotal = (order: Order): number => {
+    if (!order.orderItems || order.orderItems.length === 0) return 0;
+
+    return order.orderItems.reduce((total, item) => {
+      const price = parseFloat(item.price?.toString() || "0");
+      const quantity = parseInt(item.quantity?.toString() || "1");
+      return total + price * quantity;
+    }, 0);
+  };
+
+  const calculateOrdersTotal = (orders: Order[]): number => {
+    return orders.reduce(
+      (total, order) => total + calculateOrderTotal(order),
+      0
+    );
+  };
+
   const fetchDeliveredOrdersWithDates = async () => {
     if (!startDate || !endDate) {
       message.warning("Please select both start and end dates.");
@@ -300,7 +330,11 @@ const MainPage: React.FC = () => {
       setSummaryData((prev) =>
         prev.map((item) =>
           item.status === "4"
-            ? { ...item, count: deliveredOrders.length }
+            ? {
+                ...item,
+                count: deliveredOrders.length,
+                amount: calculateOrdersTotal(deliveredOrders),
+              }
             : item
         )
       );
@@ -785,6 +819,15 @@ const MainPage: React.FC = () => {
                     >
                       {summaryData.reduce((sum, item) => sum + item.count, 0)}
                     </div>
+                    <div className="text-lg font-semibold mt-1 flex flex-wrap items-center">
+                      <span>Amount :</span>
+                      <span className="ml-1" style={{ color: "#059669" }}>
+                        ₹
+                        {summaryData
+                          .reduce((sum, item) => sum + item.amount, 0)
+                          .toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                   <ShoppingCartOutlined
                     className="text-4xl opacity-50 hover:opacity-80 transition-opacity duration-300"
@@ -822,6 +865,15 @@ const MainPage: React.FC = () => {
                       style={{ color: "#0ea5e9cc" }}
                     >
                       {todayOrdersCount.length}
+                    </div>
+                    <div className="text-lg font-semibold mt-1 flex flex-wrap items-center">
+                      <span>Amount :</span>
+                      <span className="ml-1" style={{ color: "#059669" }}>
+                        ₹
+                        {calculateOrdersTotal(
+                          todayOrdersCount
+                        ).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                   <CalendarOutlined
@@ -914,11 +966,17 @@ const MainPage: React.FC = () => {
                       >
                         {item.count}
                       </div>
+                      <div className="text-lg font-semibold mt-1 flex flex-wrap items-center">
+                        <span>Amount :</span>
+                        <span className="ml-1" style={{ color: "#059669" }}>
+                          ₹{Math.floor(item.amount).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                     <div className="opacity-70 hover:opacity-100 transition-opacity duration-300 w-6 h-6">
                       {statusConfig.icon}
                     </div>
-                  </div>
+                  </div>  
                 </Card>
               </div>
             );

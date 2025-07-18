@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import Askoxylogo from "../../../assets/img/askoxylogoblack.png";
+import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Menu, X } from "react-feather";
 
 const useCases = [
@@ -81,7 +81,10 @@ const CMSDashboard: React.FC = () => {
       navigate("/main/services/a6b5/glms-open-source-hub-job-stree");
     } else {
       message.warning("Please login to submit your interest.");
-      sessionStorage.setItem("redirectPath", "/main/services/a6b5/glms-open-source-hub-job-stree");
+      sessionStorage.setItem(
+        "redirectPath",
+        "/main/services/a6b5/glms-open-source-hub-job-stree"
+      );
       navigate("/whatsappregister");
     }
   };
@@ -206,7 +209,6 @@ const CMSDashboard: React.FC = () => {
       </footer>
     </div>
   );
-  
 };
 
 export default CMSDashboard;

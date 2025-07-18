@@ -8,7 +8,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
-import Logo from "../assets/img/askoxylogoblack.png";
+import Logo from "../assets/img/askoxylogonew.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -53,15 +53,15 @@ const Footer = () => {
       type: "email",
     },
     {
-    icon: <Phone className="h-4 w-4 mb-1" />,
-    content: "+91 81432 71103",
-    type: "phone",
-  },
-  {
-    icon: <Phone className="h-4 w-4 mb-1" />,
-    content: "+91 91105 64106",
-    type: "phone",
-  },
+      icon: <Phone className="h-4 w-4 mb-1" />,
+      content: "+91 81432 71103",
+      type: "phone",
+    },
+    {
+      icon: <Phone className="h-4 w-4 mb-1" />,
+      content: "+91 91105 64106",
+      type: "phone",
+    },
   ];
 
   return (
@@ -198,8 +198,8 @@ const Footer = () => {
             <Link
               to="/contactus"
               className="text-gray-600 hover:text-purple-600 transition-colors duration-200"
-              >
-                Contact Us
+            >
+              Contact Us
             </Link>
           </div>
         </div>

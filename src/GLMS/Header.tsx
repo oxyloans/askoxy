@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import Askoxy from "../assets/img/askoxylogoblack.png";
+import Askoxy from "../assets/img/askoxylogonew.png";
 
 interface HeaderProps {
   onNavClick: (id: "home" | "videos" | "usecases") => void;
@@ -17,7 +17,6 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
     { id: "home", label: "GLMS Home" },
     { id: "videos", label: "Videos" },
     { id: "usecases", label: "Use Cases" },
- 
   ] as const;
 
   useEffect(() => {

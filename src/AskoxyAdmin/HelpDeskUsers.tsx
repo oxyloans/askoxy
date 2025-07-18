@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   Table,
@@ -35,6 +35,7 @@ import {
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import dayjs, { Dayjs } from "dayjs";
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
 interface HelpDeskUser {
   mail: string;
@@ -162,11 +163,22 @@ const HelpDeskUsers: React.FC = () => {
   const [userDetailsVisible, setUserDetailsVisible] =
     useState<UserDetailsVisibilityState>({});
   const [assignUserData, setAssignUserData] = useState([]);
-  const [assignUserModalVisible, setAssignUserModalVisible] = useState(false);
+  const [selectedHelpDeskUser, setSelectedHelpDeskUser] = useState<
+    string | null
+  >(null);
   const [assignUserPage, setAssignUserPage] = useState(1);
   const [assignUserTotal, setAssignUserTotal] = useState(0);
   const [assignUserId, setAssignUserId] = useState("");
   const [assignUserLoading, setAssignUserLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [commentsModalVisible, setCommentsModalVisible] =
+    useState<boolean>(false);
+  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
+  const storedUniqueId = localStorage.getItem("admin_uniquId");
+
+  const showCommentsModal = async (record: UserData | null) => {
+    setCommentsModalVisible(true);
+  };
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -221,6 +233,7 @@ const HelpDeskUsers: React.FC = () => {
     }
   };
 
+  const assignedUsersRef = useRef<HTMLDivElement>(null);
   const fetchUserDetails = async (userId: string, commentIndex: number) => {
     setUserDetailsLoading((prev) => ({ ...prev, [commentIndex]: true }));
     try {
@@ -319,10 +332,13 @@ const HelpDeskUsers: React.FC = () => {
       minute: "2-digit",
     });
   };
-
-  const handleAssignUsers = async (userId: string, pageNo = 1) => {
+  const handleAssignUsers = async (
+    userId: string,
+    userName: string,
+    pageNo = 1
+  ) => {
     setAssignUserId(userId);
-    setAssignUserModalVisible(true);
+    setSelectedHelpDeskUser(userName); // Add this line
     setAssignUserLoading(true);
     try {
       setAssignUserId(userId);
@@ -343,7 +359,12 @@ const HelpDeskUsers: React.FC = () => {
       );
       setAssignUserTotal(result?.totalCount || 0);
       setAssignUserPage(pageNo);
-      setAssignUserModalVisible(true);
+      setTimeout(() => {
+        assignedUsersRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
     } catch (error) {
       console.error("Failed to fetch assigned users", error);
       setAssignUserData([]);
@@ -353,8 +374,8 @@ const HelpDeskUsers: React.FC = () => {
   };
 
   const handleAssignUserPageChange = (page: number) => {
-    if (assignUserId) {
-      handleAssignUsers(assignUserId, page);
+    if (assignUserId && selectedHelpDeskUser) {
+      handleAssignUsers(assignUserId, selectedHelpDeskUser, page);
     }
   };
 
@@ -437,7 +458,7 @@ const HelpDeskUsers: React.FC = () => {
         <Button
           size="small"
           className="border border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-medium rounded px-1.5 py-0.5 text-sm transition-all duration-200"
-          onClick={() => handleAssignUsers(record.userId)}
+          onClick={() => handleAssignUsers(record.userId, record.name)}
         >
           Assigned Users
         </Button>
@@ -504,105 +525,82 @@ const HelpDeskUsers: React.FC = () => {
       ),
     },
     {
-      title: "Mobile",
-      dataIndex: "mobileNumber",
-      key: "mobileNumber",
-      width: 90,
-      render: (_: string, record: UserData) => {
-        const mobile = record.mobileNumber;
-        const whatsapp = record.whastappNumber;
-        const alterNativeMobileNumber = record.alterNativeMobileNumber;
+      title: "User Info",
+      key: "userInfo",
+      width: 140,
+      render: (_: any, record: UserData) => {
+        const {
+          mobileNumber,
+          whastappNumber,
+          alterNativeMobileNumber,
+          firstName,
+          lastName,
+          email,
+        } = record;
 
-        const tagStyle = {
-          fontSize: "14px",
-          width: "120px",
-          justifyContent: "center",
-          display: "flex",
-          alignItems: "center",
-        };
+        const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+        const displayName = fullName || "No Name";
 
-        const tags = [];
-
-        if (mobile) {
-          tags.push(
-            <Tag color="purple" style={tagStyle} key="mobile">
-              <PhoneOutlined className="mr-1" />
-              {mobile}
-            </Tag>
-          );
-        }
-
-        if (whatsapp && whatsapp !== mobile) {
-          tags.push(
-            <Tag color="green" style={tagStyle} key="whatsapp">
-              <WhatsAppOutlined className="mr-1" />
-              {whatsapp}
-            </Tag>
-          );
-        }
-
-        if (
-          alterNativeMobileNumber &&
-          alterNativeMobileNumber !== mobile &&
-          alterNativeMobileNumber !== whatsapp
-        ) {
-          tags.push(
-            <Tag color="blue" style={tagStyle} key="alt">
-              <PhoneOutlined className="mr-1" />
-              {alterNativeMobileNumber}
-            </Tag>
-          );
-        }
-
-        return tags.length > 0 ? (
-          <div className="flex flex-col gap-1">{tags}</div>
-        ) : null;
-      },
-    },
-    {
-      title: "Name",
-      dataIndex: "firstName",
-      key: "name",
-      width: 90,
-      render: (_text, record) => {
-        const fullName = `${record.firstName || ""} ${
-          record.lastName || ""
-        }`.trim();
         return (
-          <Tooltip title={fullName || "No Name"}>
-            <span className="flex items-center">
-              {/* <UserOutlined className="mr-2 text-gray-500" /> */}
-              {fullName ? (
-                fullName
-              ) : (
-                <span className="text-gray-400">No Name</span>
-              )}
-            </span>
-          </Tooltip>
+          <div className="space-y-1 text-sm">
+            {/* Name */}
+            <div className="font-medium">{displayName}</div>
+
+            {/* Mobile Numbers */}
+            <div className="text-gray-700">
+              📞{" "}
+              {mobileNumber ||
+                whastappNumber ||
+                alterNativeMobileNumber ||
+                "No Mobile"}
+            </div>
+
+            {/* Email */}
+            <div className="text-gray-500 text-xs truncate max-w-[200px]">
+              ✉️ {email || "No Email"}
+            </div>
+          </div>
         );
       },
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-      width: 120,
-      ellipsis: true,
-      render: (text: string) => (
-        <Tooltip title={text || "No Email"}>
-          <span className="flex items-center">
-            {/* <MailOutlined className="mr-2 text-gray-500" /> */}
-            {text ? (
-              text.length > 25 ? (
-                `${text.substring(0, 25)}...`
-              ) : (
-                text
-              )
-            ) : (
-              <span className="text-gray-400">No Email</span>
-            )}
-          </span>
-        </Tooltip>
+      title: "Assigned to",
+      key: "actions",
+      width: 40,
+      render: (_text: any, record: any) => {
+        const name = selectedHelpDeskUser;
+
+        return name ? (
+          <Tag color="cyan" className="capitalize mt-1 w-fit flex items-center">
+            <UserOutlined className="mr-1" />
+            {name}
+          </Tag>
+        ) : (
+          <Tag color="gray" className="text-sm">
+            Not Assigned
+          </Tag>
+        );
+      },
+    },
+
+    {
+      title: "Actions",
+      key: "actions",
+      width: 80,
+      render: (_text, record) => (
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-1 w-full">
+          <Button
+            type="default"
+            size="small"
+            onClick={() => {
+              setSelectedUser(record);
+              showCommentsModal(record);
+            }}
+            className="w-full sm:w-auto whitespace-nowrap rounded-md border border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-colors text-xs px-2 py-1"
+          >
+            Comments
+          </Button>
+        </div>
       ),
     },
     {
@@ -787,6 +785,54 @@ const HelpDeskUsers: React.FC = () => {
             />
           </Card>
         </Space>
+        {selectedHelpDeskUser && (
+          <div ref={assignedUsersRef}>
+            <Card
+              title={
+                <div className="flex items-center justify-between">
+                  <span>
+                    Users Assigned to: {selectedHelpDeskUser.toUpperCase()}
+                  </span>
+                  <Button
+                    type="text"
+                    onClick={() => {
+                      setSelectedHelpDeskUser(null);
+                      setAssignUserData([]);
+                      setAssignUserId("");
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕ Close
+                  </Button>
+                </div>
+              }
+              bordered={false}
+              className="mt-4"
+            >
+              <Spin spinning={assignUserLoading}>
+                <div className="overflow-x-auto">
+                  <Table
+                    columns={assignedUserColumns}
+                    dataSource={assignUserData}
+                    rowKey="userId"
+                    pagination={{
+                      current: assignUserPage,
+                      total: assignUserTotal,
+                      pageSize: 10,
+                      onChange: handleAssignUserPageChange,
+                    }}
+                    className="border border-gray-200 rounded-lg"
+                    scroll={{ x: 1200 }}
+                    size="middle"
+                    rowClassName={(record, index) =>
+                      index % 2 === 0 ? "bg-gray-50" : ""
+                    }
+                  />
+                </div>
+              </Spin>
+            </Card>
+          </div>
+        )}
       </Content>
       <Modal
         title="Call Report"
@@ -988,35 +1034,15 @@ const HelpDeskUsers: React.FC = () => {
         </div>
       </Modal>
 
-      <Modal
-        title="Assigned Users"
-        open={assignUserModalVisible}
-        onCancel={() => setAssignUserModalVisible(false)}
-        footer={null}
-        width={1000}
-      >
-        <Spin spinning={assignUserLoading}>
-          <div className="overflow-x-auto">
-            <Table
-              columns={assignedUserColumns}
-              dataSource={assignUserData}
-              rowKey="userId"
-              pagination={{
-                current: assignUserPage,
-                total: assignUserTotal,
-                pageSize: 10,
-                onChange: handleAssignUserPageChange,
-              }}
-              className="border border-gray-200 rounded-lg"
-              scroll={{ x: 1200 }}
-              size="middle"
-              rowClassName={(record, index) =>
-                index % 2 === 0 ? "bg-gray-50" : ""
-              }
-            />
-          </div>
-        </Spin>
-      </Modal>
+      <HelpDeskCommentsModal
+        open={commentsModalVisible}
+        onClose={() => setCommentsModalVisible(false)}
+        userId={selectedUser?.userId}
+        updatedBy={updatedBy}
+        storedUniqueId={storedUniqueId}
+        record={selectedUser}
+        BASE_URL={BASE_URL}
+      />
     </Layout>
   );
 };

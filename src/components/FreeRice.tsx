@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 // import Rice2 from "../assets/img/RICEU7.png";
 // import Rice3 from "../assets/img/35kg1.png";
 // import Rice4 from "../assets/img/26kg.png";
-import AskOxyLogo from "../assets/img/askoxylogoblack.png";
+import AskOxyLogo from "../assets/img/askoxylogonew.png";
 // import Retro from "../assets/img/retro.png";
 // import O5 from "../assets/img/tb1.png";
 
@@ -95,41 +95,40 @@ const FreeRiceBlog: React.FC = () => {
   };
 
   // Rice product data with weights, titles and descriptions
-const riceProducts: RiceProduct[] = [
-  {
-    id: 1,
-    imageUrl:
-      "https://i.ibb.co/vCZr4JhQ/Whats-App-Image-2025-06-24-at-11-40-40-5952be46.jpg",
-    title: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
-    description: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
-    weight: 1.0,
-  },
-  {
-    id: 2,
-    imageUrl:
-      "https://i.ibb.co/cKY19SPt/Whats-App-Image-2025-06-24-at-11-40-40-03b6ee95.jpg",
-    title: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
-    description: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
-    weight: 5.0,
-  },
-  // {
-  //   id: 3,
-  //   imageUrl: Rice4,
-  //   title: "10KG Premium Rice Bag",
-  //   description:
-  //     "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
-  //   weight: 10.0,
-  // },
-  {
-    id: 4,
-    imageUrl: Rice3,
-    title: "26KG Premium Rice Bag",
-    description:
-      "Buy a 26KG Rice Bag and Get a 35+ KG Steel Container Worth ₹2300 free!",
-    weight: 26.0,
-  },
-];
-
+  const riceProducts: RiceProduct[] = [
+    {
+      id: 1,
+      imageUrl:
+        "https://i.ibb.co/vCZr4JhQ/Whats-App-Image-2025-06-24-at-11-40-40-5952be46.jpg",
+      title: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
+      description: "Get ₹20 cashback on your first order of a 2 KG rice bag.",
+      weight: 1.0,
+    },
+    {
+      id: 2,
+      imageUrl:
+        "https://i.ibb.co/cKY19SPt/Whats-App-Image-2025-06-24-at-11-40-40-03b6ee95.jpg",
+      title: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
+      description: "Get ₹30 cashback on your first order of a 5 KG rice bag.",
+      weight: 5.0,
+    },
+    // {
+    //   id: 3,
+    //   imageUrl: Rice4,
+    //   title: "10KG Premium Rice Bag",
+    //   description:
+    //     "Buy a 10KG Rice Bag and Get an 18+ KG Steel Container Worth ₹1800 free!",
+    //   weight: 10.0,
+    // },
+    {
+      id: 4,
+      imageUrl: Rice3,
+      title: "26KG Premium Rice Bag",
+      description:
+        "Buy a 26KG Rice Bag and Get a 35+ KG Steel Container Worth ₹2300 free!",
+      weight: 26.0,
+    },
+  ];
 
   useEffect(() => {
     // Close mobile menu when resizing to desktop

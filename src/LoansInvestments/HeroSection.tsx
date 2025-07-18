@@ -210,14 +210,7 @@ function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
 
-              <button
-                onClick={handleSignIn}
-                className="group bg-white/5 backdrop-blur-sm border border-white/20 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-sm sm:text-base flex items-center justify-center gap-3 hover:bg-white/10 hover:border-white/30 hover:scale-105 transition-all duration-300"
-              >
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform duration-300" />
-                <span>Free Consultation</span>
-              </button>
-            </div>
+             </div>
           </div>
 
           {/* Right Image Section */}

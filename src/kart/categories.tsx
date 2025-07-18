@@ -667,32 +667,42 @@ const getCurrentCategoryItems = () => {
 
   if (!categories || categories.length === 0) return items;
 
-  // Try to find items by category
+  // 1️⃣ Category selected
   if (activeCategory && activeCategory !== "") {
     const categoryMatch = categories.find(
       (cat) => cat.categoryName.toLowerCase() === activeCategory.toLowerCase()
     );
     if (categoryMatch) {
       items = categoryMatch.itemsResponseDtoList || [];
-      return items;
     }
   }
 
-  // Fallback to categoryType
-  if (activeCategoryType === "ALL") {
-    items = categories.flatMap((cat) => cat.itemsResponseDtoList || []);
-  } else {
-    items = categories
-      .filter(
-        (cat) =>
-          cat.categoryType?.toUpperCase() === activeCategoryType.toUpperCase()
-      )
-      .flatMap((cat) => cat.itemsResponseDtoList || []);
+  // 2️⃣ If no category selected, use categoryType
+  if (!activeCategory || items.length === 0) {
+    if (activeCategoryType === "ALL") {
+      items = categories.flatMap((cat) => cat.itemsResponseDtoList || []);
+    } else {
+      items = categories
+        .filter(
+          (cat) =>
+            cat.categoryType?.toUpperCase() ===
+            activeCategoryType.toUpperCase()
+        )
+        .flatMap((cat) => cat.itemsResponseDtoList || []);
+    }
+  }
+
+  // 3️⃣ Apply weight filter (optional)
+  if (activeWeightFilter) {
+    const filterValue = parseFloat(activeWeightFilter).toFixed(1);
+    items = items.filter((item) => {
+      const itemWeight = parseFloat(item.weight.toString()).toFixed(1);
+      return itemWeight === filterValue;
+    });
   }
 
   return items;
 };
-
 
  const handleQuantityChange = async (
   item: Item,

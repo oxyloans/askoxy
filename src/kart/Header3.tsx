@@ -1,10 +1,10 @@
 // Header.tsx
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, UserCircle } from 'lucide-react';
+import { ShoppingCart, UserCircle } from "lucide-react";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
-import ValidationPopup from './ValidationPopup';
-import AskOxyLogo from "../assets/img/askoxylogoblack.png";
+import ValidationPopup from "./ValidationPopup";
+import AskOxyLogo from "../assets/img/askoxylogonew.png";
 
 interface HeaderProps {
   cartCount: number;
@@ -17,7 +17,9 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
   const [searchValue, setSearchValue] = useState("");
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
-  const [activeButton, setActiveButton] = useState<'profile' | 'cart' | null>(null);
+  const [activeButton, setActiveButton] = useState<"profile" | "cart" | null>(
+    null
+  );
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showValidationPopup, setShowValidationPopup] = useState(false);
@@ -26,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
     "Sonamasoori Rice",
     "Kolam Rice",
     "Brown Rice",
-    "HMT Rice"
+    "HMT Rice",
   ];
 
   useEffect(() => {
@@ -34,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
     const animatePlaceholder = async () => {
       const currentText = `Search for "${searchTexts[currentSearchIndex]}"`;
       setSearchPlaceholder(currentText);
-      
+
       timeout = setTimeout(() => {
         setCurrentSearchIndex((prev) => (prev + 1) % searchTexts.length);
       }, 3000);
@@ -49,14 +51,18 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
   };
 
   const checkProfileCompletion = () => {
-    const profileData = localStorage.getItem('profileData');
+    const profileData = localStorage.getItem("profileData");
     console.log("profileData", profileData);
-    
+
     if (profileData) {
       const parsedData = JSON.parse(profileData);
       console.log("parsedData", parsedData);
-      return !!(parsedData.firstName && parsedData.lastName && 
-                parsedData.email && parsedData.alterMobileNumber);
+      return !!(
+        parsedData.firstName &&
+        parsedData.lastName &&
+        parsedData.email &&
+        parsedData.alterMobileNumber
+      );
     }
     return false;
   };
@@ -65,13 +71,13 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
     if (!checkProfileCompletion()) {
       setShowValidationPopup(true);
     } else {
-      handleNavigation('/mycart');
+      handleNavigation("/mycart");
     }
   };
 
   const handleProfileRedirect = () => {
     setShowValidationPopup(false);
-    handleNavigation('/profile');
+    handleNavigation("/profile");
   };
 
   useEffect(() => {
@@ -84,7 +90,6 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
   useEffect(() => {
     setCartCount(propCartCount);
   }, [propCartCount]);
-
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchValue(e.target.value);
@@ -126,16 +131,20 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
             <FaTimes className="text-base" />
           </button>
         )}
-        <FaSearch className="text-gray-400 ml-2 text-base
+        <FaSearch
+          className="text-gray-400 ml-2 text-base
         group-focus-within:text-blue-500 
-        hover:text-blue-500 hover:scale-110 transition-all duration-200" />
+        hover:text-blue-500 hover:scale-110 transition-all duration-200"
+        />
       </div>
 
       {(isFocused || searchValue) && (
-        <div className="absolute w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 
-        animate-dropdown max-h-64 overflow-y-auto">
+        <div
+          className="absolute w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 
+        animate-dropdown max-h-64 overflow-y-auto"
+        >
           {searchTexts
-            .filter(text => 
+            .filter((text) =>
               text.toLowerCase().includes(searchValue.toLowerCase())
             )
             .map((text, index) => (
@@ -152,8 +161,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
                 <FaSearch className="text-gray-400 text-xs" />
                 <span className="text-sm">{text}</span>
               </button>
-            ))
-          }
+            ))}
         </div>
       )}
     </div>
@@ -166,10 +174,10 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
           <div className="flex items-center justify-between h-14 sm:h-20">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <img
-                src={AskOxyLogo} 
+                src={AskOxyLogo}
                 className="h-8 w-auto sm:h-14 object-contain cursor-pointer"
                 alt="AskOxyLogo"
-                onClick={() => handleNavigation('/dashboard-main')}
+                onClick={() => handleNavigation("/dashboard-main")}
               />
             </div>
 
@@ -187,9 +195,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
                 </button>
               ) : (
                 <div className="absolute left-0 right-0 top-0 bg-white p-2 h-14 flex items-center z-50">
-                  <div className="flex-grow mx-2">
-                    {renderSearchBar()}
-                  </div>
+                  <div className="flex-grow mx-2">{renderSearchBar()}</div>
                   <button
                     onClick={toggleSearch}
                     className="p-2 text-gray-600 hover:text-red-500"
@@ -202,37 +208,55 @@ const Header: React.FC<HeaderProps> = ({ cartCount: propCartCount }) => {
 
             <div className="flex space-x-1 sm:space-x-4">
               <button
-                onClick={() => handleNavigation('/profile')}
-                onMouseDown={() => setActiveButton('profile')}
+                onClick={() => handleNavigation("/profile")}
+                onMouseDown={() => setActiveButton("profile")}
                 onMouseUp={() => setActiveButton(null)}
                 onMouseLeave={() => setActiveButton(null)}
                 className={`flex items-center space-x-1 text-gray-700 hover:bg-gray-50 rounded-full p-1 sm:px-2 sm:py-1 
                   hover:text-green-600 transition-all duration-300 hover:scale-105 active:scale-95 
-                  ${location.pathname === '/profile' ? 'bg-green-50 text-green-600' : ''}`}
+                  ${
+                    location.pathname === "/profile"
+                      ? "bg-green-50 text-green-600"
+                      : ""
+                  }`}
               >
-                <UserCircle 
+                <UserCircle
                   size={16}
                   className={`sm:w-6 sm:h-6 transition-colors duration-300 
-                    ${location.pathname === '/profile' ? 'text-green-600' : 
-                    activeButton === 'profile' ? 'text-green-500' : 'text-gray-700'}`}
+                    ${
+                      location.pathname === "/profile"
+                        ? "text-green-600"
+                        : activeButton === "profile"
+                        ? "text-green-500"
+                        : "text-gray-700"
+                    }`}
                 />
                 <span className="hidden sm:inline text-sm">Profile</span>
               </button>
 
               <button
                 onClick={handleCartClick}
-                onMouseDown={() => setActiveButton('cart')}
+                onMouseDown={() => setActiveButton("cart")}
                 onMouseUp={() => setActiveButton(null)}
                 onMouseLeave={() => setActiveButton(null)}
                 className={`relative flex items-center space-x-1 text-gray-700 hover:bg-gray-50 rounded-full p-1 sm:px-2 sm:py-1 
                   hover:text-blue-600 transition-all duration-300 hover:scale-105 active:scale-95 
-                  ${location.pathname === '/mycart' ? 'bg-blue-50 text-blue-600' : ''}`}
+                  ${
+                    location.pathname === "/mycart"
+                      ? "bg-blue-50 text-blue-600"
+                      : ""
+                  }`}
               >
-                <ShoppingCart 
+                <ShoppingCart
                   size={16}
                   className={`sm:w-6 sm:h-6 transition-colors duration-300 
-                    ${location.pathname === '/mycart' ? 'text-blue-600' : 
-                    activeButton === 'cart' ? 'text-blue-500' : 'text-gray-700'}`}
+                    ${
+                      location.pathname === "/mycart"
+                        ? "text-blue-600"
+                        : activeButton === "cart"
+                        ? "text-blue-500"
+                        : "text-gray-700"
+                    }`}
                 />
                 <span className="hidden sm:inline text-sm">Cart</span>
                 {cartCount > 0 && (

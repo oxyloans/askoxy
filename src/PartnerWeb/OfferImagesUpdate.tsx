@@ -11,12 +11,15 @@ import {
   Tabs,
   message,
   Space,
+  Form,
+  InputNumber,
 } from "antd";
 import {
   PlusOutlined,
   UploadOutlined,
   EditOutlined,
   DeleteOutlined,
+  DollarOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import type { UploadProps } from "antd/es/upload";
@@ -46,12 +49,21 @@ interface ImageFormData {
   targetParam: string;
 }
 
+interface MinOrderAmount {
+  orderAmount: number;
+  id: string;
+}
+
 const UpdateOffers: React.FC = () => {
   const [paymentData, setPaymentData] = useState<PaymentStatus[]>([]);
   const [offerImages, setOfferImages] = useState<OfferImage[]>([]);
+  const [minOrderAmount, setMinOrderAmount] = useState<MinOrderAmount | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [orderAmountModalVisible, setOrderAmountModalVisible] = useState(false);
   const [formData, setFormData] = useState({ paymentStatus: "", status: true });
   const [imageFormData, setImageFormData] = useState<ImageFormData>({
     webNavigation: "",
@@ -62,6 +74,7 @@ const UpdateOffers: React.FC = () => {
   const [editingPayment, setEditingPayment] = useState<PaymentStatus | null>(
     null
   );
+  const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
 
   // Fetch payment status data
   const fetchPaymentData = async () => {
@@ -75,7 +88,7 @@ const UpdateOffers: React.FC = () => {
         setPaymentData(data);
       } else {
         message.error("Invalid payment data received");
-        setPaymentData([]); // or handle gracefully
+        setPaymentData([]);
       }
     } catch (error) {
       setPaymentData([]);
@@ -107,9 +120,36 @@ const UpdateOffers: React.FC = () => {
     }
   };
 
+  const fetchMinOrderAmount = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${BASE_URL}/order-service/allMinimumOrders`
+      );
+      const data = await response.json();
+      console.log("Fetched minimum order data:", data);
+      if (data && data.orderAmount !== undefined && data.id) {
+        setMinOrderAmount(data);
+        setNewOrderAmount(data.orderAmount);
+      } else {
+        message.error("Invalid minimum order amount data received");
+        setMinOrderAmount(null);
+        setNewOrderAmount(0);
+      }
+    } catch (error) {
+      console.error("Error fetching minimum order amount:", error);
+      setMinOrderAmount(null);
+      setNewOrderAmount(0);
+      message.error("Failed to fetch minimum order amount");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPaymentData();
     fetchOfferImages();
+    fetchMinOrderAmount();
   }, []);
 
   // Handle payment status toggle
@@ -166,6 +206,49 @@ const UpdateOffers: React.FC = () => {
       }
     } catch (error) {
       message.error("Error updating image status");
+    }
+  };
+
+  // Handle minimum order amount update
+  const handleOrderAmountUpdate = async () => {
+    if (!minOrderAmount || !minOrderAmount.id) {
+      message.error("No minimum order amount data available");
+      return;
+    }
+
+    if (newOrderAmount <= 0) {
+      message.error("Order amount must be greater than 0");
+      return;
+    }
+
+    try {
+
+      const response = await fetch(
+        `${BASE_URL}/order-service/minimumOrderAmountUpdate`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: minOrderAmount.id,
+            amount: newOrderAmount,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        message.success("Minimum order amount updated successfully");
+        setOrderAmountModalVisible(false);
+        await fetchMinOrderAmount();
+      } else {
+        const errorData = await response.text();
+
+        message.error("Failed to update minimum order amount");
+      }
+    } catch (error) {
+      console.error("Error updating minimum order amount:", error);
+      message.error("Error updating minimum order amount");
     }
   };
 
@@ -416,7 +499,6 @@ const UpdateOffers: React.FC = () => {
                 loading={loading}
                 pagination={{
                   pageSize: 50,
-                  position: ["topRight", "bottomRight"],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} items`,
                 }}
@@ -445,12 +527,63 @@ const UpdateOffers: React.FC = () => {
                 loading={loading}
                 pagination={{
                   pageSize: 50,
-                  position: ["topRight", "bottomRight"],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} items`,
                 }}
                 scroll={{ x: 1200 }}
               />
+            </Card>
+          </TabPane>
+
+          <TabPane tab="Min Order Amount" key="3">
+            <Card className="shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Minimum Order Amount Management
+                </h2>
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    if (minOrderAmount) {
+                      setNewOrderAmount(minOrderAmount.orderAmount);
+                      setOrderAmountModalVisible(true);
+                    }
+                  }}
+                  disabled={!minOrderAmount}
+                >
+                  Update Amount
+                </Button>
+              </div>
+
+              {minOrderAmount ? (
+                <div className="bg-white p-6 rounded-lg border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        Current Minimum Order Amount
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        ID: {minOrderAmount.id}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-green-600 flex items-center">
+                        <DollarOutlined className="mr-2" />₹
+                        {minOrderAmount.orderAmount}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">
+                    {loading
+                      ? "Loading..."
+                      : "No minimum order amount data available"}
+                  </p>
+                </div>
+              )}
             </Card>
           </TabPane>
         </Tabs>
@@ -628,6 +761,55 @@ const UpdateOffers: React.FC = () => {
                 disabled={!selectedFile}
               >
                 Upload Image
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Order Amount Update Modal */}
+        <Modal
+          title="Update Minimum Order Amount"
+          open={orderAmountModalVisible}
+          onCancel={() => {
+            setOrderAmountModalVisible(false);
+            setNewOrderAmount(minOrderAmount?.orderAmount || 0);
+          }}
+          footer={null}
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Amount: ₹{minOrderAmount?.orderAmount || 0}
+              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                New Minimum Order Amount (₹)
+              </label>
+              <InputNumber
+                placeholder="Enter new minimum order amount"
+                className="w-full"
+                value={newOrderAmount}
+                onChange={(value) => setNewOrderAmount(value || 0)}
+                min={1}
+                precision={0}
+                size="large"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                onClick={() => {
+                  setOrderAmountModalVisible(false);
+                  setNewOrderAmount(minOrderAmount?.orderAmount || 0);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleOrderAmountUpdate}
+                disabled={newOrderAmount <= 0}
+              >
+                Update Amount
               </Button>
             </div>
           </div>

@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from "react";
-import {
-  
-  User,
-  Menu,
-  X,
-  ShoppingCart,
-  AlertCircle,
-} from "lucide-react";
+import { User, Menu, X, ShoppingCart, AlertCircle } from "lucide-react";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
 import Rice4 from "../assets/img/3 (4).png";
 import Rice2 from "../assets/img/3 (2).png";
 import Rice3 from "../assets/img/3 (1).png";
 import Rice1 from "../assets/img/3 (3).png";
-import AskOxyLogo from "../assets/img/askoxylogoblack.png";
-
+import AskOxyLogo from "../assets/img/askoxylogonew.png";
 
 // Campaign Base URL
 const CAMPAIGN_BASE_URL = "https://www.askoxy.ai/miyapurmetro";
@@ -184,9 +176,9 @@ const MeyaporeMetro: React.FC = () => {
     }
   };
 
-//   const handleLogoClick = () => {
-//     navigate("/");
-//   };
+  //   const handleLogoClick = () => {
+  //     navigate("/");
+  //   };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
