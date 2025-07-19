@@ -406,7 +406,7 @@ const HelpDeskDashboard: React.FC = () => {
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {record.isActive ? "Active" : "Not Active"}
+                {record.isActive ? "Active" : "InActive"}
               </Tag>
             )}
           </div>

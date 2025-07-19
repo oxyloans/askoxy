@@ -32,7 +32,7 @@ const Footer = () => {
   ];
 
   const services = [
-    { name: "Free Rudraksha", path: "/main/services/freerudraksha" },
+    // { name: "Free Rudraksha", path: "/main/services/freerudraksha" },
     { name: "AI & GEN AI Training", path: "/main/services/freeai-genai" },
     { name: "Legal Knowledge", path: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" },

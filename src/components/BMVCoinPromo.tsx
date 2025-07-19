@@ -6,36 +6,11 @@ const BMVCoinPromo: React.FC = () => {
   const navigate = useNavigate();
   const LOGIN_URL = "/whatsapplogin";
   const [isVisible, setIsVisible] = useState(false);
-  const [countdown, setCountdown] = useState({
-    hours: 23,
-    minutes: 59,
-    seconds: 59,
-  });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
-  }, []);
-
-  // Countdown timer logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        let { hours, minutes, seconds } = prev;
-        if (seconds > 0) seconds--;
-        else if (minutes > 0) {
-          minutes--;
-          seconds = 59;
-        } else if (hours > 0) {
-          hours--;
-          minutes = 59;
-          seconds = 59;
-        }
-        return { hours, minutes, seconds };
-      });
-    }, 1000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleSignIn = () => {
@@ -53,13 +28,6 @@ const BMVCoinPromo: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const formatCountdown = () => {
-    const { hours, minutes, seconds } = countdown;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -85,8 +53,8 @@ const BMVCoinPromo: React.FC = () => {
 
             {/* Headline */}
             <h2 className="text-3xl sm:text-4xl font-extrabold text-purple-900 mb-3">
-              Get <span className="text-purple-600">1000 BMVCOINS</span> Free
-              Today!
+              Get <span className="text-purple-600">₹20 Worth of BMVCOINS</span>{" "}
+              Free Today!
             </h2>
 
             {/* Subtext */}
@@ -95,23 +63,29 @@ const BMVCoinPromo: React.FC = () => {
               <span className="text-purple-600 font-semibold">
                 exclusive crypto rewards
               </span>
-              . Don’t miss this opportunity!
+              . Don’t miss your free ₹20 boost — no strings attached!
             </p>
 
-            {/* Countdown Timer */}
-            {/* <div className="text-purple-700 text-xl font-bold mb-6">
-              ⏰ Offer Expires in:{" "}
-              <span className="font-mono bg-purple-100 px-2 py-1 rounded">
-                {formatCountdown()}
-              </span>
-            </div> */}
+            {/* Coin Value Note */}
+            <p className="text-sm text-purple-700 italic mb-4">
+              (1 BMVCOIN = ₹0.02 • You get 1000 coins = ₹20)
+            </p>
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               {[
-                { label: "Guaranteed Minimum", value: "1000 BMVCOINS" },
-                { label: "Potential Maximum", value: "1,00,000 BMVCOINS" },
-                { label: "Total Distributed", value: "8,00,000+ BMVCOINS" },
+                {
+                  label: "Guaranteed Minimum",
+                  value: "₹20 (1000 BMVCOINS)",
+                },
+                {
+                  label: "Potential Maximum",
+                  value: "₹2,000 (1,00,000 BMVCOINS)",
+                },
+                {
+                  label: "Total Distributed",
+                  value: "₹2,000+ (1,00,000 BMVCOINS)", // ✅ Updated here
+                },
               ].map((item, index) => (
                 <div
                   key={index}
@@ -136,7 +110,7 @@ const BMVCoinPromo: React.FC = () => {
                   isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                🚀 {isLoading ? "Processing..." : "Claim Your Free Coins"}
+                🚀 {isLoading ? "Processing..." : "Claim Free Coins"}
               </button>
             </div>
           </div>

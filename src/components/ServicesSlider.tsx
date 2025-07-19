@@ -76,11 +76,11 @@ const ServicesSlider: React.FC = () => {
       title: "Study Abroad",
       path: "/studyabroad",
     },
-    {
-      image: "https://iili.io/FEwOOdv.md.png",
-      title: "Free Rudraksha",
-      path: "/services/freerudraksha",
-    },
+    // {
+    //   image: "https://iili.io/FEwOOdv.md.png",
+    //   title: "Free Rudraksha",
+    //   path: "/services/freerudraksha",
+    // },
     {
       image: "https://iili.io/FGCrmbV.md.png",
       title: "Free AI & GEN AI Training",

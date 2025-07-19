@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Sparkles, Shield, Zap, TrendingUp } from "lucide-react";
-import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
+import { ArrowRight, Shield, Zap, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
@@ -11,14 +11,15 @@ function HeroSection() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const LOGIN_URL = "/whatsapplogin";
   const navigate = useNavigate();
+
   const rotatingWords = [
-    "Loans Made Simple",
-    "Secure Your Future",
-    "Smart Investments",
-    "Financial Freedom",
+    "P2P Lending Made Simple",
+    "Invest in Borrowers Directly",
+    "Earn Attractive Returns",
+    "Empower Financial Growth",
   ];
 
-  const fullHeadingText = "Unlock Your ";
+  const fullHeadingText = "Unlock Your";
 
   useEffect(() => {
     const handleMouseMove = (e: any) => {
@@ -56,19 +57,15 @@ function HeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  // Handle sign-in logic
   const handleSignIn = () => {
     try {
       setIsLoading(true);
-
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/service/oxyloans-service"; // your desired path
+      const redirectPath = "/main/service/oxyloans-service";
 
       if (userId) {
-        // User is already logged in
         navigate(redirectPath);
       } else {
-        // Save redirect path before redirecting to login
         sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
@@ -78,7 +75,6 @@ function HeroSection() {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <section className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 sm:py-16 lg:py-20 overflow-hidden min-h-screen flex items-center">
@@ -119,7 +115,7 @@ function HeroSection() {
       {/* Main Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-10 lg:gap-20">
-          {/* Left Text Section */}
+          {/* Left Section */}
           <div
             className={`w-full lg:w-1/2 space-y-6 sm:space-y-8 text-center lg:text-left transition-all duration-1000 ${
               isVisible
@@ -140,36 +136,36 @@ function HeroSection() {
             </h1>
 
             <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-light">
-              Experience seamless financial solutions with instant approvals,
-              competitive rates, and expert guidance tailored to your unique
-              needs.
+              Join the future of lending and borrowing. Connect directly with
+              borrowers, diversify your portfolio, and unlock high returns—all
+              with full transparency and control.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
               {[
                 {
-                  title: "Gold Loans",
-                  description: "Instant approval with secure gold storage",
+                  title: "Borrow Easily",
+                  description: "Low-interest personal and business loans",
+                  icon: Zap,
+                  color: "from-green-400 to-emerald-500",
+                  bg: "bg-green-500/10",
+                  border: "border-green-500/30",
+                },
+                {
+                  title: "Invest Smartly",
+                  description: "Lend directly & earn higher returns",
+                  icon: TrendingUp,
+                  color: "from-indigo-400 to-purple-500",
+                  bg: "bg-indigo-500/10",
+                  border: "border-indigo-500/30",
+                },
+                {
+                  title: "Secure Platform",
+                  description: "Data privacy & risk-managed lending",
                   icon: Shield,
                   color: "from-yellow-400 to-orange-500",
                   bg: "bg-yellow-500/10",
                   border: "border-yellow-500/30",
-                },
-                {
-                  title: "Quick Loans",
-                  description: "Fast disbursement in 24 hours",
-                  icon: Zap,
-                  color: "from-cyan-400 to-blue-500",
-                  bg: "bg-cyan-500/10",
-                  border: "border-cyan-500/30",
-                },
-                {
-                  title: "Investments",
-                  description: "Smart portfolio management",
-                  icon: TrendingUp,
-                  color: "from-purple-400 to-pink-500",
-                  bg: "bg-purple-500/10",
-                  border: "border-purple-500/30",
                 },
               ].map(
                 (
@@ -205,15 +201,16 @@ function HeroSection() {
                 onClick={handleSignIn}
                 className="group relative bg-gradient-to-r from-cyan-500 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-sm sm:text-base flex items-center justify-center gap-3 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 overflow-hidden"
               >
-                <span className="relative z-10">Get Started Now</span>
+                <span className="relative z-10">
+                  Start Lending or Borrowing
+                </span>
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300 relative z-10" />
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
-
-             </div>
+            </div>
           </div>
 
-          {/* Right Image Section */}
+          {/* Right Section - Image */}
           <div
             className={`w-full lg:w-1/2 transition-all duration-700 transform ${
               isVisible
@@ -225,7 +222,7 @@ function HeroSection() {
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100" />
               <img
                 src="https://i.ibb.co/PzVKsW5X/4.png"
-                alt="Hero"
+                alt="P2P Lending"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />
               <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
@@ -248,7 +245,6 @@ function HeroSection() {
         }
         .animate-float.delay-1000 { animation-delay: 1s; }
         .animate-float.delay-2000 { animation-delay: 2s; }
-
         @media (max-width: 640px) {
           .animate-float {
             animation: float 4s ease-in-out infinite;

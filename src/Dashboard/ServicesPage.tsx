@@ -71,16 +71,16 @@ const ServicesPage: React.FC = () => {
         icon: <HandCoins className="text-purple-600" size={24} />,
         category: "Finance",
       },
-      {
-        title: "Free Rudraksha",
-        image:
-          "https://iili.io/FEwOOdv.md.png",
-        description:
-          "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
-        path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
-        icon: <Gem className="text-purple-600" size={24} />,
-        category: "Spiritual",
-      },
+      // {
+      //   title: "Free Rudraksha",
+      //   image:
+      //     "https://iili.io/FEwOOdv.md.png",
+      //   description:
+      //     "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
+      //   path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
+      //   icon: <Gem className="text-purple-600" size={24} />,
+      //   category: "Spiritual",
+      // },
       {
         title: "Free AI & Gen AI Training",
         image:

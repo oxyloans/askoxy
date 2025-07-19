@@ -228,7 +228,7 @@ const Tabview = () => {
   );
 
   const BMVInfoModal = () => (
-     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
         <button
           onClick={() => setShowBmvModal(false)}
@@ -237,7 +237,7 @@ const Tabview = () => {
         >
           <X size={20} />
         </button>
-        
+
         <div className="p-6 sm:p-8">
           {/* Header */}
           <div className="text-center mb-6">
@@ -256,16 +256,22 @@ const Tabview = () => {
               What are BMVCOINS?
             </h3>
             <p className="text-gray-700 mb-3">
-              BMVCOINS are digital reward tokens powered by <strong>OXYCHAIN</strong>, our private blockchain.
-              They work like cashback points for your purchases.
+              BMVCOINS are digital reward tokens powered by{" "}
+              <strong>OXYCHAIN</strong>, our private blockchain. They work like
+              cashback points for your purchases.
             </p>
-            <div className="bg-purple-50 p-4 rounded-lg space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Current Value:</span>
-                <span className="text-purple-700 font-bold">1000 BMVCOINS = ₹20</span>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium">
+                  Current Value: <span   className="text-purple-600 font-bold">₹0.02 per coin</span>
+                </span>
+
+                <span className="text-purple-700 font-bold">
+                  1000 BMVCOINS = ₹20
+                </span>
               </div>
-              <div className="text-sm text-gray-600">₹0.02 per coin</div>
             </div>
+
             <ul className="mt-3 space-y-1 text-gray-700">
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-1">✅</span>
@@ -273,7 +279,8 @@ const Tabview = () => {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-1">✅</span>
-                Track your coin balance anytime from your <strong>AskOxy dashboard</strong>
+                Track your coin balance anytime from your{" "}
+                <strong>AskOxy dashboard</strong>
               </li>
             </ul>
           </div>
@@ -294,14 +301,13 @@ const Tabview = () => {
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                 <Users className="text-blue-500 mt-1" size={16} />
                 <div>
-                  <strong>Transfer or receive</strong> coins with friends and family on AskOxy
+                  <strong>Transfer or receive</strong> coins with friends and
+                  family on AskOxy
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
                 <span className="text-purple-500 mt-1">📊</span>
-                <div>
-                  View transactions and coin status in your profile
-                </div>
+                <div>View transactions and coin status in your profile</div>
               </div>
             </div>
           </div>
@@ -342,7 +348,8 @@ const Tabview = () => {
           {/* Note */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <p className="text-sm text-gray-600 mb-2">
-              <strong>Note:</strong> BMVCOINS are bonus rewards. Prices remain competitive even without them.
+              <strong>Note:</strong> BMVCOINS are bonus rewards. Prices remain
+              competitive even without them.
             </p>
             <p className="text-sm text-gray-600">
               Use wisely — earn, redeem, and grow with AskOxy!

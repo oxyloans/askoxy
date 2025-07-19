@@ -219,13 +219,7 @@ function GoldSilverDiamondHeroSection() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300 relative z-10" />
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
-              <button
-                onClick={handleSignIn}
-                className="group bg-white/70 backdrop-blur-sm border-2 border-yellow-300 text-yellow-700 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 hover:bg-white hover:border-yellow-400 hover:scale-105 transition-all duration-300 shadow-lg"
-              >
-                <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                <span>Book Consultation</span>
-              </button>
+           
             </div>
           </div>
 

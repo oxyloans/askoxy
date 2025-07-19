@@ -4,7 +4,7 @@ import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
 
 import Landingpage from "./components/Landingpage";
-import Freerudraksha from "./components/Services/Freerudraksh";
+// import Freerudraksha from "./components/Services/Freerudraksh";
 import TermsAndConditions from "./kart/TermsAndConditions";
 import RCSConsentForm from "./kart/RCSConsentForm";
 import FreeSample from "./components/Services/FreeSample";
@@ -228,7 +228,7 @@ const App: React.FC = () => {
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
-            <Route path="services/freerudraksha" element={<Freerudraksha />} />
+            {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
             <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
             <Route path="services/:id/:type" element={<CampaignDetails />} />
             <Route path="blog/:id/:type" element={<BlogDetails />} />
@@ -461,10 +461,10 @@ const App: React.FC = () => {
               <Route path="jobdetails" element={<JobDetails />} />
               <Route path="caserviceitems" element={<CAServicesItems />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
-              <Route
+              {/* <Route
                 path="services/freerudraksha"
                 element={<Freerudraksha />}
-              />
+              /> */}
               <Route
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}

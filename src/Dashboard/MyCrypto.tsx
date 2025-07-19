@@ -500,10 +500,12 @@ const MyCrypto: React.FC = () => {
             </p>
             <div className="bg-white p-3 rounded-lg">
               <div className="text-center">
-                <div className="text-purple-600 font-bold text-base">
+                Current Value:{" "}
+                <span className="text-purple-600 font-bold">
                   ₹0.02 per coin
-                </div>
-                <div className="text-sm text-gray-600">1000 BMVCOINS = ₹20</div>
+                </span>
+                <br/>
+                <div className="text-md text-purple-600">1000 BMVCOINS = ₹20</div>
               </div>
             </div>
           </div>
