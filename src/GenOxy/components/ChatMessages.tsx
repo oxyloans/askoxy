@@ -17,12 +17,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 }) => {
   // Auto scroll to bottom on message update
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]); // Added loading dependency to scroll when loading state changes
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        // Timeout to ensure layout is rendered before scrolling
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100);
+      }
+    };
+
+    scrollToBottom();
+  }, [messages, loading]); // scrolls on every new message or loading state change
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32 sm:pb-24">
-      {" "}
+    <div className="flex-1 overflow-y-auto pb-48 sm:pb-40">
       {/* Added padding bottom for input space */}
       <div className="px-4 py-6">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -30,12 +41,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             <div key={msg.id || idx} className="animate-fade-in-up">
               {msg.role === "user" ? (
                 <div className="flex justify-end">
-                  <div className="flex items-start gap-3 max-w-[85%] group">
+                  <div className="flex items-start gap-3 max-w-full sm:max-w-[85%] group">
                     <div className="relative">
-                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-5 py-3 shadow-lg">
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                          {msg.content}
-                        </p>
+                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-5 py-3 shadow-lg break-words whitespace-pre-wrap text-sm leading-relaxed">
+                        {msg.content}
                       </div>
                     </div>
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -45,18 +54,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 </div>
               ) : (
                 <div className="flex justify-start">
-                  <div className="flex items-start gap-3 max-w-[85%] w-full group">
+                  <div className="flex items-start gap-3 max-w-full sm:max-w-[85%] w-full group">
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className=" px-5 py-4  relative">
+                      <div className="px-5 py-4 relative rounded-2xl shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                         {msg.isImage ? (
                           <div className="relative group/image">
                             <img
                               src={msg.content}
                               alt="AI Generated"
-                              className="rounded-xl w-full max-h-96 object-contain shadow-lg"
+                              className="rounded-xl w-full max-h-96 object-contain shadow"
                               onError={(e) => {
                                 e.currentTarget.style.display = "none";
                                 const next = e.currentTarget.nextElementSibling;
@@ -71,12 +80,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             </div>
                           </div>
                         ) : (
-                          // <div
-                          //   className="prose prose-sm max-w-none break-words text-gray-900 dark:text-white"
-                          //   dangerouslySetInnerHTML={{
-                          //     __html: parseMarkdown(msg.content),
-                          //   }}
-                          // />
                           <MarkdownRenderer content={msg.content} />
                         )}
                         <MessageActions message={msg} index={idx} />
@@ -110,7 +113,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             </div>
           )}
 
-          {/* Extra space for better scrolling */}
+          {/* Padding for bottom scroll spacing */}
           <div className="h-4" />
           <div ref={messagesEndRef} />
         </div>

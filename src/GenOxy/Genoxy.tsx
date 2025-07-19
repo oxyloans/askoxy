@@ -19,13 +19,14 @@ const GenOxy: React.FC<OpenAiProps> = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const { darkMode } = useDarkMode();
-  const { handleSend } = useMessages(
-    messages,
-    setMessages,
-    input,
-    setInput,
-    setLoading
-  );
+ const { handleSend } = useMessages({
+   messages,
+   setMessages,
+   input,
+   setInput,
+   setLoading,
+   messagesEndRef,
+ });
 
   const showCenteredLayout = messages.length === 0 && !loading;
 

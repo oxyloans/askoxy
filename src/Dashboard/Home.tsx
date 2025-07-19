@@ -12,23 +12,18 @@ import {
   Coins,
   Bot,
   ShoppingBag,
-  Briefcase,
+  
   Loader2,
-  Droplet,
-  Star,
+  
   TrendingUp,
   ArrowRight,
-  Search,
+  
   ChevronRight,
   Settings,
   HandCoins,
   Gem,
   Globe,
-  Package,
-  Gift,
-  Ticket,
-  Info,
-  Sparkles,
+  
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -38,27 +33,22 @@ import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals";
 import RiceOfferFAQs from "./Faqs";
 import ProductImg1 from "../assets/img/ricecard1.png";
-import ProductImg2 from "../assets/img/ricecard2.png";
-import ServiceImg1 from "../assets/img/oxyloasntemp (1).png";
-import ServiceImg2 from "../assets/img/study abroad.png";
-import GPTImg1 from "../assets/img/study abroad.png";
+
+
 import CryptoImg1 from "../assets/img/bmvcoin.png";
-import RudrakshaImage from "../assets/img/freerudraksha.png";
-import offer5kg from "../assets/img/5offer.png";
-import offer2kgRice from "../assets/img/2offer.png";
-import O1 from "../assets/img/o1.png";
-import O2 from "../assets/img/o2.png";
+
+
+
+
 import O8 from "../assets/img/StudyAbroda.png";
-import O3 from "../assets/img/2offer.png";
-import O4 from "../assets/img/o4.png";
+
 import O5 from "../assets/img/cashewoffer1.png";
 import O6 from "../assets/img/35kg1.png";
 import CB from "../assets/img/cashback offer png.png";
 import Cashew from "../assets/img/rakhi1.png";
 import Riceoffers from "../assets/img/rice offers.png";
 import festive from "../assets/img/festive.png";
-import O7 from "../assets/img/5offer.png";
-import O9 from "../assets/img/essentialsmart.png";
+
 import gold from "../assets/img/gold.png";
 import allitems from "../assets/img/all items.png";
 import grocerie from "../assets/img/Groceries.png";
@@ -190,9 +180,9 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
-  const [hoveredImage, setHoveredImage] = useState<string | number | null>(
-    null
-  );
+  // const [hoveredImage, setHoveredImage] = useState<string | number | null>(
+  //   null
+  // );
   const [isHovered, setIsHovered] = useState(false); // NEW: State to track hover status
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
@@ -786,10 +776,10 @@ const Home: React.FC = () => {
       },
       {
         id: "3",
-        title: "Free Rudraksha",
-        image: "https://iili.io/FEwOOdv.md.png",
+        title: "Free AI & Gen AI Traininga",
+        image: "https://iili.io/FGCrmbV.md.png",
         description: "Receive a sacred Rudraksha bead",
-        path: "/main/services/freerudraksha",
+        path: "/main/services/freeai-genai",
         icon: <Gem className="text-purple-600" size={24} />,
       },
     ];
@@ -1162,11 +1152,24 @@ const Home: React.FC = () => {
             <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm hover:text-purple-600 transition-colors">
               {item.title}
             </h3>
+            {/* <p className="text-sm text-gray-500">
+              Weight: {item.weight}{" "}
+              {item.units === "pcs"
+                ? "Pc"
+                : item.units === "gms" && item.weight === "1"
+                ? "Gm"
+                : item.weight === "1" && item.units === "kg"
+                ? "Kg"
+                : item.units}
+            </p> */}
+
             <p className="text-sm text-gray-500">
               Weight: {item.weight}{" "}
-              {item.units == "pcs"
+              {item.units === "pcs"
                 ? "Pc"
-                : item.weight == "1"
+                : item.units === "gms" && item.weight === "1"
+                ? "Gm"
+                : item.weight === "1" && item.units === "kg"
                 ? "Kg"
                 : item.units}
             </p>
@@ -1403,15 +1406,40 @@ const Home: React.FC = () => {
       setSearchTerm("");
       setSelectedWeight(null);
       // NEW: Scroll to the products section smoothly after category change
+      // Updated scrolling logic to fix mobile responsiveness
       setTimeout(() => {
         if (productsRef.current) {
-          productsRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
+          try {
+            // Get the element's position relative to the document for precise scrolling
+            const rect = productsRef.current.getBoundingClientRect();
+            const scrollTop =
+              window.pageYOffset || document.documentElement.scrollTop;
+            const targetY = rect.top + scrollTop - 50; // Offset to ensure visibility above headers
+
+            // First attempt with scrollIntoView for smooth scrolling
+            productsRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+
+            // Fallback to window.scrollTo for better mobile compatibility
+            window.scrollTo({
+              top: targetY,
+              behavior: "smooth",
+            });
+
+            // Debug log to verify scroll position
+            console.log(`Scrolled to products section at Y: ${targetY}`);
+          } catch (error) {
+            // Log any errors during scrolling for debugging
+            console.error("Error during scroll to products section:", error);
+          }
+        } else {
+          // Warn if the productsRef is not available
+          console.warn("productsRef.current is not available for scrolling");
         }
         setProductsLoading(false);
-      }, 300);
+      }, 500); // Increased timeout from 300ms to 500ms to ensure DOM rendering on mobile
     } else {
       console.warn(`Category ${categoryName} not found`);
       setProducts([]);
@@ -1667,17 +1695,20 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <section ref={productsRef} className="mb-12">
-          <div className="flex items-center mb-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2">
+        <section ref={productsRef} className="mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+            {/* Heading - Left Side */}
             <h2 className="text-xl font-bold text-gray-800 flex items-center">
               <ShoppingBag className="text-purple-600 mr-2" size={20} />
               Our Products
             </h2>
+
+            {/* Button - Right Side */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 mb-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center justify-center hover:bg-purple-700 transition-colors"
               onClick={viewAllProducts}
             >
               View All
@@ -1874,93 +1905,99 @@ const Home: React.FC = () => {
         </section>
 
         {/* Digital Services Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
+          {/* Free GPTs Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <Bot className="mr-2 text-purple-600" size={24} />
                 Free GPTs
               </h2>
               <button
                 onClick={() => navigate("/main/dashboard/freegpts")}
-                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg font-medium flex items-center text-sm transition-colors"
+                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
                 aria-label="Explore Free GPTs"
               >
                 Explore <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
 
+            {/* Content */}
             <div className="grid grid-cols-1 gap-5">
-              {loading
-                ? Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg animate-pulse h-24 flex items-center px-4"
-                      >
-                        <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
-                        <div className="space-y-2 flex-1">
-                          <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4"></div>
-                          <div className="h-3 bg-blue-200 rounded animate-pulse w-1/2"></div>
-                        </div>
+              {loading ? (
+                Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl animate-pulse h-24 flex items-center px-4"
+                    >
+                      <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-blue-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-blue-200 rounded w-1/2"></div>
                       </div>
-                    ))
-                : freeGPTs.map((item, index) =>
-                    renderDigitalServiceCard(item, index, "gpt")
-                  )}
+                    </div>
+                  ))
+              ) : freeGPTs.length > 0 ? (
+                freeGPTs.map((item, index) =>
+                  renderDigitalServiceCard(item, index, "gpt")
+                )
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Bot className="mx-auto mb-3 text-gray-400" size={32} />
+                  <p>No free GPTs available at the moment</p>
+                </div>
+              )}
             </div>
-
-            {!loading && freeGPTs.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Bot className="mx-auto mb-3 text-gray-400" size={32} />
-                <p>No free GPTs available at the moment</p>
-              </div>
-            )}
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-6">
+          {/* Cryptocurrency Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <Coins className="mr-2 text-purple-600" size={24} />
                 Cryptocurrency
               </h2>
               <button
                 onClick={() => navigate("/main/dashboard/bmvcoin")}
-                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg font-medium flex items-center text-sm transition-colors"
+                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
                 aria-label="Explore Cryptocurrency"
               >
                 Explore <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
 
+            {/* Content */}
             <div className="grid grid-cols-1 gap-5">
-              {loading
-                ? Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-lg animate-pulse h-24 flex items-center px-4"
-                      >
-                        <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
-                        <div className="space-y-2 flex-1">
-                          <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4"></div>
-                          <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
-                        </div>
+              {loading ? (
+                Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-xl animate-pulse h-24 flex items-center px-4"
+                    >
+                      <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-amber-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-amber-200 rounded w-1/2"></div>
                       </div>
-                    ))
-                : cryptocurrency.map((item, index) =>
-                    renderDigitalServiceCard(item, index, "crypto")
-                  )}
+                    </div>
+                  ))
+              ) : cryptocurrency.length > 0 ? (
+                cryptocurrency.map((item, index) =>
+                  renderDigitalServiceCard(item, index, "crypto")
+                )
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Coins className="mx-auto mb-3 text-gray-400" size={32} />
+                  <p>No cryptocurrency data available at the moment</p>
+                </div>
+              )}
             </div>
-
-            {!loading && cryptocurrency.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Coins className="mx-auto mb-3 text-gray-400" size={32} />
-                <p>No cryptocurrency data available at the moment</p>
-              </div>
-            )}
           </div>
         </section>
       </div>

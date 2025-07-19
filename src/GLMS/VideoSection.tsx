@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { PlayCircle, X } from "lucide-react";
 
@@ -62,45 +61,54 @@ const VideoSection = () => {
 
   useEffect(() => {
     document.body.style.overflow = modalVideo ? "hidden" : "auto";
-  }, [modalVideo]);
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCloseModal();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [modalVideo, handleCloseModal]);
 
   return (
-    <section className="py-8 md:py-12 bg-gradient-to-br from-purple-50 to-yellow-50">
+    <section className="py-12 bg-gradient-to-br from-purple-50 to-yellow-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Heading */}
+        {/* Section Title */}
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
             See Our Platform in Action
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-            Watch how GenOxy’s Global Loan Management System transforms banking operations with real AI-powered use cases.
+          <p className="text-gray-600 max-w-2xl mx-auto text-base">
+            Watch how GenOxy’s Global Loan Management System transforms banking
+            operations with real AI-powered use cases.
           </p>
         </div>
 
-        {/* Videos Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Video Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedVideos.map((video) => (
             <div
               key={video.id}
               onClick={() => setModalVideo(video.embedUrl)}
-              className="group bg-white rounded-lg shadow hover:shadow-xl transition cursor-pointer overflow-hidden"
+              className="group bg-white rounded-xl shadow-md hover:shadow-xl transition cursor-pointer overflow-hidden"
             >
               <div className="relative aspect-video">
                 <img
                   src={video.thumbnail}
                   alt={video.title}
                   loading="lazy"
-                  className="absolute w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <PlayCircle className="w-10 h-10 text-white" />
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <PlayCircle className="w-12 h-12 text-white" />
                 </div>
               </div>
               <div className="p-4">
-                <h3 className="text-md font-semibold text-gray-800 line-clamp-2">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1 line-clamp-2">
                   {video.title}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1 line-clamp-3">
+                <p className="text-sm text-gray-600 line-clamp-3">
                   {video.description}
                 </p>
               </div>
@@ -108,19 +116,19 @@ const VideoSection = () => {
           ))}
         </div>
 
-        {/* View All Button */}
+        {/* Show More Button */}
         {!showAll && videos.length > 3 && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-10">
             <button
               onClick={() => setShowAll(true)}
-              className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-full transition focus:ring-2 focus:ring-purple-300"
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full text-sm font-semibold shadow focus:outline-none focus:ring-2 focus:ring-purple-400"
             >
               View All Videos
             </button>
           </div>
         )}
 
-        {/* Modal */}
+        {/* Video Modal */}
         {modalVideo && (
           <div
             className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
@@ -132,7 +140,7 @@ const VideoSection = () => {
             >
               <button
                 onClick={handleCloseModal}
-                className="absolute top-4 right-4 text-gray-700 hover:text-red-600 z-10"
+                className="absolute top-4 right-4 text-gray-700 hover:text-red-600"
                 aria-label="Close Video"
               >
                 <X className="w-6 h-6" />
@@ -141,7 +149,7 @@ const VideoSection = () => {
                 <iframe
                   src={`${modalVideo}?autoplay=1`}
                   title="Video Player"
-                  className="w-full h-full"
+                  className="w-full h-full rounded-b-xl"
                   allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
                   allowFullScreen
                 />

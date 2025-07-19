@@ -286,14 +286,14 @@ export default function LandingPage() {
       </main>
 
       {/* Chat Icon Button */}
-      <button
+      {/* <button
         onClick={handleChatIconClick}
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:p-4 bg-purple-600 text-white rounded-full shadow-2xl hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
         aria-label="Toggle GLMS Support Chat"
         title="Chat with GLMS Support"
       >
         <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6 sm:w-7 sm:h-7" />
-      </button>
+      </button> */}
 
       {/* Chat Window */}
       {showChat && (

@@ -200,7 +200,7 @@ const Rice2RoboEcommersFooter = () => {
                        }`}
                      >
                        {[
-                         "Free Rudraksha",
+                        
                          "AI & GEN AI Training",
                          "Legal Knowledge",
                          "Study Abroad",

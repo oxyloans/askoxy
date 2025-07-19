@@ -97,63 +97,63 @@ const domains = [
 
 const DomainSection = () => {
   return (
-    <section className="py-10 md:py-14 bg-gradient-to-br from-blue-50 to-green-50">
+    <section className="py-12 md:py-16 bg-gradient-to-br from-blue-50 to-green-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Global Lending Management Solutions
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Global Lending Management Systems
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-            Explore systems that streamline every phase of the loan lifecycle —
-            from origination to servicing.
+          <p className="text-gray-600 max-w-2xl mx-auto text-base">
+            Streamline every phase of the loan lifecycle — from origination to
+            collections and servicing.
           </p>
         </div>
 
-        {/* Cards Grid */}
+        {/* Domain Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {domains.map((domain) => (
             <Link
-              to={domain.link}
               key={domain.id}
-              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group flex flex-col overflow-hidden"
+              to={domain.link}
+              className="group bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 flex flex-col justify-between"
             >
-              <div className="p-5 flex flex-col h-full">
-                {/* Title & Icon */}
-                <div className="flex items-center mb-3">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
+              <div>
+                {/* Icon and Title */}
+                <div className="flex items-center mb-4">
+                  <div className="bg-blue-100 p-3 rounded-full">
                     {domain.icon}
                   </div>
-                  <h3 className="text-base font-semibold text-gray-800">
+                  <h3 className="text-lg font-semibold text-gray-800 ml-3">
                     {domain.title}
                   </h3>
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-gray-600 text-sm mb-5">
                   {domain.description}
                 </p>
 
                 {/* Use Cases */}
-                <div className="flex-1">
-                  <h4 className="text-xs font-semibold text-gray-700 mb-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
                     Key Use Cases
                   </h4>
-                  <ul className="space-y-1">
+                  <ul className="space-y-2">
                     {domain.useCases.map((uc) => (
-                      <li key={uc.id}>
-                        <div className="text-sm text-gray-800">{uc.name}</div>
-                        <p className="text-xs text-gray-500">{uc.desc}</p>
+                      <li key={uc.id} className="text-sm text-gray-700">
+                        <span className="font-medium">{uc.name}:</span>{" "}
+                        <span className="text-gray-500">{uc.desc}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
+              </div>
 
-                {/* Learn More Link */}
-                <div className="mt-4 text-blue-600 text-sm font-medium flex items-center group-hover:text-blue-800">
-                  Learn More
-                  <ChevronRight className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </div>
+              {/* Learn More */}
+              <div className="mt-6 flex items-center text-blue-600 font-medium group-hover:text-blue-800 transition">
+                Learn More
+                <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
               </div>
             </Link>
           ))}

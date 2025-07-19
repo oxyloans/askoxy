@@ -107,9 +107,7 @@ const NyayagptOurServices = () => {
 
   return (
     <section className="min-screen bg-gradient-to-br from-purple-100 via-gray-100 to-blue-100 py-8 lg:py-16">
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      
         {/* Header Section */}
         <div className="text-center mb-12 lg:mb-16">
           <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-extrabold mb-4 leading-tight">
@@ -127,21 +125,24 @@ const NyayagptOurServices = () => {
           <Slider {...settings}>
             {companies.map((company, index) => (
               <div key={index} className="px-4">
-                <a
-                  href={company.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-transform duration-300 ease-in-out hover:scale-105"
+                <div
+                  className="relative group cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105"
+                  onClick={() => (window.location.href = company.link)}
                 >
-                  <img
-                    src={company.logo}
-                    alt={company.name}
-                    className="mx-auto h-40 object-contain mb-4"
-                  />
-                  {/* <p className="text-lg font-semibold text-gray-700">
+                  {/* Logo inside a card */}
+                  <div>
+                    <img
+                      src={company.logo}
+                      alt={company.name}
+                      className="mx-auto h-40 object-contain"
+                    />
+                  </div>
+
+                  {/* Hover: Show name overlay */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                     {company.name}
-                  </p> */}
-                </a>
+                  </div>
+                </div>
               </div>
             ))}
           </Slider>

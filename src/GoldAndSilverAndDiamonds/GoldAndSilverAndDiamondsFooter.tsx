@@ -196,7 +196,7 @@ const GoldAndSilverAndCacsFooter = () => {
                         }`}
                       >
                         {[
-                          "Free Rudraksha",
+                          
                           "AI & GEN AI Training",
                           "Legal Knowledge",
                           "Study Abroad",

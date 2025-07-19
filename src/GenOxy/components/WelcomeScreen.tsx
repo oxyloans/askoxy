@@ -264,7 +264,7 @@ useEffect(() => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-24 mx-auto  w-full pointer-events-auto">
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-19 mx-auto  w-full pointer-events-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="relative mb-6">

@@ -103,10 +103,10 @@ const InputBar: React.FC<InputBarProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 shadow-2xl ">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
       {isRecording && (
         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-xs shadow-lg animate-pulse">
-          🎤 Recording... Tap mic to stop
+          🎤 Recording...Tap mic to stop
         </div>
       )}
       <div className="max-w-4xl mx-auto p-3 sm:p-4">
@@ -114,7 +114,7 @@ const InputBar: React.FC<InputBarProps> = ({
           <div className="absolute -inset-1 rounded-2xl blur bg-gradient-to-r from-indigo-600 to-purple-600 opacity-20 group-hover:opacity-30 transition duration-300 pointer-events-none" />
           <div className="relative bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-xl focus-within:border-indigo-500 dark:focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-200 overflow-hidden">
             <div className="flex gap-2 sm:gap-3 p-3 sm:p-4">
-              <div className="flex-1 px-4 py-3 sm:px-6 sm:py-4 bg-white dark:bg-gray-800 rounded-3xl shadow-inner border border-gray-200 dark:border-gray-700 flex flex-col">
+              <div className="flex-1 px-4 py-3 sm:px-6 sm:py-4  rounded-3xl border border-gray-200 dark:border-gray-700 flex flex-col">
                 {/* Textarea */}
                 <div className="flex-grow">
                   <textarea

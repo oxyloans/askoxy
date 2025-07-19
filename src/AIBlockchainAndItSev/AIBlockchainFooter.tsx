@@ -191,7 +191,7 @@ const AIBlockchainFooter = () => {
               }`}
             >
               {[
-                "Free Rudraksha",
+             
                 "AI & GEN AI Training",
                 "Legal Knowledge",
                 "Study Abroad",
