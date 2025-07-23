@@ -14,40 +14,51 @@ import s9 from "../../assets/img/s9.png";
 
 const companies = [
   {
-    logo: s1,
+    logo: "https://i.ibb.co/0yGwYp5n/a1.png",
     name: "AI | Blockchain & IT Services",
     link: "https://www.askoxy.ai/aiblockchainanditservices",
   },
   {
-    logo: s2,
+    logo: "https://i.ibb.co/KczYBVnt/a2.png",
     name: "AI - Blogs, Jobs and Training",
     link: "https://www.askoxy.ai/glms",
   },
   {
-    logo: s3,
+    logo: "https://i.ibb.co/934hDrxH/a3.png",
     name: "CA | CS Services",
     link: "https://www.askoxy.ai/caandcsservices",
   },
   {
-    logo: s4,
-    name: "Gold, Silver & Diamonds",
+    logo: "https://i.ibb.co/gpr9XDj/a4.png",
+    name: "Nyaya Gpt",
     link: "https://www.askoxy.ai/goldandsilveranddiamonds",
   },
   {
-    logo: s5,
-    name: "Loans & Investments",
+    logo: "https://i.ibb.co/jvzPFYKQ/a5.png",
+    name: "Gold, Silver & Diamonds",
     link: "https://www.askoxy.ai/loansinvestments",
   },
-  { logo: s6, name: "Nyaya Gpt", link: "https://www.askoxy.ai/nyayagpt" },
-  { logo: s7, name: "Real Estate", link: "https://www.askoxy.ai/realestate" },
   {
-    logo: s8,
+    logo: "https://i.ibb.co/Cs8trQLZ/a6.png",
+    name: " Loans & Investments",
+    link: "https://www.askoxy.ai/nyayagpt",
+  },
+  {
+    logo: "https://i.ibb.co/7xGFvBVW/a7.png",
     name: "Rice 2 Robo ECommerce",
+    link: "https://www.askoxy.ai/realestate",
+  },
+  {
+    logo: "https://i.ibb.co/ynYWxzZr/a8.png",
+    name: "Real Estate",
     link: "https://www.askoxy.ai/rice2roboecommers",
   },
-  { logo: s9, name: "Study Abroad", link: "https://www.askoxy.ai/studyabroad" },
+  {
+    logo: "https://i.ibb.co/NgRVq7fJ/a9.png",
+    name: "Study Abroad",
+    link: "https://www.askoxy.ai/studyabroad",
+  },
 ];
-
 
 const OurServicesCarousel = () => {
   const settings = {
@@ -103,7 +114,6 @@ const OurServicesCarousel = () => {
       </div>
     );
   }
-  
 
   return (
     <section className="min-screen bg-gradient-to-br from-purple-100 via-gray-100 to-blue-100 py-8 lg:py-16">
@@ -121,25 +131,22 @@ const OurServicesCarousel = () => {
           <div className="w-24 h-1 bg-gradient-to-r from-purple-600 to-blue-600 mx-auto rounded-full"></div>
         </div>
 
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <Slider {...settings}>
             {companies.map((company, index) => (
-              <div key={index} className="px-4">
+              <div key={index} className="px-2 sm:px-4">
                 <div
-                  className="relative group cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105"
-                  onClick={() => (window.location.href = company.link)}
+                  className="relative group cursor-pointer rounded-lg overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105"
+                  onClick={() => window.open(company.link, "_blank")}
+                  aria-label={`Visit ${company.name}`}
                 >
-                  {/* Logo inside a card */}
-                  <div>
-                    <img
-                      src={company.logo}
-                      alt={company.name}
-                      className="mx-auto h-40 object-contain"
-                    />
-                  </div>
+                  <img
+                    src={company.logo}
+                    alt={company.name || "Company Logo"}
+                    className="mx-auto h-32 sm:h-40 md:h-48 object-contain w-full max-w-xs transition duration-300"
+                  />
 
-                  {/* Hover: Show name overlay */}
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                  <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs sm:text-sm font-semibold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 whitespace-nowrap">
                     {company.name}
                   </div>
                 </div>

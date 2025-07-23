@@ -1,49 +1,51 @@
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Sparkles, ShoppingCart, Package, Truck, Star, Users, Award, Zap, Shield } from "lucide-react";
-
+import {
+  ArrowRight,
+  Sparkles,
+  ShoppingCart,
+  Package,
+  Truck,
+  Shield,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 function Rice2RoboEcommersHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-   const [isLoading, setIsLoading] = useState<boolean>(false);
-    const LOGIN_URL = "/whatsapplogin";
-    const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const rotatingWords = [
-    "Smart Shopping",
-    "Quality Products",
-    "Fast Delivery",
-  ];
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
+
+  const rotatingWords = ["Smart Shopping", "Quality Products", "Fast Delivery"];
   const fullHeadingText = "Experience";
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
 
-    const startTypingAnimation = () => {
-      let currentIndex = 0;
-      const currentWord = rotatingWords[currentWordIndex];
-      setIsTypingComplete(false);
-      setTypedText("");
+  useEffect(() => {
+    let currentIndex = 0;
+    setIsTypingComplete(false);
+    setTypedText("");
 
-      const typingInterval = setInterval(() => {
-        if (currentIndex < currentWord.length) {
-          setTypedText(currentWord.slice(0, currentIndex + 1));
-          currentIndex++;
-        } else {
-          clearInterval(typingInterval);
-          setIsTypingComplete(true);
-          setTimeout(() => {
-            setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
-          }, 2000);
-        }
-      }, 100);
+    const currentWord = rotatingWords[currentWordIndex];
 
-      return typingInterval;
-    };
+    const typingInterval = setInterval(() => {
+      if (currentIndex < currentWord.length) {
+        setTypedText(currentWord.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+        setIsTypingComplete(true);
+        setTimeout(() => {
+          setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+        }, 2000);
+      }
+    }, 100);
 
-    const typingInterval = startTypingAnimation();
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
@@ -52,13 +54,11 @@ function Rice2RoboEcommersHeroSection() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/dashboard/home"; // your desired path
+      const redirectPath = "/main/dashboard/home";
 
       if (userId) {
-        // User is already logged in
         navigate(redirectPath);
       } else {
-        // Save redirect path before redirecting to login
         sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
@@ -68,16 +68,18 @@ function Rice2RoboEcommersHeroSection() {
       setIsLoading(false);
     }
   };
-  
+
   return (
-    <section className="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 py-6 sm:py-8 lg:py-16 pb-16 sm:pb-20 overflow-hidden min-h-screen flex items-center">
-      {/* Enhanced Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
+    <section
+      className="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900
+                 py-6 sm:py-8 lg:py-16 pb-16 sm:pb-20 overflow-hidden min-h-screen
+                 flex items-center"
+    >
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-60 sm:w-80 h-60 sm:h-80 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-60 sm:w-80 h-60 sm:h-80 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 sm:w-96 h-72 sm:h-96 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-full blur-3xl animate-pulse delay-500"></div>
-
-        {/* Animated Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] animate-pulse"></div>
       </div>
 
@@ -85,15 +87,16 @@ function Rice2RoboEcommersHeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
           {/* Left Content */}
           <div
-            className={`lg:col-span-7 space-y-4 sm:space-y-6 lg:space-y-8 text-center lg:text-left transform transition-all duration-700 ${
-              isVisible
-                ? "translate-x-0 opacity-100"
-                : "-translate-x-10 opacity-0"
-            }`}
+            className={`lg:col-span-7 space-y-4 sm:space-y-6 lg:space-y-8
+              text-center lg:text-left
+              transform transition-all duration-700
+              ${
+                isVisible
+                  ? "translate-x-0 opacity-100"
+                  : "-translate-x-10 opacity-0"
+              }`}
           >
             <div className="space-y-3 sm:space-y-4">
-              {/* Brand Badge */}
-
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
                 {fullHeadingText}
                 <span className="block mt-1 sm:mt-2">
@@ -103,7 +106,7 @@ function Rice2RoboEcommersHeroSection() {
                       className={`inline-block w-0.5 sm:w-1 h-6 sm:h-8 md:h-10 lg:h-12 bg-blue-400 ml-1 ${
                         isTypingComplete ? "animate-pulse" : ""
                       }`}
-                    ></span>
+                    />
                   </span>
                 </span>
               </h1>
@@ -114,7 +117,7 @@ function Rice2RoboEcommersHeroSection() {
                 deliver quality and convenience right to your doorstep.
               </p>
 
-              {/* Enhanced Service Cards */}
+              {/* Service Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mt-6 sm:mt-8 lg:mt-10">
                 {[
                   {
@@ -148,20 +151,31 @@ function Rice2RoboEcommersHeroSection() {
                   ) => (
                     <div
                       key={index}
-                      className={`bg-gradient-to-br ${bgColor} backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 border border-white/10 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:bg-white/5 hover:scale-105 cursor-pointer group`}
+                      className={`bg-gradient-to-br ${bgColor} backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl
+                      p-3 sm:p-4 lg:p-6 border border-white/10 shadow-lg
+                      transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:bg-white/5 hover:scale-105
+                      cursor-pointer group`}
+                      role="group"
+                      tabIndex={0}
+                      aria-label={`${title} feature`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.currentTarget.click();
+                        }
+                      }}
                     >
                       <div className="flex flex-col items-center text-center space-y-2 sm:space-y-3">
                         <div
                           className={`p-2 sm:p-3 rounded-full bg-gradient-to-r from-white/10 to-white/5 ${color} group-hover:scale-110 transition-transform duration-300`}
                         >
-                          <Icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-8 xl:h-8" />
+                          <Icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
                         </div>
                         <h3
-                          className={`text-sm sm:text-base lg:text-lg xl:text-xl font-semibold ${color}`}
+                          className={`text-base sm:text-lg lg:text-xl font-semibold ${color}`}
                         >
                           {title}
                         </h3>
-                        <p className="text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed">
+                        <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed">
                           {description}
                         </p>
                       </div>
@@ -175,7 +189,13 @@ function Rice2RoboEcommersHeroSection() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mt-6 sm:mt-8">
               <button
                 onClick={handleSignIn}
-                className="group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2.5 sm:py-3 lg:py-4 px-5 sm:px-6 lg:px-8 rounded-full flex items-center justify-center gap-2 sm:gap-3 hover:from-blue-600 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+                disabled={isLoading}
+                aria-label="Shop Now"
+                className={`group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2.5 sm:py-3 lg:py-4
+                  px-5 sm:px-6 lg:px-8 rounded-full flex items-center justify-center gap-2 sm:gap-3
+                  hover:from-blue-600 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/25
+                  transition-all duration-300 transform hover:scale-105 text-sm sm:text-base
+                  ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <ShoppingCart className="w-4 h-4 lg:w-5 lg:h-5" />
                 Shop Now
@@ -184,7 +204,13 @@ function Rice2RoboEcommersHeroSection() {
 
               <button
                 onClick={handleSignIn}
-                className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-2.5 sm:py-3 lg:py-4 px-5 sm:px-6 lg:px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-2 sm:gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20 text-sm sm:text-base"
+                disabled={isLoading}
+                aria-label="Get Support"
+                className={`group bg-white/10 backdrop-blur-sm text-white font-semibold py-2.5 sm:py-3 lg:py-4 px-5 sm:px-6 lg:px-8 rounded-full
+                  hover:bg-white/20 flex items-center justify-center gap-2 sm:gap-3
+                  shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20
+                  text-sm sm:text-base
+                  ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
                 Get Support
@@ -194,28 +220,31 @@ function Rice2RoboEcommersHeroSection() {
 
           {/* Right Content - Hero Image */}
           <div
-            className={`lg:col-span-5 transition-all duration-700 transform ${
-              isVisible
-                ? "translate-x-0 opacity-100"
-                : "translate-x-10 opacity-0"
-            } flex justify-center mt-8 lg:mt-0`}
+            className={`lg:col-span-5 transition-all duration-700 transform flex justify-center mt-8 lg:mt-0
+              ${
+                isVisible
+                  ? "translate-x-0 opacity-100"
+                  : "translate-x-10 opacity-0"
+              }`}
           >
-            <div className="relative group">
+            <div className="relative group max-w-sm sm:max-w-md lg:max-w-full">
               {/* Image Glow Effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100 pointer-events-none"></div>
 
               <img
                 src="https://i.ibb.co/bMPQKNX5/7.png"
                 alt="CA CS Services Professional"
-                className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
+                className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full transform group-hover:scale-105 transition-all duration-500"
+                loading="lazy"
+                decoding="async"
               />
 
               {/* Floating Badge */}
-              <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
+              {/* <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce pointer-events-none select-none">
                 <span className="text-xs sm:text-sm font-bold">
                   Trusted Experts
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

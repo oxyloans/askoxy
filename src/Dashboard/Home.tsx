@@ -769,7 +769,7 @@ const Home: React.FC = () => {
       {
         id: "2",
         title: "Study Abroad",
-        image: "https://iili.io/FGn6wdu.md.png",
+        image: "https://i.ibb.co/8LhJDQTn/study-abroad1.png",
         description: "Complete guidance for international education",
         path: "/studyabroad",
         icon: <Globe className="text-purple-600" size={24} />,

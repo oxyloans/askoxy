@@ -10,7 +10,7 @@ import {
   Maximize2,
   Minimize2,
   ThumbsUp,
-  ThumbsDown,
+
   MessageCircle,
   User,
   Copy,

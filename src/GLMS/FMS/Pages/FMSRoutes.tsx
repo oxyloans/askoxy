@@ -62,7 +62,7 @@ const FMSRouteRenderer: React.FC = () => {
   // Handle mode switch
   const handleModeSwitch = (mode: "business" | "system") => {
     setCurrentMode(mode);
-    navigate(`/los/${useCaseId}/${mode}`);
+    navigate(`/fms/${useCaseId}/${mode}`);
   };
   // Enhanced predefined questions with icons
   const predefinedQuestions = [

@@ -111,8 +111,7 @@ const MyOrders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] =
     useState<OrderDetailsResponse | null>(null);
   const [activeTab, setActiveTab] = useState<number | string>("details");
-  const [isDayDropdownOpen, setIsDayDropdownOpen] = useState(false);
-  const [isSelectionOpen, setIsSelectionOpen] = useState(true);
+ 
   const [showTimeSlotPopup, setShowTimeSlotPopup] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [allOrders, setOrders] = useState<OrderDetailsResponse[]>([]);
@@ -618,69 +617,91 @@ const MyOrders: React.FC = () => {
     }
   };
 
-  const handleDownloadInvoice = (order: OrderDetailsResponse) => {
-    try {
-      const orderDate = new Date(order.orderDate);
-      const formattedDate = orderDate.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
+//   const handleDownloadInvoice = (order: OrderDetailsResponse) => {
+//     try {
+//       const orderDate = new Date(order.orderDate);
+//       const formattedDate = orderDate.toLocaleDateString("en-US", {
+//         year: "numeric",
+//         month: "short",
+//         day: "numeric",
+//       });
 
-      // Add GA tracking for invoice download
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "download_invoice", {
-          currency: "INR",
-          order_id: order.newOrderId || order.orderId,
-          value: order.grandTotal,
-        });
-      }
+//       // Add GA tracking for invoice download
+//       if (typeof window !== "undefined" && window.gtag) {
+//         window.gtag("event", "download_invoice", {
+//           currency: "INR",
+//           order_id: order.newOrderId || order.orderId,
+//           value: order.grandTotal,
+//         });
+//       }
 
-    const invoiceContent = `
-  INVOICE
-  =============================
-  Order ID: ${order.newOrderId || order.orderId}
-  Date: ${formattedDate}
-  Customer: ${order.customerName}
-  Phone: ${order.customerMobile}
+//     const invoiceContent = `
+//   INVOICE
+//   =============================
+//   Order ID: ${order.newOrderId || order.orderId}
+//   Date: ${formattedDate}
+//   Customer: ${order.customerName}
+//   Phone: ${order.customerMobile}
   
-  Items:
-  -----------------------------
-  ${order.orderItems
-    .map(
-      (item) =>
-        `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
-          item.quantity
-        } =₹${Math.round(Number(item.quantity * item.singleItemPrice))}`
-    )
-    .join("\n")}
+//   Items:
+//   -----------------------------
+//   ${order.orderItems
+//     .map(
+//       (item) =>
+//         `${item.itemName} (${item.weight} ${item.itemUnit || "KGS"}) x ${
+//           item.quantity
+//         } =₹${Math.round(Number(item.quantity * item.singleItemPrice))}`
+//     )
+//     .join("\n")}
   
-  -----------------------------
-  Sub Total: ₹${Math.round(Number(order.subTotal || order.grandTotal))}
-  Delivery Fee: ₹${Math.round(Number(order.deliveryFee))}
-  ${order.walletAmount > 0 ? `Wallet Amount: -₹${Math.round(Number(order.walletAmount))}\n` : ""}
-  ${order.discountAmount > 0 ? `Coupon Discount: -₹${Math.round(Number(order.discountAmount))}\n` : ""}
-  ${order.gstAmount > 0 ? `GST Charges: ₹${Math.round(Number(order.gstAmount))}\n` : ""}
+//   -----------------------------
+//   Sub Total: ₹${Math.round(Number(order.subTotal || order.grandTotal))}
+//   Delivery Fee: ₹${Math.round(Number(order.deliveryFee))}
+//   ${order.walletAmount > 0 ? `Wallet Amount: -₹${Math.round(Number(order.walletAmount))}\n` : ""}
+//   ${order.discountAmount > 0 ? `Coupon Discount: -₹${Math.round(Number(order.discountAmount))}\n` : ""}
+//   ${order.gstAmount > 0 ? `GST Charges: ₹${Math.round(Number(order.gstAmount))}\n` : ""}
   
-  TOTAL: ₹${Math.round(Number(order.grandTotal))}
-  =============================
-  Payment Method: ${order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"}
-`;
+//   TOTAL: ₹${Math.round(Number(order.grandTotal))}
+//   =============================
+//   Payment Method: ${order.paymentType === 2 ? "Online Payment" : "Cash on Delivery"}
+// `;
 
-      const blob = new Blob([invoiceContent], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `Invoice-${order.newOrderId || order.orderId}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error generating invoice:", error);
-      alert("Failed to download invoice. Please try again later.");
-    }
-  };
+//       const blob = new Blob([invoiceContent], { type: "text/plain" });
+//       const url = URL.createObjectURL(blob);
+//       const link = document.createElement("a");
+//       link.href = url;
+//       link.download = `Invoice-${order.newOrderId || order.orderId}.txt`;
+//       document.body.appendChild(link);
+//       link.click();
+//       document.body.removeChild(link);
+//       URL.revokeObjectURL(url);
+//     } catch (error) {
+//       console.error("Error generating invoice:", error);
+//       alert("Failed to download invoice. Please try again later.");
+//     }
+//   };
+
+
+ const handleDownloadInvoice = (order: any) => {
+   try {
+     if (order?.invoiceUrl) {
+       const link = document.createElement("a");
+       link.href = order.invoiceUrl;
+       link.download = `invoice_${order.orderId}.pdf`;
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+       message.success("Invoice download started.");
+     } else {
+       console.error("No invoice URL found for order:", order.orderId);
+       message.error("No invoice available for this order.");
+     }
+   } catch (error) {
+     console.error("Error downloading invoice:", error);
+     message.error("Failed to download invoice. Please try again.");
+   }
+ };
+
 
   const fetchOrderFeedbackData = async (
     orderId: string

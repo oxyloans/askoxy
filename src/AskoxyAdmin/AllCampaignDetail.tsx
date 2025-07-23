@@ -302,7 +302,9 @@ const AllCampaignsDetails: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/publishposttosocialmedia?campaignId=${
           currentBlogCampaign?.campaignId
-        }&platform=${platform.toUpperCase()}&socialMediaCaption=${socialMediaCaption.trim()}`,
+        }&platform=${platform.toUpperCase()}&socialMediaCaption=${encodeURIComponent(
+          socialMediaCaption.trim()
+        )}`,
         "",
         {
           headers: {

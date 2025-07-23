@@ -101,7 +101,7 @@ function CacsHeroSection() {
           >
             <div className="space-y-4 sm:space-y-6">
               {/* Main Heading */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
                 {fullHeadingText}
                 <span className="block mt-2 sm:mt-4">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
@@ -212,11 +212,11 @@ function CacsHeroSection() {
               />
 
               {/* Floating Badge */}
-              <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
+              {/* <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
                 <span className="text-xs sm:text-sm font-bold">
                   Trusted Experts
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

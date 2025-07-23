@@ -63,8 +63,7 @@ const ServicesPage: React.FC = () => {
     () => [
       {
         title: "OxyLoans - RBI Approved P2P NBFC",
-        image:
-          "https://iili.io/FENcMAb.md.png",
+        image: "https://iili.io/FENcMAb.md.png",
         description:
           "Earn up to 1.75% Monthly ROI and 24% P.A. on your investments.",
         path: `${accessToken ? "/main" : ""}/service/oxyloans-service`,
@@ -83,8 +82,7 @@ const ServicesPage: React.FC = () => {
       // },
       {
         title: "Free AI & Gen AI Training",
-        image:
-          "https://iili.io/FGCrmbV.md.png",
+        image: "https://iili.io/FGCrmbV.md.png",
         description:
           "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
         path: `${accessToken ? "/main" : ""}/services/freeai-genai`,
@@ -93,8 +91,7 @@ const ServicesPage: React.FC = () => {
       },
       {
         title: "Study Abroad",
-        image:
-          "https://iili.io/FGn6wdu.md.png",
+        image: "https://i.ibb.co/8LhJDQTn/study-abroad1.png",
         description:
           "Explore opportunities to study abroad with expert guidance and support.",
         path: "/studyabroad",
@@ -103,8 +100,7 @@ const ServicesPage: React.FC = () => {
       },
       {
         title: "Legal Knowledge Hub",
-        image:
-          "https://iili.io/FGomRzF.md.png",
+        image: "https://iili.io/FGomRzF.md.png",
         description:
           "Access expert legal advice and educational resources to navigate legal matters.",
         path: `${accessToken ? "/main" : ""}/services/legalservice`,
@@ -122,8 +118,7 @@ const ServicesPage: React.FC = () => {
       },
       {
         title: "Manufacturing Services",
-        image:
-          "https://iili.io/FGxUkKX.md.png",
+        image: "https://iili.io/FGxUkKX.md.png",
         description:
           "Explore advanced machinery and manufacturing services for industrial growth.",
         path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
@@ -132,8 +127,7 @@ const ServicesPage: React.FC = () => {
       },
       {
         title: "We Are Hiring",
-        image:
-          "https://iili.io/FGxPrnR.md.png",
+        image: "https://iili.io/FGxPrnR.md.png",
         description:
           "Explore exciting job opportunities and be a part of our growing team.",
         path: `${accessToken ? "/main" : ""}/services/we-are-hiring`,

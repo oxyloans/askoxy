@@ -98,7 +98,7 @@ const Header = ({ onNavClick, activeLink }: HeaderProps) => {
           {/* Logo */}
           <div
             className="flex items-center cursor-pointer"
-            onClick={handleSignIn}
+            onClick={()=>navigate("/")}
           >
             <img
               src={Askoxy}

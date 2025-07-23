@@ -58,7 +58,7 @@ const CMSRouteRenderer: React.FC = () => {
   // Handle mode switch
   const handleModeSwitch = (mode: "business" | "system") => {
     setCurrentMode(mode);
-    navigate(`/los/${useCaseId}/${mode}`);
+    navigate(`/cms/${useCaseId}/${mode}`);
   };
   const predefinedQuestions = [
     {

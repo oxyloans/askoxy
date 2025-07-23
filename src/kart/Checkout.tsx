@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { message, Modal } from "antd";
+import { Button, Divider, message, Modal, notification } from "antd";
 import Footer from "../components/Footer";
 import {
   ArrowLeft,
@@ -20,7 +20,11 @@ import encryptEas from "./encryptEas";
 import { CartContext } from "../until/CartContext";
 import BASE_URL from "../Config";
 // import DeliveryFee from "./DeliveryFee";
-import { calculateDeliveryFee } from "./DeliveryFee";
+import {
+  calculateDeliveryFee,
+  checkEligibilityForActiveZones,
+} from "./DeliveryFee";
+import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
 interface CartItem {
   itemId: string;
@@ -87,6 +91,8 @@ interface ExtendedTimeSlot extends TimeSlot {
 const CheckoutPage: React.FC = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const [isEligibleToday, setIsEligibleToday] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
@@ -107,6 +113,7 @@ const CheckoutPage: React.FC = () => {
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
   const [handlingFee, setHandlingFee] = useState<number | null>(0);
   const [subGst, setSubGst] = useState(0);
+  const [goldMakingCharges, setGoldMakingCharges] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [walletMessage, setWalletMessage] = useState<string>("");
   const [grandTotal, setGrandTotal] = useState<number>(0);
@@ -182,7 +189,15 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     fetchCartData();
     getWalletAmount();
-    fetchTimeSlots();
+    let isEligible: boolean = false;
+    if (selectedAddress?.latitude && selectedAddress?.longitude) {
+      (async () => {
+        const isEligible = await checkEligibility();
+        fetchTimeSlots(isEligible);
+      })();
+    } else {
+      fetchTimeSlots(false);
+    }
     fetchAvailableCoupons();
     const queryParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(queryParams.entries());
@@ -219,9 +234,62 @@ const CheckoutPage: React.FC = () => {
     message.success(`Delivery time slot selected: ${date}, ${timeSlot}`);
     setIsDeliveryTimelineModalVisible(true);
   };
+  const checkEligibility = async () => {
+    try {
+      const result = await checkEligibilityForActiveZones(
+        selectedAddress?.latitude || 0,
+        selectedAddress?.longitude || 0
+      );
+      if (result.eligible) {
+        setIsEligibleToday(true);
+        setIsModalVisible(true);
+        console.log("user today delivery status " + result.eligible);
+      }
+      return result.eligible;
+    } catch (error) {
+      console.error("Eligibility check failed:", error);
+      return false;
+    }
+  };
 
-  const handleShowDeliveryTimeline = () => {
-    setShowDeliveryTimelineModal(true);
+  const handleOk = () => {
+    setIsModalVisible(false);
+
+    if (isEligibleToday) {
+      const todayDate = new Date();
+      const formattedToday = `${String(todayDate.getDate()).padStart(
+        2,
+        "0"
+      )}-${String(todayDate.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${todayDate.getFullYear()}`;
+
+      // Find today's slot from already fetched timeSlots
+      const todaySlot = timeSlots.find((slot) => slot.date === formattedToday);
+
+      if (todaySlot) {
+        // Try to auto-select the first available time slot
+        const availableTimeSlot =
+          todaySlot.timeSlot1 ||
+          todaySlot.timeSlot2 ||
+          todaySlot.timeSlot3 ||
+          todaySlot.timeSlot4;
+
+        if (availableTimeSlot) {
+          handleSelectTimeSlot(
+            todaySlot.date,
+            availableTimeSlot,
+            todaySlot.dayOfWeek
+          );
+        }
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    openTimeSlotModal();
   };
 
   const renderDeliveryTimelineModal = () => {
@@ -316,11 +384,14 @@ const CheckoutPage: React.FC = () => {
     );
   };
 
-  const getAvailableDays = (maxDays: number = 14): DayInfo[] => {
+  const getAvailableDays = (
+    maxDays: number = 14,
+    includeToday: boolean
+  ): DayInfo[] => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    const startDate = tomorrow;
+    const startDate = includeToday ? today : tomorrow;
     const daysOfWeek = [
       "Sunday",
       "Monday",
@@ -362,7 +433,7 @@ const CheckoutPage: React.FC = () => {
     return nextDays;
   };
 
-  const fetchTimeSlots = async (): Promise<void> => {
+  const fetchTimeSlots = async (isEligible: boolean): Promise<void> => {
     try {
       setLoading(true);
 
@@ -374,7 +445,9 @@ const CheckoutPage: React.FC = () => {
       );
 
       if (response.data && Array.isArray(response.data)) {
-        const nextDays = getAvailableDays(14);
+        console.log("isEligibleToday", isEligible);
+
+        const nextDays = getAvailableDays(14, isEligible);
 
         interface ApiTimeSlot {
           id: string;
@@ -417,7 +490,10 @@ const CheckoutPage: React.FC = () => {
             }
           }
 
-          if (formattedTimeSlots.length >= 3) {
+          const limit = isEligible ? 4 : 3;
+          console.log("limit" + limit);
+
+          if (formattedTimeSlots.length >= limit) {
             break;
           }
         }
@@ -442,8 +518,6 @@ const CheckoutPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      console.log("API Response:", response.data);
 
       if (response.data && Array.isArray(response.data)) {
         const filteredCoupons = response.data
@@ -568,9 +642,19 @@ const CheckoutPage: React.FC = () => {
               sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
             0
           );
-        console.log("this is the amout to pay" + amountToPay);
 
         const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
+
+        let goldMakingCharges = 0;
+
+        response.data.customerCartResponseList?.forEach((item: any) => {
+          const making = parseFloat(item.goldMakingCost || 0);
+          if (making > 0) {
+            goldMakingCharges += making;
+          }
+        });
+
+        // const actualGstWithoutMaking = gstAmount - goldMakingCharges;
 
         let deliveryFee = 0;
         let handlingFee = 0;
@@ -613,6 +697,7 @@ const CheckoutPage: React.FC = () => {
         }
 
         setSubGst(gstAmount);
+        setGoldMakingCharges(goldMakingCharges);
         setTotalAmount(amountToPay);
         setGrandTotal(amountToPay);
         setDeliveryFee(deliveryFee);
@@ -728,7 +813,7 @@ const CheckoutPage: React.FC = () => {
           console.error("Error fetching wallet amount:", walletError);
         }
 
-        fetchTimeSlots();
+        fetchTimeSlots(isEligibleToday);
 
         requestAnimationFrame(() => {
           setPricesLoading(false);
@@ -983,6 +1068,16 @@ const CheckoutPage: React.FC = () => {
 
   const handlePayment = async () => {
     console.log("Exchange policy accepted:", exchangePolicyAccepted);
+    if (couponCode && !coupenApplied) {
+      notification.warning({
+        message: "Coupon Not Applied",
+        description:
+          "You entered a coupon code but didn't apply it. Please apply or remove the coupon code.",
+        placement: "topRight",
+      });
+
+      return;
+    }
 
     if (!exchangePolicyAccepted) {
       Modal.warning({
@@ -1616,102 +1711,102 @@ const CheckoutPage: React.FC = () => {
     );
   };
 
-  const renderCouponsModal = (): JSX.Element => {
-    console.log("Rendering Coupons Modal, availableCoupons:", availableCoupons);
-    return (
-      <Modal
-        title={
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold text-purple-700 flex items-center">
-              <Tag className="w-5 h-5 mr-2 text-purple-500" />
-              Available Coupons
-            </div>
-            <X
-              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
-              onClick={() => setShowCouponsModal(false)}
-            />
-          </div>
-        }
-        open={showCouponsModal}
-        onCancel={() => setShowCouponsModal(false)}
-        footer={[
-          <button
-            key="close"
-            onClick={() => setShowCouponsModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-          >
-            Close
-          </button>,
-        ]}
-        centered
-        width={600}
-        closeIcon={null}
-        className="coupons-modal"
-      >
-        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
-          {couponsLoading ? (
-            <div className="text-center p-8">
-              <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-              <p className="text-gray-500 mt-2">Loading coupons...</p>
-            </div>
-          ) : availableCoupons.length === 0 ? (
-            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
-              <Tag className="w-16 h-16 text-purple-200 mb-4" />
-              <p className="text-lg font-medium mb-2">No available coupons</p>
-              <p className="text-sm text-gray-400">
-                Check back later for offers
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {availableCoupons.map((coupon: Coupon) => (
-                <div
-                  key={coupon.couponCode}
-                  className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-semibold text-purple-700">
-                        {coupon.couponCode}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Discount: ₹
-                        {coupon.couponValue !== undefined
-                          ? coupon.couponValue.toFixed(2)
-                          : "0.00"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Min. Order: ₹
-                        {coupon.minOrder !== undefined
-                          ? coupon.minOrder.toFixed(2)
-                          : "0.00"}
-                      </p>
-                      {coupon.couponDesc && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          {coupon.couponDesc}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      className="px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
-                      onClick={() => handleSelectCoupon(coupon)}
-                      disabled={coupenLoading}
-                    >
-                      {coupenLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                      ) : (
-                        "Apply"
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </Modal>
-    );
-  };
+  // const renderCouponsModal = (): JSX.Element => {
+  //   console.log("Rendering Coupons Modal, availableCoupons:", availableCoupons);
+  //   return (
+  //     <Modal
+  //       title={
+  //         <div className="flex items-center justify-between">
+  //           <div className="text-lg font-semibold text-purple-700 flex items-center">
+  //             <Tag className="w-5 h-5 mr-2 text-purple-500" />
+  //             Available Coupons
+  //           </div>
+  //           <X
+  //             className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
+  //             onClick={() => setShowCouponsModal(false)}
+  //           />
+  //         </div>
+  //       }
+  //       open={showCouponsModal}
+  //       onCancel={() => setShowCouponsModal(false)}
+  //       footer={[
+  //         <button
+  //           key="close"
+  //           onClick={() => setShowCouponsModal(false)}
+  //           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+  //         >
+  //           Close
+  //         </button>,
+  //       ]}
+  //       centered
+  //       width={600}
+  //       closeIcon={null}
+  //       className="coupons-modal"
+  //     >
+  //       <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
+  //         {couponsLoading ? (
+  //           <div className="text-center p-8">
+  //             <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+  //             <p className="text-gray-500 mt-2">Loading coupons...</p>
+  //           </div>
+  //         ) : availableCoupons.length === 0 ? (
+  //           <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
+  //             <Tag className="w-16 h-16 text-purple-200 mb-4" />
+  //             <p className="text-lg font-medium mb-2">No available coupons</p>
+  //             <p className="text-sm text-gray-400">
+  //               Check back later for offers
+  //             </p>
+  //           </div>
+  //         ) : (
+  //           <div className="space-y-4">
+  //             {availableCoupons.map((coupon: Coupon) => (
+  //               <div
+  //                 key={coupon.couponCode}
+  //                 className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
+  //               >
+  //                 <div className="flex justify-between items-start">
+  //                   <div className="flex-1">
+  //                     <p className="font-semibold text-purple-700">
+  //                       {coupon.couponCode}
+  //                     </p>
+  //                     <p className="text-sm text-gray-600">
+  //                       Discount: ₹
+  //                       {coupon.couponValue !== undefined
+  //                         ? coupon.couponValue.toFixed(2)
+  //                         : "0.00"}
+  //                     </p>
+  //                     <p className="text-sm text-gray-600">
+  //                       Min. Order: ₹
+  //                       {coupon.minOrder !== undefined
+  //                         ? coupon.minOrder.toFixed(2)
+  //                         : "0.00"}
+  //                     </p>
+  //                     {coupon.couponDesc && (
+  //                       <p className="text-sm text-gray-500 mt-1">
+  //                         {coupon.couponDesc}
+  //                       </p>
+  //                     )}
+  //                   </div>
+  //                   <button
+  //                     className="px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+  //                     onClick={() => handleSelectCoupon(coupon)}
+  //                     disabled={coupenLoading}
+  //                   >
+  //                     {coupenLoading ? (
+  //                       <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+  //                     ) : (
+  //                       "Apply"
+  //                     )}
+  //                   </button>
+  //                 </div>
+  //               </div>
+  //             ))}
+  //           </div>
+  //         )}
+  //       </div>
+  //     </Modal>
+  //   );
+  // };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -1819,9 +1914,18 @@ const CheckoutPage: React.FC = () => {
                         <span className="text-gray-600">Subtotal</span>
                         <span>₹{grandTotal.toFixed(2)}</span>
                       </div>
+                      {goldMakingCharges > 0 && (
+                        <div className="flex justify-between py-2">
+                          <span className="text-gray-600">
+                            Gold Making Charges
+                          </span>
+                          <span>₹{goldMakingCharges.toFixed(2)}</span>
+                        </div>
+                      )}
+
                       <div className="flex justify-between py-2">
                         <span className="text-gray-600">GST</span>
-                        <span>₹{subGst.toFixed(2)}</span>
+                        <span>₹{(subGst - goldMakingCharges).toFixed(2)}</span>
                       </div>
                       {cartData.length > 0 && deliveryFee !== null && (
                         <div className="flex justify-between py-2">
@@ -1869,17 +1973,90 @@ const CheckoutPage: React.FC = () => {
                       )}
                       <div className="border-t pt-2 mt-2">
                         <div className="flex justify-between font-medium text-lg">
-                          <span>Total</span>
-                          <span>₹{grandTotalAmount.toFixed(2)}</span>
+                          <strong className="text-lg">Total</strong>
+                          <strong>₹{grandTotalAmount.toFixed(2)}</strong>
                         </div>
                       </div>
                     </div>
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div>
+                      <div className="text-lg font-semibold text-purple-700 flex items-center">
+                        <Tag className="w-5 h-5 mr-2 text-purple-500" />
+                        Available Coupons
+                      </div>
 
-                    <div className="w-full mt-4 px-2 sm:px-0">
-                      <h4 className="font-medium text-sm mb-2 flex items-center">
-                        <Tag className="w-4 h-4 mr-1 text-purple-500" />
+                      {/* Coupons Content */}
+                      <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
+                        {couponsLoading ? (
+                          <div className="text-center p-8">
+                            <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+                            <p className="text-gray-500 mt-2">
+                              Loading coupons...
+                            </p>
+                          </div>
+                        ) : availableCoupons.length === 0 ? (
+                          <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
+                            <Tag className="w-16 h-16 text-purple-200 mb-4" />
+                            <p className="text-lg font-medium mb-2">
+                              No available coupons
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              Check back later for offers
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex overflow-x-auto gap-3">
+                            {availableCoupons.map((coupon: Coupon) => (
+                              <div
+                                key={coupon.couponCode}
+                                className="p-3 bg-white border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all flex-none w-36"
+                              >
+                                {/* Coupon Code */}
+                                <div className="font-semibold text-green-600 text-sm mb-2 truncate">
+                                  {coupon.couponCode}
+                                </div>
+
+                                {/* Min and Max Amount */}
+                                <div className="space-y-1 mb-2">
+                                  <div className="text-xs text-gray-600">
+                                    Min: ₹
+                                    <span className="font-semibold text-gray-800">
+                                      {coupon.minOrder !== undefined
+                                        ? coupon.minOrder.toFixed(0)
+                                        : "0"}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    Save: ₹
+                                    <span className="font-semibold text-gray-800">
+                                      {coupon.couponValue !== undefined
+                                        ? coupon.couponValue.toFixed(0)
+                                        : "0"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  className="w-full bg-purple-500 hover:bg-purple-600 border-none text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-0.5 min-h-[28px] sm:min-h-[28px] h-auto flex items-center justify-center"
+                                  onClick={() => handleSelectCoupon(coupon)}
+                                  loading={coupenLoading}
+                                >
+                                  Apply
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="w-full mt-2 px-2 sm:px-0">
+                      <div className="text-lg font-semibold text-purple-700 flex items-center mb-2">
+                        <Tag className="w-5 h-5 mr-2 text-purple-500" />
                         Apply Coupon
-                      </h4>
+                      </div>
                       <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
                         <input
                           type="text"
@@ -1914,17 +2091,18 @@ const CheckoutPage: React.FC = () => {
                           </motion.button>
                         )}
                       </div>
-                      <motion.button
+                      {/* <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={handleOpenCouponsModal}
-                        className="w-full mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                        className="w-full mt-2 px-4 py-2 bg-green-200 text-gray-700 rounded-md hover:bg-green-300 transition-colors"
                       >
                         View Available Coupons
-                      </motion.button>
+                      </motion.button> */}
                     </div>
+                    <Divider style={{ margin: "12px 0" }} />
 
-                    <div className="flex items-start space-x-2 mt-4">
+                    <div className="flex items-start space-x-2 mt-2">
                       <input
                         type="checkbox"
                         id="exchangePolicy"
@@ -2016,10 +2194,108 @@ const CheckoutPage: React.FC = () => {
             <Footer />
             {renderTimeSlotModal()}
             {renderDeliveryTimelineModal()}
-            {renderCouponsModal()}
+            {/* {renderCouponsModal()} */}
           </main>
         </div>
       </div>
+      {isEligibleToday && (
+        <Modal
+          title={null}
+          visible={isModalVisible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          footer={null}
+          centered
+          width={500}
+          className="unique-delivery-modal"
+          maskStyle={{
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(8px)",
+          }}
+          bodyStyle={{ padding: 0 }}
+          closeIcon={null}
+        >
+          <div className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-2xl overflow-hidden">
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full blur-xl animate-pulse"></div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-xl animate-pulse delay-1000"></div>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={handleCancel}
+              className="absolute top-4 right-4 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg z-10"
+            >
+              <CloseCircleOutlined className="text-gray-600" />
+            </button>
+
+            <div className="relative p-8">
+              {/* Icon and title section */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg mb-4 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-ping opacity-20"></div>
+                  <CheckCircleOutlined className="text-3xl text-white relative z-10" />
+                </div>
+
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+                  🚀 Instant Delivery
+                </h2>
+                <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto"></div>
+              </div>
+
+              {/* Content */}
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/30">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mt-1">
+                    <CheckCircleOutlined className="text-sm text-white" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-800 mb-2">
+                      You're all set for today! ✨
+                    </p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Your location qualifies for our lightning-fast instant
+                      delivery service. Ready to get your order delivered in
+                      record time?
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex space-x-3">
+                <Button
+                  onClick={handleCancel}
+                  className="flex-1 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl border border-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
+                >
+                  <CloseCircleOutlined className="mr-2" />
+                  Maybe Later
+                </Button>
+
+                <Button
+                  type="primary"
+                  onClick={handleOk}
+                  className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-medium rounded-xl border-none shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
+                >
+                  <CheckCircleOutlined className="mr-2" />
+                  Confirm Delivery
+                </Button>
+              </div>
+
+              {/* Delivery time indicator */}
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-sm border border-amber-200">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                  <span className="font-medium">
+                    Order Will be delivered today
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

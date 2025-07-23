@@ -318,7 +318,7 @@ const handleHome = () =>{navigate("/")};
             </div>
 
             {/* Mobile Contact Info */}
-            <div className="pt-4 mt-4 border-t border-gray-200 text-center">
+            {/* <div className="pt-4 mt-4 border-t border-gray-200 text-center">
               <p className="text-sm text-gray-600 mb-2">Need help with your order?</p>
               <a 
                 href="tel:+1555123456" 
@@ -334,7 +334,7 @@ const handleHome = () =>{navigate("/")};
                 <Mail size={16} />
                 support@rice2roboecommers.com
               </a>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

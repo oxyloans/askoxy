@@ -39,7 +39,20 @@ const CacsFooter = () => {
       behavior: "smooth",
     });
   };
-
+const solutions = [
+  { label: "AI Blockchain & IT services", path: "/aiblockchainanditservices" },
+  { label: "CA | CS Services", path: "/caandcsservices" },
+  { label: "Gold, Silver & Diamonds", path: "/goldandsilveranddiamonds" },
+  { label: "Loans & Investments", path: "/loansinvestments" },
+  { label: "Nyaya GPT", path: "/nyayagpt" },
+  { label: "Real Estate", path: "/realestate" },
+  { label: "Rice 2 Robo Ecommerce", path: "/rice2roboecommers" },
+  {
+    label: "Software Training - 100% job placement",
+    path: "/softwaretraining",
+  }, // Add path or adjust as needed
+  { label: "Study Abroad", path: "/studyabroad" },
+];
   return (
     <footer className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white py-8 sm:py-10 relative overflow-hidden">
       {/* Background Elements */}
@@ -127,143 +140,134 @@ const CacsFooter = () => {
           </div>
 
           {/* Solutions - with mobile accordion */}
-                   <div>
-                     <button
-                       type="button"
-                       aria-expanded={openSections.solutions}
-                       aria-controls="solutions-content"
-                       className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                       onClick={() => toggleSection("solutions")}
-                     >
-                       <h3 className="text-lg font-semibold">Our Platforms</h3>
-                       <ChevronDown
-                         className={`h-5 w-5 md:hidden transition-transform ${
-                           openSections.solutions ? "rotate-180" : ""
-                         }`}
-                       />
-                     </button>
-                     <ul
-                       id="solutions-content"
-                       className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
-                         openSections.solutions ? "max-h-96" : "max-h-0 md:max-h-96"
-                       }`}
-                     >
-                       {[
-                         "AI Blockchain & IT services",
-                         "CA | CS Services",
-                         "Gold, Silver & Diamonds",
-                         "Loans & Investments",
-                         "Nyaya GPT",
-                         "Real Estate",
-                         "Rice 2 Robo Ecommerce",
-                         "Software Training - 100% job placement",
-                         "Study Abroad",
-                       ].map((item, index) => (
-                         <li key={index}>
-                           <button
-                             type="button"
-                             className="text-white decoration-none hover:text-cyan-600 transition-colors hover:underline bg-transparent border-none p-0 m-0 cursor-pointer"
-                             aria-label={item}
-                           >
-                             {item}
-                           </button>
-                         </li>
-                       ))}
-                     </ul>
-                   </div>
-         
-                   {/* Technologies - with mobile accordion */}
-                   <div>
-                     <button
-                       type="button"
-                       aria-expanded={openSections.technologies}
-                       aria-controls="technologies-content"
-                       className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                       onClick={() => toggleSection("technologies")}
-                     >
-                       <h3 className="text-lg font-semibold">Our Services</h3>
-                       <ChevronDown
-                         className={`h-5 w-5 md:hidden transition-transform ${
-                           openSections.technologies ? "rotate-180" : ""
-                         }`}
-                       />
-                     </button>
-                     <ul
-                       id="technologies-content"
-                       className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
-                         openSections.technologies ? "max-h-96" : "max-h-0 md:max-h-96"
-                       }`}
-                     >
-                       {[
-                         "Free Rudraksha",
-                         "AI & GEN AI Training",
-                         "Legal Knowledge",
-                         "Study Abroad",
-                         "My Rotary",
-                         "We Are Hiring",
-                       ].map((tech, index) => (
-                         <li key={index}>
-                           <a
-                             href="#"
-                             className="text-white hover:text-cyan-600 transition-colors hover:underline"
-                           >
-                             {tech}
-                           </a>
-                         </li>
-                       ))}
-                     </ul>
-                   </div>
+          <div>
+            <button
+              type="button"
+              aria-expanded={openSections.solutions}
+              aria-controls="solutions-content"
+              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              onClick={() => toggleSection("solutions")}
+            >
+              <h3 className="text-lg font-semibold">Our Platforms</h3>
+              <ChevronDown
+                className={`h-5 w-5 md:hidden transition-transform ${
+                  openSections.solutions ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            <ul
+              id="solutions-content"
+              className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
+                openSections.solutions ? "max-h-96" : "max-h-0 md:max-h-96"
+              }`}
+            >
+              {solutions.map(({ label, path }, index) => (
+                <li key={index}>
+                  <button
+                    type="button"
+                    className="text-white decoration-none hover:text-cyan-600 transition-colors hover:underline bg-transparent border-none p-0 m-0 cursor-pointer"
+                    aria-label={label}
+                    onClick={() => (window.location.href = path)}
+                  >
+                    {label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Technologies - with mobile accordion */}
+          <div>
+            <button
+              type="button"
+              aria-expanded={openSections.technologies}
+              aria-controls="technologies-content"
+              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              onClick={() => toggleSection("technologies")}
+            >
+              <h3 className="text-lg font-semibold">Our Services</h3>
+              <ChevronDown
+                className={`h-5 w-5 md:hidden transition-transform ${
+                  openSections.technologies ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            <ul
+              id="technologies-content"
+              className={`space-y-2 text-sm text-white overflow-hidden transition-all duration-300 ease-in-out ${
+                openSections.technologies ? "max-h-96" : "max-h-0 md:max-h-96"
+              }`}
+            >
+              {[
+                "Free Rudraksha",
+                "AI & GEN AI Training",
+                "Legal Knowledge",
+                "Study Abroad",
+                "My Rotary",
+                "We Are Hiring",
+              ].map((tech, index) => (
+                <li key={index}>
+                  <a
+                    href="#"
+                    className="text-white hover:text-cyan-600 transition-colors hover:underline"
+                  >
+                    {tech}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Contact Info - with mobile accordion */}
           <div>
-                     <button
-                       type="button"
-                       aria-expanded={openSections.contact}
-                       aria-controls="contact-content"
-                       className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                       onClick={() => toggleSection("contact")}
-                     >
-                       <h3 className="text-lg text-white font-semibold">Contact Us</h3>
-                       <ChevronDown
-                         className={`h-5 w-5 md:hidden transition-transform ${
-                           openSections.contact ? "rotate-180" : ""
-                         }`}
-                       />
-                     </button>
-                     <div
-                       id="contact-content"
-                       className={`space-y-4 text-sm overflow-hidden transition-all duration-300 ease-in-out ${
-                         openSections.contact ? "max-h-96" : "max-h-0 md:max-h-96"
-                       }`}
-                     >
-                       <div className="flex items-start gap-3">
-                         <MapPin className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
-                         <address className="not-italic text-white">
-                           OXYKART TECHNOLOGIES PVT LTD, CC-02, Ground Floor, Indu
-                           Fortune Fields, KPHB Colony, Hyderabad, Telangana - 500085
-                         </address>
-                       </div>
-         
-                       <div className="flex items-center gap-3">
-                         <FaWhatsapp className="w-5 h-5 text-cyan-600" />
-                         <a
-                           href="tel:+1234567890"
-                           className="text-white hover:text-cyan-600 transition-colors"
-                         >
-                           +91 98765 43210
-                         </a>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <Mail className="w-5 h-5 text-cyan-600" />
-                         <a
-                           href="mailto:contact@aiblockchainit.com"
-                           className="text-white hover:text-cyan-600 transition-colors"
-                         >
-                           support@askoxy.ai
-                         </a>
-                       </div>
-                     </div>
-                   </div>
+            <button
+              type="button"
+              aria-expanded={openSections.contact}
+              aria-controls="contact-content"
+              className="flex justify-between items-center mb-4 w-full cursor-pointer md:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              onClick={() => toggleSection("contact")}
+            >
+              <h3 className="text-lg text-white font-semibold">Contact Us</h3>
+              <ChevronDown
+                className={`h-5 w-5 md:hidden transition-transform ${
+                  openSections.contact ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            <div
+              id="contact-content"
+              className={`space-y-4 text-sm overflow-hidden transition-all duration-300 ease-in-out ${
+                openSections.contact ? "max-h-96" : "max-h-0 md:max-h-96"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
+                <address className="not-italic text-white">
+                  OXYKART TECHNOLOGIES PVT LTD, CC-02, Ground Floor, Indu
+                  Fortune Fields, KPHB Colony, Hyderabad, Telangana - 500085
+                </address>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <FaWhatsapp className="w-5 h-5 text-cyan-600" />
+                <a
+                  href="tel:+1234567890"
+                  className="text-white hover:text-cyan-600 transition-colors"
+                >
+                  +91 98765 43210
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-cyan-600" />
+                <a
+                  href="mailto:contact@aiblockchainit.com"
+                  className="text-white hover:text-cyan-600 transition-colors"
+                >
+                  support@askoxy.ai
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Newsletter subscription - mobile only */}

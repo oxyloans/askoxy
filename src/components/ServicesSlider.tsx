@@ -72,7 +72,7 @@ const ServicesSlider: React.FC = () => {
       path: "/service/oxyloans-service",
     },
     {
-      image: "https://iili.io/FGn6wdu.md.png",
+      image: "https://i.ibb.co/8LhJDQTn/study-abroad1.png",
       title: "Study Abroad",
       path: "/studyabroad",
     },

@@ -1,17 +1,18 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  memo,
-  useRef,
-  useMemo,
-} from "react";
-import { Home, X, Cpu,Building, Key, Phone } from "lucide-react";
+import React, { useState, useEffect, useCallback, memo, useRef } from "react";
+import { Home, X, Cpu, Building, Key, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 interface RealEstateHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
   activeLink: string;
 }
+
+// Moved outside to avoid re-creating on each render
+const navLinks = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "services", label: "Services", icon: Building },
+  { id: "contact", label: "Contact", icon: Phone },
+] as const;
 
 const RealEstateHeader = memo(function RealEstateHeader({
   onNavClick,
@@ -20,10 +21,12 @@ const RealEstateHeader = memo(function RealEstateHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
-   const [isLoading, setIsLoading] = useState<boolean>(false);
-    const LOGIN_URL = "/whatsapplogin";
-    const navigate = useNavigate();
-const handleHome = () =>{navigate("/")};
+  const [isLoading, setIsLoading] = useState(false);
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
+
+  const handleHome = () => navigate("/");
+
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -101,18 +104,15 @@ const handleHome = () =>{navigate("/")};
       };
     }
   }, [isMenuOpen]);
+
   const handleSignIn = () => {
     try {
       setIsLoading(true);
-
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/37b3/urban-springs-300-sqyards-vill"; // your desired path
-
+      const redirectPath = "/main/services/37b3/urban-springs-300-sqyards-vill";
       if (userId) {
-        // User is already logged in
         navigate(redirectPath);
       } else {
-        // Save redirect path before redirecting to login
         sessionStorage.setItem("redirectPath", redirectPath);
         window.location.href = LOGIN_URL;
       }
@@ -122,16 +122,6 @@ const handleHome = () =>{navigate("/")};
       setIsLoading(false);
     }
   };
-  
-  const navLinks = useMemo(
-    () =>
-      [
-        { id: "home", label: "Home", icon: Home },
-        { id: "services", label: "Services", icon: Building },
-        { id: "contact", label: "Contact", icon: Phone },
-      ] as const,
-    []
-  );
 
   const headerClasses = {
     base: "sticky top-0 z-50 w-full transition-all duration-300",
@@ -172,21 +162,21 @@ const handleHome = () =>{navigate("/")};
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full opacity-50 blur group-hover:opacity-70 transition-opacity"></div>
                 <div className="relative bg-white rounded-full p-2 shadow-lg group-hover:shadow-xl transition-shadow">
-                  <div className="relative">
-                    <Cpu className="h-7 w-7 text-blue-700" />
-                  </div>
+                  <Cpu className="h-7 w-7 text-blue-700" />
                 </div>
               </div>
-              <div className="ml-3">
-                <div className="text-xl font-bold">
-                  <span className="text-blue-800">Real </span>
-                  <span className="text-cyan-600">Estate</span>
-                </div>
+              <div className="ml-3 text-xl font-bold">
+                <span className="text-blue-800">Real </span>
+                <span className="text-cyan-600">Estate</span>
               </div>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex flex-1 justify-center">
+            <nav
+              role="navigation"
+              aria-label="Main Navigation"
+              className="hidden md:flex flex-1 justify-center"
+            >
               <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-blue-50/80 to-cyan-50/80 rounded-full px-3 py-2 shadow-inner border border-gray-200/50 backdrop-blur-sm">
                 {navLinks.map((link) => {
                   const isActive = activeLink === link.id;
@@ -202,8 +192,7 @@ const handleHome = () =>{navigate("/")};
                         aria-label={`Navigate to ${link.label}`}
                       >
                         <link.icon size={16} />
-                        <span className="hidden lg:inline">{link.label}</span>
-                        <span className="lg:hidden">{link.label}</span>
+                        <span>{link.label}</span>
                       </button>
                     </li>
                   );
@@ -215,11 +204,15 @@ const handleHome = () =>{navigate("/")};
             <div className="hidden md:flex items-center gap-3">
               <button
                 onClick={handleSignIn}
-                className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium py-2.5 px-6 rounded-full hover:shadow-lg group transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                aria-label="Get started with our services"
+                disabled={isLoading}
+                className={`relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium py-2.5 px-6 rounded-full transition-all duration-300 transform ${
+                  isLoading
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:scale-105"
+                } focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2`}
               >
                 <span className="relative z-10 flex items-center gap-2">
-                  Sign In
+                  {isLoading ? "Loading..." : "Sign In"}
                 </span>
                 <span className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-400 transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
               </button>
@@ -261,10 +254,6 @@ const handleHome = () =>{navigate("/")};
           }`}
         >
           <div className="px-4 py-6 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
-            {/* Mobile Logo */}
-           
-
-            {/* Mobile Navigation Links */}
             {navLinks.map((link) => {
               const isActive = activeLink === link.id;
               return (
@@ -284,19 +273,17 @@ const handleHome = () =>{navigate("/")};
               );
             })}
 
-            {/* Mobile CTA */}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
                 onClick={handleSignIn}
+                disabled={isLoading}
                 className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center gap-2"
                 aria-label="Get started with our services"
               >
                 <Key size={20} />
-               Sign In
+                {isLoading ? "Loading..." : "Sign In"}
               </button>
             </div>
-
-           
           </div>
         </div>
       </div>

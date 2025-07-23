@@ -115,7 +115,7 @@ const StudyAbroadFooter = () => {
           </div>
 
           {/* Study Destinations */}
-          {/* <div>
+          <div>
             <div
               className="flex justify-between items-center mb-3 cursor-pointer md:cursor-default"
               onClick={() => toggleSection("destinations")}
@@ -150,7 +150,7 @@ const StudyAbroadFooter = () => {
                 </li>
               ))}
             </ul>
-          </div> */}
+          </div>
 
           {/* Contact Info */}
           <div>

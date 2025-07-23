@@ -146,25 +146,31 @@ const NyayagptHeader = memo(function NyayagptHeader({
     inactive: "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50",
   };
 
-  const logo = (
-    <div
-      className="flex items-center cursor-pointer group"
-      onClick={() => handleNavClick("home")}
-    >
-      <div className="relative">
-        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full opacity-50 blur group-hover:opacity-70 transition-opacity"></div>
-        <div className="relative bg-white rounded-full p-2 shadow-lg group-hover:shadow-xl transition-shadow">
-          <Bot className="h-7 w-7 text-purple-600" />
-        </div>
-      </div>
-      <div className="ml-3">
-        <div className="text-xl font-bold">
-          <span className="text-indigo-800">Nyaya </span>
-          <span className="text-purple-600">GPT</span>
-        </div>
+const logo = (
+  <div
+    className="flex items-center gap-3 cursor-pointer group"
+    onClick={() => navigate("/")}
+    role="button"
+    aria-label="Navigate to homepage"
+  >
+    <div className="relative">
+      {/* Gradient glow background */}
+      <div className="absolute -inset-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full opacity-40 blur-lg group-hover:opacity-60 transition-all duration-300"></div>
+
+      {/* Logo icon */}
+      <div className="relative bg-white rounded-full p-2 shadow-md group-hover:shadow-lg transition-shadow">
+        <Bot className="h-7 w-7 text-purple-600" />
       </div>
     </div>
-  );
+
+    {/* Logo text */}
+    <div className="text-xl font-bold leading-tight tracking-tight">
+      <span className="text-indigo-800">Nyaya</span>
+      <span className="text-purple-600">GPT</span>
+    </div>
+  </div>
+);
+
 
   return (
     <>

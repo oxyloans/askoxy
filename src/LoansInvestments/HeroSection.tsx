@@ -225,11 +225,7 @@ function HeroSection() {
                 alt="P2P Lending"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />
-              <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
-                <span className="text-xs sm:text-sm font-bold">
-                  Trusted Experts
-                </span>
-              </div>
+              
             </div>
           </div>
         </div>

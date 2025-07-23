@@ -9,6 +9,23 @@ interface DeliveryFeeProps {
   onFeeCalculated: (fee: number | null, handlingFee: number | null) => void;
 }
 
+interface ZoneMatch {
+  id: string;
+  zonename: string;
+  centrallat: number;
+  centrallng: number;
+  cutofftime: string;
+  alloweddistance: number;
+  distance: number;
+}
+
+interface ZoneCheckResult {
+  eligible: boolean;
+  matchedZone: ZoneMatch | null;
+  message: string;
+  error?: string;
+}
+
 const getDistanceInKm = (
   lat1: number,
   lon1: number,
@@ -253,4 +270,108 @@ const DeliveryFee: React.FC<DeliveryFeeProps> = ({
   return null; // No UI rendering needed
 };
 
-// export default DeliveryFee;
+export const checkEligibilityForActiveZones = async (
+  userLat: number,
+  userLng: number
+): Promise<ZoneCheckResult> => {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+
+  try {
+    console.log("Fetching active delivery zones...");
+
+    const { data: zones, error } = await supabase
+      .from("delivery_zones")
+      .select(
+        "id, zonename, centrallat, centrallng, cutofftime, alloweddistance"
+      )
+      .eq("active", true);
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return {
+        eligible: false,
+        matchedZone: null,
+        message: "Error fetching active delivery zones.",
+      };
+    }
+
+    if (!zones || zones.length === 0) {
+      return {
+        eligible: false,
+        matchedZone: null,
+        message: "No active delivery zones found.",
+      };
+    }
+
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    for (const zone of zones) {
+      const {
+        id,
+        zonename,
+        centrallat,
+        centrallng,
+        cutofftime,
+        alloweddistance,
+      } = zone;
+
+      if (!cutofftime || !centrallat || !centrallng || !alloweddistance)
+        continue;
+
+      const [cutoffHour, cutoffMinute] = cutofftime.split(":").map(Number);
+      const cutoffTotalMinutes = cutoffHour * 60 + cutoffMinute;
+
+      const isBeforeCutoff = currentTime <= cutoffTotalMinutes;
+
+      // Haversine Distance
+      const R = 6371; // Earth radius in km
+      const dLat = toRad(centrallat - userLat);
+      const dLng = toRad(centrallng - userLng);
+
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(userLat)) *
+          Math.cos(toRad(centrallat)) *
+          Math.sin(dLng / 2) ** 2;
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = parseFloat((R * c).toFixed(2));
+
+      const isWithinDistance = distance <= alloweddistance;
+
+      if (isBeforeCutoff && isWithinDistance) {
+        return {
+          eligible: true,
+          matchedZone: {
+            id,
+            zonename,
+            centrallat,
+            centrallng,
+            cutofftime,
+            alloweddistance,
+            distance,
+          },
+          message: `✅ Eligible in ${
+            zonename || "Unnamed Zone"
+          }: Distance ${distance} KM (Allowed: ${alloweddistance} KM), within cutoff time ${cutofftime}`,
+        };
+      }
+    }
+
+    return {
+      eligible: false,
+      matchedZone: null,
+      message:
+        "❌ Not eligible: All active zones either exceeded cutoff time or allowed distance.",
+    };
+  } catch (err: any) {
+    console.error("Unexpected error:", err);
+    return {
+      eligible: false,
+      matchedZone: null,
+      message: "Unexpected error occurred while checking zone eligibility.",
+      error: err?.message || err,
+    };
+  }
+};

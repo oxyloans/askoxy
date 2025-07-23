@@ -127,8 +127,6 @@
 
 
 
-
-
 import React from "react";
 import {
   ArrowRight,
@@ -194,13 +192,18 @@ function HeroSection() {
         <div className="bg-white rounded-3xl shadow-lg p-8 flex flex-col justify-between text-center hover:shadow-xl transition-all duration-300 hover:scale-[1.015]">
           <div>
             <div className="flex items-center justify-center gap-2 mb-4">
-              <BookOpen className="text-pink-600 w-6 h-6" />
+              <BookOpen className="text-pink-600 w-4 h-4 " />
               <h2 className="text-2xl font-bold text-gray-800">Latest Blogs</h2>
             </div>
             <p className="text-gray-700 text-[15px] leading-relaxed">
               Dive into curated articles that explore the future of banking,
-              financial tech innovations, AI strategies in lending, and
-              professional insights from industry experts.
+              financial technology innovations, AI-driven lending strategies,
+              and in-depth professional insights from industry thought leaders.
+              <br />
+              <br />
+              Stay updated on regulatory changes, digital transformation trends,
+              and success stories that empower BFSI professionals to remain
+              competitive and informed in a rapidly evolving landscape.
             </p>
           </div>
 
@@ -218,13 +221,19 @@ function HeroSection() {
         <div className="bg-white rounded-3xl shadow-lg p-8 flex flex-col justify-between text-center hover:shadow-xl transition-all duration-300 hover:scale-[1.015]">
           <div>
             <div className="flex items-center justify-center gap-2 mb-4">
-              <Briefcase className="text-green-600 w-6 h-6" />
+              <Briefcase className="text-green-600 w-4 h-4" />
               <h2 className="text-2xl font-bold text-gray-800">Explore Jobs</h2>
             </div>
             <p className="text-gray-700 text-[15px] leading-relaxed">
-              Discover job opportunities designed for AI-savvy BFSI
-              professionals. Access tailored roles, apply directly, and
-              accelerate your career in the evolving fintech ecosystem.
+              Discover curated job opportunities tailored for AI-savvy BFSI
+              professionals across banking, insurance, fintech, and lending
+              domains.
+              <br />
+              <br />
+              Gain access to exclusive roles ranging from data scientists,
+              compliance analysts, digital transformation leads, to AI product
+              managers. Apply directly through our platform and accelerate your
+              career growth in the dynamic fintech ecosystem.
             </p>
           </div>
 
@@ -243,4 +252,3 @@ function HeroSection() {
 }
 
 export default HeroSection;
-
