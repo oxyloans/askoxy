@@ -4,6 +4,7 @@ import { parseMarkdown } from "../utils/markdown";
 import MessageActions from "./MessageActions";
 import { Message } from "../types/types";
 import MarkdownRenderer from "./MarkdownRenderer";
+
 interface ChatMessagesProps {
   messages: Message[];
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -23,7 +24,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({
             behavior: "smooth",
-            block: "start",
+            block: "end",
           });
         }, 100);
       }
@@ -33,9 +34,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   }, [messages, loading]); // scrolls on every new message or loading state change
 
   return (
-    <div className="flex-1 overflow-y-auto pb-48 sm:pb-40">
-      {/* Added padding bottom for input space */}
-      <div className="px-4 py-6">
+    <div className="h-full overflow-y-auto">
+      <div className="px-4 py-6 pb-24">
+        {/* Bottom padding for input bar space */}
         <div className="max-w-4xl mx-auto space-y-8">
           {messages.map((msg, idx) => (
             <div key={msg.id || idx} className="animate-fade-in-up">
@@ -113,9 +114,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             </div>
           )}
 
-          {/* Padding for bottom scroll spacing */}
-          <div className="h-4" />
-          <div ref={messagesEndRef} />
+          {/* Reference element for auto-scroll */}
+          <div ref={messagesEndRef} className="h-1" />
         </div>
       </div>
     </div>

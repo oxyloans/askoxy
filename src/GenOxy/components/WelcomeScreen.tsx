@@ -50,17 +50,16 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
   };
 
-useEffect(() => {
-  const textarea = textareaRef.current;
-  if (textarea) {
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
 
-    // Scroll to the bottom if content overflows
-    textarea.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-}, [input]);
-
+      // Scroll to the bottom if content overflows
+      textarea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [input]);
 
   const handleToggleVoice = () => {
     const SpeechRecognition =
@@ -119,6 +118,7 @@ useEffect(() => {
     recognition.start();
   };
 
+ 
   return (
     <div className="fixed inset-0 overflow-y-auto pointer-events-auto z-0 bg-white dark:bg-gray-900">
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
@@ -264,21 +264,21 @@ useEffect(() => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-19 mx-auto  w-full pointer-events-auto">
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-20 mx-auto  w-full pointer-events-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="relative mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl transform hover:scale-105 transition-all duration-300">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-300 via-purple-400 to-pink-800 rounded-3xl flex items-center justify-center mx-auto shadow-2xl transform hover:scale-105 transition-all duration-300">
               <Sparkles className="w-8 h-8 text-white animate-pulse" />
             </div>
             <div className="absolute -inset-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-full blur-xl animate-pulse"></div>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 animate-fade-in">
-            GENOXY
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+           Welcome to Genoxy
           </h1>
+
           <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed animate-fade-in-delayed">
-            Your intelligent AI companion for creativity, learning, and
-            problem-solving
+            How can I assist you today?
           </p>
         </div>
 

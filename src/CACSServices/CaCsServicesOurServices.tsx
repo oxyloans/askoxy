@@ -3,6 +3,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
+// Company data
 const companies = [
   {
     logo: "https://i.ibb.co/0yGwYp5n/a1.png",
@@ -22,27 +23,27 @@ const companies = [
   {
     logo: "https://i.ibb.co/gpr9XDj/a4.png",
     name: "Nyaya Gpt",
-    link: "https://www.askoxy.ai/goldandsilveranddiamonds",
+    link: "https://www.askoxy.ai/nyayagpt",
   },
   {
     logo: "https://i.ibb.co/jvzPFYKQ/a5.png",
     name: "Gold, Silver & Diamonds",
-    link: "https://www.askoxy.ai/loansinvestments",
+    link: "https://www.askoxy.ai/goldandsilveranddiamonds",
   },
   {
     logo: "https://i.ibb.co/Cs8trQLZ/a6.png",
     name: " Loans & Investments",
-    link: "https://www.askoxy.ai/nyayagpt",
+    link: "https://www.askoxy.ai/loansinvestments",
   },
   {
     logo: "https://i.ibb.co/7xGFvBVW/a7.png",
     name: "Rice 2 Robo ECommerce",
-    link: "https://www.askoxy.ai/realestate",
+    link: "https://www.askoxy.ai/rice2roboecommers",
   },
   {
     logo: "https://i.ibb.co/ynYWxzZr/a8.png",
     name: "Real Estate",
-    link: "https://www.askoxy.ai/rice2roboecommers",
+    link: "https://www.askoxy.ai/realestate",
   },
   {
     logo: "https://i.ibb.co/NgRVq7fJ/a9.png",

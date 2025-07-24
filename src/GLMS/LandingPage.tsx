@@ -1,4 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Drawer, Button, Input, Avatar } from "antd";
+import {
+  SendOutlined,
+  CloseOutlined,
+  MessageOutlined,
+} from "@ant-design/icons";
 import Header from "./Header";
 import HeroSection from "./HeroSection";
 import VideoSection from "./VideoSection";
@@ -6,98 +12,111 @@ import DomainSection from "./DomainSection ";
 import Footer from "./Footer";
 import useScrollAnimation from "./useScrollAnimation";
 import "./Animation.css";
-import {
-  XMarkIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
-} from "@heroicons/react/24/solid";
-import ReactMarkdown from "react-markdown";
-import { Send } from "lucide-react";
 import BASE_URL from "../Config";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
-declare global {
-  interface Window {
-    gtag?: (
-      command: string,
-      action: string,
-      params?: {
-        [key: string]: any;
-      }
-    ) => void;
-  }
-}
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark as oneDarkStyle } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-// Define Message interface
+// Define interfaces
 interface Message {
   role: "user" | "assistant";
   content: string;
   isImage?: boolean;
 }
 
-export default function LandingPage() {
+interface PageEvents {
+  pageLoaded: boolean;
+  scrollCount: number;
+  lastInteraction: string;
+  visitDuration: number;
+}
+
+const LandingPage: React.FC = () => {
   useScrollAnimation();
 
-  // State to track active section
-  const [activeLink, setActiveLink] = useState("home");
+  const [activeLink, setActiveLink] = useState<
+    "home" | "videos" | "usecases" | "contact"
+  >("home");
 
-  // State for tracking page events
-  const [pageEvents, setPageEvents] = useState({
+  const [pageEvents, setPageEvents] = useState<PageEvents>({
     pageLoaded: false,
     scrollCount: 0,
     lastInteraction: "",
     visitDuration: 0,
   });
 
-  // State for chat
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
-        "👋 Welcome to GLMS Support, your assistant for Global Lending Management Systems queries. Ask me about loan processing, system features, or troubleshooting. How can I assist you today?",
+        "👋 Welcome to GLMS Support! Ask about loan processing, system features, or troubleshooting. How can I assist you today?",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    if (showChat) {
+      setTimeout(() => {
+        document.querySelector<HTMLInputElement>(".ant-input")?.focus();
+      }, 300);
+    }
+  }, [showChat]);
 
   const handleSend = useCallback(
     async (messageContent?: string) => {
-      const textToSend = messageContent || input.trim();
+      const textToSend = messageContent ?? input.trim();
       if (!textToSend) return;
 
-      const userMessage: Message = { role: "user", content: textToSend };
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
+      // Add user message optimistically
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "user", content: textToSend },
+      ]);
       setInput("");
       setLoading(true);
 
       try {
+        const updatedMessages = [
+          ...messages,
+          { role: "user", content: textToSend },
+        ];
+
         const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedMessages),
         });
-        const data = await response.text();
 
+        const data = await response.text();
         const isImageUrl = data.startsWith("http");
+
         const assistantReply: Message = {
           role: "assistant",
           content: data,
           isImage: isImageUrl,
         };
 
-        setMessages([...updatedMessages, assistantReply]);
+        setMessages((prevMessages) => [...prevMessages, assistantReply]);
       } catch (error) {
         console.error("Chat error:", error);
-        setMessages([
-          ...updatedMessages,
+        setMessages((prevMessages) => [
+          ...prevMessages,
           {
             role: "assistant",
             content: "❌ Sorry, I encountered an error. Please try again.",
@@ -107,61 +126,34 @@ export default function LandingPage() {
         setLoading(false);
       }
     },
-    [messages, input]
+    [input, messages]
   );
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !loading) {
-      handleSend();
-    }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !loading) handleSend();
   };
 
-  // Handle chat icon click
-  const handleChatIconClick = () => {
+  const handleChatIconClick = useCallback(() => {
     setShowChat((prev) => {
       const newShowChat = !prev;
-
-      // Track chat open/close event with GA4
-      if (typeof window.gtag === "function") {
-        window.gtag(
-          "event",
-          newShowChat ? "glms_chat_open" : "glms_chat_close",
-          {
-            content_type: "chat",
-            item_id: "ukaira_chat",
-            section_id: activeLink,
-          }
-        );
-      }
-
-      // Update page events
-      setPageEvents((prev) => ({
-        ...prev,
+      setPageEvents((prevEvents) => ({
+        ...prevEvents,
         lastInteraction: `Chat ${
           newShowChat ? "opened" : "closed"
         } at ${new Date().toLocaleTimeString()}`,
       }));
-
-      // Log to console
-      console.log("Chat interaction", {
-        action: newShowChat ? "opened" : "closed",
-        section: activeLink,
-        timestamp: new Date().toISOString(),
-      });
-
       return newShowChat;
     });
+  }, []);
+
+  const sectionRefs = {
+    home: useRef<HTMLDivElement>(null),
+    videos: useRef<HTMLDivElement>(null),
+    usecases: useRef<HTMLDivElement>(null),
+    contact: useRef<HTMLDivElement>(null),
   };
 
-  // Create refs for each section
-  const homeRef = useRef<HTMLDivElement | null>(null);
-  const videosRef = useRef<HTMLDivElement | null>(null);
-  const usecasesRef = useRef<HTMLDivElement | null>(null);
-  const contactRef = useRef<HTMLDivElement | null>(null);
-
-  // Scroll to section function
-  const scrollToSection = (
-    sectionId: "home" | "videos" | "usecases" | "contact"
-  ) => {
+  const scrollToSection = useCallback((sectionId: keyof typeof sectionRefs) => {
     setActiveLink(sectionId);
     setPageEvents((prev) => ({
       ...prev,
@@ -169,168 +161,111 @@ export default function LandingPage() {
       scrollCount: prev.scrollCount + 1,
     }));
 
-    if (typeof window.gtag === "function") {
-      window.gtag("event", "select_contenttype", {
-        content_type: "section",
-        content_id: sectionId,
-        item_id: sectionId,
-      });
-    }
-
-    const sectionRefs = {
-      home: homeRef,
-      videos: videosRef,
-      usecases: usecasesRef,
-      contact: contactRef,
-    };
-
+    const headerHeight = 64;
     const targetRef = sectionRefs[sectionId];
-    if (targetRef && targetRef.current) {
-      const headerHeight = 64;
-      const yOffset = -headerHeight;
+
+    if (targetRef?.current) {
       const y =
         targetRef.current.getBoundingClientRect().top +
-        window.pageYOffset +
-        yOffset;
+        window.pageYOffset -
+        headerHeight;
 
       window.scrollTo({ top: y, behavior: "smooth" });
     }
-  };
+  }, []);
 
-  const handleContentClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const targetType = target.tagName.toLowerCase();
-    const targetId = target.id || "unknown";
-    const targetClass = target.className || "unknown";
+  const handleContentClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      const targetType = target.tagName.toLowerCase();
+      const targetId = target.id || "unknown";
+      const targetClass = target.className || "unknown";
 
-    setPageEvents((prev) => ({
-      ...prev,
-      lastInteraction: `Clicked ${targetType}#${targetId} element`,
-    }));
+      setPageEvents((prev) => ({
+        ...prev,
+        lastInteraction: `Clicked ${targetType}#${targetId}`,
+      }));
+    },
+    []
+  );
 
-    if (typeof window.gtag === "function") {
-      if (targetType === "button") {
-        window.gtag("event", "select_contenttype", {
-          content_type: "button",
-          item_id: targetId || targetClass,
-          section_id: activeLink,
-        });
-      } else if (targetType === "a") {
-        const href = (target as HTMLAnchorElement).href;
-        const isExternal =
-          href && href.indexOf(window.location.hostname) === -1;
-
-        window.gtag(
-          "event",
-          isExternal ? "glms_clickforvideo" : "select_contenttype",
-          {
-            content_type: isExternal ? "outbound_link" : "internal_link",
-            item_id: href || targetId,
-            outbound: isExternal,
-            section_id: activeLink,
-          }
-        );
-      } else if (targetType === "video" || target.closest("video")) {
-        const video = target.closest("video") || target;
-        window.gtag("event", "glms_video_start", {
-          video_title: video.id || "unnamed_video",
-          video_current_time: (video as HTMLVideoElement).currentTime,
-          video_duration: (video as HTMLVideoElement).duration,
-          video_percent: Math.round(
-            ((video as HTMLVideoElement).currentTime /
-              (video as HTMLVideoElement).duration) *
-              100
-          ),
-        });
-      } else if (targetType === "form" || target.closest("form")) {
-        const form = target.closest("form") || target;
-        window.gtag("event", "glms_begin_form", {
-          form_id: form.id || "unknown",
-          form_name: (form as HTMLFormElement).name || "unnamed",
-          form_destination: (form as HTMLFormElement).action || "unknown",
-        });
-      } else {
-        window.gtag("event", "select_contenttype", {
-          content_type: targetType,
-          item_id: targetId || targetClass,
-          section_id: activeLink,
-        });
-      }
-    }
-
-    console.log("Element clicked", {
-      element: targetType,
-      id: targetId,
-      class: targetClass,
-      section: activeLink,
-      timestamp: new Date().toISOString(),
-    });
-  };
+  // Calculate drawer width once on render, fallback to 400
+  const drawerWidth = window.innerWidth < 640 ? "100%" : 400;
 
   return (
-    <div className="flex flex-col min-h-screen" onClick={handleContentClick}>
+    <div
+      className="flex flex-col min-h-screen bg-gray-50"
+      onClick={handleContentClick}
+    >
       <Header onNavClick={scrollToSection} activeLink={activeLink} />
       <main className="flex-grow">
-        <div ref={homeRef} id="home">
+        <section ref={sectionRefs.home} id="home">
           <HeroSection />
-        </div>
-        <div ref={videosRef} id="videos">
+        </section>
+        <section ref={sectionRefs.videos} id="videos">
           <VideoSection />
-        </div>
-        <div ref={usecasesRef} id="usecases">
+        </section>
+        <section ref={sectionRefs.usecases} id="usecases">
           <DomainSection />
-        </div>
-        <div ref={contactRef} id="contact">
+        </section>
+        <section ref={sectionRefs.contact} id="contact">
           <Footer />
-        </div>
+        </section>
       </main>
 
-      {/* Chat Icon Button */}
-      {/* <button
+      {/* Chat Button */}
+      <Button
+        type="primary"
+        shape="circle"
+        icon={<MessageOutlined />}
+        size="large"
         onClick={handleChatIconClick}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:p-4 bg-purple-600 text-white rounded-full shadow-2xl hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
-        aria-label="Toggle GLMS Support Chat"
-        title="Chat with GLMS Support"
-      >
-        <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6 sm:w-7 sm:h-7" />
-      </button> */}
+        className="fixed bottom-6 right-6 z-50 shadow-xl hover:scale-110 transition-transform"
+        aria-label="Open Chat"
+      />
 
-      {/* Chat Window */}
-      {showChat && (
-        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[90vw] max-w-[400px] h-[70vh] sm:h-[600px] md:h-[650px] bg-white dark:bg-gray-900 shadow-2xl rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col animate-slide-up transition-all duration-300">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-600 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-gray-800 dark:to-gray-700 rounded-t-2xl">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base font-bold text-purple-800 dark:text-white">
-                🧑‍💼 GLMS Support
-              </h2>
-              <span className="text-xs text-gray-500 dark:text-gray-300">
-                Powered by UKAIRA
-              </span>
-            </div>
-            <button
-              onClick={() => setShowChat(false)}
-              aria-label="Close chat"
-              className="text-gray-500 hover:text-red-500 transition-colors duration-200"
-            >
-              <XMarkIcon className="w-6 h-6" />
-            </button>
+      {/* Chat Drawer */}
+      <Drawer
+        placement="right"
+        onClose={() => setShowChat(false)}
+        open={showChat}
+        width={drawerWidth}
+        closable={false}
+        title={
+          <div className="flex items-center gap-2">
+            <Avatar
+              icon={<MessageOutlined />}
+              style={{ backgroundColor: "#722ed1" }}
+            />
+            <span className="font-semibold text-base">GLMS Support</span>
           </div>
-
-          {/* Chat Body */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50 dark:bg-gray-800 scrollbar-thin scrollbar-thumb-purple-400 dark:scrollbar-thumb-gray-500 scrollbar-track-gray-100 dark:scrollbar-track-gray-900">
+        }
+        extra={
+          <Button
+            type="text"
+            icon={<CloseOutlined />}
+            onClick={() => setShowChat(false)}
+          />
+        }
+        bodyStyle={{ padding: 0, background: "#f9fafb" }}
+        headerStyle={{
+          background: "linear-gradient(to right, #e0e7ff, #c3ddff)",
+        }}
+      >
+        <div className="flex flex-col h-[calc(100%-64px)]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`flex ${
                   msg.role === "user" ? "justify-end" : "justify-start"
-                } animate-fade-in`}
+                }`}
               >
                 <div
-                  className={`max-w-[80%] px-4 py-3 text-sm rounded-2xl whitespace-pre-wrap shadow-lg transition-all duration-200 ${
+                  className={`max-w-[80%] p-3 rounded-xl text-sm whitespace-pre-wrap shadow ${
                     msg.role === "user"
-                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-br-none"
-                      : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none"
+                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-none"
+                      : "bg-white border border-gray-200 text-gray-900 rounded-bl-none"
                   }`}
                 >
                   {msg.isImage ? (
@@ -340,19 +275,79 @@ export default function LandingPage() {
                       className="rounded-md max-w-full h-auto"
                     />
                   ) : msg.role === "assistant" ? (
-                    <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100">
+                    <ReactMarkdown
+                      className="prose prose-sm max-w-none"
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        code({
+                          node,
+                          inline,
+                          className,
+                          children,
+                          ...props
+                        }: {
+                          node?: any;
+                          inline?: boolean;
+                          className?: string;
+                          children?: React.ReactNode;
+                          [key: string]: any;
+                        }) {
+                          const match = /language-(\w+)/.exec(className || "");
+                          return !inline && match ? (
+                            <SyntaxHighlighter
+                              style={oneDarkStyle as any} // cast to any to fix style typing error
+                              language={match[1]}
+                              PreTag="div"
+                              {...props}
+                            >
+                              {String(children).replace(/\n$/, "")}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <code
+                              className="bg-gray-100 px-1 py-0.5 rounded text-red-600"
+                              {...props}
+                            >
+                              {children}
+                            </code>
+                          );
+                        },
+                        a: ({ node, ...props }) => (
+                          // eslint-disable-next-line jsx-a11y/anchor-has-content
+                          <a
+                            {...props}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          />
+                        ),
+                        img: ({ node, ...props }) => (
+                          <img
+                            {...props}
+                            className="rounded shadow max-w-full h-auto my-2"
+                            alt={props.alt || "markdown image"}
+                          />
+                        ),
+                      }}
+                    >
                       {msg.content}
                     </ReactMarkdown>
                   ) : (
-                    <span className="text-white">{msg.content}</span>
+                    <span>{msg.content}</span>
                   )}
+                  <div className="text-xs text-gray-400 mt-1 text-right">
+                    {new Date().toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
                 </div>
               </div>
             ))}
             {loading && (
-              <div className="flex justify-start animate-pulse">
-                <div className="bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-sm px-4 py-3 rounded-2xl shadow rounded-bl-none">
-                  GLMS Support is processing...
+              <div className="flex justify-start">
+                <div className="bg-white px-4 py-2 rounded-xl shadow animate-pulse text-gray-500">
+                  Typing...
                 </div>
               </div>
             )}
@@ -360,31 +355,31 @@ export default function LandingPage() {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Ask about GLMS features or issues..."
-                className="w-full py-3 pl-5 pr-12 text-sm border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 transition-all duration-200"
-                disabled={loading}
-                aria-label="Type your GLMS-related question"
-              />
-              <button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || loading}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                title="Send GLMS question"
-                aria-label="Send message"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="p-4 border-t bg-white">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onPressEnter={handleKeyPress}
+              placeholder="Ask about GLMS features or issues..."
+              disabled={loading}
+              suffix={
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon={<SendOutlined />}
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || loading}
+                  aria-label="Send message"
+                />
+              }
+              className="rounded-full px-4 py-2 text-sm"
+              aria-label="Chat input"
+            />
           </div>
         </div>
-      )}
+      </Drawer>
     </div>
   );
-}
+};
+
+export default LandingPage;

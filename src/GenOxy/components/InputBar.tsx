@@ -103,18 +103,18 @@ const InputBar: React.FC<InputBarProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
+    <div className="bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-900 dark:via-gray-900/95 dark:to-transparent backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-700/50">
       {isRecording && (
         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-xs shadow-lg animate-pulse">
           🎤 Recording...Tap mic to stop
         </div>
       )}
-      <div className="max-w-4xl mx-auto p-3 sm:p-4">
+      <div className="max-w-4xl mx-auto p-2">
         <div className="relative group">
           <div className="absolute -inset-1 rounded-2xl blur bg-gradient-to-r from-indigo-600 to-purple-600 opacity-20 group-hover:opacity-30 transition duration-300 pointer-events-none" />
-          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700  focus-within:border-indigo-500 dark:focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-200 overflow-hidden">
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 focus-within:border-indigo-500 dark:focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-200 overflow-hidden">
             <div className="flex">
-              <div className="flex-1 px-4 py-3 sm:px-6 sm:py-4  border border-gray-200 dark:border-gray-700 flex flex-col">
+              <div className="flex-1 px-6 py-2 flex flex-col">
                 {/* Textarea */}
                 <div className="flex-grow">
                   <textarea
@@ -127,7 +127,8 @@ const InputBar: React.FC<InputBarProps> = ({
                     placeholder="Type your message..."
                     disabled={loading}
                     rows={1}
-                    className="w-full text-sm sm:text-base resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 max-h-60 overflow-auto p-1"
+                    className="w-full text-sm sm:text-base resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 max-h-32 overflow-auto p-1"
+                    style={{ minHeight: "20px" }}
                   />
                 </div>
 
@@ -138,14 +139,14 @@ const InputBar: React.FC<InputBarProps> = ({
                     onClick={handleToggleVoice}
                     title="Voice Input"
                     disabled={loading}
-                    className={`w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl transition ${
+                    className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
                       isRecording
-                        ? "bg-red-100 text-red-600 animate-pulse"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                        ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                     }`}
                     aria-label="Voice input"
                   >
-                    <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
+                    <Mic className="w-5 h-5" />
                   </button>
 
                   {/* Send Button */}
@@ -153,16 +154,16 @@ const InputBar: React.FC<InputBarProps> = ({
                     onClick={() => handleSend()}
                     disabled={!input.trim() || loading}
                     aria-label="Send message"
-                    className={`w-8 h-12 sm:w-8 sm:h-8 rounded-xl transition-all duration-200 flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center ${
                       input.trim() && !loading
                         ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                         : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     }`}
                   >
                     {loading ? (
-                      <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      <ArrowUp className="w-6 h-6 sm:w-7 sm:h-7" />
+                      <ArrowUp className="w-5 h-5" />
                     )}
                   </button>
                 </div>

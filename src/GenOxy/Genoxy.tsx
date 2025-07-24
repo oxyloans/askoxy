@@ -37,42 +37,52 @@ const GenOxy: React.FC<OpenAiProps> = () => {
     }
   };
 
-  return (
-    <div
-      className={`h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300 ${
-        darkMode ? "dark" : ""
-      }`}
-    >
-      {!showCenteredLayout && <Header clearChat={() => setMessages([])} />}
+ return (
+   <div
+     className={`h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300 ${
+       darkMode ? "dark" : ""
+     }`}
+   >
+     {/* Sticky Header */}
+     {!showCenteredLayout && <Header clearChat={() => setMessages([])} />}
 
-      {showCenteredLayout ? (
-        <WelcomeScreen
-          input={input}
-          setInput={setInput}
-          handleSend={handleSend}
-          handleKeyPress={handleKeyPress}
-          loading={loading}
-          textareaRef={textareaRef}
-        />
-      ) : (
-        <div className="flex-1 flex flex-col min-h-0">
-          <ChatMessages
-            messages={messages}
-            messagesEndRef={messagesEndRef}
-            loading={loading}
-          />
-          <InputBar
-            input={input}
-            setInput={setInput}
-            handleSend={handleSend}
-            handleKeyPress={handleKeyPress}
-            loading={loading}
-            textareaRef={textareaRef}
-          />
-        </div>
-      )}
-    </div>
-  );
+     {showCenteredLayout ? (
+       <WelcomeScreen
+         input={input}
+         setInput={setInput}
+         handleSend={handleSend}
+         handleKeyPress={handleKeyPress}
+         loading={loading}
+         textareaRef={textareaRef}
+       />
+     ) : (
+       // Main Scrollable Container
+       <div className="flex-1 flex flex-col min-h-0 relative">
+         {/* Scrollable message container */}
+           <div className="flex-1 flex flex-col min-h-0 relative">
+           <ChatMessages
+             messages={messages}
+             messagesEndRef={messagesEndRef}
+             loading={loading}
+           />
+         </div>
+
+         {/* Fixed Input Bar */}
+         <div className="shrink-0">
+           <InputBar
+             input={input}
+             setInput={setInput}
+             handleSend={handleSend}
+             handleKeyPress={handleKeyPress}
+             loading={loading}
+             textareaRef={textareaRef}
+           />
+         </div>
+       </div>
+     )}
+   </div>
+ );
+
 };
 
 export default GenOxy;
