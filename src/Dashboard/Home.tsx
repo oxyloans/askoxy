@@ -789,11 +789,11 @@ const Home: React.FC = () => {
     return [
       {
         id: "1",
-        title: "Free GPTs",
+        title: "GENOXY",
         image:
           "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
-        description: "AI-powered guidance for studying abroad",
-        path: "/main/dashboard/freegpts",
+        description: "AI-powered guidance for all services",
+        path: "/genoxy",
         icon: <Bot className="text-white" size={24} />,
       },
     ];
@@ -806,7 +806,7 @@ const Home: React.FC = () => {
         title: "Cryptocurrency",
         image: CryptoImg1,
         description: "Track and manage your BMV cryptocurrency",
-        path: "/main/dashboard/bmvcoin",
+        path: "/main/crypto",
         icon: <Coins className="text-white" size={24} />,
       },
     ];
@@ -1912,12 +1912,12 @@ const Home: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <Bot className="mr-2 text-purple-600" size={24} />
-                Free GPTs
+                GENOXY
               </h2>
               <button
-                onClick={() => navigate("/main/dashboard/freegpts")}
+                onClick={() => navigate("/genoxy")}
                 className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
-                aria-label="Explore Free GPTs"
+                aria-label="Explore GENOXY"
               >
                 Explore <ArrowRight size={16} className="ml-2" />
               </button>
@@ -1947,7 +1947,7 @@ const Home: React.FC = () => {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Bot className="mx-auto mb-3 text-gray-400" size={32} />
-                  <p>No free GPTs available at the moment</p>
+                  <p>No GENOXY available at the moment</p>
                 </div>
               )}
             </div>
@@ -1962,7 +1962,7 @@ const Home: React.FC = () => {
                 Cryptocurrency
               </h2>
               <button
-                onClick={() => navigate("/main/dashboard/bmvcoin")}
+                onClick={() => navigate("/main/crypto")}
                 className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
                 aria-label="Explore Cryptocurrency"
               >

@@ -132,7 +132,7 @@ function RealEstateHeroSection() {
             <div className="relative group">
               <div className="absolute -inset-3 bg-cyan-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition duration-300"></div>
               <img
-                src="https://i.ibb.co/q3LpsJrq/2.png"
+                src="https://i.ibb.co/G3bFgTFY/2.png"
                 alt="Real estate services"
                 className="relative rounded-3xl w-full max-w-sm sm:max-w-md lg:max-w-full shadow-xl transition-transform duration-500 group-hover:scale-105"
               />
