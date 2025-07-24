@@ -37,6 +37,7 @@ import {
   CalendarOutlined,
   EnvironmentOutlined,
   NumberOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 
 import {
@@ -58,6 +59,7 @@ import {
 } from "lucide-react";
 
 import BASE_URL from "../Config";
+import ProductModal from "./AllItemsModal";
 
 const { Title, Text } = Typography;
 
@@ -113,6 +115,7 @@ interface OrderItem {
   weight: number;
   status: string | null;
   errorMessage: string | null;
+  tableId: string;
 }
 
 interface Order {
@@ -196,12 +199,13 @@ const OrderDetailsPage: React.FC = () => {
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
     useState<DeliveryBoy | null>();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const navigate = useNavigate();
-
+  const [modalMessage, setModalMessage] = useState("Adding");
+  const [tableId, setTableId] = useState("");
   const [buttonLabel, setButtonLabel] = useState<string>("");
   const [showButton, setShowButton] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [preference, setPreference] = useState<string | null>();
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
   const fetchContainerStatus = (ordersData: Order) => {
     axios
@@ -929,101 +933,105 @@ const OrderDetailsPage: React.FC = () => {
             </Card>
           </div>
 
-          <div className="p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 border-t border-gray-200">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg mr-4">
-                  <ShoppingCart className="text-white" size={24} />
-                </div>
-                Order Items
-                <span className="ml-4 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                  {orderDetails.orderItems.length} items
-                </span>
-              </h2>
+          <div className="p-3 sm:p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 border-t border-gray-200">
+            {/* Header Section */}
+            <div className="mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg mr-3">
+                    <ShoppingCart className="text-white" size={20} />
+                  </div>
+                  <span className="mr-3">Order Items</span>
+                  <span className="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                    {orderDetails.orderItems.length} items
+                  </span>
+                </h2>
+
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setIsProductModalOpen(true);
+                    setModalMessage("Adding");
+                  }}
+                  size="small"
+                  className="self-start sm:self-auto bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-md"
+                >
+                  Add Items
+                </Button>
+              </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 overflow-y">
-              <div className="max-h-96 overflow-y-auto">
-                <div className="p-4 space-y-3">
-                  {orderDetails.orderItems.map((item, index) => (
-                    <div
-                      key={item.itemId}
-                      className="bg-gradient-to-r from-white to-gray-50 rounded-lg hover:shadow-md hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-gray-100 p-5"
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div className="flex items-center flex-1">
-                          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg mr-4 text-white font-bold text-sm">
-                            {String(index + 1).padStart(2, "0")}
-                          </div>
-                          <div className="bg-blue-50 p-2 rounded-lg mr-4">
-                            <Package className="text-blue-600" size={20} />
-                          </div>
-                          <h3 className="text-gray-900 font-bold text-lg leading-tight">
-                            {item.itemName || "Unnamed Item"}
-                          </h3>
-                        </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-2 sm:p-3">
+              <div className="space-y-3">
+                {orderDetails.orderItems.map((item, index) => (
+                  <div
+                    key={item.itemId}
+                    className="bg-gradient-to-r from-white to-gray-50 rounded-lg border border-gray-100 p-3"
+                  >
+                    {/* Item Header with Number and Name */}
+                    <div className="flex items-start gap-2 mb-2">
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded text-white font-bold text-xs flex-shrink-0 mt-0.5">
+                        {String(index + 1).padStart(2, "0")}
+                      </div>
 
-                        <div className="flex flex-wrap gap-8 text-sm">
-                          <div className="flex items-center min-w-0">
-                            <div className="bg-emerald-100 p-1 rounded mr-2">
-                              <Percent className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                            </div>
-                            <span className="text-gray-500 mr-2 font-medium">
-                              Price:
-                            </span>
-                            <span className="font-bold text-emerald-700 text-base">
-                              ₹{(item.itemprice || 0).toFixed(0)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center min-w-0">
-                            <div className="bg-blue-100 p-1 rounded mr-2">
-                              <Package
-                                className="text-blue-600 flex-shrink-0"
-                                size={16}
-                              />
-                            </div>
-                            <span className="text-gray-500 mr-2 font-medium">
-                              Qty:
-                            </span>
-                            <span className="font-bold text-blue-700 text-base">
-                              {item.quantity || 0}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center min-w-0">
-                            <div className="bg-orange-100 p-1 rounded mr-2">
-                              <Scale
-                                className="text-orange-600 flex-shrink-0"
-                                size={16}
-                              />
-                            </div>
-                            <span className="text-gray-500 mr-2 font-medium">
-                              Weight:
-                            </span>
-                            <span className="font-bold text-orange-700 text-base">
-                              {item.weight || "N/A"} {item.itemUnit}
-                            </span>
-                          </div>
-
-                          {item.itemBarCode && (
-                            <div className="flex items-center min-w-0">
-                              <div className="bg-purple-100 p-1 rounded mr-2">
-                                <Barcode
-                                  className="text-purple-600 flex-shrink-0"
-                                  size={16}
-                                />
-                              </div>
-                              <span className="bg-gray-800 text-white px-3 py-1 rounded-md font-mono text-xs">
-                                {item.itemBarCode}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h3 className="text-gray-900 font-bold text-base sm:text-lg leading-tight break-words">
+                          {item.itemName || "Unnamed Item"}
+                        </h3>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Item Details - Horizontal Layout */}
+                    <div className="flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs ml-8 mb-3 sm:mb-0">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="text-gray-500 mr-1">Price:</span>
+                        <span className="font-semibold text-emerald-700">
+                          ₹{(item.itemprice || 0).toFixed(0)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="text-gray-500 mr-1">Qty:</span>
+                        <span className="font-semibold text-blue-700">
+                          {item.quantity || 0}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="text-gray-500 mr-1">Weight:</span>
+                        <span className="font-semibold text-orange-700">
+                          {item.weight || "N/A"} {item.itemUnit}
+                        </span>
+                      </div>
+
+                      {item.itemBarCode && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 mr-1">Code:</span>
+                          <span className="bg-gray-800 text-white px-2 py-0.5 rounded text-xs font-mono">
+                            {item.itemBarCode}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Change Button - Visible only on mobile at bottom */}
+                    <div className="sm:hidden flex justify-end mt-2">
+                      <Button
+                        type="primary"
+                        size="small"
+                        onClick={() => {
+                          setIsProductModalOpen(true);
+                          setModalMessage("Change");
+                          setTableId(item.tableId);
+                        }}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-orange-700 border-0 shadow-md text-xs px-3"
+                      >
+                        Change Item
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1225,6 +1233,17 @@ const OrderDetailsPage: React.FC = () => {
           <Empty description="No delivery boys available" />
         )}
       </Modal>
+<ProductModal
+  visible={isProductModalOpen}
+  orderId={orderDetails.orderId}
+  id={tableId}
+  modalMessage={modalMessage}
+  onClose={() => setIsProductModalOpen(false)}
+  onSuccess={() => {
+    setIsProductModalOpen(false); // close modal
+    findOrderDetails();           // refresh the page with updated order data
+  }}
+/>
     </div>
   );
 };

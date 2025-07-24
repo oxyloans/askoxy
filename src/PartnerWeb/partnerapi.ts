@@ -17,13 +17,12 @@ interface Order {
   mobileNumber?: string;
   deliveryDate?: string;
   distancefromMiyapur: string;
-  expectedDeliveryDate:string;
+  expectedDeliveryDate: string;
   distancefromMythriNager: string;
   choosedLocations: string;
-  deliveryBoyMobile?:string;
-  deliveryBoyName:string;
-  deliveryFee:Number;
-
+  deliveryBoyMobile?: string;
+  deliveryBoyName: string;
+  deliveryFee: Number;
 }
 
 interface OrderItems {
@@ -34,7 +33,7 @@ interface OrderItems {
   price: number;
   weight: string;
   itemQty?: number;
-  itemUnit:string;
+  itemUnit: string;
 }
 
 interface Address {
@@ -43,6 +42,13 @@ interface Address {
   landMark?: string;
   pincode?: string;
   googleMapLink?: string;
+}
+
+interface OrderRequest {
+  id: string | null;
+  itemId: string | null;
+  orderId: string;
+  quantity: number;
 }
 
 interface ExchangeOrder {
@@ -237,7 +243,6 @@ export const assignOrderToDeliveryBoy = async (
   }
 };
 
-
 export const assignExchangeOrder = async (
   exchangeId: string,
   deliveryBoyId: string,
@@ -293,4 +298,22 @@ export const reassignExchangeOrder = async (
   } catch {
     throw new Error("Something went wrong!");
   }
+};
+
+export const fetchGroupedProducts = async () => {
+  const response = await fetch(
+    `${BASE_URL}/product-service/showGroupItemsForCustomrs`
+  );
+  if (!response.ok) throw new Error("Failed to fetch products");
+  return response.json();
+};
+
+export const updateOrderItem = async (orderRequest: OrderRequest) => {
+  const response = await fetch(`${BASE_URL}/order-service/orderItemsUpdate`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(orderRequest),
+  });
+  if (!response.ok) throw new Error("Failed to update item");
+  return response.json();
 };

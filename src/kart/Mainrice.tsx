@@ -558,6 +558,7 @@ const Ricebags: React.FC = () => {
     offer3,
     offer4,
     offer5,
+    offer6,
     offer7,
     offer8,
   ].map((src, i) => ({ src, alt: `Offer ${i + 1}` }));
@@ -698,9 +699,10 @@ const Ricebags: React.FC = () => {
       case 4:
         setShowAppModal(true);
         break;
-      // case 5:
-      //   setShowFAQModal(true);
-      //   break;
+      case 5:
+         setActiveCategory("Monsoon Magic");
+        scrollToSection("Monsoon Magic");
+        break;
       case 6:
         setActiveCategory("Kolam Rice");
         scrollToSection("Kolam Rice");
