@@ -1185,7 +1185,7 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900 mb-2">
                       {itemDetails?.itemName}
                     </h1>
                     <div className="flex items-center space-x-2">

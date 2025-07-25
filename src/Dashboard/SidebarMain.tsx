@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,7 +13,6 @@ import {
   Layers,
   ChevronRight,
   LogOut,
-  Book,
   FileText,
   Briefcase,
 } from "lucide-react";
@@ -21,166 +20,182 @@ import {
 interface SidebarProps {
   onCollapse: (collapsed: boolean) => void;
   onItemClick?: () => void;
+  isCollapsed?: boolean;
+  isHovering?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar: React.FC<SidebarProps> = ({
+  onCollapse,
+  onItemClick,
+  isCollapsed = false,
+  isHovering = false,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleSignout = () => {
     const entryPoint = localStorage.getItem("entryPoint") || "/";
-    console.log("Signing out - Redirecting to:", entryPoint); // Debug log
-
     localStorage.removeItem("userId");
     localStorage.removeItem("email");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("mobileNumber");
     localStorage.removeItem("whatsappNumber");
-    // localStorage.clear();
-    localStorage.setItem("entryPoint", entryPoint); // Preserve entry point
-
+    localStorage.setItem("entryPoint", entryPoint);
     navigate(entryPoint);
   };
 
   const toggleCollapse = () => {
-    const newCollapsed = !isCollapsed;
-    setIsCollapsed(newCollapsed);
-    onCollapse(newCollapsed);
+    onCollapse(!isCollapsed);
   };
 
   const menuItems = [
     {
       to: "/main/dashboard/home",
-      icon: <LayoutDashboard size={20} />,
+      icon: <LayoutDashboard size={18} />,
       label: "Dashboard",
     },
     {
       to: "/main/myorders",
-      icon: <ShoppingCart size={20} />,
+      icon: <ShoppingCart size={18} />,
       label: "My Orders",
     },
     {
       to: "/main/profile",
-      icon: <User size={20} />,
+      icon: <User size={18} />,
       label: "Profile",
     },
     {
       to: "/main/wallet",
-      icon: <Wallet size={20} />,
+      icon: <Wallet size={18} />,
       label: "My Wallet",
     },
     {
       to: "/main/subscription",
-      icon: <CreditCard size={20} />,
+      icon: <CreditCard size={18} />,
       label: "My Subscriptions",
     },
     {
       to: "/main/referral",
-      icon: <Users size={20} />,
+      icon: <Users size={18} />,
       label: "Referral",
     },
     {
       to: "/main/writetous",
-      icon: <MessageSquare size={20} />,
+      icon: <MessageSquare size={18} />,
       label: "Write to Us",
     },
     {
       to: "/main/crypto",
-      icon: <Coins size={20} />,
+      icon: <Coins size={18} />,
       label: "My Crypto",
     },
     {
       to: "/main/dashboard/myservices",
-      icon: <Layers size={20} />,
+      icon: <Layers size={18} />,
       label: "My Services",
     },
     {
       to: "/main/dashboard/myblogs",
-      icon: <FileText size={20} />,
+      icon: <FileText size={18} />,
       label: "My Blogs",
     },
     {
       to: "/main/jobDetails",
-      icon: <Briefcase size={20} />,
+      icon: <Briefcase size={18} />,
       label: "My Jobs",
     },
   ];
 
+  // Determine if sidebar should show expanded content
+  const isExpanded = !isCollapsed || isHovering;
+
   return (
-    <div className="relative h-full flex flex-col bg-white">
-      <div className="flex justify-end items-center p-2 py-2">
+    <div className="h-full flex flex-col bg-white border-r border-gray-200">
+      {/* Header Section */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-100 min-h-[60px] flex-shrink-0">
+        <div
+          className={`flex items-center transition-all duration-300 ${
+            isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+          }`}
+        >
+          {/* <div className="w-7 h-7 bg-purple-600 rounded-md flex items-center justify-center mr-3">
+            <span className="text-white font-semibold text-xs">M</span>
+          </div>
+          <h2 className="text-gray-800 font-semibold text-sm whitespace-nowrap">
+            Dashboard
+          </h2> */}
+        </div>
+
         <button
           onClick={toggleCollapse}
-          className={`p-2 rounded-lg bg-gray-50 hover:bg-purple-50 
-            transition-all duration-300 hidden md:flex items-center justify-center
-            ${isCollapsed ? "mx-auto" : ""}`}
+          className="p-2 rounded-md hover:bg-purple-50 transition-colors duration-200 flex-shrink-0 hidden md:flex"
         >
           {isCollapsed ? (
-            <ChevronRight size={18} className="text-purple-600" />
+            <ChevronRight size={16} className="text-purple-600" />
           ) : (
-            <ChevronLeft size={18} className="text-purple-600" />
+            <ChevronLeft size={16} className="text-purple-600" />
           )}
         </button>
       </div>
 
-      <div className={`flex-1 px-3 pb-2 space-y-1.5 overflow-y-auto`}>
-        {menuItems.map((item, index) => {
+      {/* Navigation Menu - Scrollable */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-purple-400">
+        {menuItems.map((item) => {
           const isActive = location.pathname === item.to;
+
           return (
             <Link
-              key={index}
+              key={item.to}
               to={item.to}
               onClick={() => onItemClick && onItemClick()}
-              className={`relative flex items-center rounded-xl transition-all duration-200 
-                ${
-                  isCollapsed
-                    ? "w-12 min-h-10 h-auto sm:h-10 md:h-10 justify-center"
-                    : "min-h-10 h-auto sm:h-11 md:h-10 px-4"
-                }
+              className={`group relative flex items-center rounded-lg transition-all duration-200 min-h-[44px]
+                ${isExpanded ? "px-3" : "px-0 justify-center"}
                 ${
                   isActive
-                    ? "bg-purple-50 before:absolute before:w-1 before:h-8 before:bg-purple-600 before:rounded-full before:left-0 before:top-2"
-                    : "hover:bg-gray-50"
-                }
-                group`}
+                    ? "bg-purple-50 text-purple-700 shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                }`}
             >
+              {/* Active indicator */}
+              {isActive && (
+                <div className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 rounded-r-full" />
+              )}
+
+              {/* Icon */}
               <div
-                className={`flex items-center ${isCollapsed ? "" : "gap-4"}`}
+                className={`flex items-center justify-center flex-shrink-0 transition-all duration-200
+                ${isExpanded ? "mr-3" : "mx-auto"}
+                ${isActive ? "text-purple-600" : "group-hover:text-purple-600"}
+              `}
               >
-                <span
-                  className={`transition-colors duration-200 flex items-center justify-center
-                    ${
-                      isActive
-                        ? "text-purple-600"
-                        : "text-gray-500 group-hover:text-purple-600"
-                    }`}
-                >
-                  {item.icon}
-                </span>
-                {!isCollapsed && (
-                  <span
-                    className={`font-medium whitespace-nowrap text-sm
-                      ${
-                        isActive
-                          ? "text-purple-600"
-                          : "text-gray-600 group-hover:text-purple-600"
-                      }`}
-                  >
-                    {item.label}
-                  </span>
-                )}
+                {item.icon}
               </div>
 
-              {isCollapsed && (
+              {/* Label */}
+              <span
+                className={`font-medium text-sm transition-all duration-300 whitespace-nowrap
+                ${
+                  isExpanded
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 -translate-x-2 absolute"
+                }
+                ${isActive ? "text-purple-700" : "group-hover:text-purple-600"}
+              `}
+              >
+                {item.label}
+              </span>
+
+              {/* Tooltip for collapsed state */}
+              {isCollapsed && !isHovering && (
                 <div
-                  className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 
-                  bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 invisible
-                  group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+                  className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 
+                  bg-gray-900 text-white text-xs rounded opacity-0 invisible
+                  group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50
+                  pointer-events-none whitespace-nowrap"
                 >
                   {item.label}
                   <div
-                    className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
+                    className="absolute right-full top-1/2 -translate-y-1/2 
                     border-4 border-transparent border-r-gray-900"
                   />
                 </div>
@@ -188,34 +203,50 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapse, onItemClick }) => {
             </Link>
           );
         })}
-      </div>
+      </nav>
 
-      <div className="mt-auto px-3 py-2 border-t">
+      {/* Sign Out Section */}
+      <div className="p-3 border-t border-gray-100 flex-shrink-0">
         <button
           onClick={handleSignout}
-          className={`flex items-center rounded-xl transition-all duration-200
-            hover:bg-red-50 min-h-10 h-auto sm:h-10 md:h-12
-            ${isCollapsed ? "w-12 justify-center" : "px-4"}`}
+          className={`group w-full flex items-center rounded-lg transition-all duration-200 min-h-[44px]
+            text-red-600 hover:bg-red-50 relative
+            ${isExpanded ? "px-3" : "px-0 justify-center"}
+          `}
         >
-          <div className={`flex items-center ${isCollapsed ? "" : "gap-4"}`}>
-            <span className="text-red-500 flex items-center justify-center">
-              <LogOut size={20} />
-            </span>
-
-            {!isCollapsed && (
-              <span className="text-red-500 font-medium text-sm">Sign Out</span>
-            )}
+          {/* Icon */}
+          <div
+            className={`flex items-center justify-center flex-shrink-0 transition-all duration-200
+            ${isExpanded ? "mr-3" : "mx-auto"}
+          `}
+          >
+            <LogOut size={18} />
           </div>
 
-          {isCollapsed && (
+          {/* Label */}
+          <span
+            className={`font-medium text-sm transition-all duration-300 whitespace-nowrap
+            ${
+              isExpanded
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-2 absolute"
+            }
+          `}
+          >
+            Sign Out
+          </span>
+
+          {/* Tooltip for collapsed state */}
+          {isCollapsed && !isHovering && (
             <div
-              className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 
-              bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 invisible
-              group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+              className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 
+              bg-gray-900 text-white text-xs rounded opacity-0 invisible
+              group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50
+              pointer-events-none whitespace-nowrap"
             >
               Sign Out
               <div
-                className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
+                className="absolute right-full top-1/2 -translate-y-1/2 
                 border-4 border-transparent border-r-gray-900"
               />
             </div>

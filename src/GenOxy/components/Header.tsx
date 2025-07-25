@@ -27,8 +27,10 @@ const Header: React.FC<HeaderProps> = ({ clearChat }) => {
               onClick={clearChat}
               className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200"
             >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">New Chat</span>
+              <Plus className="w-4 h-4 text-purple-700"  />
+              <span className="hidden sm:inline font-semibold text-purple-600">
+                New Chat
+              </span>
             </button>
           </div>
         </div>
