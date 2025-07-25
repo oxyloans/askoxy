@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Row, Col } from "antd";
 import {
   Card,
   Descriptions,
@@ -15,9 +16,10 @@ import {
   Tooltip,
   Divider,
   Form,
-  Input,
-  Radio,
   Space,
+  Radio,
+  Input,
+  Select,
   Empty,
   Avatar,
   Badge,
@@ -206,6 +208,9 @@ const OrderDetailsPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [preference, setPreference] = useState<string | null>();
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressForm] = Form.useForm();
+  const [latLong, setLatLong] = useState({ lat: 0, lng: 0 });
 
   const fetchContainerStatus = (ordersData: Order) => {
     axios
@@ -792,13 +797,15 @@ const OrderDetailsPage: React.FC = () => {
               )}
 
               {(orderStatus === "3" || orderStatus === "PickedUp") && (
-                <button
-                  onClick={fetchDeliveryBoys}
-                  className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition flex items-center text-xs font-medium w-auto h-8"
-                >
-                  <ReloadOutlined className="mr-1 text-sm" />
-                  Re-Assign
-                </button>
+                <>
+                  <button
+                    onClick={fetchDeliveryBoys}
+                    className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition flex items-center text-xs font-medium w-auto h-8"
+                  >
+                    <ReloadOutlined className="mr-1 text-sm" />
+                    Re-Assign
+                  </button>
+                </>
               )}
 
               {(orderStatus === "1" ||
@@ -887,10 +894,22 @@ const OrderDetailsPage: React.FC = () => {
             {/* Delivery Address Card */}
             <Card
               title={
-                <span className="text-green-600">
-                  <HomeOutlined className="mr-2" />
-                  Delivery Address
-                </span>
+                <div className="flex justify-between items-center">
+                  <span className="text-green-600 flex items-center">
+                    <HomeOutlined className="mr-2" />
+                    Delivery Address
+                  </span>
+                  {(orderDetails.orderStatus === "3" ||
+                    orderDetails.orderStatus === "PickedUp") && (
+                    <button
+                      onClick={() => setIsAddressModalOpen(true)}
+                      className="px-3 py-1.5 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition flex items-center text-xs font-medium h-8"
+                    >
+                      <HomeOutlined className="mr-1 text-sm" />
+                      Update Address
+                    </button>
+                  )}
+                </div>
               }
               className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-green-500"
               bordered={false}
@@ -1233,17 +1252,217 @@ const OrderDetailsPage: React.FC = () => {
           <Empty description="No delivery boys available" />
         )}
       </Modal>
-<ProductModal
-  visible={isProductModalOpen}
-  orderId={orderDetails.orderId}
-  id={tableId}
-  modalMessage={modalMessage}
-  onClose={() => setIsProductModalOpen(false)}
-  onSuccess={() => {
-    setIsProductModalOpen(false); // close modal
-    findOrderDetails();           // refresh the page with updated order data
-  }}
-/>
+      <ProductModal
+        visible={isProductModalOpen}
+        orderId={orderDetails.orderId}
+        id={tableId}
+        modalMessage={modalMessage}
+        onClose={() => setIsProductModalOpen(false)}
+        onSuccess={() => {
+          setIsProductModalOpen(false); // close modal
+          findOrderDetails(); // refresh the page with updated order data
+        }}
+      />
+      <Modal
+        title="Update Delivery Address"
+        open={isAddressModalOpen}
+        onCancel={() => setIsAddressModalOpen(false)}
+        okText="Update"
+        onOk={async () => {
+          try {
+            const values = await addressForm.validateFields();
+
+            // Validate Pincode
+            const pinResp = await axios.get(
+              `https://api.postalpincode.in/pincode/${values.pincode}`
+            );
+            if (
+              !pinResp.data ||
+              pinResp.data[0].Status !== "Success" ||
+              !pinResp.data[0].PostOffice
+            ) {
+              message.error("Invalid pincode. Please enter a valid pincode.");
+              return;
+            }
+
+            // Build full address
+            const fullAddress = `${values.flatNo}, ${values.address}, ${values.landMark}, ${values.pincode}`;
+
+            // Get Coordinates from Google Maps
+            const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
+            const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+              fullAddress
+            )}&key=${API_KEY}`;
+
+            const geoResp = await axios.get(geocodeUrl);
+            const location = geoResp.data?.results?.[0]?.geometry?.location;
+
+            if (!location) {
+              message.error("Failed to get coordinates from Google Maps.");
+              return;
+            }
+
+            const payload = {
+              ...values,
+              latitude: location.lat,
+              longitude: location.lng,
+              orderId: orderDetails?.orderId,
+            };
+
+            await axios.patch(
+              `${BASE_URL}/order-service/orderAddressUpdate`,
+              payload
+            );
+
+            message.success("Address updated successfully!");
+            setIsAddressModalOpen(false);
+            findOrderDetails(); // Refresh
+          } catch (error) {
+            console.error("Update error:", error);
+            message.error("Failed to update address.");
+          }
+        }}
+        width={700}
+      >
+        <Form
+          layout="vertical"
+          form={addressForm}
+          initialValues={{ addressType: "HOME" }}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="flatNo"
+                label="Flat Number"
+                rules={[{ required: true }]}
+              >
+                <Input placeholder="e.g. 402-B" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="area" label="Area" rules={[{ required: true }]}>
+                <Input placeholder="e.g. Madhapur" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="address"
+            label="Address"
+            rules={[{ required: true }]}
+          >
+            <Input.TextArea rows={2} placeholder="Full address" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="landMark"
+                label="Landmark"
+                rules={[{ required: true }]}
+              >
+                <Input placeholder="Near XYZ Park" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="pincode"
+                label="Pincode"
+                rules={[{ required: true }]}
+              >
+                <Input type="number" placeholder="6-digit code" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="addressType"
+                label="Address Type"
+                rules={[{ required: true }]}
+              >
+                <Radio.Group>
+                  <Radio value="HOME">Home</Radio>
+                  <Radio value="WORK">Work</Radio>
+                  <Radio value="OTHER">Other</Radio>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="houseType"
+                label="House Type"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  placeholder="Select house type"
+                  onChange={() => {
+                    addressForm.setFieldValue("residenceName", "");
+                  }}
+                >
+                  <Select.Option value="Apartment">Apartment</Select.Option>
+                  <Select.Option value="Villa">Villa</Select.Option>
+                  <Select.Option value="Pg">PG</Select.Option>
+                  <Select.Option value="GatedCommunity">
+                    Gated Community
+                  </Select.Option>
+                  <Select.Option value="IndividualHouse">
+                    Individual House
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            shouldUpdate={(prev, curr) => prev.houseType !== curr.houseType}
+          >
+            {() => {
+              const houseType = addressForm.getFieldValue("houseType");
+              const labelMap = {
+                Apartment: "Apartment Name",
+                Villa: "Villa Name",
+                Pg: "PG Name",
+                GatedCommunity: "Community Name",
+                IndividualHouse: "House Name",
+              };
+              return (
+                <Form.Item
+                  shouldUpdate={(prev, curr) =>
+                    prev.houseType !== curr.houseType
+                  }
+                >
+                  {() => {
+                    const houseType = addressForm.getFieldValue(
+                      "houseType"
+                    ) as keyof typeof labelMap;
+                    const labelMap = {
+                      Apartment: "Apartment Name",
+                      Villa: "Villa Name",
+                      Pg: "PG Name",
+                      GatedCommunity: "Community Name",
+                      IndividualHouse: "House Name",
+                    };
+
+                    const label = labelMap[houseType] || "Residence Name";
+
+                    return (
+                      <Form.Item
+                        name="residenceName"
+                        label={label}
+                        rules={[{ required: true }]}
+                      >
+                        <Input placeholder={`Enter ${label}`} />
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
+              );
+            }}
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

@@ -10,7 +10,7 @@ import { ShoppingBag } from "lucide-react";
 import {
   ShoppingCart,
   Home,
-  ChevronRight,
+  ChevronRight,Info,
   Minus,
   Plus,
   Package2,
@@ -48,6 +48,7 @@ interface Item {
   image: string;
   quantity: number;
    status?: string;
+   bmvCoins?: number; 
 }
 
 interface CartItem {
@@ -105,6 +106,7 @@ const ItemDisplayPage = () => {
   const [fullscreenImage, setFullscreenImage] =
     useState<FullscreenImage | null>(null);
   const [wasModalOpen, setWasModalOpen] = useState<boolean>(false);
+  const [isBmvModalVisible, setIsBmvModalVisible] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -1227,6 +1229,18 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
                       {itemDetails?.weightUnit || itemDetails?.units}
                     </p>
                   </div>
+                  {itemDetails?.bmvCoins !== undefined && itemDetails.bmvCoins > 0 && (
+  <div className="text-xs bg-yellow-100 text-yellow-800 rounded px-2 py-1 inline-flex items-center justify-center gap-1 transform scale-110">
+    Earn: <span className="font-bold">{itemDetails.bmvCoins}</span> BMVCOINS
+    <Info
+      className="w-4 h-4 text-yellow-600 cursor-pointer hover:text-yellow-800"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsBmvModalVisible(true); // Define this modal separately
+      }}
+    />
+  </div>
+)}
 
                   {itemDetails && (
                     <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
@@ -1832,13 +1846,43 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
       </div>
     </Modal>
 
+    <Modal
+  title="BMVCOINS Info"
+  open={isBmvModalVisible}
+  onCancel={() => setIsBmvModalVisible(false)}
+  footer={null}
+  centered
+>
+  <div className="text-gray-700 text-sm space-y-2">
+    <p>
+      <strong>Current Value:</strong> ₹0.02 per coin
+    </p>
+    <p>
+      <strong>Future Value:</strong> ₹1+{" "}
+      <span className="italic text-xs text-gray-500">
+        (Projected value – no guarantee)
+      </span>
+    </p>
+    <p>
+      1,000 coins = <strong>₹20</strong>
+    </p>
+    <hr />
+    <p className="font-medium text-purple-700">
+      Minimum redemption amount
+    </p>
+    <ul className="list-disc pl-5 text-sm">
+      <li>Transfer to friends and family</li>
+      <li>Share with other ASKOXY.AI users</li>
+      <li>Use on non-GST items</li>
+    </ul>
+  </div>
+</Modal>
+
+
       <Footer />
     </div>
   );
 };
 
-
-
 export default ItemDisplayPage;
-
 

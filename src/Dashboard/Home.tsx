@@ -11,19 +11,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Coins,
   Bot,
+  Info,
   ShoppingBag,
-  
   Loader2,
-  
   TrendingUp,
   ArrowRight,
-  
   ChevronRight,
   Settings,
   HandCoins,
   Gem,
   Globe,
-  
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -34,11 +31,7 @@ import ProductOfferModals from "./ProductOffermodals";
 import RiceOfferFAQs from "./Faqs";
 import ProductImg1 from "../assets/img/ricecard1.png";
 
-
 import CryptoImg1 from "../assets/img/bmvcoin.png";
-
-
-
 
 import O8 from "../assets/img/StudyAbroda.png";
 
@@ -143,6 +136,7 @@ interface DashboardItem {
   units?: string;
   isCombo?: boolean;
   status?: string;
+  bmvCoins?: number;
 }
 
 interface Item {
@@ -156,6 +150,7 @@ interface Item {
   units: string;
   categoryName: string;
   categoryType?: string;
+  bmvCoins?: number;
 }
 
 interface Category {
@@ -196,6 +191,7 @@ const Home: React.FC = () => {
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategoryType, setActiveCategoryType] = useState<string>("");
+  const [isBmvModalVisible, setIsBmvModalVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(
     "All Items"
   );
@@ -430,6 +426,7 @@ const Home: React.FC = () => {
         units: item.units,
         itemName: item.itemName,
         itemImage: item.itemImage,
+        bmvCoins: item.bmvCoins, 
       }));
 
     setProducts(productItems);
@@ -1173,6 +1170,20 @@ const Home: React.FC = () => {
                 ? "Kg"
                 : item.units}
             </p>
+
+            {item.bmvCoins !== undefined && item.bmvCoins > 0 && (
+              <div className="text-xs bg-purple-100 text-yellow-800 rounded px-2 py-1 mt-1 inline-flex items-center justify-center gap-1 transform mx-auto">
+                Earn: <span className="font-bold">{item.bmvCoins}</span>{" "}
+                BMVCOINS
+                <Info
+                  className="w-4 h-4 text-black-600 cursor-pointer hover:text-purple-800"
+                  onClick={(e) => {
+                    e.stopPropagation(); // ✅ Prevents card click
+                    setIsBmvModalVisible(true);
+                  }}
+                />
+              </div>
+            )}
 
             <div className="flex items-baseline space-x-2">
               <span className="text-lg font-semibold text-gray-900">
@@ -2235,6 +2246,38 @@ const Home: React.FC = () => {
             <span className="font-medium">🎉 Special Offer:</span> Add any item
             to your combo and enjoy exclusive discounts!
           </p>
+        </div>
+      </Modal>
+
+      <Modal
+        title="BMVCOINS Info"
+        open={isBmvModalVisible}
+        onCancel={() => setIsBmvModalVisible(false)}
+        footer={null}
+        centered
+      >
+        <div className="text-gray-700 text-sm space-y-2">
+          <p>
+            <strong>Current Value:</strong> ₹0.02 per coin
+          </p>
+          <p>
+            <strong>Future Value:</strong> ₹1+{" "}
+            <span className="italic text-xs text-gray-500">
+              (Projected value – no guarantee)
+            </span>
+          </p>
+          <p>
+            1,000 coins = <strong>₹20</strong>
+          </p>
+          <hr />
+          <p className="font-medium text-purple-700">
+            Minimum redemption amount
+          </p>
+          <ul className="list-disc pl-5 text-sm">
+            <li>Transfer to friends and family</li>
+            <li>Share with other ASKOXY.AI users</li>
+            <li>Use on non-GST items</li>
+          </ul>
         </div>
       </Modal>
 
