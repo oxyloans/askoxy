@@ -140,9 +140,11 @@ const WhatsappLogin = () => {
     const userAgent = navigator.userAgent || navigator.vendor;
 
     if (/android/i.test(userAgent)) {
-      window.location.href = "https://play.google.com/store/apps/details?id=com.askoxy.customer";
-    } else if (/iPad|iPhone|iPod/.test(userAgent) && !('MSStream' in window)) {
-      window.location.href = "https://apps.apple.com/app/askoxy-ai/id123456789";
+      window.location.href =
+        "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer";
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !("MSStream" in window)) {
+      window.location.href =
+        "https://apps.apple.com/in/app/askoxy-ai-ai-z-marketplace/id6738732000";
     }
   }, []);
 

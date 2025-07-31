@@ -42,7 +42,7 @@ export const useCMSRoutes: Record<
     title: "Allocation of Delinquent Cases_Define Allocation contract",
     business: <DefineAllocationUseCaseBusiness />,
     system: <DefineAllocationUseCase />,
-    image: "",
+    image: "https://i.ibb.co/wN7rSyJh/define.jpg",
   },
   "manual-allocation": {
     title: "Allocation of Delinquent Cases_Manual Allocation",
@@ -96,7 +96,7 @@ export const useCMSRoutes: Record<
     title: "Queue Curing",
     business: <QueueCuringUseCaseBusiness />,
     system: <QueueCuringUseCase />,
-    image: "",
+    image: "https://i.ibb.co/k2Jf7N5R/queue.jpg",
   },
   "work-plan": {
     title: "Work Plan",

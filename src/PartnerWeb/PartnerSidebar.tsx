@@ -96,6 +96,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <FaChartBar className="text-blue-500" />,
       label: "Stock Update",
     },
+    {
+      key: "/home/stockdetails",
+      icon: <AppstoreOutlined />,
+      label: "Stock Details",
+    },
+    {
+      key: "/home/scan-qr",
+      icon: <QrcodeOutlined />,
+      label: "Scan QR",
+    },
 
     {
       key: "/home/queryManagement",

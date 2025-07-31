@@ -33,7 +33,7 @@ import ProductImg1 from "../assets/img/ricecard1.png";
 
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
-import O8 from "../assets/img/StudyAbroda.png";
+import O8 from "../assets/img/zeeba.png";
 
 import O5 from "../assets/img/cashewoffer1.png";
 import O6 from "../assets/img/35kg1.png";
@@ -723,12 +723,12 @@ const Home: React.FC = () => {
       },
     },
     {
-      id: "Study Abroad",
+      id: "Limited offers",
       src: O8,
-      alt: "Study Abroad",
-      path: "/studyabroad",
+      alt: "Limited Offers",
+      path: "/main/dashboard/products?category=RICE",
       onClick: () => {
-        navigate("/studyabroad");
+        navigate("/main/dashboard/products?category=LIMITED TIME DEAL OFFERS");
       },
     },
   ];
@@ -773,7 +773,7 @@ const Home: React.FC = () => {
       },
       {
         id: "3",
-        title: "Free AI & Gen AI Traininga",
+        title: "Free AI & Gen AI Training",
         image: "https://iili.io/FGCrmbV.md.png",
         description: "Receive a sacred Rudraksha bead",
         path: "/main/services/freeai-genai",

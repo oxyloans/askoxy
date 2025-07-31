@@ -1218,7 +1218,9 @@ const CheckoutPage: React.FC = () => {
           });
         } else {
           if (response.data.paymentId) {
-            const number = localStorage.getItem("number");
+            const number =
+              localStorage.getItem("whatsappNumber") ||
+              localStorage.getItem("mobileNumber");
             const withoutCountryCode = number?.replace("+91", "");
             sessionStorage.setItem("address", JSON.stringify(selectedAddress));
 
@@ -1228,15 +1230,24 @@ const CheckoutPage: React.FC = () => {
               merchantTransactionId: response.data.paymentId,
               transactionDate: new Date(),
               terminalId: "getepay.merchant128638@icici",
-              udf1: withoutCountryCode,
-              udf2: `${profileData.firstName} ${profileData.lastName}`,
-              udf3: profileData.email,
-              ru: `https://amountms.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
-              callbackUrl: `https://ms.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              udf1: withoutCountryCode || "",
+              udf2: `${profileData.firstName || ""} ${
+                profileData.lastName || ""
+              }`,
+              udf3: profileData.email || "",
+              udf4: "",
+              udf5: "",
+              udf6: "",
+              udf7: "",
+              udf8: "",
+              udf9: "",
+              udf10: "",
+              ru: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
+              callbackUrl: `https://www.askoxy.ai/main/checkout?trans=${response.data.paymentId}`,
               currency: "INR",
               paymentMode: "ALL",
-              money: "single",
-              amountType: "IPG",
+              txnType: "single",
+              productType: "IPG",
               txnNote: "Rice Order In Live",
               vpa: "getepay.merchant128638@icici",
             };
@@ -1259,13 +1270,14 @@ const CheckoutPage: React.FC = () => {
 
   const renderPaymentMethods = () => {
     return (
-      <div className="space-y-3">
+      <div className="flex gap-4">
+        {/* Online Payment */}
         <div
           className={`p-3 border rounded-md ${
             selectedPayment === "ONLINE"
               ? "border-purple-500 bg-purple-50"
               : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
-          } flex items-center cursor-pointer transition-colors`}
+          } flex items-center cursor-pointer transition-colors w-full`}
           onClick={() => setSelectedPayment("ONLINE")}
         >
           <div className="w-4 h-4 rounded-full border border-purple-500 bg-white">
@@ -1280,44 +1292,26 @@ const CheckoutPage: React.FC = () => {
           </label>
         </div>
 
-        {!showOtherOptions ? (
-          <button
-            onClick={() => setShowOtherOptions(true)}
-            className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Other Options
-          </button>
-        ) : (
-          <div className="space-y-3">
+        {/* Cash on Delivery */}
+        <div
+          className={`p-3 border rounded-md ${
+            selectedPayment === "COD"
+              ? "border-purple-500 bg-purple-50"
+              : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
+          } flex items-center cursor-pointer transition-colors w-full`}
+          onClick={() => setSelectedPayment("COD")}
+        >
+          <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
             <div
-              className={`p-3 border rounded-md ${
-                selectedPayment === "COD"
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-300 hover:border-purple-500 bg-white hover:bg-purple-50"
-              } flex items-center cursor-pointer transition-colors`}
-              onClick={() => setSelectedPayment("COD")}
-            >
-              <div className="w-4 h-4 rounded-full border border-gray-400 bg-white">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    selectedPayment === "COD" ? "bg-purple-500" : ""
-                  } m-0.5`}
-                ></div>
-              </div>
-              <label className="ml-2 flex-grow cursor-pointer">
-                Cash on Delivery (COD)
-              </label>
-            </div>
-            <button
-              onClick={() => setShowOtherOptions(false)}
-              className="w-full py-2 px-3 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
-            >
-              <X className="w-4 h-4 mr-1" />
-              Close Options
-            </button>
+              className={`w-2 h-2 rounded-full ${
+                selectedPayment === "COD" ? "bg-purple-500" : ""
+              } m-0.5`}
+            ></div>
           </div>
-        )}
+          <label className="ml-2 flex-grow cursor-pointer">
+            Cash on Delivery (COD)
+          </label>
+        </div>
       </div>
     );
   };
@@ -1711,102 +1705,102 @@ const CheckoutPage: React.FC = () => {
     );
   };
 
-  // const renderCouponsModal = (): JSX.Element => {
-  //   console.log("Rendering Coupons Modal, availableCoupons:", availableCoupons);
-  //   return (
-  //     <Modal
-  //       title={
-  //         <div className="flex items-center justify-between">
-  //           <div className="text-lg font-semibold text-purple-700 flex items-center">
-  //             <Tag className="w-5 h-5 mr-2 text-purple-500" />
-  //             Available Coupons
-  //           </div>
-  //           <X
-  //             className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
-  //             onClick={() => setShowCouponsModal(false)}
-  //           />
-  //         </div>
-  //       }
-  //       open={showCouponsModal}
-  //       onCancel={() => setShowCouponsModal(false)}
-  //       footer={[
-  //         <button
-  //           key="close"
-  //           onClick={() => setShowCouponsModal(false)}
-  //           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-  //         >
-  //           Close
-  //         </button>,
-  //       ]}
-  //       centered
-  //       width={600}
-  //       closeIcon={null}
-  //       className="coupons-modal"
-  //     >
-  //       <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
-  //         {couponsLoading ? (
-  //           <div className="text-center p-8">
-  //             <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-  //             <p className="text-gray-500 mt-2">Loading coupons...</p>
-  //           </div>
-  //         ) : availableCoupons.length === 0 ? (
-  //           <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
-  //             <Tag className="w-16 h-16 text-purple-200 mb-4" />
-  //             <p className="text-lg font-medium mb-2">No available coupons</p>
-  //             <p className="text-sm text-gray-400">
-  //               Check back later for offers
-  //             </p>
-  //           </div>
-  //         ) : (
-  //           <div className="space-y-4">
-  //             {availableCoupons.map((coupon: Coupon) => (
-  //               <div
-  //                 key={coupon.couponCode}
-  //                 className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
-  //               >
-  //                 <div className="flex justify-between items-start">
-  //                   <div className="flex-1">
-  //                     <p className="font-semibold text-purple-700">
-  //                       {coupon.couponCode}
-  //                     </p>
-  //                     <p className="text-sm text-gray-600">
-  //                       Discount: ₹
-  //                       {coupon.couponValue !== undefined
-  //                         ? coupon.couponValue.toFixed(2)
-  //                         : "0.00"}
-  //                     </p>
-  //                     <p className="text-sm text-gray-600">
-  //                       Min. Order: ₹
-  //                       {coupon.minOrder !== undefined
-  //                         ? coupon.minOrder.toFixed(2)
-  //                         : "0.00"}
-  //                     </p>
-  //                     {coupon.couponDesc && (
-  //                       <p className="text-sm text-gray-500 mt-1">
-  //                         {coupon.couponDesc}
-  //                       </p>
-  //                     )}
-  //                   </div>
-  //                   <button
-  //                     className="px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
-  //                     onClick={() => handleSelectCoupon(coupon)}
-  //                     disabled={coupenLoading}
-  //                   >
-  //                     {coupenLoading ? (
-  //                       <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-  //                     ) : (
-  //                       "Apply"
-  //                     )}
-  //                   </button>
-  //                 </div>
-  //               </div>
-  //             ))}
-  //           </div>
-  //         )}
-  //       </div>
-  //     </Modal>
-  //   );
-  // };
+  const renderCouponsModal = (): JSX.Element => {
+    console.log("Rendering Coupons Modal, availableCoupons:", availableCoupons);
+    return (
+      <Modal
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Tag className="w-5 h-5 mr-2 text-purple-500" />
+              Available Coupons
+            </div>
+            <X
+              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={() => setShowCouponsModal(false)}
+            />
+          </div>
+        }
+        open={showCouponsModal}
+        onCancel={() => setShowCouponsModal(false)}
+        footer={[
+          <button
+            key="close"
+            onClick={() => setShowCouponsModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Close
+          </button>,
+        ]}
+        centered
+        width={600}
+        closeIcon={null}
+        className="coupons-modal"
+      >
+        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
+          {couponsLoading ? (
+            <div className="text-center p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+              <p className="text-gray-500 mt-2">Loading coupons...</p>
+            </div>
+          ) : availableCoupons.length === 0 ? (
+            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
+              <Tag className="w-16 h-16 text-purple-200 mb-4" />
+              <p className="text-lg font-medium mb-2">No available coupons</p>
+              <p className="text-sm text-gray-400">
+                Check back later for offers
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {availableCoupons.map((coupon: Coupon) => (
+                <div
+                  key={coupon.couponCode}
+                  className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-semibold text-purple-700">
+                        {coupon.couponCode}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Discount: ₹
+                        {coupon.couponValue !== undefined
+                          ? coupon.couponValue.toFixed(2)
+                          : "0.00"}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Min. Order: ₹
+                        {coupon.minOrder !== undefined
+                          ? coupon.minOrder.toFixed(2)
+                          : "0.00"}
+                      </p>
+                      {coupon.couponDesc && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {coupon.couponDesc}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      className="px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+                      onClick={() => handleSelectCoupon(coupon)}
+                      disabled={coupenLoading}
+                    >
+                      {coupenLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                      ) : (
+                        "Apply"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -1980,9 +1974,17 @@ const CheckoutPage: React.FC = () => {
                     </div>
                     <Divider style={{ margin: "8px 0" }} />
                     <div>
-                      <div className="text-lg font-semibold text-purple-700 flex items-center">
-                        <Tag className="w-5 h-5 mr-2 text-purple-500" />
-                        Available Coupons
+                      <div className="flex justify-between items-center border-b pb-2 mb-3">
+                        <div className="text-lg font-semibold text-purple-700 flex items-center">
+                          <Tag className="w-5 h-5 mr-2 text-purple-500" />
+                          Available Coupons
+                        </div>
+                        <span
+                          onClick={handleOpenCouponsModal}
+                          className="text-sm text-purple-600 cursor-pointer hover:underline"
+                        >
+                          View All Coupons
+                        </span>
                       </div>
 
                       {/* Coupons Content */}
@@ -2194,7 +2196,7 @@ const CheckoutPage: React.FC = () => {
             <Footer />
             {renderTimeSlotModal()}
             {renderDeliveryTimelineModal()}
-            {/* {renderCouponsModal()} */}
+            {renderCouponsModal()}
           </main>
         </div>
       </div>

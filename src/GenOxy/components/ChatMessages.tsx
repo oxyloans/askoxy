@@ -9,12 +9,15 @@ interface ChatMessagesProps {
   messages: Message[];
   messagesEndRef: React.RefObject<HTMLDivElement>;
   loading: boolean;
+  onEditMessage: (messageId: string, content: string) => void;
+  
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   messagesEndRef,
   loading,
+  onEditMessage,
 }) => {
   // Auto scroll to bottom on message update
   useEffect(() => {
@@ -42,14 +45,25 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             <div key={msg.id || idx} className="animate-fade-in-up">
               {msg.role === "user" ? (
                 <div className="flex justify-end">
-                  <div className="flex items-start gap-3 max-w-full sm:max-w-[85%] group">
-                    <div className="relative">
-                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-5 py-3 shadow-lg break-words whitespace-pre-wrap text-sm leading-relaxed">
-                        {msg.content}
-                      </div>
+                  <div className="flex items-start gap-3 max-w-full sm:max-w-[85%] relative group">
+                    {/* Message bubble */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-5 py-3 shadow-lg break-words whitespace-pre-wrap text-sm leading-relaxed">
+                      {msg.content}
                     </div>
+
+                    {/* User avatar */}
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
                       <User className="w-4 h-4 text-white" />
+                    </div>
+
+                    {/* Hover-only Edit & Copy buttons outside bottom-right of the bubble */}
+                    <div className="absolute -bottom-8 right-10 hidden group-hover:flex z-10 space-x-2">
+                      <MessageActions
+                        message={msg}
+                        index={idx}
+                        onEdit={() => onEditMessage(msg.id!, msg.content)}
+                        showOnly={["edit", "copy"]}
+                      />
                     </div>
                   </div>
                 </div>
@@ -60,7 +74,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="px-5 py-4 relative rounded-2xl shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <div className="p-3 relative rounded-2xl shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 space-y-2">
                         {msg.isImage ? (
                           <div className="relative group/image">
                             <img
@@ -83,7 +97,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         ) : (
                           <MarkdownRenderer content={msg.content} />
                         )}
-                        <MessageActions message={msg} index={idx} />
+                        <div className="flex justify-end">
+                          <MessageActions message={msg} index={idx} small />
+                        </div>
                       </div>
                     </div>
                   </div>

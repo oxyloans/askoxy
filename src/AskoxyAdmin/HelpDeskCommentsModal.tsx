@@ -37,7 +37,9 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
   const [userResponse, setUserResponse] = useState<string | undefined>();
   const [orderId, setOrderId] = useState("");
   const [isActive, setIsActive] = useState<string | undefined>();
-  const [currentIsActiveStatus, setCurrentIsActiveStatus] = useState<boolean | null | undefined>(null);
+  const [currentIsActiveStatus, setCurrentIsActiveStatus] = useState<
+    boolean | null | undefined
+  >(null);
   const { Option } = Select;
 
   const emojiOptions: SelectProps["options"] = [
@@ -77,7 +79,8 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
 
   // Helper function to get badge color for isActive status
   const getIsActiveBadgeColor = (status: boolean | null | undefined) => {
-    if (status === null || status === undefined) return "bg-gray-100 text-gray-700";
+    if (status === null || status === undefined)
+      return "bg-gray-100 text-gray-700";
     return status ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
   };
 
@@ -87,7 +90,9 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
     if (open && userId) {
       fetchComments();
       // Get current isActive status from record or set from latest comment
-      setCurrentIsActiveStatus(record?.isActive !== undefined ? record.isActive : null);
+      setCurrentIsActiveStatus(
+        record?.isActive !== undefined ? record.isActive : null
+      );
       setIsActive(record?.isActive !== undefined ? record.isActive : null);
     }
   }, [open, userId, record]);
@@ -111,9 +116,12 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
       );
       const commentsData = Array.isArray(response.data) ? response.data : [];
       setComments(commentsData);
-      
+
       // If no record isActive status, get from latest comment
-      if (commentsData.length > 0 && (record?.isActive === undefined || record?.isActive === null)) {
+      if (
+        commentsData.length > 0 &&
+        (record?.isActive === undefined || record?.isActive === null)
+      ) {
         const latestComment = commentsData[0];
         setCurrentIsActiveStatus(latestComment.isActive);
         setIsActive(latestComment.isActive);
@@ -148,13 +156,9 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
       return;
     }
 
-    // Check if isActive is required (when current status is null/undefined)
-    if (currentIsActiveStatus === null || currentIsActiveStatus === undefined) {
-      if (!isActive) {
-        message.warning("Please select user active status");
-        return;
-      }
-    }
+    // If status is being updated, include it; otherwise skip
+    const shouldUpdateIsActive =
+      currentIsActiveStatus === null || currentIsActiveStatus === undefined;
 
     let commentText = newComment;
     if (orderId) {
@@ -176,8 +180,8 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
         customerBehaviour: userResponse,
       };
 
-      // Include isActive in the request if it's being updated
-      if (currentIsActiveStatus === null || currentIsActiveStatus === undefined) {
+      // Include isActive only if selected by user
+      if (shouldUpdateIsActive && isActive !== undefined) {
         requestData.isActive = isActive === "true";
       }
 
@@ -276,11 +280,16 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
                               )}
                             </span>
                           )}
-                          {comment.isActive !== undefined && comment.isActive !== null && (
-                            <span className={`text-xs px-2 py-1 rounded-full border ${getIsActiveBadgeColor(comment.isActive)}`}>
-                              {getIsActiveDisplayText(comment.isActive)}
-                            </span>
-                          )}
+                          {comment.isActive !== undefined &&
+                            comment.isActive !== null && (
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full border ${getIsActiveBadgeColor(
+                                  comment.isActive
+                                )}`}
+                              >
+                                {getIsActiveDisplayText(comment.isActive)}
+                              </span>
+                            )}
                           <span className="text-[10px] text-gray-400">
                             {formatDate(comment.commentsCreatedDate)}
                           </span>
@@ -331,7 +340,8 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
           <h3 className="text-base font-semibold text-gray-800 mb-3">
             User Active
           </h3>
-          {currentIsActiveStatus === null || currentIsActiveStatus === undefined ? (
+          {currentIsActiveStatus === null ||
+          currentIsActiveStatus === undefined ? (
             <Select
               style={{ width: "100%" }}
               placeholder="Select user active status"
@@ -342,7 +352,11 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
           ) : (
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
               <span className="text-sm text-gray-600">Current Status:</span>
-              <span className={`text-sm px-3 py-1 rounded-full border ${getIsActiveBadgeColor(currentIsActiveStatus)}`}>
+              <span
+                className={`text-sm px-3 py-1 rounded-full border ${getIsActiveBadgeColor(
+                  currentIsActiveStatus
+                )}`}
+              >
                 {getIsActiveDisplayText(currentIsActiveStatus)}
               </span>
             </div>

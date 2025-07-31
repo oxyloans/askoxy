@@ -160,6 +160,7 @@ interface Order {
   timeSlot: string;
   dayOfWeek: string;
   expectedDeliveryDate: string;
+  couponCode: string | null;
 }
 type DeliveryBoy = {
   userId: string;
@@ -1149,6 +1150,14 @@ const OrderDetailsPage: React.FC = () => {
             </h2>
 
             <div className="bg-gray-50 rounded-lg p-5 border space-y-3">
+              {orderDetails.couponCode && (
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Coupon Applied</span>
+                  <span className="font-medium text-green-600">
+                    {orderDetails.couponCode}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-gray-700">
                 <span>SubTotal</span>
                 <span className="font-medium">

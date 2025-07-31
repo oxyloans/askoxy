@@ -182,6 +182,7 @@ import OfferImagesUpdate from "./PartnerWeb/OfferImagesUpdate";
 import JobsAdminPage from "./AskoxyAdmin/Alljobdetails";
 import AddReference from "./PartnerWeb/AddReference";
 import UserAppliedJob from "./AskoxyAdmin/UserAppliedJobs";
+import StockTable from "./PartnerWeb/StockDetails";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -617,6 +618,7 @@ const App: React.FC = () => {
               <Route path="versionUpdate" element={<VersionUpdate />} />
               <Route path="updateoffers" element={<OfferImagesUpdate />} />
               <Route path="addReference" element={<AddReference />} />
+              <Route path="stockdetails" element={<StockTable />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}
@@ -646,6 +648,7 @@ const App: React.FC = () => {
               <Route path="addblogs" element={<AddBlog />} />
               <Route path="orderstats" element={<OrderStatsDashboard />} />
               <Route path="updatestock" element={<StockUpdate />} />
+
               <Route
                 path="superAdminComments"
                 element={<SuperAdminComments />}

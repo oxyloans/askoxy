@@ -159,7 +159,7 @@ const AddJob: React.FC = () => {
   const handleImageUpload = async (file: File) => {
     setUploading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken"); 
+      const accessToken = localStorage.getItem("accessToken");
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
 
@@ -198,13 +198,13 @@ const AddJob: React.FC = () => {
       const payload = {
         applicationDeadLine: formValues.applicationDeadLine?.toISOString(),
         jobTitle: formValues.jobTitle,
-        jobDesignation: formValues.jobDesignation, 
+        jobDesignation: formValues.jobDesignation,
         companyName: formValues.companyName,
         industry: formValues.industry,
         userId: userId,
         jobLocations: formValues.jobLocations?.join(","),
         jobType: formValues.jobType,
-        workMode: formValues.workMode, 
+        workMode: formValues.workMode,
         description: formValues.description,
         benefits: formValues.benefits,
         jobStatus: isActive,
@@ -289,8 +289,63 @@ const AddJob: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Post a Job</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-800">Post a Job</h1>
+
+        <div className="relative">
+          <input
+            type="file"
+            id="hiddenExcelUpload"
+            accept=".xls,.xlsx"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              const formData = new FormData();
+              formData.append("file", file);
+
+              try {
+                const accessToken = localStorage.getItem("accessToken");
+                const response = await fetch(
+                  `${BASE_URL}/marketing-service/campgin/JobsExcelUpdate`,
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                    body: formData,
+                  }
+                );
+
+                if (response.ok) {
+                  message.success("Jobs uploaded successfully from Excel!");
+                } else {
+                  throw new Error("Upload failed");
+                }
+              } catch (error) {
+                console.error("Upload error:", error);
+                message.error("Failed to upload Excel file.");
+              } finally {
+                // Reset file input so you can upload the same file again if needed
+                (
+                  document.getElementById(
+                    "hiddenExcelUpload"
+                  ) as HTMLInputElement
+                ).value = "";
+              }
+            }}
+          />
+
+          <button
+            onClick={() => {
+              document.getElementById("hiddenExcelUpload")?.click();
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+          >
+            Upload Excel
+          </button>
+        </div>
       </div>
 
       <Card className="shadow-2xl border-0 rounded-3xl overflow-hidden bg-white/95">

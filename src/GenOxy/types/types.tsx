@@ -1,5 +1,5 @@
 export interface Message {
-  id?: string | number;
+  id?: string ;
   role: "user" | "assistant";
   content: string;
   isImage?: boolean;

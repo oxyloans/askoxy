@@ -80,6 +80,19 @@ const AllCampaignsDetails: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const reopenId = localStorage.getItem("reopenPublishModal");
+    if (reopenId && campaigns.length > 0) {
+      const matched = campaigns.find((c) => c.campaignId === reopenId);
+      if (matched) {
+        setCurrentBlogCampaign(matched);
+        setSocialMediaCaption(matched.socialMediaCaption || "");
+        setIsPublishModalVisible(true);
+      }
+      localStorage.removeItem("reopenPublishModal"); // ✅ Clear after use
+    }
+  }, [campaigns]);
+
+  useEffect(() => {
     console.log(fileList);
   }, [formData, fileList]);
 
@@ -295,49 +308,53 @@ const AllCampaignsDetails: React.FC = () => {
     );
   };
 
-  const handlePlatformPublish = async (platform: string) => {
-    try {
-      message.loading(`Publishing to ${platform}...`, 0);
+ const handlePlatformPublish = async (platform: string) => {
+  try {
+    message.loading(`Publishing to ${platform}...`, 0);
 
-      const response = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/publishposttosocialmedia?campaignId=${
-          currentBlogCampaign?.campaignId
-        }&platform=${platform.toUpperCase()}&socialMediaCaption=${encodeURIComponent(
-          socialMediaCaption.trim()
-        )}`,
-        "",
-        {
-          headers: {
-            accept: "*/*",
-          },
-        }
-      );
-
-      message.destroy();
-
-      const { status, url, postId } = response.data;
-
-      if (status) {
-        message.success(`Successfully published to ${platform}!`);
-
-        if (url && postId) {
-          updateCampaignPostUrls(platform, url, postId);
-        }
-      } else {
-        message.error(`Failed to publish to ${platform}`);
+    const response = await axios.post(
+      `${BASE_URL}/marketing-service/campgin/publishposttosocialmedia?campaignId=${
+        currentBlogCampaign?.campaignId
+      }&platform=${platform.toUpperCase()}&socialMediaCaption=${encodeURIComponent(
+        socialMediaCaption.trim()
+      )}`,
+      "",
+      {
+        headers: {
+          accept: "*/*",
+        },
       }
-    } catch (error) {
-      message.destroy();
-      console.error(`Error publishing to ${platform}:`, error);
+    );
 
-      const err = error as AxiosError;
+    message.destroy();
 
-      const errorMessage =
-        (err.response?.data as any)?.message || "Please try again.";
+    const { status, url, postId } = response.data;
 
-      message.error(`Failed to publish to ${platform}: ${errorMessage}`);
+    if (status) {
+      message.success(`Successfully published to ${platform}!`);
+
+      if (url && postId) {
+        updateCampaignPostUrls(platform, url, postId);
+
+        // ✅ Store to reopen modal again
+        localStorage.setItem("reopenPublishModal", currentBlogCampaign?.campaignId || "");
+      }
+
+      // ✅ Just re-fetch data, DO NOT reload page
+      fetchCampaigns();
+    } else {
+      message.error(`Failed to publish to ${platform}`);
     }
-  };
+  } catch (error) {
+    message.destroy();
+    console.error(`Error publishing to ${platform}:`, error);
+
+    const err = error as AxiosError;
+    const errorMessage = (err.response?.data as any)?.message || "Please try again.";
+    message.error(`Failed to publish to ${platform}: ${errorMessage}`);
+  }
+};
+
 
   const updateCampaignPostUrls = (
     platform: string,

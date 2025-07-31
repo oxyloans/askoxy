@@ -20,6 +20,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   DollarOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import type { UploadProps } from "antd/es/upload";
@@ -27,6 +28,7 @@ import BASE_URL from "../Config";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
+const { TextArea } = Input;
 
 interface PaymentStatus {
   id: string;
@@ -54,16 +56,23 @@ interface MinOrderAmount {
   id: string;
 }
 
+interface BMVDescription {
+  id: string;
+  discription: string;
+}
+
 const UpdateOffers: React.FC = () => {
   const [paymentData, setPaymentData] = useState<PaymentStatus[]>([]);
   const [offerImages, setOfferImages] = useState<OfferImage[]>([]);
   const [minOrderAmount, setMinOrderAmount] = useState<MinOrderAmount | null>(
     null
   );
+  const [bmvDescriptions, setBmvDescriptions] = useState<BMVDescription[]>([]);
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [orderAmountModalVisible, setOrderAmountModalVisible] = useState(false);
+  const [bmvModalVisible, setBmvModalVisible] = useState(false);
   const [formData, setFormData] = useState({ paymentStatus: "", status: true });
   const [imageFormData, setImageFormData] = useState<ImageFormData>({
     webNavigation: "",
@@ -74,7 +83,12 @@ const UpdateOffers: React.FC = () => {
   const [editingPayment, setEditingPayment] = useState<PaymentStatus | null>(
     null
   );
+  const [editingBmvDescription, setEditingBmvDescription] =
+    useState<BMVDescription | null>(null);
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
+  const [bmvDescriptionText, setBmvDescriptionText] = useState<string>("");
+  const [isAddingBmvDescription, setIsAddingBmvDescription] =
+    useState<boolean>(false);
 
   // Fetch payment status data
   const fetchPaymentData = async () => {
@@ -146,10 +160,33 @@ const UpdateOffers: React.FC = () => {
     }
   };
 
+  // Fetch BMV descriptions data
+  const fetchBmvDescriptions = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${BASE_URL}/user-service/allBmvDiscriptionData`
+      );
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setBmvDescriptions(data);
+      } else {
+        message.error("Invalid BMV description data received");
+        setBmvDescriptions([]);
+      }
+    } catch (error) {
+      setBmvDescriptions([]);
+      message.error("Failed to fetch BMV descriptions");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPaymentData();
     fetchOfferImages();
     fetchMinOrderAmount();
+    fetchBmvDescriptions();
   }, []);
 
   // Handle payment status toggle
@@ -222,7 +259,6 @@ const UpdateOffers: React.FC = () => {
     }
 
     try {
-
       const response = await fetch(
         `${BASE_URL}/order-service/minimumOrderAmountUpdate`,
         {
@@ -243,12 +279,75 @@ const UpdateOffers: React.FC = () => {
         await fetchMinOrderAmount();
       } else {
         const errorData = await response.text();
-
         message.error("Failed to update minimum order amount");
       }
     } catch (error) {
       console.error("Error updating minimum order amount:", error);
       message.error("Error updating minimum order amount");
+    }
+  };
+
+  const handleBmvDescriptionUpdate = async () => {
+    if (!bmvDescriptionText.trim()) {
+      message.error("Description cannot be empty");
+      return;
+    }
+
+    try {
+      if (!isAddingBmvDescription && !editingBmvDescription?.id) {
+        message.error("No BMV description selected for editing");
+        return;
+      }
+
+      const payload: Record<string, any> = {
+        discription: bmvDescriptionText.trim(),
+      };
+
+      if (!isAddingBmvDescription) {
+        payload.id = editingBmvDescription?.id;
+      }
+
+      const response = await fetch(
+        `${BASE_URL}/user-service/bmvDiscriptionUpdate`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (response.ok) {
+        message.success(
+          `BMV description ${
+            isAddingBmvDescription ? "added" : "updated"
+          } successfully`
+        );
+        setBmvModalVisible(false);
+        setEditingBmvDescription(null);
+        setBmvDescriptionText("");
+        setIsAddingBmvDescription(false);
+        await fetchBmvDescriptions();
+      } else {
+        message.error(
+          `Failed to ${
+            isAddingBmvDescription ? "add" : "update"
+          } BMV description`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `Error ${
+          isAddingBmvDescription ? "adding" : "updating"
+        } BMV description:`,
+        error
+      );
+      message.error(
+        `Error ${
+          isAddingBmvDescription ? "adding" : "updating"
+        } BMV description`
+      );
     }
   };
 
@@ -464,6 +563,50 @@ const UpdateOffers: React.FC = () => {
     },
   ];
 
+  // BMV descriptions table columns
+  const bmvColumns: ColumnsType<BMVDescription> = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      width: 250,
+      render: (text) => (
+        <span className="font-mono text-sm text-gray-600">{text}</span>
+      ),
+    },
+    {
+      title: "Description Preview",
+      dataIndex: "discription",
+      key: "discription",
+      render: (text) => (
+        <div className="max-w-md">
+          <div className="text-gray-800 line-clamp-3">
+            {text.length > 100 ? `${text.substring(0, 100)}...` : text}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 120,
+      render: (_, record) => (
+        <Button
+          type="link"
+          icon={<EditOutlined />}
+          onClick={() => {
+            setIsAddingBmvDescription(false);
+            setEditingBmvDescription(record);
+            setBmvDescriptionText(record.discription);
+            setBmvModalVisible(true);
+          }}
+        >
+          Edit
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -584,6 +727,40 @@ const UpdateOffers: React.FC = () => {
                   </p>
                 </div>
               )}
+            </Card>
+          </TabPane>
+
+          <TabPane tab="BMV Descriptions" key="4">
+            <Card className="shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  BMV Description Management
+                </h2>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setIsAddingBmvDescription(true);
+                    setEditingBmvDescription(null);
+                    setBmvDescriptionText("");
+                    setBmvModalVisible(true);
+                  }}
+                >
+                  Add Description
+                </Button>
+              </div>
+              <Table
+                columns={bmvColumns}
+                dataSource={bmvDescriptions}
+                rowKey="id"
+                loading={loading}
+                pagination={{
+                  pageSize: 10,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} items`,
+                }}
+                scroll={{ x: 800 }}
+              />
             </Card>
           </TabPane>
         </Tabs>
@@ -810,6 +987,72 @@ const UpdateOffers: React.FC = () => {
                 disabled={newOrderAmount <= 0}
               >
                 Update Amount
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* BMV Description Modal */}
+        <Modal
+          title={
+            isAddingBmvDescription
+              ? "Add BMV Description"
+              : "Update BMV Description"
+          }
+          open={bmvModalVisible}
+          onCancel={() => {
+            setBmvModalVisible(false);
+            setEditingBmvDescription(null);
+            setBmvDescriptionText("");
+            setIsAddingBmvDescription(false);
+          }}
+          footer={null}
+          width={800}
+        >
+          <div className="space-y-4">
+            {!isAddingBmvDescription && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description ID: {editingBmvDescription?.id}
+                </label>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description Content
+              </label>
+              <TextArea
+                placeholder="Enter BMV description content"
+                value={bmvDescriptionText}
+                onChange={(e) => setBmvDescriptionText(e.target.value)}
+                rows={15}
+                showCount
+                maxLength={5000}
+              />
+              <p className="text-gray-500 text-sm mt-1">
+                You can use Markdown formatting for better presentation
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                onClick={() => {
+                  setBmvModalVisible(false);
+                  setEditingBmvDescription(null);
+                  setBmvDescriptionText("");
+                  setIsAddingBmvDescription(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleBmvDescriptionUpdate}
+                disabled={!bmvDescriptionText.trim()}
+              >
+                {isAddingBmvDescription
+                  ? "Add Description"
+                  : "Update Description"}
               </Button>
             </div>
           </div>

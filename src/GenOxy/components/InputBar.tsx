@@ -14,7 +14,10 @@ interface InputBarProps {
   handleKeyPress: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
   loading: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
+  stopGeneration: () => void; // New prop to stop ongoing response
+   isEditing: boolean; // Indicates if editing a message
 }
+
 
 type SpeechRecognitionEvent = Event & {
   results: SpeechRecognitionResultList;
@@ -33,6 +36,8 @@ const InputBar: React.FC<InputBarProps> = ({
   handleKeyPress,
   loading,
   textareaRef,
+  stopGeneration,
+  isEditing,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -124,7 +129,11 @@ const InputBar: React.FC<InputBarProps> = ({
                       setInput(e.target.value)
                     }
                     onKeyDown={handleKeyPress}
-                    placeholder="Type your message..."
+                    placeholder={
+                      isEditing
+                        ? "Edit your message..."
+                        : "Type your message..."
+                    }
                     disabled={loading}
                     rows={1}
                     className="w-full text-sm sm:text-base resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 max-h-32 overflow-auto p-1"
@@ -138,12 +147,18 @@ const InputBar: React.FC<InputBarProps> = ({
                   <button
                     onClick={handleToggleVoice}
                     title="Voice Input"
-                    disabled={loading}
+                    disabled={loading || isEditing}
+                    // className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                    //   isRecording
+                    //     ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
+                    //     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    // }`}
+
                     className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
                       isRecording
                         ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
                         : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                    }`}
+                    } ${isEditing ? "opacity-50 cursor-not-allowed" : ""}`}
                     aria-label="Voice input"
                   >
                     <Mic className="w-5 h-5" />
@@ -151,11 +166,25 @@ const InputBar: React.FC<InputBarProps> = ({
 
                   {/* Send Button */}
                   <button
-                    onClick={() => handleSend()}
-                    disabled={!input.trim() || loading}
-                    aria-label="Send message"
+                    onClick={loading ? stopGeneration : () => handleSend()}
+                    disabled={!loading && (!input.trim() || isRecording)}
+                    aria-label={
+                      loading
+                        ? "Stop generation"
+                        : isEditing
+                        ? "Save message"
+                        : "Send message"
+                    }
+                    // className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center ${
+                    //   input.trim() && !loading
+                    //     ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                    //     : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                    // }`}
+
                     className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center ${
-                      input.trim() && !loading
+                      loading
+                        ? "bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 shadow-lg"
+                        : input.trim() && !isRecording
                         ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                         : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     }`}

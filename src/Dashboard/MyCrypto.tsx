@@ -65,11 +65,10 @@ const MyCrypto: React.FC = () => {
     "all" | "sent" | "received"
   >("all");
 
-  // Single place to define expandedTxId - at component level
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
-  // Refs for uncontrolled inputs
+  // Refs
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -83,13 +82,11 @@ const MyCrypto: React.FC = () => {
     error: null as string | null,
   });
 
-  // Transfer details for the success message
   const [transferDetails, setTransferDetails] = useState({
     recipientMobile: "",
     amount: "",
   });
 
-  // Track if component is mounted to prevent state updates after unmount
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -98,7 +95,7 @@ const MyCrypto: React.FC = () => {
     };
   }, []);
 
-  // Add event listener for clicking outside modal
+  // Event listeners for modals
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -118,30 +115,28 @@ const MyCrypto: React.FC = () => {
       }
     };
 
-    // Add event listener when modal is shown
     if (showTransfersModal || showTransferModal) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
-    // Clean up event listener
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showTransfersModal, showTransferModal]);
 
-  // Fetch user data only once on mount
+  // Fetch user data on mount
   useEffect(() => {
     fetchUserData();
   }, []);
 
-  // Filter transfers when filter changes or transfers update
+  // Filter transfers
   useEffect(() => {
     if (transfers.length > 0) {
       const filtered = transfers.filter((transfer) => {
         const isSent = transfer.txMobileNumber === userMobileNumber;
         if (transferFilter === "sent") return isSent;
         if (transferFilter === "received") return !isSent;
-        return true; // 'all' filter
+        return true;
       });
       setFilteredTransfers(filtered);
     } else {
@@ -149,18 +144,15 @@ const MyCrypto: React.FC = () => {
     }
   }, [transfers, transferFilter, userMobileNumber]);
 
-  // Function to close transfers modal with clean state
   const closeTransfersModal = () => {
     setShowTransfersModal(false);
-    setTransferFilter("all"); // Reset filter when closing
+    setTransferFilter("all");
   };
 
-  // Toggle expanded view for a transaction
   const toggleExpand = (index: number) => {
     setExpandedTxId(expandedTxId === index ? null : index);
   };
 
-  // Function to fetch user profile data
   const fetchUserData = async () => {
     try {
       setIsLoading(true);
@@ -173,7 +165,6 @@ const MyCrypto: React.FC = () => {
         `${BASE_URL}/user-service/getProfile/${userId}`
       );
 
-      // Only update state if component is still mounted
       if (isMounted.current) {
         setMultichainId(response.data.multiChainId || "");
         setBmvCoin(response.data.coinAllocated || 0);
@@ -194,8 +185,6 @@ const MyCrypto: React.FC = () => {
     }
   };
 
-  // Only fetch transfers when mobileNumber is available AND we haven't fetched before
-  // This ensures we only fetch once initially, and then only on explicit refresh
   useEffect(() => {
     if (userMobileNumber && !transfersInitialized.current) {
       transfersInitialized.current = true;
@@ -203,7 +192,6 @@ const MyCrypto: React.FC = () => {
     }
   }, [userMobileNumber]);
 
-  // If modal is opened and shouldFetchTransfers is true, fetch transfers
   useEffect(() => {
     if (showTransfersModal && shouldFetchTransfers) {
       fetchTransfers();
@@ -211,65 +199,42 @@ const MyCrypto: React.FC = () => {
     }
   }, [showTransfersModal, shouldFetchTransfers]);
 
-  // Improved fetchTransfers function with better error handling and loading state management
   const fetchTransfers = useCallback(async () => {
-    // Return early without updating state if there's no mobile number
     if (!userMobileNumber) return;
 
-    console.log("🔄 Fetching transfers for", userMobileNumber);
-
     try {
-      // Set loading state before starting request
       setTransfersLoading(true);
       setTransfersError(null);
 
       const response = await axios.get(`${BASE_URL}/user-service/bmvhistory`, {
         params: { mobileNumber: userMobileNumber },
-        // Add timeout to prevent infinite loading state
         timeout: 1000,
-        // Handle 204 responses properly (No Content)
         validateStatus: (status) =>
           (status >= 200 && status < 300) || status === 204,
       });
 
-      // Guard against component unmounting during async operation
       if (!isMounted.current) return;
 
-      // Handle 204 No Content response specifically (no transactions found)
       if (response.status === 204) {
-        // Set transfers to empty array to indicate no transactions found
         setTransfers([]);
         return;
       }
 
-      // Validate response for other success cases
-      if (!response.data) {
-        throw new Error("No data received from server");
-      }
-
-      const data = response.data;
-
-      if (!Array.isArray(data)) {
+      if (!response.data || !Array.isArray(response.data)) {
         throw new Error("Invalid response format from server");
       }
 
-      // Update transfers state with fresh data
-      setTransfers(data);
-      console.log("✅ Successfully fetched", data.length, "transfers");
+      setTransfers(response.data);
     } catch (error: any) {
       console.error("Error fetching transfers:", error);
 
-      // Only update error state if component is still mounted
       if (isMounted.current) {
-        // Set specific error message based on error type
         if (error.code === "ECONNABORTED") {
           setTransfersError("Request timed out. Please try again.");
         } else if (error.response?.status === 404) {
           setTransfersError("No transfers found");
         } else if (error.response?.status === 400) {
-          setTransfersError(
-            "Invalid request. Please check your mobile number."
-          );
+          setTransfersError("Invalid request. Please check your mobile number.");
         } else if (error.response?.status >= 500) {
           setTransfersError("Server error. Please try again later.");
         } else {
@@ -281,23 +246,15 @@ const MyCrypto: React.FC = () => {
         }
       }
     } finally {
-      // Only update loading state if component is still mounted
       if (isMounted.current) {
         setTransfersLoading(false);
       }
     }
   }, [userMobileNumber]);
 
-  // Prepare for transfer modal - ensure we have the latest data
   const handleOpenTransfersModal = () => {
     setShowTransfersModal(true);
-
-    // Only fetch new transfers if we've successfully fetched once before
-    // This prevents redundant API calls on initial open
-    if (
-      transfersInitialized.current &&
-      (transfers.length > 0 || transfersError)
-    ) {
+    if (transfersInitialized.current && (transfers.length > 0 || transfersError)) {
       setShouldFetchTransfers(true);
     }
   };
@@ -330,7 +287,6 @@ const MyCrypto: React.FC = () => {
     },
   ];
 
-  // Copy multichain ID to clipboard
   const handleCopyMultichainId = async () => {
     if (multichainId) {
       try {
@@ -347,15 +303,12 @@ const MyCrypto: React.FC = () => {
     }
   };
 
-  // Handle transfer submission
   const handleTransferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Get values from refs
     const recipientMobile = mobileInputRef.current?.value || "";
     const transferAmount = amountInputRef.current?.value || "";
 
-    // Validate form
     if (!recipientMobile || !transferAmount) {
       setTransferStatus({
         loading: false,
@@ -365,7 +318,6 @@ const MyCrypto: React.FC = () => {
       return;
     }
 
-    // Validate mobile number
     if (recipientMobile.length !== 10 || !/^\d{10}$/.test(recipientMobile)) {
       setTransferStatus({
         loading: false,
@@ -375,7 +327,6 @@ const MyCrypto: React.FC = () => {
       return;
     }
 
-    // Validate amount
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0 || amount > bmvCoin) {
       setTransferStatus({
@@ -389,35 +340,27 @@ const MyCrypto: React.FC = () => {
     try {
       setTransferStatus({ loading: true, success: false, error: null });
 
-      // Simple POST with no token
       await axios.post(`${BASE_URL}/user-service/assetTransfer`, {
         from_mobile: userMobileNumber,
         to_mobile: recipientMobile,
         amount: transferAmount,
       });
 
-      // Save transfer details for success message
       if (isMounted.current) {
         setTransferDetails({
           recipientMobile: recipientMobile,
           amount: transferAmount,
         });
 
-        // Update success state
         setTransferStatus({ loading: false, success: true, error: null });
-
-        // Refresh balance
         fetchUserData();
 
-        // Reset form and close modal after delay
         setTimeout(() => {
           if (isMounted.current) {
             if (mobileInputRef.current) mobileInputRef.current.value = "";
             if (amountInputRef.current) amountInputRef.current.value = "";
             setShowTransferModal(false);
             setTransferStatus({ loading: false, success: false, error: null });
-
-            // Mark that we need to refresh transfers list next time it's opened
             setShouldFetchTransfers(true);
           }
         }, 2000);
@@ -425,7 +368,6 @@ const MyCrypto: React.FC = () => {
     } catch (error: any) {
       console.error("Transfer error:", error);
 
-      // Handle specific API errors
       if (isMounted.current) {
         if (error.response?.status === 400) {
           setTransferStatus({
@@ -458,69 +400,67 @@ const MyCrypto: React.FC = () => {
     }
   };
 
-  // Simplified BMVInfoModal Component - Web and Mobile Responsive
+  // BMVInfoModal Component
   const BMVInfoModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg relative overflow-y-auto max-h-[90vh]">
-        {/* Close Button */}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg relative overflow-y-auto max-h-[90vh] ">
         <button
           onClick={() => setShowBmvModal(false)}
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center 
-                  bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-50"
+          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center 
+                  bg-gray-100 hover:bg-gray-200 rounded-full transition-all z-50"
           aria-label="Close modal"
         >
-          <X size={18} className="text-gray-600" />
+          <X size={20} className="text-gray-600" />
         </button>
 
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-lg">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-xl">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white rounded-full">
-              <img src={BMVICON} alt="BMV Coin" className="h-6 w-full" />
-            </div>
-            <h1 className="text-xl font-bold">Welcome to BMVCOINS</h1>
+            {/* <div className="p-2 bg-white rounded-full">
+              <img src={BMVICON} alt="BMV Coin" className="h-7 w-7" />
+            </div> */}
+            <h1 className="text-2xl font-bold">Welcome to BMVCOINS</h1>
           </div>
           <p className="text-purple-100 text-sm">Your Digital Reward Tokens</p>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-5">
-          {/* What are BMVCoins */}
-          <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-5 w-5 text-purple-600" />
+        <div className="p-6 space-y-6">
+          <div className="bg-purple-50/80 p-5 rounded-xl border border-purple-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <Sparkles className="h-6 w-6 text-purple-600" />
               <h2 className="text-lg font-semibold text-gray-800">
                 What are BMVCOINS?
               </h2>
             </div>
-            <p className="text-gray-700 text-sm mb-3 leading-relaxed">
+            <p className="text-gray-700 mb-4 leading-relaxed">
               BMVCOINS are digital reward tokens powered by{" "}
               <strong>OXYCHAIN</strong>. They work like cashback points for your
               purchases.
             </p>
-            <div className="bg-white p-3 rounded-lg">
+            <div className="bg-white p-4 rounded-lg shadow-inner">
               <div className="text-center">
-                Current Value:{" "}
-                <span className="text-purple-600 font-bold">
+                <p className="text-sm text-gray-500">Current Value</p>
+                <p className="text-2xl font-bold text-purple-600">
                   ₹0.02 per coin
-                </span>
-                <br/>
-                <div className="text-md text-purple-600">1000 BMVCOINS = ₹20</div>
+                </p>
+                <div className="text-md text-purple-500 mt-1">
+                  1000 BMVCOINS = ₹20
+                </div>
               </div>
             </div>
           </div>
 
-          {/* How to Use */}
-          <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="h-5 w-5 text-green-600" />
+          <div className="bg-green-50/80 p-5 rounded-xl border border-green-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <DollarSign className="h-6 w-6 text-green-600" />
               <h2 className="text-lg font-semibold text-gray-800">
                 How to Use
               </h2>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-green-600 mt-0.5" />
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="p-1 bg-green-100 rounded-full mt-0.5">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-gray-800">
                     Redeem at ₹200 (10,000 coins)
@@ -530,8 +470,10 @@ const MyCrypto: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-green-600 mt-0.5" />
+              <div className="flex items-start gap-3">
+                <div className="p-1 bg-green-100 rounded-full mt-0.5">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-gray-800">
                     Transfer to friends and family
@@ -541,8 +483,10 @@ const MyCrypto: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-green-600 mt-0.5" />
+              <div className="flex items-start gap-3">
+                <div className="p-1 bg-green-100 rounded-full mt-0.5">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-gray-800">
                     Use on non-GST items
@@ -553,27 +497,26 @@ const MyCrypto: React.FC = () => {
             </div>
           </div>
 
-          {/* Future Value */}
-          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-5 w-5 text-yellow-600" />
+          <div className="bg-yellow-50/80 p-5 rounded-xl border border-yellow-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <TrendingUp className="h-6 w-6 text-yellow-600" />
               <h2 className="text-lg font-semibold text-gray-800">
                 Future Potential
               </h2>
             </div>
-            <p className="text-gray-700 text-sm mb-3">
+            <p className="text-gray-700 mb-4">
               We're working to list BMVCOINS on exchanges soon.
             </p>
-            <div className="bg-white p-3 rounded-lg">
+            <div className="bg-white p-4 rounded-lg shadow-inner">
               <div className="flex items-center justify-between text-sm">
                 <div className="text-center">
-                  <div className="font-medium">Today</div>
-                  <div className="text-yellow-600 font-bold">₹0.02</div>
+                  <div className="font-medium text-gray-500">Today</div>
+                  <div className="text-xl font-bold text-yellow-600">₹0.02</div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-gray-400" />
+                <ArrowRight className="h-5 w-5 text-gray-400 mx-4" />
                 <div className="text-center">
-                  <div className="font-medium">Projected</div>
-                  <div className="text-green-600 font-bold">₹1+</div>
+                  <div className="font-medium text-gray-500">Projected</div>
+                  <div className="text-xl font-bold text-green-600">₹1+</div>
                 </div>
               </div>
             </div>
@@ -582,27 +525,26 @@ const MyCrypto: React.FC = () => {
             </p>
           </div>
 
-          {/* Key Features */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Gift className="h-5 w-5 text-blue-600" />
+          <div className="bg-blue-50/80 p-5 rounded-xl border border-blue-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <Gift className="h-6 w-6 text-blue-600" />
               <h2 className="text-lg font-semibold text-gray-800">
                 Key Features
               </h2>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-blue-600" />
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Zap className="h-5 w-5 text-blue-600" />
                 <span className="text-sm font-medium">Powered by OXYCHAIN</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-blue-600" />
+              <div className="flex items-center gap-3">
+                <Star className="h-5 w-5 text-blue-600" />
                 <span className="text-sm font-medium">
                   Track in AskOxy dashboard
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-600" />
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-blue-600" />
                 <span className="text-sm font-medium">
                   Transferable between users
                 </span>
@@ -610,9 +552,8 @@ const MyCrypto: React.FC = () => {
             </div>
           </div>
 
-          {/* Important Note */}
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-            <p className="text-xs text-gray-600 text-center leading-relaxed">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+            <p className="text-xs text-gray-600 leading-relaxed">
               <strong>Note:</strong> BMVCOINS are bonus rewards. Prices remain
               competitive even without them. Use wisely — earn, redeem, and grow
               with AskOxy!
@@ -620,13 +561,12 @@ const MyCrypto: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer Button */}
         <div className="p-6 pt-0">
           <button
             onClick={() => setShowBmvModal(false)}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 
                     rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 
-                    font-medium text-sm shadow-lg"
+                    font-medium text-sm shadow-lg hover:shadow-xl"
           >
             Got it! Let's Start Earning
           </button>
@@ -637,56 +577,54 @@ const MyCrypto: React.FC = () => {
 
   // TransferModal Component
   const TransferModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         ref={transferModalRef}
-        className="bg-white p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-md relative overflow-y-auto max-h-[90vh]"
+        className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md relative overflow-y-auto max-h-[90vh] "
       >
-        {/* Fixed close button - optimized for mobile */}
         <button
           onClick={() => setShowTransferModal(false)}
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center 
+          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center 
                     bg-white hover:bg-gray-100 rounded-full transition-colors z-50
                     shadow-lg border border-gray-200"
           aria-label="Close modal"
         >
-          <X size={16} strokeWidth={2.5} className="text-gray-700" />
+          <X size={18} strokeWidth={2.5} className="text-gray-700" />
         </button>
 
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-4 mb-6">
           <div className="p-3 rounded-full bg-purple-100">
-            <SendHorizonal className="h-6 w-6 text-purple-600" />
+            <SendHorizonal className="h-7 w-7 text-purple-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800">Transfer BMVCOINS</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Transfer BMVCOINS</h2>
         </div>
 
-        {/* Show different content based on transfer status */}
         {transferStatus.success ? (
           <div className="text-center py-4">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <Check className="h-6 w-6 text-green-600" />
+            <div className="mx-auto w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-5">
+              <Check className="h-7 w-7 text-green-600" />
             </div>
-            <h3 className="text-xl font-bold text-green-600 mb-2">
+            <h3 className="text-2xl font-bold text-green-600 mb-3">
               Transfer Successful!
             </h3>
-            <p className="text-gray-700 mb-4">
+            <p className="text-gray-700 mb-5">
               You have successfully transferred {transferDetails.amount}{" "}
               BMVCOINS to {transferDetails.recipientMobile}.
             </p>
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <div className="bg-gray-50 p-4 rounded-xl mb-5">
               <p className="text-gray-500 mb-1">Updated Balance:</p>
-              <p className="text-2xl font-bold text-purple-700">
+              <p className="text-3xl font-bold text-purple-700">
                 {bmvCoin} BMVCOINS
               </p>
             </div>
           </div>
         ) : (
           <form onSubmit={handleTransferSubmit}>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
                 <label
                   htmlFor="recipientMobile"
-                  className="block text-gray-700 font-medium mb-1"
+                  className="block text-gray-700 font-medium mb-2"
                 >
                   Recipient Mobile Number
                 </label>
@@ -695,7 +633,7 @@ const MyCrypto: React.FC = () => {
                   type="text"
                   id="recipientMobile"
                   placeholder="Enter 10-digit mobile number"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700"
                   maxLength={10}
                   pattern="\d{10}"
                 />
@@ -704,7 +642,7 @@ const MyCrypto: React.FC = () => {
               <div>
                 <label
                   htmlFor="amount"
-                  className="block text-gray-700 font-medium mb-1"
+                  className="block text-gray-700 font-medium mb-2"
                 >
                   Amount to Transfer
                 </label>
@@ -716,34 +654,34 @@ const MyCrypto: React.FC = () => {
                     placeholder="Enter amount"
                     min="1"
                     max={bmvCoin}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700"
                   />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  <div className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                     BMVCOINS
                   </div>
                 </div>
-                <p className="text-gray-500 text-sm mt-1">
-                  Available: {bmvCoin} BMVCOINS
+                <p className="text-gray-500 text-sm mt-2">
+                  Available: <span className="font-medium">{bmvCoin} BMVCOINS</span>
                 </p>
               </div>
 
               {transferStatus.error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600">
+                <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-600">
                   {transferStatus.error}
                 </div>
               )}
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-500 text-sm mb-1">Important:</p>
-                <ul className="space-y-1 text-gray-600 text-sm">
-                  <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-gray-500 text-sm mb-2 font-medium">Important:</p>
+                <ul className="space-y-2 text-gray-600 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mt-0.5 flex-shrink-0">
                       •
                     </span>
                     <span>All transfers are final and cannot be reversed.</span>
                   </li>
-                  <li className="flex items-start">
-                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mr-2 mt-0.5 flex-shrink-0">
+                  <li className="flex items-start gap-2">
+                    <span className="h-5 w-5 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 mt-0.5 flex-shrink-0">
                       •
                     </span>
                     <span>The recipient must be a registered user.</span>
@@ -753,12 +691,12 @@ const MyCrypto: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full p-3.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
                 disabled={transferStatus.loading}
               >
                 {transferStatus.loading ? (
-                  <span className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     Processing...
                   </span>
                 ) : (
@@ -772,36 +710,34 @@ const MyCrypto: React.FC = () => {
     </div>
   );
 
-  // TransfersModal Component
+   // TransfersModal Component
   const TransfersModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         ref={modalRef}
-        className="bg-white rounded-xl shadow-xl w-full max-w-4xl relative overflow-hidden max-h-[90vh] flex flex-col"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl relative overflow-hidden max-h-[90vh] flex flex-col "
       >
-        {/* Fixed header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-white">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b bg-white sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-100">
-              <History className="h-6 w-6 text-blue-600" />
+              <History className="h-7 w-7 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800">
               Transfer History
             </h2>
           </div>
           <button
             onClick={closeTransfersModal}
-            className="w-8 h-8 flex items-center justify-center 
+            className="w-9 h-9 flex items-center justify-center 
                       bg-white hover:bg-gray-100 rounded-full transition-colors
                       shadow-lg border border-gray-200"
             aria-label="Close modal"
           >
-            <X size={16} strokeWidth={2.5} className="text-gray-700" />
+            <X size={18} strokeWidth={2.5} className="text-gray-700" />
           </button>
         </div>
 
-        {/* Filter buttons */}
-        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b">
+        <div className="px-5 sm:px-6 py-4 bg-gray-50 border-b sticky top-16 z-10">
           <div className="flex flex-wrap gap-2">
             {[
               { key: "all", label: "All" },
@@ -811,10 +747,10 @@ const MyCrypto: React.FC = () => {
               <button
                 key={key}
                 onClick={() => setTransferFilter(key as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   transferFilter === key
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 {label}
@@ -823,32 +759,37 @@ const MyCrypto: React.FC = () => {
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
           {transfersLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Loading transfers...</span>
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+              <span className="text-gray-600">Loading transfers...</span>
             </div>
           ) : transfersError ? (
-            <div className="text-center py-8">
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 mb-4">
+            <div className="text-center py-10">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 mb-5">
                 {transfersError}
               </div>
               <button
                 onClick={fetchTransfers}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
               >
                 Try Again
               </button>
             </div>
           ) : filteredTransfers.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-10">
               <History className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No transfers found</p>
+              <button
+                onClick={fetchTransfers}
+                className="mt-4 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
+              >
+                Refresh
+              </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredTransfers.map((transfer, index) => {
                 const isSent = transfer.txMobileNumber === userMobileNumber;
                 const isExpanded = expandedTxId === index;
@@ -856,7 +797,7 @@ const MyCrypto: React.FC = () => {
                 return (
                   <div
                     key={index}
-                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow"
                   >
                     <div
                       className="flex items-center justify-between cursor-pointer"
@@ -869,9 +810,9 @@ const MyCrypto: React.FC = () => {
                           }`}
                         >
                           {isSent ? (
-                            <Minus className="h-5 w-5 text-red-600" />
+                            <Minus className="h-6 w-6 text-red-600" />
                           ) : (
-                            <Plus className="h-5 w-5 text-green-600" />
+                            <Plus className="h-6 w-6 text-green-600" />
                           )}
                         </div>
                         <div>
@@ -888,7 +829,7 @@ const MyCrypto: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-lg font-bold ${
+                          className={`text-xl font-bold ${
                             isSent ? "text-red-600" : "text-green-600"
                           }`}
                         >
@@ -904,17 +845,17 @@ const MyCrypto: React.FC = () => {
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div className="mt-5 pt-5 border-t border-gray-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
                           <div>
-                            <p className="text-gray-500">From Address:</p>
-                            <p className="font-mono text-gray-800 break-all">
+                            <p className="text-gray-500 mb-1">From Address:</p>
+                            <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
                               {transfer.txChainAddress}
                             </p>
                           </div>
                           <div>
-                            <p className="text-gray-500">To Address:</p>
-                            <p className="font-mono text-gray-800 break-all">
+                            <p className="text-gray-500 mb-1">To Address:</p>
+                            <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
                               {transfer.rxChainAddress}
                             </p>
                           </div>
@@ -967,34 +908,32 @@ const MyCrypto: React.FC = () => {
     ];
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-white">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative overflow-y-auto max-h-[90vh] ">
+          <div className="flex items-center justify-between p-5 sm:p-6 border-b bg-white sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-green-100">
-                <HelpCircle className="h-6 w-6 text-green-600" />
+                <HelpCircle className="h-7 w-7 text-green-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="text-2xl font-bold text-gray-800">
                 Frequently Asked Questions
               </h2>
             </div>
             <button
               onClick={() => setShowFaqModal(false)}
-              className="w-8 h-8 flex items-center justify-center 
+              className="w-9 h-9 flex items-center justify-center 
                         bg-white hover:bg-gray-100 rounded-full transition-colors
                         shadow-lg border border-gray-200"
               aria-label="Close modal"
             >
-              <X size={16} strokeWidth={2.5} className="text-gray-700" />
+              <X size={18} strokeWidth={2.5} className="text-gray-700" />
             </button>
           </div>
 
-          {/* FAQ Content */}
-          <div className="p-4 sm:p-6">
+          <div className="p-5 sm:p-6">
             <div className="space-y-4">
               {faqs.map((faq) => (
-                <div key={faq.id} className="border border-gray-200 rounded-lg">
+                <div key={faq.id} className="border border-gray-200 rounded-xl overflow-hidden">
                   <button
                     onClick={() =>
                       setExpandedFaq(expandedFaq === faq.id ? null : faq.id)
@@ -1011,8 +950,8 @@ const MyCrypto: React.FC = () => {
                     )}
                   </button>
                   {expandedFaq === faq.id && (
-                    <div className="px-4 pb-4 border-t border-gray-100">
-                      <p className="text-gray-700 pt-3">{faq.answer}</p>
+                    <div className="px-4 pb-4 -mt-2">
+                      <p className="text-gray-700">{faq.answer}</p>
                     </div>
                   )}
                 </div>
@@ -1023,141 +962,70 @@ const MyCrypto: React.FC = () => {
       </div>
     );
   };
-
-  // Main component render
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full">
-                <Coins className="h-6 w-6 text-white" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-                My Crypto
-              </h1>
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="h-6 w-6 text-gray-600" />
-            </button>
-
-            {/* Desktop navigation */}
-            <div className="hidden sm:flex items-center gap-4">
-              {navItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={item.action}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors
-                    ${
-                      item.color === "purple"
-                        ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                        : item.color === "blue"
-                        ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile navigation */}
-          {showMobileMenu && (
-            <div className="sm:hidden border-t border-gray-200 py-4">
-              <div className="space-y-2">
-                {navItems.map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => {
-                      item.action();
-                      setShowMobileMenu(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors
-                      ${
-                        item.color === "purple"
-                          ? "bg-purple-100 text-purple-700"
-                          : item.color === "blue"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
+    return (
+    <>
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Balance Card */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-              <div className="flex items-center gap-4 mb-6">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                    BMVCOIN Balance
-                  </h2>
-                  <p className="text-gray-600">Your digital reward tokens</p>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100 mb-2">Current Balance</p>
-                    <p className="text-4xl sm:text-5xl font-bold">
-                      {bmvCoin.toLocaleString()}
-                    </p>
-                    <p className="text-purple-100 mt-2">BMVCOINS</p>
+          {/* BMVCOINS Card */}
+          <div className="lg:col-span-3">
+            <div className="bg-gradient-to-r from-purple-900 to-purple-700 rounded-2xl shadow-xl p-6 text-white">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold mb-2">Your BMVCOINS Balance</h2>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">{bmvCoin}</span>
+                    <span className="text-lg">BMVCOINS</span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-purple-100 mb-2">Equivalent Value</p>
-                    <p className="text-2xl sm:text-3xl font-bold">
-                      ₹{(bmvCoin * 0.02).toFixed(2)}
-                    </p>
-                    <p className="text-purple-100 mt-2">@ ₹0.02 per coin</p>
+                  <p className="text-purple-100 mt-2">
+                    ≈ ₹{(bmvCoin * 0.02).toFixed(2)} (₹0.02 per coin)
+                  </p>
+                  <div className="mt-4">
+                    <p className="text-sm text-purple-100 mb-1">Blockchain ID:</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-xs sm:text-sm break-all bg-purple-800/30 p-2 rounded-lg">
+                        {multichainId || "Loading..."}
+                      </p>
+                      <button
+                        onClick={handleCopyMultichainId}
+                        className="p-2 bg-purple-800/50 rounded-lg hover:bg-purple-800/70 transition-colors"
+                        disabled={!multichainId}
+                      >
+                        {isCopied ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={() => setShowTransferModal(true)}
-                  className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
-                >
-                  <SendHorizonal className="h-5 w-5" />
-                  <span>Transfer Coins</span>
-                </button>
-                <button
-                  onClick={handleOpenTransfersModal}
-                  className="flex items-center justify-center gap-3 p-4 border-2 border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors font-medium"
-                >
-                  <History className="h-5 w-5" />
-                  <span>View History</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                  <button
+                    onClick={() => setShowBmvModal(true)}
+                    className="px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Info className="h-5 w-5" />
+                    <span>Learn More</span>
+                  </button>
+                  <button
+                    onClick={() => setShowTransferModal(true)}
+                    className="px-5 py-3 bg-yellow-400 hover:bg-yellow-300 text-purple-900 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <SendHorizonal className="h-5 w-5" />
+                    <span>Transfer</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Wallet Address Card */}
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-100 rounded-full">
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="p-3 bg-blue-100 rounded-xl">
                   <Shield className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-800">
@@ -1165,8 +1033,8 @@ const MyCrypto: React.FC = () => {
                 </h3>
               </div>
 
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-5">
+                <div className="p-4 bg-gray-50 rounded-xl">
                   <p className="text-gray-600 text-sm mb-2">
                     Your Multichain ID
                   </p>
@@ -1176,10 +1044,9 @@ const MyCrypto: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Copy Address Button */}
                   <button
                     onClick={handleCopyMultichainId}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 p-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
                     disabled={!multichainId}
                   >
                     {isCopied ? (
@@ -1190,56 +1057,152 @@ const MyCrypto: React.FC = () => {
                     ) : (
                       <>
                         <Copy className="h-5 w-5" />
-                        <span>Copy</span>
+                        <span>Copy Address</span>
                       </>
                     )}
                   </button>
 
-                  {/* Open Explorer Button */}
                   <a
                     href="http://bmv.money:2750/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 p-3.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-md"
                   >
-                    🔗 <span>OXYCHIAN</span>
+                    <ExternalLink className="h-5 w-5" />
+                    <span>View Explorer</span>
                   </a>
                 </div>
               </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-5">
                 Quick Stats
               </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-600">Current Rate</span>
                   <span className="font-bold text-green-600">₹0.02/coin</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-600">Total Value</span>
                   <span className="font-bold text-purple-600">
                     ₹{(bmvCoin * 0.02).toFixed(2)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-600">Blockchain</span>
                   <span className="font-bold text-blue-600">OXYCHAIN</span>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Recent Transactions Preview */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-lg p-6 h-full">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-100 rounded-xl">
+                    <History className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    Recent Transactions
+                  </h3>
+                </div>
+                <button
+                  onClick={handleOpenTransfersModal}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  View All
+                </button>
+              </div>
+
+              {transfersLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : transfersError ? (
+                <div className="text-center py-10">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 mb-4">
+                    {transfersError}
+                  </div>
+                  <button
+                    onClick={fetchTransfers}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : filteredTransfers.length === 0 ? (
+                <div className="text-center py-10">
+                  <History className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No recent transactions</p>
+                  <button
+                    onClick={fetchTransfers}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredTransfers.slice(0, 3).map((transfer, index) => {
+                    const isSent = transfer.txMobileNumber === userMobileNumber;
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:shadow-sm transition-shadow"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`p-2 rounded-xl ${
+                              isSent ? "bg-red-100" : "bg-green-100"
+                            }`}
+                          >
+                            {isSent ? (
+                              <Minus className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <Plus className="h-5 w-5 text-green-600" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {isSent ? "Sent to" : "Received from"}{" "}
+                              {isSent
+                                ? transfer.rxMobileNumber
+                                : transfer.txMobileNumber}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date().toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          className={`text-lg font-bold ${
+                            isSent ? "text-red-600" : "text-green-600"
+                          }`}
+                        >
+                          {isSent ? "-" : "+"}
+                          {transfer.amountTransfer}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Modals */}
+     {/* Modals */}
       {showBmvModal && <BMVInfoModal />}
       {showTransferModal && <TransferModal />}
       {showTransfersModal && <TransfersModal />}
       {showFaqModal && <FAQModal />}
-    </div>
+    </>
   );
 };
 

@@ -12,21 +12,24 @@ const Content1: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  // AI Chat Window toggle state
-  const [isAiChatOpen, setIsAiChatOpen] = useState(true);
+  // AI Chat Window toggle state - closed by default on mobile
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const onCollapse = (collapsed: boolean) => {
     setIsCollapsed(collapsed);
   };
 
   const handleSidebarMouseEnter = () => {
-    if (window.innerWidth >= 768) { // Only on desktop
+    if (window.innerWidth >= 768) {
+      // Only on desktop
       setIsHovering(true);
     }
   };
 
   const handleSidebarMouseLeave = () => {
-    if (window.innerWidth >= 768) { // Only on desktop
+    if (window.innerWidth >= 768) {
+      // Only on desktop
       setIsHovering(false);
     }
   };
@@ -45,13 +48,28 @@ const Content1: React.FC = () => {
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+
+      if (mobile) {
         setIsHovering(false);
+        // Close AI chat when switching to mobile if it was open
+        if (isAiChatOpen) {
+          setIsAiChatOpen(false);
+        }
+      } else {
+        // Open AI chat by default on desktop
+        if (!isAiChatOpen) {
+          setIsAiChatOpen(true);
+        }
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Initial check
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const customerId = localStorage.getItem("userId") || "";
@@ -86,6 +104,44 @@ const Content1: React.FC = () => {
       console.error("Error fetching profile data:", error);
     }
   };
+  const sendToAIChat = (message: string) => {
+    setIsAiChatOpen(true);
+    window.dispatchEvent(
+      new CustomEvent("aiChatExternalRequest", {
+        detail: { message },
+      })
+    );
+  };
+
+  // Register globally
+  useEffect(() => {
+    (window as any).openAiChat = handleExternalChatRequest;
+    (window as any).sendToAIChat = sendToAIChat;
+
+    return () => {
+      delete (window as any).openAiChat;
+      delete (window as any).sendToAIChat;
+    };
+  }, []);
+
+  // Function to handle external requests from other pages
+  const handleExternalChatRequest = (message: string) => {
+    setIsAiChatOpen(true);
+    // This will be passed to AIChatWindow to trigger a message
+    window.dispatchEvent(
+      new CustomEvent("aiChatExternalRequest", {
+        detail: { message },
+      })
+    );
+  };
+
+  // Expose function globally for other pages to use
+  useEffect(() => {
+    (window as any).openAiChat = handleExternalChatRequest;
+    return () => {
+      delete (window as any).openAiChat;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -120,54 +176,61 @@ const Content1: React.FC = () => {
         </div>
       </aside>
 
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
+
+      {/* AI Chat Window */}
+      {isAiChatOpen && (
+        <div
+          className={`fixed z-50 transition-all
+${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
+        >
+          <AIChatWindow
+            isMobile={isMobile}
+            onClose={() => setIsAiChatOpen(false)}
+            onExternalRequest={(message) =>
+              console.log("External request:", message)
+            }
+          />
+        </div>
+      )}
       <style>
         {`
-  @keyframes glow {
-    0%, 100% {
-      box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.4);
+    @keyframes glow {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(192,132,252,0.6), 0 0 20px rgba(192,132,252,0.4);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(192,132,252,0.9), 0 0 30px rgba(192,132,252,0.7);
+      }
     }
-    50% {
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.9), 0 0 30px rgba(168, 85, 247, 0.6);
+    .animate-glow {
+      animation: glow 1.5s ease-in-out infinite;
     }
-  }
-`}
+  `}
       </style>
 
       <button
         onClick={toggleAiChat}
-        className={`fixed top-1/2 -translate-y-1/2 z-40 p-2 rounded-l-lg shadow-xl transition-all duration-300
-    ${isAiChatOpen ? "right-72" : "right-0"} 
-    ${isAiChatOpen ? "md:right-72" : "md:right-0"} 
-    bg-purple-600 hover:bg-purple-700 text-white 
-    animate-glow focus:outline-none`}
-         style={{
-    position: 'fixed',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    zIndex: 40,
-    padding: '0.5rem',
-    borderTopLeftRadius: '0.375rem',
-    borderBottomLeftRadius: '0.375rem',
-    backgroundColor: '#9333ea', // purple-600
-    color: 'white',
-    boxShadow: '0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.4)',
-    animation: 'glow 1.5s infinite ease-in-out',
-    transition: 'all 0.3s ease-in-out',
-    right: isAiChatOpen ? '18rem' : '0rem', // right-72 equivalent
-  }}
-        title={isAiChatOpen ? "Close AI Chat" : "Open AI Chat"}
+        className={`fixed z-40 text-white transition-all duration-300 animate-glow
+    ${
+      isMobile
+        ? "bottom-6 right-6 bg-purple-600 rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_15px_rgba(192,132,252,0.9)]"
+        : isAiChatOpen
+        ? "top-1/2 right-[18rem] -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
+        : "top-1/2 right-0 -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
+    }
+  `}
+        title={isAiChatOpen ? "Close ASKOXY.AI" : "Open ASKOXY.AI"}
       >
         <svg
-          className={`w-4 h-4 transition-transform duration-300 ${
-            isAiChatOpen ? "rotate-180" : ""
-          }`}
+          className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
+            !isMobile && isAiChatOpen ? "rotate-180" : ""
+          } transition-transform`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -176,38 +239,23 @@ const Content1: React.FC = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M9 5l7 7-7 7"
+            d={
+              isMobile
+                ? isAiChatOpen
+                  ? "M6 18L18 6M6 6l12 12"
+                  : "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                : "M9 5l7 7-7 7"
+            }
           />
         </svg>
       </button>
 
-      {/* <button
-        onClick={toggleAiChat}
-        className={`fixed top-20 z-40 bg-green-600 hover:bg-green-700 
-          text-white px-3 py-1 rounded-b-lg shadow-lg transition-all duration-300 text-xs
-          ${isAiChatOpen ? 'right-72' : 'right-4'} 
-          ${isAiChatOpen ? 'md:right-72' : 'md:right-4'}`}
-        title={isAiChatOpen ? "Close AI Chat" : "Open AI Chat"}
-      >
-        {isAiChatOpen ? '✕ Close Chat' : '💬 Open Chat'}
-      </button> */}
-
-      {/* AI Chat Window - Conditionally rendered */}
-      {isAiChatOpen && (
-        <AIChatWindow
-          onExternalRequest={(message) =>
-            console.log("External request:", message)
-          }
-        />
-      )}
-
-      {/* Main Content Area - Reduced spacing */}
       <div
         className={`transition-all duration-300
           pt-16 md:pt-20
           ${isCollapsed && !isHovering ? "md:pl-20" : "md:pl-64"}
           ${isMobileOpen ? "pl-0" : "pl-0"}
-          ${isAiChatOpen ? "pr-2 md:pr-72" : "pr-2"}`}
+          ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
       >
         <Tabview />
         <main className="min-h-screen p-2 md:p-4 bg-white rounded-tl-lg shadow-sm">
