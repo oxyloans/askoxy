@@ -567,11 +567,14 @@ const CMSRouteRenderer: React.FC = () => {
               className="lg:col-span-2 hidden lg:block sticky top-[64px]"
               // style={{ height: `calc(100vh - 64px)` }}
             >
-              <img
-                src={useCase.image}
-                alt={`${useCase.title} Illustration`}
-                className="w-full h-full object-cover"
-              />
+              <div className="relative w-full h-full bg-gray-200 animate-pulse">
+                <img
+                  src={useCase.image}
+                  alt={`${useCase.title} Illustration`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
             </div>
 
             {/* Right Side: Component Area (5/7) - Scrollable */}

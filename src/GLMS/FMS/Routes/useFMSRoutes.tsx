@@ -106,7 +106,7 @@ export const useFMSRoutes: Record<
     title: "Cheque Processing",
     business: <SettlementsChequeProcessing />,
     system: <WfSettlementsChequeProcessingUseCase />,
-    image: "",
+    image: "https://i.ibb.co/qMBm3PHz/SETTELEMENTS.jpg",
   },
   "settlement-advisory": {
     title: "Settlement Advisory",
@@ -136,7 +136,7 @@ export const useFMSRoutes: Record<
     title: "Agent Work Plan",
     business: <SettlementsReceipts />,
     system: <WfFmsSettlementsReceiptsUseCase />,
-    image: "https://i.ibb.co/qMBm3PHz/SETTELEMENTS.jpg",
+    image: "https://i.ibb.co/QSTZzMm/settlement-receipts.jpg",
   },
   "settlements-payment": {
     title: "Settlements - Payment",

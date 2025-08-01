@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Askoxylogo from "../../assets/img/askoxylogostatic.png";
-
+import { motion, AnimatePresence } from "framer-motion"; // optional animation
 const images = [
   "https://i.ibb.co/chQ2MPVX/job-street.png",
   "https://i.ibb.co/C5jn6P53/standee-banks-roles.png",
@@ -18,8 +18,35 @@ const images = [
   "https://i.ibb.co/nMntMRSG/caparing-proposed-asset-details.png",
   "https://i.ibb.co/279s0FBy/checking-the-eligibility-of-the-customer.png",
   "https://i.ibb.co/nsdtW1xZ/work-flow-for-evaluating-the-networth.png",
+
+  "https://i.ibb.co/SXBxHxbK/asset-insurance.jpg",
+  "https://i.ibb.co/yngtGw2R/pdc-printing.jpg",
+  "https://i.ibb.co/nq6ZjnXL/installprepayment.jpg",
+  "https://i.ibb.co/rR0mxDKS/NPA-GRADING.jpg",
+  "https://i.ibb.co/VYtSg7Nn/NPA-PROVISIONING.jpg",
+  "https://i.ibb.co/SXqgtcGN/KNOCKOFF.jpg",
+  "https://i.ibb.co/qMBm3PHz/SETTELEMENTS.jpg",
+  "https://i.ibb.co/99WM5mx5/manual-advise.jpg",
+  "https://i.ibb.co/GjWcDnY/termination-foreclosure.png",
+  "https://i.ibb.co/cKxCvbHW/finance-details.jpg",
+  "https://i.ibb.co/4RG7VkKk/floating-review-process.jpg",
+  "https://i.ibb.co/QSTZzMm/settlement-receipts.jpg",
+  "https://i.ibb.co/KzwZKxyR/settlements-payments.jpg",
+  "https://i.ibb.co/ds5xptpJ/settlements-waive-off.jpg",
+  "https://i.ibb.co/dwhb3S8y/eod-bod.png",
+  "https://i.ibb.co/TxX82fBM/workflow-clousre-account-clousre.png",
+  "https://i.ibb.co/hFGsRgH6/account-status.jpg",
+  "https://i.ibb.co/jk8ywqYL/document-master.png",
+  "https://i.ibb.co/ymY8fBs6/29.png",
+  "https://i.ibb.co/TqBYG6yQ/Finance-Rescheduling-Due-date-change.png",
+  "https://i.ibb.co/zVk0PwQB/Finance-Rescheduling-rate-of-intrest.png",
+  "https://i.ibb.co/B2H7yCRk/Work-Flow-Finance-Rescheduling-Tenure-Change.png",
+  "https://i.ibb.co/wrhVtZcm/post-disbursal-edit.jpg",
+  "https://i.ibb.co/VWZsL214/repayment-deferral.jpg",
+  "https://i.ibb.co/SXDC5zTj/32.png",
+  "https://i.ibb.co/rRLjxCB0/portfolio-wise-defferral.jpg",
   "https://i.ibb.co/LD6k5ZYn/allocation-hold-for-delinquent-cases.png",
-  "",
+  "https://i.ibb.co/wN7rSyJh/define.jpg",
   "https://i.ibb.co/hxHsM71w/manual-allocation.png",
   "https://i.ibb.co/RTzZPnrm/manual-recollection.png",
   "https://i.ibb.co/TyMnqfw/beggaining-of-day-process.png",
@@ -28,34 +55,8 @@ const images = [
   "https://i.ibb.co/knpXx2S/legal-collection-workflow.png",
   "https://i.ibb.co/mFzB0c2X/prioritizing-a-queue.png",
   "https://i.ibb.co/v6qK9sbF/queue-communication-mapping.png",
-  "",
+  "https://i.ibb.co/k2Jf7N5R/queue.jpg",
   "https://i.ibb.co/Nd8gn6c9/Workplan.png",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "https://i.ibb.co/GjWcDnY/termination-foreclosure.png",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "https://i.ibb.co/dwhb3S8y/eod-bod.png",
-  "https://i.ibb.co/TxX82fBM/workflow-clousre-account-clousre.png",
-  "",
-  "https://i.ibb.co/jk8ywqYL/document-master.png",
-  "https://i.ibb.co/ymY8fBs6/29.png",
-  "https://i.ibb.co/TqBYG6yQ/Finance-Rescheduling-Due-date-change.png",
-  "https://i.ibb.co/zVk0PwQB/Finance-Rescheduling-rate-of-intrest.png",
-  "https://i.ibb.co/B2H7yCRk/Work-Flow-Finance-Rescheduling-Tenure-Change.png",
-  "",
-  "",
-  "https://i.ibb.co/SXDC5zTj/32.png",
-  "",
 ];
 
 const useCaseNames = [
@@ -74,18 +75,7 @@ const useCaseNames = [
   "Workflow for Capturing Proposed Asset Details",
   "Customer Eligibility & Loan Limit Check",
   "Workflow for Evaluating the Net Worth",
-  "Allocation of Delinquent Cases_Allocation Hold",
-  "Allocation of Delinquent Cases_Define Allocation contract",
-  "Allocation of Delinquent Cases_Manual Allocation",
-  "Allocation of Delinquent Cases_Manual Reallocation",
-  "Beginning of Day Process",
-  "Classification of Delinquent Cases - Define Queue",
-  "Contact Recording",
-  "Legal Collections Workflow",
-  "Prioritizing a Queue",
-  "Queue Communication Mapping",
-  "Queue Curing",
-  "Collector Work Plan",
+
   "Asset Details",
   "PDC Printing",
   "WF_ Installment Prepayment",
@@ -112,37 +102,61 @@ const useCaseNames = [
   "Work Flow_Repayment Deferral_Constitution Wise Deferral",
   "Work Flow_Repayment Deferral_Finance Wise Deferral",
   "Work Flow_Repayment Deferral_Portfolio Wise Deferral",
+  "Allocation of Delinquent Cases_Allocation Hold",
+  "Allocation of Delinquent Cases_Define Allocation contract",
+  "Allocation of Delinquent Cases_Manual Allocation",
+  "Allocation of Delinquent Cases_Manual Reallocation",
+  "Beginning of Day Process",
+  "Classification of Delinquent Cases - Define Queue",
+  "Contact Recording",
+  "Legal Collections Workflow",
+  "Prioritizing a Queue",
+  "Queue Communication Mapping",
+  "Queue Curing",
+  "Collector Work Plan",
 ];
 
 const JobStreet: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  const useCases = useCaseNames.map((title, idx) => ({
+    id: idx + 1,
+    title,
+    image: images[idx],
+  }));
+
+  const currentUseCase = useCases[currentIndex];
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const handleLogoClick = () => (window.location.href = "/");
   const handleGLMSClick = () => (window.location.href = "/glms");
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? useCases.length - 1 : prev - 1));
+    setImageLoaded(false);
+  };
 
-    if (window.gtag) {
-      window.gtag("event", "js_page_view", {
-        page_title: "JobStreet Page",
-        page_location: window.location.href,
-        page_path: window.location.pathname,
-      });
-    }
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev === useCases.length - 1 ? 0 : prev + 1));
+    setImageLoaded(false);
+  };
 
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
 
-  const useCases = useCaseNames.map((name, idx) => ({
-    id: idx + 1,
-    title: name,
-    image: images[idx],
-  }));
+  const handleSwipeEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 50) handleNext();
+    if (diff < -50) handlePrev();
+    touchStartX.current = null;
+  };
 
   const getRouteByUseCase = (title: string): string => {
     const casKeywords = [
@@ -205,37 +219,49 @@ const JobStreet: React.FC = () => {
       "Work Flow_Repayment Deferral_Portfolio Wise Deferral",
     ];
 
-    if (casKeywords.includes(title)) return "/cas";
+    if (casKeywords.includes(title)) return "/los";
     if (cmsKeywords.includes(title)) return "/cms";
     if (fmsKeywords.includes(title)) return "/fms";
-
-    return ""; // fallback: no navigation
+    return "";
   };
 
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? useCases.length - 1 : prev - 1));
-  };
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev === useCases.length - 1 ? 0 : prev + 1));
-  };
+    if (window.gtag) {
+      window.gtag("event", "js_page_view", {
+        page_title: "JobStreet Page",
+        page_location: window.location.href,
+        page_path: window.location.pathname,
+      });
+    }
 
-  const currentUseCase = useCases[currentIndex];
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "ArrowLeft") handlePrev();
+    };
+    window.addEventListener("keydown", handleKey);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans">
+    <div className="min-h-screen flex flex-col font-sans bg-white">
       {/* Header */}
       <header
-        className={`sticky top-0 w-full z-50 transition-all duration-300 ${
+        className={`sticky top-0 z-50 transition ${
           isScrolled ? "bg-white/95 shadow-md" : "bg-white/80"
         } backdrop-blur-md`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="flex justify-between items-center h-16 md:h-20">
             <div onClick={handleLogoClick} className="cursor-pointer">
               <img src={Askoxylogo} alt="Askoxy.AI" className="h-14 w-auto" />
             </div>
-
             <div className="hidden md:flex">
               <button
                 onClick={handleGLMSClick}
@@ -244,19 +270,17 @@ const JobStreet: React.FC = () => {
                 Go To GLMS
               </button>
             </div>
-
             <div className="md:hidden">
-              <button onClick={toggleMobileMenu} className="p-2">
+              <button onClick={toggleMobileMenu}>
                 {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
             </div>
           </div>
-
           {mobileMenuOpen && (
             <div className="md:hidden py-4 bg-white shadow-lg rounded-b-lg px-4">
               <button
                 onClick={handleGLMSClick}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg mt-2"
               >
                 Go To GLMS
               </button>
@@ -266,87 +290,80 @@ const JobStreet: React.FC = () => {
       </header>
 
       {/* Main */}
-      <main className="flex-grow bg-gradient-to-br from-white via-blue-50 to-purple-50 pb-4 px-4">
+      <main className="flex-grow bg-gradient-to-br from-white via-blue-50 to-purple-50 pb-10 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 my-6">
+          <h1 className="sr-only">JobStreet Use Cases</h1>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-2 mb-4">
             Explore Our Use Cases
           </h2>
 
-          <div className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6">
-            {/* Arrows */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-2 sm:left-4 z-10">
+          <p className="sm:hidden text-sm text-gray-500 mb-4">
+            Swipe left or right to explore use cases
+          </p>
+
+          <div
+            ref={containerRef}
+            onTouchStart={handleSwipeStart}
+            onTouchEnd={handleSwipeEnd}
+            className="relative p-2 sm:p-2"
+          >
+            {/* Navigation Arrows */}
+            <div className="hidden sm:block absolute top-1/2 left-2 transform -translate-y-1/2 z-10">
               <button
                 onClick={handlePrev}
-                className={`flex items-center gap-2 px-3 py-2 rounded-full shadow-md text-sm transition-all duration-200 ${
-                  currentIndex === 0
-                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                }`}
-                aria-label="Previous Use Case"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow-lg"
               >
-                <ChevronLeft size={20} />
-                <span className="hidden sm:inline">Previous</span>
+                <ChevronLeft />
               </button>
             </div>
-
-            <div className="absolute top-1/2 -translate-y-1/2 right-2 sm:right-4 z-10">
+            <div className="hidden sm:block absolute top-1/2 right-2 transform -translate-y-1/2 z-10">
               <button
                 onClick={handleNext}
-                className={`flex items-center gap-2 px-3 py-2 rounded-full shadow-md text-sm transition-all duration-200 ${
-                  currentIndex === useCases.length - 1
-                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                }`}
-                aria-label="Next Use Case"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow-lg"
               >
-                <span className="hidden sm:inline">Next</span>
-                <ChevronRight size={20} />
+                <ChevronRight />
               </button>
             </div>
 
-            {/* Use Case Content */}
+            {/* Use Case Card */}
             <div
               className="cursor-pointer"
               onClick={() => {
                 const route = getRouteByUseCase(currentUseCase.title);
-                if (route) {
-                  window.location.href = route;
-                }
+                if (route) window.location.href = route;
               }}
-              aria-label={`Navigate to use case details for ${currentUseCase.title}`}
             >
-              <h3 className="text-lg sm:text-xl font-semibold text-indigo-700 mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-indigo-700">
                 {currentUseCase.title}
               </h3>
-              <img
-                src={currentUseCase.image}
-                alt={`Use Case ${currentIndex + 1}`}
-                className="w-full max-h-[550px] sm:max-h-[600px] object-contain rounded-md transition-transform duration-300 hover:scale-[1.02]"
-              />
+
+              {!imageLoaded && (
+                <div className="w-full h-[300px] sm:h-[400px] bg-gray-200 rounded-md animate-pulse" />
+              )}
+
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentUseCase.image}
+                  src={currentUseCase.image}
+                  alt={`Image for use case: ${currentUseCase.title}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  onLoad={() => setImageLoaded(true)}
+                  className={`w-full max-h-[500px] sm:max-h-[600px] object-contain rounded-lg ${
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              </AnimatePresence>
             </div>
 
-            {/* Navigation Dots */}
-            <div className="mt-6 flex justify-center flex-wrap gap-2">
-              {useCases.map((useCase, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentIndex(i)}
-                  title={useCase.title}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    currentIndex === i
-                      ? "bg-indigo-600 scale-125 shadow-md"
-                      : "bg-gray-300 hover:bg-indigo-400"
-                  }`}
-                  aria-label={`Jump to ${useCase.title}`}
-                ></button>
-              ))}
-            </div>
-          </div>
+                     </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-4 text-center text-sm">
+      <footer className="bg-gray-900 text-white text-sm text-center py-4">
         &copy; {new Date().getFullYear()} Global Loans Management Systems. All
         rights reserved.
       </footer>
@@ -355,3 +372,4 @@ const JobStreet: React.FC = () => {
 };
 
 export default JobStreet;
+

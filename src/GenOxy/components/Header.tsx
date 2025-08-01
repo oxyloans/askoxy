@@ -77,9 +77,7 @@ const Header: React.FC<HeaderProps> = ({
   //   }
   // };
   return (
-    
-
-    <header className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
+    <header className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm ">
       <div className="max-w-5xl mx-auto px-4 py-3">
         <div className="relative flex items-center justify-between">
           {/* LEFT: Menu Icon (mobile only) */}
@@ -97,8 +95,8 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* Sparkles + GENOXY */}
           <div className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            <span className="font-semibold text-purple-700 text-sm dark:bg-gray-800 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+            <Sparkles className="w-6 h-6 text-purple-700  dark:text-white" />
+            <span className="font-semibold text-purple-700 text-sm  px-3 py-2 dark:text-white rounded-lg hover:bg-gray-50 hover:dark:bg-gray-700 transition-all duration-200">
               GENOXY
             </span>
           </div>
@@ -107,10 +105,10 @@ const Header: React.FC<HeaderProps> = ({
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={shareChat}
-              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white  dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200"
+              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-white  hover:bg-gray-50 hover:dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200"
             >
-              <Share className="w-4 h-4 text-purple-700" />
-              <span className="hidden sm:inline font-semibold text-purple-600">
+              <Share className="w-6 h-6 text-purple-700 dark:text-white" />
+              <span className="hidden sm:inline font-semibold text-purple-600 dark:text-white">
                 Share
               </span>
             </button>

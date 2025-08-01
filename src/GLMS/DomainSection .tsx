@@ -33,36 +33,7 @@ const domains = [
       },
     ],
   },
-  {
-    id: "collections",
-    title: "Collections Management",
-    link: "/cms",
-    description:
-      "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
-    icon: <CreditCard size={22} className="text-blue-600" />,
-    useCases: [
-      {
-        id: "col-1",
-        name: "Allocation Hold",
-        desc: "Monitor outstanding debts with ease",
-      },
-      {
-        id: "col-2",
-        name: "Define Allocation Contract",
-        desc: "Automated reminders and communication",
-      },
-      {
-        id: "col-3",
-        name: "Manual Allocation",
-        desc: "Customizable repayment timelines",
-      },
-      {
-        id: "col-4",
-        name: "Manual Reallocation",
-        desc: "Seamless payment handling within system",
-      },
-    ],
-  },
+
   {
     id: "fms",
     title: "Financial Management System",
@@ -90,6 +61,36 @@ const domains = [
         id: "fms-4",
         name: "NPA Grading",
         desc: "Generate balance sheets and statements",
+      },
+    ],
+  },
+  {
+    id: "collections",
+    title: "Collections Management",
+    link: "/cms",
+    description:
+      "Tools to manage recoveries, reduce delinquency, and automate collection processes.",
+    icon: <CreditCard size={22} className="text-blue-600" />,
+    useCases: [
+      {
+        id: "col-1",
+        name: "Allocation Hold",
+        desc: "Monitor outstanding debts with ease",
+      },
+      {
+        id: "col-2",
+        name: "Define Allocation Contract",
+        desc: "Automated reminders and communication",
+      },
+      {
+        id: "col-3",
+        name: "Manual Allocation",
+        desc: "Customizable repayment timelines",
+      },
+      {
+        id: "col-4",
+        name: "Manual Reallocation",
+        desc: "Seamless payment handling within system",
       },
     ],
   },
