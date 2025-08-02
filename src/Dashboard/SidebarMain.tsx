@@ -41,6 +41,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     localStorage.removeItem("mobileNumber");
     localStorage.removeItem("whatsappNumber");
     localStorage.setItem("entryPoint", entryPoint);
+    localStorage.clear();
+    sessionStorage.clear();
     navigate(entryPoint);
   };
 

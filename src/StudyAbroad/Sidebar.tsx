@@ -100,6 +100,8 @@ const StudentSidebar: React.FC<SidebarProps> = ({
     const entryPoint = localStorage.getItem("entryPoint") || "/";
     // localStorage.clear();
     localStorage.setItem("entryPoint", entryPoint);
+    localStorage.clear();
+    sessionStorage.clear();
     navigate(entryPoint);
   };
 

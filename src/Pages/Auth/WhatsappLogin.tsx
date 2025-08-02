@@ -88,7 +88,7 @@ const WhatsappLogin: React.FC = () => {
   const [isGetOtpButtonDisabled, setIsGetOtpButtonDisabled] = useState<boolean>(true);
   const [showEriceAlert, setShowEriceAlert] = useState<boolean>(false);
   const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">("CUSTOMER");
-
+const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   // Retrieve variables from localStorage and sessionStorage
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
@@ -97,7 +97,7 @@ const WhatsappLogin: React.FC = () => {
   // OAuth URL for Gmail authentication
   const state = encodeURIComponent(JSON.stringify({ primaryType }));
   const oauthUrl = `http://ec2-65-0-147-157.ap-south-1.compute.amazonaws.com:9024/oauth2/authorize/google?redirect_uri=${encodeURIComponent(
-    "https://www.askoxy.ai/whatsapplogin"
+    "http://localhost:3000/whatsapplogin"
   )}&state=${state}`;
 
   // Fetch user details
@@ -190,6 +190,7 @@ const WhatsappLogin: React.FC = () => {
 
     setPrimaryType(detectedPrimaryType);
     setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
+    setShowGoogleButton(detectedPrimaryType === "CUSTOMER");
     sessionStorage.setItem("primaryType", detectedPrimaryType);
   }, [location]);
 
@@ -345,6 +346,7 @@ const WhatsappLogin: React.FC = () => {
 
     if (primaryType === "CUSTOMER") {
       setShowEriceAlert(false);
+      setShowGoogleButton(false);
     }
 
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
@@ -595,6 +597,7 @@ const WhatsappLogin: React.FC = () => {
     setIsGetOtpButtonDisabled(true);
     if (primaryType === "CUSTOMER") {
       setShowEriceAlert(true);
+      setShowGoogleButton(true);  
     }
     setCredentials({
       otp: ["", "", "", ""],
@@ -623,12 +626,17 @@ const WhatsappLogin: React.FC = () => {
           </button>
           <div className="flex flex-col items-center gap-4 sm:gap-6 text-center pr-8 sm:pr-0">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">
-              {primaryType === "STUDENT" ? "Welcome to Study Abroad" : "Welcome to ASKOXY.AI"}
+              {primaryType === "STUDENT"
+                ? "Welcome to Study Abroad"
+                : "Welcome to ASKOXY.AI"}
             </h2>
             <div className="flex flex-row gap-2 sm:gap-3 justify-center w-full">
               <button
                 onClick={() => {
-                  const loginPath = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin";
+                  const loginPath =
+                    primaryType === "STUDENT"
+                      ? "/whatsapplogin?primaryType=STUDENT"
+                      : "/whatsapplogin";
                   navigate(loginPath);
                 }}
                 className="bg-white text-purple-600 px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
@@ -653,20 +661,24 @@ const WhatsappLogin: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   {!showEnglish ? (
                     <>
-                      <p className="font-bold text-xs sm:text-sm">ERICE కస్టమర్లకు గమనిక</p>
+                      <p className="font-bold text-xs sm:text-sm">
+                        ERICE కస్టమర్లకు గమనిక
+                      </p>
                       <p className="text-xs mt-1 leading-relaxed break-words">
                         మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్
-                        అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు
-                        WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు
+                        అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే,
+                        మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="font-bold text-xs sm:text-sm">Attention Erice Customers</p>
+                      <p className="font-bold text-xs sm:text-sm">
+                        Attention Erice Customers
+                      </p>
                       <p className="text-xs mt-1 leading-relaxed break-words">
-                        Your data has been migrated. Log in using the SMS option.
-                        If your mobile and WhatsApp numbers are the same, you can
-                        also log in via WhatsApp.
+                        Your data has been migrated. Log in using the SMS
+                        option. If your mobile and WhatsApp numbers are the
+                        same, you can also log in via WhatsApp.
                       </p>
                     </>
                   )}
@@ -694,32 +706,41 @@ const WhatsappLogin: React.FC = () => {
         )}
 
         <div className="p-6">
-          <form onSubmit={showOtp ? handleOtpSubmit : handleSubmit} className="space-y-6">
+          <form
+            onSubmit={showOtp ? handleOtpSubmit : handleSubmit}
+            className="space-y-6"
+          >
             {!showOtp && (
               <div className="mb-6">
-                <button
-                  type="button"
-                  onClick={handleGmailAuth}
-                  disabled={!isGmailButtonEnabled || isGoogleLoading}
-                  className={`w-full py-3 ${
-                    !isGmailButtonEnabled || isGoogleLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
-                  } text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg`}
-                  aria-label="Continue with Gmail"
-                >
-                  {isGoogleLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <FaGoogle className="w-5 h-5" />
-                  )}
-                  Continue with Gmail
-                </button>
-                <div className="flex items-center my-6">
-                  <div className="flex-1 border-t border-gray-300"></div>
-                  <span className="px-4 text-sm text-gray-500 bg-white">or</span>
-                  <div className="flex-1 border-t border-gray-300"></div>
-                </div>
+                {showGoogleButton && primaryType === "CUSTOMER" && (
+                  <button
+                    type="button"
+                    onClick={handleGmailAuth}
+                    disabled={!isGmailButtonEnabled || isGoogleLoading}
+                    className={`w-full py-3 ${
+                      !isGmailButtonEnabled || isGoogleLoading
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                    } text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg`}
+                    aria-label="Continue with Gmail"
+                  >
+                    {isGoogleLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <FaGoogle className="w-5 h-5" />
+                    )}
+                    Continue with Gmail
+                  </button>
+                )}
+                {showGoogleButton && primaryType === "CUSTOMER" && (
+                  <div className="flex items-center my-6">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                    <span className="px-4 text-sm text-gray-500 bg-white">
+                      or
+                    </span>
+                    <div className="flex-1 border-t border-gray-300"></div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -731,7 +752,11 @@ const WhatsappLogin: React.FC = () => {
                     otpMethod === "mobile"
                       ? "bg-purple-600 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                  } ${
+                    isPhoneDisabled || isMethodDisabled
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
                   onClick={() => switchOtpMethod("mobile")}
                   disabled={isPhoneDisabled || isMethodDisabled}
                 >
@@ -744,7 +769,11 @@ const WhatsappLogin: React.FC = () => {
                     otpMethod === "whatsapp"
                       ? "bg-green-500 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                  } ${
+                    isPhoneDisabled || isMethodDisabled
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
                   onClick={() => switchOtpMethod("whatsapp")}
                   disabled={isPhoneDisabled || isMethodDisabled}
                 >
@@ -756,7 +785,8 @@ const WhatsappLogin: React.FC = () => {
 
             <div className="relative w-full">
               <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
-                {otpMethod === "whatsapp" ? "WhatsApp Number" : "Mobile Number"} <span className="text-red-500">*</span>
+                {otpMethod === "whatsapp" ? "WhatsApp Number" : "Mobile Number"}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <PhoneInput
@@ -771,7 +801,11 @@ const WhatsappLogin: React.FC = () => {
                   className="w-full px-3 py-2 sm:p-2 bg-white shadow-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-800 placeholder-gray-400 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] [&>*]:outline-none [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:border-none [&_.PhoneInputInput]:min-h-[40px] [&_.PhoneInputInput]:py-0 PhoneInput"
                   maxLength={20}
                   placeholder="Enter your number"
-                  style={{ "--PhoneInputCountryFlag-borderColor": "transparent" } as any}
+                  style={
+                    {
+                      "--PhoneInputCountryFlag-borderColor": "transparent",
+                    } as any
+                  }
                 />
                 {otpMethod === "whatsapp" ? (
                   <FaWhatsapp className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
@@ -814,7 +848,11 @@ const WhatsappLogin: React.FC = () => {
             )}
 
             {showOtp && (
-              <div className={`space-y-4 transition-all duration-500 ${animateOtp ? "animate-slideInUp" : ""}`}>
+              <div
+                className={`space-y-4 transition-all duration-500 ${
+                  animateOtp ? "animate-slideInUp" : ""
+                }`}
+              >
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     {otpMethod === "whatsapp" ? (
@@ -823,17 +861,22 @@ const WhatsappLogin: React.FC = () => {
                       <Smartphone className="w-5 h-5 text-purple-500" />
                     )}
                     <span className="text-sm text-gray-600">
-                      OTP sent to your {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
+                      OTP sent to your{" "}
+                      {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <label className="block text-sm font-medium text-gray-700">
-                    Enter {otpMethod === "whatsapp" ? "4" : "6"}-digit OTP <span className="text-red-500">*</span>
+                    Enter {otpMethod === "whatsapp" ? "4" : "6"}-digit OTP{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="flex gap-2 justify-center">
-                    {(otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP).map((digit, index) => (
+                    {(otpMethod === "whatsapp"
+                      ? credentials.otp
+                      : credentials.mobileOTP
+                    ).map((digit, index) => (
                       <input
                         key={index}
                         ref={(el) => {

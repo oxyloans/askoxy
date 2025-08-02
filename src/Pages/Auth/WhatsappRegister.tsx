@@ -2,9 +2,23 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
 import axios from "axios";
-import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import PhoneInput, {
+  isValidPhoneNumber,
+  parsePhoneNumber,
+} from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import { X, Send, KeyRound, PhoneCall, Loader2, ArrowRight, RefreshCcw, AlertTriangle, Smartphone, ChevronRight } from "lucide-react";
+import {
+  X,
+  Send,
+  KeyRound,
+  PhoneCall,
+  Loader2,
+  ArrowRight,
+  RefreshCcw,
+  AlertTriangle,
+  Smartphone,
+  ChevronRight,
+} from "lucide-react";
 import BASE_URL from "../../Config";
 
 // Handle auth error
@@ -20,7 +34,10 @@ const handleAuthError = (err: any, navigate: any) => {
 
 // Handle login redirect for non-authenticated users
 const handleLoginRedirect = (navigate: any, redirectPath?: string) => {
-  sessionStorage.setItem("redirectPath", redirectPath || window.location.pathname);
+  sessionStorage.setItem(
+    "redirectPath",
+    redirectPath || window.location.pathname
+  );
   sessionStorage.setItem("fromStudyAbroad", "true");
   navigate("/whatsapplogin?primaryType=STUDENT");
 };
@@ -56,24 +73,28 @@ const WhatsappRegister = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [receiveNotifications, setReceiveNotifications] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">("CUSTOMER");
-
+  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">(
+    "CUSTOMER"
+  );
+  const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
   const urlPrimaryType = params.primaryType;
 
   const savePreferences = () => {
-    localStorage.setItem("receiveNotifications", receiveNotifications.toString());
+    localStorage.setItem(
+      "receiveNotifications",
+      receiveNotifications.toString()
+    );
     localStorage.setItem("agreeToTerms", agreeToTerms.toString());
   };
 
   const fetchUserDetails = async (accessToken: string) => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/user-service/me`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      const response = await axios.get(`${BASE_URL}/user-service/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       setUserDetails(response.data);
       localStorage.setItem("userId", response.data.userId || "");
       return response.data;
@@ -102,12 +123,17 @@ const WhatsappRegister = () => {
       sessionStorage.setItem("redirectPath", "/main/dashboard/home");
       sessionStorage.setItem("fromStudyAbroad", "true");
       sessionStorage.setItem("primaryType", primaryType);
-      sessionStorage.setItem("receiveNotifications", receiveNotifications.toString());
+      sessionStorage.setItem(
+        "receiveNotifications",
+        receiveNotifications.toString()
+      );
       sessionStorage.setItem("agreeToTerms", agreeToTerms.toString());
 
-      const state = btoa(JSON.stringify({ primaryType, from: "/main/dashboard/home" }));
+      const state = btoa(
+        JSON.stringify({ primaryType, from: "/main/dashboard/home" })
+      );
       const oauthUrl = `http://ec2-65-0-147-157.ap-south-1.compute.amazonaws.com:9024/oauth2/authorize/google?redirect_uri=${encodeURIComponent(
-        "https://www.askoxy.ai/whatsappregister"
+        "http://localhost:3000/whatsappregister"
       )}&state=${state}`;
       sessionStorage.setItem("pendingGoogleAuth", "true");
       window.location.href = oauthUrl;
@@ -127,7 +153,8 @@ const WhatsappRegister = () => {
       fetchUserDetails(accessToken).then((userData) => {
         if (userData && userData.userId) {
           // localStorage.setItem("userId", userData.userId); // Ensure userId is stored
-          const redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+          const redirectPath =
+            sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
           sessionStorage.removeItem("pendingGoogleAuth");
           sessionStorage.removeItem("redirectPath");
           navigate(redirectPath, { replace: true });
@@ -139,16 +166,30 @@ const WhatsappRegister = () => {
     const queryParamsGoogle = new URLSearchParams(location.search);
     const accessTokenGoogle = queryParamsGoogle.get("token");
 
-    if (pendingGoogleAuth && accessTokenGoogle && accessTokenGoogle !== "null") {
+    if (
+      pendingGoogleAuth &&
+      accessTokenGoogle &&
+      accessTokenGoogle !== "null"
+    ) {
       localStorage.setItem("accessToken", accessTokenGoogle);
-      localStorage.setItem("primaryType", sessionStorage.getItem("primaryType") || "CUSTOMER");
-      localStorage.setItem("receiveNotifications", sessionStorage.getItem("receiveNotifications") || "false");
-      localStorage.setItem("agreeToTerms", sessionStorage.getItem("agreeToTerms") || "false");
+      localStorage.setItem(
+        "primaryType",
+        sessionStorage.getItem("primaryType") || "CUSTOMER"
+      );
+      localStorage.setItem(
+        "receiveNotifications",
+        sessionStorage.getItem("receiveNotifications") || "false"
+      );
+      localStorage.setItem(
+        "agreeToTerms",
+        sessionStorage.getItem("agreeToTerms") || "false"
+      );
 
       fetchUserDetails(accessTokenGoogle).then((userData) => {
         if (userData && userData.userId) {
           // localStorage.setItem("userId", userData.userId); // Store userId
-          const redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+          const redirectPath =
+            sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
           sessionStorage.removeItem("pendingGoogleAuth");
           sessionStorage.removeItem("redirectPath");
           sessionStorage.removeItem("receiveNotifications");
@@ -196,7 +237,9 @@ const WhatsappRegister = () => {
   useEffect(() => {
     if (phoneNumber) {
       const phoneNumberS = parsePhoneNumber(phoneNumber);
-      const countryCode = phoneNumberS?.countryCallingCode ? `+${phoneNumberS.countryCallingCode}` : "";
+      const countryCode = phoneNumberS?.countryCallingCode
+        ? `+${phoneNumberS.countryCallingCode}`
+        : "";
       setCountryCode(countryCode || "");
       setIsMethodDisabled(true);
     } else {
@@ -228,20 +271,30 @@ const WhatsappRegister = () => {
       }
 
       if (otpMethod === "whatsapp" && index === 3 && sanitizedValue) {
-        const isComplete = credentials.otp.every((val, i) => i === index || Boolean(val));
+        const isComplete = credentials.otp.every(
+          (val, i) => i === index || Boolean(val)
+        );
         if (isComplete) {
           const newOtp = [...credentials.otp];
           newOtp[index] = sanitizedValue;
           setCredentials((prev) => ({ ...prev, otp: newOtp }));
-          setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+          setTimeout(
+            () => document.getElementById("otpSubmitButton")?.click(),
+            300
+          );
         }
       } else if (otpMethod === "mobile" && index === 5 && sanitizedValue) {
-        const isComplete = credentials.mobileOTP.every((val, i) => i === index || Boolean(val));
+        const isComplete = credentials.mobileOTP.every(
+          (val, i) => i === index || Boolean(val)
+        );
         if (isComplete) {
           const newMobileOtp = [...credentials.mobileOTP];
           newMobileOtp[index] = sanitizedValue;
           setCredentials((prev) => ({ ...prev, mobileOTP: newMobileOtp }));
-          setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+          setTimeout(
+            () => document.getElementById("otpSubmitButton")?.click(),
+            300
+          );
         }
       }
     }
@@ -250,7 +303,10 @@ const WhatsappRegister = () => {
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const otpLength = otpMethod === "whatsapp" ? 4 : 6;
-    const pastedData = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, otpLength);
+    const pastedData = e.clipboardData
+      .getData("text")
+      .replace(/[^0-9]/g, "")
+      .slice(0, otpLength);
 
     if (otpMethod === "whatsapp") {
       const newOtp = [...credentials.otp];
@@ -259,7 +315,10 @@ const WhatsappRegister = () => {
       });
       setCredentials((prev) => ({ ...prev, otp: newOtp }));
       if (pastedData.length === 4) {
-        setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+        setTimeout(
+          () => document.getElementById("otpSubmitButton")?.click(),
+          300
+        );
       }
     } else {
       const newMobileOtp = [...credentials.mobileOTP];
@@ -268,13 +327,20 @@ const WhatsappRegister = () => {
       });
       setCredentials((prev) => ({ ...prev, mobileOTP: newMobileOtp }));
       if (pastedData.length === 6) {
-        setTimeout(() => document.getElementById("otpSubmitButton")?.click(), 300);
+        setTimeout(
+          () => document.getElementById("otpSubmitButton")?.click(),
+          300
+        );
       }
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    const currentOtp = otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP;
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const currentOtp =
+      otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP;
     if (e.key === "Backspace" && !currentOtp[index] && index > 0) {
       otpRefs.current[index - 1]?.focus();
     }
@@ -293,7 +359,9 @@ const WhatsappRegister = () => {
     setMessage("");
     setIsLoading(true);
     setShowEriceAlert(false);
-
+    if (primaryType === "CUSTOMER") {
+      setShowGoogleButton(false);
+    }
     if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
       setError("Please enter a valid Phone number with country code");
       setIsLoading(false);
@@ -324,7 +392,10 @@ const WhatsappRegister = () => {
       );
 
       if (response.data) {
-        localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession);
+        localStorage.setItem(
+          "mobileOtpSession",
+          response.data.mobileOtpSession
+        );
         localStorage.setItem("salt", response.data.salt);
         localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
         localStorage.setItem("userType", userType);
@@ -333,13 +404,20 @@ const WhatsappRegister = () => {
         if (response.data.mobileOtpSession === null) {
           setShowSuccessPopup(false);
           setError("You are already registered with this number.");
-          const loginUrl = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin";
+          const loginUrl =
+            primaryType === "STUDENT"
+              ? "/whatsapplogin?primaryType=STUDENT"
+              : "/whatsapplogin";
           setTimeout(() => navigate(loginUrl), 1000);
         } else {
           setIsButtonEnabled(true);
           setOtpShow(true);
           setShowSuccessPopup(true);
-          setMessage(`OTP sent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`);
+          setMessage(
+            `OTP sent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
+          );
           setResendDisabled(true);
           setisPhoneDisabled(true);
           setResendTimer(30);
@@ -351,15 +429,23 @@ const WhatsappRegister = () => {
       }
     } catch (err: any) {
       if (err.response?.status === 401) {
-        setError("Unauthorized: Invalid or missing access token. Please log in again.");
+        setError(
+          "Unauthorized: Invalid or missing access token. Please log in again."
+        );
         handleAuthError(err, navigate);
       } else if (err.response?.status === 409) {
         setShowSuccessPopup(false);
         setError("You are already registered with this number. Please log in.");
-        const loginUrl = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin";
+        const loginUrl =
+          primaryType === "STUDENT"
+            ? "/whatsapplogin?primaryType=STUDENT"
+            : "/whatsapplogin";
         setTimeout(() => navigate(loginUrl), 1500);
       } else {
-        setError(err.response?.data?.message || "An error occurred. Please try again later.");
+        setError(
+          err.response?.data?.message ||
+            "An error occurred. Please try again later."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -385,7 +471,10 @@ const WhatsappRegister = () => {
       setIsLoading(false);
       setIsRegistering(false);
       return;
-    } else if (otpMethod === "mobile" && credentials.mobileOTP.join("").length !== 6) {
+    } else if (
+      otpMethod === "mobile" &&
+      credentials.mobileOTP.join("").length !== 6
+    ) {
       setOtpError("Please enter the complete Mobile OTP");
       setIsLoading(false);
       setIsRegistering(false);
@@ -401,7 +490,8 @@ const WhatsappRegister = () => {
       };
       if (otpMethod === "whatsapp") {
         requestBody.whatsappNumber = phoneNumber?.replace(countryCode, "");
-        requestBody.whatsappOtpSession = localStorage.getItem("mobileOtpSession");
+        requestBody.whatsappOtpSession =
+          localStorage.getItem("mobileOtpSession");
         requestBody.whatsappOtpValue = credentials.otp.join("");
         requestBody.salt = localStorage.getItem("salt");
         requestBody.expiryTime = localStorage.getItem("expiryTime");
@@ -445,7 +535,10 @@ const WhatsappRegister = () => {
           localStorage.setItem("userId", userData.userId); // Ensure userId is stored
           setMessage("Registration Successful");
           setTimeout(() => {
-            const redirectPath = sessionStorage.getItem("redirectPath") || location.state?.from || "/main/dashboard/home";
+            const redirectPath =
+              sessionStorage.getItem("redirectPath") ||
+              location.state?.from ||
+              "/main/dashboard/home";
             sessionStorage.removeItem("redirectPath");
             navigate(redirectPath, { replace: true });
           }, 1000);
@@ -459,11 +552,18 @@ const WhatsappRegister = () => {
       }
     } catch (err: any) {
       if (err.response?.status === 401) {
-        setOtpError("Unauthorized: Invalid or missing access token. Please log in again.");
+        setOtpError(
+          "Unauthorized: Invalid or missing access token. Please log in again."
+        );
         handleAuthError(err, navigate);
       } else if (err.response?.status === 409) {
-        setOtpError("You are already registered with this number. Redirecting to login...");
-        const loginUrl = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin";
+        setOtpError(
+          "You are already registered with this number. Redirecting to login..."
+        );
+        const loginUrl =
+          primaryType === "STUDENT"
+            ? "/whatsapplogin?primaryType=STUDENT"
+            : "/whatsapplogin";
         setTimeout(() => navigate(loginUrl), 1500);
       } else {
         setOtpError(err.response?.data?.message || "Invalid OTP");
@@ -503,22 +603,40 @@ const WhatsappRegister = () => {
         );
 
         if (response.data) {
-          if (response.data.message === "User already registered with this Mobile Number, please log in.") {
-            setError("You are already registered with this number. Redirecting to login...");
-            const loginUrl = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin";
+          if (
+            response.data.message ===
+            "User already registered with this Mobile Number, please log in."
+          ) {
+            setError(
+              "You are already registered with this number. Redirecting to login..."
+            );
+            const loginUrl =
+              primaryType === "STUDENT"
+                ? "/whatsapplogin?primaryType=STUDENT"
+                : "/whatsapplogin";
             setTimeout(() => navigate(loginUrl), 1000);
             return;
           }
 
-          localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession);
+          localStorage.setItem(
+            "mobileOtpSession",
+            response.data.mobileOtpSession
+          );
           localStorage.setItem("salt", response.data.salt);
           localStorage.setItem("expiryTime", response.data.otpGeneratedTime);
 
           setShowSuccessPopup(true);
-          setMessage(`OTP resent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`);
+          setMessage(
+            `OTP resent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
+          );
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
-            mobileOTP: otpMethod === "mobile" ? ["", "", "", "", "", ""] : prev.mobileOTP,
+            mobileOTP:
+              otpMethod === "mobile"
+                ? ["", "", "", "", "", ""]
+                : prev.mobileOTP,
           }));
           setTimeout(() => {
             setShowSuccessPopup(false);
@@ -527,9 +645,15 @@ const WhatsappRegister = () => {
         }
       } catch (err: any) {
         if (err.response?.status === 401) {
-          setError("Unauthorized: Invalid or missing access token. Please log in again.");
+          setError(
+            "Unauthorized: Invalid or missing access token. Please log in again."
+          );
           handleAuthError(err, navigate);
-        } else if (err.response && err.response.data && err.response.data.message) {
+        } else if (
+          err.response &&
+          err.response.data &&
+          err.response.data.message
+        ) {
           setError(err.response.data.message);
         } else {
           setError("Failed to resend OTP. Please try again.");
@@ -540,7 +664,11 @@ const WhatsappRegister = () => {
     }
   };
 
-  const isOtpButtonEnabled = phoneNumber && isValidPhoneNumber(phoneNumber) && receiveNotifications && agreeToTerms;
+  const isOtpButtonEnabled =
+    phoneNumber &&
+    isValidPhoneNumber(phoneNumber) &&
+    receiveNotifications &&
+    agreeToTerms;
   const isGmailButtonEnabled = receiveNotifications && agreeToTerms;
 
   const handleChangeNumber = () => {
@@ -548,6 +676,9 @@ const WhatsappRegister = () => {
     setisPhoneDisabled(false);
     setOtpError("");
     setShowEriceAlert(true);
+    if (primaryType === "CUSTOMER") {
+      setShowGoogleButton(true);
+    }
     setCredentials({
       otp: ["", "", "", ""],
       mobileOTP: ["", "", "", "", "", ""],
@@ -555,7 +686,10 @@ const WhatsappRegister = () => {
   };
 
   const handleLoginRedirectClick = () => {
-    const loginUrl = primaryType === "STUDENT" ? "/whatsapplogin?primaryType=STUDENT" : "/whatsapplogin";
+    const loginUrl =
+      primaryType === "STUDENT"
+        ? "/whatsapplogin?primaryType=STUDENT"
+        : "/whatsapplogin";
     navigate(loginUrl);
   };
 
@@ -568,7 +702,9 @@ const WhatsappRegister = () => {
       >
         <div className="bg-purple-600 p-3 sm:p-4 lg:p-6 relative">
           <h2 className="text-2xl font-bold text-white text-center">
-            {primaryType === "STUDENT" ? "Register to Study Abroad" : "Register to ASKOXY.AI"}
+            {primaryType === "STUDENT"
+              ? "Register to Study Abroad"
+              : "Register to ASKOXY.AI"}
           </h2>
           <button
             onClick={handleClose}
@@ -586,7 +722,10 @@ const WhatsappRegister = () => {
               </button>
               <button
                 onClick={() => {
-                  const registerUrl = primaryType === "STUDENT" ? "/whatsappregister?primaryType=STUDENT" : "/whatsappregister";
+                  const registerUrl =
+                    primaryType === "STUDENT"
+                      ? "/whatsappregister?primaryType=STUDENT"
+                      : "/whatsappregister";
                   window.location.href = registerUrl;
                 }}
                 className="bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold"
@@ -627,8 +766,12 @@ const WhatsappRegister = () => {
                     onChange={(e) => setReceiveNotifications(e.target.checked)}
                     className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
                   />
-                  <label htmlFor="notifications" className="ml-2 text-sm text-gray-700">
-                    I want to receive notifications on SMS, RCS & Email from ASKOXY.AI
+                  <label
+                    htmlFor="notifications"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    I want to receive notifications on SMS, RCS & Email from
+                    ASKOXY.AI
                   </label>
                 </div>
                 <div className="flex items-start">
@@ -641,47 +784,75 @@ const WhatsappRegister = () => {
                   />
                   <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
                     I agree to all the{" "}
-                    <Link to="/termsandconditions" className="text-blue-600 hover:underline">
+                    <Link
+                      to="/termsandconditions"
+                      className="text-blue-600 hover:underline"
+                    >
                       Terms of Services
                     </Link>{" "}
                     and{" "}
-                    <Link to="/privacypolicy" className="text-blue-600 hover:underline">
+                    <Link
+                      to="/privacypolicy"
+                      className="text-blue-600 hover:underline"
+                    >
                       Privacy Policy
-                    </Link>.
+                    </Link>
+                    .
                   </label>
                 </div>
               </div>
 
               {!showOtp && (
                 <div className="mb-6">
-                  <button
-                    type="button"
-                    onClick={handleGmailAuth}
-                    disabled={!isGmailButtonEnabled || isGoogleLoading}
-                    className={`w-full py-3 ${
-                      !isGmailButtonEnabled ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
-                    } text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg`}
-                    aria-label="Continue with Gmail"
-                  >
-                    {isGoogleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <FaGoogle className="w-5 h-5" />}
-                    Continue with Gmail
-                  </button>
-                  <div className="flex items-center my-6">
-                    <div className="flex-1 border-t border-gray-300"></div>
-                    <span className="px-4 text-sm text-gray-500 bg-white">or</span>
-                    <div className="flex-1 border-t border-gray-300"></div>
-                  </div>
+                  {showGoogleButton && primaryType === "CUSTOMER" && (
+                    <button
+                      type="button"
+                      onClick={handleGmailAuth}
+                      disabled={!isGmailButtonEnabled || isGoogleLoading}
+                      className={`w-full py-3 ${
+                        !isGmailButtonEnabled || isGoogleLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                      } text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg`}
+                      aria-label="Continue with Gmail"
+                    >
+                      {isGoogleLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <FaGoogle className="w-5 h-5" />
+                      )}
+                      Continue with Gmail
+                    </button>
+                  )}
+                  {showGoogleButton && primaryType === "CUSTOMER" && (
+                    <div className="flex items-center my-6">
+                      <div className="flex-1 border-t border-gray-300"></div>
+                      <span className="px-4 text-sm text-gray-500 bg-white">
+                        or
+                      </span>
+                      <div className="flex-1 border-t border-gray-300"></div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <form onSubmit={showOtp ? handleOtpSubmit : handleSubmit} className="space-y-6">
+              <form
+                onSubmit={showOtp ? handleOtpSubmit : handleSubmit}
+                className="space-y-6"
+              >
                 <div className="flex flex-col items-center gap-4 p-4 border-b border-gray-100 pb-6">
                   <div className="flex gap-4">
                     <button
                       type="button"
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                        otpMethod === "whatsapp" ? "bg-green-500 text-white shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                        otpMethod === "whatsapp"
+                          ? "bg-green-500 text-white shadow-md"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      } ${
+                        isPhoneDisabled || isMethodDisabled
+                          ? "opacity-70 cursor-not-allowed"
+                          : ""
+                      }`}
                       onClick={() => handleMethodChange("whatsapp")}
                       disabled={isPhoneDisabled || isMethodDisabled}
                     >
@@ -691,8 +862,14 @@ const WhatsappRegister = () => {
                     <button
                       type="button"
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                        otpMethod === "mobile" ? "bg-purple-600 text-white shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } ${isPhoneDisabled || isMethodDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                        otpMethod === "mobile"
+                          ? "bg-purple-600 text-white shadow-md"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      } ${
+                        isPhoneDisabled || isMethodDisabled
+                          ? "opacity-70 cursor-not-allowed"
+                          : ""
+                      }`}
                       onClick={() => handleMethodChange("mobile")}
                       disabled={isPhoneDisabled || isMethodDisabled}
                     >
@@ -704,7 +881,10 @@ const WhatsappRegister = () => {
                 {otpMethod && (
                   <div className="relative w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {otpMethod === "whatsapp" ? "WhatsApp Number" : "Mobile Number"} <span className="text-red-500">*</span>
+                      {otpMethod === "whatsapp"
+                        ? "WhatsApp Number"
+                        : "Mobile Number"}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <PhoneInput
@@ -713,11 +893,18 @@ const WhatsappRegister = () => {
                         defaultCountry="IN"
                         disabled={isPhoneDisabled}
                         international={otpMethod === "whatsapp"}
-                        countrySelectProps={{ disabled: otpMethod === "mobile" }}
+                        countrySelectProps={{
+                          disabled: otpMethod === "mobile",
+                        }}
                         className="w-full px-3 py-2 sm:p-2 bg-white shadow-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-800 placeholder-gray-400 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] [&>*]:outline-none [&.PhoneInputInput]:outline-none [&.PhoneInputInput]:border-none [&.PhoneInputInput]:min-h-[40px] [&.PhoneInputInput]:py-0 PhoneInput"
                         maxLength={20}
                         placeholder="Enter your number"
-                        style={{ "--PhoneInputCountryFlag-borderColor": "transparent" } as any}
+                        style={
+                          {
+                            "--PhoneInputCountryFlag-borderColor":
+                              "transparent",
+                          } as any
+                        }
                       />
                       {otpMethod === "whatsapp" ? (
                         <FaWhatsapp className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -731,12 +918,20 @@ const WhatsappRegister = () => {
                   <div className="space-y-4 animate-fadeIn">
                     <div className="flex justify-between items-center">
                       <label className="block text-sm font-medium text-gray-700">
-                        Enter {otpMethod === "whatsapp" ? "4-digit" : "6-digit"} OTP
+                        Enter {otpMethod === "whatsapp" ? "4-digit" : "6-digit"}{" "}
+                        OTP
                       </label>
-                      <span className="text-xs text-gray-500">{otpMethod === "whatsapp" ? "Sent via WhatsApp" : "Sent via SMS"}</span>
+                      <span className="text-xs text-gray-500">
+                        {otpMethod === "whatsapp"
+                          ? "Sent via WhatsApp"
+                          : "Sent via SMS"}
+                      </span>
                     </div>
                     <div className="flex justify-center gap-3">
-                      {(otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP).map((digit, index) => (
+                      {(otpMethod === "whatsapp"
+                        ? credentials.otp
+                        : credentials.mobileOTP
+                      ).map((digit, index) => (
                         <input
                           key={index}
                           type="text"
@@ -744,7 +939,9 @@ const WhatsappRegister = () => {
                           maxLength={1}
                           value={digit}
                           ref={(el) => (otpRefs.current[index] = el!)}
-                          onChange={(e) => handleOtpChange(e.target.value, index)}
+                          onChange={(e) =>
+                            handleOtpChange(e.target.value, index)
+                          }
                           onKeyDown={(e) => handleKeyDown(e, index)}
                           onPaste={handlePaste}
                           className="w-12 h-12 text-center text-lg font-semibold border rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
@@ -763,7 +960,11 @@ const WhatsappRegister = () => {
                       disabled={resendDisabled || isLoading}
                       className="text-sm text-purple-600 hover:text-purple-800 disabled:text-gray-400 flex items-center gap-1 transition-colors group"
                     >
-                      {resendDisabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />}
+                      {resendDisabled ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
+                      )}
                       Resend OTP {resendDisabled && `(${resendTimer}s)`}
                     </button>
                   </div>
@@ -774,7 +975,9 @@ const WhatsappRegister = () => {
                     type="submit"
                     disabled={isLoading || (!showOtp && !isOtpButtonEnabled)}
                     className={`w-full py-3 ${
-                      !showOtp && !isOtpButtonEnabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+                      !showOtp && !isOtpButtonEnabled
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-purple-600 hover:bg-purple-700"
                     } text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {isLoading ? (
@@ -811,8 +1014,12 @@ const WhatsappRegister = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-              <p className="text-lg font-medium text-gray-700">Registering your account...</p>
-              <p className="text-sm text-gray-500">Please wait, this may take a moment</p>
+              <p className="text-lg font-medium text-gray-700">
+                Registering your account...
+              </p>
+              <p className="text-sm text-gray-500">
+                Please wait, this may take a moment
+              </p>
             </div>
           )}
         </div>
@@ -835,5 +1042,3 @@ const WhatsappRegister = () => {
 };
 
 export default WhatsappRegister;
-
-            
