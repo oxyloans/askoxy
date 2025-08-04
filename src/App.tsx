@@ -208,8 +208,7 @@ const App: React.FC = () => {
       "/nyayagpt",
       "/student-home",
       "/studyabroad",
-      "/whatsapplogin",
-      "/whatsappregister",
+     
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log

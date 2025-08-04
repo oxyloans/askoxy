@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import BASE_URL from "../Config";
-
+import CartProvider from "./CartProvider";
 // const BASE_URL = "https://meta.oxyglobal.tech/api";
 
 interface SearchResult {
@@ -60,8 +60,10 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <SearchContext.Provider value={{ searchValue, setSearchValue, searchResults, isSearching, searchProducts }}>
-      {children}
-    </SearchContext.Provider>
+    <CartProvider>
+      <SearchContext.Provider value={{ searchValue, setSearchValue, searchResults, isSearching, searchProducts }}>
+        {children}
+      </SearchContext.Provider>
+    </CartProvider>
   );
 };

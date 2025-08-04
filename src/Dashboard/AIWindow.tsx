@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { message as antdMessage } from "antd";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-
+import { Mic } from "lucide-react"; 
 const OPENAI_KEY = process.env.REACT_APP_OPENAI_KEY;
 const PRODUCT_API = `${BASE_URL}/product-service/showGroupItemsForCustomrs`;
 const OFFERS_API = `${BASE_URL}/product-service/getComboActiveInfo`;
@@ -16,6 +16,14 @@ interface Message {
   products?: any[];
   offers?: any[];
 }
+type SpeechRecognitionEvent = Event & {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+};
+type SpeechRecognitionErrorEvent = Event & {
+  error: string;
+  message?: string;
+};
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -53,6 +61,9 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
   const [offersCache, setOffersCache] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const recognitionRef = useRef<any>(null);
+  
   const navigate = useNavigate();
 
   const scrollToBottom = () =>
@@ -235,6 +246,86 @@ Keywords: <comma-separated keywords or leave blank>`;
       antdMessage.error("Failed to process your request.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleVoice = () => {
+    // Check if SpeechRecognition API is supported
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      antdMessage.error("Speech Recognition is not supported in this browser.");
+      return;
+    }
+
+    // If already recording, stop the recognition
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      recognitionRef.current = null;
+      return;
+    }
+
+    // Initialize new speech recognition instance
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US"; // Set language to English
+    recognition.interimResults = true; // Allow interim results for real-time transcription
+    recognition.continuous = true; // Continuous listening
+
+    recognitionRef.current = recognition;
+
+    // Handle start of voice recording
+    recognition.onstart = () => {
+      console.log("🎙️ Voice recording started...");
+      setIsRecording(true);
+      antdMessage.info("Voice input started...");
+    };
+
+    // Handle speech recognition results
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = "";
+      // Aggregate final results from speech recognition
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          transcript += result[0].transcript + " ";
+        }
+      }
+
+      // Update input text with transcribed speech
+      if (transcript.trim()) {
+        setInputText((prev) => (prev.trim() + " " + transcript.trim()).trim());
+      }
+    };
+
+    // Handle speech recognition errors
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("❌ Voice recognition error:", event.error);
+      antdMessage.error(`Voice input failed: ${event.error}`);
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    // Handle end of speech recognition
+    recognition.onend = () => {
+      console.log("🛑 Voice recognition stopped.");
+      setIsRecording(false);
+      recognitionRef.current = null;
+      // Automatically send the transcribed message if it exists
+      if (inputText.trim()) {
+        handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
+      }
+    };
+
+    // Start speech recognition
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error("Failed to start voice recognition:", error);
+      antdMessage.error("Failed to start voice input.");
+      setIsRecording(false);
     }
   };
 
@@ -566,14 +657,29 @@ Keywords: <comma-separated keywords or leave blank>`;
             isMobile ? "text-base min-h-[44px]" : "text-sm"
           } rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500`}
           placeholder="Type your message..."
-          // disabled={!isDataLoaded}
+          disabled={isLoading || !isDataLoaded}
         />
+        <button
+          type="button"
+          onClick={handleToggleVoice}
+          className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${
+            isRecording
+              ? "bg-red-100 text-red-600 animate-pulse"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          } ${
+            isLoading || !isDataLoaded ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          disabled={isLoading || !isDataLoaded}
+          title={isRecording ? "Stop Voice Input" : "Start Voice Input"}
+        >
+          <Mic className="w-5 h-5" />
+        </button>
         <button
           type="submit"
           className={`bg-purple-600 text-white ${
             isMobile ? "p-3 min-h-[44px] min-w-[44px]" : "p-2"
           } rounded-lg disabled:bg-gray-400 hover:bg-purple-700 active:bg-purple-800 transition-colors flex items-center justify-center`}
-          disabled={isLoading || !inputText.trim()}
+          disabled={isLoading || !inputText.trim() || !isDataLoaded}
           title="Send message"
         >
           <svg

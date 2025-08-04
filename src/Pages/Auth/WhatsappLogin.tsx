@@ -266,12 +266,13 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
     }
   };
 
-  const handleClose = () => {
-    setIsClosing(true);
-    const defaultPath = primaryType === "STUDENT" ? "/studyabroad" : "/";
-    const entryPoint = localStorage.getItem("entryPoint") || defaultPath;
-    setTimeout(() => navigate(entryPoint), 300);
-  };
+const handleClose = () => {
+  setIsClosing(true);
+  const defaultPath = primaryType === "STUDENT" ? "/studyabroad" : "/";
+  const entryPoint = localStorage.getItem("entryPoint") || defaultPath;
+  console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
+  setTimeout(() => navigate(entryPoint), 300);
+};
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");

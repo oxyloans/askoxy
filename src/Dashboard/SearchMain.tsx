@@ -1,5 +1,5 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useContext } from "react";
+import { useLocation,useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -10,12 +10,13 @@ import {
   Home,
   ChevronRight,
 } from "lucide-react";
+import BASE_URL from "../Config";
 import axios from "axios";
 import { message, Popconfirm } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Footer from "../components/Footer";
-
+import { CartContext } from "../until/CartContext";
 // Define the SearchItem interface (same as in your SearchBar component)
 interface SearchItem {
   itemId: string;
@@ -43,7 +44,12 @@ interface CartItem {
 const SearchMain: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const context = useContext(CartContext);
+   if (!context) {
+      throw new Error("CartDisplay must be used within a CartProvider");
+    }
+  
+    const { setCount } = context;
   // Extract searchResults from the location state, default to an empty array if not present
   const searchResults: SearchItem[] =
     (location.state as { searchResults?: SearchItem[] })?.searchResults || [];
@@ -70,7 +76,7 @@ const SearchMain: React.FC = () => {
     const fetchCartData = async () => {
       try {
         const response = await axios.get(
-          `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.customerCartResponseList) {
@@ -127,13 +133,13 @@ const SearchMain: React.FC = () => {
 
     try {
       await axios.post(
-        `https://meta.oxyglobal.tech/api/cart-service/cart/addAndIncrementCart`,
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         { customerId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success("Item added to cart successfully.");
       const response = await axios.get(
-        `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const cartItemsMap = response.data.customerCartResponseList.reduce(
@@ -147,6 +153,7 @@ const SearchMain: React.FC = () => {
         {}
       );
       setCartItems(cartItemsMap);
+       
       setCartData(response.data.customerCartResponseList);
       setLoadingItems((prev) => ({
         ...prev,
@@ -165,8 +172,8 @@ const SearchMain: React.FC = () => {
   // Handle quantity change (increment/decrement)
   const handleQuantityChange = async (item: SearchItem, increment: boolean) => {
     const endpoint = increment
-      ? `https://meta.oxyglobal.tech/api/cart-service/cart/addAndIncrementCart`
-      : `https://meta.oxyglobal.tech/api/cart-service/cart/minusCartItem`;
+      ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+      : `${BASE_URL}/cart-service/cart/minusCartItem`;
 
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
@@ -184,7 +191,7 @@ const SearchMain: React.FC = () => {
           (cart) => cart.itemId === item.itemId
         )?.cartId;
         await axios.delete(
-          `https://meta.oxyglobal.tech/api/cart-service/cart/remove`,
+          `${BASE_URL}/cart-service/cart/remove`,
           {
             data: { id: targetCartId },
             headers: { Authorization: `Bearer ${token}` },
@@ -192,14 +199,15 @@ const SearchMain: React.FC = () => {
         );
         message.success("Item removed from cart successfully.");
       } else {
-        await axios.patch(
+        const method = increment ? "post" : "patch";
+        await axios[method](
           endpoint,
           { customerId, itemId: item.itemId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
       const response = await axios.get(
-        `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const cartItemsMap = response.data.customerCartResponseList.reduce(
@@ -247,7 +255,7 @@ const SearchMain: React.FC = () => {
       }));
       try {
         await axios.delete(
-          `https://meta.oxyglobal.tech/api/cart-service/cart/remove`,
+          `${BASE_URL}/cart-service/cart/remove`,
           {
             data: { id: targetCartId },
             headers: { Authorization: `Bearer ${token}` },
@@ -255,7 +263,7 @@ const SearchMain: React.FC = () => {
         );
         message.success("Item removed from cart successfully.");
         const response = await axios.get(
-          `https://meta.oxyglobal.tech/api/cart-service/cart/userCartInfo?customerId=${customerId}`,
+          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const cartItemsMap = response.data.customerCartResponseList.reduce(
