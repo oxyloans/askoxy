@@ -153,6 +153,8 @@ const CheckoutPage: React.FC = () => {
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
   const userData = localStorage.getItem("profileData");
+  const [canPlaceOrder, setCanPlaceOrder] = useState(true);
+  const [minOrderToPlace, setMinOrderToPlace] = useState(0);
   //states for small cart fee and service fee
   const [smallCartFee, setSmallCartFee] = useState<number>(0);
   const [serviceFee, setServiceFee] = useState<number>(0);
@@ -221,6 +223,14 @@ const CheckoutPage: React.FC = () => {
       setIsDeliveryTimelineModalVisible(true);
     }
   }, [selectedTimeSlot]);
+
+  // Place this after your interfaces
+  const isRiceOnlyCart = (cartData: CartItem[] = []) => {
+    return (
+      cartData.length > 0 &&
+      cartData.every((item) => item.itemName?.toLowerCase().includes("rice"))
+    );
+  };
 
   const handleSelectTimeSlot = (
     date: string,
@@ -669,14 +679,16 @@ const CheckoutPage: React.FC = () => {
             walletApplicable: walletFlag,
             minOrderForWallet: minWallet,
             minOrderAmount: minOrderamnt,
+            canPlaceOrder: canPlace,
+            minOrderToPlace,
           } = await calculateDeliveryFee(
             selectedAddress.latitude,
             selectedAddress.longitude,
             amountToPay
           );
 
-          setWalletApplicable(walletFlag);
-          setMinOrderForWallet(minWallet);
+          setCanPlaceOrder(canPlace);
+          setMinOrderToPlace(minOrderToPlace ?? minOrderamnt);
           setMinOrderAmount(minOrderamnt);
           deliveryFee = fee ?? 0;
           handlingFee = calculatedHandlingFee;
@@ -1015,11 +1027,12 @@ const CheckoutPage: React.FC = () => {
     setGrandTotalAmount(discountedTotal);
   }
   const handleCheckboxToggle = () => {
-    if (
-      !walletApplicable ||
-      walletAmount === 0 ||
-      totalAmount < minOrderForWallet
-    ) {
+    if (walletAmount === 0) {
+      message.info("Wallet balance is ₹0.");
+      return;
+    }
+
+    if (!walletApplicable || totalAmount < minOrderForWallet) {
       message.warning(
         `Wallet not applicable. Minimum cart amount should be ₹${minOrderForWallet}`
       );
@@ -1079,7 +1092,8 @@ const CheckoutPage: React.FC = () => {
       return;
     }
 
-    if (!exchangePolicyAccepted) {
+    const isRiceCart = isRiceOnlyCart(cartData);
+    if (isRiceCart && !exchangePolicyAccepted) {
       Modal.warning({
         title: "Confirmation Required",
         content:
@@ -2104,52 +2118,54 @@ const CheckoutPage: React.FC = () => {
                     </div>
                     <Divider style={{ margin: "12px 0" }} />
 
-                    <div className="flex items-start space-x-2 mt-2">
-                      <input
-                        type="checkbox"
-                        id="exchangePolicy"
-                        checked={exchangePolicyAccepted}
-                        onChange={(e) =>
-                          setExchangePolicyAccepted(e.target.checked)
-                        }
-                        className="mt-1"
-                      />
-                      <label
-                        htmlFor="exchangePolicy"
-                        className="text-sm text-gray-700"
-                      >
-                        You can request an exchange within 10 Days from your
-                        order being delivered.
-                      </label>
-                    </div>
-
-                    {walletApplicable && totalAmount >= minOrderForWallet ? (
-                      <p className="text-sm text-green-600 mt-1">
-                        Wallet applicable! You can use ₹
-                        {walletAmount.toFixed(2)}.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-red-500 mt-1">
-                        Wallet not applicable. Minimum order amount ₹
-                        {minOrderForWallet} required.
-                      </p>
+                    {isRiceOnlyCart(cartData) && (
+                      <div className="flex items-start space-x-2 mt-2">
+                        <input
+                          type="checkbox"
+                          id="exchangePolicy"
+                          checked={exchangePolicyAccepted}
+                          onChange={(e) =>
+                            setExchangePolicyAccepted(e.target.checked)
+                          }
+                          className="mt-1"
+                        />
+                        <label
+                          htmlFor="exchangePolicy"
+                          className="text-sm text-gray-700"
+                        >
+                          You can request an exchange within 10 Days from your
+                          order being delivered.
+                        </label>
+                      </div>
                     )}
 
-                    <div className="flex items-center space-x-2 mt-3">
-                      <input
-                        type="checkbox"
-                        id="useWallet"
-                        checked={useWallet}
-                        onChange={handleCheckboxToggle}
-                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                      />
-                      <label
-                        htmlFor="useWallet"
-                        className="text-sm text-gray-700"
-                      >
-                        Use Wallet Balance (₹{walletAmount.toFixed(2)})
-                      </label>
-                    </div>
+                    {isRiceOnlyCart(cartData) &&
+                      walletApplicable &&
+                      totalAmount >= minOrderForWallet &&
+                      walletAmount > 0 && (
+                        <p className="text-sm text-green-600 mt-1">
+                          Wallet applicable! You can use ₹
+                          {walletAmount.toFixed(2)}.
+                        </p>
+                      )}
+
+                    {isRiceOnlyCart(cartData) && (
+                      <div className="flex items-center space-x-2 mt-3">
+                        <input
+                          type="checkbox"
+                          id="useWallet"
+                          checked={useWallet}
+                          onChange={handleCheckboxToggle}
+                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                        />
+                        <label
+                          htmlFor="useWallet"
+                          className="text-sm text-gray-700"
+                        >
+                          Use Wallet Balance (₹{walletAmount.toFixed(2)})
+                        </label>
+                      </div>
+                    )}
                     <div className="mt-3">
                       {grandTotal < minOrderAmount && (
                         <label
@@ -2162,6 +2178,7 @@ const CheckoutPage: React.FC = () => {
                         </label>
                       )}
                     </div>
+
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -2172,7 +2189,7 @@ const CheckoutPage: React.FC = () => {
                         !selectedTimeSlot ||
                         cartData.length === 0 ||
                         deliveryFee === null ||
-                        grandTotal < minOrderAmount
+                        !canPlaceOrder // ← Only use this for minimum order logic!
                       }
                       className="w-full mt-6 py-3 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed flex items-center justify-center"
                     >

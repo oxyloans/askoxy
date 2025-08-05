@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { useLocation,useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -45,11 +45,11 @@ const SearchMain: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const context = useContext(CartContext);
-   if (!context) {
-      throw new Error("CartDisplay must be used within a CartProvider");
-    }
-  
-    const { setCount } = context;
+  if (!context) {
+    throw new Error("CartDisplay must be used within a CartProvider");
+  }
+
+  const { setCount } = context;
   // Extract searchResults from the location state, default to an empty array if not present
   const searchResults: SearchItem[] =
     (location.state as { searchResults?: SearchItem[] })?.searchResults || [];
@@ -153,8 +153,13 @@ const SearchMain: React.FC = () => {
         {}
       );
       setCartItems(cartItemsMap);
-       
       setCartData(response.data.customerCartResponseList);
+      setCount(
+        (Object.values(cartItemsMap) as number[]).reduce(
+          (acc, quantity) => acc + quantity,
+          0
+        )
+      );
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -190,13 +195,10 @@ const SearchMain: React.FC = () => {
         const targetCartId = cartData.find(
           (cart) => cart.itemId === item.itemId
         )?.cartId;
-        await axios.delete(
-          `${BASE_URL}/cart-service/cart/remove`,
-          {
-            data: { id: targetCartId },
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
+          data: { id: targetCartId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
         message.success("Item removed from cart successfully.");
       } else {
         const method = increment ? "post" : "patch";
@@ -222,6 +224,12 @@ const SearchMain: React.FC = () => {
       );
       setCartItems(cartItemsMap);
       setCartData(response.data.customerCartResponseList);
+      setCount(
+        (Object.values(cartItemsMap) as number[]).reduce(
+          (acc, quantity) => acc + quantity,
+          0
+        )
+      );
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -254,13 +262,10 @@ const SearchMain: React.FC = () => {
         [item.itemId]: true,
       }));
       try {
-        await axios.delete(
-          `${BASE_URL}/cart-service/cart/remove`,
-          {
-            data: { id: targetCartId },
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
+          data: { id: targetCartId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
         message.success("Item removed from cart successfully.");
         const response = await axios.get(
           `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,

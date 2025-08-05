@@ -224,11 +224,21 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         className="bg-gray-800 shadow-md"
         style={siderStyles}
       >
-        <div className="text-center font-bold mt-4 mb-1 text-lg">
+        {/* Close Button for Mobile */}
+        {isMobile && !collapsed && (
+          <button
+            onClick={toggleCollapse}
+            className="absolute top-4 right-4 z-20 text-white text-2xl"
+            aria-label="Close sidebar"
+          >
+            &times;
+          </button>
+        )}
+        {/* <div className="text-center font-bold mt-4 mb-1 text-lg">
           <div className="text-white">{collapsed ? "A" : "ASKOXY.AI"}</div>
-        </div>
+        </div> */}
 
-        <div className="py-2 border-b border-gray-700">
+        <div className="mt-2 py-2  border-b border-gray-700">
           <Row justify="center" align="middle">
             <div className="text-center font-bold my-0 text-xl">
               <span className="text-green-500">{collapsed ? "T" : "TASK"}</span>{" "}

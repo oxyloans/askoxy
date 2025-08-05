@@ -22,6 +22,7 @@ import {
   SyncOutlined,
   LinkOutlined,
 } from "@ant-design/icons";
+import { Truck } from 'lucide-react';
 import { FaChartBar, FaComments } from "react-icons/fa";
 
 interface SidebarProps {
@@ -101,16 +102,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <AppstoreOutlined />,
       label: "Stock Details",
     },
-    {
-      key: "/home/scan-qr",
-      icon: <QrcodeOutlined />,
-      label: "Scan QR",
-    },
+    // {
+    //   key: "/home/scan-qr",
+    //   icon: <QrcodeOutlined />,
+    //   label: "Scan QR",
+    // },
 
     {
       key: "/home/queryManagement",
       icon: <QuestionCircleOutlined />,
       label: "All Queries",
+    },
+      {
+      key: "/home/addvehicle",
+      icon: <Truck />,
+      label: "Vehicle Report",
     },
     {
       key: "/home/versionUpdate",
@@ -127,6 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <LinkOutlined />,
       label: "Add Reference",
     },
+   
     // {
     //   key: "/home/feedback",
     //   icon: <FaComments />,

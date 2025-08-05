@@ -108,6 +108,7 @@ import PartnerLogin from "./PartnerWeb/PartnerLogin";
 import PartnerHome from "./PartnerWeb/PartnerHome";
 import MainPage from "./PartnerWeb/MainPage";
 import NewOrders from "./PartnerWeb/NewOrders";
+import VehicleManagement from "./PartnerWeb/Addvechicle";
 import OrderDetailsPage from "./PartnerWeb/OrderDetials";
 import AllOrders from "./PartnerWeb/AllOrders";
 import DeliveryBoyList from "./PartnerWeb/DeliveryBoyList";
@@ -183,6 +184,7 @@ import JobsAdminPage from "./AskoxyAdmin/Alljobdetails";
 import AddReference from "./PartnerWeb/AddReference";
 import UserAppliedJob from "./AskoxyAdmin/UserAppliedJobs";
 import StockTable from "./PartnerWeb/StockDetails";
+
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -606,6 +608,7 @@ const App: React.FC = () => {
               <Route path="assignedOrders/:status" element={<NewOrders />} />
               <Route path="orderDetails" element={<OrderDetailsPage />} />
               <Route path="allOrders" element={<AllOrders />} />
+              <Route path="addvehicle" element={<VehicleManagement />} />
               <Route path="dbList" element={<DeliveryBoyList />} />
               <Route path="queryManagement" element={<AllQueries />} />
               <Route path="scan-qr" element={<BarcodeScanner />} />
