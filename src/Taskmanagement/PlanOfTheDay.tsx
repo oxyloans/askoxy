@@ -113,7 +113,7 @@ const PlanOfTheDay: React.FC = () => {
       const hours = now.getHours();
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
-      const openTimeInMinutes = 7 * 60 + 30; // 7:30 AM
+      const openTimeInMinutes = 7 * 60 + 0; // 7:00 AM
       const closeTimeInMinutes = 10 * 60; // 10:00 AM
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
