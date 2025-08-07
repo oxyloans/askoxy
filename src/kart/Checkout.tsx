@@ -179,12 +179,20 @@ const CheckoutPage: React.FC = () => {
     };
 
     try {
-      await axios.post(`${BASE_URL}/user-service/bmvCashBack`, requestBody, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("BMV cashback applied successfully");
+      const response = await axios.post(
+        `${BASE_URL}/user-service/bmvCashBack`,
+        requestBody,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Show how many coins were earned, if returned by backend
+      if (response.data?.bmvCoinsEarned) {
+        message.success(`You earned ${response.data.bmvCoinsEarned} BMVCOINS!`);
+      } else {
+        message.success("BMVCOINS have been credited to your wallet!");
+      }
     } catch (error) {
       console.error("Error applying BMV cashback:", error);
+      message.error("Could not credit BMVCOINS.");
     }
   };
 

@@ -11,7 +11,9 @@ const ContactUs: React.FC = () => {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -38,12 +40,16 @@ const ContactUs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-      <div className="pt-6"> {/* Added padding-top for a small gap */}
+      <div className="pt-6">
+        {" "}
+        {/* Added padding-top for a small gap */}
         <div className="flex items-start justify-center p-6">
           <div className="max-w-4xl w-full flex">
             {/* Main Form */}
             <div className="w-2/3 bg-white p-6 rounded-lg shadow-lg mr-6">
-              <h1 className="text-3xl font-bold mb-6 text-center">Contact Us</h1>
+              <h1 className="text-3xl font-bold mb-6 text-center">
+                Contact Us
+              </h1>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <select
                   name="helpTopic"
@@ -58,7 +64,30 @@ const ContactUs: React.FC = () => {
                   <option value="general">General Inquiry</option>
                   <option value="support">Support Request</option>
                   <option value="feedback">Feedback</option>
+                  <option value="delete-account">
+                    Account/Data Deletion Request
+                  </option>
                 </select>
+                {formData.helpTopic === "delete-account" && (
+                  <div className="p-4 mb-4 bg-red-50 border border-red-300 rounded">
+                    <h2 className="text-lg font-semibold mb-2 text-red-700">
+                      Account & Data Deletion
+                    </h2>
+                    <p className="text-sm text-gray-700">
+                      To delete your ASKOXY.AI account and all associated data,
+                      submit this request using your registered email.
+                      <br />
+                      <strong>Data deleted:</strong> Your account, personal
+                      details, orders, and usage info.
+                      <br />
+                      <strong>Data retained:</strong> Legal/financial records
+                      (if required) for up to 180 days as per law.
+                      <br />
+                      We will confirm deletion within 7 working days.
+                    </p>
+                  </div>
+                )}
+
                 <input
                   type="text"
                   name="fullName"
@@ -109,8 +138,8 @@ const ContactUs: React.FC = () => {
                   Issue with your order?
                 </h2>
                 <p className="text-gray-600">
-                  Contact our support team via mobile at +91 98765 43210 or email
-                  at support@askoxy.ai.
+                  Contact our support team via mobile at +91 81432 71103 or
+                  email at support@askoxy.ai.
                 </p>
               </div>
             </div>

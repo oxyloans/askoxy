@@ -176,6 +176,7 @@ import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
 import AskoxyAi from "./components/OpenAi";
 import GenOxy from "./GenOxy/Genoxy";
+import RealtimePage  from "./GenOxy/RealTimeVoice";
 import JobDetails from "./components/JobDetails";
 import AddJob from "./AskoxyAdmin/AddJob";
 import VersionUpdate from "./PartnerWeb/VersionUpdate";
@@ -299,6 +300,7 @@ const App: React.FC = () => {
             />
             {/* <Route path="/generateimage" element={<AskoxyAi />} /> */}
             <Route path="/genoxy" element={<GenOxy />} />
+            <Route path="/voiceAssistant" element={<RealtimePage />} />
             <Route path="/caandcsservices" element={<CACSService />} />
             <Route
               path="/goldandsilveranddiamonds"

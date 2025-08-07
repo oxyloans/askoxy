@@ -1,7 +1,16 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Loader2, X, Trash2, Info, Gift } from "lucide-react";
+import {
+  Loader2,
+  X,
+  Trash2,
+  Info,
+  Gift,
+  Package,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
 import { Button, message, Modal, Input, Tag } from "antd";
@@ -45,6 +54,8 @@ interface CartItem {
   goldGst?: number;
   goldMakingCostAndGst?: number;
   combo?: boolean;
+  saveAmount?: number;
+  savePercentage?: number;
 }
 
 interface AddressFormData {
@@ -105,6 +116,7 @@ const CartPage: React.FC = () => {
     {}
   );
   const [totalGstAmount, setTotalGstAmount] = useState<number>(0);
+  const [saveAmount, setSaveAmount] = useState<number>(0);
   const [isPlanDetailsModalOpen, setIsPlanDetailsModalOpen] =
     useState<boolean>(false);
   const [currentPlanDetails, setCurrentPlanDetails] = useState<
@@ -781,6 +793,7 @@ const CartPage: React.FC = () => {
           )
         );
         setTotalGstAmount(response.data.totalGstAmountToPay || 0); // Set the total GST amount
+        setSaveAmount(response.data.saveAmount || 0);
         return cartWithFreeItems;
       } else {
         console.warn(
@@ -1802,11 +1815,12 @@ const CartPage: React.FC = () => {
                 cartData.map((item) => (
                   <div
                     key={item.itemId}
-                    className="border rounded-lg p-4 mb-4 flex flex-col md:flex-row w-full"
+                    className="bg-white border-b border-gray-100 p-4"
                   >
-                    <div className="flex flex-1 mb-4 md:mb-0">
+                    <div className="flex gap-3">
+                      {/* Product Image */}
                       <div
-                        className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
+                        className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
                         onClick={() =>
                           navigate(`/main/itemsdisplay/${item.itemId}`, {
                             state: { item },
@@ -1820,160 +1834,163 @@ const CartPage: React.FC = () => {
                         />
                       </div>
 
-                      <div className="ml-4 flex flex-col justify-center">
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        {/* Low Stock Warning */}
                         {item.quantity < 6 && item.quantity > 0 && (
-                          <p className="text-xs font-medium text-red-500 mb-1">
-                            Only {item.quantity}{" "}
-                            {item.quantity === 1 ? "item" : "items"} left
+                          <p className="text-xs text-red-500 mb-1">
+                            Only {item.quantity} left
                           </p>
                         )}
-                        <h3 className="text-smc md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
+
+                        {/* Product Name */}
+                        <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
                           {item.itemName}
                         </h3>
-                        <p className="text-sm text-gray-600">
-                          Weight: {item.weight} {item.units}
+
+                        {/* Weight */}
+                        <p className="text-xs text-gray-500 mb-2">
+                          {item.weight} {item.units}
                         </p>
-                        <div className="flex items-center mt-1">
-                          <p className="text-sm line-through text-gray-400 mr-2">
-                            ₹{item.priceMrp}
-                          </p>
-                          <p className="text-green-600 font-bold">
+
+                        {/* Price */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold text-gray-900">
                             ₹{item.itemPrice}
-                          </p>
+                          </span>
+                          {item.priceMrp && Number(item.priceMrp) > 0 && (
+                            <span className="text-xs line-through text-gray-400">
+                              ₹{item.priceMrp}
+                            </span>
+                          )}
                         </div>
+
+                        {/* Save Amount */}
+                        {typeof item.saveAmount === "number" &&
+                          item.saveAmount > 0 && (
+                            <p className="text-xs text-green-600 font-medium">
+                              You Save ₹{item.saveAmount.toFixed(2)} (
+                              {item.savePercentage ?? 0}% OFF)
+                            </p>
+                          )}
+                      </div>
+
+                      {/* Action Controls */}
+                      <div className="flex flex-col items-end justify-between h-full">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          className="text-gray-400 hover:text-red-500 p-1 mb-2"
+                          onClick={async () => {
+                            await removeCartItem(item);
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </motion.button>
+
+                        {item.quantity !== 0 ? (
+                          item.status === "ADD" ? (
+                            // Regular item controls
+                            <div className="flex flex-col items-end gap-2">
+                              <div className="flex items-center border border-purple-500 rounded-lg">
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  className="w-8 h-8 flex items-center justify-center text-purple-600 hover:bg-purple-50"
+                                  onClick={() => handleDecrease(item)}
+                                  disabled={loadingItems[item.itemId]}
+                                >
+                                  <span className="text-lg font-medium">−</span>
+                                </motion.button>
+
+                                <div className="px-3 min-w-[32px] text-center">
+                                  {loadingItems[item.itemId] ? (
+                                    <Loader2 className="animate-spin text-purple-600 w-4 h-4" />
+                                  ) : (
+                                    <span className="text-sm font-medium text-purple-600">
+                                      {regularCartItems[item.itemId] || 0}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`w-8 h-8 flex items-center justify-center text-purple-600 hover:bg-purple-50 ${
+                                    (regularCartItems[item.itemId] || 0) >=
+                                    item.quantity
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                  onClick={() => {
+                                    if (
+                                      (regularCartItems[item.itemId] || 0) <
+                                      item.quantity
+                                    ) {
+                                      handleIncrease(item);
+                                    }
+                                  }}
+                                  disabled={
+                                    (regularCartItems[item.itemId] || 0) >=
+                                      item.quantity || loadingItems[item.itemId]
+                                  }
+                                >
+                                  <span className="text-lg font-medium">+</span>
+                                </motion.button>
+                              </div>
+
+                              {/* Item Total */}
+                              <p className="text-sm font-bold text-purple-700">
+                                Total: ₹
+                                {(
+                                  Number(item.itemPrice) *
+                                  (regularCartItems[item.itemId] || 0)
+                                ).toFixed(2)}
+                              </p>
+                            </div>
+                          ) : (
+                            // FREE/COMBO item controls
+                            <div className="flex flex-col items-end gap-2">
+                              <div className="text-xs font-medium text-green-600 mb-1">
+                                {item.status === "FREE" ? "FREE" : "COMBO"}
+                              </div>
+
+                              <div className="flex items-center border border-gray-300 rounded-lg opacity-60">
+                                <button
+                                  className="w-8 h-8 flex items-center justify-center text-gray-400 cursor-not-allowed"
+                                  disabled
+                                >
+                                  <span className="text-lg font-medium">−</span>
+                                </button>
+                                <div className="px-3 min-w-[32px] text-center">
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {item.cartQuantity}
+                                  </span>
+                                </div>
+                                <button
+                                  className="w-8 h-8 flex items-center justify-center text-gray-400 cursor-not-allowed"
+                                  disabled
+                                >
+                                  <span className="text-lg font-medium">+</span>
+                                </button>
+                              </div>
+
+                              {/* Item Total */}
+                              <p className="text-sm font-bold text-purple-700">
+                                Total: ₹
+                                {(
+                                  Number(item.itemPrice) * item.cartQuantity
+                                ).toFixed(2)}
+                              </p>
+                            </div>
+                          )
+                        ) : (
+                          // Out of stock
+                          <div className="flex flex-col items-end gap-2">
+                            <div className="text-xs font-medium text-red-500">
+                              OUT OF STOCK
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-{item.quantity !== 0 ? (
-  item.status === "ADD" ? (
-    // ✅ ENABLE for pure ADD item
-    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-      <div className="flex items-center justify-between md:justify-end w-full">
-        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow"
-            onClick={() => handleDecrease(item)}
-            disabled={loadingItems[item.itemId]}
-          >
-            <span className="font-medium">-</span>
-          </motion.button>
-
-          <div className="px-4">
-            {loadingItems[item.itemId] ? (
-              <Loader2 className="animate-spin text-purple-600" />
-            ) : (
-              <span className="font-medium text-purple-700">
-                {regularCartItems[item.itemId] || 0}
-              </span>
-            )}
-          </div>
-
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 hover:shadow-md transition-shadow ${
-              (regularCartItems[item.itemId] || 0) >= item.quantity
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-            }`}
-            onClick={() => {
-              if ((regularCartItems[item.itemId] || 0) < item.quantity) {
-                handleIncrease(item);
-              }
-            }}
-            disabled={
-              (regularCartItems[item.itemId] || 0) >= item.quantity ||
-              loadingItems[item.itemId]
-            }
-          >
-            <span className="font-medium">+</span>
-          </motion.button>
-        </div>
-
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
-          onClick={async () => {
-            await removeCartItem(item);
-          }}
-        >
-          <Trash2 size={16} />
-        </motion.button>
-      </div>
-
-      <div className="w-full flex justify-end">
-        <p className="text-purple-700 font-bold text-base">
-          Total: ₹
-          {(
-            parseFloat(item.itemPrice) * (regularCartItems[item.itemId] || 0)
-          ).toFixed(2)}
-        </p>
-      </div>
-    </div>
-  ) : (
-    // ❌ DISABLE for FREE or COMBO or anything else
-    <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-     <p className="text-green-600 font-bold text-base mb-2">
-  {item.status === "FREE" ? "FREE Item" : "Combo Item"}
-</p>
-      <div className="flex items-center justify-between md:justify-end w-full">
-        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
-            disabled
-          >
-            <span className="font-medium">-</span>
-          </motion.button>
-          <div className="px-4">
-            <span className="font-medium text-purple-700">
-              {item.cartQuantity}
-            </span>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 opacity-50 cursor-not-allowed"
-            disabled
-          >
-            <span className="font-medium">+</span>
-          </motion.button>
-        </div>
-
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          className="ml-4 bg-red-500 hover:bg-red-600 hover:shadow-md text-white w-8 h-8 rounded-md transition-all duration-200 flex items-center justify-center"
-          onClick={async () => {
-            await removeCartItem(item);
-          }}
-        >
-          <Trash2 size={16} />
-        </motion.button>
-      </div>
-
-      <div className="w-full flex justify-end">
-        <p className="text-green-600 font-semibold">
-          Total: ₹
-          {(parseFloat(item.itemPrice) * item.cartQuantity).toFixed(2)}
-        </p>
-      </div>
-    </div>
-  )
-) : (
-  <div className="flex flex-col md:items-end justify-center space-y-3 w-full md:w-auto">
-    <p className="text-red-600 font-bold text-base mb-2">Out of Stock</p>
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      className="bg-red-500 hover:bg-red-600 hover:shadow-md text-white px-4 py-2 rounded-md transition-all duration-200 text-sm flex items-center justify-center"
-      onClick={async () => {
-        await removeCartItem(item);
-      }}
-    >
-      <Trash2 size={16} className="mr-1" />
-      Delete
-    </motion.button>
-  </div>
-)}
-
                   </div>
                 ))
               )}

@@ -97,7 +97,7 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   // OAuth URL for Gmail authentication
   const state = encodeURIComponent(JSON.stringify({ primaryType }));
   const oauthUrl = `http://ec2-65-0-147-157.ap-south-1.compute.amazonaws.com:9024/oauth2/authorize/google?redirect_uri=${encodeURIComponent(
-    "http://localhost:3000/whatsapplogin"
+    "https://www.askoxy.ai/whatsapplogin"
   )}&state=${state}`;
 
   // Fetch user details

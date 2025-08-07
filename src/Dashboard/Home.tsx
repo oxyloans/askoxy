@@ -190,6 +190,8 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [bmvModalItem, setBmvModalItem] = useState<DashboardItem | null>(null);
+
   const [activeCategoryType, setActiveCategoryType] = useState<string>("");
   const [isBmvModalVisible, setIsBmvModalVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(
@@ -426,7 +428,7 @@ const Home: React.FC = () => {
         units: item.units,
         itemName: item.itemName,
         itemImage: item.itemImage,
-        bmvCoins: item.bmvCoins, 
+        bmvCoins: item.bmvCoins,
       }));
 
     setProducts(productItems);
@@ -1177,9 +1179,11 @@ const Home: React.FC = () => {
                 BMVCOINS
                 <Info
                   className="w-4 h-4 text-black-600 cursor-pointer hover:text-purple-800"
+                  // 👇 Updated onClick: set both modal item and visibility
                   onClick={(e) => {
-                    e.stopPropagation(); // ✅ Prevents card click
-                    setIsBmvModalVisible(true);
+                    e.stopPropagation();
+                    setBmvModalItem(item); // Store the clicked product for the modal
+                    setIsBmvModalVisible(true); // Show the modal
                   }}
                 />
               </div>
@@ -2250,34 +2254,128 @@ const Home: React.FC = () => {
       </Modal>
 
       <Modal
-        title="BMVCOINS Info"
+        title={
+          <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
+            BMVCOINS Info
+          </span>
+        }
         open={isBmvModalVisible}
         onCancel={() => setIsBmvModalVisible(false)}
         footer={null}
         centered
       >
-        <div className="text-gray-700 text-sm space-y-2">
-          <p>
-            <strong>Current Value:</strong> ₹0.02 per coin
-          </p>
-          <p>
-            <strong>Future Value:</strong> ₹1+{" "}
-            <span className="italic text-xs text-gray-500">
-              (Projected value – no guarantee)
-            </span>
-          </p>
-          <p>
-            1,000 coins = <strong>₹20</strong>
-          </p>
-          <hr />
-          <p className="font-medium text-purple-700">
-            Minimum redemption amount
-          </p>
-          <ul className="list-disc pl-5 text-sm">
-            <li>Transfer to friends and family</li>
-            <li>Share with other ASKOXY.AI users</li>
-            <li>Use on non-GST items</li>
+        <div className="text-gray-700 text-sm space-y-5 pb-2">
+          {/* MAIN: Show GET coins and INR conversion as BIG highlight */}
+          {typeof bmvModalItem?.bmvCoins === "number" &&
+          bmvModalItem.bmvCoins > 0 ? (
+            <div className="text-center mb-3">
+              {/* MAIN VALUE */}
+              <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+                <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+                  Get{" "}
+                  <span className="text-purple-700">
+                    {bmvModalItem.bmvCoins}
+                  </span>{" "}
+                  coins
+                  <span className="mx-2 text-purple-600 text-2xl font-semibold">
+                    =
+                  </span>
+                  <span className="text-green-700 font-bold">
+                    ₹{(bmvModalItem.bmvCoins * 0.02).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              {/* FUTURE VALUE */}
+              <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+                <span className="underline decoration-dotted">
+                  Future value :
+                </span>
+                <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">
+                  ₹{bmvModalItem.bmvCoins}
+                </span>
+                <span className="text-yellow-500 font-extrabold ml-1">*</span>
+              </div>
+              <div className="italic text-xs text-gray-400 mt-1">
+                (*No guarantee on future value)
+              </div>
+            </div>
+          ) : (
+            <div className="text-center mb-3">
+              <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+                <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+                  Get <span className="text-purple-700">1,000</span> coins
+                  <span className="mx-2 text-purple-400 text-2xl font-semibold">
+                    =
+                  </span>
+                  <span className="text-green-700 font-bold">₹20.00</span>
+                </div>
+              </div>
+              <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+                <span className="underline decoration-dotted">
+                  Future value :
+                </span>
+                <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">
+                  ₹1,000
+                </span>
+                <span className="text-yellow-500 font-extrabold ml-1">*</span>
+              </div>
+              <div className="italic text-xs text-gray-400 mt-1">
+                (*No guarantee on future value)
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-purple-200 my-4" />
+
+          <div className="font-medium text-purple-700 text-base mb-1">
+            Redemption & Usage
+          </div>
+          <ul className="list-none space-y-2 pl-0">
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Transfer to friends and family</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Share with other ASKOXY.AI users</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Use on non-GST items</span>
+            </li>
           </ul>
+
+          <div className="mt-2 text-xs text-gray-500">
+            <span className="font-semibold text-purple-700">Note:</span> Minimum
+            redemption amount applies
+          </div>
         </div>
       </Modal>
 

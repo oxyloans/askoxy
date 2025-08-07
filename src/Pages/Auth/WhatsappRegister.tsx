@@ -133,7 +133,7 @@ const WhatsappRegister = () => {
         JSON.stringify({ primaryType, from: "/main/dashboard/home" })
       );
       const oauthUrl = `http://ec2-65-0-147-157.ap-south-1.compute.amazonaws.com:9024/oauth2/authorize/google?redirect_uri=${encodeURIComponent(
-        "http://localhost:3000/whatsappregister"
+        "https://www.askoxy.ai/whatsappregister"
       )}&state=${state}`;
       sessionStorage.setItem("pendingGoogleAuth", "true");
       window.location.href = oauthUrl;

@@ -1,16 +1,17 @@
-import React, { useEffect, useState,useRef, useContext } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DOMPurify from "dompurify";
 import { message, Modal } from "antd";
-import ReactMarkdown from "react-markdown"; 
+import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 
 import {
   ShoppingCart,
   Home,
-  ChevronRight,Info,
+  ChevronRight,
+  Info,
   Minus,
   Plus,
   Package2,
@@ -47,8 +48,8 @@ interface Item {
   category: string;
   image: string;
   quantity: number;
-   status?: string;
-   bmvCoins?: number; 
+  status?: string;
+  bmvCoins?: number;
 }
 
 interface CartItem {
@@ -121,17 +122,17 @@ const ItemDisplayPage = () => {
     items: {},
     status: {},
   });
-const [comboAddOnModal, setComboAddOnModal] = useState<{
-  visible: boolean;
-  items: any[];
-  itemCount: number;
-}>({
-  visible: false,
-  items: [],
-  itemCount: 0,
-});
+  const [comboAddOnModal, setComboAddOnModal] = useState<{
+    visible: boolean;
+    items: any[];
+    itemCount: number;
+  }>({
+    visible: false,
+    items: [],
+    itemCount: 0,
+  });
 
-const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
+  const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
   const [modalData, setModalData] = useState<{
     images: GoldImage[];
     urls: string[];
@@ -189,7 +190,7 @@ const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
       setItemImages([]);
     }
   };
- const scrollToBottom = () => {
+  const scrollToBottom = () => {
     if (chatEndRef.current) {
       const chatContainer = chatEndRef.current.parentElement; // Get the parent container with overflow-y-auto
       if (chatContainer) {
@@ -198,10 +199,9 @@ const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
     }
   };
 
-
-   useEffect(() => {
-     scrollToBottom();
-   }, [messages]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchItemDetails = async (id: string) => {
     try {
@@ -226,20 +226,22 @@ const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
     }
   };
 
-const fetchComboAddOns = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/product-service/combo-offers`);
-    const comboItems = response.data?.content || [];
+  const fetchComboAddOns = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/product-service/combo-offers`
+      );
+      const comboItems = response.data?.content || [];
 
-    const addOns = comboItems.flatMap((combo: any) => combo.items || []);
+      const addOns = comboItems.flatMap((combo: any) => combo.items || []);
 
-    if (addOns.length > 0) {
-      setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+      if (addOns.length > 0) {
+        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+      }
+    } catch (err) {
+      console.error("Error fetching combo offers:", err);
     }
-  } catch (err) {
-    console.error("Error fetching combo offers:", err);
-  }
-};
+  };
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -488,94 +490,92 @@ const fetchComboAddOns = async () => {
     }
   }, [itemDetails]);
 
-const handleAddToCart = async (item: Item & { status?: string }) => {
-  const accessToken = localStorage.getItem("accessToken");
-  const userId = localStorage.getItem("userId");
+  const handleAddToCart = async (item: Item & { status?: string }) => {
+    const accessToken = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
 
-  if (!accessToken || !userId) {
-    message.warning("Please login to add items to the cart.");
-    setTimeout(() => navigate("/whatapplogin"), 2000);
-    return;
-  }
-
-  setLoadingItems((prev) => ({
-    ...prev,
-    items: { ...prev.items, [item.itemId]: true },
-  }));
-
-  try {
-    const weight = parseFloat(String(item.weight ?? "0"));
-    const isComboItem =
-      item.status === "COMBO" 
-
-    const requestBody: any = {
-      customerId: userId,
-      itemId: item.itemId,
-      quantity: 1,
-    };
-
-    if (item.status === "COMBO") {
-      requestBody.status = "COMBO";
+    if (!accessToken || !userId) {
+      message.warning("Please login to add items to the cart.");
+      setTimeout(() => navigate("/whatapplogin"), 2000);
+      return;
     }
 
-    await axios.post(
-      `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
-      requestBody,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    await fetchCartData(item.itemId);
-
-    if (!isComboItem) {
-      try {
-        const res = await axios.get(
-          `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
-        );
-        const comboItems = res.data?.items || [];
-
-        if (comboItems.length > 0) {
-          const formattedItems = comboItems.map((i: any) => ({
-            itemId: i.individualItemId,
-            itemName: i.itemName,
-            itemPrice: i.itemPrice,
-            itemMrp: i.itemMrp ?? i.itemPrice,
-            itemImage: i.imageUrl,
-            weight: i.itemWeight,
-            units: i.units,
-            quantity: i.quantity ?? 1,
-            status: "COMBO",
-            title: i.itemName,
-            image: i.imageUrl,
-            description: "",
-            path: "",
-            icon: <ShoppingBag className="text-purple-600" />,
-          }));
-
-          setComboAddOnModal({
-            visible: true,
-            items: formattedItems,
-            itemCount: formattedItems.length,
-          });
-
-          return;
-        }
-      } catch (error) {
-        console.error("Error fetching combo info:", error);
-      }
-    }
-
-    message.success("Item added to cart successfully.");
-  } catch (error) {
-    console.error("Error adding to cart:", error);
-    message.error("Failed to add item to cart.");
-  } finally {
     setLoadingItems((prev) => ({
       ...prev,
-      items: { ...prev.items, [item.itemId]: false },
+      items: { ...prev.items, [item.itemId]: true },
     }));
-  }
-};
 
+    try {
+      const weight = parseFloat(String(item.weight ?? "0"));
+      const isComboItem = item.status === "COMBO";
+
+      const requestBody: any = {
+        customerId: userId,
+        itemId: item.itemId,
+        quantity: 1,
+      };
+
+      if (item.status === "COMBO") {
+        requestBody.status = "COMBO";
+      }
+
+      await axios.post(
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+        requestBody,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      await fetchCartData(item.itemId);
+
+      if (!isComboItem) {
+        try {
+          const res = await axios.get(
+            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+          );
+          const comboItems = res.data?.items || [];
+
+          if (comboItems.length > 0) {
+            const formattedItems = comboItems.map((i: any) => ({
+              itemId: i.individualItemId,
+              itemName: i.itemName,
+              itemPrice: i.itemPrice,
+              itemMrp: i.itemMrp ?? i.itemPrice,
+              itemImage: i.imageUrl,
+              weight: i.itemWeight,
+              units: i.units,
+              quantity: i.quantity ?? 1,
+              status: "COMBO",
+              title: i.itemName,
+              image: i.imageUrl,
+              description: "",
+              path: "",
+              icon: <ShoppingBag className="text-purple-600" />,
+            }));
+
+            setComboAddOnModal({
+              visible: true,
+              items: formattedItems,
+              itemCount: formattedItems.length,
+            });
+
+            return;
+          }
+        } catch (error) {
+          console.error("Error fetching combo info:", error);
+        }
+      }
+
+      message.success("Item added to cart successfully.");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      message.error("Failed to add item to cart.");
+    } finally {
+      setLoadingItems((prev) => ({
+        ...prev,
+        items: { ...prev.items, [item.itemId]: false },
+      }));
+    }
+  };
 
   const handleRemoveItem = async (itemId: string) => {
     setLoadingItems((prev) => ({
@@ -781,84 +781,83 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
   // };
 
   const gridCols =
-  comboAddOnModal.itemCount === 1
-    ? "grid-cols-1"
-    : comboAddOnModal.itemCount === 2
-    ? "grid-cols-2"
-    : comboAddOnModal.itemCount <= 4
-    ? "grid-cols-2 md:grid-cols-3"
-    : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
+    comboAddOnModal.itemCount === 1
+      ? "grid-cols-1"
+      : comboAddOnModal.itemCount === 2
+      ? "grid-cols-2"
+      : comboAddOnModal.itemCount <= 4
+      ? "grid-cols-2 md:grid-cols-3"
+      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
 
+  const handleChatView = async (productName: string) => {
+    // Save current scroll position
+    const currentScrollPosition = window.scrollY;
+    setShowChatSection(true);
 
-   const handleChatView = async (productName: string) => {
-      // Save current scroll position
-      const currentScrollPosition = window.scrollY;
-      setShowChatSection(true);
-  
-      const introMessage: Message = {
-        id: messages.length,
-        text: `Can you tell me about "${productName}"?`,
-        content: `Can you tell me about "${productName}"?`,
-  
-        type: "sent",
-        role: "user",
-      };
-  
-      const updatedMessages = [introMessage];
-      setMessages(updatedMessages);
-      setLoading(true);
-  
-      try {
-        const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedMessages),
-        });
-  
-        const data = await response.text();
-        const isImageUrl = data.startsWith("http");
-  
-        const assistantReply: Message = {
-          role: "assistant",
-          content: data,
-          isImage: isImageUrl,
-          id: updatedMessages.length,
-          text: isImageUrl ? "" : data, // show text unless it's an image
-          type: "received",
-        };
-  
-        setMessages([...updatedMessages, assistantReply]);
-      } catch (error) {
-        console.error("Chat error:", error);
-        setMessages([
-          ...updatedMessages,
-          {
-            id: updatedMessages.length,
-            text: "❌ Sorry, I couldn't fetch product info right now.",
-            type: "system",
-            role: "assistant",
-            content: "❌ Sorry, I couldn't fetch product info right now.",
-          },
-        ]);
-      } finally {
-        setLoading(false);
-        // Restore scroll position after chat is opened
-        window.scrollTo(0, currentScrollPosition);
-      }
+    const introMessage: Message = {
+      id: messages.length,
+      text: `Can you tell me about "${productName}"?`,
+      content: `Can you tell me about "${productName}"?`,
+
+      type: "sent",
+      role: "user",
     };
+
+    const updatedMessages = [introMessage];
+    setMessages(updatedMessages);
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMessages),
+      });
+
+      const data = await response.text();
+      const isImageUrl = data.startsWith("http");
+
+      const assistantReply: Message = {
+        role: "assistant",
+        content: data,
+        isImage: isImageUrl,
+        id: updatedMessages.length,
+        text: isImageUrl ? "" : data, // show text unless it's an image
+        type: "received",
+      };
+
+      setMessages([...updatedMessages, assistantReply]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages([
+        ...updatedMessages,
+        {
+          id: updatedMessages.length,
+          text: "❌ Sorry, I couldn't fetch product info right now.",
+          type: "system",
+          role: "assistant",
+          content: "❌ Sorry, I couldn't fetch product info right now.",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+      // Restore scroll position after chat is opened
+      window.scrollTo(0, currentScrollPosition);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
-  
+
     // Message shown to user: only original inputMessage
     const userMsg: Message = {
       role: "user",
-      content: inputMessage,   // user sees only original input
+      content: inputMessage, // user sees only original input
       text: inputMessage,
       id: messages.length,
       type: "sent",
     };
-  
+
     // Prepare messages for backend with appended " Minimum 20 Words"
     const backendMessages = [
       ...messages,
@@ -867,22 +866,22 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
         content: inputMessage + "Minimum 15 Words", // appended only for backend
       },
     ];
-  
+
     // Update UI with original message only
     setMessages([...messages, userMsg]);
     setInputMessage("");
     setLoading(true);
-  
+
     try {
       const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(backendMessages),  // send modified content here
+        body: JSON.stringify(backendMessages), // send modified content here
       });
-  
+
       const data = await response.text();
       const isImageUrl = data.startsWith("http");
-  
+
       const assistantReply: Message = {
         role: "assistant",
         content: data,
@@ -891,11 +890,11 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
         id: messages.length + 1,
         type: "received",
       };
-  
-      setMessages(prev => [...prev, assistantReply]);
+
+      setMessages((prev) => [...prev, assistantReply]);
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           id: messages.length + 1,
@@ -909,8 +908,7 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
       setLoading(false);
     }
   };
-  
-  
+
   const calculateDiscount = (mrp: number, price: number) => {
     return Math.round(((mrp - price) / mrp) * 100);
   };
@@ -1229,18 +1227,29 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
                       {itemDetails?.weightUnit || itemDetails?.units}
                     </p>
                   </div>
-                  {itemDetails?.bmvCoins !== undefined && itemDetails.bmvCoins > 0 && (
-  <div className="text-xs bg-yellow-100 text-yellow-800 rounded px-2 py-1 inline-flex items-center justify-center gap-1 transform scale-110">
-    Earn: <span className="font-bold">{itemDetails.bmvCoins}</span> BMVCOINS
-    <Info
-      className="w-4 h-4 text-yellow-600 cursor-pointer hover:text-yellow-800"
-      onClick={(e) => {
-        e.stopPropagation();
-        setIsBmvModalVisible(true); // Define this modal separately
-      }}
-    />
-  </div>
-)}
+                  {itemDetails?.bmvCoins !== undefined &&
+                    itemDetails.bmvCoins > 0 && (
+                      <div className="inline-flex items-center bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-1 gap-2 mt-2 mb-2 shadow-md">
+                        <span className="font-bold text-purple-700 text-base tracking-wider">
+                          EARN:
+                        </span>
+                        <span className="font-bold text-purple-900 text-lg">
+                          {itemDetails.bmvCoins}
+                        </span>
+                        <span className="text-xs font-semibold text-purple-700 uppercase">
+                          BMVCOINS
+                        </span>
+                        <span title="BMVCOINS Info">
+                          <Info
+                            className="w-5 h-5 text-purple-500 cursor-pointer hover:text-purple-700 ml-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsBmvModalVisible(true);
+                            }}
+                          />
+                        </span>
+                      </div>
+                    )}
 
                   {itemDetails && (
                     <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
@@ -1387,7 +1396,7 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
                   </button>
                 </div>
                 {/* Chat Body */}
-               <div className="border rounded-lg flex flex-col h-[24rem] sm:h-[26rem] overflow-hidden">
+                <div className="border rounded-lg flex flex-col h-[24rem] sm:h-[26rem] overflow-hidden">
                   {/* Messages Scroll Area */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {messages.map((message) => (
@@ -1691,193 +1700,286 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
         </div>
       )}
 
-    <Modal
-      open={comboAddOnModal.visible}
-      onCancel={() => {
-        setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
-        setHasAddedComboAddOn(false);
-      }}
-      footer={null}
-      centered
-      title={
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-purple-700 mb-1">Special Offer Add-on</h3>
-          <p className="text-xs text-gray-600">Choose your favorite add-on and save more!</p>
-        </div>
-      }
-      className="special-offer-modal"
-      width={
-    comboAddOnModal.itemCount === 1
-      ? 300
-      : comboAddOnModal.itemCount === 2
-      ? 500
-      : 700
-  }
-    >
-      <div className={`grid gap-4 ${gridCols}`}>
-        {comboAddOnModal.items.map((addonItem) => {
-          // Calculate discount percentage (assuming you have itemMRP field)
-          const discountPercentage = addonItem.itemMrp 
-            ? Math.round(((addonItem.itemMrp - addonItem.itemPrice) / addonItem.itemMrp) * 100)
-            : 0;
-          
-          return (
-            <div
-              key={addonItem.itemId}
-              className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden"
-            >
-              {/* Discount Badge */}
-              {discountPercentage > 0 && (
-                <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
-                  {discountPercentage}% OFF
-                </div>
-              )}
-              
-              {/* Selection Badge */}
-              {hasAddedComboAddOn && (
-                <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
-                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
-    
-              {/* Square Image Container */}
-              <div className="relative mb-2">
-                <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
-                  {addonItem.itemImage ? (
-                    <img
-                      src={addonItem.itemImage}
-                      alt={addonItem.itemName}
-                      className="w-full h-full object-contain p-1.5"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          const fallback = parent.querySelector('.fallback-icon');
-                          if (fallback) {
-                            (fallback as HTMLElement).style.display = 'flex';
-                          }
-                        }
-                      }}
-                    />
-                  ) : null}
-                  <div
-                    className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
-                    style={{ display: addonItem.itemImage ? 'none' : 'flex' }}
-                  >
-                    <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+      <Modal
+        open={comboAddOnModal.visible}
+        onCancel={() => {
+          setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
+          setHasAddedComboAddOn(false);
+        }}
+        footer={null}
+        centered
+        title={
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-purple-700 mb-1">
+              Special Offer Add-on
+            </h3>
+            <p className="text-xs text-gray-600">
+              Choose your favorite add-on and save more!
+            </p>
+          </div>
+        }
+        className="special-offer-modal"
+        width={
+          comboAddOnModal.itemCount === 1
+            ? 300
+            : comboAddOnModal.itemCount === 2
+            ? 500
+            : 700
+        }
+      >
+        <div className={`grid gap-4 ${gridCols}`}>
+          {comboAddOnModal.items.map((addonItem) => {
+            // Calculate discount percentage (assuming you have itemMRP field)
+            const discountPercentage = addonItem.itemMrp
+              ? Math.round(
+                  ((addonItem.itemMrp - addonItem.itemPrice) /
+                    addonItem.itemMrp) *
+                    100
+                )
+              : 0;
+
+            return (
+              <div
+                key={addonItem.itemId}
+                className="bg-white border-2 border-purple-100 rounded-lg p-3 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-300 relative overflow-hidden"
+              >
+                {/* Discount Badge */}
+                {discountPercentage > 0 && (
+                  <div className="absolute top-2 left-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-bold z-10">
+                    {discountPercentage}% OFF
+                  </div>
+                )}
+
+                {/* Selection Badge */}
+                {hasAddedComboAddOn && (
+                  <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1 z-10">
+                    <svg
+                      className="w-2.5 h-2.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
-                </div>
-              </div>
-    
-              {/* Product Info */}
-              <div className="text-center">
-                <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
-                  {addonItem.itemName}
-                </h4>
-                
-                {/* Price Section */}
-                <div className="mb-3">
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <span className="text-purple-600 font-bold text-lg">
-                      ₹{addonItem.itemPrice}
-                    </span>
-                    {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
-                      <span className="text-gray-500 text-xs line-through">
-                        ₹{addonItem.itemMrp}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Savings Info */}
-                  {addonItem.itemMrp && addonItem.itemMrp > addonItem.itemPrice && (
-                    <div className="text-green-600 text-xs font-medium">
-                      You save ₹{addonItem.itemMrp - addonItem.itemPrice}
-                    </div>
-                  )}
-                </div>
-    
-                {/* Add Button */}
-                <motion.button
-                  whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
-                  whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
-                  className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
-                    hasAddedComboAddOn
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg'
-                  }`}
-                  onClick={() => {
-                    if (!hasAddedComboAddOn) {
-                     handleAddToCart({ ...(addonItem as Item), status: "COMBO" });
-                      setHasAddedComboAddOn(true);
-                   setComboAddOnModal({ visible: false, items: [], itemCount: 0 });
-                    } else {
-                      message.warning("You can only select one optional add-on.");
-                    }
-                  }}
-                  disabled={hasAddedComboAddOn}
-                >
-                  {hasAddedComboAddOn ? (
-                    <span className="flex items-center justify-center gap-1.5">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Add-on Selected
-                    </span>
-                  ) : (
-                    'Add Add-on'
-                  )}
-                </motion.button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      
-      {/* Modal Footer Info */}
-      <div className="text-center p-3 bg-gray-50 mx-3 mb-3 rounded-md">
-        <p className="text-xs text-gray-600">
-          <span className="font-medium">🎉 Special Offer:</span> Add any item to your combo and enjoy exclusive discounts!
-        </p>
-      </div>
-    </Modal>
+                )}
 
-    <Modal
-  title="BMVCOINS Info"
+                {/* Square Image Container */}
+                <div className="relative mb-2">
+                  <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+                    {addonItem.itemImage ? (
+                      <img
+                        src={addonItem.itemImage}
+                        alt={addonItem.itemName}
+                        className="w-full h-full object-contain p-1.5"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const fallback =
+                              parent.querySelector(".fallback-icon");
+                            if (fallback) {
+                              (fallback as HTMLElement).style.display = "flex";
+                            }
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="fallback-icon absolute inset-0 w-full h-full items-center justify-center text-purple-300"
+                      style={{ display: addonItem.itemImage ? "none" : "flex" }}
+                    >
+                      <svg
+                        className="w-10 h-10"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Product Info */}
+                <div className="text-center">
+                  <h4 className="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 min-h-[2rem]">
+                    {addonItem.itemName}
+                  </h4>
+
+                  {/* Price Section */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <span className="text-purple-600 font-bold text-lg">
+                        ₹{addonItem.itemPrice}
+                      </span>
+                      {addonItem.itemMrp &&
+                        addonItem.itemMrp > addonItem.itemPrice && (
+                          <span className="text-gray-500 text-xs line-through">
+                            ₹{addonItem.itemMrp}
+                          </span>
+                        )}
+                    </div>
+
+                    {/* Savings Info */}
+                    {addonItem.itemMrp &&
+                      addonItem.itemMrp > addonItem.itemPrice && (
+                        <div className="text-green-600 text-xs font-medium">
+                          You save ₹{addonItem.itemMrp - addonItem.itemPrice}
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Add Button */}
+                  <motion.button
+                    whileHover={{ scale: hasAddedComboAddOn ? 1 : 1.02 }}
+                    whileTap={{ scale: hasAddedComboAddOn ? 1 : 0.98 }}
+                    className={`w-full py-2 rounded-md font-medium text-xs transition-all duration-200 ${
+                      hasAddedComboAddOn
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg"
+                    }`}
+                    onClick={() => {
+                      if (!hasAddedComboAddOn) {
+                        handleAddToCart({
+                          ...(addonItem as Item),
+                          status: "COMBO",
+                        });
+                        setHasAddedComboAddOn(true);
+                        setComboAddOnModal({
+                          visible: false,
+                          items: [],
+                          itemCount: 0,
+                        });
+                      } else {
+                        message.warning(
+                          "You can only select one optional add-on."
+                        );
+                      }
+                    }}
+                    disabled={hasAddedComboAddOn}
+                  >
+                    {hasAddedComboAddOn ? (
+                      <span className="flex items-center justify-center gap-1.5">
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Add-on Selected
+                      </span>
+                    ) : (
+                      "Add Add-on"
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Modal Footer Info */}
+        <div className="text-center p-3 bg-gray-50 mx-3 mb-3 rounded-md">
+          <p className="text-xs text-gray-600">
+            <span className="font-medium">🎉 Special Offer:</span> Add any item
+            to your combo and enjoy exclusive discounts!
+          </p>
+        </div>
+      </Modal>
+
+     <Modal
+  title={
+    <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
+      BMVCOINS Info
+    </span>
+  }
   open={isBmvModalVisible}
   onCancel={() => setIsBmvModalVisible(false)}
   footer={null}
   centered
 >
-  <div className="text-gray-700 text-sm space-y-2">
-    <p>
-      <strong>Current Value:</strong> ₹0.02 per coin
-    </p>
-    <p>
-      <strong>Future Value:</strong> ₹1+{" "}
-      <span className="italic text-xs text-gray-500">
-        (Projected value – no guarantee)
-      </span>
-    </p>
-    <p>
-      1,000 coins = <strong>₹20</strong>
-    </p>
-    <hr />
-    <p className="font-medium text-purple-700">
-      Minimum redemption amount
-    </p>
-    <ul className="list-disc pl-5 text-sm">
-      <li>Transfer to friends and family</li>
-      <li>Share with other ASKOXY.AI users</li>
-      <li>Use on non-GST items</li>
+  <div className="text-gray-700 text-sm space-y-5 pb-2">
+    {/* MAIN: Show GET coins and INR conversion as BIG highlight */}
+    {typeof itemDetails?.bmvCoins === "number" && itemDetails.bmvCoins > 0 ? (
+      <div className="text-center mb-3">
+        {/* MAIN VALUE */}
+        <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+          <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+            Get <span className="text-purple-700">{itemDetails.bmvCoins}</span> coins
+            <span className="mx-2 text-purple-400 text-2xl font-semibold">=</span>
+            <span className="text-green-700 font-bold">
+              ₹{(itemDetails.bmvCoins * 0.02).toFixed(2)}
+            </span>
+          </div>
+        </div>
+        {/* FUTURE VALUE */}
+        <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+          <span className="underline decoration-dotted">Future value :</span>
+          <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">₹{itemDetails.bmvCoins}</span>
+          <span className="text-yellow-500 font-extrabold ml-1">*</span>
+        </div>
+        <div className="italic text-xs text-gray-400 mt-1">
+          (*No guarantee on future value)
+        </div>
+      </div>
+    ) : (
+      <div className="text-center mb-3">
+        <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+          <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+            Get <span className="text-purple-700">1,000</span> coins
+            <span className="mx-2 text-purple-400 text-2xl font-semibold">=</span>
+            <span className="text-green-700 font-bold">₹20.00</span>
+          </div>
+        </div>
+        <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+          <span className="underline decoration-dotted">Future value :</span>
+          <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">₹1,000</span>
+          <span className="text-yellow-500 font-extrabold ml-1">*</span>
+        </div>
+        <div className="italic text-xs text-gray-400 mt-1">
+          (*No guarantee on future value)
+        </div>
+      </div>
+    )}
+
+    <div className="border-t border-purple-200 my-4" />
+
+    <div className="font-medium text-purple-700 text-base mb-1">
+      Redemption & Usage
+    </div>
+    <ul className="list-none space-y-2 pl-0">
+      <li className="flex items-center gap-2">
+        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
+        <span>Transfer to friends and family</span>
+      </li>
+      <li className="flex items-center gap-2">
+        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
+        <span>Share with other ASKOXY.AI users</span>
+      </li>
+      <li className="flex items-center gap-2">
+        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
+        <span>Use on non-GST items</span>
+      </li>
     </ul>
+
+    <div className="mt-2 text-xs text-gray-500">
+      <span className="font-semibold text-purple-700">Note:</span> Minimum redemption amount applies
+    </div>
   </div>
 </Modal>
-
 
       <Footer />
     </div>
@@ -1885,4 +1987,3 @@ const handleAddToCart = async (item: Item & { status?: string }) => {
 };
 
 export default ItemDisplayPage;
-
