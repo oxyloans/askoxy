@@ -1,5 +1,3 @@
-
-
 import React, {
   memo,
   useRef,
@@ -20,51 +18,31 @@ interface Props {
 
 const MarkdownRenderer: React.FC<Props> = memo(
   ({ content, className = "" }) => {
-   const CodeBlock = ({
-     inline,
-     className,
-     children,
-     ...props
-   }: ComponentPropsWithoutRef<"code"> & { inline?: boolean }) => {
-     const preRef = useRef<HTMLPreElement>(null);
+    const CodeBlock = ({
+      inline,
+      className,
+      children,
+      ...props
+    }: ComponentPropsWithoutRef<"code"> & { inline?: boolean }) => {
+      const preRef = useRef<HTMLPreElement>(null);
 
-     const copyToClipboard = () => {
-       if (preRef.current) {
-         // Get the exact text content preserving all whitespace and formatting
-         const codeElement = preRef.current.querySelector("code");
-         if (codeElement) {
-           const codeText =
-             codeElement.innerText || codeElement.textContent || "";
-           navigator.clipboard.writeText(codeText);
-         }
-       }
-     };
-
-     return inline ? (
-       <code className="rounded bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-300 px-1 py-0.5 text-sm font-mono">
-         {children}
-       </code>
-     ) : (
-       <div className="relative group my-4">
-         <pre
-           ref={preRef}
-           className="bg-[#f9f9f9] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 px-4 py-3 rounded-xl shadow-sm overflow-x-auto text-sm font-mono whitespace-pre-wrap"
-         >
-           <code {...props} className="break-words">
-             {children}
-           </code>
-         </pre>
-         {/* <button
-           onClick={copyToClipboard}
-           className="absolute top-2 right-2 hidden group-hover:inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded transition hover:bg-gray-300 dark:hover:bg-gray-600"
-           aria-label="Copy code"
-           title="Copy code"
-         >
-           Copy
-         </button> */}
-       </div>
-     );
-   };
+      return inline ? (
+        <code className="rounded bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-300 px-1 py-0.5 text-sm font-mono">
+          {children}
+        </code>
+      ) : (
+        <div className="relative group my-4">
+          <pre
+            ref={preRef}
+            className="bg-[#f9f9f9] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 px-4 py-3 rounded-xl shadow-sm overflow-x-auto text-sm font-mono whitespace-pre-wrap"
+          >
+            <code {...props} className="break-words">
+              {children}
+            </code>
+          </pre>
+        </div>
+      );
+    };
 
     const LinkRenderer = ({
       href,
@@ -156,17 +134,19 @@ const MarkdownRenderer: React.FC<Props> = memo(
               </blockquote>
             ),
             ul: ({ children }) => (
-              <ul className="list-disc ml-6 space-y-1 text-gray-800 dark:text-gray-200">
+              <ul className="list-disc ml-4 space-y-1 text-gray-800 dark:text-gray-200">
                 {children}
               </ul>
             ),
             ol: ({ children }) => (
-              <ol className="list-decimal ml-6 space-y-1 text-gray-800 dark:text-gray-200">
+              <ol className="list-decimal ml-4 space-y-1 text-gray-800 dark:text-gray-200">
                 {children}
               </ol>
             ),
             li: ({ children }) => (
-              <li className="leading-relaxed">{children}</li>
+              <li className="leading-relaxed text-gray-800 dark:text-gray-200 pl-2">
+                {children}
+              </li>
             ),
             code: CodeBlock,
             a: LinkRenderer,

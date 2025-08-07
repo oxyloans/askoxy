@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState } from "react";
 import { Download, Loader2, Copy, Check, Pencil } from "lucide-react";
 import {
@@ -16,7 +10,7 @@ import { Message } from "../types/types";
 interface MessageActionsProps {
   message: Message;
   index: number;
-  onEdit?: () => void; // Optional callback for editing (user messages only)
+  onEdit?: () => void;
   showOnly?: ("edit" | "copy" | "share" | "speak")[];
   small?: boolean;
 }
@@ -25,19 +19,19 @@ const MessageActions: React.FC<MessageActionsProps> = ({
   message,
   index,
   onEdit,
-  showOnly = ["edit", "copy", "share", "speak"], // default to show all
+  showOnly = ["edit", "copy", "share", "speak"],
   small = false,
 }) => {
   const [downloadingImage, setDownloadingImage] = useState<string | null>(null);
   const [readingAloudId, setReadingAloudId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false); // Track copy state for feedback
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-const buttonSize = small ? "w-6 h-6 text-xs" : "w-8 h-8";
+
   const shareContent = async (text: string) => {
     if (!navigator.share) {
       alert("Sharing is not supported on this browser.");
@@ -60,14 +54,11 @@ const buttonSize = small ? "w-6 h-6 text-xs" : "w-8 h-8";
       alert("Text-to-speech not supported.");
       return;
     }
-
     window.speechSynthesis.cancel();
-
     if (readingAloudId === id) {
       setReadingAloudId(null);
       return;
     }
-
     setReadingAloudId(id);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.onend = () => setReadingAloudId(null);
@@ -103,7 +94,6 @@ const buttonSize = small ? "w-6 h-6 text-xs" : "w-8 h-8";
 
   return (
     <div className="flex gap-2 items-center mt-2">
-      {/* Download Image Button (always shown for images) */}
       {message.isImage && (
         <button
           onClick={() => handleImageDownload(message.content)}
@@ -117,71 +107,68 @@ const buttonSize = small ? "w-6 h-6 text-xs" : "w-8 h-8";
             <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           )}
         </button>
-      )} <div className={`flex gap-1 mt-1 ${small ? "justify-end" : ""}`}>
-      {/* Edit Button (only shown if allowed) */}
-      {message.role === "user" && onEdit && showOnly.includes("edit") && (
-        <button
-          onClick={onEdit}
-          title="Edit message"
-          className="w-6 h-6 flex items-center justify-center rounded-lg  dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-        >
-          <Pencil className="w-4 h-4" />
-        </button>
       )}
-      {/* Copy Button (only shown if allowed) */}
-      {showOnly.includes("copy") && (
-        <button
-          onClick={handleCopy}
-          title={copied ? "Copied!" : "Copy message"}
-          className={`w-6 h-6 flex items-center justify-center rounded-lg transition-colors duration-200 ${
-            copied
-              ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
-              : " dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          {copied ? (
-            <Check className="w-4 h-4" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
-        </button>
-      )}
-      {/* Share Button (always shown) */}
-      {showOnly.includes("share") && (
-        <button
-          onClick={() => shareContent(message.content)}
-          title="Share message"
-          className="w-6 h-6 flex items-center justify-center rounded-lg dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-        >
-          <ShareIcon className="w-4 h-4" />
-        </button>
-      )}
-      {/* Read Aloud Button (always shown) */}
-      {showOnly.includes("speak") && (
-        <button
-          onClick={() =>
-            readAloud(
-              message.content,
-              message.id !== undefined ? String(message.id) : String(index)
-            )
-          }
-          title={
-            readingAloudId === (message.id || String(index))
-              ? "Stop reading"
-              : "Read aloud"
-          }
-          className={`w-6 h-6 flex items-center justify-center rounded-lg transition-colors duration-200 ${
-            readingAloudId === (message.id || String(index))
-              ? "bg-indigo-600 text-white"
-              : " dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          {readingAloudId === (message.id || String(index)) ? (
-            <SpeakerXMarkIcon className="w-4 h-4" />
-          ) : (
-            <SpeakerWaveIcon className="w-4 h-4" />
-          )}
-        </button>
+      <div className={`flex gap-1 mt-1 ${small ? "justify-end" : ""}`}>
+        {message.role === "user" && onEdit && showOnly.includes("edit") && (
+          <button
+            onClick={onEdit}
+            title="Edit message"
+            className="w-6 h-6 flex items-center justify-center rounded-lg dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        )}
+        {showOnly.includes("copy") && (
+          <button
+            onClick={handleCopy}
+            title={copied ? "Copied!" : "Copy message"}
+            className={`w-6 h-6 flex items-center justify-center rounded-lg transition-colors duration-200 ${
+              copied
+                ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+                : "dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
+          >
+            {copied ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+          </button>
+        )}
+        {showOnly.includes("share") && (
+          <button
+            onClick={() => shareContent(message.content)}
+            title="Share message"
+            className="w-6 h-6 flex items-center justify-center rounded-lg dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+          >
+            <ShareIcon className="w-4 h-4" />
+          </button>
+        )}
+        {showOnly.includes("speak") && (
+          <button
+            onClick={() =>
+              readAloud(
+                message.content,
+                message.id !== undefined ? String(message.id) : String(index)
+              )
+            }
+            title={
+              readingAloudId === (message.id || String(index))
+                ? "Stop reading"
+                : "Read aloud"
+            }
+            className={`w-6 h-6 flex items-center justify-center rounded-lg transition-colors duration-200 ${
+              readingAloudId === (message.id || String(index))
+                ? "bg-indigo-600 text-white"
+                : "dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
+          >
+            {readingAloudId === (message.id || String(index)) ? (
+              <SpeakerXMarkIcon className="w-4 h-4" />
+            ) : (
+              <SpeakerWaveIcon className="w-4 h-4" />
+            )}
+          </button>
         )}
       </div>
     </div>
@@ -189,4 +176,3 @@ const buttonSize = small ? "w-6 h-6 text-xs" : "w-8 h-8";
 };
 
 export default MessageActions;
-

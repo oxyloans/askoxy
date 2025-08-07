@@ -1,6 +1,7 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import BASE_URL from "../../Config";
 import { Message } from "../types/types";
+import axios from "axios";
 
 interface UseMessagesProps {
   messages: Message[];
@@ -9,7 +10,11 @@ interface UseMessagesProps {
   setInput: React.Dispatch<React.SetStateAction<string>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   messagesEndRef: React.RefObject<HTMLDivElement>;
-  abortControllerRef: React.MutableRefObject<AbortController | null>; // New prop for cancellation
+  abortControllerRef: React.MutableRefObject<AbortController | null>;
+  remainingPrompts: string | null;
+  setRemainingPrompts: React.Dispatch<React.SetStateAction<string | null>>;
+  threadId: string | null;
+  setThreadId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 export const useMessages = ({
@@ -20,6 +25,10 @@ export const useMessages = ({
   setLoading,
   messagesEndRef,
   abortControllerRef,
+  remainingPrompts,
+  setThreadId,
+  setRemainingPrompts,
+  threadId,
 }: UseMessagesProps) => {
   const handleSend = useCallback(
     async (messageContent?: string) => {
@@ -40,7 +49,7 @@ export const useMessages = ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedMessages),
-          signal: controller.signal, // Attach signal for cancellation
+          signal: controller.signal,
         });
 
         const data = await response.text();
@@ -49,7 +58,6 @@ export const useMessages = ({
           throw new Error(`Error: ${data}`);
         }
 
-        // Scroll after user message
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({
             behavior: "smooth",
@@ -64,7 +72,6 @@ export const useMessages = ({
           isImage: isImageUrl,
         };
 
-        // Scroll again after assistant message is shown
         setTimeout(() => {
           setMessages((prev) => [...prev, assistantReply]);
         }, 50);
@@ -97,12 +104,11 @@ export const useMessages = ({
       abortControllerRef,
     ]
   );
-  // Handle editing an existing message
+
   const handleEdit = useCallback(
     async (messageId: string, newContent: string) => {
       if (!newContent.trim()) return;
 
-      // Update the message content
       const updatedMessages = messages.map((msg) =>
         msg.id === messageId ? { ...msg, content: newContent } : msg
       );
@@ -114,7 +120,6 @@ export const useMessages = ({
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
-        // Send updated conversation to API
         const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -136,7 +141,6 @@ export const useMessages = ({
           isImage: isImageUrl,
         };
 
-        // Append new assistant response
         setMessages((prev) => [...prev, assistantReply]);
         messagesEndRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -162,6 +166,80 @@ export const useMessages = ({
     },
     [messages, setMessages, setLoading, messagesEndRef, abortControllerRef]
   );
+  const handleFileUpload = async (
+    file: File | null,
+    userPrompt: string
+  ): Promise<string | null> => {
+    if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
+      return await Promise.resolve(null);
+    }
 
-  return { handleSend, handleEdit };
+    setLoading(true);
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: userPrompt,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+
+    try {
+      const formData = new FormData();
+      if (file && threadId === null) {
+        formData.append("file", file);
+      }
+      formData.append("prompt", userPrompt);
+      if (threadId) {
+        formData.append("threadId", threadId);
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/student-service/user/chat-with-file`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const {
+        answer,
+        threadId: newThreadId,
+        remainingPrompts: updatedPrompts,
+      } = response.data;
+
+      setThreadId(newThreadId);
+      setRemainingPrompts(updatedPrompts);
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: answer,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      return newThreadId;
+    } catch (error) {
+      console.error("File upload failed:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "assistant",
+        content: "Sorry, the file upload failed. Please try again.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    handleSend,
+    handleEdit,
+    handleFileUpload,
+  };
 };

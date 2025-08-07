@@ -6,7 +6,17 @@ import React, {
   KeyboardEvent,
   useEffect,
 } from "react";
-import { ArrowUp, Loader2, Sparkles, Paperclip, Mic } from "lucide-react";
+import {
+  ArrowUp,
+  Loader2,
+  Sparkles,
+  Mic,
+  Plus,
+  X,
+  FileText,
+  Image,
+} from "lucide-react";
+import { message } from "antd";
 
 interface WelcomeScreenProps {
   input: string;
@@ -15,11 +25,43 @@ interface WelcomeScreenProps {
   handleKeyPress: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
   loading: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
+  handleFileUpload: (file: File, prompt: string) => void;
+  remainingPrompts: string | null;
+  selectedFile: File | null;
+  setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
 }
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult:
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
+    | null;
+  onerror:
+    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any)
+    | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+}
+
+interface SpeechRecognitionStatic {
+  new (): SpeechRecognition;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionStatic;
+    webkitSpeechRecognition: SpeechRecognitionStatic;
+  }
+}
+
 type SpeechRecognitionEvent = Event & {
   results: SpeechRecognitionResultList;
   resultIndex: number;
 };
+
 type SpeechRecognitionErrorEvent = Event & {
   error: string;
   message?: string;
@@ -31,6 +73,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   handleSend,
   loading,
   textareaRef,
+  handleFileUpload,
+  selectedFile,
+  setSelectedFile,
 }) => {
   const {
     suggestionPrompts,
@@ -40,12 +85,32 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     setShowDropdown,
   } = usePrompts(handleSend, setInput);
   const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [input]);
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      await handleSend();
+      if (selectedFile) {
+        handleFileUpload(
+          selectedFile,
+          input || "Summarize what this file contains in simple terms."
+        );
+        setInput("");
+      } else {
+        if (!input.trim()) {
+          message.info("Please enter a message or upload a file.");
+          return;
+        }
+        await handleSend();
+      }
       setShowDropdown(false);
     }
   };
@@ -61,10 +126,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
   }, [input]);
 
-  const handleToggleVoice = () => {
+  const handleToggleVoice = (): void => {
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert("Speech Recognition not supported in this browser.");
@@ -84,12 +148,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     recognitionRef.current = recognition;
 
-    recognition.onstart = () => {
+    recognition.onstart = (): void => {
       console.log("🎙️ Voice recording started...");
       setIsRecording(true);
     };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: SpeechRecognitionEvent): void => {
       let transcript = "";
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -104,13 +168,13 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent): void => {
       console.error("❌ Voice recognition error:", event.error);
       alert("Voice input failed: " + event.error);
       setIsRecording(false);
     };
 
-    recognition.onend = () => {
+    recognition.onend = (): void => {
       console.log("🛑 Voice recognition stopped.");
       setIsRecording(false);
     };
@@ -118,7 +182,79 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     recognition.start();
   };
 
- 
+  // Function to validate file type
+  const isValidFileType = (file: File): boolean => {
+    const allowedTypes = [
+      // Images
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      // Documents
+      "text/csv",
+      "text/plain",
+      "application/pdf",
+      // Word documents
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    const allowedExtensions = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp",
+      ".csv",
+      ".txt",
+      ".pdf",
+      ".doc",
+      ".docx",
+    ];
+
+    const fileExtension =
+      "." + (file.name.split(".").pop()?.toLowerCase() || "");
+
+    return (
+      allowedTypes.includes(file.type) ||
+      allowedExtensions.includes(fileExtension)
+    );
+  };
+
+  // Function to get file type display name
+  const getFileTypeDisplay = (file: File): string => {
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    switch (extension) {
+      case "jpg":
+      case "jpeg":
+      case "png":
+      case "gif":
+      case "webp":
+        return "📷 Image";
+      case "csv":
+        return "📊 CSV";
+      case "txt":
+        return "📄 Text";
+      case "pdf":
+        return "📕 PDF";
+      case "doc":
+      case "docx":
+        return "📘 Word";
+      default:
+        return "📎 File";
+    }
+  };
+
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith("image/")) {
+      return <Image className="w-4 h-4" />;
+    } else if (file.type === "application/pdf") {
+      return <FileText className="w-4 h-4" />;
+    }
+    return <FileText className="w-4 h-4" />;
+  };
+
   return (
     <div className="fixed inset-0 overflow-y-auto pointer-events-auto z-0 bg-white dark:bg-gray-900">
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
@@ -274,7 +410,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <div className="absolute -inset-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-full blur-xl animate-pulse"></div>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-           Welcome to Genoxy
+            Welcome to Genoxy
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed animate-fade-in-delayed">
@@ -291,108 +427,208 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
             )}
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {selectedFile && (
+                <div className="px-3 pt-1 pb-1 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-700 rounded-md">
+                    {filePreview ? (
+                      <img
+                        src={filePreview}
+                        alt="File preview"
+                        className="w-8 h-8 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 lg:w-7 lg:h-7 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                        {getFileIcon(selectedFile)}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 pl-2">
+                      <p className="text-[13px] font-medium text-gray-900 dark:text-white leading-tight truncate">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
 
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex items-end px-4 py-2 sm:py-3 sm:px-6 gap-3">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                  setInput(e.target.value)
-                }
-                onKeyDown={handleKeyPress}
-                placeholder="Type your message..."
-                disabled={loading}
-                rows={1}
-                className="flex-1 resize-none overflow-auto bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base sm:text-lg leading-[1.4] p-3 m-0 max-h-48"
-              />
-
-              <button
-                onClick={handleToggleVoice}
-                title="Voice Input"
-                disabled={loading}
-                className={`w-10 h-10 flex items-center justify-center rounded-xl transition ${
-                  isRecording
-                    ? "bg-red-100 text-red-600 animate-pulse"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                }`}
-              >
-                <Mic className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={async () => {
-                  await handleSend();
-                  setShowDropdown(false);
-                }}
-                disabled={!input.trim() || loading}
-                title="Send"
-                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 ${
-                  input.trim() && !loading
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <ArrowUp className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Suggestion Prompts */}
-        <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 flex flex-col gap-6 sm:gap-8">
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:flex sm:flex-wrap sm:justify-center">
-            {suggestionPrompts.map((prompt, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  const isMobile = window.innerWidth < 640;
-                  if (isMobile) {
-                    setInput(prompt.text);
-                    handleSend(prompt.text);
-                    setShowDropdown(false);
-                  } else {
-                    handlePromptSelect(prompt.text, prompt.related);
-                  }
-                }}
-                className="flex items-center px-3 py-2 bg-gray-900 border border-gray-700 rounded-full text-white hover:bg-gray-800 transition-all duration-300 text-xs sm:text-sm min-h-[44px]"
-              >
-                <div
-                  className={`flex items-center justify-center w-6 h-6 mr-2 rounded-full bg-gradient-to-br ${prompt.gradient} text-white text-xs`}
-                >
-                  {prompt.icon}
-                </div>
-                <span className="font-medium">{prompt.text}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Related Questions Dropdown */}
-          {showDropdown && relatedOptions.length > 0 && (
-            <div className="w-full flex justify-center px-3 sm:px-0">
-              <div className="max-h-[200px] overflow-y-auto sm:overflow-visible  rounded-lg  px-4 py-3">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-                  {relatedOptions.map((question, index) => (
                     <button
-                      key={index}
-                      onClick={() => {
-                        setInput(question);
-                        handleSend(question);
+                      onClick={() => setSelectedFile(null)}
+                      className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-400 transition-colors"
+                      title="Remove file"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex">
+                {/* Textarea */}
+                <div className="flex-1 px-6 py-2 flex flex-col">
+                  <div className="flex-grow">
+                    <textarea
+                      ref={textareaRef}
+                      value={input}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                        setInput(e.target.value)
+                      }
+                      onKeyDown={handleKeyPress}
+                      placeholder={
+                        selectedFile
+                          ? "Ask me anything about this file..."
+                          : "Type your message..."
+                      }
+                      disabled={loading}
+                      rows={1}
+                      className="w-full text-sm sm:text-base resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 max-h-32 overflow-auto p-1"
+                      style={{ minHeight: "20px" }}
+                    />
+                  </div>
+
+                  <div className="mt-2 flex justify-between items-end flex-wrap sm:flex-nowrap gap-2">
+                    <div className="flex gap-2">
+                      {/* Upload Button */}
+
+                      <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          if (!isValidFileType(file)) {
+                            alert(
+                              "Please select only: Images (JPEG, PNG, GIF, WebP), CSV, TXT, PDF, or Word documents (.doc, .docx)"
+                            );
+                            e.target.value = "";
+                            return;
+                          }
+
+                          setSelectedFile(file);
+                          e.target.value = "";
+                        }}
+                        accept=".jpg,.jpeg,.png,.gif,.webp,.csv,.txt,.pdf,.doc,.docx,image/*,text/csv,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      />
+                      <label htmlFor="file-upload">
+                        <div
+                          className={`w-7 h-7 sm:w-8 sm:h-8  lg:w-7 lg:h-7 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
+                            selectedFile
+                              ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          }`}
+                          title="Upload file"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </div>
+                      </label>
+                      {/* Mic Button */}
+                      <button
+                        onClick={handleToggleVoice}
+                        title="Voice Input"
+                        disabled={loading}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 lg:w-7 lg:h-7 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                          isRecording
+                            ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        <Mic className="w-5 h-5" />
+                      </button>
+                    </div>
+                    {/* Send Button */}
+                    <button
+                      onClick={async () => {
+                        if (selectedFile) {
+                          handleFileUpload(
+                            selectedFile,
+                            input || "please describe the file content properly"
+                          );
+                          setInput("");
+                        } else {
+                          if (!input.trim()) {
+                            message.info(
+                              "Please enter a message or upload a file."
+                            );
+                            return;
+                          }
+
+                          await handleSend();
+                        }
                         setShowDropdown(false);
                       }}
-                      className="flex items-center px-4 py-2 bg-gray-700 border border-gray-600 rounded-full text-white hover:bg-gray-600 transition duration-300 text-xs sm:text-sm min-h-[40px]"
+                      disabled={(!input.trim() && !selectedFile) || loading}
+                      title="Send"
+                      className={`w-7 h-7 sm:w-8 sm:h-8   lg:w-7 lg:h-7  flex items-center justify-center rounded-xl transition-all duration-200 ${
+                        (input.trim() || selectedFile) && !loading
+                          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                      }`}
                     >
-                      <span className="font-medium truncate">{question}</span>
+                      {loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <ArrowUp className="w-5 h-5" />
+                      )}
                     </button>
-                  ))}
+                  </div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
+      </div>
+
+      {/* Suggestion Prompts */}
+      <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 flex flex-col gap-6 sm:gap-8">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:flex sm:flex-wrap sm:justify-center">
+          {suggestionPrompts.map((prompt, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                const isMobile = window.innerWidth < 640;
+                if (isMobile) {
+                  setInput(prompt.text);
+                  handleSend(prompt.text);
+                  setShowDropdown(false);
+                } else {
+                  handlePromptSelect(prompt.text, prompt.related);
+                }
+              }}
+              className="flex items-center px-3 py-2 bg-gray-900 border border-gray-700 rounded-full text-white hover:bg-gray-800 transition-all duration-300 text-xs sm:text-sm min-h-[44px]"
+            >
+              <div
+                className={`flex items-center justify-center w-6 h-6 mr-2 rounded-full bg-gradient-to-br ${prompt.gradient} text-white text-xs`}
+              >
+                {prompt.icon}
+              </div>
+              <span className="font-medium">{prompt.text}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Related Questions Dropdown */}
+        {showDropdown && relatedOptions.length > 0 && (
+          <div className="w-full flex justify-center px-3 sm:px-0">
+            <div className="max-h-[200px] overflow-y-auto sm:overflow-visible  rounded-lg  px-4 py-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+                {relatedOptions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setInput(question);
+                      handleSend(question);
+                      setShowDropdown(false);
+                    }}
+                    className="flex items-center px-4 py-2 bg-gray-700 border border-gray-600 rounded-full text-white hover:bg-gray-600 transition duration-300 text-xs sm:text-sm min-h-[40px]"
+                  >
+                    <span className="font-medium truncate">{question}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

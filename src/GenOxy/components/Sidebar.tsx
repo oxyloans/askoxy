@@ -18,13 +18,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   clearChat,
 }) => {
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 shadow-lg">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800 shadow-lg">
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-2 py-1 border-b border-gray-200  dark:border-gray-700">
         {/* Sparkles icon - hidden on small screens */}
         <div className="hidden sm:flex rounded-lg  items-center justify-center transition-shadow duration-200">
           <button onClick={clearChat}>
-            <Sparkles className="w-8 h-8 text-purple-800  rounded-lg bg-gray-50" />
+            <Sparkles className="w-6 h-6 text-purple-800 dark:text-white dark:bg-gray-800  rounded-lg" />
           </button>
         </div>
         <div className="hidden sm:flex flex-1 justify-center" />

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Menu, Share, Sparkles } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -7,7 +6,7 @@ interface HeaderProps {
   clearChat: () => void;
   toggleSidebar: () => void;
   isSidebarOpen: boolean;
-  messages: Message[]; 
+  messages: Message[];
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -18,31 +17,43 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const shareChat = async () => {
     try {
-      // Generate a unique conversation ID
+      if (!messages.length) {
+        alert("No chat to share.");
+        return;
+      }
+
       const conversationId = uuidv4();
-      // Mock URL for the shared conversation (replace with actual backend endpoint if available)
+
+      // Save snapshot locally
+      const chatSnapshot = {
+        id: conversationId,
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        createdAt: new Date().toISOString(),
+      };
+
+      const storageKey = `genoxy_shared_chat_${conversationId}`;
+      localStorage.setItem(storageKey, JSON.stringify(chatSnapshot));
+
+      // Generate the share URL
       const shareUrl = `${window.location.origin}/genoxy/share/${conversationId}`;
 
-      // Simulate storing the conversation snapshot (in a real app, this would be sent to a backend)
-      const conversationSnapshot = {
-        id: conversationId,
-        messages: messages.map(({ role, content }) => ({ role, content })), // Snapshot of current messages
-        timestamp: new Date().toISOString(),
-      };
-      console.log("Sharing conversation snapshot:", conversationSnapshot);
-
-      // Copy the URL to the clipboard
-      await navigator.clipboard.writeText(shareUrl);
-      alert(
-        "Link copied to clipboard! Share it with others to view the conversation. Note: Anyone with the link can view it, so avoid sharing sensitive information."
-      );
-    } catch (error) {
-      console.error("Failed to share conversation:", error);
-      alert("Failed to copy share link. Please try again.");
+      // Prefer Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: "Shared Chat from Genoxy",
+          text: `Check out this conversation:\n${shareUrl}`,
+          url: shareUrl,
+        });
+      } else {
+        // Fallback: Copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        alert("🔗 Share link copied to clipboard!");
+      }
+    } catch (error: any) {
+      console.error("❌ Share failed:", error);
+      alert("❌ Failed to share the chat.");
     }
   };
-
-
 
 
   // const shareChat = async () => {
@@ -77,8 +88,8 @@ const Header: React.FC<HeaderProps> = ({
   //   }
   // };
   return (
-    <header className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm ">
-      <div className="max-w-5xl mx-auto px-4 py-3">
+    <header className="flex-shrink-0 sticky top-0 z-20  ">
+      <div className="max-w-5xl mx-auto px-2 py-1">
         <div className="relative flex items-center justify-between">
           {/* LEFT: Menu Icon (mobile only) */}
           <div className="sm:hidden">
@@ -94,11 +105,13 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Sparkles + GENOXY */}
-          <div className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-purple-700  dark:text-white" />
-            <span className="font-semibold text-purple-700 text-sm  px-3 py-2 dark:text-white rounded-lg hover:bg-gray-50 hover:dark:bg-gray-700 transition-all duration-200">
-              GENOXY
-            </span>
+          <div className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:dark:bg-gray-700 transition-all duration-200">
+              <Sparkles className="w-5 h-5 text-purple-700 dark:text-white" />
+              <span className="font-semibold text-purple-700 text-sm dark:text-white">
+                GENOXY
+              </span>
+            </div>
           </div>
 
           {/* RIGHT: Share button */}
@@ -107,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({
               onClick={shareChat}
               className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-white  hover:bg-gray-50 hover:dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200"
             >
-              <Share className="w-6 h-6 text-purple-700 dark:text-white" />
+              <Share className="w-5 h-5 text-purple-700 dark:text-white" />
               <span className="hidden sm:inline font-semibold text-purple-600 dark:text-white">
                 Share
               </span>
