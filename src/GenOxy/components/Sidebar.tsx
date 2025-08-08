@@ -18,7 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   clearChat,
 }) => {
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 shadow-lg">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800 shadow-sm">
       {/* Sidebar Header */}
       <div className="flex items-center justify-between px-2 py-1 border-b border-gray-200  dark:border-gray-700">
         {/* Sparkles icon - hidden on small screens */}
@@ -61,8 +61,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-2 px-4 py-2">
-        <History className="w-5 h-5 text-purple-800 dark:text-white" />
-        <h2 className="text-lg pt-2 font-semibold text-purple-800 dark:text-white">
+        <History className="w-5 h-5 pt-1 text-purple-800 dark:text-white" />
+        <h2 className="text-lg pt-3 font-semibold text-purple-800 dark:text-white">
           Chat History
         </h2>
       </div>

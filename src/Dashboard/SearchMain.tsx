@@ -246,9 +246,7 @@ const SearchMain: React.FC = () => {
 
   // Handle item click to navigate to ItemDisplayPage
   const handleItemClick = (item: SearchItem) => {
-    navigate(`/main/itemsdisplay/${item.itemId}`, {
-      state: { item },
-    });
+    navigate(`/main/itemsdisplay/${item.itemId}`);
   };
 
   // Handle remove item from cart

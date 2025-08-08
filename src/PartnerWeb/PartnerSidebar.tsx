@@ -1,12 +1,13 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu } from "antd";
+import { Store } from "lucide-react";
 import {
   ShoppingCartOutlined,
   CheckOutlined,
   TruckOutlined,
   UnorderedListOutlined,
-  UserOutlined,
+  UserOutlined,CarOutlined,
   InboxOutlined,
   QuestionCircleOutlined,
   QrcodeOutlined,
@@ -19,7 +20,7 @@ import {
   LineChartOutlined,
   AppstoreOutlined,
   CodeSandboxOutlined,
-  SyncOutlined,
+  SyncOutlined,ShopOutlined,
   LinkOutlined,
 } from "@ant-design/icons";
 import { Truck } from 'lucide-react';
@@ -115,8 +116,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
       {
       key: "/home/addvehicle",
-      icon: <Truck />,
+      icon: <CarOutlined />,
       label: "Vehicle Report",
+    },
+      {
+      key: "/home/marketreport",
+      icon: <ShopOutlined/>,
+      label: "Market Report",
     },
     {
       key: "/home/versionUpdate",

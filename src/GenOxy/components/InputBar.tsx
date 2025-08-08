@@ -5,7 +5,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import { ArrowUp, Loader2, Mic, X, FileText, Image } from "lucide-react";
+import { ArrowUp, Loader2, Mic, X,  Plus,  FileText, Image } from "lucide-react";
 import { message } from "antd";
 
 interface InputBarProps {
@@ -267,14 +267,14 @@ const InputBar: React.FC<InputBarProps> = ({
                       {/* + Upload Button */}
                       <label
                         htmlFor="file-upload"
-                        className={`w-7 h-7 sm:w-8 sm:h-8 lg:w-7 lg:h-7 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
+                        className={`inline-flex items-center justify-center appearance-none w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 rounded-xl transition-all duration-200 cursor-pointer ${
                           uploadedFile
                             ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                         }`}
                         title="Upload file"
                       >
-                        +
+                      <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
                       </label>
                       <input
                         id="file-upload"
@@ -289,14 +289,14 @@ const InputBar: React.FC<InputBarProps> = ({
                         onClick={handleToggleVoice}
                         title="Voice Input"
                         disabled={loading || isEditing}
-                        className={`w-7 h-7  lg:w-7 lg:h-7  sm:w-8 sm:h-8 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                        className={`inline-flex items-center justify-center appearance-none rounded-xl transition-all duration-200 w-8 h-8 sm:w-8 sm:h-8 lg:w-8 lg:h-8 ${
                           isRecording
                             ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                         } ${isEditing ? "opacity-50 cursor-not-allowed" : ""}`}
                         aria-label="Voice input"
                       >
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
                       </button>
                     </div>
 
@@ -316,7 +316,7 @@ const InputBar: React.FC<InputBarProps> = ({
                           ? "Send file with message"
                           : "Send message"
                       }
-                      className={`w-8 h-8 sm:w-7 sm:h-7  lg:w-7 lg:h-7  rounded-xl transition-all duration-200 flex items-center justify-center ${
+                      className={`inline-flex items-center justify-center appearance-none rounded-xl transition-all duration-200 w-8 h-8 sm:w-8 sm:h-8 lg:w-8 lg:h-8 ${
                         loading
                           ? "bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 shadow-lg"
                           : (input.trim() || uploadedFile) && !isRecording
@@ -325,9 +325,9 @@ const InputBar: React.FC<InputBarProps> = ({
                       }`}
                     >
                       {loading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
                       ) : (
-                        <ArrowUp className="w-5 h-5" />
+                        <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6" />
                       )}
                     </button>
                   </div>

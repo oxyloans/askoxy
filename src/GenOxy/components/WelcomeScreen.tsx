@@ -510,30 +510,30 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         }}
                         accept=".jpg,.jpeg,.png,.gif,.webp,.csv,.txt,.pdf,.doc,.docx,image/*,text/csv,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       />
-                      <label htmlFor="file-upload">
-                        <div
-                          className={`w-7 h-7 sm:w-8 sm:h-8  lg:w-7 lg:h-7 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
-                            selectedFile
-                              ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                          }`}
-                          title="Upload file"
-                        >
-                          <Plus className="w-5 h-5" />
-                        </div>
+                      <label
+                        htmlFor="file-upload"
+                        className={`inline-flex items-center justify-center appearance-none w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 rounded-xl transition-all duration-200 cursor-pointer
+          ${
+            selectedFile
+              ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
+              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+          }`}
+                        title="Upload file"
+                      >
+                        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
                       </label>
                       {/* Mic Button */}
                       <button
                         onClick={handleToggleVoice}
                         title="Voice Input"
                         disabled={loading}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 lg:w-7 lg:h-7 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                        className={`inline-flex items-center justify-center appearance-none rounded-xl transition-all duration-200 w-8 h-8 sm:w-8 sm:h-8 lg:w-8 lg:h-8 ${
                           isRecording
                             ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                         }`}
                       >
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
                       </button>
                     </div>
                     {/* Send Button */}
@@ -559,16 +559,16 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       }}
                       disabled={(!input.trim() && !selectedFile) || loading}
                       title="Send"
-                      className={`w-7 h-7 sm:w-8 sm:h-8   lg:w-7 lg:h-7  flex items-center justify-center rounded-xl transition-all duration-200 ${
+                      className={`inline-flex items-center justify-center appearance-none rounded-xl transition-all duration-200 w-8 h-8 sm:w-8 sm:h-8 lg:w-8 lg:h-8${
                         (input.trim() || selectedFile) && !loading
                           ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                           : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                       }`}
                     >
                       {loading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
                       ) : (
-                        <ArrowUp className="w-5 h-5" />
+                        <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6" />
                       )}
                     </button>
                   </div>

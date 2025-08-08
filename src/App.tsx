@@ -185,6 +185,7 @@ import JobsAdminPage from "./AskoxyAdmin/Alljobdetails";
 import AddReference from "./PartnerWeb/AddReference";
 import UserAppliedJob from "./AskoxyAdmin/UserAppliedJobs";
 import StockTable from "./PartnerWeb/StockDetails";
+import MarketReport from "./PartnerWeb/Marketreport";
 
 
 const App: React.FC = () => {
@@ -613,6 +614,7 @@ const App: React.FC = () => {
               <Route path="addvehicle" element={<VehicleManagement />} />
               <Route path="dbList" element={<DeliveryBoyList />} />
               <Route path="queryManagement" element={<AllQueries />} />
+              <Route path="marketreport" element={<MarketReport />} />
               <Route path="scan-qr" element={<BarcodeScanner />} />
               <Route path="itemsList" element={<PartnerItemsList />} />
               <Route path="dbOrderList" element={<DbOrderDetails />} />
