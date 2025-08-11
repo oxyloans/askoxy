@@ -186,6 +186,7 @@ import AddReference from "./PartnerWeb/AddReference";
 import UserAppliedJob from "./AskoxyAdmin/UserAppliedJobs";
 import StockTable from "./PartnerWeb/StockDetails";
 import MarketReport from "./PartnerWeb/Marketreport";
+import FreeAiBookLandingPage from "./FREEAIBOOK/LandingPage";
 
 
 const App: React.FC = () => {
@@ -295,6 +296,7 @@ const App: React.FC = () => {
               element={<FMSRouteRenderer />}
             />
             <Route path="/glms" element={<LandingPage />} />
+            <Route path="/FreeAIBook" element={<FreeAiBookLandingPage />} />
             <Route
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
