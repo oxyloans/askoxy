@@ -78,6 +78,7 @@ import Content1 from "./Dashboard/Content";
 import CampaignDetails from "./components/campaignDetails";
 import FreeChatGPTnormal from "./Dashboard/Freechatgptnormal";
 import WomensDay from "./components/WomensDay";
+import Content2 from "./FREEAIBOOK/Content";
 import HiddenLogin from "./Pages/Auth/HiddenLogin";
 import SuperAdminComments from "./AskoxyAdmin/SuperAdminComments";
 import TestimonialsPage from "./Dashboard/TestimoinalsOXY";
@@ -187,6 +188,7 @@ import UserAppliedJob from "./AskoxyAdmin/UserAppliedJobs";
 import StockTable from "./PartnerWeb/StockDetails";
 import MarketReport from "./PartnerWeb/Marketreport";
 import FreeAiBookLandingPage from "./FREEAIBOOK/LandingPage";
+import FreeAiBook from "./FREEAIBOOK/FreeAiBookLandingPage";
 
 
 const App: React.FC = () => {
@@ -213,6 +215,7 @@ const App: React.FC = () => {
       "/nyayagpt",
       "/student-home",
       "/studyabroad",
+      "/FreeAIBook"
      
     ];
     if (validEntryPoints.includes(location.pathname)) {
@@ -296,14 +299,17 @@ const App: React.FC = () => {
               element={<FMSRouteRenderer />}
             />
             <Route path="/glms" element={<LandingPage />} />
-            <Route path="/FreeAIBook" element={<FreeAiBookLandingPage />} />
+            <Route path="/FreeAIBook" element={<Content2 />}>
+              <Route index element={<FreeAiBookLandingPage />} />
+              <Route path="view" element={<FreeAiBook />} />
+            </Route>
             <Route
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
             />
             {/* <Route path="/generateimage" element={<AskoxyAi />} /> */}
             <Route path="/genoxy" element={<GenOxy />} />
-            <Route path="/voiceAssistant" element={<RealtimePage />} />
+            <Route path="/voiceAssistant" element={<RealtimePage />} />
             <Route path="/caandcsservices" element={<CACSService />} />
             <Route
               path="/goldandsilveranddiamonds"

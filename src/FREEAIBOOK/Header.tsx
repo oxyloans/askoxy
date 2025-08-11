@@ -1,40 +1,53 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogonew.png";
+import { useNavigate } from "react-router-dom";
 
-
-
-const Header = () => {
+const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const navigate = useNavigate();
+  const LOGIN_URL = "/whatsappregister";
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    // Check login status on mount
+    const userId = localStorage.getItem("userId");
+    setIsLoggedIn(!!userId);
   }, []);
 
-  useEffect(() => {
-    if (isMenuOpen) {
-      const closeOnOutsideClick = (e: MouseEvent) => {
-        if (
-          !(e.target instanceof HTMLElement) ||
-          (!e.target.closest(".mobile-menu-container") &&
-            !e.target.closest(".menu-button"))
-        ) {
-          setIsMenuOpen(false);
+  const handleAuth = async () => {
+    try {
+      setIsLoading(true);
+
+      if (isLoggedIn) {
+        // Sign out
+        localStorage.removeItem("userId");
+        sessionStorage.removeItem("redirectPath");
+        setIsLoggedIn(false);
+        navigate("/FreeAIBook"); // Redirect to home after sign out
+      } else {
+        // Sign in
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+          navigate("/FreeAIBook/view");
+        } else {
+          sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
+          window.location.href = LOGIN_URL;
         }
-      };
-      document.addEventListener("click", closeOnOutsideClick);
-      return () => document.removeEventListener("click", closeOnOutsideClick);
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [isMenuOpen]);
+  };
 
- 
-
+  const handleWriteToUs = () => {
+    window.location.href = "/main/writetous";
+  };
 
   return (
     <header
@@ -55,10 +68,34 @@ const Header = () => {
             />
           </div>
 
-          {/* Desktop Buttons */}
+          {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-indigo-400">
-              Free AI Book
+            {isLoggedIn && (
+              <button
+                onClick={handleWriteToUs}
+                className="bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:via-indigo-700 hover:to-indigo-800 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-indigo-400"
+              >
+                Write to Us
+              </button>
+            )}
+            <button
+              onClick={handleAuth}
+              disabled={isLoading}
+              className={`${
+                isLoggedIn
+                  ? "bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white"
+                  : "bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:from-purple-600 hover:via-purple-700 hover:to-purple-800 text-white"
+              } px-4 py-2 rounded-lg transition transform hover:scale-105 focus-visible:ring-2 ${
+                isLoggedIn
+                  ? "focus-visible:ring-red-400"
+                  : "focus-visible:ring-indigo-400"
+              }`}
+            >
+              {isLoading
+                ? "Loading..."
+                : isLoggedIn
+                ? "Sign Out"
+                : "Free AI Book"}
             </button>
           </div>
 
@@ -78,20 +115,37 @@ const Header = () => {
           </div>
         </div>
 
+        {/* Mobile Dropdown */}
         {isMenuOpen && (
           <div className="mobile-menu-container md:hidden bg-white border-t rounded-b-lg shadow-lg mt-1 animate-slideDown">
             <ul className="flex flex-col divide-y text-sm">
-              
-
-              <li className="px-4 pt-4">
+              {isLoggedIn && (
+                <li className="px-4 pt-4 pb-2">
+                  <button
+                    onClick={handleWriteToUs}
+                    className="w-full py-3 rounded-md bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white transition"
+                  >
+                    Write to Us
+                  </button>
+                </li>
+              )}
+              <li className="px-4 pt-2 pb-4">
                 <button
-                 
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-md transition"
+                  onClick={handleAuth}
+                  disabled={isLoading}
+                  className={`w-full py-3 rounded-md transition ${
+                    isLoggedIn
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  } text-white`}
                 >
-                  Free AI Book
+                  {isLoading
+                    ? "Loading..."
+                    : isLoggedIn
+                    ? "Sign Out"
+                    : "Free AI Book"}
                 </button>
               </li>
-              
             </ul>
           </div>
         )}

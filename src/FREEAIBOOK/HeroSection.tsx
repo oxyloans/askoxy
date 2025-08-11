@@ -1,88 +1,133 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BookOpen, Users, Building2, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+const FreeAIBookHome: React.FC = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-function FreeAIBookHome() {
-  const googleDriveLink =
-    "https://docs.google.com/presentation/d/1VhV-DHryWpu81oiVjDTzi6WxDKaddEEz/preview";
+    const navigate = useNavigate();
+const LOGIN_URL = "/whatsappregister";
 
-  const handleOpenBook = () => {
-    window.open(googleDriveLink, "_blank", "noopener,noreferrer");
-  };
+   const handleSignIn = async () => {
+     try {
+       setIsLoading(true);
+       const userId = localStorage.getItem("userId");
+       if (userId) {
+         // ✅ Directly navigate to the image viewer
+         navigate("/FreeAIBook/view");
+       } else {
+         // Save the intended path so user comes back here after login
+         sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
+         window.location.href = LOGIN_URL; // goes to WhatsApp register
+       }
+     } catch (error) {
+       console.error("Sign in error:", error);
+     } finally {
+       setIsLoading(false);
+     }
+   };
+
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Main Section */}
-      <section className="flex-grow bg-gradient-to-br from-indigo-50 via-blue-100 to-purple-100 py-16 px-6 sm:px-10 lg:px-20">
-        <div className="max-w-7xl mx-auto text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-800 mb-4">
-            🚀 Empowering India with AI Innovation
+    <main className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+      <section
+        className={`flex-grow px-6 sm:px-10 lg:px-20 py-4 transition-shadow duration-300 ${
+          isScrolled ? "shadow-sm" : "shadow-none"
+        }`}
+        aria-labelledby="main-heading"
+      >
+        <div className="max-w-7xl mx-auto text-center mb-8">
+          <h1
+            id="main-heading"
+            className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500"
+          >
+            Empowering India with AI Innovation
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Join the movement that’s shaping the future of Artificial
-            Intelligence, Blockchain & Cloud — through education, innovation,
-            and community.
+
+          <p className="text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-400">
+            Join the movement shaping the future of Artificial Intelligence,
+            Blockchain & Cloud — through education, innovation, and community.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Mission Million AI Coders */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 text-center border-t-4 border-blue-500">
-            <Users className="text-blue-600 w-12 h-12 mx-auto mb-5" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <article
+            className="bg-white rounded-3xl shadow-xl p-8 text-center border-t-4 border-blue-500 transform transition-transform duration-300 hover:shadow-2xl hover:scale-[1.04]"
+            tabIndex={0}
+            aria-label="Mission Million AI Coders"
+          >
+            <Users
+              className="text-blue-600 w-12 h-12 mx-auto mb-5"
+              aria-hidden="true"
+            />
+            <h2 className="text-2xl font-bold text-blue-700 mb-4">
               Mission Million AI Coders
             </h2>
-            <p className="text-gray-700 text-[15px] leading-relaxed">
-              Skilling <span className="font-semibold">1 million Indians</span>{" "}
-              in AI, Blockchain & Cloud through real-world projects, mentorship,
-              and community-driven learning.
+            <p className="text-blue-600 text-[15px] leading-relaxed">
+              Skilling <strong>1 million Indians</strong> in AI, Blockchain &
+              Cloud through real-world projects, mentorship, and
+              community-driven learning.
             </p>
-          </div>
+          </article>
 
-          {/* BillionAIre Hub */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 text-center border-t-4 border-purple-500">
-            <Building2 className="text-purple-600 w-12 h-12 mx-auto mb-5" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <article
+            className="bg-white rounded-3xl shadow-xl p-8 text-center border-t-4 border-purple-500 transform transition-transform duration-300 hover:shadow-2xl hover:scale-[1.04]"
+            tabIndex={0}
+            aria-label="BillionAIre Hub"
+          >
+            <Building2
+              className="text-purple-600 w-12 h-12 mx-auto mb-5"
+              aria-hidden="true"
+            />
+            <h2 className="text-2xl font-bold text-purple-700 mb-4">
               BillionAIre Hub
             </h2>
-            <p className="text-gray-700 text-[15px] leading-relaxed">
-              India’s first{" "}
-              <span className="font-semibold">AI Studio-as-a-Service</span>
-              in Hyderabad — open to entrepreneurs, students & professionals to
-              innovate and build AI solutions for free.
+            <p className="text-purple-600 text-[15px] leading-relaxed">
+              India’s first <strong>AI Studio-as-a-Service</strong> in Hyderabad
+              — open to entrepreneurs, students & professionals to innovate and
+              build AI solutions for free.
             </p>
-          </div>
+          </article>
 
-          {/* First Free AI Book */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 text-center border-t-4 border-green-500">
-            <BookOpen className="text-green-600 w-12 h-12 mx-auto mb-5" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <article
+            className="bg-white rounded-3xl shadow-xl p-8 text-center border-t-4 border-green-500 transform transition-transform duration-300 hover:shadow-2xl hover:scale-[1.04]"
+            tabIndex={0}
+            aria-label="Our First Free AI Book"
+          >
+            <BookOpen
+              className="text-green-600 w-12 h-12 mx-auto mb-5"
+              aria-hidden="true"
+            />
+            <h2 className="text-2xl font-bold text-green-700 mb-4">
               Our First Free AI Book
             </h2>
-            <p className="text-gray-700 text-[15px] leading-relaxed">
+            <p className="text-green-600 text-[15px] leading-relaxed">
               Discover India’s AI journey with inspiring stories, real-world
               insights, and future-ready strategies from our initiatives.
             </p>
-            <button
-              onClick={handleOpenBook}
-              className="mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 mx-auto transition-all duration-300 shadow-md"
-            >
-              View Book
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          </article>
+        </div>
+
+        {/* Button below all cards */}
+        <div className="mt-12 text-center">
+          <button
+            onClick={handleSignIn}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 hover:from-indigo-600 hover:via-purple-700 hover:to-pink-600 focus:outline-none focus:ring-4 focus:ring-purple-300 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition-all duration-300 text-lg"
+            aria-label="View our first free AI book"
+          >
+            Our First Free AI Book
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-6 text-center">
-        <p className="text-sm text-gray-400">
-          © {new Date().getFullYear()}{" "}
-          <span className="font-semibold">ASKOXY.AI</span> — Empowering Minds
-          with AI
-        </p>
-      </footer>
-    </div>
+    </main>
   );
-}
+};
 
 export default FreeAIBookHome;

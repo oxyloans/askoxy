@@ -567,12 +567,12 @@ const Home: React.FC = () => {
           itemsResponseDtoList: goldItems,
           subCategories: [],
         },
-        {
-          categoryName: "Festival", // show "Festival" but fetches RAKHI items
-          categoryImage: defaultCategoryImages["Rakhi"],
-          itemsResponseDtoList: rakhiItems,
-          subCategories: [],
-        },
+        // {
+        //   categoryName: "Festival", // show "Festival" but fetches RAKHI items
+        //   categoryImage: defaultCategoryImages["Rakhi"],
+        //   itemsResponseDtoList: rakhiItems,
+        //   subCategories: [],
+        // },
       ];
 
       // Log final categories
@@ -692,9 +692,9 @@ const Home: React.FC = () => {
       id: "Cashew Offer",
       src: Cashew,
       alt: "Cashew Offer",
-      path: "/main/dashboard/products?category=RAKHI",
+      path: "/main/dashboard/products?category=Monsoon Magic",
       onClick: () => {
-        navigate("/main/dashboard/products?category=RAKHI");
+        navigate("/main/dashboard/products?category=Monsoon Magic");
       },
     },
     {
