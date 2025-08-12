@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { Home, X, Building, Phone, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-interface NyayagptHeaderProps {
+interface CaCsHeaderProps {
   onNavClick: (id: "home" | "services" | "contact") => void;
   activeLink: string;
 }
@@ -16,7 +16,7 @@ interface NyayagptHeaderProps {
 const NyayagptHeader = memo(function NyayagptHeader({
   onNavClick,
   activeLink,
-}: NyayagptHeaderProps) {
+}: CaCsHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
   const scrollRef = useRef(isScrolled);
@@ -44,18 +44,18 @@ const NyayagptHeader = memo(function NyayagptHeader({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = useCallback(
-    (id: "home" | "services" | "contact") => {
-      const target = document.getElementById(id);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth" });
-      }
-      onNavClick(id);
-      setIsMenuOpen(false);
-    },
-    [onNavClick]
-  );
-
+    const handleNavClick = useCallback(
+      (id: "home" | "services" | "contact") => {
+        const target = document.getElementById(id);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" });
+        }
+        onNavClick(id);
+        setIsMenuOpen(false);
+      },
+      [onNavClick]
+    );
+  
   const toggleMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -169,7 +169,8 @@ const logo = (
       <span className="text-purple-600">GPT</span>
     </div>
   </div>
-);
+  );
+   const isActive = (id: string) => activeLink === id;
 
 
   return (
@@ -183,24 +184,20 @@ const logo = (
           <div className="flex items-center justify-between h-16 md:h-20">
             {logo}
 
-            <nav className="hidden md:flex flex-1 justify-center">
-              <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-full px-3 py-2 shadow-inner border border-gray-200/50">
-                {navLinks.map((link) => (
-                  <li key={link.id}>
-                    <button
-                      onClick={handleHome}
-                      className={`px-4 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 ${
-                        activeLink === link.id
-                          ? "text-white bg-gradient-to-r from-indigo-600 to-purple-500 shadow-md scale-105"
-                          : "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105"
-                      }`}
-                    >
-                      <link.icon size={16} />
-                      <span>{link.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            <nav className="hidden md:flex items-center gap-3">
+              {navLinks.map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => handleNavClick(id)}
+                  className={`px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                    isActive(id)
+                      ? "bg-gradient-to-r from-blue-700 to-purple-600 text-white shadow-md"
+                      : "text-blue-900 hover:bg-blue-50 hover:text-blue-600"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </nav>
 
             <div className="hidden md:flex items-center gap-3">

@@ -135,8 +135,8 @@ const OurServicesCarousel = () => {
                 >
                   <img
                     src={company.logo}
-                    alt={company.name}
-                    className="mx-auto h-40 object-contain"
+                    alt={company.name || "Company Logo"}
+                    className="mx-auto h-40 sm:h-52 md:h-64 object-contain w-full transition duration-300"
                   />
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                     {company.name}

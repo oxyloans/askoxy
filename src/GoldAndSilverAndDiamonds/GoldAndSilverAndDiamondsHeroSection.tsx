@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  memo,
+  useRef,
+  useMemo,
+} from "react";
+import { Cpu, X, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const rotatingWords = [
   "Gold Jewelry",
@@ -14,6 +22,12 @@ function GoldSilverDiamondHeroSection() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
+    const scrollRef = useRef(isScrolled);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const LOGIN_URL = "/whatsapplogin";
+    const navigate = useNavigate();
 
   useEffect(() => {
     setIsVisible(true);
@@ -39,17 +53,23 @@ function GoldSilverDiamondHeroSection() {
     return () => clearInterval(interval);
   }, [currentWordIndex]);
 
-  const handleExplore = () => {
-    // Using state instead of localStorage for demo
-    const userId = "demo-user";
-    const redirectPath = "/main/services/71e3/gold-silver-diamonds";
-
-    if (userId) {
-      console.log("Navigating to:", redirectPath);
-    } else {
-      console.log("Redirecting to login");
-    }
-  };
+ const handleSignIn = () => {
+   try {
+     setIsLoading(true);
+     const userId = localStorage.getItem("userId");
+     const redirectPath = "/main/services/71e3/gold-silver-diamonds";
+     if (userId) {
+       navigate(redirectPath);
+     } else {
+       sessionStorage.setItem("redirectPath", redirectPath);
+       window.location.href = LOGIN_URL;
+     }
+   } catch (error) {
+     console.error("Sign in error:", error);
+   } finally {
+     setIsLoading(false);
+   }
+ };
 
   return (
     <section className="relative min-h-screen flex items-center bg-gradient-to-br from-gray-100 via-slate-50 to-gray-200 px-6 py-16">
@@ -57,7 +77,7 @@ function GoldSilverDiamondHeroSection() {
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-slate-400/20"></div>
       </div>
-      
+
       {/* Hero Container */}
       <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
         {/* Left Content */}
@@ -85,15 +105,6 @@ function GoldSilverDiamondHeroSection() {
           </p>
 
           {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={handleExplore}
-              className="bg-gradient-to-r from-gray-600 to-slate-700 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
-            >
-              Explore Collection
-              <ArrowRight size={18} />
-            </button>
-          </div>
 
           {/* Features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
@@ -119,12 +130,19 @@ function GoldSilverDiamondHeroSection() {
                 className="bg-white/80 border border-gray-200/50 backdrop-blur-md rounded-xl p-4 text-center shadow-md hover:shadow-lg transition-all hover:bg-white/90"
               >
                 <div className="text-3xl mb-2">{icon}</div>
-                <h3 className="font-semibold text-lg text-gray-800">
-                  {title}
-                </h3>
+                <h3 className="font-semibold text-lg text-gray-800">{title}</h3>
                 <p className="text-sm text-gray-600">{desc}</p>
               </div>
             ))}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={handleSignIn}
+              className="bg-gradient-to-r from-gray-600 to-slate-700 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+            >
+              Explore Collection
+              <ArrowRight size={18} />
+            </button>
           </div>
         </div>
 

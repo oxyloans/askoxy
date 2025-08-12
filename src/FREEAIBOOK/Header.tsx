@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import Askoxy from "../assets/img/askoxylogonew.png";
 import { useNavigate } from "react-router-dom";
@@ -12,42 +12,40 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const LOGIN_URL = "/whatsappregister";
 
+  // Check login status on mount
   useEffect(() => {
-    // Check login status on mount
-    const userId = localStorage.getItem("userId");
-    setIsLoggedIn(!!userId);
+    setIsLoggedIn(!!localStorage.getItem("userId"));
   }, []);
 
-  const handleAuth = async () => {
-    try {
-      setIsLoading(true);
+  // Scroll effect for header styling
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
+  const handleAuth = useCallback(async () => {
+    setIsLoading(true);
+    try {
       if (isLoggedIn) {
-        // Sign out
         localStorage.removeItem("userId");
         sessionStorage.removeItem("redirectPath");
         setIsLoggedIn(false);
-        navigate("/FreeAIBook"); // Redirect to home after sign out
+        navigate("/FreeAIBook");
       } else {
-        // Sign in
-        const userId = localStorage.getItem("userId");
-        if (userId) {
-          navigate("/FreeAIBook/view");
-        } else {
-          sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
-          window.location.href = LOGIN_URL;
-        }
+        sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
+        window.location.href = LOGIN_URL;
       }
     } catch (error) {
       console.error("Auth error:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isLoggedIn, navigate]);
 
-  const handleWriteToUs = () => {
-    window.location.href = "/main/writetous";
-  };
+  const handleWriteToUs = useCallback(() => {
+    navigate("/main/writetous");
+  }, [navigate]);
 
   return (
     <header
@@ -60,20 +58,24 @@ const Header: React.FC = () => {
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <div className="flex items-center cursor-pointer">
+          <div
+            // onClick={() => navigate("/")}
+            className="flex items-center cursor-pointer select-none"
+          >
             <img
               src={Askoxy}
               alt="Askoxy.AI Logo"
               className="h-10 sm:h-12 w-auto object-contain"
+              loading="lazy"
             />
           </div>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn && (
               <button
                 onClick={handleWriteToUs}
-                className="bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:via-indigo-700 hover:to-indigo-800 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105"
               >
                 Write to Us
               </button>
@@ -81,14 +83,10 @@ const Header: React.FC = () => {
             <button
               onClick={handleAuth}
               disabled={isLoading}
-              className={`${
+              className={`px-4 py-2 rounded-lg transition transform hover:scale-105 text-white ${
                 isLoggedIn
-                  ? "bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white"
-                  : "bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:from-purple-600 hover:via-purple-700 hover:to-purple-800 text-white"
-              } px-4 py-2 rounded-lg transition transform hover:scale-105 focus-visible:ring-2 ${
-                isLoggedIn
-                  ? "focus-visible:ring-red-400"
-                  : "focus-visible:ring-indigo-400"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-purple-600 hover:bg-purple-700"
               }`}
             >
               {isLoading
@@ -102,42 +100,38 @@ const Header: React.FC = () => {
           {/* Mobile Menu Toggle */}
           <div className="md:hidden">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
-              }}
-              className="menu-button text-gray-700 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className="p-2 rounded-lg text-gray-700 hover:text-indigo-600 hover:bg-gray-100 transition"
               aria-label="Toggle Menu"
-              aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="mobile-menu-container md:hidden bg-white border-t rounded-b-lg shadow-lg mt-1 animate-slideDown">
-            <ul className="flex flex-col divide-y text-sm">
+          <div className="md:hidden bg-white border-t rounded-b-lg shadow-lg mt-1 animate-slideDown">
+            <ul className="flex flex-col divide-y">
               {isLoggedIn && (
-                <li className="px-4 pt-4 pb-2">
+                <li className="p-4">
                   <button
                     onClick={handleWriteToUs}
-                    className="w-full py-3 rounded-md bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white transition"
+                    className="w-full py-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition"
                   >
                     Write to Us
                   </button>
                 </li>
               )}
-              <li className="px-4 pt-2 pb-4">
+              <li className="p-4">
                 <button
                   onClick={handleAuth}
                   disabled={isLoading}
-                  className={`w-full py-3 rounded-md transition ${
+                  className={`w-full py-3 rounded-md transition text-white ${
                     isLoggedIn
                       ? "bg-red-600 hover:bg-red-700"
-                      : "bg-indigo-600 hover:bg-indigo-700"
-                  } text-white`}
+                      : "bg-purple-600 hover:bg-purple-700"
+                  }`}
                 >
                   {isLoading
                     ? "Loading..."

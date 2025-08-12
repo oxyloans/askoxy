@@ -1,11 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { ArrowRight, Home, Building, Key } from "lucide-react";
 
+import { ArrowRight, Home, Building, Key } from "lucide-react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  memo,
+  useRef,
+  useMemo,
+} from "react";
+import { Phone, Bot } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 function NyayagptHeroSection() {
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-
+  const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
+ const scrollRef = useRef(isScrolled);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const LOGIN_URL = "/whatsapplogin";
+ const navigate = useNavigate();
   const rotatingWords = [
     "Legal Clarity",
     "Property Insights",
@@ -35,10 +48,27 @@ function NyayagptHeroSection() {
     return () => clearInterval(interval);
   }, [currentWordIndex]);
 
-  const handleSignIn = () => {
-    // Demo function - would normally handle navigation
-    console.log("Navigate to sign in");
-  };
+ const handleSignIn = () => {
+   try {
+     setIsLoading(true);
+
+     const userId = localStorage.getItem("userId");
+     const redirectPath = "/main/services/legalservice"; // your desired path
+
+     if (userId) {
+       // User is already logged in
+       navigate(redirectPath);
+     } else {
+       // Save redirect path before redirecting to login
+       sessionStorage.setItem("redirectPath", redirectPath);
+       window.location.href = LOGIN_URL;
+     }
+   } catch (error) {
+     console.error("Sign in error:", error);
+   } finally {
+     setIsLoading(false);
+   }
+ };
 
   return (
     <section className="relative bg-gradient-to-br from-amber-900 via-yellow-800 to-yellow-900 py-14 overflow-hidden">

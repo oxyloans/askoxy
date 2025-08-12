@@ -144,7 +144,7 @@ const NyayagptOurServices = () => {
                   <img
                     src={company.logo}
                     alt={company.name || "Company Logo"}
-                    className="mx-auto h-32 sm:h-40 md:h-48 object-contain w-full max-w-xs transition duration-300"
+                    className="mx-auto h-40 sm:h-52 md:h-64 object-contain w-full transition duration-300"
                   />
 
                   <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs sm:text-sm font-semibold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 whitespace-nowrap">

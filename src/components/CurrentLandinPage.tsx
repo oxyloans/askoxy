@@ -10,6 +10,7 @@ import Footer from "./Footer";
 import OurPeople from "./OurTeam";
 import PdfPages from "./Presentation";
 import UnicornGrid from "./SuperOurApp";
+import AwardPage from "./Award";
 
 const CurrentLandingPage: React.FC = () => {
   return (
@@ -32,6 +33,10 @@ const CurrentLandingPage: React.FC = () => {
       </section>
       <section>
         <FreeGPTs />
+      </section>
+       <section>
+        {" "}
+        <AwardPage />
       </section>
       <section>
         {" "}

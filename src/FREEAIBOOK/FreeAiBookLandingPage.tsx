@@ -197,8 +197,8 @@ const [loading, setLoading] = useState(false);
       if (touchEndX - touchStartX > 50) goPrev();
     };
   return (
-    <main className="flex flex-col items-center justify-center bg-gradient-to-br from-white via-blue-50 to-purple-50 pt-2 min-h-screen">
-      <h2 className="text-xl font-semibold mb-2 text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+    <main className="flex flex-col items-center justify-center bg-gradient-to-br from-white via-blue-50 to-purple-50">
+      <h2 className="text-xl font-semibold  text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
         {headings[currentIndex]}
       </h2>
 
@@ -207,7 +207,7 @@ const [loading, setLoading] = useState(false);
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="w-[450px] h-[600px] flex justify-center items-center bg-gray-50 relative">
+        <div className="w-[400px] h-[450px] flex justify-center items-center bg-gray-50 relative">
           {loading && (
             <div className="absolute inset-0 bg-white bg-opacity-70 flex justify-center items-center z-10">
               <svg
@@ -235,7 +235,7 @@ const [loading, setLoading] = useState(false);
           <img
             src={images[currentIndex]}
             alt={`AI Book Page ${currentIndex + 1}`}
-            className={`w-[450px] h-[600px] object-fill transition-opacity duration-300 ${
+            className={`max-w-full max-h-full w-auto h-auto object-contain transition-opacity duration-300 ${
               loading ? "opacity-30" : "opacity-100"
             }`}
             loading="lazy"

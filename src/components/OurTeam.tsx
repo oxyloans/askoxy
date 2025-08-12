@@ -7,6 +7,7 @@ import Radha from "../assets/img/radha sir.png";
 import Rama from "../assets/img/rama mam.png";
 import Sneha from "../assets/img/sneha.png";
 import Subash from "../assets/img/subbu.png";
+import Chakri from "../assets/img/Chakri.jpg";
 import Srinivas from "../assets/img/srinivas.png";
 import Ramesh from "../assets/img/ramesh.png";
 import Narendra from "../assets/img/narendra.png";
@@ -30,6 +31,12 @@ const teamMembers = [
     role: "Co-Founder",
     img: Subash,
     linkedin: "https://www.linkedin.com/in/ssure/",
+  },
+  {
+    name: "Jags (Chakravarthy) Chinnam ",
+    role: "AI Transformation Leader",
+    img: Chakri,
+    linkedin: "https://www.linkedin.com/in/jc-cv/",
   },
   {
     name: "Snehalatha Reddy",
@@ -64,88 +71,88 @@ const teamMembers = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.2,
+      ease: "easeOut",
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
 const OurPeople: React.FC = () => {
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
-    },
-  };
-
-  const card = {
-    hidden: { opacity: 0, y: 40 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
-  };
-
   return (
-    <section className="bg-gradient-to-b from-purple-50 to-white py-16 px-4 lg:px-8">
+    <section className="bg-gradient-to-b from-purple-50 to-white py-16 px-4 sm:px-6 lg:px-8">
       {/* Section Header */}
       <motion.div
-        className="text-center mb-12"
-        initial={{ opacity: 0, y: -20 }}
+        className="text-center max-w-3xl mx-auto mb-12"
+        initial={{ opacity: 0, y: -30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
         viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 mb-3">
+        <h2 className="text-4xl font-extrabold text-purple-900 mb-3 select-none">
           Meet Our Executive Team
         </h2>
-        <div className="h-1.5 bg-purple-600 w-28 mx-auto rounded-full mb-4"></div>
-        <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+        <div className="mx-auto mb-5 w-32 h-1.5 rounded-full bg-gradient-to-r from-purple-700 via-indigo-700 to-pink-600"></div>
+        <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
           The visionary leaders driving innovation and excellence at Oxy Group.
         </p>
       </motion.div>
 
-      {/* Team Members Grid */}
+      {/* Team Grid */}
       <motion.div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto"
-        variants={container}
+        variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
       >
-        {teamMembers.map((member, index) => (
-          <motion.div
-            key={index}
-            className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
-            variants={card}
+        {teamMembers.map(({ name, role, img, linkedin }, idx) => (
+          <motion.article
+            key={idx}
+            className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-shadow duration-300 focus-within:ring-4 focus-within:ring-indigo-400 outline-none"
+            tabIndex={0}
+            aria-label={`${name}, ${role}`}
+            variants={cardVariants}
           >
-            {/* Image Container */}
-            <div className="relative overflow-hidden h-64">
+            {/* Image */}
+            <div className="relative h-64 overflow-hidden rounded-t-3xl">
               <img
-                src={member.img}
-                alt={`${member.name} - ${member.role}`}
-                className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+                src={img}
+                alt={`${name} portrait`}
                 loading="lazy"
+                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
               />
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none rounded-t-3xl"></div>
             </div>
 
-            {/* Details */}
-            <div className="p-5 text-center">
+            {/* Content */}
+            <div className="p-6 text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                {member.name}
+                {name}
               </h3>
-              <p className="text-purple-700 text-sm mb-3">{member.role}</p>
-
-              {/* LinkedIn Button */}
+              <p className="text-indigo-700 text-sm mb-4">{role}</p>
               <a
-                href={member.linkedin}
+                href={linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`LinkedIn profile of ${member.name}`}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300"
+                aria-label={`LinkedIn profile of ${name}`}
+                className="inline-flex items-center justify-center mx-auto w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
               >
                 <FaLinkedinIn size={18} />
               </a>
             </div>
-          </motion.div>
+          </motion.article>
         ))}
       </motion.div>
     </section>
