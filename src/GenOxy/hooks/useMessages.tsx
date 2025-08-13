@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import BASE_URL from "../../Config";
 import { Message } from "../types/types";
 import axios from "axios";
+import { LanguageConfig, ChatMessage } from "../types/types";
 
 interface UseMessagesProps {
   messages: Message[];
@@ -243,3 +244,204 @@ export const useMessages = ({
     handleFileUpload,
   };
 };
+
+class VoiceSessionService {
+  private peerConnection: RTCPeerConnection | null = null;
+  private micStream: MediaStream | null = null;
+  private recognition: any = null;
+  private dataChannel: RTCDataChannel | null = null;
+
+  async getEphemeralToken(instructions: string): Promise<string> {
+    try {
+      const res = await fetch(`${BASE_URL}/student-service/user/token`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ instructions }),
+      });
+      const data = await res.json();
+      return data.client_secret.value;
+    } catch (error) {
+      console.error("Failed to get ephemeral token:", error);
+      throw error;
+    }
+  }
+
+  async startSession(
+    selectedLanguage: LanguageConfig,
+    selectedInstructions: string,
+    onMessage: (message: ChatMessage) => void,
+    onAssistantSpeaking: (speaking: boolean) => void
+  ): Promise<RTCDataChannel> {
+    try {
+      const EPHEMERAL_KEY = await this.getEphemeralToken(selectedInstructions);
+
+      const pc = new RTCPeerConnection();
+      this.peerConnection = pc;
+
+      // Setup audio
+      const audioEl = document.createElement("audio");
+      audioEl.autoplay = true;
+      pc.ontrack = (e) => {
+        audioEl.srcObject = e.streams[0];
+      };
+
+      // Setup microphone
+      this.micStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      pc.addTrack(this.micStream.getTracks()[0]);
+
+      // Setup data channel
+      const dc = pc.createDataChannel("oai-events");
+      this.dataChannel = dc;
+
+      // Setup WebRTC connection
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const model = "gpt-4o-realtime-preview-2025-06-03";
+      const sdpRes = await fetch(
+        `https://api.openai.com/v1/realtime?model=${model}`,
+        {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${EPHEMERAL_KEY}`,
+            "Content-Type": "application/sdp",
+          },
+        }
+      );
+
+      const answer: RTCSessionDescriptionInit = {
+        type: "answer",
+        sdp: await sdpRes.text(),
+      };
+      await pc.setRemoteDescription(answer);
+
+      // Setup speech recognition
+      this.setupSpeechRecognition(selectedLanguage, onMessage);
+
+      // Setup data channel handlers
+      this.setupDataChannelHandlers(dc, onMessage, onAssistantSpeaking);
+
+      return dc;
+    } catch (error) {
+      console.error("Failed to start session:", error);
+      throw error;
+    }
+  }
+
+  private setupSpeechRecognition(
+    selectedLanguage: LanguageConfig,
+    onMessage: (message: ChatMessage) => void
+  ) {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = selectedLanguage.speechLang;
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event: any) => {
+        const transcript =
+          event.results[event.results.length - 1][0].transcript.trim();
+        if (transcript) {
+          const msg: ChatMessage = {
+            role: "user",
+            text: transcript,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          onMessage(msg);
+          this.sendMessage(transcript);
+        }
+      };
+
+      recognition.onerror = (e: any) =>
+        console.error("Speech recognition error:", e);
+
+      recognition.onend = () => {
+        if (this.dataChannel) recognition.start();
+      };
+
+      recognition.start();
+      this.recognition = recognition;
+    }
+  }
+
+  private setupDataChannelHandlers(
+    dc: RTCDataChannel,
+    onMessage: (message: ChatMessage) => void,
+    onAssistantSpeaking: (speaking: boolean) => void
+  ) {
+    let buffer = "";
+
+    dc.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        onAssistantSpeaking(true);
+
+        if (event.type === "response.output_text.delta" && event.delta) {
+          buffer += event.delta;
+          onAssistantSpeaking(true);
+
+          const msg: ChatMessage = {
+            role: "assistant",
+            text: buffer,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          onMessage(msg);
+        }
+
+        if (event.type === "response.audio.delta") {
+          onAssistantSpeaking(true);
+        }
+
+        if (event.type === "response.stop") {
+          onAssistantSpeaking(false);
+          buffer = "";
+        }
+      } catch (err) {
+        console.error("Failed to parse assistant event:", err);
+      }
+    };
+
+    dc.onopen = () => {
+      console.log("Data channel opened");
+    };
+  }
+
+  sendMessage(text: string) {
+    if (!this.dataChannel) return;
+
+    const event = {
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    };
+
+    this.dataChannel.send(JSON.stringify(event));
+    this.dataChannel.send(JSON.stringify({ type: "response.create" }));
+  }
+
+  stopSession() {
+    this.dataChannel?.close();
+    this.micStream?.getTracks().forEach((t) => t.stop());
+    this.peerConnection?.close();
+    this.recognition?.stop();
+
+    this.dataChannel = null;
+    this.micStream = null;
+    this.peerConnection = null;
+    this.recognition = null;
+  }
+}
+
+export const voiceSessionService = new VoiceSessionService();

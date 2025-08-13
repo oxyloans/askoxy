@@ -177,7 +177,7 @@ import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
 import AskoxyAi from "./components/OpenAi";
 import GenOxy from "./GenOxy/Genoxy";
-import RealtimePage  from "./GenOxy/RealTimeVoice";
+import RealtimePage from "./GenOxy/components/RealTimeMainscreen";
 import JobDetails from "./components/JobDetails";
 import AddJob from "./AskoxyAdmin/AddJob";
 import VersionUpdate from "./PartnerWeb/VersionUpdate";
@@ -189,7 +189,6 @@ import StockTable from "./PartnerWeb/StockDetails";
 import MarketReport from "./PartnerWeb/Marketreport";
 import FreeAiBookLandingPage from "./FREEAIBOOK/LandingPage";
 import FreeAiBook from "./FREEAIBOOK/FreeAiBookLandingPage";
-
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -215,8 +214,7 @@ const App: React.FC = () => {
       "/nyayagpt",
       "/student-home",
       "/studyabroad",
-      "/FreeAIBook"
-     
+      "/FreeAIBook",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -308,8 +306,18 @@ const App: React.FC = () => {
               element={<AIBlockchainAndItServices />}
             />
             {/* <Route path="/generateimage" element={<AskoxyAi />} /> */}
+            {/* <Route
+              path="/genoxy"
+              element={<Navigate to="/genoxy/welcome" replace />}
+            />
+            <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
             <Route path="/genoxy" element={<GenOxy />} />
-            <Route path="/voiceAssistant" element={<RealtimePage />} />
+       
+            <Route
+              path="/voiceAssistant"
+              element={<Navigate to="/voiceAssistant/welcome" replace />}
+            />
+            <Route path="/voiceAssistant/:screen" element={<RealtimePage />} />
             <Route path="/caandcsservices" element={<CACSService />} />
             <Route
               path="/goldandsilveranddiamonds"

@@ -98,10 +98,11 @@ const Genoxy: React.FC = () => {
         </p>
 
         {/* Search box */}
+        {/* Search box */}
+        {/* Search Input */}
         <div
-          className={`relative max-w-xl mx-auto transition-transform duration-300 transform-gpu ${
-            isInputFocused ? "scale-105" : ""
-          }`}
+          className="relative flex w-full max-w-2xl mx-auto transition-all duration-300"
+          style={{ transform: isInputFocused ? "scale(1.02)" : "scale(1)" }}
         >
           <input
             ref={searchInputRef}
@@ -112,29 +113,24 @@ const Genoxy: React.FC = () => {
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
             placeholder={placeholderTexts[currentPlaceholderIndex]}
-            aria-label="Search input"
-            className={`w-full pl-5 pr-14 py-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400
-              focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-md transition-shadow duration-300 transition-opacity ${
-                fade ? "opacity-100" : "opacity-0"
-              }`}
+            className="w-full pl-5 pr-14 py-6 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-md transition-shadow duration-300 transition-opacity opacity-100 sm:pr-16"
           />
           <button
             onClick={handleSearch}
+            className="absolute right-2 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 shadow-lg flex items-center justify-center"
             aria-label="Search"
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-purple-600
-              hover:from-cyan-400 hover:to-purple-500 text-white p-3 rounded-full shadow-lg transition-all"
           >
             <svg
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
               fill="none"
               stroke="currentColor"
-              strokeWidth={2}
               viewBox="0 0 24 24"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M14 5l7 7-7 7M21 12H3"
+                strokeWidth={2}
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
               />
             </svg>
           </button>
