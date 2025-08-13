@@ -33,7 +33,7 @@ const teamMembers = [
     linkedin: "https://www.linkedin.com/in/ssure/",
   },
   {
-    name: "Jags (Chakravarthy) Chinnam ",
+    name: "Jagadeesh Chinnam",
     role: "AI Transformation Leader",
     img: Chakri,
     linkedin: "https://www.linkedin.com/in/jc-cv/",
@@ -76,11 +76,7 @@ const containerVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.2,
-      ease: "easeOut",
-    },
+    transition: { staggerChildren: 0.08, delayChildren: 0.2, ease: "easeOut" },
   },
 };
 
@@ -100,11 +96,11 @@ const OurPeople: React.FC = () => {
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <h2 className="text-4xl font-extrabold text-purple-900 mb-3 select-none">
+        <h2 className="text-3xl sm:text-4xl lg:text-4xl font-extrabold text-purple-900 mb-3 select-none">
           Meet Our Executive Team
         </h2>
         <div className="mx-auto mb-5 w-32 h-1.5 rounded-full bg-gradient-to-r from-purple-700 via-indigo-700 to-pink-600"></div>
-        <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
+        <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
           The visionary leaders driving innovation and excellence at Oxy Group.
         </p>
       </motion.div>
@@ -129,25 +125,25 @@ const OurPeople: React.FC = () => {
             <div className="relative h-64 overflow-hidden rounded-t-3xl">
               <img
                 src={img}
-                alt={`${name} portrait`}
+                alt={`${name}, ${role} portrait`}
                 loading="lazy"
-                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                className="w-full h-full object-cover object-top transition-transform duration-500 will-change-transform hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none rounded-t-3xl"></div>
             </div>
 
             {/* Content */}
             <div className="p-6 text-center">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
                 {name}
               </h3>
-              <p className="text-indigo-700 text-sm mb-4">{role}</p>
+              <p className="text-xs sm:text-sm text-indigo-700 mb-4">{role}</p>
               <a
                 href={linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`LinkedIn profile of ${name}`}
-                className="inline-flex items-center justify-center mx-auto w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                className="inline-flex items-center justify-center mx-auto w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-visible:ring-offset-2 transition"
               >
                 <FaLinkedinIn size={18} />
               </a>

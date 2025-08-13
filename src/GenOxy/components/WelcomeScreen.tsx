@@ -17,7 +17,7 @@ import {
   Image,
 } from "lucide-react";
 import { message } from "antd";
-
+import { useLocation } from "react-router-dom";
 interface WelcomeScreenProps {
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
@@ -87,7 +87,25 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
-
+  const location = useLocation(); // Added to access URL parameters
+  // Extract query from URL and set it to input state
+  // Extract query from URL and set input, then trigger handleSend
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const query = queryParams.get("query");
+    if (query && !input) {
+      const decodedQuery = decodeURIComponent(query);
+      setInput(decodedQuery); // Set the input state with the query
+      // Automatically trigger handleSend with the query
+      if (decodedQuery.trim() && !loading && !selectedFile) {
+        handleSend(decodedQuery).then(() => {
+          setShowDropdown(false);
+          // Optionally clear the input after sending
+          setInput("");
+        });
+      }
+    }
+  }, [location.search, setInput, handleSend, loading, input, selectedFile]);
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";

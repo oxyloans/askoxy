@@ -92,9 +92,13 @@ const [loading, setLoading] = useState(false);
     setSearchParams({ image: (currentIndex + 1).toString() });
   }, [currentIndex, setSearchParams]);
 
-    const goNext = () => changeIndex((currentIndex + 1) % images.length);
-    const goPrev = () =>
-      changeIndex((currentIndex - 1 + images.length) % images.length);
+  const goNext = () => {
+    if (currentIndex < images.length - 1) changeIndex(currentIndex + 1);
+  };
+
+  const goPrev = () => {
+    if (currentIndex > 0) changeIndex(currentIndex - 1);
+  };
   // Corresponding headings for each image (length 73)
  const headings = [
    "ENTER THE AI UNIVERSE",
@@ -245,24 +249,27 @@ const [loading, setLoading] = useState(false);
         </div>
 
         {/* Prev button - hidden on mobile */}
-        <button
-          onClick={goPrev}
-          aria-label="Previous Image"
-          className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-3 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition"
-          disabled={loading}
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-700" />
-        </button>
-
+        {currentIndex > 0 && (
+          <button
+            onClick={goPrev}
+            aria-label="Previous Image"
+            className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-3 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition"
+            disabled={loading}
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </button>
+        )}
         {/* Next button - hidden on mobile */}
-        <button
-          onClick={goNext}
-          aria-label="Next Image"
-          className="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-3 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition"
-          disabled={loading}
-        >
-          <ArrowRight className="w-5 h-5 text-gray-700" />
-        </button>
+        {currentIndex < images.length - 1 && (
+          <button
+            onClick={goNext}
+            aria-label="Next Image"
+            className="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-3 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition"
+            disabled={loading}
+          >
+            <ArrowRight className="w-5 h-5 text-gray-700" />
+          </button>
+        )}
       </div>
     </main>
   );

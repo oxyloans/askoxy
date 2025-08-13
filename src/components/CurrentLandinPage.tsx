@@ -28,23 +28,23 @@ const CurrentLandingPage: React.FC = () => {
         <ServicesSlider />
       </section>
       <section>
-        {" "}
+       
         <BMVCoinPromo />
       </section>
       <section>
         <FreeGPTs />
       </section>
        <section>
-        {" "}
+    
         <AwardPage />
       </section>
       <section>
-        {" "}
+      
         <OurPeople />
       </section>
 
       <section>
-        {" "}
+      
         <PdfPages />
       </section>
 
