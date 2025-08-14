@@ -3,7 +3,7 @@ import BASE_URL from "../../Config";
 import { Message } from "../types/types";
 import axios from "axios";
 import { LanguageConfig, ChatMessage } from "../types/types";
-
+import { useLocation, useNavigate } from "react-router-dom";
 interface UseMessagesProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -31,6 +31,8 @@ export const useMessages = ({
   setRemainingPrompts,
   threadId,
 }: UseMessagesProps) => {
+  const location = useLocation(); // Added: For checking current path
+  const navigate = useNavigate(); // Added: For navigation
   const handleSend = useCallback(
     async (messageContent?: string) => {
       const textToSend = messageContent || input.trim();
@@ -92,6 +94,10 @@ export const useMessages = ({
             behavior: "smooth",
             block: "start",
           });
+          // Added: Navigate to /genoxy/chat if currently on /genoxy (after starting chat from WelcomeScreen)
+          if (location.pathname === "/genoxy") {
+            navigate("/genoxy/chat");
+          }
         }, 100);
       }
     },
@@ -103,6 +109,8 @@ export const useMessages = ({
       setLoading,
       messagesEndRef,
       abortControllerRef,
+      location, // Added dependency
+      navigate, // Added dependency
     ]
   );
 
@@ -222,6 +230,15 @@ export const useMessages = ({
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      // Added: Navigate to /genoxy/chat if currently on /genoxy after file upload
+      if (location.pathname === "/genoxy") {
+        navigate("/genoxy/chat");
+      }
 
       return newThreadId;
     } catch (error) {
@@ -232,6 +249,7 @@ export const useMessages = ({
         content: "Sorry, the file upload failed. Please try again.",
       };
       setMessages((prev) => [...prev, errorMessage]);
+
       return null;
     } finally {
       setLoading(false);

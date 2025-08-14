@@ -311,7 +311,10 @@ const App: React.FC = () => {
               element={<Navigate to="/genoxy/welcome" replace />}
             />
             <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
-            <Route path="/genoxy" element={<GenOxy />} />
+           <Route path="/genoxy" element={<GenOxy />} />
+    
+    {/* Added: New route for chat interface */}
+    <Route path="/genoxy/chat" element={<GenOxy />} />
        
             <Route
               path="/voiceAssistant"

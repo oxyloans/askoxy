@@ -12,7 +12,7 @@ import { Message } from "./types/types";
 import "./styles/OpenAi.css";
 import { message } from "antd";
 import { ThreeDRotation } from "@mui/icons-material";
-
+import { useLocation, useNavigate } from "react-router-dom";
 interface OpenAiProps {}
 
 const GenOxy: React.FC<OpenAiProps> = () => {
@@ -29,7 +29,9 @@ const GenOxy: React.FC<OpenAiProps> = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [remainingPrompts, setRemainingPrompts] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
-
+  const location = useLocation(); // Added: Get current location/path
+  const navigate = useNavigate(); // Added: For programmatic navigation
+const isChatRoute = location.pathname === "/genoxy/chat";
   const { handleSend, handleEdit, handleFileUpload } = useMessages({
     messages,
     setMessages,
@@ -116,12 +118,14 @@ const GenOxy: React.FC<OpenAiProps> = () => {
     setMessages([]);
     setIsSidebarOpen(false);
     setEditingMessageId(null);
+    navigate("/genoxy");
   };
 
   const loadChat = (chat: Message[]) => {
     setMessages(chat);
     setIsSidebarOpen(false);
     setEditingMessageId(null);
+    navigate("/genoxy/chat"); // Added: Navigate to /genoxy/chat when loading a chat
   };
 
   const editMessage = (messageId: string, content: string) => {
@@ -130,7 +134,7 @@ const GenOxy: React.FC<OpenAiProps> = () => {
     textareaRef.current?.focus();
   };
 
-  const showCenteredLayout = messages.length === 0 && !loading;
+ const showCenteredLayout = messages.length === 0 && !loading && !isChatRoute;
 
   return (
     <div
