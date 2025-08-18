@@ -42,7 +42,7 @@ const AwardPage = () => {
           {/* Left - Award Image */}
           <div className="flex justify-center lg:justify-start">
             <div
-              onClick={() => setLightboxOpen(true)}
+              // onClick={() => setLightboxOpen(true)}
               className="relative cursor-pointer group w-full max-w-md"
             >
               <img
@@ -51,11 +51,7 @@ const AwardPage = () => {
                 className=" transition-transform duration-300 group-hover:scale-[1.03] object-contain"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-2xl flex items-center justify-center transition">
-                <span className="opacity-0 group-hover:opacity-100 text-white bg-black bg-opacity-60 px-3 py-1 rounded-full text-sm">
-                  Click to enlarge
-                </span>
-              </div>
+
             </div>
           </div>
 

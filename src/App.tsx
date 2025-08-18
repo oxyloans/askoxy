@@ -189,6 +189,8 @@ import StockTable from "./PartnerWeb/StockDetails";
 import MarketReport from "./PartnerWeb/Marketreport";
 import FreeAiBookLandingPage from "./FREEAIBOOK/LandingPage";
 import FreeAiBook from "./FREEAIBOOK/FreeAiBookLandingPage";
+import ChatInterface from "./components/ChatInterfaceAi";
+import WalletEligibilitySlabs from "./PartnerWeb/CartAmountBasedOrder";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -264,6 +266,7 @@ const App: React.FC = () => {
             <Route path="/freerice" element={<FreeRiceBlog />} />
             <Route path="/userFeedback" element={<Feedback />} />
             <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
+            <Route path="/aiassistant" element={<ChatInterface />} />
             <Route
               path="/usermobilenumberupdate"
               element={<MobileNumberUpdate />}
@@ -646,6 +649,7 @@ const App: React.FC = () => {
               <Route path="updateoffers" element={<OfferImagesUpdate />} />
               <Route path="addReference" element={<AddReference />} />
               <Route path="stockdetails" element={<StockTable />} />
+              <Route path="cartamountbasedorderplaces" element={<WalletEligibilitySlabs />} />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}

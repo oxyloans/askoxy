@@ -139,6 +139,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <LinkOutlined />,
       label: "Add Reference",
     },
+    {
+      key: "/home/cartamountbasedorderplaces",
+      icon: <ShoppingCartOutlined />,
+      label: "Cart Amount Based Order Places",
+    }
    
     // {
     //   key: "/home/feedback",

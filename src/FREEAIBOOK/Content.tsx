@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import axios from "axios";
 import Header from "./Header";
 import Footer from "./Footer";
-import AIChatWindow from "../Dashboard/AIWindow";
+import AssistantAI from "../components/AssistantAI";
 import BASE_URL from "../Config";
 
 const Content2: React.FC = () => {
@@ -162,8 +162,9 @@ const Content2: React.FC = () => {
           className={`fixed z-50 transition-all
 ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
         >
-          <AIChatWindow
+          <AssistantAI
             isMobile={isMobile}
+            assistantId="asst_ynAlbuttMrSrETgstodARDwC"
             onClose={() => setIsAiChatOpen(false)}
             onExternalRequest={(message) =>
               console.log("External request:", message)
