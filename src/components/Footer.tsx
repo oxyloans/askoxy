@@ -7,11 +7,17 @@ import {
   MapPin,
   Mail,
   Phone,
+  ArrowUp,
+  Twitter,
 } from "lucide-react";
 import Logo from "../assets/img/askoxylogonew.png";
 
-const Footer = () => {
+const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const socialLinks = [
     {
@@ -29,10 +35,14 @@ const Footer = () => {
       href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
       label: "LinkedIn",
     },
+    {
+      icon: <Twitter className="h-4 w-4" />,
+      href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
+      label: "Twitter",
+    }
   ];
 
   const services = [
-    // { name: "Free Rudraksha", path: "/main/services/freerudraksha" },
     { name: "AI & GEN AI Training", path: "/main/services/freeai-genai" },
     { name: "Legal Knowledge", path: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" },
@@ -65,9 +75,9 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-white border-t border-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <footer className="bg-gradient-to-br from-cyan-50 via-purple-50 to-green-50 border-t border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-3">
             <img
@@ -75,11 +85,11 @@ const Footer = () => {
               alt="ASKOXY.AI Logo"
               className="h-12 w-auto object-contain"
             />
-            <p className="text-gray-600 text-xs leading-relaxed">
+            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
               ASKOXY.AI offers unlimited ChatGPT prompts, empowering innovation
               without cost barriers.
             </p>
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 mt-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
@@ -87,6 +97,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-purple-600 transition-colors duration-200"
+                  aria-label={social.label}
                 >
                   {social.icon}
                 </a>
@@ -94,7 +105,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Services Navigation */}
+          {/* Services */}
           <div className="space-y-2">
             <h3 className="text-base font-semibold text-gray-900">
               Our Services
@@ -104,7 +115,7 @@ const Footer = () => {
                 <Link
                   key={service.name}
                   to={service.path}
-                  className="block text-xs text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                  className="block text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
                 >
                   {service.name}
                 </Link>
@@ -122,7 +133,7 @@ const Footer = () => {
                 <div key={index} className="flex items-start space-x-2">
                   <div className="text-purple-600 mt-0.5">{info.icon}</div>
                   {info.type === "text" ? (
-                    <p className="text-xs text-gray-600 leading-tight">
+                    <p className="text-xs sm:text-sm text-gray-600 leading-tight">
                       {info.content}
                     </p>
                   ) : (
@@ -130,7 +141,7 @@ const Footer = () => {
                       href={`${info.type === "email" ? "mailto:" : "tel:"}${
                         info.content
                       }`}
-                      className="text-xs text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                      className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
                     >
                       {info.content}
                     </a>
@@ -145,10 +156,10 @@ const Footer = () => {
             <h3 className="text-base font-semibold text-gray-900">
               Get Our App
             </h3>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Download ASKOXY.AI for a seamless experience.
             </p>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-1">
               <a
                 href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
                 target="_blank"
@@ -176,32 +187,40 @@ const Footer = () => {
         </div>
 
         {/* Footer Bottom */}
-        <div className="border-t border-gray-100 mt-6 pt-4 text-center">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-600">
-            <span>
-              © {currentYear} <span className="font-medium">ASKOXY.AI</span>.
-              All rights reserved.
-            </span>
-            <span>CIN: U72900TG2020PTC142391</span>
+        <div className="border-t border-gray-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm text-gray-600">
+          <span>
+            © {currentYear} <span className="font-medium">ASKOXY.AI</span>. All
+            rights reserved.
+          </span>
+          <span>CIN: U72900TG2020PTC142391</span>
+          <div className="flex flex-wrap justify-center sm:justify-start gap-2">
             <Link
               to="/termsandconditions"
-              className="text-gray-600 hover:text-purple-600 transition-colors duration-200"
+              className="hover:text-purple-600 transition-colors duration-200"
             >
-              Terms and Conditions
+              Terms & Conditions
             </Link>
             <Link
               to="/privacypolicy"
-              className="text-gray-600 hover:text-purple-600 transition-colors duration-200"
+              className="hover:text-purple-600 transition-colors duration-200"
             >
               Privacy Policy
             </Link>
             <Link
               to="/contactus"
-              className="text-gray-600 hover:text-purple-600 transition-colors duration-200"
+              className="hover:text-purple-600 transition-colors duration-200"
             >
               Contact Us
             </Link>
           </div>
+          <button
+            onClick={scrollToTop}
+            className="flex items-center hover:text-purple-600 transition-colors mt-2 sm:mt-0 group"
+            aria-label="Scroll to top"
+          >
+            <span className="mr-2">Back to top</span>
+            <ArrowUp className="w-4 h-4 transform group-hover:-translate-y-1 transition-transform" />
+          </button>
         </div>
       </div>
     </footer>

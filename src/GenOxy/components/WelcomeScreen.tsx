@@ -221,7 +221,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </div>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 mb-2">
-            Welcome to GenOxy
+            Welcome to GENOXY
           </h1>
           <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300">
             Pick an assistant from the sidebar to begin.

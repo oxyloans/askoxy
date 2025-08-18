@@ -2,11 +2,14 @@ import React from "react";
 import { Menu, Share, Sparkles } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Message } from "../types/types";
+
 interface HeaderProps {
   clearChat: () => void;
   toggleSidebar: () => void;
   isSidebarOpen: boolean;
   messages: Message[];
+  /** NEW: name of the active assistant; falls back to GENOXY if not set */
+  activeAssistantName?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -14,6 +17,7 @@ const Header: React.FC<HeaderProps> = ({
   toggleSidebar,
   isSidebarOpen,
   messages,
+  activeAssistantName,
 }) => {
   const shareChat = async () => {
     try {
@@ -55,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
- const shareContent = async (text: string) => {
+  const shareContent = async (text: string) => {
     if (!navigator.share) {
       alert("Sharing is not supported on this browser.");
       return;
@@ -72,41 +76,10 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const centerLabel = activeAssistantName?.trim() || "GENOXY";
 
-
-  // const shareChat = async () => {
-  //   try {
-  //     if (!messages.length) {
-  //       alert("No conversation to share.");
-  //       return;
-  //     }
-
-  //     const chatSnapshot = {
-  //       messages: messages.map(({ role, content }) => ({ role, content })),
-  //       createdAt: new Date().toISOString(),
-  //     };
-
-  //     // Encode the data to base64
-  //     const encoded = btoa(JSON.stringify(chatSnapshot));
-  //     const shareUrl = `${window.location.origin}/genoxy/share?data=${encoded}`;
-
-  //     // Save it locally too (optional)
-  //     localStorage.setItem(
-  //       `genoxy_share_${Date.now()}`,
-  //       JSON.stringify(chatSnapshot)
-  //     );
-
-  //     // Copy to clipboard
-  //     await navigator.clipboard.writeText(shareUrl);
-
-  //     alert("✅ Share link copied to clipboard!");
-  //   } catch (error) {
-  //     console.error("Share error:", error);
-  //     alert("❌ Failed to share the conversation.");
-  //   }
-  // };
   return (
-    <header className="flex-shrink-0 sticky top-0 z-20  ">
+    <header className="flex-shrink-0 sticky top-0 z-20">
       <div className="max-w-5xl mx-auto px-2 py-1">
         <div className="relative flex items-center justify-between">
           {/* LEFT: Menu Icon (mobile only) */}
@@ -122,12 +95,15 @@ const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Sparkles + GENOXY */}
+          {/* Center badge: shows active assistant name or GENOXY */}
           <div className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:dark:bg-gray-700 transition-all duration-200">
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:dark:bg-gray-700 transition-all duration-200"
+              title={centerLabel}
+            >
               <Sparkles className="w-5 h-5 text-purple-700 dark:text-white" />
               <span className="font-semibold text-purple-700 text-sm dark:text-white">
-                GENOXY
+                {centerLabel}
               </span>
             </div>
           </div>
@@ -142,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({
                     : "Check out GENOXY!"
                 )
               }
-              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-white  hover:bg-gray-50 hover:dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200"
+              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 hover:dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200"
             >
               <Share className="w-5 h-5 text-purple-700 dark:text-white" />
               <span className="hidden sm:inline font-semibold text-purple-600 dark:text-white">
