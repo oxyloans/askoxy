@@ -7,11 +7,11 @@ import Radha from "../assets/img/radha sir.png";
 import Rama from "../assets/img/rama mam.png";
 import Sneha from "../assets/img/sneha.png";
 import Subash from "../assets/img/subbu.png";
-import Chakri from "../assets/img/Chakri.jpg";
-import Srinivas from "../assets/img/srinivas.png";
+import Chakri from "../assets/img/jags.png";
+import Srinivas from "../assets/img/yadavalli srinivas.png";
 import Ramesh from "../assets/img/ramesh.png";
 import Narendra from "../assets/img/narendra.png";
-import Umamaheswara from "../assets/img/mahesh.png";
+// import Umamaheswara from "../assets/img/mahesh.png";
 
 const teamMembers = [
   {
@@ -63,14 +63,16 @@ const teamMembers = [
     linkedin:
       "https://www.linkedin.com/in/narendra-kumar-balijepalli-bb4a96129/",
   },
-  {
-    name: "Umamaheswara Rao",
-    role: "Co-Founder",
-    img: Umamaheswara,
-    linkedin: "https://www.linkedin.com/in/umamaheswara",
-  },
+  // Future addition for better scalability
+  // {
+  //   name: "Umamaheswara Rao",
+  //   role: "Co-Founder",
+  //   img: Umamaheswara,
+  //   linkedin: "https://www.linkedin.com/in/umamaheswara",
+  // },
 ];
 
+// Framer motion variants
 const containerVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
@@ -87,19 +89,19 @@ const cardVariants = {
 
 const OurPeople: React.FC = () => {
   return (
-    <section className="bg-gradient-to-b from-purple-50 to-white py-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-gradient-to-b from-purple-50 via-white to-green-50 py-6 px-4 sm:px-6 lg:px-8">
       {/* Section Header */}
       <motion.div
-        className="text-center max-w-3xl mx-auto mb-12"
+        className="text-center max-w-3xl mx-auto mb-8"
         initial={{ opacity: 0, y: -30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <h2 className="text-3xl sm:text-4xl lg:text-4xl font-extrabold text-purple-900 mb-3 select-none">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-indigo-900 mb-3 select-none">
           Meet Our Executive Team
         </h2>
-        <div className="mx-auto mb-5 w-32 h-1.5 rounded-full bg-gradient-to-r from-purple-700 via-indigo-700 to-pink-600"></div>
+        <div className="mx-auto mb-5 w-32 h-1.5 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500"></div>
         <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
           The visionary leaders driving innovation and excellence at Oxy Group.
         </p>
@@ -116,7 +118,7 @@ const OurPeople: React.FC = () => {
         {teamMembers.map(({ name, role, img, linkedin }, idx) => (
           <motion.article
             key={idx}
-            className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-shadow duration-300 focus-within:ring-4 focus-within:ring-indigo-400 outline-none"
+            className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-shadow duration-300 focus-within:ring-4 focus-within:ring-indigo-400 outline-none"
             tabIndex={0}
             aria-label={`${name}, ${role}`}
             variants={cardVariants}
@@ -127,9 +129,10 @@ const OurPeople: React.FC = () => {
                 src={img}
                 alt={`${name}, ${role} portrait`}
                 loading="lazy"
-                className="w-full h-full object-cover object-top transition-transform duration-500 will-change-transform hover:scale-105"
+                decoding="async"
+                className="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none rounded-t-3xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent rounded-t-3xl pointer-events-none"></div>
             </div>
 
             {/* Content */}
@@ -143,7 +146,7 @@ const OurPeople: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`LinkedIn profile of ${name}`}
-                className="inline-flex items-center justify-center mx-auto w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-visible:ring-offset-2 transition"
+                className="inline-flex items-center justify-center mx-auto w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
               >
                 <FaLinkedinIn size={18} />
               </a>

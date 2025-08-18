@@ -44,7 +44,11 @@ const Header: React.FC = () => {
   }, [isLoggedIn, navigate]);
 
   const handleWriteToUs = useCallback(() => {
-    navigate("/main/writetous");
+    navigate("/main/services/5d27/free-ai-book");
+  }, [navigate]);
+
+  const handleInterested = useCallback(() => {
+    navigate("/main/services/5d27/free-ai-book");
   }, [navigate]);
 
   return (
@@ -58,10 +62,7 @@ const Header: React.FC = () => {
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <div
-            // onClick={() => navigate("/")}
-            className="flex items-center cursor-pointer select-none"
-          >
+          <div className="flex items-center cursor-pointer select-none">
             <img
               src={Askoxy}
               alt="Askoxy.AI Logo"
@@ -73,12 +74,20 @@ const Header: React.FC = () => {
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn && (
-              <button
-                onClick={handleWriteToUs}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105"
-              >
-                Write to Us
-              </button>
+              <>
+                <button
+                  onClick={handleWriteToUs}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105"
+                >
+                  Write to Us
+                </button>
+                <button
+                  onClick={handleInterested}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105"
+                >
+                  I am Interested
+                </button>
+              </>
             )}
             <button
               onClick={handleAuth}
@@ -114,14 +123,24 @@ const Header: React.FC = () => {
           <div className="md:hidden bg-white border-t rounded-b-lg shadow-lg mt-1 animate-slideDown">
             <ul className="flex flex-col divide-y">
               {isLoggedIn && (
-                <li className="p-4">
-                  <button
-                    onClick={handleWriteToUs}
-                    className="w-full py-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition"
-                  >
-                    Write to Us
-                  </button>
-                </li>
+                <>
+                  <li className="p-4">
+                    <button
+                      onClick={handleWriteToUs}
+                      className="w-full py-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition"
+                    >
+                      Write to Us
+                    </button>
+                  </li>
+                  <li className="p-4">
+                    <button
+                      onClick={handleInterested}
+                      className="w-full py-3 rounded-md bg-green-600 hover:bg-green-700 text-white transition"
+                    >
+                      I am Interested
+                    </button>
+                  </li>
+                </>
               )}
               <li className="p-4">
                 <button

@@ -268,7 +268,7 @@ const ServicesSlider: React.FC = () => {
   };
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white min-h-[70vh]">
+    <section className="py-12 bg-purple-50 px-4 sm:px-6 lg:px-8 bg-white min-h-[70vh]">
       <div className="relative z-10">
         {/* SERVICES SECTION */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-16">

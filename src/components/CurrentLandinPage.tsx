@@ -2,7 +2,7 @@ import React from "react";
 
 import Header from "./Header";
 import ServicesSlider from "./ServicesSlider";
-import HorizontalScrollGallery from "./CurrentSevices";
+
 import FreeGPTs from "./FreeGPTs";
 import BMVCoinPromo from "./BMVCoinPromo";
 import OXYGroupCompanies from "./OXYGroupCompanies";
@@ -11,6 +11,7 @@ import OurPeople from "./OurTeam";
 import PdfPages from "./Presentation";
 import UnicornGrid from "./SuperOurApp";
 import AwardPage from "./Award";
+import FreeAiBook from "./FreeAiBook";
 
 const CurrentLandingPage: React.FC = () => {
   return (
@@ -24,27 +25,27 @@ const CurrentLandingPage: React.FC = () => {
       {/* <section className="mt-4">
         <HorizontalScrollGallery />
       </section> */}
+
+      <section>
+        <FreeAiBook />
+      </section>
       <section>
         <ServicesSlider />
       </section>
       <section>
-       
         <BMVCoinPromo />
       </section>
       <section>
         <FreeGPTs />
       </section>
-       <section>
-    
+      <section>
         <AwardPage />
       </section>
       <section>
-      
         <OurPeople />
       </section>
 
       <section>
-      
         <PdfPages />
       </section>
 

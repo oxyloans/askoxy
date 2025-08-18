@@ -143,7 +143,7 @@ const Content2: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 bg-white z-30 shadow-sm">
         <Header />
@@ -231,19 +231,19 @@ ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
           ${isMobileOpen ? "pl-0" : "pl-0"}
           ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
       >
-        <main className=" p-2 md:p-4 rounded-tl-lg shadow-sm">
+
           <Outlet />
-        </main>
+        
       </div>
       {/* Footer with dynamic width and white background */}
-      <div
+      {/* <div
         className={`transition-all duration-300
        
           ${isMobileOpen ? "pl-0" : "pl-0"}
           ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
       >
         <Footer />
-      </div>
+      </div> */}
     </div>
   );
 };

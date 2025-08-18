@@ -202,7 +202,7 @@ const [loading, setLoading] = useState(false);
     };
   return (
     <main className="flex flex-col items-center justify-center bg-gradient-to-br from-white via-blue-50 to-purple-50">
-      <h2 className="text-xl font-semibold  text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+      <h2 className="text-xl font-semibold pt-8 text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
         {headings[currentIndex]}
       </h2>
 

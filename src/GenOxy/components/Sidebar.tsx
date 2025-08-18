@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <>
           <div className="flex items-center gap-2 px-4 pt-3">
             <Bot className="w-5 h-5 text-purple-800 dark:text-white" />
-            <h2 className="text-lg font-semibold text-purple-800 dark:text-white">
+            <h2 className="text-lg pt-3 font-semibold text-purple-800 dark:text-white">
               Assistants
             </h2>
           </div>

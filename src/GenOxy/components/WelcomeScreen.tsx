@@ -459,7 +459,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       />
                       <label
                         htmlFor="file-upload"
-                        className={`inline-flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 cursor-pointer
+                        className={`inline-flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 rounded-xl transition-all duration-200 cursor-pointer
                         ${
                           selectedFile
                             ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
@@ -474,7 +474,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         onClick={handleToggleVoice}
                         title="Voice Input"
                         disabled={loading}
-                        className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-11 h-11
+                        className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 
                           ${
                             isRecording
                               ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
@@ -506,7 +506,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       }}
                       disabled={(!input.trim() && !selectedFile) || loading}
                       title="Send"
-                      className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-11 h-11
+                      className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 
                         ${
                           (input.trim() || selectedFile) && !loading
                             ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"

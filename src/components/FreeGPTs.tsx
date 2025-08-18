@@ -62,8 +62,8 @@ const Genoxy: React.FC = () => {
 
   return (
     <section
-      className="relative py-12 px-4 sm:px-6 md:px-8 lg:px-12 min-h-[85vh] flex items-center justify-center overflow-hidden
-        bg-gradient-to-tr from-[#f2f5fc] via-[#e0f0ff] to-[#fdf6fb]"
+      className="relative py-6 px-4 sm:px-6 md:px-8 lg:px-12 min-h-[85vh] flex items-center justify-center overflow-hidden
+        bg-gradient-to-tr from-green-50 via-emerald-50 to-cyan-50"
     >
       {/* Animated background orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
