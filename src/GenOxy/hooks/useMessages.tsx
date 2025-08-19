@@ -18,6 +18,14 @@ interface UseMessagesProps {
   setThreadId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
+const cleanContent = (content: string): string => {
+  // Remove ?number:number?source? or similar patterns
+  return content
+    .replace(/\?\d+:\d+\?source\?/g, "")
+    .replace(/\?.*?\?/g, "")
+    .trim();
+};
+
 export const useMessages = ({
   messages,
   setMessages,
@@ -71,7 +79,7 @@ export const useMessages = ({
         const isImageUrl = data.startsWith("http");
         const assistantReply: Message = {
           role: "assistant",
-          content: data,
+          content: cleanContent(data),
           isImage: isImageUrl,
         };
 
@@ -146,7 +154,7 @@ export const useMessages = ({
         const assistantReply: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data,
+          content: cleanContent(data),
           isImage: isImageUrl,
         };
 
@@ -226,7 +234,7 @@ export const useMessages = ({
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: answer,
+        content: cleanContent(answer),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -409,7 +417,7 @@ class VoiceSessionService {
 
           const msg: ChatMessage = {
             role: "assistant",
-            text: buffer,
+            text: cleanContent(buffer),
             timestamp: new Date().toLocaleTimeString(),
           };
           onMessage(msg);

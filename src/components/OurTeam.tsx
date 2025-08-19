@@ -89,7 +89,7 @@ const cardVariants = {
 
 const OurPeople: React.FC = () => {
   return (
-    <section className="bg-gradient-to-b from-purple-50 via-white to-green-50 py-6 px-4 sm:px-6 lg:px-8">
+    <section className="bg-gradient-to-b from-purple-50 via-white to-green-50 py-10 px-4 sm:px-6 lg:px-8">
       {/* Section Header */}
       <motion.div
         className="text-center max-w-3xl mx-auto mb-8"

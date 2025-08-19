@@ -10,7 +10,14 @@ interface ChatMessagesProps {
   loading: boolean;
   onEditMessage: (messageId: string, content: string) => void;
 }
-
+// Utility function to clean unwanted characters from content
+const cleanContent = (content: string): string => {
+  // Remove ?number:number?source? or similar patterns
+  return content
+    .replace(/\?\d+:\d+\?source\?/g, "")
+    .replace(/\?.*?\?/g, "")
+    .trim();
+};
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   messagesEndRef,
@@ -41,7 +48,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <div className="flex justify-end">
                   <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] relative group">
                     <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md break-words whitespace-pre-wrap">
-                      {msg.content}
+                      {cleanContent(msg.content)}
                     </div>
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
                       <User className="w-4 h-4 text-white" />
@@ -50,7 +57,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       <MessageActions
                         message={msg}
                         index={idx}
-                        onEdit={() => onEditMessage(msg.id!, msg.content)}
+                        onEdit={() =>
+                          onEditMessage(msg.id!, cleanContent(msg.content))
+                        }
                         showOnly={["edit", "copy"]}
                       />
                     </div>
@@ -84,7 +93,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             </div>
                           </div>
                         ) : (
-                          <MarkdownRenderer content={msg.content} />
+                          <MarkdownRenderer
+                            content={cleanContent(msg.content)}
+                          />
                         )}
                         <div className="flex justify-end mt-2">
                           <MessageActions message={msg} index={idx} small />

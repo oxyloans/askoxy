@@ -38,7 +38,7 @@ const BMVCoinPromo: React.FC = () => {
 
   return (
     <section
-      className={`relative min-h-screen 
+      className={`relative 
       bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 
       overflow-hidden transition-all duration-700 ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
@@ -50,7 +50,7 @@ const BMVCoinPromo: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-100 rounded-full blur-3xl opacity-30 -mb-10 -ml-10"></div>
       </div>
 
-      <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between px-4 md:px-8 lg:px-16 py-16 space-y-10 lg:space-y-0">
+      <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between px-4 md:px-8 lg:px-16 py-10 space-y-8 lg:space-y-0">
         {/* Left Content */}
         <div className="w-full lg:w-3/5 text-center lg:text-left">
           <div className="bg-white bg-opacity-90 backdrop-blur-md border border-purple-100 rounded-2xl shadow-md p-6 sm:p-8">

@@ -33,13 +33,13 @@ const PdfPages: React.FC = () => {
   };
 
   return (
-    <section className="bg-gradient-to-br from-purple-50 via-gray-50 to-indigo-50 py-10 sm:py-20 px-4 sm:px-8 lg:px-16">
+    <section className="bg-gradient-to-br  from-purple-50 via-gray-50 to-indigo-50 py-10 sm:py-10 px-4 sm:px-8 lg:px-16">
       {/* Header Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-indigo-800 leading-tight mb-3">
+      <div className="text-center mb-10">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-indigo-800 leading-tight mb-3">
           Explore Our Presentations
-        </h1>
-        <div className="h-1 w-24 bg-indigo-600 mx-auto mb-4 rounded-full"></div>
+        </h2>
+        <div className="h-1.5 w-24 bg-indigo-600 mx-auto mb-4 rounded-full"></div>
         <p className="text-gray-700 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
           Get inspired by our vision, innovation journeys, and initiatives that
           drive positive change and growth across industries.
@@ -47,7 +47,7 @@ const PdfPages: React.FC = () => {
       </div>
 
       {/* Presentation Cards */}
-      <div className="flex flex-col space-y-8 max-w-7xl bg-purple-50 mx-auto">
+      <div className="flex flex-col space-y-6 max-w-7xl bg-purple-50 mx-auto">
         {presentations.map((item, index) => (
           <div
             key={index}

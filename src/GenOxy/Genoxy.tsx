@@ -1,4 +1,4 @@
-import React, { useRef, useState, KeyboardEvent } from "react";
+import React, { useRef, useState, useEffect, KeyboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { message as antdMessage } from "antd";
 
@@ -16,21 +16,48 @@ import { Message } from "./types/types";
 
 import "./styles/OpenAi.css";
 
+type AssistantPublic = {
+  name: string;
+  slug: string;
+  description?: string;
+};
+
 /* ================================
- * Assistants (no roles in API)
+ * Assistants – use slug for URL, id only for API (never shown)
  * ================================ */
 
 interface AssistantOption {
-  id: string;
-  name: string;
+  id: string; // internal only
+  name: string; // shown
+  slug: string; // shown in URL, friendly
   description?: string;
 }
 
 const ASSISTANTS: AssistantOption[] = [
-  { id: "asst_5g20JJbZ88NvcSgNYLMeQTm2", name: "Tie Hyd" },
-  { id: "asst_PGnuKq3mSvx96598PTed2XGy", name: "IRDAI" },
-  { id: "asst_XYsY8abeIoMWvsD394DW2N5A", name: "KLM Fashions" },
+  { id: "asst_5g20JJbZ88NvcSgNYLMeQTm2", name: "Tie Hyd", slug: "tie-hyd" },
+  // {
+  //   id: "asst_PGnuKq3mSvx96598PTed2XGy",
+  //   name: "Insurance LLM",
+  //   slug: "insurance-llm",
+  // },
+  {
+    id: "asst_XYsY8abeIoMWvsD394DW2N5A",
+    name: "KLM Fashions",
+    slug: "klm-fashions",
+  },
 ];
+
+function findAssistantBySlug(slug: string | null) {
+  if (!slug) return null;
+  return ASSISTANTS.find((a) => a.slug === slug) ?? null;
+}
+
+/** Always version the URL so browser back/forward is reliable (slug only) */
+function assistantUrl(slug: string, version?: number) {
+  const v = version ?? Date.now(); // unique each click
+  const qs = new URLSearchParams({ a: slug, v: String(v) });
+  return `/genoxy/chat?${qs.toString()}`;
+}
 
 const ASK_ENDPOINT = `${(BASE_URL || "").replace(
   /\/$/,
@@ -47,65 +74,139 @@ const TIE_PROMPTS: string[] = [
   "Who regularly speaks at startup events or conferences?",
 ];
 
-/** KLM roles + prompts */
-type KlmRole = "CXO" | "Operations" | "Management" | "IT" | "Sales";
+/** Defining KLM roles and associated prompts for role-based interactions */
+type KlmRole =
+  | "Management"
+  | "Operations"
+  | "Infrastructure"
+  | "IT"
+  | "Finance & Accounts"
+  | "HR"
+  | "Legal & Compliance"
+  | "CSR/Sustainability";
+
+// Defining KLM roles with labels and icons for display
 const KLM_ROLES: { key: KlmRole; label: string; icon: string }[] = [
-  { key: "CXO", label: "CXO", icon: "👔" },
-  { key: "Operations", label: "Operations", icon: "🏭" },
-  { key: "Management", label: "Management", icon: "👨‍💼" },
-  { key: "IT", label: "IT", icon: "💻" },
-  { key: "Sales", label: "Sales", icon: "📈" },
+  { key: "Management", label: "Management / CXO", icon: "👔" }, // Executive leadership role
+  { key: "Operations", label: "Operations", icon: "🏭" }, // Operational efficiency and execution
+  { key: "Infrastructure", label: "Infrastructure", icon: "🏗️" }, // Supply chain and logistics
+  { key: "IT", label: "Information Technology", icon: "💻" }, // IT systems and support
+  { key: "Finance & Accounts", label: "Finance & Accounts", icon: "💰" }, // Financial management
+  { key: "HR", label: "Human Resources", icon: "🧑‍🤝‍🧑" }, // Employee management and culture
+  { key: "Legal & Compliance", label: "Legal & Compliance", icon: "⚖️" }, // Legal and regulatory adherence
+  { key: "CSR/Sustainability", label: "CSR / Sustainability", icon: "🌱" }, // Social and environmental responsibility
 ];
 
+// Mapping KLM roles to their respective prompt options for quick access
 const KLM_PROMPTS: Record<KlmRole, string[]> = {
-  CXO: [
-    "View Profitability Summary",
-    "Forecast Next Quarter Growth",
-    "Top 3 Risks Affecting Margins",
-    "Cash Burn vs Revenue",
+  Management: [
+    "Give me a snapshot of quarterly performance within this financial year", // Overview of organizational metrics
+    "Which business risks are flagged in this year’s disclosures?", // Key growth and strategic initiatives
+    "Summarize the investor-related updates or IPO communications this year.", // Summary of potential risks
+    "Highlight key governance updates reported this year", // Planning for the upcoming quarter
+    "What are the compliance issues raised or addressed in this year’s filings?",
+    "Summarize media mentions and newspaper clippings relevant to this year",
   ],
   Operations: [
-    "Inventory Status of Fast-Moving SKUs",
-    "Shipment Delays and Reasons",
-    "Supply Chain Cost Breakdown",
-    "SKU Return & Quality Issues",
+    "Show me employee attrition rates for this year.",
+    "Summarize this year’s training programs and skill development initiatives.",
+    "What grievance cases from employees/customers are recorded this year?",
+    "Highlight shrinkage risks or operational inefficiencies reported this year.",
+    "What safety or SOP updates were introduced in operations this year?",
+    "Give me a breakdown of store/warehouse expansions in this year.",
   ],
-  Management: [
-    "Department-wise Target Achievement",
-    "Underperforming Product Lines",
-    "Cost-Benchmark Analysis",
-    "90-Day Performance Summary",
+  Infrastructure: [
+  "Summarize health & safety incidents reported this year.",
+
+"What energy and water usage has been disclosed for this year?",
+
+"Are offices and stores compliant with accessibility standards this year?",
+
+"Highlight infra-related sustainability initiatives in this year’s disclosures.",
+
+"What major CAPEX or infra upgrades were reported this year?",
+
+"Show me waste management or recycling disclosures from this year.",
   ],
   IT: [
-    "IT Infra Cost Overview",
-    "Recent Downtime or Security Issues",
-    "License Renewals Due",
-    "Helpdesk Ticket Trends",
+    "List IT/cybersecurity risks mentioned in this year’s reports.",
+
+"What technology initiatives were introduced for customers this year?",
+
+"Summarize IT’s role in grievance redressal this year.",
+
+"What compliance or audit references involve IT this year?",
+
+"Highlight system or data security disclosures in this year.",
+
+"What digital upgrades were announced or completed this year?",
   ],
-  Sales: [
-    "Daily Sales vs Last Week",
-    "Top Performing Products",
-    "Conversion Rates by Region",
-    "Sales Impact of Recent Campaign",
+  "Finance & Accounts": [
+    "Summarize quarterly financial results disclosed this year.",
+
+    "Highlight key revenue and expense drivers from this year.",
+
+    "What CSR spends were made this year under Section 135?",
+
+    "Summarize any tax notices or compliance matters this year.",
+
+    "What litigation items have financial impact this year?",
+
+    "Summarize credit rating or auditor comments given this year."
+  ],
+  HR: [
+    "Give me employee count and gender diversity for this year.",
+    "What are attrition and retention rates disclosed this year?",
+    "Summarize employee training and development programs this year.",
+    "List differently abled employee statistics for this year.",
+    "What grievance or POSH cases were reported this year?",
+    "Highlight policies related to employee well-being this year."
+  ],
+  "Legal & Compliance": [
+    "Summarize litigation updates disclosed this year.",
+    "What SEBI/ROC filings are noted this year?",
+    "Highlight whistleblower or anti-bribery disclosures this year.",
+    "What compliance frameworks are referenced this year?",
+    "Summarize environmental or social compliance requirements this year.",
+    "List statutory notices or regulatory correspondence this year."
+  ],
+  "CSR/Sustainability": [
+   "Summarize CSR initiatives undertaken this year.",
+   "What ESG risks and opportunities are highlighted this year?",
+   "Which SDG-linked activities are reported this year?",
+   "Give me employee inclusion/diversity updates this year.",
+   "Summarize this year’s energy, water, and waste management data.",
+   "What stakeholder engagement activities were reported this year?"
   ],
 };
 
+
 /* ================================
- * IRDAI options (dependent dropdowns)
+Give me employee inclusion/diversity updates this year.
+
+Summarize this year’s energy, water, and waste management data.
+
+What stakeholder engagement activities were reported this year?
+  ],
+};
+
+
+/* ================================
+ * Insurance LLM options (dependent dropdowns)
  * ================================ */
 
-type IrdaLicenseType =
+type InsuranceLicenseType =
   | "Life Insurance Companies"
   | "Non-life/General Insurance Companies"
   | "Reinsurers";
 
-const IRDAI_LICENSE_TYPES: IrdaLicenseType[] = [
+const INSURANCE_LICENSE_TYPES: InsuranceLicenseType[] = [
   "Life Insurance Companies",
   "Non-life/General Insurance Companies",
   "Reinsurers",
 ];
 
-const IRDAI_ENTITIES: Record<IrdaLicenseType, string[]> = {
+const INSURANCE_ENTITIES: Record<InsuranceLicenseType, string[]> = {
   "Life Insurance Companies": [
     "Life Insurance Corporation of India (LIC)",
     "HDFC Life Insurance Co. Ltd.",
@@ -175,10 +276,10 @@ const IRDAI_ENTITIES: Record<IrdaLicenseType, string[]> = {
   ],
 };
 
-const IRDAI_FIXED_QUESTIONS = [
+const INSURANCE_FIXED_QUESTIONS = [
   "Generate Compliance Scorecard",
   "Assess Clarity & Correctness of Rule Implementation",
-  "Highlight Deviations from IRDA Guidelines",
+  "Highlight Deviations from Insurance Guidelines",
   "Suggest Steps for 100% Compliance",
 ];
 
@@ -205,9 +306,11 @@ const GenOxy: React.FC = () => {
   // KLM stage state
   const [klmRole, setKlmRole] = useState<KlmRole | null>(null);
 
-  // IRDAI form state
-  const [irdaLicense, setIrdaLicense] = useState<IrdaLicenseType | "">("");
-  const [irdaEntity, setIrdaEntity] = useState<string>("");
+  // Insurance LLM form state
+  const [insuranceLicense, setInsuranceLicense] = useState<
+    InsuranceLicenseType | ""
+  >("");
+  const [insuranceEntity, setInsuranceEntity] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -217,6 +320,19 @@ const GenOxy: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isChatRoute = location.pathname === "/genoxy/chat";
+
+  // Sync assistant from URL on navigation/back/forward (slug → assistant)
+  useEffect(() => {
+    const qs = new URLSearchParams(location.search);
+    const slug = qs.get("a");
+    const fromUrl = findAssistantBySlug(slug);
+    if (slug && fromUrl && fromUrl.slug !== activeAssistant?.slug) {
+      setActiveAssistant(fromUrl);
+    }
+    if (!slug && activeAssistant) {
+      setActiveAssistant(null);
+    }
+  }, [location.search]); // track only URL
 
   const { handleSend, handleEdit, handleFileUpload } = useMessages({
     messages,
@@ -232,8 +348,7 @@ const GenOxy: React.FC = () => {
     setRemainingPrompts,
   });
 
-  /* Helpers */
-  function resetChatForNewAssistant() {
+  function resetChatForNewAssistant(nextAssistantSlug?: string | null) {
     setChatHistory((prev) =>
       messages.length ? [...prev, [...messages]] : prev
     );
@@ -244,10 +359,15 @@ const GenOxy: React.FC = () => {
     setThreadId(null);
     setRemainingPrompts(null);
     setKlmRole(null);
-    // reset IRDAI form
-    setIrdaLicense("");
-    setIrdaEntity("");
-    navigate("/genoxy/chat");
+
+    // Insurance LLM fields
+    setInsuranceLicense?.("");
+    setInsuranceEntity?.("");
+
+    const target = nextAssistantSlug
+      ? assistantUrl(nextAssistantSlug)
+      : "/genoxy/chat";
+    navigate(target); // push, so Back works
   }
 
   async function askAssistant(
@@ -262,7 +382,7 @@ const GenOxy: React.FC = () => {
     const url =
       `${ASK_ENDPOINT}` +
       `?assistantId=${encodeURIComponent(assistantId)}` +
-      `&instruction=`; // empty instruction
+      `&instruction=`;
 
     const payload = [{ role: userMessage.role, content: userMessage.content }];
 
@@ -313,33 +433,42 @@ const GenOxy: React.FC = () => {
     }
   }
 
-  /* UI Events */
-  const handlePickAssistant = (assistant: AssistantOption) => {
-    if (!activeAssistant || activeAssistant.id !== assistant.id) {
-      resetChatForNewAssistant();
+  const handlePickAssistant = (assistant: AssistantPublic) => {
+    // Map the public payload (no id) back to the full one (with id) using slug
+    const full = ASSISTANTS.find((a) => a.slug === assistant.slug);
+    if (full) {
+      setActiveAssistant(full);
     }
-    setActiveAssistant(assistant);
+    // Always reset chat + navigate using the slug
+    resetChatForNewAssistant(assistant.slug);
   };
 
+  /** Ensure the URL has the assistant slug when sending, then call API with id */
   const handleAssistantSend = async () => {
     const trimmed = input.trim();
     if (!trimmed) {
-      antdMessage.error("Please enter a message.");
+      antdMessage?.error?.("Please enter a message.");
       return;
     }
     if (!activeAssistant) {
-      await handleSend();
+      await handleSend(); // fallback
       return;
     }
 
-    // If IRDAI is active, add context
+    // Pin/refresh assistant slug in URL (preserve back stack)
+    const qs = new URLSearchParams(location.search);
+    if (qs.get("a") !== activeAssistant.slug) {
+      navigate(assistantUrl(activeAssistant.slug));
+    }
+
+    // If Insurance LLM is active, add context
     let finalContent = trimmed;
-    if (activeAssistant.name.toLowerCase().includes("irdai")) {
-      if (!irdaLicense || !irdaEntity) {
+    if (activeAssistant.name.toLowerCase().includes("insurance")) {
+      if (!insuranceLicense || !insuranceEntity) {
         antdMessage.error("Please select license type and regulated entity.");
         return;
       }
-      finalContent = `[License Type: ${irdaLicense}; Entity: ${irdaEntity}] ${trimmed}`;
+      finalContent = `[License Type: ${insuranceLicense}; Entity: ${insuranceEntity}] ${trimmed}`;
     }
 
     setMessages((prev) => [
@@ -412,8 +541,12 @@ const GenOxy: React.FC = () => {
     setEditingMessageId(null);
     setKlmRole(null);
     setActiveAssistant(null);
-    setIrdaLicense("");
-    setIrdaEntity("");
+
+    // Insurance LLM fields
+    setInsuranceLicense?.("");
+    setInsuranceEntity?.("");
+
+    // Drop assistant param
     navigate("/genoxy");
   };
 
@@ -421,7 +554,11 @@ const GenOxy: React.FC = () => {
     setMessages(chat);
     setIsSidebarOpen(false);
     setEditingMessageId(null);
-    navigate("/genoxy/chat");
+
+    const slug = activeAssistant?.slug;
+    navigate(
+      slug ? `/genoxy/chat?a=${encodeURIComponent(slug)}` : "/genoxy/chat"
+    );
   };
 
   const editMessage = (messageId: string, content: string) => {
@@ -455,26 +592,215 @@ const GenOxy: React.FC = () => {
     messages.length === 0 &&
     isChatRoute;
 
-  const TieStarter: React.FC = () => (
-    <div className="w-full bg-white">
-      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-        <div className="rounded-2xl bg-[#6b4cd6] text-white p-6 sm:p-8 shadow-md">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl sm:text-3xl font-bold">
-              TiE Hyderabad Assistant
-            </h2>
-            <div className="text-sm opacity-90 font-semibold">
-              TiE HYDERABAD
-            </div>
-          </div>
-          <p className="mt-2 text-white/90">
-            Ask anything about TiE Hyderabad founders, mentors, investors &
-            domain experts. Let the Assistant guide you.
+ const TieStarter: React.FC = () => (
+   <div className="w-full">
+     <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 md:py-12">
+       {/* Top Section */}
+       <div className="rounded-2xl bg-[#6b4cd6] dark:bg-[#6b4cd6]/80 text-white p-6 sm:p-8 md:p-10 shadow-md text-center">
+         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+           TiE Hyderabad Conversations
+         </h2>
+      
+         <p className="mt-3 text-white/90 text-sm md:text-base max-w-2xl mx-auto">
+           Ask anything about TiE Hyderabad founders, mentors, investors &
+           domain experts. Let the Assistant guide you.
+         </p>
+       </div>
+
+       {/* Prompt Buttons */}
+       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-6 md:mt-8">
+         {TIE_PROMPTS.map((q) => (
+           <button
+             key={q}
+             onClick={async () => {
+               setMessages((prev) => [
+                 ...prev,
+                 {
+                   id: `m_${Date.now()}`,
+                   role: "user",
+                   content: q,
+                   timestamp: new Date().toISOString(),
+                 },
+               ]);
+               await askAssistant(activeAssistant!.id, {
+                 role: "user",
+                 content: q,
+               });
+             }}
+             className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white 
+                       dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
+                       hover:border-purple-300 dark:hover:border-purple-500 
+                       hover:shadow transition text-left"
+           >
+             <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
+             <span className="text-sm md:text-base font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
+               {q}
+             </span>
+           </button>
+         ))}
+       </div>
+     </div>
+   </div>
+ );
+
+  /* KLM: Stage 1 (Role select) */
+  const isKlm = activeAssistant?.name?.toLowerCase().includes("klm");
+  const showKlmRoleStage =
+    isKlm && klmRole === null && messages.length === 0 && isChatRoute;
+
+const KlmRoleSelect: React.FC = () => {
+  return (
+    <div className="w-full">
+      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-4 sm:p-6 shadow-sm md:shadow-md text-center">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-900 dark:text-white">
+            KLM Fashions – Role-Based Conversations
+          </h2>
+          <p className="mt-1 text-gray-600 dark:text-gray-300 text-xs sm:text-sm max-w-2xl mx-auto">
+            Choose your role to get relevant insights.
           </p>
+
+          {/* All Roles - Same Size */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 place-items-center">
+            {KLM_ROLES.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setKlmRole(r.key)}
+                className="group rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-sm px-2 py-3 transition flex flex-col items-center text-center w-full"
+              >
+                <div className="text-xl sm:text-2xl mb-1">{r.icon}</div>
+                <div className="font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 text-xs sm:text-sm">
+                  {r.label}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            You can change role anytime from the menu.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+
+  /* KLM: Stage 2 (Role prompts) */
+  const showKlmPromptStage =
+    isKlm && klmRole !== null && messages.length === 0 && isChatRoute;
+
+  const KlmRoleStarter: React.FC = () => {
+    if (!klmRole) return null;
+    const prompts = KLM_PROMPTS[klmRole];
+     const headerStyles: Record<
+       KlmRole,
+       { bg: string; accent: string; sub: string }
+     > = {
+       Management: {
+         bg: "bg-[#0b2a5b] dark:bg-[#0b2a5b]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       Operations: {
+         bg: "bg-[#1f3d2c] dark:bg-[#1f3d2c]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       Infrastructure: {
+         bg: "bg-[#0f2f36] dark:bg-[#0f2f36]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       IT: {
+         bg: "bg-[#132b3a] dark:bg-[#132b3a]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       "Finance & Accounts": {
+         bg: "bg-[#1c2c5e] dark:bg-[#1c2c5e]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       HR: {
+         bg: "bg-[#3b2b5e] dark:bg-[#3b2b5e]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       "Legal & Compliance": {
+         bg: "bg-[#2b3a5e] dark:bg-[#2b3a5e]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+       "CSR/Sustainability": {
+         bg: "bg-[#2b5e3b] dark:bg-[#2b5e3b]/80",
+         accent: "text-white",
+         sub: "text-white/80",
+       },
+     };
+
+   const roleHeader: Record<KlmRole, { title: string; sub: string }> = {
+     Management: {
+       title: "Welcome Management – Strategic Insights at a Glance",
+       sub: "Choose a report or ask a question below.",
+     },
+     Operations: {
+       title: "Welcome Operations Team – Stay on Top of Execution",
+       sub: "Pick a topic to begin or type your query.",
+     },
+     Infrastructure: {
+       title: "Welcome Infrastructure Team – Optimize Supply Chain",
+       sub: "Select a topic or initiate a custom query.",
+     },
+     IT: {
+       title:
+         "Welcome IT Team – Infrastructure & Compliance at Your Fingertips",
+       sub: "Select a topic or initiate a custom query.",
+     },
+     "Finance & Accounts": {
+       title: "Welcome Finance Team – Financial Insights and Control",
+       sub: "Click below or ask your own finance question.",
+     },
+     HR: {
+       title: "Welcome HR Team – Empower Your Workforce",
+       sub: "Select a topic or ask about employee management.",
+     },
+     "Legal & Compliance": {
+       title: "Welcome Legal Team – Stay Compliant and Informed",
+       sub: "Choose a report or ask a compliance question.",
+     },
+     "CSR/Sustainability": {
+       title: "Welcome CSR Team – Drive Sustainable Impact",
+       sub: "Select a topic or ask about sustainability initiatives.",
+     },
+   };
+
+
+    const h = headerStyles[klmRole];
+    const copy = roleHeader[klmRole];
+
+  return (
+    <div className="w-full">
+      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div
+          className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold">{copy.title}</h2>
+          <p className={`mt-2 ${h.sub} max-w-2xl mx-auto`}>{copy.sub}</p>
+          <button
+            onClick={() => setKlmRole(null)}
+            className="mt-3 text-sm underline decoration-dotted opacity-90 hover:opacity-100 dark:hover:text-purple-200"
+            title="Change role"
+          >
+            Change role
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-          {TIE_PROMPTS.map((q) => (
+        {/* Centered Prompt Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 place-items-center">
+          {prompts.map((q) => (
             <button
               key={q}
               onClick={async () => {
@@ -492,178 +818,41 @@ const GenOxy: React.FC = () => {
                   content: q,
                 });
               }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-purple-300 hover:shadow transition text-left"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white 
+                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
+                 hover:border-purple-300 dark:hover:border-purple-500 
+                 hover:shadow transition text-left max-w-sm w-full"
             >
               <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
-              <span className="text-sm font-medium text-gray-800">{q}</span>
+              <span className="text-xs md:text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
+                {q}
+              </span>
             </button>
           ))}
         </div>
       </div>
     </div>
   );
+};
+  
 
-  /* KLM: Stage 1 (Role select) */
-  const isKlm = activeAssistant?.name?.toLowerCase().includes("klm");
-  const showKlmRoleStage =
-    isKlm && klmRole === null && messages.length === 0 && isChatRoute;
-
-  const KlmRoleSelect: React.FC = () => (
-    <div className="w-full">
-      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-        <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 border border-gray-200 p-6 sm:p-8 shadow-sm">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            KLM Fashions – Role-Based Assistant
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Choose your role to get relevant insights and start your
-            conversation.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
-            {KLM_ROLES.map((r) => (
-              <button
-                key={r.key}
-                onClick={() => setKlmRole(r.key)}
-                className="group rounded-2xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-md px-4 py-6 text-left transition flex flex-col items-start"
-              >
-                <div className="text-2xl mb-3">{r.icon}</div>
-                <div className="font-semibold text-gray-900">{r.label}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Click to explore
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-5 text-xs text-gray-500">
-            You can change role anytime from the menu.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  /* KLM: Stage 2 (Role prompts) */
-  const showKlmPromptStage =
-    isKlm && klmRole !== null && messages.length === 0 && isChatRoute;
-
-  const KlmRoleStarter: React.FC = () => {
-    if (!klmRole) return null;
-    const prompts = KLM_PROMPTS[klmRole];
-    const headerStyles: Record<
-      KlmRole,
-      { bg: string; accent: string; sub: string }
-    > = {
-      CXO: { bg: "bg-[#0b2a5b]", accent: "text-white", sub: "text-white/80" },
-      Operations: {
-        bg: "bg-[#1f3d2c]",
-        accent: "text-white",
-        sub: "text-white/80",
-      },
-      Management: {
-        bg: "bg-[#0f2f36]",
-        accent: "text-white",
-        sub: "text-white/80",
-      },
-      IT: { bg: "bg-[#132b3a]", accent: "text-white", sub: "text-white/80" },
-      Sales: { bg: "bg-[#1c2c5e]", accent: "text-white", sub: "text-white/80" },
-    };
-
-    const roleHeader: Record<KlmRole, { title: string; sub: string }> = {
-      CXO: {
-        title: "Welcome CXO – Strategic Insights at a Glance",
-        sub: "Start your conversation below or type your own.",
-      },
-      Operations: {
-        title: "Welcome Operations Team – Stay on Top of Execution",
-        sub: "Pick a topic to begin or type your query.",
-      },
-      Management: {
-        title: "Welcome Management – Insights for Team Performance",
-        sub: "Choose a report or ask a question below.",
-      },
-      IT: {
-        title:
-          "Welcome IT Team – Infrastructure & Compliance at Your Fingertips",
-        sub: "Select a topic or initiate a custom query.",
-      },
-      Sales: {
-        title: "Welcome Sales Team – Drive Revenue with Insights",
-        sub: "Click below or ask your own sales question.",
-      },
-    };
-
-    const h = headerStyles[klmRole];
-    const copy = roleHeader[klmRole];
-
-    return (
-      <div className="w-full">
-        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-          <div
-            className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md`}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold">{copy.title}</h2>
-                <p className={`mt-2 ${h.sub}`}>{copy.sub}</p>
-              </div>
-              <button
-                onClick={() => setKlmRole(null)}
-                className="text-xs underline decoration-dotted opacity-90 hover:opacity-100"
-                title="Change role"
-              >
-                Change role
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-            {prompts.map((q) => (
-              <button
-                key={q}
-                onClick={async () => {
-                  setMessages((prev) => [
-                    ...prev,
-                    {
-                      id: `m_${Date.now()}`,
-                      role: "user",
-                      content: q,
-                      timestamp: new Date().toISOString(),
-                    },
-                  ]);
-                  await askAssistant(activeAssistant!.id, {
-                    role: "user",
-                    content: q,
-                  });
-                }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left"
-              >
-                <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
-                <span className="text-sm font-medium text-gray-800">{q}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  /* IRDAI Starter Panel (dropdowns + fixed questions) */
-  const isIrdai =
-    activeAssistant?.name?.toLowerCase().includes("irdai") &&
+  /* Insurance LLM Starter Panel (dropdowns + fixed questions) */
+  const isInsurance =
+    activeAssistant?.name?.toLowerCase().includes("insurance") &&
     messages.length === 0 &&
     isChatRoute;
 
-  const IrdaiStarter: React.FC = () => {
-    const entities = irdaLicense ? IRDAI_ENTITIES[irdaLicense] : [];
+  const InsuranceStarter: React.FC = () => {
+    const entities = insuranceLicense
+      ? INSURANCE_ENTITIES[insuranceLicense]
+      : [];
 
     const sendWithContext = async (text: string) => {
-      if (!irdaLicense || !irdaEntity) {
+      if (!insuranceLicense || !insuranceEntity) {
         antdMessage.error("Please select license type and regulated entity.");
         return;
       }
-      const content = `[License Type: ${irdaLicense}; Entity: ${irdaEntity}] ${text}`;
+      const content = `[License Type: ${insuranceLicense}; Entity: ${insuranceEntity}] ${text}`;
       setMessages((prev) => [
         ...prev,
         {
@@ -681,7 +870,7 @@ const GenOxy: React.FC = () => {
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
           <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 border border-gray-200 p-6 sm:p-8 shadow-sm">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Insurance Companies LLM Assistant
+              Insurance LLM Assistant
             </h2>
 
             {/* Controls */}
@@ -692,15 +881,15 @@ const GenOxy: React.FC = () => {
                 </label>
                 <select
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={irdaLicense}
+                  value={insuranceLicense}
                   onChange={(e) => {
-                    const val = e.target.value as IrdaLicenseType | "";
-                    setIrdaLicense(val);
-                    setIrdaEntity("");
+                    const val = e.target.value as InsuranceLicenseType | "";
+                    setInsuranceLicense(val);
+                    setInsuranceEntity("");
                   }}
                 >
-                  <option value="">Choose…</option>
-                  {IRDAI_LICENSE_TYPES.map((t) => (
+                  <option value="">Choose license type</option>
+                  {INSURANCE_LICENSE_TYPES.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
@@ -714,12 +903,12 @@ const GenOxy: React.FC = () => {
                 </label>
                 <select
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={irdaEntity}
-                  onChange={(e) => setIrdaEntity(e.target.value)}
-                  disabled={!irdaLicense}
+                  value={insuranceEntity}
+                  onChange={(e) => setInsuranceEntity(e.target.value)}
+                  disabled={!insuranceLicense}
                 >
                   <option value="">
-                    {irdaLicense ? "Choose…" : "Select license type first"}
+                    {insuranceLicense ? "Choose…" : "Select license type first"}
                   </option>
                   {entities.map((ent) => (
                     <option key={ent} value={ent}>
@@ -732,7 +921,7 @@ const GenOxy: React.FC = () => {
 
             {/* Action chips */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-              {IRDAI_FIXED_QUESTIONS.map((q) => (
+              {INSURANCE_FIXED_QUESTIONS.map((q) => (
                 <button
                   key={q}
                   onClick={() => sendWithContext(q)}
@@ -769,8 +958,8 @@ const GenOxy: React.FC = () => {
             clearHistory={() => setChatHistory([])}
             toggleSidebar={() => setIsSidebarOpen(false)}
             clearChat={clearChat}
-            assistants={ASSISTANTS}
-            activeAssistantId={activeAssistant?.id ?? null}
+            assistants={ASSISTANTS.map(({ id, ...rest }) => rest)} // pass only name, slug, description
+            activeAssistantSlug={activeAssistant?.slug ?? null}
             onPickAssistant={handlePickAssistant}
           />
         </div>
@@ -807,7 +996,7 @@ const GenOxy: React.FC = () => {
             {showTieStarter && <TieStarter />}
             {isKlm && showKlmRoleStage && <KlmRoleSelect />}
             {isKlm && showKlmPromptStage && <KlmRoleStarter />}
-            {isIrdai && <IrdaiStarter />}
+            {isInsurance && <InsuranceStarter />}
 
             {/* Chat stream */}
             <div className="flex-1 flex flex-col min-h-0 relative">

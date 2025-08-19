@@ -62,8 +62,8 @@ const Genoxy: React.FC = () => {
 
   return (
     <section
-      className="relative py-6 px-4 sm:px-6 md:px-8 lg:px-12 min-h-[85vh] flex items-center justify-center overflow-hidden
-        bg-gradient-to-tr from-green-50 via-emerald-50 to-cyan-50"
+      className="relative py-10 px-4 sm:px-6 md:px-8 lg:px-12  flex items-center justify-center overflow-hidden
+        bg-gradient-to-tr from-emerald-50 via-gray-50 to-white"
     >
       {/* Animated background orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -81,11 +81,11 @@ const Genoxy: React.FC = () => {
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-5xl text-center">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
           <span className="bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
             GENOXY
           </span>
-        </h1>
+        </h2>
 
         <div className="mx-auto mb-10 w-32 h-1.5 rounded-full bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500"></div>
 

@@ -2,9 +2,10 @@ import React from "react";
 import { X, Trash2, User, Sparkles, History, Bot } from "lucide-react";
 import { Message } from "../types/types";
 
-interface AssistantOption {
-  id: string;
+interface AssistantPublic {
+  // no ID here – UI should never receive IDs
   name: string;
+  slug: string; // friendly URL piece like "tie-hyd"
   description?: string;
 }
 
@@ -15,10 +16,10 @@ interface SidebarProps {
   toggleSidebar: () => void;
   clearChat: () => void;
 
-  // NEW: assistants list + active id + setter
-  assistants?: AssistantOption[];
-  activeAssistantId?: string | null;
-  onPickAssistant?: (assistant: AssistantOption) => void;
+  // Assistants passed without IDs
+  assistants?: AssistantPublic[];
+  activeAssistantSlug?: string | null;
+  onPickAssistant?: (assistant: AssistantPublic) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -29,22 +30,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   clearChat,
 
   assistants = [],
-  activeAssistantId = null,
+  activeAssistantSlug = null,
   onPickAssistant,
 }) => {
+  // Helper function to handle button clicks and close sidebar on mobile
+  const handleMobileClick = (callback: () => void) => {
+    callback();
+    // Close sidebar only on mobile view (sm:hidden)
+    if (window.innerWidth < 640) {
+      toggleSidebar();
+    }
+  };
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800 shadow-sm">
       {/* Sidebar Header */}
       <div className="flex items-center justify-between px-2 py-1 border-b border-gray-200  dark:border-gray-700">
         <div className="hidden sm:flex rounded-lg  items-center justify-center transition-shadow duration-200">
-          <button onClick={clearChat}>
+          <button onClick={() => handleMobileClick(clearChat)}>
             <Sparkles className="w-6 h-6 text-purple-800 dark:text-white dark:bg-gray-800  rounded-lg" />
           </button>
         </div>
         <div className="hidden sm:flex flex-1 justify-center" />
         <div className="flex-1 flex sm:justify-center justify-start">
           <button
-            onClick={clearChat}
+            onClick={() => handleMobileClick(clearChat)}
             className="flex items-center gap-2 text-sm font-semibold text-purple-800  px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
           >
             <svg
@@ -74,25 +83,28 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Assistants */}
+      {/* Assistants (IDs never rendered) */}
       {assistants.length > 0 && (
         <>
-          <div className="flex items-center gap-2 px-4 pt-3">
-            <Bot className="w-5 h-5 text-purple-800 dark:text-white" />
-            <h2 className="text-lg pt-3 font-semibold text-purple-800 dark:text-white">
+          <div className="flex items-center gap-2 px-4 pt-4">
+            <Bot className="w-5 h-5 mb-2 text-purple-800 dark:text-white" />
+            <h2 className="text-lg font-semibold text-purple-800 dark:text-white">
               Assistants
             </h2>
           </div>
           <div className="px-4 pt-2 space-y-2">
             {assistants.map((a) => (
               <button
-                key={a.id}
-                onClick={() => onPickAssistant && onPickAssistant(a)}
+                key={a.slug}
+                onClick={() =>
+                  handleMobileClick(() => onPickAssistant && onPickAssistant(a))
+                }
                 className={`w-full text-left p-3 rounded-lg transition-all duration-200 text-sm border ${
-                  activeAssistantId === a.id
+                  activeAssistantSlug === a.slug
                     ? "bg-purple-50 border-purple-200 text-purple-900 dark:bg-purple-900/30 dark:border-purple-800 dark:text-purple-100"
                     : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white"
                 }`}
+                title={a.name}
               >
                 <div className="font-semibold">{a.name}</div>
                 {a.description && (
@@ -121,12 +133,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           chatHistory.map((chat, index) => (
             <button
               key={index}
-              onClick={() => loadChat(chat)}
+              onClick={() => handleMobileClick(() => loadChat(chat))}
               className="w-full text-left p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-sm text-gray-900 dark:text-white flex items-center gap-3 border border-gray-200 dark:border-gray-700"
             >
               <User className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
               <span className="truncate">
-                {chat[0]?.content.length > 50
+                {chat[0]?.content?.length > 50
                   ? `${chat[0].content.substring(0, 50)}...`
                   : chat[0]?.content || `Chat ${index + 1}`}
               </span>
@@ -138,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {chatHistory.length > 0 && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
-            onClick={clearHistory}
+            onClick={() => handleMobileClick(clearHistory)}
             className="flex justify-center items-center gap-2 w-full p-3 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-all duration-200"
           >
             <Trash2 className="w-4 h-4" />

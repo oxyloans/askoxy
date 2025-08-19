@@ -202,17 +202,23 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   return (
     <div className="fixed inset-0 overflow-y-auto pointer-events-auto z-0 bg-white dark:bg-gray-900">
       {/* Header with button */}
-      <div className="absolute top-4 right-4">
+      <div
+        className="
+    absolute top-4 left-1/2 transform -translate-x-1/2
+    md:left-auto md:right-4 md:transform-none
+  "
+      >
         <button
           onClick={() => navigate("/genoxy/chat")}
           className="px-6 py-3 rounded-xl font-bold text-white 
-             bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
-             shadow-lg hover:shadow-2xl transform hover:-translate-y-1 
-             transition-all duration-300 ease-in-out"
+       bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
+       shadow-lg hover:shadow-2xl transform hover:-translate-y-1 
+       transition-all duration-300 ease-in-out"
         >
           Explore AI ASSISTANTS
         </button>
       </div>
+
       <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-20 mx-auto w-full pointer-events-auto">
         <div className="text-center mb-6">
           <div className="relative mb-6">

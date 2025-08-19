@@ -268,17 +268,17 @@ const ServicesSlider: React.FC = () => {
   };
 
   return (
-    <section className="py-12 bg-purple-50 px-4 sm:px-6 lg:px-8 bg-white min-h-[70vh]">
+    <section className="py-10 bg-purple-50  min-h-screen  px-4 sm:px-6 lg:px-8 bg-white">
       <div className="relative z-10">
         {/* SERVICES SECTION */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-16">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="mb-8 sm:mb-0 text-center sm:text-left">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
                 Our <span className="text-yellow-500">Services</span>
               </h2>
               <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>
@@ -370,16 +370,16 @@ const ServicesSlider: React.FC = () => {
           )}
       </div>
 
-      <hr className="p-2 mt-16"></hr>
+      <hr className="p-2 mt-12"></hr>
       <div className="relative z-10">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-16">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="mb-8 sm:mb-0 text-center sm:text-left">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
                 Our <span className="text-yellow-500">Blogs</span>
               </h2>
               <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>
@@ -498,16 +498,16 @@ const ServicesSlider: React.FC = () => {
         )}
       </div>
 
-      <hr className="p-2 mt-16"></hr>
+      <hr className="p-2 mt-12"></hr>
       <div className="relative z-10">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-16">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="mb-8 sm:mb-0 text-center sm:text-left">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
                 Our <span className="text-yellow-500">Jobs</span>
               </h2>
               <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>

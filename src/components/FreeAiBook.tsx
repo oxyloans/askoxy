@@ -11,7 +11,7 @@ const FreeAiBook: React.FC = () => {
   };
 
   return (
-    <section className="flex flex-col items-center bg-purple-50 py-6 md:py-12 px-4 sm:px-6 md:px-12">
+    <section className="flex flex-col items-center bg-purple-50 py-10 md:py-10 px-4 sm:px-6 md:px-12">
       {/* Heading */}
       <div className="text-center mb-6">
         <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-purple-900 leading-tight">

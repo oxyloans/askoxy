@@ -9,11 +9,11 @@ import oxybricksLogo from "../assets/img/image2.png";
 import bmvcoinLogo from "../assets/img/image4.png";
 import oxyfoundationLogo from "../assets/img/image5.png";
 
-// Custom arrow components
+// Custom arrow components with responsive visibility
 const CustomPrevArrow = (props: any) => (
   <button
     {...props}
-    className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
+    className="hidden md:block absolute left-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
   >
     ❮
   </button>
@@ -22,7 +22,7 @@ const CustomPrevArrow = (props: any) => (
 const CustomNextArrow = (props: any) => (
   <button
     {...props}
-    className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
+    className="hidden md:block absolute right-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
   >
     ❯
   </button>
@@ -67,19 +67,22 @@ const OXYGroupCompanies = () => {
       },
       {
         breakpoint: 480,
-        settings: { slidesToShow: 1 },
+        settings: {
+          slidesToShow: 1,
+          arrows: false, // disable arrows on mobile
+        },
       },
     ],
   };
 
   return (
-    <section className="py-16 px-6 bg-gradient-to-br from-cyan-50 via-white to-purple-50 text-center">
+    <section className="py-10 px-6 bg-gradient-to-br from-cyan-50 via-white to-purple-50 text-center">
       {/* Gradient Colored Heading */}
-      <h3 className="text-2xl font-extrabold mb-10">
-        <span className="text-blue-800">OXY</span>{" "}
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-10">
+        <span className="text-blue-800">OXY</span>
         <span className="text-green-600">GROUP</span>{" "}
         <span className="text-gray-800">COMPANIES</span>
-      </h3>
+      </h2>
 
       <div className="max-w-6xl mx-auto relative">
         <Slider {...settings}>
@@ -97,9 +100,6 @@ const OXYGroupCompanies = () => {
                   className="mb-3 w-full h-auto max-w-full object-contain"
                 />
               </a>
-              {/* <p className="font-medium text-base text-gray-800">
-                {company.name}
-              </p> */}
             </div>
           ))}
         </Slider>

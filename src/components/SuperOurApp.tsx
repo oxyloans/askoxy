@@ -94,7 +94,7 @@ export default function UnicornGrid() {
     <div className="min-h-screen relative overflow-hidden">
       {/* Main Background with Gradient */}
       <div
-        className="min-h-screen flex items-center justify-center relative pt-0"
+        className="flex items-center justify-center relative pt-0"
         style={{
           background:
             "linear-gradient(180deg, #5c3391 0%, #5d4086 33%, #6f4386 66%, #312c74 100%)",

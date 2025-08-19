@@ -27,14 +27,14 @@ const AwardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100 px-4 sm:px-6 lg:px-12 py-10">
+    <div className="  min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100 px-4 sm:px-6 lg:px-12 py-10">
       <div className="max-w-7xl mx-auto">
         {/* Title */}
         <header className="text-center mb-10">
-          <h3 className="text-3xl md:text-5xl font-bold text-amber-700 leading-tight">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-amber-700 leading-tight">
             ET Excellence Award
-          </h3>
-          <div className="mx-auto mb-5 w-28 h-1 rounded-full bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600"></div>
+          </h2>
+          <div className="mx-auto mb-5 w-28 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600"></div>
         </header>
 
         {/* Content */}
@@ -51,7 +51,6 @@ const AwardPage = () => {
                 className=" transition-transform duration-300 group-hover:scale-[1.03] object-contain"
                 loading="lazy"
               />
-
             </div>
           </div>
 
