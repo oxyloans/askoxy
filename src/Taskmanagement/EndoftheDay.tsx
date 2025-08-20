@@ -143,11 +143,11 @@ const TaskUpdate: React.FC = () => {
     const currentTime = dayjs();
     const taskDate = dayjs(task.planCreatedAt);
     const isSameDay = currentTime.isSame(taskDate, "day");
-    const isBeforeEightPM =
-      currentTime.hour() < 20 ||
-      (currentTime.hour() === 20 && currentTime.minute() === 0);
+   const isBeforeEightThirtyPM =
+     currentTime.hour() < 20 ||
+     (currentTime.hour() === 20 && currentTime.minute() <= 30);
 
-    return isSameDay && isBeforeEightPM;
+    return isSameDay && isBeforeEightThirtyPM;
   };
 
   // Modified to fetch all pending tasks without date filter

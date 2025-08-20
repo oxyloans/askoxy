@@ -13,10 +13,12 @@ interface ChatMessagesProps {
 // Utility function to clean unwanted characters from content
 const cleanContent = (content: string): string => {
   // Remove ?number:number?source? or similar patterns
+  
   return content
-    .replace(/\?\d+:\d+\?source\?/g, "")
-    .replace(/\?.*?\?/g, "")
-    .trim();
+    .replace(/\?\d+:\d+\?source\?/g, "") // Remove ?number:number?source? patterns
+    .replace(/(\w+)\?s/g, "$1") // Remove ?s from words like company?s, year?s
+    .replace(/\?.*?\?/g, "") // Remove any other ?...? patterns
+    .trim(); // Remove leading/trailing whitespace
 };
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
@@ -117,7 +119,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-md">
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      GenOxy is thinking
+                      GENOXY is thinking
                     </span>
                     <div className="flex gap-1">
                       <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />

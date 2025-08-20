@@ -215,7 +215,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
        shadow-lg hover:shadow-2xl transform hover:-translate-y-1 
        transition-all duration-300 ease-in-out"
         >
-          Explore AI ASSISTANTS
+          Explore AI LLMs
         </button>
       </div>
 

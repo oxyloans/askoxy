@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 flex sm:justify-center justify-start">
           <button
             onClick={() => handleMobileClick(clearChat)}
-            className="flex items-center gap-2 text-sm font-semibold text-purple-800  px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+            className="flex items-center gap-2 text-sm font-semibold text-purple-800  px-3 py-2 pt-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
           >
             <svg
               width="18"
@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="sm:hidden">
           <button
             onClick={toggleSidebar}
-            className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="p-2 pt-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             aria-label="Close sidebar"
           >
             <X className="w-6 h-6" />
@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-2 px-4 pt-4">
             <Bot className="w-5 h-5 mb-2 text-purple-800 dark:text-white" />
             <h2 className="text-lg font-semibold text-purple-800 dark:text-white">
-              Assistants
+              LLMs
             </h2>
           </div>
           <div className="px-4 pt-2 space-y-2">

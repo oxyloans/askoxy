@@ -1,9 +1,6 @@
-import React, { useCallback, useRef, useState } from "react";
-import Header from "./Header";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import FreeAIBookHome from "./HeroSection";
-import Footer from "./Footer";
 
-// Define interfaces
 interface PageEvents {
   pageLoaded: boolean;
   scrollCount: number;
@@ -19,12 +16,22 @@ const FreeAiBookLandingPage: React.FC = () => {
     visitDuration: 0,
   });
 
+  useEffect(() => {
+    setPageEvents((prev) => ({ ...prev, pageLoaded: true }));
+    const startTime = Date.now();
+    return () => {
+      setPageEvents((prev) => ({
+        ...prev,
+        visitDuration: Date.now() - startTime,
+      }));
+    };
+  }, []);
+
   const handleContentClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const target = e.target as HTMLElement;
       const targetType = target.tagName.toLowerCase();
       const targetId = target.id || "unknown";
-
       setPageEvents((prev) => ({
         ...prev,
         lastInteraction: `Clicked ${targetType}#${targetId}`,
@@ -33,20 +40,18 @@ const FreeAiBookLandingPage: React.FC = () => {
     []
   );
 
-  const sectionRefs = {
-    home: useRef<HTMLDivElement>(null),
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      setPageEvents((prev) => ({ ...prev, scrollCount: prev.scrollCount + 1 }));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-   
-    
-      <main>
-       
-          <FreeAIBookHome />
-        
-      </main>
-    
-   
+    <main className="flex flex-col min-h-screen" onClick={handleContentClick}>
+      <FreeAIBookHome />
+    </main>
   );
 };
 

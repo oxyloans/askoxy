@@ -1,44 +1,123 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { BookOpen, Users, Building2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import axios from "axios";
+import BASE_URL from "../Config";
+import {message}  from "antd"
 const FreeAIBookHome: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
   const LOGIN_URL = "/whatsappregister";
+  // Check login status and trigger API on login
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    setIsLoggedIn(!!userId);
 
-  const handleSignIn = useCallback(async () => {
+    if (userId && !localStorage.getItem("askOxyOfers")) {
+      // UPDATED: Fetch whatsappNumber and mobileNumber directly from localStorage
+      const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
+      const mobileNumber = localStorage.getItem("mobileNumber") || "";
+      const contactNumber = whatsappNumber || mobileNumber;
+      if (contactNumber) {
+        submitInterest(userId, contactNumber);
+      }
+    }
+  }, []);
+
+  // Scroll effect for header styling
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const submitInterest = useCallback(
+    async (userId: string, contactNumber: string) => {
+      try {
+        const response = await axios.post(
+          `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
+          {
+            askOxyOfers: "FREEAIBOOK",
+            mobileNumber: contactNumber, // UPDATED: Use contactNumber (whatsappNumber or mobileNumber)
+            userId,
+            projectType: "ASKOXY",
+          }
+        );
+        if (response.status === 200) {
+          localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+          message.success("Welcome to Free AI Book!");
+          setTimeout(() => setSuccessMessage(null), 3000);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("API Error:", error);
+        return false;
+      }
+    },
+    []
+  );
+
+  const handleAuth = useCallback(async () => {
     setIsLoading(true);
     try {
-      const userId = localStorage.getItem("userId");
-      if (userId) {
-        navigate("/FreeAIBook/view");
+      if (isLoggedIn) {
+        // UPDATED: Clear all localStorage on sign-out
+        localStorage.clear(); // Clears all localStorage keys (userId, askOxyOfers, whatsappNumber, mobileNumber, etc.)
+        sessionStorage.removeItem("redirectPath");
+        setIsLoggedIn(false);
+        navigate("/FreeAIBook");
       } else {
-        sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
-        window.location.href = LOGIN_URL;
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+          if (localStorage.getItem("askOxyOfers")) {
+            message.success(
+              "You have already participated, just visit the book."
+            );
+            setTimeout(() => setSuccessMessage(null), 3000);
+            navigate("/FreeAIBook/view");
+          } else {
+            // UPDATED: Fetch whatsappNumber and mobileNumber directly from localStorage
+            const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
+            const mobileNumber = localStorage.getItem("mobileNumber") || "";
+            const contactNumber = whatsappNumber || mobileNumber;
+            if (contactNumber) {
+              const success = await submitInterest(userId, contactNumber);
+              if (success) {
+                navigate("/FreeAIBook/view");
+              }
+            } else {
+              navigate("/FreeAIBook/view"); // Fallback if no contact number
+            }
+          }
+        } else {
+          sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
+          window.location.href = LOGIN_URL;
+        }
       }
     } catch (error) {
-      console.error("Sign in error:", error);
+      console.error("Auth error:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [navigate]);
+  }, [isLoggedIn, navigate, submitInterest]);
 
-  useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  // useEffect(() => {
+  //   const onScroll = () => setIsScrolled(window.scrollY > 10);
+  //   window.addEventListener("scroll", onScroll, { passive: true });
+  //   return () => window.removeEventListener("scroll", onScroll);
+  // }, []);
 
   const cardBaseClasses =
-    "bg-white rounded-3xl shadow-xl p-5 text-center border-t-4 transform transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-indigo-400 hover:shadow-2xl hover:scale-105";
+    "bg-white rounded-3xl shadow-xl p-5 text-center border-t-4 transform transition-transform";
 
   return (
-    <main className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <main className="flex flex-col pt-16 min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <section
-        className={`flex-grow px-6 sm:px-10 lg:px-20 py-2 md:py-4 transition-shadow duration-300 ${
+        className={`flex-grow px-6 sm:px-10 lg:px-20 py-2 md:py-2 transition-shadow duration-300 ${
           isScrolled ? "shadow-sm" : "shadow-none"
         }`}
         aria-labelledby="main-heading"
@@ -46,7 +125,7 @@ const FreeAIBookHome: React.FC = () => {
         <div className="max-w-7xl mx-auto text-center mb-4">
           <h1
             id="main-heading"
-            className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight mb-5 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 select-none"
+            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight mb-5 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 select-none"
           >
             Empowering India with AI Innovation
           </h1>
@@ -118,7 +197,7 @@ const FreeAIBookHome: React.FC = () => {
         {/* Button */}
         <div className="mt-16 text-center">
           <button
-            onClick={handleSignIn}
+            onClick={handleAuth}
             disabled={isLoading}
             aria-busy={isLoading}
             aria-label="View our first free AI book"

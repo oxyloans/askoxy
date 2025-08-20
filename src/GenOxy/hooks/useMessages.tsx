@@ -21,9 +21,10 @@ interface UseMessagesProps {
 const cleanContent = (content: string): string => {
   // Remove ?number:number?source? or similar patterns
   return content
-    .replace(/\?\d+:\d+\?source\?/g, "")
-    .replace(/\?.*?\?/g, "")
-    .trim();
+    .replace(/\?\d+:\d+\?source\?/g, "") // Remove ?number:number?source? patterns
+    .replace(/(\w+)\?s/g, "$1") // Remove ?s from words like company?s, year?s
+    .replace(/\?.*?\?/g, "") // Remove any other ?...? patterns
+    .trim(); // Remove leading/trailing whitespace
 };
 
 export const useMessages = ({

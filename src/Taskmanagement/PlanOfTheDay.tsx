@@ -114,7 +114,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0; // 7:00 AM
-      const closeTimeInMinutes = 10 * 60; // 10:00 AM
+      const closeTimeInMinutes = 10 * 60 + 15; // 10:15 AM
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes
@@ -363,7 +363,7 @@ const PlanOfTheDay: React.FC = () => {
         <span>
           You can submit your <strong>Plan of the Day</strong> only between
           <br />
-          <strong>7:30 AM to 10:00 AM</strong> (daily).
+          <strong>7:00 AM to 10:15 AM</strong> (daily).
           <br />
           Please come back during this window tomorrow.
         </span>

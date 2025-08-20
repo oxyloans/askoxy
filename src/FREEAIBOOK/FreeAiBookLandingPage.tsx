@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -78,12 +78,11 @@ const images = [
   "https://i.ibb.co/G4xDwRqY/Book-72.jpg",
 ];
 
-
 const FreeAiBook: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const param = searchParams.get("image");
   const initialIndex = param ? parseInt(param, 10) - 1 : 0;
-const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(() =>
     initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0
   );
@@ -91,102 +90,122 @@ const [loading, setLoading] = useState(false);
   useEffect(() => {
     setSearchParams({ image: (currentIndex + 1).toString() });
   }, [currentIndex, setSearchParams]);
+  // Preload images for smoother transitions
+  useEffect(() => {
+    const preloadImages = () => {
+      const nextIndex = currentIndex < images.length - 1 ? currentIndex + 1 : 0;
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : images.length - 1;
+      [images[currentIndex], images[nextIndex], images[prevIndex]].forEach(
+        (src) => {
+          const img = new Image();
+          img.src = src;
+        }
+      );
+    };
+    preloadImages();
+  }, [currentIndex]);
 
-  const goNext = () => {
-    if (currentIndex < images.length - 1) changeIndex(currentIndex + 1);
-  };
-
-  const goPrev = () => {
-    if (currentIndex > 0) changeIndex(currentIndex - 1);
-  };
-  // Corresponding headings for each image (length 73)
- const headings = [
-   "ENTER THE AI UNIVERSE",
-   "Index-1",
-   "Index-2",
-   "Index-3",
-   "Index-4",
-   "What is AI?",
-   "What is Generative AI?",
-   "Why Learn AI Now?",
-   "How to Use This Book?",
-   "Mission Million AI Coders: The Journey Begins",
-   "What is Prompt Engineering?",
-   "Popular Generative AI Tools",
-   "Writing Great AI Prompt Instructions",
-   "Think in Prompts — Not Just in Tasks",
-   "A Good AI Prompt Engineer...",
-   "AI Prompt Engineering Tips",
-   "AI Prompt Engineering Kit",
-   "Prompt Templates — Reuse, Remix, Repeat",
-   "Your First 5 Prompts — Get Started Today",
-   "Daily Prompting Habits: Build Your AI Muscle",
-   "Chain of Thought Prompts",
-   "Types of Prompts — Zero, One, and Few-Shot",
-   "Role-Based Prompts",
-   "Agent-Style Prompts",
-   "Meta-Prompts",
-   "Loops in AI and GenAI",
-   "AI Loops",
-   "Debugging in AI vs GenAI",
-   "Prompting Mistakes to Avoid",
-   "Prompt vs Completion: Understand the Difference",
-   "Tone Variations",
-   "Length Control",
-   "Language & Dialect Shift",
-   "Logic Bugs in AI & GenAI Systems",
-   "Testing Your AI Model",
-   "Test Plan",
-   "From Binary to Brain: How GenAI Thinks",
-   "What Are Tokens and Embeddings?",
-   "LLMs & Tokens",
-   "What is Vector Embedding? (Made Simple)",
-   "Vector Embeddings",
-   "Storing Images, Texts, and Vectors",
-   "Image Transformation Techniques",
-   "Spotting Patterns",
-   "From Commands to Creativity: How AI Paints a Picture",
-   "Being Creative with AI & GenAI",
-   "Inside a GPU",
-   "Who Builds AI Tools — Team Roles and Skills",
-   "Understanding Language Model Sizes",
-   "Which Model Fits Which Task?",
-   "Popular AI LLMs",
-   "Popular Languages for LLM Development",
-   "What is RAG?",
-   "Retrieval Augmented Generation",
-   "Metadata Filtering in LLMs",
-   "FAISS vs Chroma DB",
-   "What is Chunking?",
-   "AI Agents in Action",
-   "AI Agent vs Assistant vs Language Model",
-   "Multi-Tool Agent in Action",
-   "Re-ranking Logic in LLMs",
-   "AI Decision-Making",
-   "OpenAI API Request Structure",
-   "Streamlit UI Components",
-   "Ask Your PDF: How It Works",
-   "How an AI Prompt Engineer Can Earn Lakhs of Money",
-   "Jobs You Can Do as a Prompt Engineer",
-   "Platforms & Niches",
-   "Creating Prompt Products — Templates and Packs",
-   "Can AI Get a Virus?",
-   "AI Under Attack",
-   "AI and Human Jobs — A Future Together",
-   "Human vs AI Agent",
- ];
-
-  // Helper to change image index with loader
-  const changeIndex = (newIndex: number) => {
+  // Handle index change with loading state
+  const changeIndex = useCallback((newIndex: number) => {
     setLoading(true);
-    // Simulate loading delay (e.g. 300ms)
     setTimeout(() => {
       setCurrentIndex(newIndex);
       setLoading(false);
     }, 300);
-  };
+  }, []);
+  const goNext = useCallback(() => {
+    if (currentIndex < images.length - 1) changeIndex(currentIndex + 1);
+  }, [currentIndex, changeIndex]);
 
-  
+  const goPrev = useCallback(() => {
+    if (currentIndex > 0) changeIndex(currentIndex - 1);
+  }, [currentIndex, changeIndex]);
+  // Corresponding headings for each image (length 73)
+  const headings = [
+    "ENTER THE AI UNIVERSE",
+    "Index-1",
+    "Index-2",
+    "Index-3",
+    "Index-4",
+    "What is AI?",
+    "What is Generative AI?",
+    "Why Learn AI Now?",
+    "How to Use This Book?",
+    "Mission Million AI Coders: The Journey Begins",
+    "What is Prompt Engineering?",
+    "Popular Generative AI Tools",
+    "Writing Great AI Prompt Instructions",
+    "Think in Prompts — Not Just in Tasks",
+    "A Good AI Prompt Engineer...",
+    "AI Prompt Engineering Tips",
+    "AI Prompt Engineering Kit",
+    "Prompt Templates — Reuse, Remix, Repeat",
+    "Your First 5 Prompts — Get Started Today",
+    "Daily Prompting Habits: Build Your AI Muscle",
+    "Chain of Thought Prompts",
+    "Types of Prompts — Zero, One, and Few-Shot",
+    "Role-Based Prompts",
+    "Agent-Style Prompts",
+    "Meta-Prompts",
+    "Loops in AI and GenAI",
+    "AI Loops",
+    "Debugging in AI vs GenAI",
+    "Prompting Mistakes to Avoid",
+    "Prompt vs Completion: Understand the Difference",
+    "Tone Variations",
+    "Length Control",
+    "Language & Dialect Shift",
+    "Logic Bugs in AI & GenAI Systems",
+    "Testing Your AI Model",
+    "Test Plan",
+    "From Binary to Brain: How GenAI Thinks",
+    "What Are Tokens and Embeddings?",
+    "LLMs & Tokens",
+    "What is Vector Embedding? (Made Simple)",
+    "Vector Embeddings",
+    "Storing Images, Texts, and Vectors",
+    "Image Transformation Techniques",
+    "Spotting Patterns",
+    "From Commands to Creativity: How AI Paints a Picture",
+    "Being Creative with AI & GenAI",
+    "Inside a GPU",
+    "Who Builds AI Tools — Team Roles and Skills",
+    "Understanding Language Model Sizes",
+    "Which Model Fits Which Task?",
+    "Popular AI LLMs",
+    "Popular Languages for LLM Development",
+    "What is RAG?",
+    "Retrieval Augmented Generation",
+    "Metadata Filtering in LLMs",
+    "FAISS vs Chroma DB",
+    "What is Chunking?",
+    "AI Agents in Action",
+    "AI Agent vs Assistant vs Language Model",
+    "Multi-Tool Agent in Action",
+    "Re-ranking Logic in LLMs",
+    "AI Decision-Making",
+    "OpenAI API Request Structure",
+    "Streamlit UI Components",
+    "Ask Your PDF: How It Works",
+    "How an AI Prompt Engineer Can Earn Lakhs of Money",
+    "Jobs You Can Do as a Prompt Engineer",
+    "Platforms & Niches",
+    "Creating Prompt Products — Templates and Packs",
+    "Can AI Get a Virus?",
+    "AI Under Attack",
+    "AI and Human Jobs — A Future Together",
+    "Human vs AI Agent",
+  ];
+
+  // Handle index change with loading state
+  // const changeIndex = useCallback((newIndex: number) => {
+  //   setLoading(true);
+  //   setTimeout(() => {
+  //     setCurrentIndex(newIndex);
+  //     setLoading(false);
+  //   }, 300);
+  // }, []);
+
   // Handle touch swipe
   let touchStartX = 0;
   let touchEndX = 0;
@@ -195,27 +214,27 @@ const [loading, setLoading] = useState(false);
     touchStartX = e.changedTouches[0].clientX;
   };
 
-    const handleTouchEnd = (e: React.TouchEvent) => {
-      touchEndX = e.changedTouches[0].clientX;
-      if (touchStartX - touchEndX > 50) goNext();
-      if (touchEndX - touchStartX > 50) goPrev();
-    };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX = e.changedTouches[0].clientX;
+    if (touchStartX - touchEndX > 50) goNext();
+    if (touchEndX - touchStartX > 50) goPrev();
+  };
   return (
-    <main className="flex flex-col items-center justify-center bg-gradient-to-br from-white via-blue-50 to-purple-50">
-      <h2 className="text-xl font-semibold pt-8 text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+    <main className="flex flex-col items-center justify-center bg-gradient-to-br from-white via-gray-50 to-purple-50 pt-2 min-h-screen">
+      <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2 md:mb-4 text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent px-4">
         {headings[currentIndex]}
       </h2>
 
       <div
-        className="relative max-w-4xl w-full flex justify-center items-center overflow-hidden"
+        className="relative w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto flex justify-center items-center overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="w-[400px] h-[450px] flex justify-center items-center bg-gray-50 relative">
+        <div className="w-full aspect-[4/5] max-h-[80vh] relative flex justify-center items-center bg-gray-50">
           {loading && (
             <div className="absolute inset-0 bg-white bg-opacity-70 flex justify-center items-center z-10">
               <svg
-                className="animate-spin h-10 w-10 text-indigo-600"
+                className="animate-spin h-8 w-8 sm:h-10 sm:w-10 text-indigo-600"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -239,7 +258,7 @@ const [loading, setLoading] = useState(false);
           <img
             src={images[currentIndex]}
             alt={`AI Book Page ${currentIndex + 1}`}
-            className={`max-w-full max-h-full w-auto h-auto object-contain transition-opacity duration-300 ${
+            className={`w-full h-full object-contain transition-opacity duration-300 ${
               loading ? "opacity-30" : "opacity-100"
             }`}
             loading="lazy"
@@ -249,27 +268,35 @@ const [loading, setLoading] = useState(false);
         </div>
 
         {/* Prev button - hidden on mobile */}
-        {currentIndex > 0 && (
-          <button
-            onClick={goPrev}
-            aria-label="Previous Image"
-            className="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-3 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition"
-            disabled={loading}
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-        )}
-        {/* Next button - hidden on mobile */}
-        {currentIndex < images.length - 1 && (
-          <button
-            onClick={goNext}
-            aria-label="Next Image"
-            className="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-3 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition"
-            disabled={loading}
-          >
-            <ArrowRight className="w-5 h-5 text-gray-700" />
-          </button>
-        )}
+        <button
+          onClick={goPrev}
+          aria-label="Previous Image"
+          className={`absolute top-1/2 -translate-y-1/2 left-2 sm:left-3 md:left-4 bg-white/90 hover:bg-white p-1 sm:p-2 rounded-full shadow-md transition ${
+            currentIndex === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "opacity-100 hover:scale-105"
+          } hidden sm:flex`}
+          disabled={currentIndex === 0}
+        >
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+        </button>
+
+        {/* UPDATED: Improved Next button active state and styling */}
+        <button
+          onClick={goNext}
+          aria-label="Next Image"
+          className={`absolute top-1/2 -translate-y-1/2 right-2 sm:right-3 md:right-4 bg-white/90 hover:bg-white p-1 sm:p-2 rounded-full shadow-md transition ${
+            currentIndex === images.length - 1
+              ? "opacity-50 cursor-not-allowed"
+              : "opacity-100 hover:scale-105"
+          } hidden sm:flex`}
+          disabled={currentIndex === images.length - 1}
+        >
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+        </button>
+      </div>
+      <div className="text-sm sm:hidden  text-indigo-800 px-3 py-4 rounded-full mb-4 font-medium">
+        Swipe left or right to view images
       </div>
     </main>
   );

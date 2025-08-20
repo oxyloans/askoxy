@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import axios from "axios";
 import Header from "./Header";
 import Footer from "./Footer";
-import AssistantAI from "../components/AssistantAI";
+import AIChatWindow from "../Dashboard/AIWindow";
 import BASE_URL from "../Config";
 
 const Content2: React.FC = () => {
@@ -143,7 +143,7 @@ const Content2: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 bg-white z-30 shadow-sm">
         <Header />
@@ -162,9 +162,8 @@ const Content2: React.FC = () => {
           className={`fixed z-50 transition-all
 ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
         >
-          <AssistantAI
+          <AIChatWindow
             isMobile={isMobile}
-            assistantId="asst_ynAlbuttMrSrETgstodARDwC"
             onClose={() => setIsAiChatOpen(false)}
             onExternalRequest={(message) =>
               console.log("External request:", message)
@@ -226,24 +225,24 @@ ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
 
       <div
         className={`transition-all duration-300
-          pt-16 md:pt-20
+          pt-4 md:pt-8
          
           ${isMobileOpen ? "pl-0" : "pl-0"}
           ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
       >
-
-          <Outlet />
         
+          <Outlet />
+       
       </div>
       {/* Footer with dynamic width and white background */}
-      {/* <div
+      <div
         className={`transition-all duration-300
        
           ${isMobileOpen ? "pl-0" : "pl-0"}
           ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
       >
         <Footer />
-      </div> */}
+      </div>
     </div>
   );
 };
