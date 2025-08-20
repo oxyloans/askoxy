@@ -34,9 +34,11 @@ const Header: React.FC<HeaderProps> = ({
   const [pickerOpen, setPickerOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Close on click outside (desktop dropdown) & on Escape (both views)
+  // Close on click outside (DESKTOP ONLY) & on Escape (both views)
   useEffect(() => {
     const onClickAway = (e: MouseEvent) => {
+      // ✅ Do NOT close on mobile; the sheet handles its own closing.
+      if (window.innerWidth < 640) return;
       if (!containerRef.current) return;
       const target = e.target as Node;
       if (!containerRef.current.contains(target)) setPickerOpen(false);
@@ -108,6 +110,7 @@ const Header: React.FC<HeaderProps> = ({
               onClick={toggleSidebar}
               className="p-2 text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
               aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+              type="button"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -125,6 +128,7 @@ const Header: React.FC<HeaderProps> = ({
                              dark:text-white dark:hover:text-purple-200 dark:hover:bg-gray-700 transition-all"
                   aria-haspopup="dialog"
                   aria-expanded={pickerOpen}
+                  type="button"
                 >
                   <span className="truncate max-w-[9rem] sm:max-w-[12rem]">
                     {activeAssistantName
@@ -143,12 +147,13 @@ const Header: React.FC<HeaderProps> = ({
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-purple-800 dark:text-white">
-                        Choose an LLM
+                        Choose an AI LLM
                       </div>
                       <button
                         className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                         onClick={() => setPickerOpen(false)}
                         aria-label="Close"
+                        type="button"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -173,16 +178,14 @@ const Header: React.FC<HeaderProps> = ({
                                 ? "bg-purple-50 border-purple-300 text-purple-900 dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-100"
                                 : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white"
                             }`}
+                            type="button"
                           >
                             <div className="flex items-center justify-between">
                               <div className="font-semibold text-sm">
                                 {a.name}
                               </div>
                               {active && (
-                                <span
-                                  className="inline-flex items-center gap-1 text-[11px] font-semibold
-                                                 text-purple-700 dark:text-purple-200"
-                                >
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-700 dark:text-purple-200">
                                   <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                                   Active
                                 </span>
@@ -207,6 +210,7 @@ const Header: React.FC<HeaderProps> = ({
               onClick={shareChat}
               className="hidden sm:inline-flex items-center gap-2 text-sm font-medium
                          text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-2"
+              type="button"
             >
               <Share className="w-5 h-5 text-purple-700 dark:text-white" />
               <span className="font-semibold text-purple-600 dark:text-white">
@@ -220,6 +224,7 @@ const Header: React.FC<HeaderProps> = ({
               className="sm:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-purple-600 dark:text-white"
               aria-label="Share chat"
               title="Share"
+              type="button"
             >
               <Share className="w-6 h-6" />
             </button>
@@ -240,10 +245,10 @@ const Header: React.FC<HeaderProps> = ({
           {/* Sheet */}
           <div className="absolute inset-x-0 top-14 p-2">
             <div className="mx-2 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
-              {/* Sheet header (updated) */}
+              {/* Sheet header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <div className="text-base font-semibold text-purple-800 dark:text-white whitespace-nowrap">
-                  Choose an AI LLM
+                  Choose an LLM
                 </div>
                 <button
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
