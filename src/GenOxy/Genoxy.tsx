@@ -395,76 +395,82 @@ const GenOxy: React.FC = () => {
     }
   }
 
-  async function askAssistant(
-    assistantId: string | null | undefined,
-    userMessage: { role: "user"; content: string }
-  ) {
-    if (!assistantId) {
-      antdMessage.error("Pick an assistant first.");
-      return;
-    }
-
-    const url =
-      `${ASK_ENDPOINT}` +
-      `?assistantId=${encodeURIComponent(assistantId)}` +
-      `&instruction=`;
-
-    const payload = [{ role: userMessage.role, content: userMessage.content }];
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    setLoading(true);
-    try {
-      const historyForServer = [
-        ...messagesRef.current.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        { role: userMessage.role, content: userMessage.content },
-      ];
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "*/*" },
-        body: JSON.stringify(historyForServer),
-        signal: controller.signal,
-      });
-
-      const text = await res.text();
-      if (!res.ok)
-        throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
-
-      let serverMsgs: { role: "user" | "assistant"; content: string }[] | null =
-        null;
-
-      try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-          serverMsgs = parsed.map((m: any) => ({
-            role: m.role === "assistant" ? "assistant" : "user",
-            content: String(m.content ?? ""),
-          }));
-        }
-      } catch {}
-      const toAppend = serverMsgs ?? [{ role: "assistant", content: text }];
-
-      setMessages((prev) => [
-        ...prev,
-        ...toAppend.map((m, i) => ({
-          id: `m_${Date.now()}_${i}`,
-          role: m.role,
-          content: m.content,
-          timestamp: new Date().toISOString(),
-        })),
-      ]);
-    } catch (e: any) {
-      antdMessage.error(e?.message || "Request failed");
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
-    }
+async function askAssistant(
+  assistantId: string | null | undefined,
+  userMessage: { role: "user"; content: string }
+) {
+  if (!assistantId) {
+    antdMessage.error("Pick an assistant first.");
+    return;
   }
+
+  // 🔹 Build instruction if KLM + role selected
+  let instruction = "";
+  if (activeAssistant?.name.toLowerCase().includes("klm") && klmRole) {
+    instruction = `Your helpful assistant. Your role is ${klmRole}. Answer based on this role only.`;
+  }
+
+  const url =
+    `${ASK_ENDPOINT}` +
+    `?assistantId=${encodeURIComponent(assistantId)}` +
+    `&instruction=${encodeURIComponent(instruction)}`;
+
+  const payload = [{ role: userMessage.role, content: userMessage.content }];
+
+  const controller = new AbortController();
+  abortControllerRef.current = controller;
+
+  setLoading(true);
+  try {
+    const historyForServer = [
+      ...messagesRef.current.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      { role: userMessage.role, content: userMessage.content },
+    ];
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "*/*" },
+      body: JSON.stringify(historyForServer),
+      signal: controller.signal,
+    });
+
+    const text = await res.text();
+    if (!res.ok)
+      throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
+
+    let serverMsgs: { role: "user" | "assistant"; content: string }[] | null =
+      null;
+
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) {
+        serverMsgs = parsed.map((m: any) => ({
+          role: m.role === "assistant" ? "assistant" : "user",
+          content: String(m.content ?? ""),
+        }));
+      }
+    } catch {}
+    const toAppend = serverMsgs ?? [{ role: "assistant", content: text }];
+
+    setMessages((prev) => [
+      ...prev,
+      ...toAppend.map((m, i) => ({
+        id: `m_${Date.now()}_${i}`,
+        role: m.role,
+        content: m.content,
+        timestamp: new Date().toISOString(),
+      })),
+    ]);
+  } catch (e: any) {
+    antdMessage.error(e?.message || "Request failed");
+  } finally {
+    setLoading(false);
+    abortControllerRef.current = null;
+  }
+}
 
   const handlePickAssistant = (assistant: AssistantPublic) => {
     // Map the public payload (no id) back to the full one (with id) using slug

@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 flex sm:justify-center justify-start">
           <button
             onClick={() => handleMobileClick(clearChat)}
-            className="flex items-center gap-2 text-sm font-semibold text-purple-800  px-3 py-2 pt-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+            className="flex items-center gap-2 text-sm font-semibold text-purple-800  px-3 py-2 pt-4 rounded-lg dark:hover:bg-gray-800 transition-all duration-200"
           >
             <svg
               width="18"
