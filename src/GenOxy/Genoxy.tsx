@@ -63,10 +63,7 @@ function disclaimerForAssistant(name?: string | null) {
   return null;
 }
 
-const ASK_ENDPOINT = `${(BASE_URL || "").replace(
-  /\/$/,
-  ""
-)}/student-service/user/askquestion`;
+const ASK_ENDPOINT = `${(BASE_URL || "").replace(/\/$/, "")}/student-service/user/askquestion`;
 
 /** TiE starter prompts */
 const TIE_PROMPTS: string[] = [
@@ -168,6 +165,16 @@ const KLM_PROMPTS: Record<KlmRole, string[]> = {
     "What stakeholder engagement activities were reported this year?",
   ],
 };
+
+/** KLM generic quick-start questions (your 6) */
+const KLM_GENERIC_QUESTIONS: string[] = [
+  "Which business risks are flagged in this year’s disclosures?",
+  "Show me employee attrition rates for this year.",
+  "What energy and water usage has been disclosed for this year?",
+  "List IT/cybersecurity risks mentioned in this year’s reports.",
+  "What CSR spends were made this year under Section 135?",
+  "Summarize this year’s energy, water, and waste management data.",
+];
 
 /* ================================
  * Insurance LLM options (dependent dropdowns)
@@ -283,6 +290,7 @@ const GenOxy: React.FC = () => {
 
   // KLM stage state
   const [klmRole, setKlmRole] = useState<KlmRole | null>(null);
+  const [klmMode, setKlmMode] = useState<"role" | "generic" | null>(null); // NEW
 
   // Insurance LLM form state
   const [insuranceLicense, setInsuranceLicense] = useState<
@@ -317,8 +325,6 @@ const GenOxy: React.FC = () => {
     const slug = qs.get("a");
     const nextAssistant = findAssistantBySlug(slug);
 
-    // If the assistant indicated by the URL is different from the active one,
-    // save current messages under the previous slug, then restore the new ones.
     if (nextAssistant?.slug !== activeAssistant?.slug) {
       // save current messages for the previous assistant
       if (activeAssistant?.slug) {
@@ -328,6 +334,7 @@ const GenOxy: React.FC = () => {
       // switch assistant to match URL
       setActiveAssistant(nextAssistant ?? null);
       setKlmRole(null);
+      setKlmMode(null); // NEW
 
       // restore messages for the new assistant (or empty if none)
       const restored = nextAssistant?.slug
@@ -336,13 +343,12 @@ const GenOxy: React.FC = () => {
       setMessages(restored);
     }
 
-    // If the URL has no assistant but we still have an active one,
-    // clear the active assistant and preserve its messages.
     if (!slug && activeAssistant) {
       chatCache.current[activeAssistant.slug] = messagesRef.current;
       setActiveAssistant(null);
       setKlmRole(null);
-      setMessages([]); // home screen / no assistant
+      setKlmMode(null); // NEW
+      setMessages([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.search]);
@@ -380,6 +386,7 @@ const GenOxy: React.FC = () => {
     setThreadId(null);
     setRemainingPrompts(null);
     setKlmRole(null);
+    setKlmMode(null); // NEW
 
     // Insurance LLM fields
     setInsuranceLicense?.("");
@@ -389,95 +396,88 @@ const GenOxy: React.FC = () => {
       ? assistantUrl(nextAssistantSlug)
       : "/genoxy/chat";
 
-    // Only push if the location is actually changing
     if (location.pathname + location.search !== target) {
-      navigate(target); // push; Back goes to previous page
+      navigate(target);
     }
   }
 
-async function askAssistant(
-  assistantId: string | null | undefined,
-  userMessage: { role: "user"; content: string }
-) {
-  if (!assistantId) {
-    antdMessage.error("Pick an assistant first.");
-    return;
-  }
+  async function askAssistant(
+    assistantId: string | null | undefined,
+    userMessage: { role: "user"; content: string }
+  ) {
+    if (!assistantId) {
+      antdMessage.error("Pick an assistant first.");
+      return;
+    }
 
-  // 🔹 Build instruction if KLM + role selected
-  let instruction = "";
-  if (activeAssistant?.name.toLowerCase().includes("klm") && klmRole) {
-    instruction = `Your helpful assistant. Your role is ${klmRole}. Answer based on this role only.`;
-  }
+    // 🔹 Build instruction if KLM + role selected
+    let instruction = "";
+    if (activeAssistant?.name.toLowerCase().includes("klm") && klmRole) {
+      instruction = `Your helpful assistant. Your role is ${klmRole}. Answer based on this role only.`;
+    }
 
-  const url =
-    `${ASK_ENDPOINT}` +
-    `?assistantId=${encodeURIComponent(assistantId)}` +
-    `&instruction=${encodeURIComponent(instruction)}`;
+    const url =
+      `${ASK_ENDPOINT}` +
+      `?assistantId=${encodeURIComponent(assistantId)}` +
+      `&instruction=${encodeURIComponent(instruction)}`;
 
-  const payload = [{ role: userMessage.role, content: userMessage.content }];
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-  const controller = new AbortController();
-  abortControllerRef.current = controller;
-
-  setLoading(true);
-  try {
-    const historyForServer = [
-      ...messagesRef.current.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      { role: userMessage.role, content: userMessage.content },
-    ];
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "*/*" },
-      body: JSON.stringify(historyForServer),
-      signal: controller.signal,
-    });
-
-    const text = await res.text();
-    if (!res.ok)
-      throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
-
-    let serverMsgs: { role: "user" | "assistant"; content: string }[] | null =
-      null;
-
+    setLoading(true);
     try {
-      const parsed = JSON.parse(text);
-      if (Array.isArray(parsed)) {
-        serverMsgs = parsed.map((m: any) => ({
-          role: m.role === "assistant" ? "assistant" : "user",
-          content: String(m.content ?? ""),
-        }));
-      }
-    } catch {}
-    const toAppend = serverMsgs ?? [{ role: "assistant", content: text }];
+      const historyForServer = [
+        ...messagesRef.current.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        { role: userMessage.role, content: userMessage.content },
+      ];
 
-    setMessages((prev) => [
-      ...prev,
-      ...toAppend.map((m, i) => ({
-        id: `m_${Date.now()}_${i}`,
-        role: m.role,
-        content: m.content,
-        timestamp: new Date().toISOString(),
-      })),
-    ]);
-  } catch (e: any) {
-    antdMessage.error(e?.message || "Request failed");
-  } finally {
-    setLoading(false);
-    abortControllerRef.current = null;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "*/*" },
+        body: JSON.stringify(historyForServer),
+        signal: controller.signal,
+      });
+
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
+
+      let serverMsgs: { role: "user" | "assistant"; content: string }[] | null =
+        null;
+
+      try {
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) {
+          serverMsgs = parsed.map((m: any) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: String(m.content ?? ""),
+          }));
+        }
+      } catch {}
+      const toAppend = serverMsgs ?? [{ role: "assistant", content: text }];
+
+      setMessages((prev) => [
+        ...prev,
+        ...toAppend.map((m, i) => ({
+          id: `m_${Date.now()}_${i}`,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date().toISOString(),
+        })),
+      ]);
+    } catch (e: any) {
+      antdMessage.error(e?.message || "Request failed");
+    } finally {
+      setLoading(false);
+      abortControllerRef.current = null;
+    }
   }
-}
 
   const handlePickAssistant = (assistant: AssistantPublic) => {
-    // Map the public payload (no id) back to the full one (with id) using slug
     const full = ASSISTANTS.find((a) => a.slug === assistant.slug);
     if (full) setActiveAssistant(full);
-
-    // Reset chat + navigate (push) only if location is changing; avoids duplicate history
     resetChatForNewAssistant(assistant.slug);
   };
 
@@ -494,11 +494,10 @@ async function askAssistant(
     }
 
     // Keep URL pinned to the active assistant
-    const qs = new URLSearchParams(location.search);
     const want = assistantUrl(activeAssistant.slug);
     const current = location.pathname + location.search;
     if (current !== want) {
-      navigate(want); // push
+      navigate(want);
     }
 
     // If Insurance LLM is active, add context
@@ -582,7 +581,6 @@ async function askAssistant(
       setChatHistory((prev) => [...prev, [...messagesRef.current]]);
     }
 
-    // persist current assistant chat before clearing
     if (activeAssistant?.slug) {
       chatCache.current[activeAssistant.slug] = messagesRef.current;
     }
@@ -594,13 +592,13 @@ async function askAssistant(
     setIsSidebarOpen(false);
     setEditingMessageId(null);
     setKlmRole(null);
+    setKlmMode(null); // NEW
     setActiveAssistant(null);
 
     // Insurance LLM fields
     setInsuranceLicense?.("");
     setInsuranceEntity?.("");
 
-    // Drop assistant param; Back returns to the previous chat page if desired
     navigate("/genoxy");
   };
 
@@ -614,16 +612,14 @@ async function askAssistant(
       ? `/genoxy/chat?a=${encodeURIComponent(slug)}`
       : "/genoxy/chat";
     if (location.pathname + location.search !== target) {
-      navigate(target); // push
+      navigate(target);
     }
   };
 
   const editMessage = (messageId: string, content: string) => {
     setInput(content);
     setEditingMessageId(messageId);
-    (
-      document.querySelector("textarea") as HTMLTextAreaElement | null
-    )?.focus?.();
+    (document.querySelector("textarea") as HTMLTextAreaElement | null)?.focus?.();
   };
 
   const showCenteredLayout = messages.length === 0 && !loading && !isChatRoute;
@@ -700,10 +696,58 @@ async function askAssistant(
     </div>
   );
 
-  /* KLM: Stage 1 (Role select) */
+  /* KLM: Stage 0 (Mode select) — NEW */
   const isKlm = activeAssistant?.name?.toLowerCase().includes("klm");
+  const showKlmModeStage = isKlm && klmMode === null && messages.length === 0 && isChatRoute;
+
+  const KlmModeSelect: React.FC = () => {
+    return (
+      <div className="w-full">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 shadow-sm text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              KLM Fashions AI LLM
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+              Choose how you want to begin.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 place-items-stretch">
+              <button
+                onClick={() => setKlmMode("role")}
+                className="group rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md px-4 py-6 transition text-left"
+              >
+                <div className="text-xl">🧑‍💼</div>
+                <div className="mt-2 font-semibold text-purple-700 dark:text-purple-200">
+                  Role-based Conversations
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Pick a role (CXO, HR, IT, etc.) for focused prompts.
+                </div>
+              </button>
+
+              <button
+                onClick={() => setKlmMode("generic")}
+                className="group rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md px-4 py-6 transition text-left"
+              >
+                <div className="text-xl">💬</div>
+                <div className="mt-2 font-semibold text-purple-700 dark:text-purple-200">
+                  Generic Conversations
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Start with quick common questions for this year.
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* KLM: Stage 1 (Role select) */
   const showKlmRoleStage =
-    isKlm && klmRole === null && messages.length === 0 && isChatRoute;
+    isKlm && klmMode === "role" && klmRole === null && messages.length === 0 && isChatRoute;
 
   const KlmRoleSelect: React.FC = () => {
     return (
@@ -722,10 +766,7 @@ async function askAssistant(
               {KLM_ROLES.map((r) => (
                 <button
                   key={r.key}
-                  onClick={() => {
-                    // Only set role; do not change active assistant to avoid duplicates in picker
-                    setKlmRole(r.key);
-                  }}
+                  onClick={() => setKlmRole(r.key)}
                   className="group rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-sm px-2 py-3 transition flex flex-col items-center text-center w-full"
                 >
                   <div className="text-xl sm:text-2xl mb-1">{r.icon}</div>
@@ -737,7 +778,15 @@ async function askAssistant(
             </div>
 
             <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-              You can change role anytime from the menu.
+              <button
+                onClick={() => {
+                  setKlmRole(null);
+                  setKlmMode(null);
+                }}
+                className="underline decoration-dotted"
+              >
+                ← Back
+              </button>
             </div>
           </div>
         </div>
@@ -747,7 +796,7 @@ async function askAssistant(
 
   /* KLM: Stage 2 (Role prompts) */
   const showKlmPromptStage =
-    isKlm && klmRole !== null && messages.length === 0 && isChatRoute;
+    isKlm && klmMode === "role" && klmRole !== null && messages.length === 0 && isChatRoute;
 
   const KlmRoleStarter: React.FC = () => {
     if (!klmRole) return null;
@@ -840,18 +889,18 @@ async function askAssistant(
     return (
       <div className="w-full">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <div
-            className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}
-          >
+          <div className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}>
             <h2 className="text-2xl sm:text-3xl font-bold">{copy.title}</h2>
             <p className={`mt-2 ${h.sub} max-w-2xl mx-auto`}>{copy.sub}</p>
-            <button
-              onClick={() => setKlmRole(null)}
-              className="mt-3 text-sm underline decoration-dotted opacity-90 hover:opacity-100 dark:hover:text-purple-200"
-              title="Change role"
-            >
-              Change role
-            </button>
+            <div className="mt-3 text-sm">
+              <button
+                onClick={() => setKlmRole(null)}
+                className="underline decoration-dotted opacity-90 hover:opacity-100 dark:hover:text-purple-200"
+                title="Change role"
+              >
+                ← Change role
+              </button>
+            </div>
           </div>
 
           {/* Centered Prompt Buttons */}
@@ -871,6 +920,68 @@ async function askAssistant(
                   ]);
                   // Force role-based ID for KLM when a role is selected
                   await askAssistant(KLM_ROLE_ASSISTANT_ID, {
+                    role: "user",
+                    content: q,
+                  });
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white 
+                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
+                 hover:border-purple-300 dark:hover:border-purple-500 
+                 hover:shadow transition text-left max-w-sm w-full"
+              >
+                <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
+                <span className="text-xs md:text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
+                  {q}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* KLM: Generic Starter — NEW */
+  const showKlmGenericStage =
+    isKlm && klmMode === "generic" && messages.length === 0 && isChatRoute;
+
+  const KlmGenericStarter: React.FC = () => {
+    return (
+      <div className="w-full">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 shadow-sm text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              KLM Fashions AI LLM — Generic Conversations
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+              Start with a quick question for this year.
+            </p>
+            <div className="mt-3 text-sm">
+              <button
+                onClick={() => setKlmMode(null)}
+                className="underline decoration-dotted"
+              >
+                ← Back
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 place-items-center">
+            {KLM_GENERIC_QUESTIONS.map((q) => (
+              <button
+                key={q}
+                onClick={async () => {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: `m_${Date.now()}`,
+                      role: "user",
+                      content: q,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  // Use the normal KLM assistant for generic mode
+                  await askAssistant(activeAssistant!.id, {
                     role: "user",
                     content: q,
                   });
@@ -994,6 +1105,46 @@ async function askAssistant(
     );
   };
 
+  /* Chat start picker (no assistant yet on /genoxy/chat) — NEW */
+  const showChatStartPicker =
+    isChatRoute && !activeAssistant && messages.length === 0;
+
+  const ChatStartPicker: React.FC = () => {
+    return (
+      <div className="w-full">
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
+          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 shadow-sm text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              Choose an AI LLM to Begin
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+              Start a conversation directly from the chat window.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+              {ASSISTANTS.map(({ id, ...a }) => (
+                <button
+                  key={a.slug}
+                  onClick={() =>
+                    handlePickAssistant({ name: a.name, slug: a.slug })
+                  }
+                  className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow px-5 py-5 text-left"
+                >
+                  <div className="text-lg font-semibold text-purple-700 dark:text-purple-200">
+                    {a.name}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    Tap to open {a.name} in this chat.
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   /* Render */
   return (
     <div
@@ -1032,7 +1183,7 @@ async function askAssistant(
             isSidebarOpen={isSidebarOpen}
             messages={messages}
             activeAssistantName={activeAssistant?.name}
-            // NEW: provide assistants to show “LLMs” picker in header
+            // “LLMs” picker in header
             assistants={ASSISTANTS.map(({ id, ...rest }) => rest)}
             activeAssistantSlug={activeAssistant?.slug ?? null}
             onPickAssistant={handlePickAssistant}
@@ -1057,10 +1208,15 @@ async function askAssistant(
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0 relative pt-14 sm:pt-0">
+            {/* NEW: chat start picker */}
+            {showChatStartPicker && <ChatStartPicker />}
+
             {/* Starters shown only when chat is empty */}
             {showTieStarter && <TieStarter />}
+            {isKlm && showKlmModeStage && <KlmModeSelect />}
             {isKlm && showKlmRoleStage && <KlmRoleSelect />}
             {isKlm && showKlmPromptStage && <KlmRoleStarter />}
+            {isKlm && showKlmGenericStage && <KlmGenericStarter />}
             {isInsurance && <InsuranceStarter />}
 
             {/* Chat stream */}
@@ -1074,7 +1230,7 @@ async function askAssistant(
             </div>
 
             {/* Input */}
-          <div className="shrink-0">
+            <div className="shrink-0">
               <InputBar
                 input={input}
                 setInput={setInput}
@@ -1095,7 +1251,7 @@ async function askAssistant(
                 remainingPrompts={remainingPrompts}
                 uploadedFile={selectedFile}
                 setUploadedFile={setSelectedFile}
-                /* NEW: show disclaimer only on chat route with an active assistant */
+                /* Show disclaimer only on chat route with an active assistant */
                 disclaimerText={
                   isChatRoute && activeAssistant
                     ? disclaimerForAssistant(activeAssistant.name)
@@ -1105,7 +1261,6 @@ async function askAssistant(
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

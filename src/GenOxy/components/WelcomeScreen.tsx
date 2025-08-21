@@ -106,7 +106,15 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         });
       }
     }
-  }, [location.search, setInput, handleSend, loading, input, selectedFile, setShowDropdown]);
+  }, [
+    location.search,
+    setInput,
+    handleSend,
+    loading,
+    input,
+    selectedFile,
+    setShowDropdown,
+  ]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -191,7 +199,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       ".doc",
       ".docx",
     ];
-    const fileExtension = "." + (selectedFile?.name.split(".").pop()?.toLowerCase() || "");
+    const fileExtension =
+      "." + (selectedFile?.name.split(".").pop()?.toLowerCase() || "");
     return (
       allowedTypes.includes(file.type) ||
       allowedExtensions.includes(fileExtension)
@@ -199,31 +208,15 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const getFileIcon = (file: File) => {
-    if (file.type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />;
-    if (file.type === "application/pdf") return <FileText className="w-4 h-4" />;
+    if (file.type.startsWith("image/"))
+      return <ImageIcon className="w-4 h-4" />;
+    if (file.type === "application/pdf")
+      return <FileText className="w-4 h-4" />;
     return <FileText className="w-4 h-4" />;
   };
 
   return (
     <div className="fixed inset-0 overflow-y-auto pointer-events-auto z-0 bg-white dark:bg-gray-900">
-      {/* Header with button */}
-      <div
-        className="
-          absolute top-4 left-1/2 transform -translate-x-1/2
-          md:left-auto md:right-4 md:transform-none
-        "
-      >
-        <button
-          onClick={() => navigate("/genoxy/chat")}
-          className="px-6 py-3 rounded-xl font-bold text-white 
-            bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
-            shadow-lg hover:shadow-2xl transform hover:-translate-y-1 
-            transition-all duration-300 ease-in-out"
-        >
-          Explore AI LLMs
-        </button>
-      </div>
-
       <div className="flex-1 flex flex-col items-center justify-center px-3 py-6 max-w-6xl pt-20 mx-auto w-full pointer-events-auto">
         <div className="text-center mb-6">
           <div className="relative mb-6">
@@ -235,11 +228,162 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             Welcome to GENOXY
           </h1>
           <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300">
-            Pick an assistant from the sidebar to begin.
+            Select an AI LLM and let’s get started
           </p>
+
+          <button
+            onClick={() => navigate("/genoxy/chat")}
+            className="px-8 py-4 rounded-2xl font-extrabold text-white text-lg
+    bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+    shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105
+    transition-all duration-300 ease-in-out animate-pulse"
+          >
+            Explore AI LLMs
+          </button>
         </div>
 
-        {/* Decorative backdrop ... (unchanged) */}
+        {/* Decorative backdrop (kept) */}
+        <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+          {/* Floating Gradient Bubbles */}
+          {[
+            { left: "10%", top: "20%" },
+            { right: "15%", top: "30%" },
+            { left: "50%", bottom: "10%" },
+          ].map((pos, i) => (
+            <div
+              key={`g1-${i}`}
+              className="absolute w-4 h-4 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full animate-bubble-float"
+              style={{
+                ...pos,
+                animationDelay: `${i * 1.5}s`,
+                animationDuration: `${8 + i}s`,
+              }}
+            >
+              <div
+                className="w-full h-full bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full animate-bubble-pulse"
+                style={{
+                  animationDelay: `${i * 1.5}s`,
+                  animationDuration: "3s",
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Snowfall Effect */}
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={`snow-${i}`}
+              className="absolute rounded-full bg-white opacity-20 blur-sm animate-snow-fall"
+              style={{
+                width: `${8 + Math.random() * 8}px`,
+                height: `${8 + Math.random() * 8}px`,
+                left: `${Math.random() * 100}%`,
+                bottom: `-${Math.random() * 50}px`,
+                animationDelay: `${i * 2}s`,
+                animationDuration: `${25 + i * 6}s`,
+              }}
+            />
+          ))}
+
+          {/* More Floating Gradients */}
+          {[
+            { left: "70%", top: "15%" },
+            { right: "5%", top: "70%" },
+            { left: "25%", bottom: "30%" },
+          ].map((pos, i) => (
+            <div
+              key={`g2-${i}`}
+              className="absolute w-5 h-5 bg-gradient-to-r from-pink-400/20 to-rose-400/20 rounded-full animate-bubble-float"
+              style={{
+                ...pos,
+                animationDelay: `${2 + i}s`,
+                animationDuration: `${7 + i}s`,
+              }}
+            >
+              <div
+                className="w-full h-full bg-gradient-to-r from-pink-400/30 to-rose-400/30 rounded-full animate-bubble-pulse"
+                style={{
+                  animationDelay: `${2 + i}s`,
+                  animationDuration: "3.5s",
+                }}
+              />
+            </div>
+          ))}
+
+          {[
+            { right: "25%", top: "50%" },
+            { left: "5%", top: "60%" },
+            { left: "80%", bottom: "30%" },
+          ].map((pos, i) => (
+            <div
+              key={`g3-${i}`}
+              className="absolute w-6 h-6 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full animate-bubble-float"
+              style={{
+                ...pos,
+                animationDelay: `${3 + i}s`,
+                animationDuration: `${9 + i}s`,
+              }}
+            >
+              <div
+                className="w-full h-full bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full animate-bubble-pulse"
+                style={{
+                  animationDelay: `${3 + i}s`,
+                  animationDuration: "4s",
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Custom animations */}
+          <style>{`
+                 @keyframes bubble-float {
+                   0% {
+                     transform: translateY(0) scale(1) rotate(0deg);
+                   }
+                   50% {
+                     transform: translateY(-10px) scale(1.05) rotate(5deg);
+                   }
+                   100% {
+                     transform: translateY(0) scale(1) rotate(0deg);
+                   }
+                 }
+       
+                 @keyframes bubble-pulse {
+                   0%,
+                   100% {
+                     transform: scale(1);
+                     opacity: 0.6;
+                   }
+                   50% {
+                     transform: scale(1.15);
+                     opacity: 1;
+                   }
+                 }
+       
+                 @keyframes snow-fall {
+                   0% {
+                     transform: translateY(0);
+                     opacity: 0.5;
+                   }
+                   100% {
+                     transform: translateY(-100vh);
+                     opacity: 0;
+                   }
+                 }
+       
+                 .animate-bubble-float {
+                   animation: bubble-float infinite ease-in-out;
+                 }
+       
+                 .animate-bubble-pulse {
+                   animation: bubble-pulse infinite ease-in-out;
+                 }
+       
+                 .animate-snow-fall {
+                   animation: snow-fall infinite linear;
+                 }
+               `}</style>
+        </div>
 
         {/* Chat input */}
         <div className="w-full max-w-3xl sticky bottom-0 z-10 bg-white dark:bg-gray-900 px-3 py-3">
@@ -290,9 +434,15 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     <textarea
                       ref={textareaRef}
                       value={input}
-                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                        setInput(e.target.value)
+                      }
                       onKeyDown={handleLocalKeyPress}
-                      placeholder={selectedFile ? "Ask me anything about this file..." : "Type your message..."}
+                      placeholder={
+                        selectedFile
+                          ? "Ask me anything about this file..."
+                          : "Type your message..."
+                      }
                       disabled={loading}
                       rows={1}
                       className="w-full text-sm sm:text-base resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 max-h-32 overflow-auto p-1"
@@ -309,14 +459,22 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          const isAllowed =
-                            [
-                              "image/jpeg","image/jpg","image/png","image/gif","image/webp",
-                              "text/csv","text/plain","application/pdf",
-                              "application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            ].includes(file.type);
+                          const isAllowed = [
+                            "image/jpeg",
+                            "image/jpg",
+                            "image/png",
+                            "image/gif",
+                            "image/webp",
+                            "text/csv",
+                            "text/plain",
+                            "application/pdf",
+                            "application/msword",
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                          ].includes(file.type);
                           if (!isAllowed) {
-                            alert("Please select only: Images (JPEG, PNG, GIF, WebP), CSV, TXT, PDF, or Word documents (.doc, .docx)");
+                            alert(
+                              "Please select only: Images (JPEG, PNG, GIF, WebP), CSV, TXT, PDF, or Word documents (.doc, .docx)"
+                            );
                             e.target.value = "";
                             return;
                           }
@@ -328,9 +486,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       <label
                         htmlFor="file-upload"
                         className={`inline-flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 rounded-xl transition-all duration-200 cursor-pointer
-                          ${selectedFile
-                            ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          ${
+                            selectedFile
+                              ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                           }`}
                         title="Upload file"
                       >
@@ -342,9 +501,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         title="Voice Input"
                         disabled={loading}
                         className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 
-                          ${isRecording
-                            ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          ${
+                            isRecording
+                              ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                           }`}
                       >
                         <Mic className="w-5 h-5" />
@@ -354,11 +514,16 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     <button
                       onClick={async () => {
                         if (selectedFile) {
-                          handleFileUpload(selectedFile, input || "please describe the file content properly");
+                          handleFileUpload(
+                            selectedFile,
+                            input || "please describe the file content properly"
+                          );
                           setInput("");
                         } else {
                           if (!input.trim()) {
-                            message.info("Please enter a message or upload a file.");
+                            message.info(
+                              "Please enter a message or upload a file."
+                            );
                             return;
                           }
                           await handleSend();
@@ -368,12 +533,17 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       disabled={(!input.trim() && !selectedFile) || loading}
                       title="Send"
                       className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 
-                        ${(input.trim() || selectedFile) && !loading
-                          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                        ${
+                          (input.trim() || selectedFile) && !loading
+                            ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                            : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                         }`}
                     >
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUp className="w-5 h-5" />}
+                      {loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <ArrowUp className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -394,7 +564,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 }}
                 className="flex items-center px-3 py-2 bg-gray-900 border border-gray-700 rounded-full text-white hover:bg-gray-800 transition-all duration-300 text-xs sm:text-sm min-h-[44px]"
               >
-                <div className={`flex items-center justify-center w-6 h-6 mr-2 rounded-full bg-gradient-to-br ${prompt.gradient} text-white text-xs`}>
+                <div
+                  className={`flex items-center justify-center w-6 h-6 mr-2 rounded-full bg-gradient-to-br ${prompt.gradient} text-white text-xs`}
+                >
                   {prompt.icon}
                 </div>
                 <span className="font-medium">{prompt.text}</span>
