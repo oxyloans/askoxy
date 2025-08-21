@@ -42,7 +42,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="px-2 sm:px-4 py-6 pb-28 sm:pb-24">
+      <div className="px-2 sm:px-4 py-6 pb-28 sm:pb-20">
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.map((msg, idx) => (
             <div key={msg.id || idx} className="animate-fade-in-up">
@@ -132,7 +132,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             </div>
           )}
 
-          <div ref={messagesEndRef} className="h-1" />
+        <div ref={messagesEndRef} className="h-16 sm:h-4" />
         </div>
       </div>
     </div>

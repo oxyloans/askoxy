@@ -1,8 +1,3 @@
-import { useCallback } from "react";
-import BASE_URL from "../../Config";
-
-import { Message } from "../types/types";
-
 import { useState } from "react";
 import {
   AcademicCapIcon,
@@ -24,21 +19,20 @@ export const usePrompts = (
 ) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
-    const [relatedOptions, setRelatedOptions] = useState<string[]>([]);
-    
+  const [relatedOptions, setRelatedOptions] = useState<string[]>([]);
 
   const suggestionPrompts: Prompt[] = [
     {
-      text: "Image Generation",
-      icon: <PhotoIcon className="w-5 h-5" />,
-      gradient: "from-green-600 to-cyan-700",
-      related: [
-        "Generate a landscape image",
-        "Create a product mockup",
-        "Design a corporate banner",
-        "Visualize data infographic",
-      ],
-    },
+  text: "Image Generation",
+  icon: <PhotoIcon className="w-5 h-5" />,
+  gradient: "from-green-600 to-cyan-700",
+  related: [
+    "Generate a landscape image",
+    "Generate a realistic product mockup image", 
+    "Generate a corporate banner iamge", 
+    "Generate an infographic image",  
+  ],
+},
     {
       text: "Learning",
       icon: <AcademicCapIcon className="w-5 h-5" />,
@@ -85,7 +79,6 @@ export const usePrompts = (
     showDropdown,
     relatedOptions,
     handlePromptSelect,
-      setShowDropdown,
-    
+    setShowDropdown,
   };
 };

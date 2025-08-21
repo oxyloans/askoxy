@@ -1,9 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import BASE_URL from "../../Config";
 import { Message } from "../types/types";
 import axios from "axios";
 import { LanguageConfig, ChatMessage } from "../types/types";
 import { useLocation, useNavigate } from "react-router-dom";
+
 interface UseMessagesProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -19,12 +20,44 @@ interface UseMessagesProps {
 }
 
 const cleanContent = (content: string): string => {
-  // Remove ?number:number?source? or similar patterns
   return content
-    .replace(/\?\d+:\d+\?source\?/g, "") // Remove ?number:number?source? patterns
-    .replace(/(\w+)\?s/g, "$1") // Remove ?s from words like company?s, year?s
-    .replace(/\?.*?\?/g, "") // Remove any other ?...? patterns
-    .trim(); // Remove leading/trailing whitespace
+    .replace(/\?\d+:\d+\?source\?/g, "")
+    .replace(/(\w+)\?s/g, "$1")
+    .replace(/\?.*?\?/g, "")
+    .trim();
+};
+
+// --- NEW: robust image/url extraction ---
+const extractImageUrl = (raw: string): { isImage: boolean; url?: string } => {
+  const data = raw.trim();
+
+  // data:image base64
+  if (data.startsWith("data:image/")) {
+    return { isImage: true, url: data };
+  }
+
+  // Markdown image: ![alt](url)
+  const md = data.match(/!\[[^\]]*]\((https?:\/\/[^\s)]+)\)/i);
+  if (md?.[1]) {
+    return { isImage: true, url: md[1] };
+  }
+
+  // HTML <img src="...">
+  const html = data.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (html?.[1]) {
+    return { isImage: true, url: html[1] };
+  }
+
+  // Bare URL (accept likely image links or signed urls with query)
+  const bare = data.match(/https?:\/\/[^\s]+/i)?.[0];
+  if (bare) {
+    // If it ends with common image extensions OR has a querystring (often signed)
+    if (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(bare) || /\?/.test(bare)) {
+      return { isImage: true, url: bare };
+    }
+  }
+
+  return { isImage: false };
 };
 
 export const useMessages = ({
@@ -40,8 +73,9 @@ export const useMessages = ({
   setRemainingPrompts,
   threadId,
 }: UseMessagesProps) => {
-  const location = useLocation(); // Added: For checking current path
-  const navigate = useNavigate(); // Added: For navigation
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const handleSend = useCallback(
     async (messageContent?: string) => {
       const textToSend = messageContent || input.trim();
@@ -65,28 +99,21 @@ export const useMessages = ({
         });
 
         const data = await response.text();
-
-        if (!response.ok) {
-          throw new Error(`Error: ${data}`);
-        }
+        if (!response.ok) throw new Error(`Error: ${data}`);
 
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 100);
 
-        const isImageUrl = data.startsWith("http");
+        const { isImage, url } = extractImageUrl(data);
         const assistantReply: Message = {
           role: "assistant",
-          content: cleanContent(data),
-          isImage: isImageUrl,
+          // IMPORTANT: do NOT clean/strip when it's an image url (fixes "Failed to load image")
+          content: isImage ? (url || data.trim()) : cleanContent(data),
+          isImage,
         };
 
-        setTimeout(() => {
-          setMessages((prev) => [...prev, assistantReply]);
-        }, 50);
+        setTimeout(() => setMessages((prev) => [...prev, assistantReply]), 50);
       } catch (error) {
         console.error("Chat error:", error);
         const errorMessage: Message = {
@@ -99,11 +126,9 @@ export const useMessages = ({
         setTimeout(() => {
           setLoading(false);
           abortControllerRef.current = null;
-          messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-          // Added: Navigate to /genoxy/chat if currently on /genoxy (after starting chat from WelcomeScreen)
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+          // keep your redirect after first send from welcome screen
           if (location.pathname === "/genoxy") {
             navigate("/genoxy/chat");
           }
@@ -118,8 +143,8 @@ export const useMessages = ({
       setLoading,
       messagesEndRef,
       abortControllerRef,
-      location, // Added dependency
-      navigate, // Added dependency
+      location,
+      navigate,
     ]
   );
 
@@ -137,7 +162,6 @@ export const useMessages = ({
       try {
         const controller = new AbortController();
         abortControllerRef.current = controller;
-
         const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -146,24 +170,18 @@ export const useMessages = ({
         });
 
         const data = await response.text();
+        if (!response.ok) throw new Error(`Error: ${data}`);
 
-        if (!response.ok) {
-          throw new Error(`Error: ${data}`);
-        }
-
-        const isImageUrl = data.startsWith("http");
+        const { isImage, url } = extractImageUrl(data);
         const assistantReply: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: cleanContent(data),
-          isImage: isImageUrl,
+          content: isImage ? (url || data.trim()) : cleanContent(data),
+          isImage,
         };
 
         setMessages((prev) => [...prev, assistantReply]);
-        messagesEndRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       } catch (error: any) {
         if (error.name === "AbortError") {
           console.log("Request aborted");
@@ -184,10 +202,8 @@ export const useMessages = ({
     },
     [messages, setMessages, setLoading, messagesEndRef, abortControllerRef]
   );
-  const handleFileUpload = async (
-    file: File | null,
-    userPrompt: string
-  ): Promise<string | null> => {
+
+  const handleFileUpload = async (file: File | null, userPrompt: string): Promise<string | null> => {
     if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
       return await Promise.resolve(null);
     }
@@ -199,52 +215,37 @@ export const useMessages = ({
       role: "user",
       content: userPrompt,
     };
-
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
     try {
       const formData = new FormData();
-      if (file && threadId === null) {
-        formData.append("file", file);
-      }
+      if (file && threadId === null) formData.append("file", file);
       formData.append("prompt", userPrompt);
-      if (threadId) {
-        formData.append("threadId", threadId);
-      }
+      if (threadId) formData.append("threadId", threadId);
 
       const response = await axios.post(
         `${BASE_URL}/student-service/user/chat-with-file`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      const {
-        answer,
-        threadId: newThreadId,
-        remainingPrompts: updatedPrompts,
-      } = response.data;
+      const { answer, threadId: newThreadId, remainingPrompts: updatedPrompts } = response.data;
 
       setThreadId(newThreadId);
       setRemainingPrompts(updatedPrompts);
 
+      const { isImage, url } = extractImageUrl(answer);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: cleanContent(answer),
+        content: isImage ? (url || String(answer).trim()) : cleanContent(String(answer)),
+        isImage,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      messagesEndRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      // Added: Navigate to /genoxy/chat if currently on /genoxy after file upload
       if (location.pathname === "/genoxy") {
         navigate("/genoxy/chat");
       }
@@ -258,26 +259,21 @@ export const useMessages = ({
         content: "Sorry, the file upload failed. Please try again.",
       };
       setMessages((prev) => [...prev, errorMessage]);
-
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    handleSend,
-    handleEdit,
-    handleFileUpload,
-  };
+  return { handleSend, handleEdit, handleFileUpload };
 };
 
+// (voiceSessionService unchanged)
 class VoiceSessionService {
   private peerConnection: RTCPeerConnection | null = null;
   private micStream: MediaStream | null = null;
   private recognition: any = null;
   private dataChannel: RTCDataChannel | null = null;
-
   async getEphemeralToken(instructions: string): Promise<string> {
     try {
       const res = await fetch(`${BASE_URL}/student-service/user/token`, {
@@ -295,7 +291,6 @@ class VoiceSessionService {
       throw error;
     }
   }
-
   async startSession(
     selectedLanguage: LanguageConfig,
     selectedInstructions: string,
@@ -304,130 +299,77 @@ class VoiceSessionService {
   ): Promise<RTCDataChannel> {
     try {
       const EPHEMERAL_KEY = await this.getEphemeralToken(selectedInstructions);
-
       const pc = new RTCPeerConnection();
       this.peerConnection = pc;
-
-      // Setup audio
       const audioEl = document.createElement("audio");
       audioEl.autoplay = true;
       pc.ontrack = (e) => {
         audioEl.srcObject = e.streams[0];
       };
-
-      // Setup microphone
-      this.micStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       pc.addTrack(this.micStream.getTracks()[0]);
-
-      // Setup data channel
       const dc = pc.createDataChannel("oai-events");
       this.dataChannel = dc;
-
-      // Setup WebRTC connection
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-
       const model = "gpt-4o-realtime-preview-2025-06-03";
-      const sdpRes = await fetch(
-        `https://api.openai.com/v1/realtime?model=${model}`,
-        {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            Authorization: `Bearer ${EPHEMERAL_KEY}`,
-            "Content-Type": "application/sdp",
-          },
-        }
-      );
-
-      const answer: RTCSessionDescriptionInit = {
-        type: "answer",
-        sdp: await sdpRes.text(),
-      };
+      const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
+        method: "POST",
+        body: offer.sdp,
+        headers: { Authorization: `Bearer ${EPHEMERAL_KEY}`, "Content-Type": "application/sdp" },
+      });
+      const answer: RTCSessionDescriptionInit = { type: "answer", sdp: await sdpRes.text() };
       await pc.setRemoteDescription(answer);
-
-      // Setup speech recognition
       this.setupSpeechRecognition(selectedLanguage, onMessage);
-
-      // Setup data channel handlers
       this.setupDataChannelHandlers(dc, onMessage, onAssistantSpeaking);
-
       return dc;
     } catch (error) {
       console.error("Failed to start session:", error);
       throw error;
     }
   }
-
-  private setupSpeechRecognition(
-    selectedLanguage: LanguageConfig,
-    onMessage: (message: ChatMessage) => void
-  ) {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
+  private setupSpeechRecognition(selectedLanguage: LanguageConfig, onMessage: (message: ChatMessage) => void) {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.lang = selectedLanguage.speechLang;
       recognition.continuous = true;
       recognition.interimResults = false;
-
       recognition.onresult = (event: any) => {
-        const transcript =
-          event.results[event.results.length - 1][0].transcript.trim();
+        const transcript = event.results[event.results.length - 1][0].transcript.trim();
         if (transcript) {
-          const msg: ChatMessage = {
-            role: "user",
-            text: transcript,
-            timestamp: new Date().toLocaleTimeString(),
-          };
+          const msg: ChatMessage = { role: "user", text: transcript, timestamp: new Date().toLocaleTimeString() };
           onMessage(msg);
           this.sendMessage(transcript);
         }
       };
-
-      recognition.onerror = (e: any) =>
-        console.error("Speech recognition error:", e);
-
+      recognition.onerror = (e: any) => console.error("Speech recognition error:", e);
       recognition.onend = () => {
         if (this.dataChannel) recognition.start();
       };
-
       recognition.start();
       this.recognition = recognition;
     }
   }
-
   private setupDataChannelHandlers(
     dc: RTCDataChannel,
     onMessage: (message: ChatMessage) => void,
     onAssistantSpeaking: (speaking: boolean) => void
   ) {
     let buffer = "";
-
     dc.onmessage = (e) => {
       try {
         const event = JSON.parse(e.data);
         onAssistantSpeaking(true);
-
         if (event.type === "response.output_text.delta" && event.delta) {
           buffer += event.delta;
           onAssistantSpeaking(true);
-
-          const msg: ChatMessage = {
-            role: "assistant",
-            text: cleanContent(buffer),
-            timestamp: new Date().toLocaleTimeString(),
-          };
+          const msg: ChatMessage = { role: "assistant", text: cleanContent(buffer), timestamp: new Date().toLocaleTimeString() };
           onMessage(msg);
         }
-
         if (event.type === "response.audio.delta") {
           onAssistantSpeaking(true);
         }
-
         if (event.type === "response.stop") {
           onAssistantSpeaking(false);
           buffer = "";
@@ -436,39 +378,28 @@ class VoiceSessionService {
         console.error("Failed to parse assistant event:", err);
       }
     };
-
     dc.onopen = () => {
       console.log("Data channel opened");
     };
   }
-
   sendMessage(text: string) {
     if (!this.dataChannel) return;
-
     const event = {
       type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text }],
-      },
+      item: { type: "message", role: "user", content: [{ type: "input_text", text }] },
     };
-
     this.dataChannel.send(JSON.stringify(event));
     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
   }
-
   stopSession() {
     this.dataChannel?.close();
     this.micStream?.getTracks().forEach((t) => t.stop());
     this.peerConnection?.close();
-    this.recognition?.stop();
-
+    (this.recognition as any)?.stop();
     this.dataChannel = null;
     this.micStream = null;
     this.peerConnection = null;
     this.recognition = null;
   }
 }
-
 export const voiceSessionService = new VoiceSessionService();

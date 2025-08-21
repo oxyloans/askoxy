@@ -248,7 +248,7 @@ const Header: React.FC<HeaderProps> = ({
               {/* Sheet header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <div className="text-base font-semibold text-purple-800 dark:text-white whitespace-nowrap">
-                  Choose an LLM
+                  Choose an AI LLM
                 </div>
                 <button
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"

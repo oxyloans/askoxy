@@ -29,6 +29,12 @@ interface AssistantOption {
   description?: string;
 }
 
+const TIE_DISCLAIMER =
+  "TiE Disclaimer :- The information shown is processed from open sources and may be outdated, incomplete, or contain errors (e.g., gender mix-ups, resigned members, or stale data). Please use this only as a knowledge aid, not an official or verified record.";
+
+const KLM_DISCLAIMER =
+  "KLM Disclaimer :- This content is auto-processed to provide helpful insights, but roles, timelines, or designations may sometimes be mismatched or outdated. Please treat it as guidance, not absolute truth.";
+
 const ASSISTANTS: AssistantOption[] = [
   { id: "asst_5g20JJbZ88NvcSgNYLMeQTm2", name: "TiE AI LLM", slug: "tie-llm" },
   {
@@ -37,6 +43,7 @@ const ASSISTANTS: AssistantOption[] = [
     slug: "klm-fashions LLM",
   },
 ];
+const KLM_ROLE_ASSISTANT_ID = "asst_6Yq2RvPL50n7n7qF9Vnp5uof";
 
 function findAssistantBySlug(slug: string | null) {
   if (!slug) return null;
@@ -47,6 +54,13 @@ function findAssistantBySlug(slug: string | null) {
 function assistantUrl(slug: string) {
   const qs = new URLSearchParams({ a: slug });
   return `/genoxy/chat?${qs.toString()}`;
+}
+function disclaimerForAssistant(name?: string | null) {
+  if (!name) return null;
+  const n = name.toLowerCase();
+  if (n.includes("tie")) return TIE_DISCLAIMER;
+  if (n.includes("klm")) return KLM_DISCLAIMER;
+  return null;
 }
 
 const ASK_ENDPOINT = `${(BASE_URL || "").replace(
@@ -473,8 +487,7 @@ const GenOxy: React.FC = () => {
       return;
     }
 
-    // Ensure the URL is pinned to the assistant.
-    // IMPORTANT: use normal push (not replace) so Back/Forward works naturally.
+    // Keep URL pinned to the active assistant
     const qs = new URLSearchParams(location.search);
     const want = assistantUrl(activeAssistant.slug);
     const current = location.pathname + location.search;
@@ -492,6 +505,12 @@ const GenOxy: React.FC = () => {
       finalContent = `[License Type: ${insuranceLicense}; Entity: ${insuranceEntity}] ${trimmed}`;
     }
 
+    // Choose which assistant ID to use:
+    // If user is in KLM assistant and has selected a role, use role-based ID
+    const isKlm = activeAssistant.name.toLowerCase().includes("klm");
+    const effectiveAssistantId =
+      isKlm && klmRole ? KLM_ROLE_ASSISTANT_ID : activeAssistant.id;
+
     setMessages((prev) => [
       ...prev,
       {
@@ -503,7 +522,7 @@ const GenOxy: React.FC = () => {
     ]);
     setInput("");
 
-    await askAssistant(activeAssistant.id, {
+    await askAssistant(effectiveAssistantId, {
       role: "user",
       content: finalContent,
     });
@@ -634,8 +653,8 @@ const GenOxy: React.FC = () => {
           </h2>
 
           <p className="mt-3 text-white/90 text-sm md:text-base max-w-2xl mx-auto">
-            Ask anything about TiE Hyderabad founders, mentors, investors &
-            domain experts. Let the Assistant guide you.
+            Ask anything about TiE Hyderabad chapter members, investors & domain
+            experts. Let the Assistant guide you
           </p>
         </div>
 
@@ -697,7 +716,10 @@ const GenOxy: React.FC = () => {
               {KLM_ROLES.map((r) => (
                 <button
                   key={r.key}
-                  onClick={() => setKlmRole(r.key)}
+                  onClick={() => {
+                    // Only set role; do not change active assistant to avoid duplicates in picker
+                    setKlmRole(r.key);
+                  }}
                   className="group rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-sm px-2 py-3 transition flex flex-col items-center text-center w-full"
                 >
                   <div className="text-xl sm:text-2xl mb-1">{r.icon}</div>
@@ -841,7 +863,8 @@ const GenOxy: React.FC = () => {
                       timestamp: new Date().toISOString(),
                     },
                   ]);
-                  await askAssistant(activeAssistant!.id, {
+                  // Force role-based ID for KLM when a role is selected
+                  await askAssistant(KLM_ROLE_ASSISTANT_ID, {
                     role: "user",
                     content: q,
                   });
@@ -1045,7 +1068,7 @@ const GenOxy: React.FC = () => {
             </div>
 
             {/* Input */}
-            <div className="shrink-0">
+          <div className="shrink-0">
               <InputBar
                 input={input}
                 setInput={setInput}
@@ -1066,10 +1089,17 @@ const GenOxy: React.FC = () => {
                 remainingPrompts={remainingPrompts}
                 uploadedFile={selectedFile}
                 setUploadedFile={setSelectedFile}
+                /* NEW: show disclaimer only on chat route with an active assistant */
+                disclaimerText={
+                  isChatRoute && activeAssistant
+                    ? disclaimerForAssistant(activeAssistant.name)
+                    : null
+                }
               />
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

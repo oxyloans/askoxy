@@ -1,118 +1,77 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { BookOpen, Users, Building2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../Config";
-import {message}  from "antd"
+import { message } from "antd";
+
 const FreeAIBookHome: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  const userId = localStorage.getItem("userId");
+  const mobileNumber = localStorage.getItem("mobileNumber");
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
   const LOGIN_URL = "/whatsappregister";
-  // Check login status and trigger API on login
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    setIsLoggedIn(!!userId);
 
-    if (userId && !localStorage.getItem("askOxyOfers")) {
-      // UPDATED: Fetch whatsappNumber and mobileNumber directly from localStorage
-      const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-      const mobileNumber = localStorage.getItem("mobileNumber") || "";
-      const contactNumber = whatsappNumber || mobileNumber;
-      if (contactNumber) {
-        submitInterest(userId, contactNumber);
+  const participateInFreeAIBook = async () => {
+    if (!userId) return;
+
+    
+
+    try {
+      const { data } = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+        { userId }
+      );
+
+      const alreadyParticipated = data?.some(
+        (offer: any) => offer.askOxyOfers === "FREEAIBOOK"
+      );
+
+      if (alreadyParticipated) {
+        // message.info("You have already participated ✅");
+        navigate("/FreeAIBook/view");
+        return;
       }
-    }
-  }, []);
 
-  // Scroll effect for header styling
+      await axios.post(`${BASE_URL}/marketing-service/campgin/askOxyOfferes`, {
+        askOxyOfers: "FREEAIBOOK",
+        mobileNumber: mobileNumber || whatsappNumber,
+        userId,
+        projectType: "ASKOXY",
+      });
+
+      message.success("🎉 Welcome to Free AI Book!");
+      navigate("/FreeAIBook/view");
+    } catch (error) {
+      console.error("Participation error:", error);
+      // message.error("Something went wrong, please try again!");
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
-  const submitInterest = useCallback(
-    async (userId: string, contactNumber: string) => {
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-          {
-            askOxyOfers: "FREEAIBOOK",
-            mobileNumber: contactNumber, // UPDATED: Use contactNumber (whatsappNumber or mobileNumber)
-            userId,
-            projectType: "ASKOXY",
-          }
-        );
-        if (response.status === 200) {
-          localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
-          message.success("Welcome to Free AI Book!");
-          setTimeout(() => setSuccessMessage(null), 3000);
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("API Error:", error);
-        return false;
-      }
-    },
-    []
-  );
-
-  const handleAuth = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      if (isLoggedIn) {
-        // UPDATED: Clear all localStorage on sign-out
-        localStorage.clear(); // Clears all localStorage keys (userId, askOxyOfers, whatsappNumber, mobileNumber, etc.)
-        sessionStorage.removeItem("redirectPath");
-        setIsLoggedIn(false);
-        navigate("/FreeAIBook");
-      } else {
-        const userId = localStorage.getItem("userId");
-        if (userId) {
-          if (localStorage.getItem("askOxyOfers")) {
-            message.success(
-              "You have already participated, just visit the book."
-            );
-            setTimeout(() => setSuccessMessage(null), 3000);
-            navigate("/FreeAIBook/view");
-          } else {
-            // UPDATED: Fetch whatsappNumber and mobileNumber directly from localStorage
-            const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-            const mobileNumber = localStorage.getItem("mobileNumber") || "";
-            const contactNumber = whatsappNumber || mobileNumber;
-            if (contactNumber) {
-              const success = await submitInterest(userId, contactNumber);
-              if (success) {
-                navigate("/FreeAIBook/view");
-              }
-            } else {
-              navigate("/FreeAIBook/view"); // Fallback if no contact number
-            }
-          }
-        } else {
-          sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
-          window.location.href = LOGIN_URL;
-        }
-      }
-    } catch (error) {
-      console.error("Auth error:", error);
-    } finally {
-      setIsLoading(false);
+    // Auto participate if user is logged in
+    if (userId) {
+      participateInFreeAIBook();
     }
-  }, [isLoggedIn, navigate, submitInterest]);
 
-  // useEffect(() => {
-  //   const onScroll = () => setIsScrolled(window.scrollY > 10);
-  //   window.addEventListener("scroll", onScroll, { passive: true });
-  //   return () => window.removeEventListener("scroll", onScroll);
-  // }, []);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [userId, navigate]);
 
   const cardBaseClasses =
     "bg-white rounded-3xl shadow-xl p-5 text-center border-t-4 transform transition-transform";
+
+  const handleSignIn = async () => {
+    if (!userId) {
+      sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
+      window.location.href = LOGIN_URL;
+    }
+  };
 
   return (
     <main className="flex flex-col pt-16 min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
@@ -194,10 +153,9 @@ const FreeAIBookHome: React.FC = () => {
           </article>
         </div>
 
-        {/* Button */}
-        <div className="mt-16 text-center">
+        <div className="mt-10 text-center">
           <button
-            onClick={handleAuth}
+            onClick={handleSignIn}
             disabled={isLoading}
             aria-busy={isLoading}
             aria-label="View our first free AI book"
