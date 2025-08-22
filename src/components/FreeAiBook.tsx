@@ -17,21 +17,7 @@ const FreeAiBook: React.FC = () => {
       if (!userId) return;
 
       try {
-        const { data } = await axios.post(
-          `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-          { userId }
-        );
-
-        const alreadyParticipated = data?.some(
-          (offer: any) => offer.askOxyOfers === "FREEAIBOOK"
-        );
-
-        if (alreadyParticipated) {
-          // message.info("You have already participated ✅");
-          navigate("/FreeAIBook/view");
-          return;
-        }
-
+       
         await axios.post(
           `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
           {

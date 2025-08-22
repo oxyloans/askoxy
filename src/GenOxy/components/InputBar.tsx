@@ -55,11 +55,11 @@ const InputBar: React.FC<InputBarProps> = ({
   const recognitionRef = useRef<any>(null);
   const [isLocallyUploaded, setIsLocallyUploaded] = useState(false);
 
-  // NEW: modal state for disclaimer
+  // Modal state for disclaimer (now only via the “D” icon)
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const barRef = useRef<HTMLDivElement | null>(null);
 
-  // effect to update CSS var
+  // Keep --inputbar-height in sync for layout below (ChatMessages uses this)
   useEffect(() => {
     const setVar = () => {
       const h = barRef.current?.offsetHeight ?? 0;
@@ -68,7 +68,6 @@ const InputBar: React.FC<InputBarProps> = ({
     setVar();
     window.addEventListener("resize", setVar);
     return () => window.removeEventListener("resize", setVar);
-    // include deps that change the bar height
   }, [input, uploadedFile, isLocallyUploaded, showDisclaimer, loading]);
 
   useEffect(() => {
@@ -200,12 +199,12 @@ const InputBar: React.FC<InputBarProps> = ({
       <div
         ref={barRef}
         className="
-    fixed bottom-0 inset-x-0 z-50 md:sticky md:bottom-0
-    bg-gradient-to-t from-white via-white/95 to-transparent
-    dark:from-gray-900 dark:via-gray-900/95 dark:to-transparent
-    border-t border-gray-200/50 dark:border-gray-700/50
-    backdrop-blur-sm
-  "
+          fixed bottom-0 inset-x-0 z-50 md:sticky md:bottom-0
+          bg-gradient-to-t from-white via-white/95 to-transparent
+          dark:from-gray-900 dark:via-gray-900/95 dark:to-transparent
+          border-t border-gray-200/50 dark:border-gray-700/50
+          backdrop-blur-sm
+        "
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
       >
         {/* Recording pill */}
@@ -217,32 +216,7 @@ const InputBar: React.FC<InputBarProps> = ({
           </div>
         )}
 
-        {/* NEW: tiny notice + modal trigger (mobile + web centered, single line) */}
-        {disclaimerText ? (
-          <div className="mt-2 px-2 pb-1 w-full flex justify-center overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none]">
-            {/* Hide scrollbar in WebKit */}
-            <style>{`
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-    `}</style>
-            <p
-              className="no-scrollbar text-center text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-snug whitespace-nowrap inline-flex items-center gap-1"
-              aria-label="Disclaimer notice"
-            >
-              <span className="font-medium">GENOXY</span> can make
-              mistakes.&nbsp;Please check{" "}
-              <button
-                type="button"
-                onClick={() => setShowDisclaimer(true)}
-                className="underline decoration-dotted hover:text-gray-700 dark:hover:text-gray-200"
-                aria-haspopup="dialog"
-                aria-controls="disclaimer-modal"
-              >
-                Disclaimer
-              </button>{" "}
-              for more info.
-            </p>
-          </div>
-        ) : null}
+        {/* NOTE: Disclaimer sentence removed per request. Modal opens via “D” icon now. */}
 
         <div className="max-w-4xl mx-auto px-2 pb-2 pt-2 md:p-2">
           <div className="relative group">
@@ -307,7 +281,7 @@ const InputBar: React.FC<InputBarProps> = ({
                           : uploadedFile
                           ? "Add a message about your file..."
                           : loading
-                          ? "Model is responding… you can keep typing here"
+                          ? "Generating reply, no need to wait."
                           : "Type your message..."
                       }
                       disabled={
@@ -357,6 +331,20 @@ const InputBar: React.FC<InputBarProps> = ({
                       >
                         <Mic className="w-6 h-6" />
                       </button>
+
+                      {/* NEW: “D” Disclaimer button */}
+                      {disclaimerText ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowDisclaimer(true)}
+                          title="Show Disclaimer"
+                          className="inline-flex items-center justify-center appearance-none w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+                          aria-haspopup="dialog"
+                          aria-controls="disclaimer-modal"
+                        >
+                          <span className="text-sm font-bold">D</span>
+                        </button>
+                      ) : null}
                     </div>
 
                     {/* Send / Stop */}
@@ -377,7 +365,7 @@ const InputBar: React.FC<InputBarProps> = ({
                       }
                       className={`inline-flex items-center justify-center appearance-none rounded-xl transition-all duration-200 w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 ${
                         loading
-                          ? "bg-red-100 text-red-600 hover:bg-red-2 00 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 shadow-lg"
+                          ? "bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 shadow-lg"
                           : (input.trim() || uploadedFile) && !isRecording
                           ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                           : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
@@ -403,7 +391,7 @@ const InputBar: React.FC<InputBarProps> = ({
         </div>
       </div>
 
-      {/* NEW: Disclaimer Modal */}
+      {/* Disclaimer Modal (unchanged) */}
       {showDisclaimer && (
         <div
           id="disclaimer-modal"

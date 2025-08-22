@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Bot, User } from "lucide-react";
 import { Message } from "../types/types";
 import MessageActions from "./MessageActions";
@@ -8,43 +8,28 @@ import MarkdownRenderer from "./MarkdownRenderer";
    Helpers
    ================================ */
 
-// Much safer cleaner: only remove that specific ?num:num?source? artifact
 const cleanContent = (content: string): string => {
-  return content
-    .replace(/\?\d+:\d+\?source\?/g, "") // keep this targeted cleanup
-    // .replace(/(\w+)\?s/g, "$1") // If you ever see "company?s" artefacts, keep this.
-    // IMPORTANT: Do NOT strip generic "?...?" anymore — it breaks signed URLs.
-    .trim();
+  return content.replace(/\?\d+:\d+\?source\?/g, "").trim();
 };
 
-// Pull the first image url from Markdown ( ![alt](url) ) or bare URL on its own line
 const extractFirstImageUrl = (content: string): string | null => {
   if (!content) return null;
-
-  // 1) Markdown image syntax
   const mdMatch = content.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/i);
   if (mdMatch?.[1]) return mdMatch[1];
 
-  // 2) Bare URL ending with common image extensions or obvious data URIs
   const urlMatch = content.match(
     /(https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|webp|gif)(?:\?[^\s)]*)?)/i
   );
   if (urlMatch?.[1]) return urlMatch[1];
 
-  // 3) Last resort: any https URL on its own line (often SAS links without extension)
-  const lineUrl = content
-    .split(/\s+/)
-    .find((t) => /^https?:\/\/\S+/i.test(t));
+  const lineUrl = content.split(/\s+/).find((t) => /^https?:\/\/\S+/i.test(t));
   return lineUrl ?? null;
 };
 
-// Tiny clipboard helper
 const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
-  } catch {
-    // ignore
-  }
+  } catch {}
 };
 
 interface ChatMessagesProps {
@@ -60,23 +45,37 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   loading,
   onEditMessage,
 }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Live padding for content so it never hides behind the input bar
+  const bottomPad = `calc(var(--inputbar-height, 96px) + env(safe-area-inset-bottom, 0px) + 16px)`;
+
+  // Keep the list scrolled to the bottom when messages change
   useEffect(() => {
     const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "end",
-          });
-        }, 100);
-      }
+      const el = containerRef.current;
+      if (!el) return;
+      // Directly scroll the container for reliability on mobile
+      el.scrollTop = el.scrollHeight;
     };
-    scrollToBottom();
-  }, [messages, loading, messagesEndRef]);
+    // Small delay helps when images/markdown expand after paint
+    const id = setTimeout(scrollToBottom, 80);
+    return () => clearTimeout(id);
+  }, [messages, loading]);
+
+  // Calculate a height that fills the viewport minus input bar and any optional header
+  const containerStyle: React.CSSProperties = {
+    height: "calc(100vh - var(--inputbar-height, 96px) - var(--header-offset, 0px))",
+    overscrollBehaviorY: "contain",
+  };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="px-2 sm:px-4 py-6 pb-28 sm:pb-20">
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-y-auto"
+      style={containerStyle}
+    >
+      <div className="px-2 sm:px-4 py-4" style={{ paddingBottom: bottomPad }}>
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.map((msg, idx) => {
             const cleaned = cleanContent(msg.content);
@@ -120,13 +119,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                 alt="AI Generated"
                                 className="rounded-xl w-full max-h-96 object-contain"
                                 onError={(e) => {
-                                  // Hide the broken <img> and show fallback UI
                                   e.currentTarget.style.display = "none";
-                                  const next = e.currentTarget.nextElementSibling as HTMLDivElement | null;
+                                  const next = e.currentTarget
+                                    .nextElementSibling as HTMLDivElement | null;
                                   if (next) next.classList.remove("hidden");
                                 }}
                               />
-                              {/* Fallback: visible when <img> fails */}
                               <div className="hidden mt-2 rounded-lg border border-red-200 dark:border-red-600 bg-red-50/60 dark:bg-red-900/30 p-3 text-sm">
                                 <div className="font-medium text-red-700 dark:text-red-300">
                                   Failed to load image
@@ -146,9 +144,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                       Open in new tab
                                     </a>
                                     <button
-                                      onClick={() =>
-                                        copyToClipboard(discoveredImageUrl)
-                                      }
+                                      onClick={() => copyToClipboard(discoveredImageUrl)}
                                       className="px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs"
                                     >
                                       Copy URL
@@ -185,9 +181,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       GENOXY is thinking
                     </span>
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                      <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.3s] bg-indigo-500" />
+                      <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.15s] bg-purple-500" />
+                      <div className="w-2 h-2 rounded-full animate-bounce bg-pink-500" />
                     </div>
                   </div>
                 </div>
@@ -195,7 +191,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             </div>
           )}
 
-          <div ref={messagesEndRef} className="h-16 sm:h-4" />
+          {/* End anchor with scroll margin equal to input bar height */}
+          <div
+            ref={messagesEndRef}
+            style={{ height: 1, scrollMarginBottom: bottomPad as any }}
+          />
         </div>
       </div>
     </div>
