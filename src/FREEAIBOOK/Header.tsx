@@ -90,7 +90,7 @@ const Header: React.FC = () => {
   const handleSignIn = async () => {
     if (isLoggedIn) {
       localStorage.clear();
-     message.success("You have successfully sign out.");
+      message.success("You have successfully sign out.");
       window.location.href = "/FreeAIBook";
       return;
     }
@@ -101,6 +101,24 @@ const Header: React.FC = () => {
     }
   };
 
+  // Handle smooth scroll to section with offset for header height
+  const handleScroll = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    sectionId: string
+  ) => {
+    e.preventDefault();
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerHeight = document.querySelector("header")?.offsetHeight || 0;
+      const elementPosition =
+        element.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementPosition - headerHeight,
+        behavior: "smooth",
+      });
+    }
+    setIsMenuOpen(false); // Close mobile menu after click
+  };
   const handleWriteToUs = () => {
     window.location.href = "/main/services/5d27/free-ai-book";
   };
@@ -117,7 +135,7 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           <div
             className="flex items-center cursor-pointer select-none"
-            
+            onClick={() => navigate("/")}
           >
             <img
               src={Askoxy}
@@ -127,7 +145,7 @@ const Header: React.FC = () => {
             />
           </div>
 
-          <nav className="hidden md:flex items-center gap-4">
+          {/* <nav className="hidden md:flex items-center gap-4">
             {isLoggedIn && (
               <button
                 onClick={handleWriteToUs}
@@ -147,7 +165,58 @@ const Header: React.FC = () => {
             >
               {isLoggedIn ? "Sign Out" : "Sign In"}
             </button>
+          </nav> */}
+
+          <nav className="hidden md:flex items-center flex-grow justify-center gap-6">
+            {/* Show nav items only when not logged in */}
+            {!isLoggedIn && (
+              <>
+                <a
+                  href="#free-ai-book"
+                  onClick={(e) => handleScroll(e, "free-ai-book")}
+                  className="text-gray-700 hover:text-indigo-600 transition font-medium"
+                >
+                  Free AI Book
+                </a>
+                <a
+                  href="#mission-million-ai-coders"
+                  onClick={(e) => handleScroll(e, "mission-million-ai-coders")}
+                  className="text-gray-700 hover:text-indigo-600 transition font-medium"
+                >
+                  Mission Million AI Coders
+                </a>
+                <a
+                  href="#billionaire-hub"
+                  onClick={(e) => handleScroll(e, "billionaire-hub")}
+                  className="text-gray-700 hover:text-indigo-600 transition font-medium"
+                >
+                  BillionAIre Hub
+                </a>
+              </>
+            )}
           </nav>
+          {/* Right side buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            {isLoggedIn && (
+              <button
+                onClick={handleWriteToUs}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                Write to Us
+              </button>
+            )}
+            <button
+              onClick={handleSignIn}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-lg transition transform hover:scale-105 text-white ${
+                isLoggedIn
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-purple-600 hover:bg-purple-700"
+              } disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-400`}
+            >
+              {isLoggedIn ? "Sign Out" : "Sign In"}
+            </button>
+          </div>
 
           <div className="md:hidden">
             <button
@@ -159,9 +228,44 @@ const Header: React.FC = () => {
           </div>
         </div>
 
+        {/* Mobile Nav */}
         {isMenuOpen && (
           <nav className="md:hidden bg-white border-t rounded-b-lg shadow-lg mt-1 animate-slideDown mobile-menu-container">
             <ul className="flex flex-col divide-y">
+              {/* Show nav items only when not logged in */}
+              {!isLoggedIn && (
+                <>
+                  <li className="p-4">
+                    <a
+                      href="#free-ai-book"
+                      onClick={(e) => handleScroll(e, "free-ai-book")}
+                      className="block text-gray-700 hover:text-indigo-600 transition"
+                    >
+                      Free AI Book
+                    </a>
+                  </li>
+                  <li className="p-4">
+                    <a
+                      href="#mission-million-ai-coders"
+                      onClick={(e) =>
+                        handleScroll(e, "mission-million-ai-coders")
+                      }
+                      className="block text-gray-700 hover:text-indigo-600 transition"
+                    >
+                      Mission Million AI Coders
+                    </a>
+                  </li>
+                  <li className="p-4">
+                    <a
+                      href="#billionaire-hub"
+                      onClick={(e) => handleScroll(e, "billionaire-hub")}
+                      className="block text-gray-700 hover:text-indigo-600 transition"
+                    >
+                      BillionAIre Hub
+                    </a>
+                  </li>
+                </>
+              )}
               {isLoggedIn && (
                 <li className="p-4">
                   <button

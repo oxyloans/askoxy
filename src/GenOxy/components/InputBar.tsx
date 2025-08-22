@@ -57,6 +57,19 @@ const InputBar: React.FC<InputBarProps> = ({
 
   // NEW: modal state for disclaimer
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const barRef = useRef<HTMLDivElement | null>(null);
+
+  // effect to update CSS var
+  useEffect(() => {
+    const setVar = () => {
+      const h = barRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty("--inputbar-height", `${h}px`);
+    };
+    setVar();
+    window.addEventListener("resize", setVar);
+    return () => window.removeEventListener("resize", setVar);
+    // include deps that change the bar height
+  }, [input, uploadedFile, isLocallyUploaded, showDisclaimer, loading]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -184,15 +197,15 @@ const InputBar: React.FC<InputBarProps> = ({
 
   return (
     <>
-      {/* Footer input bar */}
       <div
+        ref={barRef}
         className="
-          fixed bottom-0 inset-x-0 z-50 md:sticky md:bottom-0
-          bg-gradient-to-t from-white via-white/95 to-transparent
-          dark:from-gray-900 dark:via-gray-900/95 dark:to-transparent
-          border-t border-gray-200/50 dark:border-gray-700/50
-          backdrop-blur-sm
-        "
+    fixed bottom-0 inset-x-0 z-50 md:sticky md:bottom-0
+    bg-gradient-to-t from-white via-white/95 to-transparent
+    dark:from-gray-900 dark:via-gray-900/95 dark:to-transparent
+    border-t border-gray-200/50 dark:border-gray-700/50
+    backdrop-blur-sm
+  "
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
       >
         {/* Recording pill */}

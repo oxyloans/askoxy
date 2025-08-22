@@ -1,14 +1,78 @@
-import React from "react";
+import React,{useState, useEffect} from "react";
 import { motion } from "framer-motion";
 import aiImage from "../assets/img/book.png";
 import { useNavigate } from "react-router-dom";
-
+import BASE_URL from "../Config";
+import {message} from "antd"
+import axios from "axios"
 const FreeAiBook: React.FC = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+ const [isScrolled, setIsScrolled] = useState(false);
+    const userId = localStorage.getItem("userId");
+    const mobileNumber = localStorage.getItem("mobileNumber");
+    const whatsappNumber = localStorage.getItem("whatsappNumber");
+    const LOGIN_URL = "/whatsappregister";
 
-  const handleViewMore = () => {
-    navigate("/freeaibook");
-  };
+    const participateInFreeAIBook = async () => {
+      if (!userId) return;
+
+      try {
+        const { data } = await axios.post(
+          `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+          { userId }
+        );
+
+        const alreadyParticipated = data?.some(
+          (offer: any) => offer.askOxyOfers === "FREEAIBOOK"
+        );
+
+        if (alreadyParticipated) {
+          // message.info("You have already participated ✅");
+          navigate("/FreeAIBook/view");
+          return;
+        }
+
+        await axios.post(
+          `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
+          {
+            askOxyOfers: "FREEAIBOOK",
+            mobileNumber: mobileNumber || whatsappNumber,
+            userId,
+            projectType: "ASKOXY",
+          }
+        );
+
+        message.success("🎉 Welcome to Free AI Book!");
+        navigate("/FreeAIBook/view");
+      } catch (error) {
+        console.error("Participation error:", error);
+        // message.error("Something went wrong, please try again!");
+      }
+    };
+
+    useEffect(() => {
+      const handleScroll = () => setIsScrolled(window.scrollY > 10);
+      window.addEventListener("scroll", handleScroll, { passive: true });
+
+      // Auto participate if user is logged in
+      if (userId) {
+        participateInFreeAIBook();
+      }
+
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, [userId, navigate]);
+
+    // const cardBaseClasses =
+    //   "bg-white rounded-3xl shadow-xl p-5 text-center border-t-4 transform transition-transform";
+
+    const handleSignIn = async () => {
+      if (!userId) {
+        sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
+        window.location.href = LOGIN_URL;
+      }
+    };
+
+  
 
   return (
     <section className="flex flex-col items-center bg-purple-50 py-10 md:py-10 px-4 sm:px-6 md:px-12">
@@ -62,7 +126,7 @@ const FreeAiBook: React.FC = () => {
           </p>
 
           <motion.button
-            onClick={handleViewMore}
+            onClick={handleSignIn}
             className="self-start px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-semibold shadow-md hover:opacity-90 transition-transform duration-200"
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.05 }}

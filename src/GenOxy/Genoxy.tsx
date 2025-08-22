@@ -63,7 +63,10 @@ function disclaimerForAssistant(name?: string | null) {
   return null;
 }
 
-const ASK_ENDPOINT = `${(BASE_URL || "").replace(/\/$/, "")}/student-service/user/askquestion`;
+const ASK_ENDPOINT = `${(BASE_URL || "").replace(
+  /\/$/,
+  ""
+)}/student-service/user/askquestion`;
 
 /** TiE starter prompts */
 const TIE_PROMPTS: string[] = [
@@ -442,7 +445,8 @@ const GenOxy: React.FC = () => {
       });
 
       const text = await res.text();
-      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
+      if (!res.ok)
+        throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
 
       let serverMsgs: { role: "user" | "assistant"; content: string }[] | null =
         null;
@@ -619,7 +623,9 @@ const GenOxy: React.FC = () => {
   const editMessage = (messageId: string, content: string) => {
     setInput(content);
     setEditingMessageId(messageId);
-    (document.querySelector("textarea") as HTMLTextAreaElement | null)?.focus?.();
+    (
+      document.querySelector("textarea") as HTMLTextAreaElement | null
+    )?.focus?.();
   };
 
   const showCenteredLayout = messages.length === 0 && !loading && !isChatRoute;
@@ -680,7 +686,7 @@ const GenOxy: React.FC = () => {
                   content: q,
                 });
               }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white 
+              className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white 
                        dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
                        hover:border-purple-300 dark:hover:border-purple-500 
                        hover:shadow transition text-left"
@@ -698,7 +704,8 @@ const GenOxy: React.FC = () => {
 
   /* KLM: Stage 0 (Mode select) — NEW */
   const isKlm = activeAssistant?.name?.toLowerCase().includes("klm");
-  const showKlmModeStage = isKlm && klmMode === null && messages.length === 0 && isChatRoute;
+  const showKlmModeStage =
+    isKlm && klmMode === null && messages.length === 0 && isChatRoute;
 
   const KlmModeSelect: React.FC = () => {
     return (
@@ -747,7 +754,11 @@ const GenOxy: React.FC = () => {
 
   /* KLM: Stage 1 (Role select) */
   const showKlmRoleStage =
-    isKlm && klmMode === "role" && klmRole === null && messages.length === 0 && isChatRoute;
+    isKlm &&
+    klmMode === "role" &&
+    klmRole === null &&
+    messages.length === 0 &&
+    isChatRoute;
 
   const KlmRoleSelect: React.FC = () => {
     return (
@@ -796,7 +807,11 @@ const GenOxy: React.FC = () => {
 
   /* KLM: Stage 2 (Role prompts) */
   const showKlmPromptStage =
-    isKlm && klmMode === "role" && klmRole !== null && messages.length === 0 && isChatRoute;
+    isKlm &&
+    klmMode === "role" &&
+    klmRole !== null &&
+    messages.length === 0 &&
+    isChatRoute;
 
   const KlmRoleStarter: React.FC = () => {
     if (!klmRole) return null;
@@ -889,7 +904,9 @@ const GenOxy: React.FC = () => {
     return (
       <div className="w-full">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <div className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}>
+          <div
+            className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}
+          >
             <h2 className="text-2xl sm:text-3xl font-bold">{copy.title}</h2>
             <p className={`mt-2 ${h.sub} max-w-2xl mx-auto`}>{copy.sub}</p>
             <div className="mt-3 text-sm">
@@ -1154,24 +1171,27 @@ const GenOxy: React.FC = () => {
     >
       {/* Sidebar */}
       {!showCenteredLayout && (
-        <div
-          className={`fixed left-0 z-40 transform bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out
+<div
+  className={`fixed left-0 z-40 transform bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out
       ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       top-14 bottom-0 h-[calc(100vh-3.5rem)]
       w-64 sm:w-64 md:w-68 lg:w-72
       sm:relative sm:translate-x-0 sm:flex sm:flex-col sm:top-0 sm:bottom-auto sm:h-auto`}
-        >
-          <Sidebar
-            chatHistory={chatHistory}
-            loadChat={loadChat}
-            clearHistory={() => setChatHistory([])}
-            toggleSidebar={() => setIsSidebarOpen(false)}
-            clearChat={clearChat}
-            assistants={ASSISTANTS.map(({ id, ...rest }) => rest)}
-            activeAssistantSlug={activeAssistant?.slug ?? null}
-            onPickAssistant={handlePickAssistant}
-          />
-        </div>
+  // 👇 add bottom padding equal to InputBar height
+  style={{ paddingBottom: "var(--inputbar-height, 80px)" }}
+>
+  <Sidebar
+    chatHistory={chatHistory}
+    loadChat={loadChat}
+    clearHistory={() => setChatHistory([])}
+    toggleSidebar={() => setIsSidebarOpen(false)}
+    clearChat={clearChat}
+    assistants={ASSISTANTS}
+    activeAssistantSlug={activeAssistant?.slug ?? null}
+    onPickAssistant={handlePickAssistant}
+  />
+</div>
+
       )}
 
       {/* Main */}

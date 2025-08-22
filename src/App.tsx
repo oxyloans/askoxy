@@ -314,11 +314,24 @@ const App: React.FC = () => {
               element={<Navigate to="/genoxy/welcome" replace />}
             />
             <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
-           <Route path="/genoxy" element={<GenOxy />} />
-    
-    {/* Added: New route for chat interface */}
-    <Route path="/genoxy/chat" element={<GenOxy />} />
-       
+            <Route path="/genoxy" element={<GenOxy />} />
+            <Route
+              path="/genoxy/tie"
+              element={<Navigate to="/genoxy/chat?a=tie-llm" replace />}
+            />
+            <Route
+              path="/genoxy/klm"
+              element={
+                <Navigate
+                  to={
+                    "/genoxy/chat?a=" + encodeURIComponent("klm-fashions LLM")
+                  }
+                  replace
+                />
+              }
+            />
+            {/* Added: New route for chat interface */}
+            <Route path="/genoxy/chat" element={<GenOxy />} />
             <Route
               path="/voiceAssistant"
               element={<Navigate to="/voiceAssistant/welcome" replace />}
@@ -649,7 +662,10 @@ const App: React.FC = () => {
               <Route path="updateoffers" element={<OfferImagesUpdate />} />
               <Route path="addReference" element={<AddReference />} />
               <Route path="stockdetails" element={<StockTable />} />
-              <Route path="cartamountbasedorderplaces" element={<WalletEligibilitySlabs />} />
+              <Route
+                path="cartamountbasedorderplaces"
+                element={<WalletEligibilitySlabs />}
+              />
             </Route>
             {/* Partner end */}
             {/* ----------Admin Routes Start---------- */}

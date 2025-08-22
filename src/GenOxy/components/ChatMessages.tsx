@@ -4,22 +4,56 @@ import { Message } from "../types/types";
 import MessageActions from "./MessageActions";
 import MarkdownRenderer from "./MarkdownRenderer";
 
+/* ================================
+   Helpers
+   ================================ */
+
+// Much safer cleaner: only remove that specific ?num:num?source? artifact
+const cleanContent = (content: string): string => {
+  return content
+    .replace(/\?\d+:\d+\?source\?/g, "") // keep this targeted cleanup
+    // .replace(/(\w+)\?s/g, "$1") // If you ever see "company?s" artefacts, keep this.
+    // IMPORTANT: Do NOT strip generic "?...?" anymore — it breaks signed URLs.
+    .trim();
+};
+
+// Pull the first image url from Markdown ( ![alt](url) ) or bare URL on its own line
+const extractFirstImageUrl = (content: string): string | null => {
+  if (!content) return null;
+
+  // 1) Markdown image syntax
+  const mdMatch = content.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/i);
+  if (mdMatch?.[1]) return mdMatch[1];
+
+  // 2) Bare URL ending with common image extensions or obvious data URIs
+  const urlMatch = content.match(
+    /(https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|webp|gif)(?:\?[^\s)]*)?)/i
+  );
+  if (urlMatch?.[1]) return urlMatch[1];
+
+  // 3) Last resort: any https URL on its own line (often SAS links without extension)
+  const lineUrl = content
+    .split(/\s+/)
+    .find((t) => /^https?:\/\/\S+/i.test(t));
+  return lineUrl ?? null;
+};
+
+// Tiny clipboard helper
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // ignore
+  }
+};
+
 interface ChatMessagesProps {
   messages: Message[];
   messagesEndRef: React.RefObject<HTMLDivElement>;
   loading: boolean;
   onEditMessage: (messageId: string, content: string) => void;
 }
-// Utility function to clean unwanted characters from content
-const cleanContent = (content: string): string => {
-  // Remove ?number:number?source? or similar patterns
-  
-  return content
-    .replace(/\?\d+:\d+\?source\?/g, "") // Remove ?number:number?source? patterns
-    .replace(/(\w+)\?s/g, "$1") // Remove ?s from words like company?s, year?s
-    .replace(/\?.*?\?/g, "") // Remove any other ?...? patterns
-    .trim(); // Remove leading/trailing whitespace
-};
+
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   messagesEndRef,
@@ -38,77 +72,106 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       }
     };
     scrollToBottom();
-  }, [messages, loading]);
+  }, [messages, loading, messagesEndRef]);
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="px-2 sm:px-4 py-6 pb-28 sm:pb-20">
         <div className="max-w-3xl mx-auto space-y-6">
-          {messages.map((msg, idx) => (
-            <div key={msg.id || idx} className="animate-fade-in-up">
-              {msg.role === "user" ? (
-                <div className="flex justify-end">
-                  <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] relative group">
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md break-words whitespace-pre-wrap">
-                      {cleanContent(msg.content)}
-                    </div>
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <User className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="absolute -bottom-8 right-10 hidden group-hover:flex z-10 space-x-2">
-                      <MessageActions
-                        message={msg}
-                        index={idx}
-                        onEdit={() =>
-                          onEditMessage(msg.id!, cleanContent(msg.content))
-                        }
-                        showOnly={["edit", "copy"]}
-                      />
+          {messages.map((msg, idx) => {
+            const cleaned = cleanContent(msg.content);
+            const discoveredImageUrl =
+              msg.isImage ? msg.content : extractFirstImageUrl(cleaned);
+            const shouldRenderImage = Boolean(msg.isImage || discoveredImageUrl);
+
+            return (
+              <div key={msg.id || idx} className="animate-fade-in-up">
+                {msg.role === "user" ? (
+                  <div className="flex justify-end">
+                    <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] relative group">
+                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md break-words whitespace-pre-wrap">
+                        {cleaned}
+                      </div>
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="absolute -bottom-8 right-10 hidden group-hover:flex z-10 space-x-2">
+                        <MessageActions
+                          message={msg}
+                          index={idx}
+                          onEdit={() => onEditMessage(msg.id!, cleaned)}
+                          showOnly={["edit", "copy"]}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex justify-start">
-                  <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] w-full group">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-md">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-md">
-                        {msg.isImage ? (
-                          <div className="relative group/image">
-                            <img
-                              src={msg.content}
-                              alt="AI Generated"
-                              className="rounded-xl w-full max-h-96 object-contain"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                                const next = e.currentTarget.nextElementSibling;
-                                if (next) {
-                                  next.textContent = "Failed to load image";
-                                  next.classList.remove("hidden");
-                                }
-                              }}
-                            />
-                            <div className="hidden text-red-500 text-sm mt-2">
-                              Failed to load image
+                ) : (
+                  <div className="flex justify-start">
+                    <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] w-full group">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-md">
+                        <Bot className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-md">
+                          {shouldRenderImage ? (
+                            <div className="relative group/image">
+                              <img
+                                src={discoveredImageUrl || msg.content}
+                                alt="AI Generated"
+                                className="rounded-xl w-full max-h-96 object-contain"
+                                onError={(e) => {
+                                  // Hide the broken <img> and show fallback UI
+                                  e.currentTarget.style.display = "none";
+                                  const next = e.currentTarget.nextElementSibling as HTMLDivElement | null;
+                                  if (next) next.classList.remove("hidden");
+                                }}
+                              />
+                              {/* Fallback: visible when <img> fails */}
+                              <div className="hidden mt-2 rounded-lg border border-red-200 dark:border-red-600 bg-red-50/60 dark:bg-red-900/30 p-3 text-sm">
+                                <div className="font-medium text-red-700 dark:text-red-300">
+                                  Failed to load image
+                                </div>
+                                <div className="mt-1 text-red-700/80 dark:text-red-200/80 break-words">
+                                  The link may be expired or blocked by the browser.
+                                </div>
+
+                                {discoveredImageUrl && (
+                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <a
+                                      href={discoveredImageUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs"
+                                    >
+                                      Open in new tab
+                                    </a>
+                                    <button
+                                      onClick={() =>
+                                        copyToClipboard(discoveredImageUrl)
+                                      }
+                                      className="px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs"
+                                    >
+                                      Copy URL
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
+                          ) : (
+                            <MarkdownRenderer content={cleaned} />
+                          )}
+
+                          <div className="flex justify-end mt-2">
+                            <MessageActions message={msg} index={idx} small />
                           </div>
-                        ) : (
-                          <MarkdownRenderer
-                            content={cleanContent(msg.content)}
-                          />
-                        )}
-                        <div className="flex justify-end mt-2">
-                          <MessageActions message={msg} index={idx} small />
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
 
           {loading && (
             <div className="flex justify-start animate-fade-in-up">
@@ -132,7 +195,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             </div>
           )}
 
-        <div ref={messagesEndRef} className="h-16 sm:h-4" />
+          <div ref={messagesEndRef} className="h-16 sm:h-4" />
         </div>
       </div>
     </div>

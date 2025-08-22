@@ -20,22 +20,23 @@ export const usePrompts = (
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
   const [relatedOptions, setRelatedOptions] = useState<string[]>([]);
+  const [afterSelectScrollTarget, setAfterSelectScrollTarget] = useState<(() => void) | null>(null);
 
   const suggestionPrompts: Prompt[] = [
     {
-  text: "Image Generation",
-  icon: <PhotoIcon className="w-5 h-5" />,
-  gradient: "from-green-600 to-cyan-700",
-  related: [
-    "Generate a landscape image",
-    "Generate a realistic product mockup image", 
-    "Generate a corporate banner iamge", 
-    "Generate an infographic image",  
-  ],
-},
+      text: "Image Generation",
+      icon: <PhotoIcon className="w-4 h-4" />,
+      gradient: "from-green-600 to-cyan-700",
+      related: [
+        "Generate a landscape image",
+        "Generate a realistic product mockup image",
+        "Generate a corporate banner image",
+        "Generate an infographic image",
+      ],
+    },
     {
       text: "Learning",
-      icon: <AcademicCapIcon className="w-5 h-5" />,
+      icon: <AcademicCapIcon className="w-4 h-4" />,
       gradient: "from-pink-600 to-red-600",
       related: [
         "Top skills for 2025",
@@ -46,7 +47,7 @@ export const usePrompts = (
     },
     {
       text: "Development",
-      icon: <CodeBracketIcon className="w-5 h-5" />,
+      icon: <CodeBracketIcon className="w-4 h-4" />,
       gradient: "from-indigo-600 to-purple-700",
       related: [
         "React authentication",
@@ -57,7 +58,7 @@ export const usePrompts = (
     },
     {
       text: "News",
-      icon: <NewspaperIcon className="w-5 h-5" />,
+      icon: <NewspaperIcon className="w-4 h-4" />,
       gradient: "from-yellow-600 to-orange-600",
       related: [
         "Latest AI research",
@@ -72,6 +73,8 @@ export const usePrompts = (
     setSelectedPrompt(promptText);
     setRelatedOptions(related);
     setShowDropdown(true);
+    // Smooth-scroll to prompts/related section if WelcomeScreen provided a callback
+    if (afterSelectScrollTarget) afterSelectScrollTarget();
   };
 
   return {
@@ -80,5 +83,7 @@ export const usePrompts = (
     relatedOptions,
     handlePromptSelect,
     setShowDropdown,
+    // expose setter so the screen can define what to scroll to
+    setAfterSelectScrollTarget,
   };
 };

@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Users, Building2, ArrowRight } from "lucide-react";
+import {
+  BookOpen,
+  
+  ArrowRight,
+  MapPinIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../Config";
+import aiImage from "../assets/img/book.png";
 import { message } from "antd";
+import { motion } from "framer-motion";
 
+import Mission from "../assets/img/Mission Million.png"
+import Billion from "../assets/img/AI Hub.png"
 const FreeAIBookHome: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   const userId = localStorage.getItem("userId");
@@ -17,8 +26,6 @@ const FreeAIBookHome: React.FC = () => {
 
   const participateInFreeAIBook = async () => {
     if (!userId) return;
-
-    
 
     try {
       const { data } = await axios.post(
@@ -63,8 +70,8 @@ const FreeAIBookHome: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [userId, navigate]);
 
-  const cardBaseClasses =
-    "bg-white rounded-3xl shadow-xl p-5 text-center border-t-4 transform transition-transform";
+  // const cardBaseClasses =
+  //   "bg-white rounded-3xl shadow-xl p-5 text-center border-t-4 transform transition-transform";
 
   const handleSignIn = async () => {
     if (!userId) {
@@ -73,103 +80,231 @@ const FreeAIBookHome: React.FC = () => {
     }
   };
 
+  const handleGenoxy = () => {
+    window.location.href="/genoxy"
+  }
+
   return (
-    <main className="flex flex-col pt-16 min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <main className="flex flex-col pt-14 min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+      <div className="max-w-6xl mx-auto text-center px-4 sm:px-6 lg:px-8 py-8">
+        {/* Heading */}
+        <h3
+          id="main-heading"
+          className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-snug tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600"
+        >
+          ASKOXY.AI — India’s Specialist LLM Company
+        </h3>
+
+        {/* Subheading / Paragraph */}
+        <p className="text-sm sm:text-base lg:text-lg max-w-3xl mx-auto leading-relaxed text-gray-700">
+          Powering the future of{" "}
+          <span className="font-semibold text-indigo-700">Loans</span>,{" "}
+          <span className="font-semibold text-purple-700">Jobs</span> &{" "}
+          <span className="font-semibold text-pink-600">Entrepreneurs</span>.
+          Based in Hyderabad,{" "}
+          <span className="font-semibold text-gray-900">ASKOXY.AI</span> is a
+          <span className="font-semibold text-gray-900">
+            {" "}
+            50-member AI-native company
+          </span>{" "}
+          pioneering India’s AI revolution with regulation-aligned Large
+          Language Models.
+        </p>
+      </div>
+
       <section
-        className={`flex-grow px-6 sm:px-10 lg:px-20 py-2 md:py-2 transition-shadow duration-300 ${
-          isScrolled ? "shadow-sm" : "shadow-none"
-        }`}
-        aria-labelledby="main-heading"
+        id="free-ai-book"
+        className="flex flex-col items-center  px-4 sm:px-6 md:px-12"
       >
-        <div className="max-w-7xl mx-auto text-center mb-4">
-          <h1
-            id="main-heading"
-            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight mb-5 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 select-none"
+        {/* Card */}
+        <motion.div
+          className="flex flex-col md:flex-row bg-white border border-emerald-400 shadow-md overflow-hidden w-full max-w-7xl hover:shadow-lg transition-shadow duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Left Image */}
+          <motion.div
+            className="md:w-1/2 w-full flex justify-center items-center p-4 md:p-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            Empowering India with AI Innovation
-          </h1>
-
-          <p className="text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed text-gray-700 select-text">
-            Join the movement shaping the future of Artificial Intelligence,
-            Blockchain & Cloud — through education, innovation, and community.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
-          <article
-            tabIndex={0}
-            aria-label="Mission Million AI Coders"
-            className={`${cardBaseClasses} border-blue-500`}
-          >
-            <Users
-              className="text-blue-600 w-14 h-14 mx-auto mb-6"
-              aria-hidden="true"
+            <img
+              src={aiImage}
+              alt="AI Book"
+              className="w-full h-full object-contain shadow-lg transition-transform duration-300"
             />
-            <h2 className="text-2xl font-semibold text-blue-700 mb-3">
-              Mission Million AI Coders
-            </h2>
-            <p className="text-blue-600 text-base leading-relaxed">
-              Skilling <strong>1 million Indians</strong> in AI, Blockchain &
-              Cloud through real-world projects, mentorship, and
-              community-driven learning.
-            </p>
-          </article>
+          </motion.div>
 
-          <article
-            tabIndex={0}
-            aria-label="BillionAIre Hub"
-            className={`${cardBaseClasses} border-purple-500`}
+          {/* Right Content */}
+          <motion.div
+            className="md:w-1/2 w-full flex flex-col justify-center p-4 md:p-8"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <Building2
-              className="text-purple-600 w-14 h-14 mx-auto mb-6"
-              aria-hidden="true"
+            <p className="text-gray-700 mb-3 text-base sm:text-lg md:text-lg leading-relaxed text-justify">
+              <span className="text-violet-600 font-semibold">
+                Step into the AI Universe:
+              </span>{" "}
+              Discover, learn, and create with today’s most powerful AI tools.
+              From your very first prompt to shaping global impact, explore how
+              AI is transforming industries, generating text, images, music, and
+              code, and powering innovations like ChatGPT and MidJourney.
+            </p>
+            <p className="text-gray-700 mb-5 text-base sm:text-lg md:text-lg leading-relaxed text-justify">
+              <span className="text-indigo-600 font-semibold">
+                Our Mission:
+              </span>{" "}
+              To empower one million learners with AI skills and unlock career
+              opportunities of the future. Join the revolution, master AI, and
+              be part of the next wave of technological innovation.
+            </p>
+
+            <motion.button
+              onClick={handleSignIn}
+              className="self-start flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600 text-white font-semibold shadow-lg hover:opacity-90 transition-transform duration-200"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <BookOpen className="w-5 h-5" />
+              Get Free AI Book
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      </section>
+      <section
+        id="mission-million-ai-coders"
+        className="flex flex-col items-center py-4 px-4 sm:px-6 md:px-12"
+      >
+        {/* Card */}
+        <motion.div
+          className="flex flex-col md:flex-row bg-white border border-pink-300 shadow-md overflow-hidden w-full max-w-7xl hover:shadow-lg transition-shadow duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Left Content (Text now on left) */}
+          <motion.div
+            className="md:w-1/2 w-full flex flex-col justify-center p-4 md:p-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <p className="text-gray-700 mb-3 text-base sm:text-lg md:text-lg leading-relaxed text-justify">
+              <span className="text-violet-600 font-semibold">
+                Mission Million AI Coders –{" "}
+              </span>
+              Skilling India at Scale A movement to train 1 million Indians in
+              AI, Blockchain, and Cloud—from students to working professionals.
+              With real-world projects, community-led learning, and AI-ready job
+              frameworks, this initiative builds confidence, competence, and
+              careers
+            </p>
+            <p className="text-gray-700 mb-5 text-base sm:text-lg md:text-lg leading-relaxed text-justify">
+              <span className="text-indigo-600 font-semibold">
+                Our Mission:
+              </span>{" "}
+              Build a global digital economy with AI, Blockchain, and Cloud —
+              funding entrepreneurs, empowering professionals, solving real
+              problems, and training millions, supported by BFSI and LLMs books.
+            </p>
+
+            <motion.button
+              onClick={handleGenoxy}
+              className="flex items-center gap-2 self-start px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-semibold shadow-lg hover:opacity-90 transition-transform duration-200"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              Visit GENOXY
+              <ArrowRight className="w-5 h-5" />
+            </motion.button>
+          </motion.div>
+
+          {/* Right Image (Image now on right) */}
+          <motion.div
+            className="md:w-1/2 w-full flex justify-center items-center p-4 md:p-8"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <img
+              src={Mission}
+              alt="AI Book"
+              className="w-full h-full object-contain shadow-lg transition-transform duration-300"
             />
-            <h2 className="text-2xl font-semibold text-purple-700 mb-3">
-              BillionAIre Hub
-            </h2>
-            <p className="text-purple-600 text-base leading-relaxed">
-              India’s first <strong>AI Studio-as-a-Service</strong> in Hyderabad
-              — open to entrepreneurs, students & professionals to innovate and
-              build AI solutions for free.
-            </p>
-          </article>
-
-          <article
-            tabIndex={0}
-            aria-label="Our First Free AI Book"
-            className={`${cardBaseClasses} border-green-500`}
+          </motion.div>
+        </motion.div>
+      </section>
+      <section
+        id="billionaire-hub"
+        className="flex flex-col items-center  px-4 sm:px-6 md:px-12"
+      >
+        {/* Card */}
+        <motion.div
+          className="flex flex-col md:flex-row bg-white border border-purple-400 shadow-md overflow-hidden w-full max-w-7xl hover:shadow-lg transition-shadow duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Left Image */}
+          <motion.div
+            className="md:w-1/2 w-full flex justify-center items-center p-4 md:p-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <BookOpen
-              className="text-green-600 w-14 h-14 mx-auto mb-6"
-              aria-hidden="true"
+            <img
+              src={Billion}
+              alt="AI Book"
+              className="w-full h-full object-contain shadow-lg transition-transform duration-300"
             />
-            <h2 className="text-2xl font-semibold text-green-700 mb-3">
-              Our First Free AI Book
-            </h2>
-            <p className="text-green-600 text-base leading-relaxed">
-              Discover India’s AI journey with inspiring stories, real-world
-              insights, and future-ready strategies from our initiatives.
-            </p>
-          </article>
-        </div>
+          </motion.div>
 
-        <div className="mt-10 text-center">
-          <button
-            onClick={handleSignIn}
-            disabled={isLoading}
-            aria-busy={isLoading}
-            aria-label="View our first free AI book"
-            className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 hover:from-indigo-700 hover:via-purple-800 hover:to-pink-700 focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 text-white font-semibold py-4 px-10 rounded-full shadow-lg transition-transform duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+          {/* Right Content */}
+          <motion.div
+            className="md:w-1/2 w-full flex flex-col justify-center p-4 md:p-8"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            {isLoading ? (
-              <span className="animate-pulse">Loading...</span>
-            ) : (
-              <>
-                Our First Free AI Book <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </div>
+            <p className="text-gray-700 mb-3 text-base sm:text-lg md:text-lg leading-relaxed text-justify">
+              <span className="text-violet-600 font-semibold">
+                BillionAIre Hub –
+              </span>{" "}
+              India’s first AI Studio-as-a-Service at Miyapur Metro, Hyderabad.
+              A free platform for learning, building, and testing AI.
+              Entrepreneurs, students, and professionals explore GPT workflows,
+              with contributions rewarded through BMVCOIN, an Ethereum-based
+              future-ready token.
+            </p>
+
+            <p className="text-gray-700 mb-5 text-base sm:text-lg md:text-lg leading-relaxed text-justify">
+              <span className="text-indigo-600 font-semibold">
+                Our Mission:
+              </span>{" "}
+              Build a global digital economy with AI, Blockchain, and Cloud —
+              funding entrepreneurs, empowering professionals, solving real
+              problems, and training millions, supported by BFSI and LLMs books.
+            </p>
+
+            <motion.a
+              href="https://www.google.com/maps/place/Metro+Station+Miyapur,+Nadigada+Tanda,+Miyapur,+Hyderabad,+Telangana+500049"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 self-start px-6 py-3 rounded-xl 
+             bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 
+             text-white font-semibold shadow-lg hover:opacity-90 
+             transition-transform duration-200"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <MapPinIcon className="w-5 h-5" />
+              <span>View Location</span>
+            </motion.a>
+          </motion.div>
+        </motion.div>
       </section>
     </main>
   );

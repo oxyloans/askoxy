@@ -19,25 +19,7 @@ const Content2: React.FC = () => {
     setIsCollapsed(collapsed);
   };
 
-  const handleSidebarMouseEnter = () => {
-    if (window.innerWidth >= 768) {
-      // Only on desktop
-      setIsHovering(true);
-    }
-  };
 
-  const handleSidebarMouseLeave = () => {
-    if (window.innerWidth >= 768) {
-      // Only on desktop
-      setIsHovering(false);
-    }
-  };
-
-  const handleSidebarItemClick = () => {
-    if (window.innerWidth < 768) {
-      setIsMobileOpen(false);
-    }
-  };
 
   // Toggle AI Chat Window
   const toggleAiChat = () => {
@@ -236,7 +218,7 @@ ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
       </div>
       {/* Footer with dynamic width and white background */}
       <div
-        className={`transition-all duration-300
+        className={`transition-all duration-300  pt-4
        
           ${isMobileOpen ? "pl-0" : "pl-0"}
           ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
