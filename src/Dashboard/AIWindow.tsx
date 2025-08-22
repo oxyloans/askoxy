@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { message as antdMessage } from "antd";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { Mic } from "lucide-react"; 
-const OPENAI_KEY = process.env.REACT_APP_OPENAI_KEY;
+import { Mic } from "lucide-react";
+// const OPENAI_KEY = process.env.REACT_APP_OPENAI_KEY;
 const PRODUCT_API = `${BASE_URL}/product-service/showGroupItemsForCustomrs`;
 const OFFERS_API = `${BASE_URL}/product-service/getComboActiveInfo`;
 
@@ -61,9 +61,9 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
   const [offersCache, setOffersCache] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const recognitionRef = useRef<any>(null);
-  
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   const navigate = useNavigate();
 
   const scrollToBottom = () =>
@@ -184,29 +184,34 @@ Keywords: <comma-separated keywords or leave blank>`;
 
   const processUserMessage = async (userInput: string) => {
     try {
+      setIsLoading(true);
+
+      // Prepare request body: conversation history + new user input
+      const requestBody = [
+        { role: "system", content: createSystemPrompt() },
+        ...conversationHistory,
+        { role: "user", content: userInput },
+      ];
+
       const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
+        `${BASE_URL}/student-service/user/question`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${OPENAI_KEY}`,
+            Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              { role: "system", content: createSystemPrompt() },
-              ...conversationHistory,
-              { role: "user", content: userInput },
-            ],
-            temperature: 0.5,
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
 
-      const result = await response.json();
-      const content = result.choices[0]?.message?.content?.trim() || "";
+      if (!response.ok) {
+        throw new Error("API call failed: " + response.statusText);
+      }
 
+      const content = (await response.text()).trim(); // backend returns plain string
+
+      // Extract description and keywords
       const descriptionMatch = content.match(/Description:\s*(.*)/i);
       const keywordsMatch = content.match(/Keywords:\s*(.*)/i);
 
@@ -214,15 +219,17 @@ Keywords: <comma-separated keywords or leave blank>`;
       const extractedKeywords =
         keywordsMatch?.[1]
           ?.split(",")
-          .map((k: any) => k.trim().toLowerCase())
+          .map((k: string) => k.trim().toLowerCase())
           .filter(Boolean) || [];
 
+      // Update conversation history
       setConversationHistory((prev) => [
         ...prev,
         { role: "user", content: userInput },
         { role: "assistant", content },
       ]);
 
+      // Update messages shown in UI
       setMessages((prev) => [
         ...prev,
         {
@@ -233,6 +240,7 @@ Keywords: <comma-separated keywords or leave blank>`;
         },
       ]);
 
+      // Handle keywords logic
       if (extractedKeywords.includes("offers")) {
         displayOffers();
         return;
