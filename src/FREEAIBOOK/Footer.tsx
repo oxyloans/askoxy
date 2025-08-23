@@ -93,6 +93,33 @@ const Footer: React.FC = () => {
                 BillionAIre Hub
               </a>
             </li>
+            <li>
+              <a
+                rel="noreferrer"
+                href="/glms"
+                className="text-gray-600 hover:text-indigo-600 transition-colors"
+              >
+                GLMS
+              </a>
+            </li>
+            <li>
+              <a
+                rel="noreferrer"
+                href="/jobstreet"
+                className="text-gray-600 hover:text-indigo-600 transition-colors"
+              >
+                Job Street
+              </a>
+            </li>
+            <li>
+              <a
+                rel="noreferrer"
+                href="/freeaivideos"
+                className="text-gray-600 hover:text-indigo-600 transition-colors"
+              >
+                Our AI Videos
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -128,53 +155,61 @@ const Footer: React.FC = () => {
             Connect With Us
           </h4>
           <div className="flex justify-center md:justify-start gap-6 mt-4">
+            {/* Twitter */}
             <a
               href="https://x.com/RadhakrishnaIND/status/1951525686373421101"
               target="_blank"
               rel="noreferrer"
             >
-              <Twitter className="w-6 h-6 text-gray-500 hover:text-indigo-600 transition-colors" />
+              <Twitter className="w-6 h-6 text-[#1DA1F2] hover:opacity-80 transition-colors" />
             </a>
+
+            {/* LinkedIn */}
             <a
               href="https://www.linkedin.com/in/askoxy-ai-5a2157349/"
               target="_blank"
               rel="noreferrer"
             >
-              <Linkedin className="w-6 h-6 text-gray-500 hover:text-indigo-600 transition-colors" />
+              <Linkedin className="w-6 h-6 text-[#0A66C2] hover:opacity-80 transition-colors" />
             </a>
+
+            {/* Facebook */}
             <a
               href="https://www.facebook.com/profile.php?id=61572388385568"
               target="_blank"
               rel="noreferrer"
             >
-              <Facebook className="w-6 h-6 text-gray-500 hover:text-indigo-600 transition-colors" />
+              <Facebook className="w-6 h-6 text-[#1877F2] hover:opacity-80 transition-colors" />
+            </a>
+
+            {/* YouTube */}
+            <a
+              href="https://www.youtube.com/@askoxyDOTai"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <svg
+                className="w-6 h-6 text-[#FF0000] hover:opacity-80 transition-colors"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M23.498 6.186a2.999 2.999 0 0 0-2.116-2.123C19.636 3.5 12 3.5 12 3.5s-7.636 0-9.382.563a2.999 2.999 0 0 0-2.116 2.123A31.045 31.045 0 0 0 0 12a31.045 31.045 0 0 0 .502 5.814 2.999 2.999 0 0 0 2.116 2.123C4.364 20.5 12 20.5 12 20.5s7.636 0 9.382-.563a2.999 2.999 0 0 0 2.116-2.123A31.045 31.045 0 0 0 24 12a31.045 31.045 0 0 0-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
             </a>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-200 py-4 text-center bg-gray-100">
+      <div className="border-t border-gray-100 py-2 text-center">
         <p className="text-xs sm:text-sm text-gray-600">
           © {new Date().getFullYear()}{" "}
-          <span className="font-semibold text-gray-900">ASKOXY.AI</span> —
-          Empowering Minds with AI
+          <span className="font-semibold text-gray-900">
+            <a href="/">ASKOXY.AI</a>
+          </span>{" "}
+          — Empowering Minds with AI
         </p>
       </div>
-
-    
-      {/* {isVisible && (
-        <div className="flex justify-end">
-          <button
-            onClick={scrollToTop}
-            className="flex items-center hover:text-purple-600 transition-colors mt-0 sm:mt-0 group"
-            aria-label="Scroll to top"
-          >
-            <span className="mr-2">Back to top</span>
-            <ArrowUp className="w-4 h-4 transform group-hover:-translate-y-1 transition-transform" />
-          </button>
-        </div>
-      )} */}
     </footer>
   );
 };

@@ -5,7 +5,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AIChatWindow from "../Dashboard/AIWindow";
 import BASE_URL from "../Config";
-
+import {  useNavigate, useLocation } from "react-router-dom";
 const Content2: React.FC = () => {
   // Sidebar starts collapsed by default
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -15,11 +15,11 @@ const Content2: React.FC = () => {
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const onCollapse = (collapsed: boolean) => {
     setIsCollapsed(collapsed);
   };
-
-
 
   // Toggle AI Chat Window
   const toggleAiChat = () => {
@@ -61,7 +61,18 @@ const Content2: React.FC = () => {
       fetchProfileData();
     }
   }, [customerId]);
-
+  // ✅ Check login status and auto-redirect
+  useEffect(() => {
+    if (location.pathname.startsWith("/freeaibook")) {
+      if (customerId) {
+        // logged in → always go to /FreeAIBook/view
+        navigate("/freeaibook/view", { replace: true });
+      } else {
+        // not logged in → force to /whatsapplogin
+        navigate("/freeaibook", { replace: true });
+      }
+    }
+  }, [customerId, location.pathname, navigate]);
   const fetchProfileData = async () => {
     try {
       const response = await axios.get(
@@ -212,9 +223,7 @@ ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
           ${isMobileOpen ? "pl-0" : "pl-0"}
           ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
       >
-        
-          <Outlet />
-       
+        <Outlet />
       </div>
       {/* Footer with dynamic width and white background */}
       <div

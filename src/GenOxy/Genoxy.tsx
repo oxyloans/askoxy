@@ -37,6 +37,11 @@ const KLM_DISCLAIMER =
 
 const ASSISTANTS: AssistantOption[] = [
   { id: "asst_5g20JJbZ88NvcSgNYLMeQTm2", name: "TiE AI LLM", slug: "tie-llm" },
+  //   {
+  //   id: "asst_PGnuKq3mSvx96598PTed2XGy",
+  //   name: "Insurance LLM",
+  //   slug: "insurance-llm",
+  // },
   {
     id: "asst_XYsY8abeIoMWvsD394DW2N5A",
     name: "KLM Fashions AI LLM",

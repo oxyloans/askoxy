@@ -15,93 +15,75 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const LOGIN_URL = "/whatsappregister";
 
-  const userId = localStorage.getItem("userId");
-  const mobileNumber = localStorage.getItem("mobileNumber");
-  const whatsappNumber = localStorage.getItem("whatsappNumber");
-
-  // ✅ Helper: auto participation
-  const participateInFreeAIBook = async () => {
-    if (!userId) return;
-
-    try {
-      const { data } = await axios.post(
-        `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-        { userId }
-      );
-
-      const alreadyParticipated = data?.some(
-        (offer: any) => offer.askOxyOfers === "FREEAIBOOK"
-      );
-
-      if (alreadyParticipated) {
-        // message.info("You have already participated ✅");
-        navigate("/FreeAIBook/view");
-        return;
-      }
-
-      await axios.post(`${BASE_URL}/marketing-service/campgin/askOxyOfferes`, {
-        askOxyOfers: "FREEAIBOOK",
-        mobileNumber: mobileNumber || whatsappNumber,
-        userId,
-        projectType: "ASKOXY",
-      });
-
-      message.success("🎉 Welcome to Free AI Book!");
-      navigate("/FreeAIBook/view");
-    } catch (error) {
-      console.error("Participation error:", error);
-      // message.error("Something went wrong, please try again!");
-    }
-  };
-
-  // Scroll + login check + auto participate
+  // ✅ Check login status from localStorage
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-
+    const userId = localStorage.getItem("userId");
     if (userId) {
       setIsLoggedIn(true);
-      participateInFreeAIBook(); // auto trigger
-
-      if (window.location.pathname === "/FreeAIBook") {
-        navigate("/FreeAIBook/view");
-      }
+      triggerOfferAPI(); // auto API call on login
+    } else {
+      setIsLoggedIn(false);
     }
+  }, []);
 
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [userId, navigate]);
+  // ✅ API call after successful login
+  const triggerOfferAPI = async () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      const mobileNumber =
+        localStorage.getItem("mobileNumber") ||
+        localStorage.getItem("whatsappNumber");
 
-  // Close mobile menu on outside click
-  useEffect(() => {
-    if (!isMenuOpen) return;
-    const closeOnOutsideClick = (e: MouseEvent) => {
-      if (
-        !(e.target instanceof HTMLElement) ||
-        (!e.target.closest(".mobile-menu-container") &&
-          !e.target.closest(".menu-button"))
-      ) {
-        setIsMenuOpen(false);
+      if (!userId || !mobileNumber) return;
+
+      const res = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
+        {
+          askOxyOfers: "FREEAIBOOK",
+          mobileNumber,
+          userId,
+          projectType: "ASKOXY",
+        }
+      );
+
+      if (res.status === 200) {
+        message.success("Welcome to Free AI Book 🎉");
       }
-    };
-    document.addEventListener("click", closeOnOutsideClick);
-    return () => document.removeEventListener("click", closeOnOutsideClick);
-  }, [isMenuOpen]);
-
-  const handleSignIn = async () => {
-    if (isLoggedIn) {
-      localStorage.clear();
-      message.success("You have successfully sign out.");
-      window.location.href = "/FreeAIBook";
-      return;
-    }
-
-    if (!userId) {
-      sessionStorage.setItem("redirectPath", "/FreeAIBook/view");
-      window.location.href = LOGIN_URL;
+    } catch (error) {
+      console.error("Offer API error:", error);
     }
   };
 
-  // Handle smooth scroll to section with offset for header height
+  // ✅ Sign in / Sign out logic
+  const handleSignIn = () => {
+    if (isLoggedIn) {
+      // Sign Out
+      localStorage.clear();
+      sessionStorage.clear();
+      setIsLoggedIn(false);
+      navigate("/freeaibook", { replace: true }); // 🚀 prevent going back
+      message.info("You have signed out.");
+    } else {
+      // Sign In
+      setIsLoading(true);
+      try {
+        const userId = localStorage.getItem("userId");
+        const redirectPath = "/freeaibook/view";
+        if (userId) {
+          navigate(redirectPath);
+        } else {
+          sessionStorage.setItem("redirectPath", redirectPath);
+          window.location.href = LOGIN_URL;
+        }
+      } catch (error) {
+        console.error("Sign in error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // ✅ Smooth scroll
   const handleScroll = (
     e: React.MouseEvent<HTMLAnchorElement>,
     sectionId: string
@@ -117,11 +99,28 @@ const Header: React.FC = () => {
         behavior: "smooth",
       });
     }
-    setIsMenuOpen(false); // Close mobile menu after click
+    setIsMenuOpen(false);
   };
+
   const handleWriteToUs = () => {
     window.location.href = "/main/services/5d27/free-ai-book";
   };
+
+  // ✅ Mobile menu close on outside click
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const closeOnOutsideClick = (e: MouseEvent) => {
+      if (
+        !(e.target instanceof HTMLElement) ||
+        (!e.target.closest(".mobile-menu-container") &&
+          !e.target.closest(".menu-button"))
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", closeOnOutsideClick);
+    return () => document.removeEventListener("click", closeOnOutsideClick);
+  }, [isMenuOpen]);
 
   return (
     <header
@@ -133,6 +132,7 @@ const Header: React.FC = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Logo */}
           <div
             className="flex items-center cursor-pointer select-none"
             onClick={() => navigate("/")}
@@ -145,30 +145,8 @@ const Header: React.FC = () => {
             />
           </div>
 
-          {/* <nav className="hidden md:flex items-center gap-4">
-            {isLoggedIn && (
-              <button
-                onClick={handleWriteToUs}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                Write to Us
-              </button>
-            )}
-            <button
-              onClick={handleSignIn}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-lg transition transform hover:scale-105 text-white ${
-                isLoggedIn
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-purple-600 hover:bg-purple-700"
-              } disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-400`}
-            >
-              {isLoggedIn ? "Sign Out" : "Sign In"}
-            </button>
-          </nav> */}
-
+          {/* Center Nav */}
           <nav className="hidden md:flex items-center flex-grow justify-center gap-6">
-            {/* Show nav items only when not logged in */}
             {!isLoggedIn && (
               <>
                 <a
@@ -192,15 +170,30 @@ const Header: React.FC = () => {
                 >
                   BillionAIre Hub
                 </a>
+                <a
+                  href="#billionaire-hub"
+                  onClick={(e) => handleScroll(e, "glms")}
+                  className="text-gray-700 hover:text-indigo-600 transition font-medium"
+                >
+                  GLMS
+                </a>
+                <a
+                  href="#billionaire-hub"
+                  onClick={(e) => handleScroll(e, "job-street")}
+                  className="text-gray-700 hover:text-indigo-600 transition font-medium"
+                >
+                  Job Street
+                </a>
               </>
             )}
           </nav>
-          {/* Right side buttons */}
+
+          {/* Right side */}
           <div className="hidden md:flex items-center gap-4">
             {isLoggedIn && (
               <button
                 onClick={handleWriteToUs}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105"
               >
                 Write to Us
               </button>
@@ -212,12 +205,13 @@ const Header: React.FC = () => {
                 isLoggedIn
                   ? "bg-red-600 hover:bg-red-700"
                   : "bg-purple-600 hover:bg-purple-700"
-              } disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-400`}
+              }`}
             >
               {isLoggedIn ? "Sign Out" : "Sign In"}
             </button>
           </div>
 
+          {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -232,7 +226,6 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <nav className="md:hidden bg-white border-t rounded-b-lg shadow-lg mt-1 animate-slideDown mobile-menu-container">
             <ul className="flex flex-col divide-y">
-              {/* Show nav items only when not logged in */}
               {!isLoggedIn && (
                 <>
                   <li className="p-4">
@@ -264,13 +257,31 @@ const Header: React.FC = () => {
                       BillionAIre Hub
                     </a>
                   </li>
+                  <li className="p-4">
+                    <a
+                      href="#glms"
+                      onClick={(e) => handleScroll(e, "glms")}
+                      className="block text-gray-700 hover:text-indigo-600 transition"
+                    >
+                     GLMS
+                    </a>
+                  </li>{" "}
+                  <li className="p-4">
+                    <a
+                      href="#glms"
+                      onClick={(e) => handleScroll(e, "glms")}
+                      className="block text-gray-700 hover:text-indigo-600 transition"
+                    >
+                     Job Street
+                    </a>
+                  </li>
                 </>
               )}
               {isLoggedIn && (
                 <li className="p-4">
                   <button
                     onClick={handleWriteToUs}
-                    className="w-full py-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full py-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition"
                   >
                     Write to Us
                   </button>
@@ -284,7 +295,7 @@ const Header: React.FC = () => {
                     isLoggedIn
                       ? "bg-red-600 hover:bg-red-700"
                       : "bg-purple-600 hover:bg-purple-700"
-                  } disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-400`}
+                  }`}
                 >
                   {isLoggedIn ? "Sign Out" : "Sign In"}
                 </button>

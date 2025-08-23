@@ -87,9 +87,7 @@ const FreeAiBook: React.FC = () => {
     initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0
   );
 
-  useEffect(() => {
-    setSearchParams({ image: (currentIndex + 1).toString() });
-  }, [currentIndex, setSearchParams]);
+  
   // Preload images for smoother transitions
   useEffect(() => {
     const preloadImages = () => {
@@ -197,14 +195,7 @@ const FreeAiBook: React.FC = () => {
     "Human vs AI Agent",
   ];
 
-  // Handle index change with loading state
-  // const changeIndex = useCallback((newIndex: number) => {
-  //   setLoading(true);
-  //   setTimeout(() => {
-  //     setCurrentIndex(newIndex);
-  //     setLoading(false);
-  //   }, 300);
-  // }, []);
+ 
 
   // Handle touch swipe
   let touchStartX = 0;

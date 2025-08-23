@@ -124,7 +124,7 @@ import AssignedDataPage from "./AskoxyAdmin/AssignedData";
 import HelpDeskUsersDashboard from "./AskoxyAdmin/HelpDeskUsers";
 import DataAssigned from "./AskoxyAdmin/AskoxyUsers";
 import ReferredData from "./AskoxyAdmin/RefferedData";
-
+import ProtectedRoute from "./auth/ProtectedRoute";
 import FreeRiceBlog from "./components/FreeRice";
 import MeyaporeMetro from "./components/MeyaporeMetro";
 import { SearchProvider } from "./until/SearchContext";
@@ -191,6 +191,7 @@ import FreeAiBookLandingPage from "./FREEAIBOOK/LandingPage";
 import FreeAiBook from "./FREEAIBOOK/FreeAiBookLandingPage";
 import ChatInterface from "./components/ChatInterfaceAi";
 import WalletEligibilitySlabs from "./PartnerWeb/CartAmountBasedOrder";
+import OurAIVideos from "./FREEAIBOOK/OurAIVideos";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -289,6 +290,7 @@ const App: React.FC = () => {
               path="/los/:useCaseId/:type"
               element={<CASRouteRenderer />}
             />
+            <Route path="/freeaivideos" element={<OurAIVideos/>}/>
             <Route path="/cms" element={<CMSDashboard />} />
             <Route
               path="/cms/:useCaseId/:type"
@@ -300,9 +302,16 @@ const App: React.FC = () => {
               element={<FMSRouteRenderer />}
             />
             <Route path="/glms" element={<LandingPage />} />
-            <Route path="/FreeAIBook" element={<Content2 />}>
+            <Route path="/freeaibook" element={<Content2 />}>
               <Route index element={<FreeAiBookLandingPage />} />
-              <Route path="view" element={<FreeAiBook />} />
+              <Route
+                path="view"
+                element={
+                  <ProtectedRoute>
+                    <FreeAiBook />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
             <Route
               path="/aiblockchainanditservices"
