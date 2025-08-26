@@ -165,6 +165,7 @@ import CarnivalListPage from "./Retailshop/Pages/CarnivalListPage";
 import ShopEditForm from "./Retailshop/components/ShopEditForm";
 import CarnivalEditPage from "./Retailshop/Pages/CarnivalEditPage";
 
+
 // *************************STUDY ABRAD****************************//
 import CoursesPage from "./StudyAbroad/Course";
 import UserSelectionPage from "./StudyAbroad/Homepage";
@@ -192,6 +193,10 @@ import FreeAiBook from "./FREEAIBOOK/FreeAiBookLandingPage";
 import ChatInterface from "./components/ChatInterfaceAi";
 import WalletEligibilitySlabs from "./PartnerWeb/CartAmountBasedOrder";
 import OurAIVideos from "./FREEAIBOOK/OurAIVideos";
+
+import CreateAssistant from "./AskoxyAdmin/Assistants/CreatenewAssistant";
+import AssistantDashboard from "./AskoxyAdmin/Assistants/Dashboard";
+import AssistantOverview from "./AskoxyAdmin/Assistants/AssistantOverview";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -712,6 +717,15 @@ const App: React.FC = () => {
               <Route path="pincodeorders" element={<OrdersByPincode />} />
               <Route path="alljobdetails" element={<JobsAdminPage />} />
               <Route path="userAppliedJobs" element={<UserAppliedJob />} />
+              <Route path="assistants" element={<AssistantDashboard />} />
+              <Route
+                path="conversation/:assistantId"
+                element={<AssistantOverview />}
+              />
+               <Route
+                path="createassistant"
+                element={<CreateAssistant />}
+              />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>

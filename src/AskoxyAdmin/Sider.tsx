@@ -26,6 +26,7 @@ import {
   FaStore,
   FaBlog,
   FaBoxes,
+  FaRobot
 } from "react-icons/fa";
 import {
   RiAdminLine,
@@ -105,6 +106,12 @@ const Sidebar: React.FC = () => {
           link: "/admn/helpDeskUsers",
           roles: ["HELPDESKSUPERADMIN"],
         },
+        {
+          title: "Assistants Dashboard",
+          icon: <FaRobot className="text-blue-400" />,
+          link: "/admn/assistants",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
       ],
     },
     {

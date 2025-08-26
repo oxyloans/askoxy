@@ -1,3 +1,4 @@
+// /src/Genoxy.tsx
 import React, { useRef, useState, useEffect, KeyboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { message as antdMessage } from "antd";
@@ -30,25 +31,36 @@ interface AssistantOption {
 }
 
 const TIE_DISCLAIMER =
-  "TiE Disclaimer :- The information shown is processed from open sources and may be outdated, incomplete, or contain errors (e.g., gender mix-ups, resigned members, or stale data). Please use this only as a knowledge aid, not an official or verified record.";
+  "Disclaimer :- The information shown is processed from open sources and may be outdated, incomplete, or contain errors (e.g., gender mix-ups, resigned members, or stale data). Please use this only as a knowledge aid, not an official or verified record.";
 
 const KLM_DISCLAIMER =
-  "KLM Disclaimer :- This content is auto-processed to provide helpful insights, but roles, timelines, or designations may sometimes be mismatched or outdated. Please treat it as guidance, not absolute truth.";
+  "Disclaimer :- This content is auto-processed to provide helpful insights, but roles, timelines, or designations may sometimes be mismatched or outdated. Please treat it as guidance, not absolute truth.";
 
 const ASSISTANTS: AssistantOption[] = [
   { id: "asst_5g20JJbZ88NvcSgNYLMeQTm2", name: "TiE AI LLM", slug: "tie-llm" },
-  //   {
-  //   id: "asst_PGnuKq3mSvx96598PTed2XGy",
-  //   name: "Insurance LLM",
-  //   slug: "insurance-llm",
-  // },
+  {
+    id: "", // keep empty; actual ID for Insurance is chosen per type
+    name: "Insurance AI LLM",
+    slug: "insurance-llm",
+  },
   {
     id: "asst_XYsY8abeIoMWvsD394DW2N5A",
     name: "KLM Fashions AI LLM",
     slug: "klm-fashions LLM",
   },
 ];
+
 const KLM_ROLE_ASSISTANT_ID = "asst_6Yq2RvPL50n7n7qF9Vnp5uof";
+
+// ====== Insurance: per-type Assistant IDs (UPDATED) ======
+const LIFE_ASSISTANT_ID = "asst_G2jtvsfDcWulax5QDcyWhFX1";
+const GENERAL_ASSISTANT_ID = "asst_bRxg1cfAfcQ05O3UGUjcAwwC"; 
+
+type InsuranceType = "Life Insurance" | "General Insurance";
+const INSURANCE_TYPE_TO_ID: Record<InsuranceType, string> = {
+  "Life Insurance": LIFE_ASSISTANT_ID,
+  "General Insurance": GENERAL_ASSISTANT_ID,
+};
 
 function findAssistantBySlug(slug: string | null) {
   if (!slug) return null;
@@ -65,7 +77,7 @@ function disclaimerForAssistant(name?: string | null) {
   const n = name.toLowerCase();
   if (n.includes("tie")) return TIE_DISCLAIMER;
   if (n.includes("klm")) return KLM_DISCLAIMER;
-  return null;
+  return null; // Insurance: no disclaimer text by default
 }
 
 const ASK_ENDPOINT = `${(BASE_URL || "").replace(
@@ -104,7 +116,7 @@ const KLM_ROLES: { key: KlmRole; label: string; icon: string }[] = [
   { key: "CSR/Sustainability", label: "CSR / Sustainability", icon: "🌱" },
 ];
 
-/** KLM Role-based prompts — trimmed to 4 each (kept the strongest, removed overlaps) */
+/** KLM Role-based prompts — trimmed to 4 each */
 const KLM_PROMPTS: Record<KlmRole, string[]> = {
   Management: [
     "Give me a snapshot of quarterly performance within this financial year",
@@ -165,95 +177,214 @@ const KLM_GENERIC_QUESTIONS: string[] = [
 ];
 
 /* ================================
- * Insurance LLM options (dependent dropdowns)
+ * INSURANCE (UPDATED)
  * ================================ */
 
-type InsuranceLicenseType =
-  | "Life Insurance Companies"
-  | "Non-life/General Insurance Companies"
-  | "Reinsurers";
+// Landing: multi-language strip
+const BIMA_STRIP =
+  "বিমা (Bimā) |  বীমা (Bimā) | વીમા (Vīmā) | ವಿಮೆ (Vime) |  بیمه (Bīma) | बीमा (Bīma) |  ബീമ (Bīma) | विमा (Vimā) | बीमा (Bīma) |  ବୀମା (Bimā) | ਬੀਮਾ (Bīma) | बीम (Bīma) | காப்பீடு (Kāppīṭu) | బీమా (Bīma) |  بیمه (Bīma)";
 
-const INSURANCE_LICENSE_TYPES: InsuranceLicenseType[] = [
-  "Life Insurance Companies",
-  "Non-life/General Insurance Companies",
-  "Reinsurers",
+// Life: 8 questions (as requested)
+const LIFE_QUESTIONS: string[] = [
+  "Find the Right Policy",
+  "Know What’s Covered",
+  "What’s Not Covered?",
+  "Understand Waiting Periods",
+  "Get a Premium Estimate",
+  "How to File a Claim",
+  "Cashless Hospitals Nearby",
+  "Ask Any Question",
 ];
 
-const INSURANCE_ENTITIES: Record<InsuranceLicenseType, string[]> = {
-  "Life Insurance Companies": [
-    "Life Insurance Corporation of India (LIC)",
-    "HDFC Life Insurance Co. Ltd.",
-    "Axis Max Life Insurance Co. Ltd.",
-    "ICICI Prudential Life Insurance Co. Ltd.",
-    "Kotak Life Insurance Co. Ltd.",
-    "Aditya Birla Sun Life Insurance Co. Ltd.",
-    "TATA AIA Life Insurance Co. Ltd.",
-    "SBI Life Insurance Co. Ltd.",
-    "Bajaj Allianz Life Insurance Co. Ltd.",
-    "PNB MetLife India Insurance Co. Ltd.",
-    "Reliance Nippon Life Insurance Company",
-    "Aviva Life Insurance Company India Ltd.",
-    "Sahara India Life Insurance Co. Ltd.",
-    "Shriram Life Insurance Co. Ltd.",
-    "Bharti AXA Life Insurance Co. Ltd.",
-    "Future Generali India Life Insurance Co. Ltd.",
-    "Ageas Federal Life Insurance Co. Ltd.",
-    "Canara HSBC Life Insurance Co. Ltd.",
-    "Bandhan Life Insurance Co. Ltd.",
-    "Pramerica Life Insurance Co. Ltd.",
-    "Star Union Dai-ichi Life Insurance",
-    "IndiaFirst Life Insurance Co. Ltd.",
-    "Edelweiss Life Insurance Co. Ltd.",
-    "Credit Access Life Insurance Ltd.",
-    "Acko Life Insurance Ltd.",
-    "Go Digit Life Insurance Ltd.",
-  ],
-  "Non-life/General Insurance Companies": [
-    "Acko General Insurance",
-    "Aditya Birla Health Insurance",
-    "Agriculture Insurance Company of India",
-    "Bajaj Allianz General Insurance",
-    "Cholamandalam MS General Insurance",
-    "Manipal Cigna Health Insurance",
-    "Navi General Insurance",
-    "Go Digit Insurance",
-    "Zuno General Insurance",
-    "ECGC Ltd.",
-    "Future Generali India Insurance",
-    "HDFC ERGO General Insurance",
-    "ICICI Lombard General Insurance",
-    "IFFCO-TOKIO General Insurance",
-    "Zurich Kotak General Insurance",
-    "Liberty General Insurance",
-    "Magma HDI General Insurance",
-    "Niva Bupa Health Insurance",
-    "National Insurance Company",
-    "New India Assurance",
-    "Raheja QBE General Insurance",
-    "Reliance General Insurance",
-    "Care Health Insurance Ltd.",
-    "Royal Sundaram General Insurance",
-    "SBI General Insurance",
-    "Shriram General Insurance",
-    "Star Health & Allied Insurance",
-    "Tata AIG General Insurance",
-    "The Oriental Insurance Company",
-    "United India Insurance Company",
-    "Universal Sompo General Insurance",
-    "Kshema General Insurance Ltd.",
-    "Galaxy Health Insurance Co. Ltd.",
-  ],
-  Reinsurers: [
-    "General Insurance Corporation of India (GIC Re)",
-    "Valueattics Reinsurance Limited",
-  ],
-};
+// General: 10 categories → 4 conversations each (with subcategories)
+type GeneralCategoryKey =
+  | "Health"
+  | "Motor"
+  | "Travel"
+  | "Property"
+  | "Fire"
+  | "Marine"
+  | "Crop"
+  | "Commercial"
+  | "Liability"
+  | "Misc";
 
-const INSURANCE_FIXED_QUESTIONS = [
-  "Generate Compliance Scorecard",
-  "Assess Clarity & Correctness of Rule Implementation",
-  "Highlight Deviations from Insurance Guidelines",
-  "Suggest Steps for 100% Compliance",
+const GENERAL_CATEGORIES: {
+  key: GeneralCategoryKey;
+  icon: string;
+  title: string;
+  subcategories: string[];
+  prompts: string[];
+}[] = [
+  {
+    key: "Health",
+    icon: "🏥",
+    title: "Health Insurance",
+    subcategories: [
+      "Individual",
+      "Family Floater",
+      "Critical Illness",
+      "Senior Citizen",
+      "Personal Accident",
+    ],
+    prompts: [
+      "Recommend the best health policy for my family.",
+      "What illnesses are covered under critical illness?",
+      "Is maternity covered in family floater plans?",
+      "What is the waiting period for pre-existing diseases?",
+    ],
+  },
+  {
+    key: "Motor",
+    icon: "🚗",
+    title: "Motor Insurance",
+    subcategories: [
+      "Car",
+      "Two-Wheeler",
+      "Commercial Vehicle",
+      "Third Party",
+      "Comprehensive",
+    ],
+    prompts: [
+      "What is the difference between third-party and comprehensive?",
+      "Give me premium estimate for my car.",
+      "How do I renew my bike insurance?",
+      "What documents are needed for motor claims?",
+    ],
+  },
+  {
+    key: "Travel",
+    icon: "✈️",
+    title: "Travel Insurance",
+    subcategories: [
+      "Domestic",
+      "International",
+      "Student",
+      "Senior Citizen",
+      "Multi-trip",
+    ],
+    prompts: [
+      "Do I need travel insurance for a Schengen visa?",
+      "What is covered under student travel policies?",
+      "Does travel insurance cover flight cancellation?",
+      "Is COVID covered in international travel insurance?",
+    ],
+  },
+  {
+    key: "Property",
+    icon: "🏠",
+    title: "Property & Home Insurance",
+    subcategories: [
+      "Home Building",
+      "Home Contents",
+      "Office/Shop",
+      "Comprehensive Home",
+    ],
+    prompts: [
+      "What does home insurance cover in India?",
+      "Are natural disasters covered?",
+      "How is premium calculated for property insurance?",
+      "Does it cover rented apartments?",
+    ],
+  },
+  {
+    key: "Fire",
+    icon: "🔥",
+    title: "Fire Insurance",
+    subcategories: [
+      "Standard Fire & Special Perils",
+      "Industrial Fire",
+      "Fire Loss of Profits",
+    ],
+    prompts: [
+      "What is covered under Standard Fire Policy?",
+      "Are riots and strikes included in fire insurance?",
+      "How do industries insure against fire loss?",
+      "What is Fire Loss of Profits policy?",
+    ],
+  },
+  {
+    key: "Marine",
+    icon: "🚢",
+    title: "Marine Insurance",
+    subcategories: ["Marine Cargo", "Marine Hull", "Inland Transit"],
+    prompts: [
+      "What does marine cargo insurance cover?",
+      "Is inland transit covered under marine policy?",
+      "Explain marine hull insurance.",
+      "Are piracy and theft covered in marine policies?",
+    ],
+  },
+  {
+    key: "Crop",
+    icon: "🌾",
+    title: "Crop & Agriculture Insurance",
+    subcategories: [
+      "PM Fasal Bima Yojana",
+      "Weather-Based Crop Insurance",
+      "State Crop Schemes",
+    ],
+    prompts: [
+      "What crops are covered under PMFBY?",
+      "How do farmers register for crop insurance?",
+      "Does crop insurance cover drought?",
+      "What weather events are covered under WBCIS?",
+    ],
+  },
+  {
+    key: "Commercial",
+    icon: "🏭",
+    title: "Commercial / Industrial Insurance",
+    subcategories: [
+      "Engineering",
+      "Aviation",
+      "Energy",
+      "Machinery Breakdown",
+      "Contractor’s All Risk",
+    ],
+    prompts: [
+      "What is Contractor’s All Risk Insurance?",
+      "How does machinery breakdown insurance work?",
+      "Are airports covered under aviation insurance?",
+      "Explain energy sector insurance.",
+    ],
+  },
+  {
+    key: "Liability",
+    icon: "🛡️",
+    title: "Liability Insurance",
+    subcategories: [
+      "Public Liability",
+      "Product Liability",
+      "Professional Indemnity",
+      "D&O",
+      "Cyber Liability",
+    ],
+    prompts: [
+      "What is public liability insurance?",
+      "How does product liability protect manufacturers?",
+      "Is cyber liability useful for SMEs?",
+      "What is covered under professional indemnity?",
+    ],
+  },
+  {
+    key: "Misc",
+    icon: "📦",
+    title: "Miscellaneous Covers",
+    subcategories: [
+      "Burglary",
+      "Pet",
+      "Event",
+      "Mobile/Device",
+      "Fidelity Guarantee",
+    ],
+    prompts: [
+      "How does burglary insurance work?",
+      "Can I insure my pet dog?",
+      "What is event insurance for weddings?",
+      "Is mobile insurance worth buying?",
+    ],
+  },
 ];
 
 /* ================================
@@ -278,13 +409,16 @@ const GenOxy: React.FC = () => {
 
   // KLM stage state
   const [klmRole, setKlmRole] = useState<KlmRole | null>(null);
-  const [klmMode, setKlmMode] = useState<"role" | "generic" | null>(null); // NEW
+  const [klmMode, setKlmMode] = useState<"role" | "generic" | null>(null);
 
-  // Insurance LLM form state
-  const [insuranceLicense, setInsuranceLicense] = useState<
-    InsuranceLicenseType | ""
-  >("");
-  const [insuranceEntity, setInsuranceEntity] = useState<string>("");
+  // Insurance: landing + current type + effective assistant ID
+  const [insuranceLanding, setInsuranceLanding] = useState<boolean>(true);
+  const [insuranceType, setInsuranceType] = useState<InsuranceType | null>(
+    null
+  );
+  const [insuranceAssistantId, setInsuranceAssistantId] = useState<string>("");
+  const [generalCategory, setGeneralCategory] =
+    useState<GeneralCategoryKey | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -305,8 +439,6 @@ const GenOxy: React.FC = () => {
 
   /**
    * Sync assistant and messages from URL on any navigation (Back/Forward included).
-   * - Saves current messages into a cache under the current assistant's slug.
-   * - Restores cached messages for the assistant in the URL (or clears if none).
    */
   useEffect(() => {
     const qs = new URLSearchParams(location.search);
@@ -322,7 +454,13 @@ const GenOxy: React.FC = () => {
       // switch assistant to match URL
       setActiveAssistant(nextAssistant ?? null);
       setKlmRole(null);
-      setKlmMode(null); // NEW
+      setKlmMode(null);
+
+      // reset insurance stage
+      setInsuranceLanding(true);
+      setInsuranceType(null);
+      setInsuranceAssistantId("");
+      setGeneralCategory(null);
 
       // restore messages for the new assistant (or empty if none)
       const restored = nextAssistant?.slug
@@ -335,7 +473,11 @@ const GenOxy: React.FC = () => {
       chatCache.current[activeAssistant.slug] = messagesRef.current;
       setActiveAssistant(null);
       setKlmRole(null);
-      setKlmMode(null); // NEW
+      setKlmMode(null);
+      setInsuranceLanding(true);
+      setInsuranceType(null);
+      setInsuranceAssistantId("");
+      setGeneralCategory(null);
       setMessages([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -374,11 +516,13 @@ const GenOxy: React.FC = () => {
     setThreadId(null);
     setRemainingPrompts(null);
     setKlmRole(null);
-    setKlmMode(null); // NEW
+    setKlmMode(null);
 
-    // Insurance LLM fields
-    setInsuranceLicense?.("");
-    setInsuranceEntity?.("");
+    // Insurance
+    setInsuranceLanding(true);
+    setInsuranceType(null);
+    setInsuranceAssistantId("");
+    setGeneralCategory(null);
 
     const target = nextAssistantSlug
       ? assistantUrl(nextAssistantSlug)
@@ -487,17 +631,36 @@ const GenOxy: React.FC = () => {
     const current = location.pathname + location.search;
     if (current !== want) navigate(want);
 
-    // If Insurance LLM is active, add context
-    let finalContent = trimmed;
+    // Special routing for Insurance: require type + valid assistant ID
     if (activeAssistant.name.toLowerCase().includes("insurance")) {
-      if (!insuranceLicense || !insuranceEntity) {
-        antdMessage.error("Please select license type and regulated entity.");
+      if (!insuranceType) {
+        antdMessage.error("Please choose Life or General first.");
         return;
       }
-      finalContent = `[License Type: ${insuranceLicense}; Entity: ${insuranceEntity}] ${trimmed}`;
+      const effectiveId =
+        insuranceAssistantId || INSURANCE_TYPE_TO_ID[insuranceType];
+      if (!effectiveId || effectiveId.includes("replace_me")) {
+        antdMessage.error("Assistant ID not set for selected insurance type.");
+        return;
+      }
+      const finalContent = `[Insurance Type: ${insuranceType}] ${trimmed}`;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `m_${Date.now()}`,
+          role: "user",
+          content: finalContent,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      setInput("");
+
+      await askAssistant(effectiveId, { role: "user", content: finalContent });
+      return;
     }
 
-    // Choose which assistant ID to use:
+    // KLM / others
     const isKlm = activeAssistant.name.toLowerCase().includes("klm");
     const effectiveAssistantId =
       isKlm && klmRole ? KLM_ROLE_ASSISTANT_ID : activeAssistant.id;
@@ -507,7 +670,7 @@ const GenOxy: React.FC = () => {
       {
         id: `m_${Date.now()}`,
         role: "user",
-        content: finalContent,
+        content: trimmed,
         timestamp: new Date().toISOString(),
       },
     ]);
@@ -515,7 +678,7 @@ const GenOxy: React.FC = () => {
 
     await askAssistant(effectiveAssistantId, {
       role: "user",
-      content: finalContent,
+      content: trimmed,
     });
   };
 
@@ -543,10 +706,10 @@ const GenOxy: React.FC = () => {
       if (selectedFile) {
         if (!trimmedInput) {
           antdMessage.error("Please add a short instruction for the file.");
-          return;
+        } else {
+          await handleFileUpload(selectedFile, trimmedInput);
+          setInput("");
         }
-        await handleFileUpload(selectedFile, trimmedInput);
-        setInput("");
         return;
       }
 
@@ -578,12 +741,14 @@ const GenOxy: React.FC = () => {
     setIsSidebarOpen(false);
     setEditingMessageId(null);
     setKlmRole(null);
-    setKlmMode(null); // NEW
+    setKlmMode(null);
     setActiveAssistant(null);
 
-    // Insurance LLM fields
-    setInsuranceLicense?.("");
-    setInsuranceEntity?.("");
+    // Insurance
+    setInsuranceLanding(true);
+    setInsuranceType(null);
+    setInsuranceAssistantId("");
+    setGeneralCategory(null);
 
     navigate("/genoxy");
   };
@@ -627,7 +792,7 @@ const GenOxy: React.FC = () => {
     ? handleAssistantSend
     : handleSend;
 
-  /* TiE Starter Panel (refreshed UI for 4 prompts) */
+  /* TiE Starter Panel */
   const showTieStarter =
     activeAssistant?.name?.toLowerCase().includes("tie") &&
     messages.length === 0 &&
@@ -636,57 +801,55 @@ const GenOxy: React.FC = () => {
   const TieStarter: React.FC = () => (
     <div className="w-full">
       <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 md:px-6 py-5 md:py-7">
-        {/* Top Section */}
         <div className="rounded-xl bg-[#6b4cd6] dark:bg-[#6b4cd6]/85 text-white p-5 sm:p-6 md:p-7 shadow text-center">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">
             TiE Hyderabad Conversations
           </h2>
           <p className="mt-1 text-white/90 text-xs sm:text-sm max-w-xl mx-auto leading-snug">
-            Ask anything about TiE Hyderabad chapter members, investors & experts.
-            Let the Assistant guide you.
+            Ask anything about TiE Hyderabad chapter members, investors &
+            experts. Let the Assistant guide you.
           </p>
         </div>
-       {/* 2×2 grid (perfect for 4 prompts) + better tap targets */}
-<div className="mt-4 md:mt-5">
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    {TIE_PROMPTS.map((q) => (
-      <button
-        key={q}
-        onClick={async () => {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `m_${Date.now()}`,
-              role: "user",
-              content: q,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          await askAssistant(activeAssistant!.id, {
-            role: "user",
-            content: q,
-          });
-        }}
-        className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
+
+        <div className="mt-4 md:mt-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {TIE_PROMPTS.map((q) => (
+              <button
+                key={q}
+                onClick={async () => {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: `m_${Date.now()}`,
+                      role: "user",
+                      content: q,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  await askAssistant(activeAssistant!.id, {
+                    role: "user",
+                    content: q,
+                  });
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
                    dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
                    hover:border-purple-300 dark:hover:border-purple-500 
                    hover:shadow-sm transition text-left"
-        aria-label={`Ask: ${q}`}
-      >
-        <span className="inline-block w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-        <span className="text-sm md:text-[13px] font-medium text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
-          {q}
-        </span>
-      </button>
-    ))}
-  </div>
-</div>
-
+                aria-label={`Ask: ${q}`}
+              >
+                <span className="inline-block w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                <span className="text-sm md:text-[13px] font-medium text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
+                  {q}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 
-  /* KLM: Stage 0 (Mode select) — NEW */
+  /* KLM: mode / role / prompts / generic */
   const isKlm = activeAssistant?.name?.toLowerCase().includes("klm");
   const showKlmModeStage =
     isKlm && klmMode === null && messages.length === 0 && isChatRoute;
@@ -736,7 +899,6 @@ const GenOxy: React.FC = () => {
     );
   };
 
-  /* KLM: Stage 1 (Role select) */
   const showKlmRoleStage =
     isKlm &&
     klmMode === "role" &&
@@ -744,351 +906,29 @@ const GenOxy: React.FC = () => {
     messages.length === 0 &&
     isChatRoute;
 
-const KlmRoleSelect: React.FC = () => {
-  return (
-    <div className="w-full">
-      <div className="max-w-4xl mx-auto px-3 sm:px-5 lg:px-6 py-5 md:py-6">
-        <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-5 sm:p-6 shadow text-center">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-900 dark:text-white">
-            KLM Fashions – Role-Based Conversations
-          </h2>
-          <p className="mt-1 text-gray-600 dark:text-gray-300 text-xs sm:text-sm max-w-xl mx-auto">
-            Choose your role to get relevant insights.
-          </p>
-
-          {/* Roles Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 place-items-center pb-20 sm:pb-10">
-            {KLM_ROLES.map((r) => (
-              <button
-                key={r.key}
-                onClick={() => setKlmRole(r.key)}
-                className="group rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow px-3 py-4 transition flex flex-col items-center text-center w-full"
-              >
-                <div className="text-xl mb-1">{r.icon}</div>
-                <div className="font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 text-xs sm:text-sm">
-                  {r.label}
-                </div>
-              </button>
-            ))}
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-  /* KLM: Stage 2 (Role prompts — 4 items) */
-  const showKlmPromptStage =
-    isKlm &&
-    klmMode === "role" &&
-    klmRole !== null &&
-    messages.length === 0 &&
-    isChatRoute;
-
-const KlmRoleStarter: React.FC = () => {
-  if (!klmRole) return null;
-  const prompts = KLM_PROMPTS[klmRole];
-  const headerStyles: Record<
-    KlmRole,
-    { bg: string; accent: string; sub: string }
-  > = {
-    Management: {
-      bg: "bg-[#0b2a5b] dark:bg-[#0b2a5b]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    Operations: {
-      bg: "bg-[#1f3d2c] dark:bg-[#1f3d2c]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    Infrastructure: {
-      bg: "bg-[#0f2f36] dark:bg-[#0f2f36]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    IT: {
-      bg: "bg-[#132b3a] dark:bg-[#132b3a]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    "Finance & Accounts": {
-      bg: "bg-[#1c2c5e] dark:bg-[#1c2c5e]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    HR: {
-      bg: "bg-[#3b2b5e] dark:bg-[#3b2b5e]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    "Legal & Compliance": {
-      bg: "bg-[#2b3a5e] dark:bg-[#2b3a5e]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-    "CSR/Sustainability": {
-      bg: "bg-[#2b5e3b] dark:bg-[#2b5e3b]/80",
-      accent: "text-white",
-      sub: "text-white/80",
-    },
-  };
-
-  const roleHeader: Record<KlmRole, { title: string; sub: string }> = {
-    Management: {
-      title: "Welcome Management – Strategic Insights at a Glance",
-      sub: "Choose a report or ask a question below.",
-    },
-    Operations: {
-      title: "Welcome Operations Team – Stay on Top of Execution",
-      sub: "Pick a topic to begin or type your query.",
-    },
-    Infrastructure: {
-      title: "Welcome Infrastructure Team – Optimize Supply Chain",
-      sub: "Select a topic or initiate a custom query.",
-    },
-    IT: {
-      title:
-        "Welcome IT Team – Infrastructure & Compliance at Your Fingertips",
-      sub: "Select a topic or initiate a custom query.",
-    },
-    "Finance & Accounts": {
-      title: "Welcome Finance Team – Financial Insights and Control",
-      sub: "Click below or ask your own finance question.",
-    },
-    HR: {
-      title: "Welcome HR Team – Empower Your Workforce",
-      sub: "Select a topic or ask about employee management.",
-    },
-    "Legal & Compliance": {
-      title: "Welcome Legal Team – Stay Compliant and Informed",
-      sub: "Choose a report or ask a compliance question.",
-    },
-    "CSR/Sustainability": {
-      title: "Welcome CSR Team – Drive Sustainable Impact",
-      sub: "Select a topic or ask about sustainability initiatives.",
-    },
-  };
-
-  const h = headerStyles[klmRole];
-  const copy = roleHeader[klmRole];
-
-  return (
-    <div className="w-full">
-      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div
-          className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}
-        >
-          <h2 className="text-2xl sm:text-3xl font-bold">{copy.title}</h2>
-          <p className={`mt-2 ${h.sub} max-w-2xl mx-auto`}>{copy.sub}</p>
-          <div className="mt-3 text-sm">
-            <button
-              onClick={() => setKlmRole(null)}
-              className="underline decoration-dotted opacity-90 hover:opacity-100 dark:hover:text-purple-200"
-              title="Change role"
-            >
-              ← Change role
-            </button>
-          </div>
-        </div>
-
-        {/* 2×2 grid for the 4 prompts with safe bottom space for mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 place-items-center pb-20 sm:pb-10">
-          {prompts.map((q) => (
-            <button
-              key={q}
-              onClick={async () => {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `m_${Date.now()}`,
-                    role: "user",
-                    content: q,
-                    timestamp: new Date().toISOString(),
-                  },
-                ]);
-                // Force role-based ID for KLM when a role is selected
-                await askAssistant(KLM_ROLE_ASSISTANT_ID, {
-                  role: "user",
-                  content: q,
-                });
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
-                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
-                 hover:border-purple-300 dark:hover:border-purple-500 
-                 hover:shadow transition text-left max-w-sm w-full"
-            >
-              <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
-              <span className="text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
-                {q}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-  /* KLM: Generic Starter — NEW (4 items) */
-  const showKlmGenericStage =
-    isKlm && klmMode === "generic" && messages.length === 0 && isChatRoute;
-
-const KlmGenericStarter: React.FC = () => {
-  return (
-    <div className="w-full">
-      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 shadow-sm text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            KLM Fashions AI LLM — Generic Conversations
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
-            Start with a quick question for this year.
-          </p>
-          <div className="mt-3 text-sm">
-            <button
-              onClick={() => setKlmMode(null)}
-              className="underline decoration-dotted"
-            >
-              ← Back
-            </button>
-          </div>
-        </div>
-
-        {/* 2×2 grid with safe bottom padding for mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 place-items-center pb-20 sm:pb-10">
-          {KLM_GENERIC_QUESTIONS.map((q) => (
-            <button
-              key={q}
-              onClick={async () => {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `m_${Date.now()}`,
-                    role: "user",
-                    content: q,
-                    timestamp: new Date().toISOString(),
-                  },
-                ]);
-                // Use the normal KLM assistant for generic mode
-                await askAssistant(activeAssistant!.id, {
-                  role: "user",
-                  content: q,
-                });
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
-                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
-                 hover:border-purple-300 dark:hover:border-purple-500 
-                 hover:shadow transition text-left max-w-sm w-full"
-            >
-              <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
-              <span className="text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
-                {q}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-  /* Insurance LLM Starter Panel (dropdowns + fixed questions) */
-  const isInsurance =
-    activeAssistant?.name?.toLowerCase().includes("insurance") &&
-    messages.length === 0 &&
-    isChatRoute;
-
-  const InsuranceStarter: React.FC = () => {
-    const entities = insuranceLicense
-      ? INSURANCE_ENTITIES[insuranceLicense]
-      : [];
-
-    const sendWithContext = async (text: string) => {
-      if (!insuranceLicense || !insuranceEntity) {
-        antdMessage.error("Please select license type and regulated entity.");
-        return;
-      }
-      const content = `[License Type: ${insuranceLicense}; Entity: ${insuranceEntity}] ${text}`;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `m_${Date.now()}`,
-          role: "user",
-          content,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-      await askAssistant(activeAssistant!.id, { role: "user", content });
-    };
-
+  const KlmRoleSelect: React.FC = () => {
     return (
       <div className="w-full">
-        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 border border-gray-200 p-6 sm:p-8 shadow-sm">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Insurance LLM Assistant
+        <div className="max-w-4xl mx-auto px-3 sm:px-5 lg:px-6 py-5 md:py-6">
+          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-5 sm:p-6 shadow text-center">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-900 dark:text-white">
+              KLM Fashions – Role-Based Conversations
             </h2>
+            <p className="mt-1 text-gray-600 dark:text-gray-300 text-xs sm:text-sm max-w-xl mx-auto">
+              Choose your role to get relevant insights.
+            </p>
 
-            {/* Controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
-              <div className="rounded-xl border border-gray-200 bg-white p-3">
-                <label className="text-xs font-medium text-gray-600">
-                  Select License Type
-                </label>
-                <select
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={insuranceLicense}
-                  onChange={(e) => {
-                    const val = e.target.value as InsuranceLicenseType | "";
-                    setInsuranceLicense(val);
-                    setInsuranceEntity("");
-                  }}
-                >
-                  <option value="">Choose license type</option>
-                  {INSURANCE_LICENSE_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-3">
-                <label className="text-xs font-medium text-gray-600">
-                  Select Regulated Entity
-                </label>
-                <select
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={insuranceEntity}
-                  onChange={(e) => setInsuranceEntity(e.target.value)}
-                  disabled={!insuranceLicense}
-                >
-                  <option value="">
-                    {insuranceLicense ? "Choose…" : "Select license type first"}
-                  </option>
-                  {entities.map((ent) => (
-                    <option key={ent} value={ent}>
-                      {ent}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Action chips */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-              {INSURANCE_FIXED_QUESTIONS.map((q) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 place-items-center pb-20 sm:pb-10">
+              {KLM_ROLES.map((r) => (
                 <button
-                  key={q}
-                  onClick={() => sendWithContext(q)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left"
+                  key={r.key}
+                  onClick={() => setKlmRole(r.key)}
+                  className="group rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow px-3 py-4 transition flex flex-col items-center text-center w-full"
                 >
-                  <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
-                  <span className="text-sm font-medium text-gray-800">{q}</span>
+                  <div className="text-xl mb-1">{r.icon}</div>
+                  <div className="font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 text-xs sm:text-sm">
+                    {r.label}
+                  </div>
                 </button>
               ))}
             </div>
@@ -1098,7 +938,488 @@ const KlmGenericStarter: React.FC = () => {
     );
   };
 
-  /* Chat start picker (no assistant yet on /genoxy/chat) — NEW */
+  const showKlmPromptStage =
+    isKlm &&
+    klmMode === "role" &&
+    klmRole !== null &&
+    messages.length === 0 &&
+    isChatRoute;
+
+  const KlmRoleStarter: React.FC = () => {
+    if (!klmRole) return null;
+    const prompts = KLM_PROMPTS[klmRole];
+    const headerStyles: Record<
+      KlmRole,
+      { bg: string; accent: string; sub: string }
+    > = {
+      Management: {
+        bg: "bg-[#0b2a5b] dark:bg-[#0b2a5b]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      Operations: {
+        bg: "bg-[#1f3d2c] dark:bg-[#1f3d2c]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      Infrastructure: {
+        bg: "bg-[#0f2f36] dark:bg-[#0f2f36]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      IT: {
+        bg: "bg-[#132b3a] dark:bg-[#132b3a]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      "Finance & Accounts": {
+        bg: "bg-[#1c2c5e] dark:bg-[#1c2c5e]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      HR: {
+        bg: "bg-[#3b2b5e] dark:bg-[#3b2b5e]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      "Legal & Compliance": {
+        bg: "bg-[#2b3a5e] dark:bg-[#2b3a5e]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+      "CSR/Sustainability": {
+        bg: "bg-[#2b5e3b] dark:bg-[#2b5e3b]/80",
+        accent: "text-white",
+        sub: "text-white/80",
+      },
+    };
+
+    const roleHeader: Record<KlmRole, { title: string; sub: string }> = {
+      Management: {
+        title: "Welcome Management – Strategic Insights at a Glance",
+        sub: "Choose a report or ask a question below.",
+      },
+      Operations: {
+        title: "Welcome Operations Team – Stay on Top of Execution",
+        sub: "Pick a topic to begin or type your query.",
+      },
+      Infrastructure: {
+        title: "Welcome Infrastructure Team – Optimize Supply Chain",
+        sub: "Select a topic or initiate a custom query.",
+      },
+      IT: {
+        title:
+          "Welcome IT Team – Infrastructure & Compliance at Your Fingertips",
+        sub: "Select a topic or initiate a custom query.",
+      },
+      "Finance & Accounts": {
+        title: "Welcome Finance Team – Financial Insights and Control",
+        sub: "Click below or ask your own finance question.",
+      },
+      HR: {
+        title: "Welcome HR Team – Empower Your Workforce",
+        sub: "Select a topic or ask about employee management.",
+      },
+      "Legal & Compliance": {
+        title: "Welcome Legal Team – Stay Compliant and Informed",
+        sub: "Choose a report or ask a compliance question.",
+      },
+      "CSR/Sustainability": {
+        title: "Welcome CSR Team – Drive Sustainable Impact",
+        sub: "Select a topic or ask about sustainability initiatives.",
+      },
+    };
+
+    const h = headerStyles[klmRole];
+    const copy = roleHeader[klmRole];
+
+    return (
+      <div className="w-full">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div
+            className={`rounded-2xl ${h.bg} ${h.accent} p-6 sm:p-8 shadow-md text-center`}
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold">{copy.title}</h2>
+            <p className={`mt-2 ${h.sub} max-w-2xl mx-auto`}>{copy.sub}</p>
+            <div className="mt-3 text-sm">
+              <button
+                onClick={() => setKlmRole(null)}
+                className="underline decoration-dotted opacity-90 hover:opacity-100 dark:hover:text-purple-200"
+                title="Change role"
+              >
+                ← Change role
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 place-items-center pb-20 sm:pb-10">
+            {prompts.map((q) => (
+              <button
+                key={q}
+                onClick={async () => {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: `m_${Date.now()}`,
+                      role: "user",
+                      content: q,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  await askAssistant(KLM_ROLE_ASSISTANT_ID, {
+                    role: "user",
+                    content: q,
+                  });
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
+                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
+                 hover:border-purple-300 dark:hover:border-purple-500 
+                 hover:shadow transition text-left max-w-sm w-full"
+              >
+                <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
+                <span className="text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
+                  {q}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const showKlmGenericStage =
+    isKlm && klmMode === "generic" && messages.length === 0 && isChatRoute;
+
+  const KlmGenericStarter: React.FC = () => {
+    return (
+      <div className="w-full">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-6 sm:p-8 shadow-sm text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              KLM Fashions AI LLM — Generic Conversations
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+              Start with a quick question for this year.
+            </p>
+            <div className="mt-3 text-sm">
+              <button
+                onClick={() => setKlmMode(null)}
+                className="underline decoration-dotted"
+              >
+                ← Back
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 place-items-center pb-20 sm:pb-10">
+            {KLM_GENERIC_QUESTIONS.map((q) => (
+              <button
+                key={q}
+                onClick={async () => {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: `m_${Date.now()}`,
+                      role: "user",
+                      content: q,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  await askAssistant(activeAssistant!.id, {
+                    role: "user",
+                    content: q,
+                  });
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
+                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
+                 hover:border-purple-300 dark:hover:border-purple-500 
+                 hover:shadow transition text-left max-w-sm w-full"
+              >
+                <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
+                <span className="text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
+                  {q}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* Insurance LLM Starter (Landing -> 2 types -> Features/Categories) */
+  const isInsurance =
+    activeAssistant?.name?.toLowerCase().includes("insurance") &&
+    messages.length === 0 &&
+    isChatRoute;
+  // Hide input until an insurance type is chosen
+  const isInsuranceAssistant = !!activeAssistant?.name
+    ?.toLowerCase()
+    .includes("insurance");
+  const hideInputBar = isChatRoute && isInsuranceAssistant && !insuranceType;
+
+  const InsuranceStarter: React.FC = () => {
+    const pickType = (t: InsuranceType) => {
+      setInsuranceType(t);
+      const id = INSURANCE_TYPE_TO_ID[t];
+      setInsuranceAssistantId(id);
+      setGeneralCategory(null);
+    };
+
+    const sendText = async (text: string) => {
+      if (!insuranceType) {
+        antdMessage.error("Please select Life or General first.");
+        return;
+      }
+      const effId = insuranceAssistantId || INSURANCE_TYPE_TO_ID[insuranceType];
+      if (!effId || effId.includes("replace_me")) {
+        antdMessage.error("Assistant ID not set for selected insurance type.");
+        return;
+      }
+      const content = `[Insurance Type: ${insuranceType}] ${text}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `m_${Date.now()}`,
+          role: "user",
+          content,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      await askAssistant(effId, { role: "user", content });
+    };
+
+    const lifeStage = insuranceType === "Life Insurance";
+    const generalStage = insuranceType === "General Insurance";
+
+    return (
+      <div className="w-full">
+        <div className="max-w-6xl mx-auto w-full px-3 sm:px-5 py-5">
+          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 border border-gray-200 p-3 sm:p-7 shadow-sm">
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
+              Insurance AI LLM
+            </h2>
+
+            {/* Step 0: Landing */}
+            {insuranceLanding && (
+              <div className="mt-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
+                  <div className="text-[11px] sm:text-sm text-gray-700">
+                    {BIMA_STRIP}
+                  </div>
+                </div>
+
+                <div className="mt-3 text-xs sm:text-sm leading-relaxed text-gray-700">
+                  <p>
+                    In India, insurance is commonly called{" "}
+                    <strong>Bīma (बीमा / బీమా)</strong> across most languages.
+                  </p>
+                  <p className="mt-2">
+                    The Insurance Regulatory and Development Authority of India
+                    (IRDAI) has approved <strong>61 companies</strong>:
+                  </p>
+                  <ul className="list-disc pl-5 mt-1">
+                    <li>26 Life Insurance Companies</li>
+                    <li>33 General Insurance Companies</li>
+                    <li>2 Reinsurance Companies</li>
+                  </ul>
+                  <p className="mt-2">
+                    Citizens buy policies directly from{" "}
+                    <strong>59 companies</strong>, covering life, motor, health,
+                    and more.
+                  </p>
+                </div>
+
+                <div className="mt-4">
+                  <button
+                    onClick={() => setInsuranceLanding(false)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    Let’s Explore Life & General Insurance →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 1: Show 2 type cards (Life / General) */}
+            {!insuranceLanding && !insuranceType && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-4">
+                <button
+                  onClick={() => pickType("Life Insurance")}
+                  className="w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <div className="text-xl sm:text-2xl">🫶</div>
+                  <div className="mt-1 font-semibold text-indigo-700 text-xs sm:text-sm">
+                    Life Insurance
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-gray-600 mt-1">
+                    Term, savings/ULIP, riders, claims & more.
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => pickType("General Insurance")}
+                  className="w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <div className="text-xl sm:text-2xl">🛡️</div>
+                  <div className="mt-1 font-semibold text-indigo-700 text-xs sm:text-sm">
+                    General Insurance
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-gray-600 mt-1">
+                    Motor, health, home, travel, SME, cyber & more.
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Step 2A: Life → 8 questions */}
+            {lifeStage && (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+                  <div className="text-xs sm:text-sm">
+                    <span className="font-semibold text-indigo-700">
+                      Life Insurance
+                    </span>{" "}
+                    — quick conversations
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setInsuranceType(null);
+                        setInsuranceAssistantId("");
+                      }}
+                      className="text-[11px] sm:text-xs underline decoration-dotted self-start sm:self-auto"
+                    >
+                      ← Change type
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  className="
+                    mt-2
+                    max-h-[calc(100vh-220px)]
+                    overflow-y-auto pr-1 pb-24
+                    sm:max-h-none sm:overflow-visible sm:pb-0
+                  "
+                >
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {LIFE_QUESTIONS.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => sendText(q)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
+                        <span className="text-[14px] sm:text-sm font-medium text-gray-800">
+                          {q}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Step 2B: General → categories (10) OR a chosen category → 4 prompts */}
+            {generalStage && (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+                  <div className="text-xs sm:text-sm">
+                    <span className="font-semibold text-indigo-700">
+                      General Insurance
+                    </span>{" "}
+                    — pick a category
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {generalCategory && (
+                      <button
+                        onClick={() => setGeneralCategory(null)}
+                        className="text-[11px] sm:text-xs underline decoration-dotted"
+                      >
+                        ← All categories
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setInsuranceType(null);
+                        setInsuranceAssistantId("");
+                        setGeneralCategory(null);
+                      }}
+                      className="text-[11px] sm:text-xs underline decoration-dotted"
+                    >
+                      ← Change type
+                    </button>
+                  </div>
+                </div>
+
+                {!generalCategory && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-3">
+                    {GENERAL_CATEGORIES.map((c) => (
+                      <button
+                        key={c.key}
+                        onClick={() => setGeneralCategory(c.key)}
+                        className="w-full rounded-xl border border-gray-200 bg-white p-3 hover:border-indigo-300 hover:shadow text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <div className="text-xl">{c.icon}</div>
+                        <div className="mt-1 font-semibold text-indigo-700 text-[12px] sm:text-sm">
+                          {c.title}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {generalCategory && (
+                  <div
+                    className="
+                      mt-3
+                      max-h-[calc(100vh-220px)]
+                      overflow-y-auto pr-1 pb-24
+                      sm:max-h-none sm:overflow-visible sm:pb-0
+                    "
+                  >
+                    <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
+                      <div className="text-sm font-semibold text-indigo-700">
+                        {
+                          GENERAL_CATEGORIES.find(
+                            (x) => x.key === generalCategory
+                          )?.title
+                        }
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                        {GENERAL_CATEGORIES.find(
+                          (x) => x.key === generalCategory
+                        )!
+                          .prompts.slice(0, 4)
+                          .map((q) => (
+                            <button
+                              key={q}
+                              onClick={() =>
+                                sendText(`[${generalCategory}] ${q}`)
+                              }
+                              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
+                              <span className="text-[14px] sm:text-sm font-medium text-gray-800">
+                                {q}
+                              </span>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* Chat start picker (no assistant yet on /genoxy/chat) */
   const showChatStartPicker =
     isChatRoute && !activeAssistant && messages.length === 0;
 
@@ -1132,28 +1453,25 @@ const KlmGenericStarter: React.FC = () => {
             ))}
           </div>
 
-          {/* Footer */}
-          <div className="mt-auto border-t border-gray-200 dark:border-gray-700 pt-2">
-            <div className="text-center text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 py-1">
-              Powered by{" "}
-              <a
-                href="https://www.askoxy.ai/"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-purple-700 dark:text-purple-300 hover:underline"
-              >
-                ASKOXY.AI
-              </a>{" "}
-              &nbsp;|&nbsp;
-              <a
-                href="https://oxyloans.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-purple-700 dark:text-purple-300 hover:underline"
-              >
-                OxyLoans
-              </a>
-            </div>
+          <div className="text-center text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-4 py-1">
+            Powered by{" "}
+            <a
+              href="https://www.askoxy.ai/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-purple-700 dark:text-purple-300 hover:underline"
+            >
+              ASKOXY.AI
+            </a>{" "}
+            &nbsp;|&nbsp;
+            <a
+              href="https://oxyloans.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-purple-700 dark:text-purple-300 hover:underline"
+            >
+              OxyLoans
+            </a>
           </div>
         </div>
       </div>
@@ -1175,7 +1493,6 @@ const KlmGenericStarter: React.FC = () => {
       top-14 bottom-0 h-[calc(100vh-3.5rem)]
       w-64 sm:w-64 md:w-68 lg:w-72
       sm:relative sm:translate-x-0 sm:flex sm:flex-col sm:top-0 sm:bottom-auto sm:h-auto`}
-          // 👇 add bottom padding equal to InputBar height
           style={{ paddingBottom: "var(--inputbar-height, 80px)" }}
         >
           <Sidebar
@@ -1200,7 +1517,6 @@ const KlmGenericStarter: React.FC = () => {
             isSidebarOpen={isSidebarOpen}
             messages={messages}
             activeAssistantName={activeAssistant?.name}
-            // “LLMs” picker in header
             assistants={ASSISTANTS.map(({ id, ...rest }) => rest)}
             activeAssistantSlug={activeAssistant?.slug ?? null}
             onPickAssistant={handlePickAssistant}
@@ -1248,33 +1564,34 @@ const KlmGenericStarter: React.FC = () => {
 
             {/* Input */}
             <div className="shrink-0">
-              <InputBar
-                input={input}
-                setInput={setInput}
-                handleSend={resolvedSendHandler}
-                handleKeyPress={handleKeyPress}
-                loading={loading}
-                textareaRef={textareaRef}
-                stopGeneration={() => {
-                  if (abortControllerRef.current) {
-                    abortControllerRef.current.abort();
-                    abortControllerRef.current = null;
+              {!hideInputBar && (
+                <InputBar
+                  input={input}
+                  setInput={setInput}
+                  handleSend={resolvedSendHandler}
+                  handleKeyPress={handleKeyPress}
+                  loading={loading}
+                  textareaRef={textareaRef}
+                  stopGeneration={() => {
+                    if (abortControllerRef.current) {
+                      abortControllerRef.current.abort();
+                      abortControllerRef.current = null;
+                    }
+                    setLoading(false);
+                    setEditingMessageId(null);
+                  }}
+                  isEditing={!!editingMessageId}
+                  handleFileUpload={handleFileUpload}
+                  remainingPrompts={remainingPrompts}
+                  uploadedFile={selectedFile}
+                  setUploadedFile={setSelectedFile}
+                  disclaimerText={
+                    isChatRoute && activeAssistant
+                      ? disclaimerForAssistant(activeAssistant.name)
+                      : null
                   }
-                  setLoading(false);
-                  setEditingMessageId(null);
-                }}
-                isEditing={!!editingMessageId}
-                handleFileUpload={handleFileUpload}
-                remainingPrompts={remainingPrompts}
-                uploadedFile={selectedFile}
-                setUploadedFile={setSelectedFile}
-                /* Show disclaimer only on chat route with an active assistant */
-                disclaimerText={
-                  isChatRoute && activeAssistant
-                    ? disclaimerForAssistant(activeAssistant.name)
-                    : null
-                }
-              />
+                />
+              )}
             </div>
           </div>
         )}
