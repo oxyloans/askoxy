@@ -197,6 +197,8 @@ import OurAIVideos from "./FREEAIBOOK/OurAIVideos";
 import CreateAssistant from "./AskoxyAdmin/Assistants/CreatenewAssistant";
 import AssistantDashboard from "./AskoxyAdmin/Assistants/Dashboard";
 import AssistantOverview from "./AskoxyAdmin/Assistants/AssistantOverview";
+import FaqLLMSlides from "./GenOxy/FaqSildes";
+import LLMFAQPage from "./GenOxy/FaqLLM";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -346,6 +348,8 @@ const App: React.FC = () => {
             />
             {/* Added: New route for chat interface */}
             <Route path="/genoxy/chat" element={<GenOxy />} />
+            <Route path="/genoxy/llm-faqs" element={<LLMFAQPage />} />
+             <Route path="/genoxy/faqslide" element={<FaqLLMSlides/>} />
             <Route
               path="/voiceAssistant"
               element={<Navigate to="/voiceAssistant/welcome" replace />}

@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 // Import images for 9 grid items
 import s1 from "../assets/img/s1.png";
 import s2 from "../assets/img/s2.png";
+import s8 from "../assets/img/s8.png";
 import s3 from "../assets/img/s3.png";
 import s4 from "../assets/img/s4.png";
 import s5 from "../assets/img/s5.png";
 import s6 from "../assets/img/s6.png";
 import s7 from "../assets/img/s7.png";
-import s8 from "../assets/img/s8.png";
 import s9 from "../assets/img/s9.png";
 
 // Left side big image
@@ -23,12 +23,12 @@ import goldLines from "../assets/img/goldlines.png";
 const mockImages = {
   s1,
   s2,
-  s3,
+  s8,
   s4,
   s5,
   s6,
   s7,
-  s8,
+  s3,
   s9,
   leftImage,
   purpleLines,
@@ -49,16 +49,10 @@ const gridImages = [
     title: "AI - Blogs, Jobs\n and Training",
   },
   {
-    id: "s2",
-    src: mockImages.s2,
-    route: "/caandcsservices",
-    title: "CA | CS\nServices",
-  },
-  {
-    id: "s3",
-    src: mockImages.s3,
-    route: "/goldandsilveranddiamonds",
-    title: "Gold, Silver\n& Diamonds",
+    id: "s7",
+    src: mockImages.s7,
+    route: "/rice2roboecommers",
+    title: "Rice 2 Robo\nECommerce",
   },
   {
     id: "s4",
@@ -68,13 +62,19 @@ const gridImages = [
   },
   { id: "s5", src: mockImages.s5, route: "/nyayagpt", title: "Nyaya GPT" },
   { id: "s6", src: mockImages.s6, route: "/realestate", title: "Real Estate" },
-  {
-    id: "s7",
-    src: mockImages.s7,
-    route: "/rice2roboecommers",
-    title: "Rice 2 Robo\nECommerce",
-  },
 
+  {
+    id: "s3",
+    src: mockImages.s3,
+    route: "/goldandsilveranddiamonds",
+    title: "Gold, Silver\n& Diamonds",
+  },
+    {
+    id: "s2",
+    src: mockImages.s2,
+    route: "/caandcsservices",
+    title: "CA | CS\nServices",
+  },
   {
     id: "s9",
     src: mockImages.s9,

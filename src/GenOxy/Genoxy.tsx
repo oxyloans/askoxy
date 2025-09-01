@@ -54,7 +54,7 @@ const KLM_ROLE_ASSISTANT_ID = "asst_6Yq2RvPL50n7n7qF9Vnp5uof";
 
 // ====== Insurance: per-type Assistant IDs (UPDATED) ======
 const LIFE_ASSISTANT_ID = "asst_G2jtvsfDcWulax5QDcyWhFX1";
-const GENERAL_ASSISTANT_ID = "asst_bRxg1cfAfcQ05O3UGUjcAwwC"; 
+const GENERAL_ASSISTANT_ID = "asst_bRxg1cfAfcQ05O3UGUjcAwwC";
 
 type InsuranceType = "Life Insurance" | "General Insurance";
 const INSURANCE_TYPE_TO_ID: Record<InsuranceType, string> = {
@@ -184,16 +184,16 @@ const KLM_GENERIC_QUESTIONS: string[] = [
 const BIMA_STRIP =
   "বিমা (Bimā) |  বীমা (Bimā) | વીમા (Vīmā) | ವಿಮೆ (Vime) |  بیمه (Bīma) | बीमा (Bīma) |  ബീമ (Bīma) | विमा (Vimā) | बीमा (Bīma) |  ବୀମା (Bimā) | ਬੀਮਾ (Bīma) | बीम (Bīma) | காப்பீடு (Kāppīṭu) | బీమా (Bīma) |  بیمه (Bīma)";
 
-// Life: 8 questions (as requested)
+// Life: 8 questions (updated with detailed prompts + emojis)
 const LIFE_QUESTIONS: string[] = [
-  "Find the Right Policy",
-  "Know What’s Covered",
-  "What’s Not Covered?",
-  "Understand Waiting Periods",
-  "Get a Premium Estimate",
-  "How to File a Claim",
-  "Cashless Hospitals Nearby",
-  "Ask Any Question",
+  "👨‍👩‍👧 Can you help me find the right life insurance plan for my family of four?",
+  "👵👶 Suggest a suitable life policy for my parents, kids, and myself together.",
+  "📋 Please explain in simple words what a life insurance policy usually covers.",
+  "🚫 Can you also tell me clearly what life insurance does not cover?",
+  "💰 I want a premium estimate — what details should I share to get it?",
+  "🏥 Show me hospitals nearby where my family can use cashless facilities linked to this policy.",
+  "📄 How do I file a life insurance claim step by step if something happens?",
+  "❓ I am confused about life insurance. Can you first explain the basics and then guide me with a few questions to ask?",
 ];
 
 // General: 10 categories → 4 conversations each (with subcategories)
@@ -1195,16 +1195,30 @@ const GenOxy: React.FC = () => {
 
     return (
       <div className="w-full">
+        {/* ===== Insurance AI LLM – Polished, Mobile-First UI (drop-in) ===== */}
         <div className="max-w-6xl mx-auto w-full px-3 sm:px-5 py-5">
           <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 border border-gray-200 p-3 sm:p-7 shadow-sm">
-            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
-              Insurance AI LLM
-            </h2>
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
+                Insurance AI LLM
+              </h2>
+
+              {/* Subtle pill for current step/type on larger screens */}
+              {!!insuranceType && (
+                <span className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs border border-indigo-100">
+                  <span className="text-sm">
+                    {insuranceType === "Life Insurance" ? "🫶" : "🛡️"}
+                  </span>
+                  <span className="font-medium">{insuranceType}</span>
+                </span>
+              )}
+            </div>
 
             {/* Step 0: Landing */}
             {insuranceLanding && (
               <div className="mt-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4 shadow-xs">
                   <div className="text-[11px] sm:text-sm text-gray-700">
                     {BIMA_STRIP}
                   </div>
@@ -1219,7 +1233,7 @@ const GenOxy: React.FC = () => {
                     The Insurance Regulatory and Development Authority of India
                     (IRDAI) has approved <strong>61 companies</strong>:
                   </p>
-                  <ul className="list-disc pl-5 mt-1">
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
                     <li>26 Life Insurance Companies</li>
                     <li>33 General Insurance Companies</li>
                     <li>2 Reinsurance Companies</li>
@@ -1231,45 +1245,74 @@ const GenOxy: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => setInsuranceLanding(false)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    Let’s Explore Life & General Insurance →
+                    Let’s Explore Life &amp; General Insurance →
+                  </button>
+
+                  {/* New Buttons */}
+                  <button
+                    onClick={() => navigate("/genoxy/llm-faqs")}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    Insurance AI LLM 100 FAQs
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/genoxy/faqslide")}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  >
+                    FAQ Slide
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 1: Show 2 type cards (Life / General) */}
+            {/* Step 1: Type cards */}
             {!insuranceLanding && !insuranceType && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-4">
-                <button
-                  onClick={() => pickType("Life Insurance")}
-                  className="w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <div className="text-xl sm:text-2xl">🫶</div>
-                  <div className="mt-1 font-semibold text-indigo-700 text-xs sm:text-sm">
-                    Life Insurance
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-gray-600 mt-1">
-                    Term, savings/ULIP, riders, claims & more.
-                  </div>
-                </button>
+              <div className="mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  <button
+                    onClick={() => pickType("Life Insurance")}
+                    className="group w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                        <span className="text-xl sm:text-2xl">🫶</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-indigo-700 text-sm sm:text-base">
+                          Life Insurance
+                        </div>
+                        <div className="text-[11px] sm:text-xs text-gray-600 mt-0.5">
+                          Term, savings/ULIP, riders, claims &amp; more.
+                        </div>
+                      </div>
+                    </div>
+                  </button>
 
-                <button
-                  onClick={() => pickType("General Insurance")}
-                  className="w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <div className="text-xl sm:text-2xl">🛡️</div>
-                  <div className="mt-1 font-semibold text-indigo-700 text-xs sm:text-sm">
-                    General Insurance
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-gray-600 mt-1">
-                    Motor, health, home, travel, SME, cyber & more.
-                  </div>
-                </button>
+                  <button
+                    onClick={() => pickType("General Insurance")}
+                    className="group w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                        <span className="text-xl sm:text-2xl">🛡️</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-indigo-700 text-sm sm:text-base">
+                          General Insurance
+                        </div>
+                        <div className="text-[11px] sm:text-xs text-gray-600 mt-0.5">
+                          Motor, health, home, travel, SME, cyber &amp; more.
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1289,29 +1332,36 @@ const GenOxy: React.FC = () => {
                         setInsuranceType(null);
                         setInsuranceAssistantId("");
                       }}
-                      className="text-[11px] sm:text-xs underline decoration-dotted self-start sm:self-auto"
+                      className="text-[11px] sm:text-xs underline decoration-dotted"
                     >
                       ← Change type
                     </button>
                   </div>
                 </div>
+                {/* Life Insurance Intro */}
+                <div className="mt-2 rounded-lg bg-indigo-50 border border-indigo-100 p-3 sm:p-4 text-[13px] sm:text-sm text-indigo-800">
+                  🛡 Life Insurance — Welcome! I can guide you through
+                  life insurance, explain benefits, compare policies, estimate
+                  premiums, highlight exclusions, and simplify claim processes.
+                </div>
 
+                {/* Mobile scroll area with safe spacing below */}
                 <div
                   className="
-                    mt-2
-                    max-h-[calc(100vh-220px)]
-                    overflow-y-auto pr-1 pb-24
-                    sm:max-h-none sm:overflow-visible sm:pb-0
-                  "
+            mt-2
+            max-h-[calc(100dvh-220px)]
+            overflow-y-auto pr-1 pb-[88px]
+            sm:max-h-none sm:overflow-visible sm:pb-0
+          "
                 >
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {LIFE_QUESTIONS.map((q) => (
                       <button
                         key={q}
                         onClick={() => sendText(q)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
+                        <span className="mt-1 inline-block w-2 h-2 rounded-full bg-indigo-500" />
                         <span className="text-[14px] sm:text-sm font-medium text-gray-800">
                           {q}
                         </span>
@@ -1322,7 +1372,7 @@ const GenOxy: React.FC = () => {
               </>
             )}
 
-            {/* Step 2B: General → categories (10) OR a chosen category → 4 prompts */}
+            {/* Step 2B: General → categories OR prompts */}
             {generalStage && (
               <>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
@@ -1353,14 +1403,21 @@ const GenOxy: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                {/* General Insurance Intro */}
+                <div className="mt-2 rounded-lg bg-purple-50 border border-purple-100 p-3 sm:p-4 text-[13px] sm:text-sm text-purple-800">
+                  🌍 General Insurance — Welcome! I can help you explore
+                  health, motor, travel, property, and other general insurances,
+                  understand coverage, compare options, and guide claims.
+                </div>
 
+                {/* Categories grid */}
                 {!generalCategory && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-3">
                     {GENERAL_CATEGORIES.map((c) => (
                       <button
                         key={c.key}
                         onClick={() => setGeneralCategory(c.key)}
-                        className="w-full rounded-xl border border-gray-200 bg-white p-3 hover:border-indigo-300 hover:shadow text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full rounded-xl border border-gray-200 bg-white p-3 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <div className="text-xl">{c.icon}</div>
                         <div className="mt-1 font-semibold text-indigo-700 text-[12px] sm:text-sm">
@@ -1371,14 +1428,15 @@ const GenOxy: React.FC = () => {
                   </div>
                 )}
 
+                {/* Prompts inside a category */}
                 {generalCategory && (
                   <div
                     className="
-                      mt-3
-                      max-h-[calc(100vh-220px)]
-                      overflow-y-auto pr-1 pb-24
-                      sm:max-h-none sm:overflow-visible sm:pb-0
-                    "
+              mt-3
+              max-h-[calc(100dvh-220px)]
+              overflow-y-auto pr-1 pb-[88px]
+              sm:max-h-none sm:overflow-visible sm:pb-0
+            "
                   >
                     <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
                       <div className="text-sm font-semibold text-indigo-700">
@@ -1388,6 +1446,7 @@ const GenOxy: React.FC = () => {
                           )?.title
                         }
                       </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                         {GENERAL_CATEGORIES.find(
                           (x) => x.key === generalCategory
@@ -1399,9 +1458,9 @@ const GenOxy: React.FC = () => {
                               onClick={() =>
                                 sendText(`[${generalCategory}] ${q}`)
                               }
-                              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
-                              <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
+                              <span className="mt-1 inline-block w-2 h-2 rounded-full bg-indigo-500" />
                               <span className="text-[14px] sm:text-sm font-medium text-gray-800">
                                 {q}
                               </span>

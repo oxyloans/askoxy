@@ -295,12 +295,7 @@ const MainPage: React.FC = () => {
 
   const calculateOrderTotal = (order: Order): number => {
     if (!order.orderItems || order.orderItems.length === 0) return 0;
-
-    return order.orderItems.reduce((total, item) => {
-      const price = parseFloat(item.price?.toString() || "0");
-      const quantity = parseInt(item.quantity?.toString() || "1");
-      return total + price * quantity;
-    }, 0);
+    return order.grandTotal;
   };
 
   const calculateOrdersTotal = (orders: Order[]): number => {
@@ -825,7 +820,9 @@ const MainPage: React.FC = () => {
                         ₹
                         {summaryData
                           .reduce((sum, item) => sum + item.amount, 0)
-                          .toLocaleString()}
+                          .toLocaleString("en-IN", {
+                            maximumFractionDigits: 0,
+                          })}
                       </span>
                     </div>
                   </div>
@@ -872,7 +869,9 @@ const MainPage: React.FC = () => {
                         ₹
                         {calculateOrdersTotal(
                           todayOrdersCount
-                        ).toLocaleString()}
+                        ).toLocaleString("en-IN", {
+                            maximumFractionDigits: 0,
+                          })}
                       </span>
                     </div>
                   </div>
@@ -976,7 +975,7 @@ const MainPage: React.FC = () => {
                     <div className="opacity-70 hover:opacity-100 transition-opacity duration-300 w-6 h-6">
                       {statusConfig.icon}
                     </div>
-                  </div>  
+                  </div>
                 </Card>
               </div>
             );

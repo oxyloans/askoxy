@@ -694,7 +694,7 @@ const CheckoutPage: React.FC = () => {
             selectedAddress.longitude,
             amountToPay
           );
-
+          setWalletApplicable(!!walletFlag);
           setCanPlaceOrder(canPlace);
           setMinOrderToPlace(minOrderToPlace ?? minOrderamnt);
           setMinOrderAmount(minOrderamnt);
@@ -989,7 +989,7 @@ const CheckoutPage: React.FC = () => {
       );
 
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
-      const isApplicable = response.data.status ?? false;
+      const isApplicable = (response.data.status ?? false) || usableAmount > 0;
 
       setWalletAmount(usableAmount);
       setAfterWallet(usableAmount);
@@ -1040,9 +1040,9 @@ const CheckoutPage: React.FC = () => {
       return;
     }
 
-    if (!walletApplicable || totalAmount < minOrderForWallet) {
+    if (totalAmount < minOrderForWallet) {
       message.warning(
-        `Wallet not applicable. Minimum cart amount should be ₹${minOrderForWallet}`
+        `Wallet requires a minimum cart of ₹${minOrderForWallet}`
       );
       return;
     }
@@ -2147,8 +2147,7 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     )}
 
-                    {isRiceOnlyCart(cartData) &&
-                      walletApplicable &&
+                    {walletApplicable &&
                       totalAmount >= minOrderForWallet &&
                       walletAmount > 0 && (
                         <p className="text-sm text-green-600 mt-1">
@@ -2157,23 +2156,21 @@ const CheckoutPage: React.FC = () => {
                         </p>
                       )}
 
-                    {isRiceOnlyCart(cartData) && (
-                      <div className="flex items-center space-x-2 mt-3">
-                        <input
-                          type="checkbox"
-                          id="useWallet"
-                          checked={useWallet}
-                          onChange={handleCheckboxToggle}
-                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                        />
-                        <label
-                          htmlFor="useWallet"
-                          className="text-sm text-gray-700"
-                        >
-                          Use Wallet Balance (₹{walletAmount.toFixed(2)})
-                        </label>
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-2 mt-3">
+                      <input
+                        type="checkbox"
+                        id="useWallet"
+                        checked={useWallet}
+                        onChange={handleCheckboxToggle}
+                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <label
+                        htmlFor="useWallet"
+                        className="text-sm text-gray-700"
+                      >
+                        Use Wallet Balance (₹{walletAmount.toFixed(2)})
+                      </label>
+                    </div>
                     <div className="mt-3">
                       {grandTotal < minOrderAmount && (
                         <label

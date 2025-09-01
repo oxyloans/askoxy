@@ -21,7 +21,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/img/askoxylogonew.png";
 import oxyloansLogo from "../../assets/img/image1.png";
 
-
 interface WelcomeScreenProps {
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
@@ -632,42 +631,63 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
       </div>
       {/* Powered by – footer logos */}
-<footer className="w-full max-w-6xl mx-auto mt-10 mb-6 px-3">
-  <div className="flex flex-col items-center gap-2">
-    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-      Powered by
-    </span>
-    <div className="flex items-center gap-5">
-      <a
-        href="https://www.askoxy.ai/"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex"
-        title="ASKOXY.AI"
-      >
-        <img
-          src={Logo}
-          alt="ASKOXY.AI"
-          className="h-10 sm:h-12 md:h-14 w-auto object-contain shrink-0"
-        />
-      </a>
-      <a
-        href="https://oxyloans.com/"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex"
-        title="OxyLoans"
-      >
-        <img
-          src={oxyloansLogo}
-          alt="OxyLoans"
-          className="h-20 sm:h-12 md:h-14 w-auto object-contain shrink-0"
-        />
-      </a>
-    </div>
-  </div>
-</footer>
+      <footer className="w-full max-w-6xl mx-auto mt-10 mb-6 px-3">
+        {/* New Buttons Section */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+          <button
+            onClick={() => navigate("/genoxy/llm-faqs")}
+            className="px-6 py-3.5 rounded-2xl font-semibold text-white text-sm sm:text-base
+              bg-purple-600 hover:bg-purple-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-purple-500
+              shadow-md transition-all"
+          >
+            Insurance AI LLM 100 FAQs
+          </button>
 
+          <button
+            onClick={() => navigate("/genoxy/faqslide")}
+            className="px-6 py-3.5 rounded-2xl font-semibold text-white text-sm sm:text-base
+              bg-pink-600 hover:bg-pink-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-pink-500
+              shadow-md transition-all"
+          >
+            FAQ Slide
+          </button>
+        </div>
+
+        {/* Existing footer logos */}
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Powered by
+          </span>
+          <div className="flex items-center gap-5">
+            <a
+              href="https://www.askoxy.ai/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex"
+              title="ASKOXY.AI"
+            >
+              <img
+                src={Logo}
+                alt="ASKOXY.AI"
+                className="h-10 sm:h-12 md:h-14 w-auto object-contain shrink-0"
+              />
+            </a>
+            <a
+              href="https://oxyloans.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex"
+              title="OxyLoans"
+            >
+              <img
+                src={oxyloansLogo}
+                alt="OxyLoans"
+                className="h-20 sm:h-12 md:h-14 w-auto object-contain shrink-0"
+              />
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
