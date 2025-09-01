@@ -84,8 +84,11 @@ const FreeAIBookHome: React.FC = () => {
   }
 const handledAiVideos = () =>
 {
-  window.location.href="/freeaivideos"
-}
+  window.location.href = "/ai-masterclasses";
+  }
+  const handledGeneratedAiVideos = () => {
+    window.location.href = "/ai-videos";
+  };
   return (
     <main className="flex flex-col pt-14 min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <div className="max-w-6xl mx-auto text-center px-4 sm:px-6 lg:px-8 py-8">
@@ -164,29 +167,41 @@ const handledAiVideos = () =>
               be part of the next wave of technological innovation.
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
               {/* Free AI Book Button */}
               <motion.button
                 onClick={handleSignIn}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600 
-    text-white font-semibold shadow-lg hover:opacity-90 transition-transform duration-200"
+                className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 
+      text-white font-semibold shadow-md hover:opacity-90 transition-transform duration-200 w-full sm:w-auto justify-center text-sm sm:text-base"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <BookOpen className="w-5 h-5" />
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                 Get Free AI Book
               </motion.button>
 
-              {/* AI Videos Button */}
+              {/* AI Masterclasses Button */}
               <motion.button
                 onClick={handledAiVideos}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 via-violet-600 to-pink-500 
-    text-white font-semibold shadow-lg hover:opacity-90 transition-transform duration-200"
+                className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 via-indigo-600 to-pink-500 
+      text-white font-semibold shadow-md hover:opacity-90 transition-transform duration-200 w-full sm:w-auto justify-center text-sm sm:text-base"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Play className="w-5 h-5" />
-                Get AI Videos
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                AI Masterclasses
+              </motion.button>
+
+              {/* AI Videos Button with new colors */}
+              <motion.button
+                onClick={handledGeneratedAiVideos}
+                className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-400 
+      text-white font-semibold shadow-md hover:opacity-90 transition-transform duration-200 w-full sm:w-auto justify-center text-sm sm:text-base"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                AI Videos
               </motion.button>
             </div>
           </motion.div>

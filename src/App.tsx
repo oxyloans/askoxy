@@ -192,13 +192,14 @@ import FreeAiBookLandingPage from "./FREEAIBOOK/LandingPage";
 import FreeAiBook from "./FREEAIBOOK/FreeAiBookLandingPage";
 import ChatInterface from "./components/ChatInterfaceAi";
 import WalletEligibilitySlabs from "./PartnerWeb/CartAmountBasedOrder";
-import OurAIVideos from "./FREEAIBOOK/OurAIVideos";
+import OurAIVideos from "./FREEAIBOOK/MasterClasses";
 
 import CreateAssistant from "./AskoxyAdmin/Assistants/CreatenewAssistant";
 import AssistantDashboard from "./AskoxyAdmin/Assistants/Dashboard";
 import AssistantOverview from "./AskoxyAdmin/Assistants/AssistantOverview";
 import FaqLLMSlides from "./GenOxy/FaqSildes";
 import LLMFAQPage from "./GenOxy/FaqLLM";
+import AiVideosGenerated from "./FREEAIBOOK/AiVideosGenerated";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -297,7 +298,8 @@ const App: React.FC = () => {
               path="/los/:useCaseId/:type"
               element={<CASRouteRenderer />}
             />
-            <Route path="/freeaivideos" element={<OurAIVideos/>}/>
+            <Route path="//ai-masterclasses" element={<OurAIVideos />} />
+            <Route path="/ai-videos" element={<AiVideosGenerated />} />
             <Route path="/cms" element={<CMSDashboard />} />
             <Route
               path="/cms/:useCaseId/:type"
@@ -349,7 +351,7 @@ const App: React.FC = () => {
             {/* Added: New route for chat interface */}
             <Route path="/genoxy/chat" element={<GenOxy />} />
             <Route path="/genoxy/llm-faqs" element={<LLMFAQPage />} />
-             <Route path="/genoxy/faqslide" element={<FaqLLMSlides/>} />
+            <Route path="/genoxy/faqslide" element={<FaqLLMSlides />} />
             <Route
               path="/voiceAssistant"
               element={<Navigate to="/voiceAssistant/welcome" replace />}
@@ -726,10 +728,7 @@ const App: React.FC = () => {
                 path="conversation/:assistantId"
                 element={<AssistantOverview />}
               />
-               <Route
-                path="createassistant"
-                element={<CreateAssistant />}
-              />
+              <Route path="createassistant" element={<CreateAssistant />} />
             </Route>
             {/* ----------Admin Routes end---------- */}
           </Routes>
