@@ -618,7 +618,7 @@ const handleClose = () => {
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
-        <div className="bg-purple-600 p-4 sm:p-6 lg:p-8 relative rounded-lg shadow-lg mx-4 sm:mx-0 max-w-md sm:max-w-lg w-full">
+        <div className="bg-purple-600 p-4 sm:p-6 lg:p-8 relative rounded-t-lg  shadow-lg mx-4 sm:mx-0 max-w-md sm:max-w-lg w-full">
           <button
             onClick={handleClose}
             className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white touch-manipulation z-10"
@@ -654,7 +654,7 @@ const handleClose = () => {
           </div>
         </div>
 
-        {showEriceAlert && primaryType === "CUSTOMER" && (
+        {/* {showEriceAlert && primaryType === "CUSTOMER" && (
           <div className="mx-2 xs:mx-3 sm:mx-4 mt-2">
             <div className="bg-amber-50 border border-amber-200 text-amber-800 px-2 xs:px-3 sm:px-4 py-2 sm:py-3 rounded-lg relative">
               <div className="flex items-start gap-2 sm:pr-16">
@@ -695,7 +695,7 @@ const handleClose = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {showSuccessPopup && (
           <div className="mx-6 mt-2 animate-fadeIn">
@@ -711,41 +711,7 @@ const handleClose = () => {
             onSubmit={showOtp ? handleOtpSubmit : handleSubmit}
             className="space-y-6"
           >
-            {!showOtp && (
-              <div className="mb-6">
-                {showGoogleButton && primaryType === "CUSTOMER" && (
-                  <button
-                    type="button"
-                    onClick={handleGmailAuth}
-                    disabled={!isGmailButtonEnabled || isGoogleLoading}
-                    className={`w-full py-3 ${
-                      !isGmailButtonEnabled || isGoogleLoading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
-                    } text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg`}
-                    aria-label="Continue with Gmail"
-                  >
-                    {isGoogleLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <FaGoogle className="w-5 h-5" />
-                    )}
-                    Continue with Gmail
-                  </button>
-                )}
-                {showGoogleButton && primaryType === "CUSTOMER" && (
-                  <div className="flex items-center my-6">
-                    <div className="flex-1 border-t border-gray-300"></div>
-                    <span className="px-4 text-sm text-gray-500 bg-white">
-                      or
-                    </span>
-                    <div className="flex-1 border-t border-gray-300"></div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex flex-col items-center gap-4 p-2 border-b border-gray-100 pb-4">
+            <div className="flex flex-col items-center gap-4 p-2  pb-4">
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -963,6 +929,62 @@ const handleClose = () => {
               </div>
             )}
           </form>
+          {showGoogleButton && primaryType === "CUSTOMER" && (
+            <div className="flex items-center my-4">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <span className="px-4 text-sm text-gray-500 bg-white">or</span>
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+          )}
+          {!showOtp && (
+            <div className="mb-4">
+              {showGoogleButton && primaryType === "CUSTOMER" && (
+                <button
+                  type="button"
+                  onClick={handleGmailAuth}
+                  disabled={!isGmailButtonEnabled || isGoogleLoading}
+                  className={`w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-3
+    transition-all duration-200${
+      !isGmailButtonEnabled || isGoogleLoading
+        ? "bg-gray-100 text-gray-400  cursor-not-allowed"
+        : "bg-white text-[#3c4043]  hover:bg-gray-50 active:bg-[#f1f3f4] "
+    } `}
+                  aria-label="Continue with Gmail"
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-[#3c4043]" />
+                  ) : (
+                    // <FaGoogle className="w-5 h-5 text-[#4285F4]" />
+                    <svg
+                      className="w-5 h-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 48 48"
+                    >
+                      <path
+                        fill="#4285F4"
+                        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.46 2.38 30.1 0 24 0 14.63 0 6.51 5.38 2.56 13.22l7.98 6.19C12.31 13.64 17.74 9.5 24 9.5z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M46.48 24.55c0-1.59-.14-3.11-.39-4.55H24v9.12h12.7c-.55 2.87-2.24 5.3-4.77 6.93l7.73 6c4.52-4.17 7.82-10.28 7.82-17.5z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M10.54 28.41c-.48-1.42-.76-2.92-.76-4.41s.27-2.99.76-4.41l-7.98-6.19C1.22 16.74 0 20.24 0 24c0 3.76 1.22 7.26 3.56 10.59l7.98-6.18z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.14 1.44-4.89 2.3-8.18 2.3-6.26 0-11.69-4.14-13.46-9.91l-7.98 6.18C6.51 42.62 14.63 48 24 48z"
+                      />
+                    </svg>
+                  )}
+                  <span>
+                    {isGoogleLoading ? "Signing in..." : "Continue with Gmail"}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">

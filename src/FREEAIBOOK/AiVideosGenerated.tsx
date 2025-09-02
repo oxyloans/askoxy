@@ -17,10 +17,24 @@ const videos = [
       "Earn up to 1.75% monthly and 24% yearly ROI with OxyLoans P2P Lending. Register instantly and start growing wealth.",
   },
   {
+    id: "B0fB2l8N8o4",
+    title:
+      "Insurance LLM 🦁 | Smarter Health, Life & General Insurance with ASKOXY.AI 🚀",
+    description:
+      "Discover ASKOXY.AI Insurance LLM 🚀 Compare policies, get AI-powered recommendations, and make smarter Health, Life, and General Insurance decisions.",
+  },
+
+  {
     id: "9NK4jw3-Iqs",
     title: "Study & Work Abroad 2025",
     description:
       "Get scholarships, cashback, offer letters, and financial guidance for studying or working abroad with ASKOXY.AI’s expert support.",
+  },
+  {
+    id: "yVT1s89cv-A",
+    title: "ASKOXY.AI – Insurance LLM | AI-Powered Insurance Simplified",
+    description:
+      "Discover ASKOXY.AI Insurance LLM – compare health, life, general policies with AI suggestions, insurance marketplace, and futuristic AI concepts.",
   },
   {
     id: "m54i-Umtku4",
