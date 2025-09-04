@@ -200,6 +200,8 @@ import AssistantOverview from "./AskoxyAdmin/Assistants/AssistantOverview";
 import FaqLLMSlides from "./GenOxy/FaqSildes";
 import LLMFAQPage from "./GenOxy/FaqLLM";
 import AiVideosGenerated from "./FREEAIBOOK/AiVideosGenerated";
+import BharatAgentsStore from "./components/BharatAgentsStore";
+import AssistantDetails from "./components/AssistantDetails";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -334,6 +336,14 @@ const App: React.FC = () => {
               element={<Navigate to="/genoxy/welcome" replace />}
             />
             <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
+            <Route
+              path="/bharathaiexpertstore"
+              element={<BharatAgentsStore />}
+            />
+            <Route
+              path="/bharathaiexpertstore/:id"
+              element={<AssistantDetails />}
+            />
             <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
             <Route path="/genoxy" element={<GenOxy />} />
             <Route

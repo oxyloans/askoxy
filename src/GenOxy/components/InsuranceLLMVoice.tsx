@@ -9,11 +9,12 @@ import {
   ArrowLeft,
   ArrowRight,
   MessageCircle,
+  Clock,
 } from "lucide-react";
 import { message } from "antd";
 import { voiceSessionService } from "../hooks/useMessages";
 import { useNavigate } from "react-router-dom";
-import { ChatMessage,LanguageConfig } from "../types/types";
+import { ChatMessage, LanguageConfig } from "../types/types";
 
 interface Assistant {
   name: string;
@@ -48,10 +49,16 @@ const InsuranceLLmVoice: React.FC = () => {
   const [currentConversation, setCurrentConversation] = useState<string>("");
   const [status, setStatus] = useState<"active" | "inactive">("active");
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // Timer states
+  const [timeRemaining, setTimeRemaining] = useState<number>(80);
+  const [timerActive, setTimerActive] = useState<boolean>(false);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+
   const languageConfigs: LanguageConfig[] = [
     {
       code: "te",
@@ -103,6 +110,40 @@ const InsuranceLLmVoice: React.FC = () => {
       assistantId: "asst_bRxg1cfAfcQ05O3UGUjcAwwC",
     },
   ];
+
+  // Timer effect
+  useEffect(() => {
+    if (timerActive && timeRemaining > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeRemaining((prev) => prev - 1);
+      }, 1000);
+    } else if (timeRemaining === 0 && timerActive) {
+      // Time's up - auto stop
+      handleTimerExpired();
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [timerActive, timeRemaining]);
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleTimerExpired = () => {
+    setTimerActive(false);
+    setIsListening(false);
+    // message.info(
+    //   "⏳ Your free voice session has ended. Upgrade to Premium to continue unlimited conversations!"
+    // );
+    stopVoiceConversation();
+  };
 
   const getInstructionsForLang = (lang: LanguageConfig) => {
     const assistantType = selectedAssistant?.type || "";
@@ -218,6 +259,16 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
         te: "టెక్స్ట్‌కు మార్చు",
         hi: "टेक्स्ट में बदलें",
       },
+      free_trial_notice: {
+        en: "🎁 Free Trial: 80 seconds voice interaction",
+        te: "🎁 ఉచిత ట్రయల్: 80 సెకన్ల వాయిస్ ఇంటరాక్షన్",
+        hi: "🎁 मुफ्त परीक्षण: 80 सेकंड वॉयस इंटरैक्शन",
+      },
+      time_remaining: {
+        en: "Time Remaining",
+        te: "మిగిలిన సమయం",
+        hi: "शेष समय",
+      },
     };
 
     return (
@@ -272,17 +323,39 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: "user",
+          facingMode: { exact: "user" }, // Force front camera
         },
       });
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
       }
       setIsCameraEnabled(true);
     } catch (error) {
-      console.error("Camera access denied:", error);
-      alert("Unable to access camera. Please check permissions.");
+      console.error(
+        "Camera access denied or front camera not available:",
+        error
+      );
+
+      // fallback: try without forcing if device doesn’t support `exact`
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "user", // fallback with ideal
+          },
+        });
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          streamRef.current = fallbackStream;
+        }
+        setIsCameraEnabled(true);
+      } catch (fallbackError) {
+        alert("Unable to access front camera. Please check permissions.");
+      }
     }
   };
 
@@ -304,8 +377,10 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
     }
 
     setIsListening(true);
+    setTimerActive(true);
+    setTimeRemaining(80); // Reset timer
+
     try {
-      //   await enableCamera();
       await voiceSessionService.startSession(
         selectedAssistant.assistantId,
         selectedLanguage,
@@ -315,11 +390,17 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
           setCurrentConversation(message.text);
         },
         setIsAssistantSpeaking,
-        () => setCurrentView("selection")
+        () => {
+          // This callback will be called when session ends from service
+          setIsListening(false);
+          setTimerActive(false);
+          setCurrentView("selection");
+        }
       );
     } catch (error) {
       console.error("Failed to start voice conversation:", error);
       setIsListening(false);
+      setTimerActive(false);
       disableCamera();
     }
   };
@@ -328,8 +409,9 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
     setChat([]);
     voiceSessionService.stopSession();
     setIsListening(false);
+    setTimerActive(false);
+    setTimeRemaining(80);
     setCurrentConversation("");
-    // setChat([]);
     disableCamera();
   };
 
@@ -342,7 +424,6 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
   };
 
   const switchToTextMode = () => {
-    // console.log("Switching to text mode...");
     navigate("/genoxy/chat?a=insurance-llm");
   };
 
@@ -352,6 +433,16 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
       conversationRef.current.scrollTop = conversationRef.current.scrollHeight;
     }
   }, [chat]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      stopVoiceConversation();
+    };
+  }, []);
 
   if (currentView === "selection") {
     return (
@@ -386,10 +477,20 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
         <div className="p-4 shrink-0">
           <div className="flex justify-between border-b-4 border-cyan-500 mb-6 items-center">
             <div>
-              <h1 className="text-4xl font-bold text-yellow-500 ">GENOXY</h1>
+              <h1 className="text-4xl font-bold text-yellow-500">GENOXY</h1>
               <p className="text-white text-sm">
                 VOICE ASSISTANT - INSURANCE AI LLM
               </p>
+            </div>
+          </div>
+
+          {/* Free Trial Notice */}
+          <div className="mb-6 max-w-4xl mx-auto">
+            <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/50 rounded-xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-yellow-400 font-semibold">
+                <Clock size={20} />
+                <span>{getTranslatedText("free_trial_notice")}</span>
+              </div>
             </div>
           </div>
 
@@ -467,8 +568,8 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
               className="relative px-10 py-4 rounded-full font-semibold flex items-center gap-3 
              bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 
              text-white shadow-lg border border-gray-300
-             hover:from-gay-500 hover:via-gray-600 hover:to-gray-700 
-             hover:gray-yellow-400/50 transition-all duration-300"
+             hover:from-gray-500 hover:via-gray-600 hover:to-gray-700 
+             hover:shadow-gray-400/50 transition-all duration-300"
             >
               <ArrowLeft size={20} />
               {getTranslatedText("back")}
@@ -532,6 +633,17 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
                 VOICE ASSISTANT - INSURANCE AI LLM
               </p>
             </div>
+
+            {/* Center: Timer Display */}
+            {timerActive && (
+              <div className="flex items-center gap-2 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-400/50 rounded-lg px-4 py-2">
+                <Clock size={16} className="text-red-400" />
+                <span className="text-red-400 font-semibold text-sm">
+                  {getTranslatedText("time_remaining")}:{" "}
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
+            )}
 
             {/* Right Side: Buttons */}
             <div className="flex gap-2 flex-wrap justify-center md:justify-end">
@@ -613,7 +725,7 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
 
             <button
               onClick={switchToTextMode}
-              className="relative px-10 py-4 rounded-full font-semibold flex items-center gap-3 
+              className="relative px-10 py-4 mt-4 rounded-full font-semibold flex items-center gap-3 
              bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 
              text-black shadow-lg border border-yellow-300
              hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 
@@ -674,6 +786,21 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
                         <Mic className="text-gray-400" size={32} />
                       </div>
 
+                      {/* Timer Display in Empty State */}
+                      {timerActive && (
+                        <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-400/50 rounded-lg px-6 py-3">
+                          <div className="flex items-center gap-2 text-red-400">
+                            <Clock size={20} />
+                            <span className="font-bold text-lg">
+                              {formatTime(timeRemaining)}
+                            </span>
+                          </div>
+                          <p className="text-red-300 text-sm mt-1">
+                            {getTranslatedText("time_remaining")}
+                          </p>
+                        </div>
+                      )}
+
                       {/* Status Text */}
                       <p className="text-gray-400 text-lg md:text-xl font-medium">
                         {isListening
@@ -727,8 +854,9 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
                 <video
                   ref={videoRef}
                   autoPlay
+                  playsInline
                   muted
-                  className="w-full h-full object-cover transform scale-90"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

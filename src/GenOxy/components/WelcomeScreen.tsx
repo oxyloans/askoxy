@@ -250,7 +250,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </h3> */}
 
           {/* Explore button with extra glow/highlight */}
-          {/* <div className="mt-5">
+          <div className="mt-5">
             <button
               onClick={() => navigate("/genoxy/chat")}
               className="relative px-7 py-3.5 rounded-2xl font-extrabold text-white text-base sm:text-lg
@@ -261,7 +261,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <span className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-indigo-500/30 via-purple-500/30 to-pink-500/30 blur-lg -z-10"></span>
               Explore AI LLMs
             </button>
-          </div> */}
+          </div>
 
           {/* Tagline + welcome */}
           {/* <p className="mt-3 text-sm sm:text-base text-gray-600 dark:text-gray-300">
