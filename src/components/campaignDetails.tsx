@@ -689,78 +689,85 @@ const CampaignDetails: React.FC = () => {
           )}
         </div>
       )}
-      {isOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-            <i
-              className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-600"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close"
-            />
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">
-              Write To Us
-            </h2>
-            <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="phone"
-              >
-                Mobile Number
-              </label>
-              <input
-                type="text"
-                id="phone"
-                disabled={true}
-                value={finalMobileNumber || ""}
-                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Enter your mobile number"
-              />
-            </div>
-            <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email || ""}
-                disabled={true}
-                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="query"
-              >
-                Query
-              </label>
-              <textarea
-                id="query"
-                rows={3}
-                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Enter your query"
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              {queryError && (
-                <p className="text-red-500 text-sm mt-1">{queryError}</p>
-              )}
-            </div>
-            <div className="flex justify-center">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300"
-                onClick={handleWriteToUsSubmitButton}
-              >
-                Submit Query
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+     {isOpen && (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
+    <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+      {/* Close Button */}
+      <button
+        className="absolute top-3 right-3 text-gray-700 hover:text-red-600 text-2xl font-bold"
+        onClick={() => setIsOpen(false)}
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <h2 className="text-xl font-semibold mb-4 text-blue-800">
+        Write To Us
+      </h2>
+
+      <div className="mb-4">
+        <label
+          className="block text-sm text-gray-700 font-semibold mb-1"
+          htmlFor="phone"
+        >
+          Mobile Number
+        </label>
+        <input
+          type="text"
+          id="phone"
+          disabled={true}
+          value={finalMobileNumber || ""}
+          className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label
+          className="block text-sm text-gray-700 font-semibold mb-1"
+          htmlFor="email"
+        >
+          Email
+        </label>
+        <input
+          type="email"
+          id="email"
+          value={email || ""}
+          disabled={true}
+          className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label
+          className="block text-sm text-gray-700 font-semibold mb-1"
+          htmlFor="query"
+        >
+          Query
+        </label>
+        <textarea
+          id="query"
+          rows={3}
+          className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none"
+          placeholder="Enter your query"
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {queryError && (
+          <p className="text-red-500 text-sm mt-1">{queryError}</p>
+        )}
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300"
+          onClick={handleWriteToUsSubmitButton}
+        >
+          Submit Query
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       {isprofileOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">

@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -72,6 +71,7 @@ const RealtimePage: React.FC = () => {
     setIsConnecting(true);
     try {
       await voiceSessionService.startSession(
+        "",
         selectedLanguage,
         selectedInstructions,
         (message: ChatMessage) => {
@@ -89,7 +89,8 @@ const RealtimePage: React.FC = () => {
         },
         (speaking: boolean) => {
           setIsAssistantSpeaking(speaking);
-        }
+        },
+        navigate
       );
 
       setIsSessionActive(true);

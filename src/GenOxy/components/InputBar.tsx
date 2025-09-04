@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { ArrowUp, Loader2, Mic, X, Plus, FileText, Image } from "lucide-react";
 import { message } from "antd";
+import { useNavigate } from "react-router-dom";
 
 interface InputBarProps {
   input: string;
@@ -21,6 +22,9 @@ interface InputBarProps {
   remainingPrompts: string | null;
   uploadedFile: File | null;
   setUploadedFile: React.Dispatch<React.SetStateAction<File | null>>;
+  questionCount: number;
+  showModal: boolean;
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   /** assistant-specific disclaimer shown via a modal trigger */
   disclaimerText?: string | null;
 }
@@ -48,18 +52,42 @@ const InputBar: React.FC<InputBarProps> = ({
   remainingPrompts,
   uploadedFile,
   setUploadedFile,
+  questionCount,
+  showModal,
+  setShowModal,
   disclaimerText,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const [isLocallyUploaded, setIsLocallyUploaded] = useState(false);
-
-  // Modal state for disclaimer (now only via the “D” icon)
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const barRef = useRef<HTMLDivElement | null>(null);
+  const LOGIN_URL = "/whatsapplogin";
 
-  // Keep --inputbar-height in sync for layout below (ChatMessages uses this)
+  // Handle sign-in logic for redirecting to login or navigating to genoxy
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/genoxy/chat";
+
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Sync input bar height for layout consistency
   useEffect(() => {
     const setVar = () => {
       const h = barRef.current?.offsetHeight ?? 0;
@@ -70,6 +98,7 @@ const InputBar: React.FC<InputBarProps> = ({
     return () => window.removeEventListener("resize", setVar);
   }, [input, uploadedFile, isLocallyUploaded, showDisclaimer, loading]);
 
+  // Autosize textarea based on content
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -78,7 +107,7 @@ const InputBar: React.FC<InputBarProps> = ({
     }
   }, [input, textareaRef]);
 
-  // Close modal on ESC
+  // Close disclaimer modal on ESC key
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e as any).key === "Escape") setShowDisclaimer(false);
@@ -87,6 +116,7 @@ const InputBar: React.FC<InputBarProps> = ({
     return () => window.removeEventListener("keydown", onKey as any);
   }, []);
 
+  // Toggle voice input using Web Speech API
   const handleToggleVoice = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
@@ -133,6 +163,7 @@ const InputBar: React.FC<InputBarProps> = ({
     recognition.start();
   };
 
+  // Handle file selection for upload
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -150,13 +181,22 @@ const InputBar: React.FC<InputBarProps> = ({
     }
   };
 
+  // Remove uploaded file
   const removeFile = () => {
     setUploadedFile(null);
     setFilePreview(null);
     setIsLocallyUploaded(false);
   };
 
+  // Handle form submission (text or file)
   const handleSubmit = async () => {
+    // Check if limit is reached before attempting to submit
+    if (isLimitReached) {
+      setShowModal(true); // Show modal if user tries to submit after limit
+      message.error("You've reached the 4-prompt limit. Please sign in.");
+      return;
+    }
+
     const trimmedInput = input.trim();
     const defaultPrompt = "Summarize what this file contains in simple terms.";
 
@@ -187,11 +227,24 @@ const InputBar: React.FC<InputBarProps> = ({
     await handleSend();
   };
 
+  // Get appropriate icon for uploaded file
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("image/")) return <Image className="w-4 h-4" />;
     if (file.type === "application/pdf")
       return <FileText className="w-4 h-4" />;
     return <FileText className="w-4 h-4" />;
+  };
+
+  // Check if user is logged in and if question limit is reached
+  const isLoggedIn = !!localStorage.getItem("userId");
+  const isLimitReached = !isLoggedIn && questionCount >= 4;
+
+  // Trigger modal when user focuses on disabled input
+  const handleInputFocus = () => {
+    if (isLimitReached) {
+      setShowModal(true); // Show modal when user tries to type after limit
+      message.error("You've reached the 4-prompt limit. Please sign in.");
+    }
   };
 
   return (
@@ -207,7 +260,6 @@ const InputBar: React.FC<InputBarProps> = ({
         "
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
       >
-        {/* Recording pill */}
         {isRecording && (
           <div className="px-3 pt-2">
             <div className="w-full text-center bg-red-500 text-white px-3 py-1 rounded-full text-xs shadow-md animate-pulse">
@@ -215,8 +267,6 @@ const InputBar: React.FC<InputBarProps> = ({
             </div>
           </div>
         )}
-
-        {/* NOTE: Disclaimer sentence removed per request. Modal opens via “D” icon now. */}
 
         <div className="max-w-4xl mx-auto px-2 pb-2 pt-2 md:p-2">
           <div className="relative group">
@@ -230,7 +280,6 @@ const InputBar: React.FC<InputBarProps> = ({
                 transition-all duration-200 overflow-hidden
               "
             >
-              {/* File Preview */}
               {uploadedFile && isLocallyUploaded && (
                 <div className="px-3 pt-1 pb-1 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 p-1 bg-gray-50 dark:bg-gray-700 rounded-md">
@@ -266,7 +315,6 @@ const InputBar: React.FC<InputBarProps> = ({
 
               <div className="flex">
                 <div className="flex-1 px-4 py-2 flex flex-col">
-                  {/* Textarea */}
                   <div className="flex-grow">
                     <textarea
                       ref={textareaRef}
@@ -275,8 +323,11 @@ const InputBar: React.FC<InputBarProps> = ({
                         setInput(e.target.value)
                       }
                       onKeyDown={handleKeyPress}
+                      onFocus={handleInputFocus} // Added: Trigger modal on focus if limit reached
                       placeholder={
-                        isEditing
+                        isLimitReached
+                          ? "Limit reached! Sign in for unlimited prompts."
+                          : isEditing
                           ? "Edit your message..."
                           : uploadedFile
                           ? "Add a message about your file..."
@@ -285,8 +336,9 @@ const InputBar: React.FC<InputBarProps> = ({
                           : "Type your message..."
                       }
                       disabled={
-                        remainingPrompts !== null &&
-                        Number(remainingPrompts) === 0
+                        (remainingPrompts !== null &&
+                          Number(remainingPrompts) === 0) ||
+                        isLimitReached
                       }
                       rows={1}
                       className="w-full text-[16px] sm:text-base resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 max-h-32 overflow-auto p-1"
@@ -294,10 +346,8 @@ const InputBar: React.FC<InputBarProps> = ({
                     />
                   </div>
 
-                  {/* Bottom Buttons */}
                   <div className="mt-2 flex justify-between items-end flex-wrap gap-2">
                     <div className="flex gap-2">
-                      {/* + Upload */}
                       <label
                         htmlFor="file-upload"
                         className={`inline-flex items-center justify-center appearance-none w-11 h-11 sm:w-11 sm:h-11 lg:w-8 lg:h-8 rounded-xl transition-all duration-200 cursor-pointer ${
@@ -317,7 +367,6 @@ const InputBar: React.FC<InputBarProps> = ({
                         onChange={handleFileSelect}
                       />
 
-                      {/* Mic */}
                       <button
                         onClick={handleToggleVoice}
                         title="Voice Input"
@@ -332,7 +381,6 @@ const InputBar: React.FC<InputBarProps> = ({
                         <Mic className="w-6 h-6" />
                       </button>
 
-                      {/* NEW: “D” Disclaimer button */}
                       {disclaimerText ? (
                         <button
                           type="button"
@@ -347,12 +395,12 @@ const InputBar: React.FC<InputBarProps> = ({
                       ) : null}
                     </div>
 
-                    {/* Send / Stop */}
                     <button
-                      onClick={loading ? stopGeneration : handleSubmit}
+                      onClick={handleSubmit} // Updated: Use handleSubmit to check limit
                       disabled={
                         (!loading && !input.trim() && !uploadedFile) ||
-                        isRecording
+                        isRecording ||
+                        isLimitReached
                       }
                       aria-label={
                         loading
@@ -391,7 +439,6 @@ const InputBar: React.FC<InputBarProps> = ({
         </div>
       </div>
 
-      {/* Disclaimer Modal (unchanged) */}
       {showDisclaimer && (
         <div
           id="disclaimer-modal"
@@ -427,6 +474,58 @@ const InputBar: React.FC<InputBarProps> = ({
                 className="px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for prompting login after 4-prompt limit */}
+      {showModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+          onClick={() => setShowModal(false)} // Close modal when clicking outside
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg max-w-sm sm:max-w-md w-full mx-4 relative"
+            onClick={(e) => e.stopPropagation()} // Prevent modal close on content click
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Title */}
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              Free Prompt Limit Reached
+            </h3>
+
+            {/* Modal Message */}
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+              You’ve reached the limit of free prompts available for guest
+              users. To continue exploring without restrictions, please{" "}
+              <span className="font-semibold">sign in</span> and unlock{" "}
+              <span className="font-semibold">unlimited prompts</span> plus all
+              premium features.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex justify-center items-center space-x-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Continue as Guest
+              </button>
+              <button
+                onClick={handleSignIn}
+                className="px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Sign In & Unlock Unlimited
               </button>
             </div>
           </div>

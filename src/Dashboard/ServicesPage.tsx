@@ -194,7 +194,6 @@ const ServicesPage: React.FC = () => {
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-2">
-
           {/* Search Bar */}
           <div className="relative mb-2">
             <Search
@@ -211,61 +210,61 @@ const ServicesPage: React.FC = () => {
           </div>
 
           {/* Services Grid */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
-  {filteredItems(services).map((item, index) => (
-    <div
-      key={index}
-      onClick={() => {
-        if (item.path.startsWith("https")) {
-          window.open(item.path, "_blank");
-        } else {
-          navigate(item.path);
-        }
-      }}
-      className="group cursor-pointer flex flex-col items-center text-center"
-    >
-      <div className="mb-2">
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
-        />
-      </div>
-      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-        {item.title}
-      </h3>
-    </div>
-  ))}
-  {campaigns
-    .filter(
-      (campaign) =>
-        campaign.campaignStatus !== false &&
-        campaign.campainInputType !== "BLOG"
-    )
-    .map((campaign) => (
-      <div
-        key={campaign.campaignId}
-        className="group cursor-pointer flex flex-col items-center text-center"
-        onClick={() => handleCampaignClick(campaign)}
-      >
-        <div className="mb-2">
-          {campaign.imageUrls && campaign.imageUrls.length > 0 && (
-            <img
-              src={campaign.imageUrls[0].imageUrl}
-              alt={`${campaign.campaignType}`}
-              className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
-            />
-          )}
-        </div>
-                 <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-          {campaign.campaignType}
-        </h3>
-      </div>
-    ))}
-</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+            {filteredItems(services).map((item, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  if (item.path.startsWith("https")) {
+                    window.open(item.path, "_blank");
+                  } else {
+                    navigate(item.path);
+                  }
+                }}
+                className="group cursor-pointer flex flex-col items-center text-center"
+              >
+                <div className="mb-2">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                  />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                  {item.title}
+                </h3>
+              </div>
+            ))}
+            {campaigns
+              .filter(
+                (campaign) =>
+                  campaign.campaignStatus !== false &&
+                  campaign.campainInputType !== "BLOG"
+              )
+              .map((campaign) => (
+                <div
+                  key={campaign.campaignId}
+                  className="group cursor-pointer flex flex-col items-center text-center"
+                  onClick={() => handleCampaignClick(campaign)}
+                >
+                  <div className="mb-2">
+                    {campaign.imageUrls && campaign.imageUrls.length > 0 && (
+                      <img
+                        src={campaign.imageUrls[0].imageUrl}
+                        alt={`${campaign.campaignType}`}
+                        className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                      />
+                    )}
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                    {campaign.campaignType}
+                  </h3>
+                </div>
+              ))}
+          </div>
 
- {/* Study Abroad Section */}
-          <div className="bg-white flex items-center justify-center p-4">
+          {/* Study Abroad Section */}
+          {/* <div className="bg-white flex items-center justify-center p-4">
             <div className="w-full max-w-6xl bg-gray-50 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
               <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
                 <div className="flex items-center justify-center">
@@ -370,7 +369,7 @@ const ServicesPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
           <Footer />
         </div>
       </div>

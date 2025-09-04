@@ -27,7 +27,7 @@ import CampaignsAdd from "./AskoxyAdmin/CampaignsAdd";
 import AllCampaignsDetails from "./AskoxyAdmin/AllCampaignDetail";
 import ForgotPasswordPage from "./Pages/Auth/Forgotpage";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
-
+import InsuranceLLmVoice from "./GenOxy/components/InsuranceLLMVoice";
 import ScrollToTop from "./components/ScrollToTop";
 
 import AccomidationGpt from "./components/GPT's/Accomadation";
@@ -172,7 +172,7 @@ import UserSelectionPage from "./StudyAbroad/Homepage";
 
 import UniversityListPage from "./StudyAbroad/Universitylist";
 import AllUniversities from "./StudyAbroad/AllUniversities";
-
+import LandingPage1 from "./AIServicesHub/LandingPage";
 import StudyAbroadLandingPage from "./StudyAbroad/StudyAbroadLandingPage";
 import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
@@ -226,6 +226,7 @@ const App: React.FC = () => {
       "/student-home",
       "/studyabroad",
       "/FreeAIBook",
+      "/genoxyai-services",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -298,8 +299,9 @@ const App: React.FC = () => {
               path="/los/:useCaseId/:type"
               element={<CASRouteRenderer />}
             />
-            <Route path="//ai-masterclasses" element={<OurAIVideos />} />
+            <Route path="/ai-masterclasses" element={<OurAIVideos />} />
             <Route path="/ai-videos" element={<AiVideosGenerated />} />
+            <Route path="/genoxyai-services" element={<LandingPage1 />} />
             <Route path="/cms" element={<CMSDashboard />} />
             <Route
               path="/cms/:useCaseId/:type"
@@ -332,6 +334,7 @@ const App: React.FC = () => {
               element={<Navigate to="/genoxy/welcome" replace />}
             />
             <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
+            <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
             <Route path="/genoxy" element={<GenOxy />} />
             <Route
               path="/genoxy/tie"

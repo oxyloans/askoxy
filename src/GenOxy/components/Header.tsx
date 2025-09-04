@@ -3,7 +3,7 @@ import { Menu, Share, Sparkles, ChevronDown, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Message } from "../types/types";
 import { message } from "antd";
-
+import { useNavigate } from "react-router-dom";
 interface AssistantPublic {
   name: string;
   slug: string;
@@ -33,7 +33,8 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   // Close on click outside (DESKTOP ONLY) & on Escape (both views)
   useEffect(() => {
     const onClickAway = (e: MouseEvent) => {
@@ -92,6 +93,35 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   const centerLabel = activeAssistantName?.trim() || "GENOXY";
+  const LOGIN_URL = "/whatsapplogin";
+
+  // Handle sign-in logic for redirecting to login or navigating to genoxy
+  
+
+
+  const handleAuth = () => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/genoxy/chat";
+
+      if (userId) {
+        // ✅ Sign Out logic
+        localStorage.clear();
+        sessionStorage.clear();
+        message.success("Signed out successfully");
+        navigate("/genoxy"); // redirect to home (or change to your landing route)
+      } else {
+        // ✅ Sign In logic
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     /**
@@ -114,6 +144,29 @@ const Header: React.FC<HeaderProps> = ({
             >
               <Menu className="w-6 h-6" />
             </button>
+          </div>
+          {/* Sparkles + GENOXY */}
+          <div className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0">
+            <div className="flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-200">
+              {/* GENOXY label */}
+              <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 hover:dark:bg-gray-700 px-2  rounded-md">
+                <Sparkles className="w-5 h-5 text-purple-700 dark:text-white" />
+                <span className="font-semibold text-purple-700 text-sm dark:text-white">
+                  GENOXY
+                </span>
+              </div>
+
+           
+              {/* Sign In / Sign Out button */}
+              <div
+                onClick={handleAuth}
+                className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 hover:dark:bg-gray-700 px-2  rounded-md"
+              >
+                <span className="font-semibold text-purple-700 text-sm dark:text-white">
+                  {localStorage.getItem("userId") ? "SIGN OUT" : "SIGN IN"}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* RIGHT: LLMs trigger + Share */}

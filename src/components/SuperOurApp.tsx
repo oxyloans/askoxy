@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { X } from "lucide-react"; // Close icon
 // === Image imports (s1…s12) ===
 import s1 from "../assets/img/s1.png";
 import s2 from "../assets/img/s2.png";
@@ -15,6 +15,7 @@ import s10 from "../assets/img/s10.png";
 import s11 from "../assets/img/s11.png";
 import s12 from "../assets/img/s12.png";
 import s13 from "../assets/img/s13.png";
+import s14 from "../assets/img/s14.png";
 
 // Left side big image
 import leftImage from "../assets/img/megahero.png";
@@ -31,69 +32,99 @@ type Tile = {
 export default function SuperOurApp() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  // NEW: modal state
+  const [isCryptoModalOpen, setIsCryptoModalOpen] = useState<boolean>(false);
   const go = (r: string) => navigate(r);
-    const LOGIN_URL = "/whatsapplogin";
-const handleSignIn = () => {
-  try {
-    setIsLoading(true);
+  const LOGIN_URL = "/whatsapplogin";
+  const handledSignInAiAgents = () => {
+    try {
+      setIsLoading(true);
 
-    const userId = localStorage.getItem("userId");
-    const redirectPath = "/main/crypto"; // your desired path
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/services/6e44/ai-agents-2-earn-money-zero-in"; // your desired path
 
-    if (userId) {
-      // User is already logged in
-      navigate(redirectPath);
-    } else {
-      // Save redirect path before redirecting to login
-      sessionStorage.setItem("redirectPath", redirectPath);
-      window.location.href = LOGIN_URL;
+      if (userId) {
+        // User is already logged in
+        navigate(redirectPath);
+      } else {
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsCryptoModalOpen(false); // close modal after action
     }
-  } catch (error) {
-    console.error("Sign in error:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-const tiles: Tile[] = [
-  { id: "s13", src: s13, route: "/genoxy", title: "GENOXY" },
-  { id: "s11", src: s11, route: "/genoxy/chat", title: "AI LLMS" },
-  {
-    id: "s12",
-    src: s12,
-    onClick: () => handleSignIn(),
-    title: "Crypto",
-  },
-  {
-    id: "s7",
-    src: s7,
-    route: "/rice2roboecommers",
-    title: "Rice 2 Robo\nECommerce",
-  },
-  {
-    id: "s4",
-    src: s4,
-    route: "/loansinvestments",
-    title: "Loans &\nInvestments",
-  },
-  {
-    id: "s10",
-    src: s10,
-    route: "/aiblockchainanditservices",
-    title: "BlockChain",
-  },
-  { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
-  { id: "s6", src: s6, route: "/realestate", title: "Real Estate" },
-  {
-    id: "s3",
-    src: s3,
-    route: "/goldandsilveranddiamonds",
-    title: "Gold, Silver\n& Diamonds",
-  },
-  { id: "s8", src: s8, route: "/glms", title: "GLMS" },
-  { id: "s1", src: s1, route: "/caandcsservices", title: "CA CS\nServices" },
-  { id: "s9", src: s9, route: "/studyabroad", title: "Study Abroad" },
-];
+  };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/crypto"; // your desired path
+
+      if (userId) {
+        // User is already logged in
+        navigate(redirectPath);
+      } else {
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsCryptoModalOpen(false); // close modal after action
+    }
+  };
+  const tiles: Tile[] = [
+    { id: "s13", src: s13, route: "/genoxyai-services", title: "Genoxy AI" },
+    {
+      id: "s7",
+      src: s7,
+      route: "/rice2roboecommers",
+      title: "Rice 2 Robo\nECommerce",
+    },
+    {
+      id: "s11",
+      src: s14,
+      onClick: () => handledSignInAiAgents(),
+      title: "AI Agents Earn Money",
+    },
+    {
+      id: "s12",
+      src: s12,
+      onClick: () => setIsCryptoModalOpen(true), // open modal instead of redirect,
+      title: "Crypto",
+    },
+
+    {
+      id: "s4",
+      src: s4,
+      route: "/loansinvestments",
+      title: "Loans &\nInvestments",
+    },
+    {
+      id: "s10",
+      src: s10,
+      route: "/aiblockchainanditservices",
+      title: "BlockChain",
+    },
+    { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
+    { id: "s6", src: s6, route: "/realestate", title: "Real Estate" },
+    {
+      id: "s3",
+      src: s3,
+      route: "/goldandsilveranddiamonds",
+      title: "Gold, Silver\n& Diamonds",
+    },
+    { id: "s8", src: s8, route: "/glms", title: "GLMS" },
+    { id: "s1", src: s1, route: "/caandcsservices", title: "CA CS\nServices" },
+    { id: "s9", src: s9, route: "/studyabroad", title: "Study Abroad" },
+  ];
 
   return (
     <div className="min-h-screen w-full overflow-hidden">
@@ -175,6 +206,64 @@ const tiles: Tile[] = [
           <div className="h-4 sm:h-6 lg:h-8" />
         </div>
       </div>
+      {/* === Modal for Crypto Claim === */}
+      {isCryptoModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsCryptoModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Title */}
+            <h2 className="text-xl sm:text-2xl font-bold text-center text-purple-700">
+              🎉 LIMITED TIME OFFER
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-center text-gray-700 mt-2">
+              Get <span className="font-semibold">₹20 Worth of BMVCOINS</span>{" "}
+              Free Today!
+            </p>
+
+            {/* NEW LINE: Conversion Info */}
+            <p className="text-center text-sm text-gray-600 mt-1">
+              (1 BMVCOIN = ₹0.02 • You get 1000 coins = ₹20)
+            </p>
+
+            {/* Info Cards */}
+            <div className="grid grid-cols-2 gap-4 mt-6 text-center">
+              <div className="bg-purple-100 p-4 rounded-lg">
+                <p className="text-gray-600 text-sm">Guaranteed Minimum</p>
+                <p className="text-lg font-bold text-purple-700">₹20</p>
+                <p className="text-xs text-gray-500">(1000 BMVCOINS)</p>
+              </div>
+              <div className="bg-purple-100 p-4 rounded-lg">
+                <p className="text-gray-600 text-sm">Potential Maximum</p>
+                <p className="text-lg font-bold text-purple-700">₹2,000</p>
+                <p className="text-xs text-gray-500">(1,00,000 BMVCOINS)</p>
+              </div>
+            </div>
+
+            {/* Total Distributed */}
+            <p className="text-center text-sm text-gray-600 mt-4">
+              <span className="font-medium">Total Distributed:</span> ₹2,000+
+              (1,00,000 BMVCOINS)
+            </p>
+
+            {/* Claim Button */}
+            <button
+              onClick={handleSignIn}
+              className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg shadow-lg transition-all"
+            >
+              🚀 Claim Free Coins
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

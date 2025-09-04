@@ -1,7 +1,7 @@
 import React from "react";
 import { X, Trash2, User, Sparkles, History, Bot } from "lucide-react";
 import { Message } from "../types/types";
-
+import { useNavigate } from "react-router-dom";
 interface AssistantPublic {
   name: string;
   slug: string;
@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       toggleSidebar();
     }
   };
-
+const navigate = useNavigate();
   return (
     <div className="flex flex-col h-full justify-between bg-white dark:bg-gray-800 shadow-sm">
       {/* Header */}
@@ -50,7 +50,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="hidden sm:flex flex-1 justify-center" />
         <div className="flex-1 flex sm:justify-center justify-start">
           <button
-            onClick={() => handleMobileClick(clearChat)}
+            onClick={() => {
+              handleMobileClick(() => {
+                clearChat(); // Clear chat first
+                navigate("/genoxy/chat"); // Then navigate
+              });
+            }}
             className="flex items-center gap-2 text-sm font-semibold text-purple-800  px-3 py-2 pt-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
           >
             <svg

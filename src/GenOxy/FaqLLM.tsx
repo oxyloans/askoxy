@@ -1,5 +1,6 @@
 // src/pages/FaqLLM.tsx
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom"; // add this import
 import {
   Copy,
   ChevronsLeft,
@@ -516,6 +517,7 @@ const FaqLLM: React.FC = () => {
   const [activePage, setActivePage] = useState<number>(1);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   // Flatten & sort by numeric Qxx
   const flatAll = useMemo(() => {
@@ -656,22 +658,38 @@ const FaqLLM: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      {/* HERO / INTRO */}
-      <header className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
-        <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-sm p-6 sm:p-8 shadow-md">
-          <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg md:sticky md:top-6">
-              <ShieldCheck className="w-10 h-10" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                Insurance AI LLM
-              </h1>
+    {/* Top Navigation Buttons */}
+    <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pt-6 flex gap-4">
+      <button
+        onClick={() => navigate("/genoxy/chat")}
+        className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+      >
+        Go to GENOXY
+      </button>
+      <button
+        onClick={() => navigate("/genoxy/faqslide")}
+        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  >
+        FAQ SLIDE
+      </button>
+    </div>
+
+    {/* HERO / INTRO */}
+    <header className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-4">
+      <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-sm p-6 sm:p-8 shadow-md">
+        <div className="flex flex-col md:flex-row items-start gap-6">
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg md:sticky md:top-6">
+            <ShieldCheck className="w-10 h-10" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Insurance AI LLM
+            </h1>
+
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
                 A domain-grade AI LLM for India's insurance ecosystem — clear
                 answers, reliable citations, and regulator-friendly outputs.
               </p>
-
               {/* Key Features Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">

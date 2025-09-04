@@ -132,12 +132,14 @@ const SLIDES: Slide[] = [
   {
     q: "Q17. How do hallucinations happen?",
     a: "LLMs sometimes generate plausible but wrong answers if they lack data. Grounding with insurance filings, laws, and ontology reduces this risk.",
-    imgs: ["https://i.ibb.co/3YTgmV43/Q17-How-do-hallucinations-happen.png" ],
+    imgs: ["https://i.ibb.co/3YTgmV43/Q17-How-do-hallucinations-happen.png"],
   },
   {
     q: "Q18. What is latency vs accuracy?",
     a: "Latency = response time. Accuracy = correctness. Faster responses sometimes skip deep retrieval; we balance both using hybrid search and caching.",
-    imgs: ["https://i.ibb.co/sv1Mq1vH/Chat-GPT-Image-Aug-28-2025-06-29-09-PM.png" ],
+    imgs: [
+      "https://i.ibb.co/sv1Mq1vH/Chat-GPT-Image-Aug-28-2025-06-29-09-PM.png",
+    ],
   },
   {
     q: "Q19. What is inference cost?",
@@ -152,7 +154,9 @@ const SLIDES: Slide[] = [
   {
     q: "Q21. Why use OpenAI APIs?",
     a: "OpenAI APIs let us validate ideas quickly with enterprise-grade reliability. It’s our Phase-1 platform before scaling to custom commercial models.",
-    imgs: ["https://i.ibb.co/FcLN6bc/Chat-GPT-Image-Aug-29-2025-11-52-32-AM.png" ],
+    imgs: [
+      "https://i.ibb.co/FcLN6bc/Chat-GPT-Image-Aug-29-2025-11-52-32-AM.png",
+    ],
   },
   {
     q: "Q22. Why Hugging Face?",
@@ -167,12 +171,16 @@ const SLIDES: Slide[] = [
   {
     q: "Q24. OpenAI vs Hugging Face?",
     a: "OpenAI = API-first, closed model, fast validation. Hugging Face = open-source hosting, fine-tune support, enterprise flexibility. Together, they form a phased roadmap.",
-    imgs: ["https://i.ibb.co/M5jWC3Fk/Q24-What-s-the-difference-between-Hugging-Face-and-Open-AI.png" ],
+    imgs: [
+      "https://i.ibb.co/M5jWC3Fk/Q24-What-s-the-difference-between-Hugging-Face-and-Open-AI.png",
+    ],
   },
   {
     q: "Q25. Why not use only free models?",
     a: "Free models often lack compliance, reliability, and support. For Insurance, regulatory trust demands enterprise-grade, well-managed models.",
-    imgs: ["https://i.ibb.co/4RSdnnmZ/Free-vs-Enterprise-Grade-Insurance-Models.png"],
+    imgs: [
+      "https://i.ibb.co/4RSdnnmZ/Free-vs-Enterprise-Grade-Insurance-Models.png",
+    ],
   },
   {
     q: "Q26. Which models do we plan to use?",
@@ -208,14 +216,13 @@ const SLIDES: Slide[] = [
     q: "Q32. How do you run 1,000 test packs?",
     a: "We maintain a gold-answer dataset of 1,000+ prompts across insurance categories. Daily regression runs track hit-rate, accuracy, and error patterns.",
     imgs: [
-      
       "https://i.ibb.co/cSpszj89/Q32-How-do-you-run-1-000-test-packs-1.png",
     ],
   },
   {
     q: "Q33. Why JSON/function calling?",
     a: "JSON outputs ensure answers are structured and machine-readable. Function calling enables integration with calculators, comparers, and claims APIs.",
-    imgs: [ "https://i.ibb.co/60zyzPJC/Q32-How-do-you-run-1-000-test-packs.png",],
+    imgs: ["https://i.ibb.co/60zyzPJC/Q32-How-do-you-run-1-000-test-packs.png"],
   },
   {
     q: "Q34. Why compliance guardrails?",
@@ -240,12 +247,16 @@ const SLIDES: Slide[] = [
   {
     q: "Q38. Difference between Life & General Insurance?",
     a: "Life Insurance pays a fixed benefit on death or maturity. General Insurance covers loss or damage to assets, health, or liability risks.",
-    imgs: ["https://i.ibb.co/spKYWFGR/Q38-Difference-between-Life-General-Insurance.png" ],
+    imgs: [
+      "https://i.ibb.co/spKYWFGR/Q38-Difference-between-Life-General-Insurance.png",
+    ],
   },
   {
     q: "Q39. What is Motor Insurance?",
     a: "Motor Insurance covers vehicle damage and third-party liability. In India, third-party motor insurance is legally mandatory for all vehicle owners.",
-    imgs: ["https://i.ibb.co/WvMmLYJM/Chat-GPT-Image-Aug-28-2025-06-56-30-PM.png"],
+    imgs: [
+      "https://i.ibb.co/WvMmLYJM/Chat-GPT-Image-Aug-28-2025-06-56-30-PM.png",
+    ],
   },
   {
     q: "Q40. What is Health Insurance?",
@@ -346,17 +357,19 @@ const SLIDES: Slide[] = [
   {
     q: "Q58. What is IBBI’s role in insurance?",
     a: "The Insolvency and Bankruptcy Board of India handles cases where insurers or related entities face financial distress, protecting policyholder interests.",
-    imgs: ["https://i.ibb.co/HJf3tb3/Q58-What-is-IBBI-s-role-in-insurance.png" ],
+    imgs: ["https://i.ibb.co/HJf3tb3/Q58-What-is-IBBI-s-role-in-insurance.png"],
   },
   {
     q: "Q59. What is the Insurance Act?",
     a: "The Insurance Act provides the legal framework for insurance operations in India. It covers licensing, solvency, claims, and policyholder rights.",
-    imgs: ["https://i.ibb.co/VWmTqFBD/Q59-What-is-the-Insurance-Act.png" ],
+    imgs: ["https://i.ibb.co/VWmTqFBD/Q59-What-is-the-Insurance-Act.png"],
   },
   {
     q: "Q60. How does Company Law overlap with Insurance Law?",
     a: "Insurers must comply with both insurance regulations and company law. For example, IRDAI sets product rules while ROC ensures governance compliance.",
-    imgs: ["https://i.ibb.co/9k9ySjFS/Chat-GPT-Image-Aug-28-2025-07-05-46-PM.png" ],
+    imgs: [
+      "https://i.ibb.co/9k9ySjFS/Chat-GPT-Image-Aug-28-2025-07-05-46-PM.png",
+    ],
   },
   {
     q: "Q61. What is Insurance LLM?",
@@ -386,12 +399,14 @@ const SLIDES: Slide[] = [
   {
     q: "Q66. Are we grounding data?",
     a: "Yes. We transform raw regulatory and company data into structured ontology and feed it into LLM pipelines for accurate answers.",
-    imgs: ["https://i.ibb.co/cccqqpWt/Chat-GPT-Image-Aug-29-2025-11-53-25-AM.png"],
+    imgs: [
+      "https://i.ibb.co/cccqqpWt/Chat-GPT-Image-Aug-29-2025-11-53-25-AM.png",
+    ],
   },
   {
     q: "Q67. How do we source data?",
     a: "We source data from IRDAI, insurers, ROC, RBI, SEBI, IBBI, Insurance Acts, and other official filings to ensure credibility.",
-    imgs: ["https://i.ibb.co/PGw14jjy/How-will-insurers-benefit.png" ],
+    imgs: ["https://i.ibb.co/PGw14jjy/How-will-insurers-benefit.png"],
   },
   {
     q: "Q68. How is data cleaned?",
@@ -406,9 +421,7 @@ const SLIDES: Slide[] = [
   {
     q: "Q70. How is ontology built?",
     a: "We map relationships: Insurer → Product → Plan → Features → Exclusions → Claims → Regulations. Ontology provides structured, queryable knowledge.",
-    imgs: [
-      "https://i.ibb.co/svrDnq8G/Q7-What-is-ontology-in-AI.png",
-    ],
+    imgs: ["https://i.ibb.co/svrDnq8G/Q7-What-is-ontology-in-AI.png"],
   },
   {
     q: "Q71. What tools are integrated?",
@@ -430,7 +443,9 @@ const SLIDES: Slide[] = [
   {
     q: "Q74. How do we ensure accuracy?",
     a: "We use hybrid retrieval, ontology alignment, and gold-answer comparisons. Responses failing accuracy checks are flagged for improvement.",
-    imgs: ["https://i.ibb.co/fV5WBmXt/Chat-GPT-Image-Aug-28-2025-05-45-34-PM.png"],
+    imgs: [
+      "https://i.ibb.co/fV5WBmXt/Chat-GPT-Image-Aug-28-2025-05-45-34-PM.png",
+    ],
   },
   {
     q: "Q75. How do we measure hallucination rates?",
@@ -459,22 +474,26 @@ const SLIDES: Slide[] = [
   {
     q: "Q79. Why build domain LLMs instead of generic ones?",
     a: "Generic models lack compliance and domain precision. Domain LLMs capture regulatory rules and product details, making them production-ready for critical industries.",
-    imgs: ["https://i.ibb.co/cKHYrXGB/Q79-Why-build-domain-LLMs-instead-of-generic-ones.png",],
+    imgs: [
+      "https://i.ibb.co/cKHYrXGB/Q79-Why-build-domain-LLMs-instead-of-generic-ones.png",
+    ],
   },
   {
     q: "Q80. Why start with Insurance first?",
     a: "Insurance is complex, data-rich, and highly regulated — an ideal testbed. Success here creates reusable frameworks for other BFSI domains.",
-    imgs: ["https://i.ibb.co/C3QL3d0H/Q80-Why-start-with-Insurance-first.png",],
+    imgs: ["https://i.ibb.co/C3QL3d0H/Q80-Why-start-with-Insurance-first.png"],
   },
   {
     q: "Q81. Why are we building this?",
     a: "Because insurance discovery is broken. Customers are confused, regulators seek transparency, and insurers need efficient servicing — an LLM solves all.",
-    imgs: ["https://i.ibb.co/s9W85gPm/Chat-GPT-Image-Aug-28-2025-07-12-56-PM.png"],
+    imgs: [
+      "https://i.ibb.co/s9W85gPm/Chat-GPT-Image-Aug-28-2025-07-12-56-PM.png",
+    ],
   },
   {
     q: "Q82. Why not stop at wrappers?",
     a: "Wrappers don’t scale in production. They fail at compliance, accuracy, and structured responses, which are non-negotiable in Insurance.",
-    imgs: ["https://i.ibb.co/W4Q6YZv5/Q82-Why-not-stop-at-Wrappers.png",],
+    imgs: ["https://i.ibb.co/W4Q6YZv5/Q82-Why-not-stop-at-Wrappers.png"],
   },
   {
     q: "Q83. How is this different from chatbots?",
@@ -510,7 +529,9 @@ const SLIDES: Slide[] = [
   {
     q: "Q88. How will insurers benefit?",
     a: "They reduce servicing costs, improve customer trust, and gain better lead-to-policy conversion rates.",
-    imgs: ["https://i.ibb.co/LzgSCJWy/Chat-GPT-Image-Aug-29-2025-11-55-27-AM.png",],
+    imgs: [
+      "https://i.ibb.co/LzgSCJWy/Chat-GPT-Image-Aug-29-2025-11-55-27-AM.png",
+    ],
   },
   {
     q: "Q89. What’s the revenue model?",
@@ -520,7 +541,7 @@ const SLIDES: Slide[] = [
   {
     q: "Q90. What’s the compliance framework?",
     a: "We align with IRDAI for insurance, RBI for financial linkages, SEBI for investment products, and IBBI/ROC for legal frameworks.",
-    imgs: ["https://i.ibb.co/HmBvqFV/What-s-the-compliance-framework.jpg" ],
+    imgs: ["https://i.ibb.co/HmBvqFV/What-s-the-compliance-framework.jpg"],
   },
   {
     q: "Q91. How is data residency ensured?",
@@ -578,7 +599,7 @@ const SLIDES: Slide[] = [
   {
     q: "Q100. Why us, why now?",
     a: "We have 25+ years of BFSI tech expertise, regulatory trust, and timing advantage in the AI wave — making us uniquely positioned.",
-    imgs: ["https://i.ibb.co/RkBCz8wg/Q100-Why-us-why-now.png" ],
+    imgs: ["https://i.ibb.co/RkBCz8wg/Q100-Why-us-why-now.png"],
   },
 ];
 
@@ -623,17 +644,17 @@ const FaqLLMSlides: React.FC = () => {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50; // Minimum swipe distance
     const isRightSwipe = distance < -50; // Minimum swipe distance
-    
+
     if (isLeftSwipe && idx < total - 1) {
       next();
     } else if (isRightSwipe && idx > 0) {
       prev();
     }
-    
+
     setTouchStart(null);
     setTouchEnd(null);
   };
@@ -661,8 +682,24 @@ const FaqLLMSlides: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-gray-50">
+      {/* Top Navigation Buttons */}
+      <div className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-6 flex gap-4">
+        <button
+          onClick={() => (window.location.href = "/genoxy/chat")}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+        >
+          Go to GENOXY
+        </button>
+        <button
+          onClick={() => (window.location.href = "/genoxy/llm-faqs")}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-purple-500"
+        >
+          Insurance AI LLM 100 FAQs
+        </button>
+      </div>
+
       {/* HERO / INTRO */}
-      <header className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+      <header className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-4">
         <div className="rounded-2xl sm:rounded-3xl border border-gray-200 bg-white/80 backdrop-blur-sm p-6 sm:p-8 shadow-lg">
           <div className="flex items-start gap-4 sm:gap-6">
             <div className="flex-1 min-w-0">
@@ -747,7 +784,7 @@ const FaqLLMSlides: React.FC = () => {
           </div>
 
           {/* Grid: Left images / Right text */}
-          <div 
+          <div
             ref={contentRef}
             className="grid grid-cols-1 lg:grid-cols-2 gap-0"
             onTouchStart={handleTouchStart}

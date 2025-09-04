@@ -232,7 +232,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
 
           {/* 3-line headline (25% smaller) with stronger highlight */}
-          <h3 className="text-[21px] leading-snug sm:text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white">
+          {/* <h3 className="text-[21px] leading-snug sm:text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white">
             <span className="marker-underline marker-underline-strong">
               LLM
             </span>{" "}
@@ -247,10 +247,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               AI twin
             </span>{" "}
             for every employee.
-          </h3>
+          </h3> */}
 
           {/* Explore button with extra glow/highlight */}
-          <div className="mt-5">
+          {/* <div className="mt-5">
             <button
               onClick={() => navigate("/genoxy/chat")}
               className="relative px-7 py-3.5 rounded-2xl font-extrabold text-white text-base sm:text-lg
@@ -261,16 +261,19 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <span className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-indigo-500/30 via-purple-500/30 to-pink-500/30 blur-lg -z-10"></span>
               Explore AI LLMs
             </button>
-          </div>
+          </div> */}
 
           {/* Tagline + welcome */}
-          <p className="mt-3 text-sm sm:text-base text-gray-600 dark:text-gray-300">
+          {/* <p className="mt-3 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Select an AI LLM and let’s get started
-          </p>
+          </p> */}
 
           <h2 className="mt-1 text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
             Welcome to GENOXY
           </h2>
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed animate-fade-in-delayed">
+            How can I assist you today?
+          </p>
         </div>
 
         {/* Decorative backdrop (kept) */}
@@ -578,62 +581,61 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {/* SUGGESTIONS */}
-        <div
-          ref={promptsSectionRef}
-          className="w-full max-w-5xl mx-auto px-3 sm:px-4 flex flex-col gap-6 sm:gap-8"
-        >
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:flex sm:flex-wrap sm:justify-center">
-            {suggestionPrompts.map((prompt, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
+       <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 flex flex-col gap-6 sm:gap-8">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:flex sm:flex-wrap sm:justify-center">
+          {suggestionPrompts.map((prompt, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                const isMobile = window.innerWidth < 640;
+                if (isMobile) {
+                  setInput(prompt.text);
+                  handleSend(prompt.text);
+                  setShowDropdown(false);
+                } else {
                   handlePromptSelect(prompt.text, prompt.related);
-                }}
-                className="flex items-center px-3 py-2 bg-gray-900 border border-gray-700 rounded-full text-white hover:bg-gray-800 transition-all duration-300 text-xs sm:text-sm min-h-[40px]"
+                }
+              }}
+              className="flex items-center px-3 py-2 bg-gray-900 border border-gray-700 rounded-full text-white hover:bg-gray-800 transition-all duration-300 text-xs sm:text-sm min-h-[44px]"
+            >
+              <div
+                className={`flex items-center justify-center w-6 h-6 mr-2 rounded-full bg-gradient-to-br ${prompt.gradient} text-white text-xs`}
               >
-                <div
-                  className={`flex items-center justify-center w-6 h-6 mr-2 rounded-full bg-gradient-to-br ${prompt.gradient} text-white text-xs`}
-                  aria-hidden="true"
-                >
-                  {prompt.icon}
-                </div>
-                <span className="font-medium">{prompt.text}</span>
-              </button>
-            ))}
-          </div>
+                {prompt.icon}
+              </div>
+              <span className="font-medium">{prompt.text}</span>
+            </button>
+          ))}
+        </div>
 
-          {showDropdown && relatedOptions.length > 0 && (
-            <div ref={relatedDropdownRef} className="max-w-3xl mx-auto w-full">
-              <div className="border border-gray-200 dark:border-gray-700 rounded-2xl p-3 bg-white dark:bg-gray-800 shadow-lg">
-                <div className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-                  Try one of these:
-                </div>
-                <div className="grid sm:grid-cols-2 gap-2">
-                  {relatedOptions.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setInput(opt);
-                        handleSend(opt);
-                        setShowDropdown(false);
-                        // Ensure input bar is visible after sending
-                        smoothScrollTo(inputBarRef.current);
-                      }}
-                      className="px-3 py-2 rounded-xl text-left bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm text-gray-800 dark:text-gray-100"
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+        {/* Related Questions Dropdown */}
+        {showDropdown && relatedOptions.length > 0 && (
+          <div className="w-full flex justify-center px-3 sm:px-0">
+            <div className="max-h-[200px] overflow-y-auto sm:overflow-visible  rounded-lg  px-4 py-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+                {relatedOptions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setInput(question);
+                      handleSend(question);
+                      setShowDropdown(false);
+                    }}
+                    className="flex items-center px-4 py-2 bg-gray-700 border border-gray-600 rounded-full text-white hover:bg-gray-600 transition duration-300 text-xs sm:text-sm min-h-[40px]"
+                  >
+                    <span className="font-medium truncate">{question}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
       </div>
       {/* Powered by – footer logos */}
       <footer className="w-full max-w-6xl mx-auto mt-10 mb-6 px-3">
         {/* New Buttons Section */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+        {/* <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
           <button
             onClick={() => navigate("/genoxy/llm-faqs")}
             className="px-6 py-3.5 rounded-2xl font-semibold text-white text-sm sm:text-base
@@ -651,42 +653,53 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           >
             FAQ Slide
           </button>
-        </div>
+        </div> */}
 
         {/* Existing footer logos */}
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-            Powered by
-          </span>
-          <div className="flex items-center gap-5">
-            <a
-              href="https://www.askoxy.ai/"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex"
-              title="ASKOXY.AI"
-            >
-              <img
-                src={Logo}
-                alt="ASKOXY.AI"
-                className="h-10 sm:h-12 md:h-14 w-auto object-contain shrink-0"
-              />
-            </a>
-            <a
-              href="https://oxyloans.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex"
-              title="OxyLoans"
-            >
-              <img
-                src={oxyloansLogo}
-                alt="OxyLoans"
-                className="h-20 sm:h-12 md:h-14 w-auto object-contain shrink-0"
-              />
-            </a>
-          </div>
-        </div>
+        <div className="flex flex-col items-center gap-3 py-4 dark:border-gray-700">
+  {/* Powered By Label */}
+  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+    Powered by
+  </span>
+
+  {/* Logo Row */}
+  <div className="flex items-center gap-6 sm:gap-10">
+    {/* ASKOXY.AI Logo */}
+    <a
+      href="https://www.askoxy.ai/"
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex transition-transform hover:scale-105"
+      title="ASKOXY.AI"
+      aria-label="Visit ASKOXY.AI"
+    >
+      <img
+        src={Logo}
+        alt="ASKOXY.AI Logo"
+        loading="lazy"
+        className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+      />
+    </a>
+
+    {/* OxyLoans Logo */}
+    <a
+      href="https://oxyloans.com/"
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex transition-transform hover:scale-105"
+      title="OxyLoans"
+      aria-label="Visit OxyLoans"
+    >
+      <img
+        src={oxyloansLogo}
+        alt="OxyLoans Logo"
+        loading="lazy"
+        className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+      />
+    </a>
+  </div>
+</div>
+
       </footer>
     </div>
   );

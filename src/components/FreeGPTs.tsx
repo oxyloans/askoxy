@@ -137,7 +137,7 @@ const Genoxy: React.FC = () => {
         </div>
 
         <div className="mt-6 text-sm text-gray-600 select-none">
-          Press Enter or click the arrow to get started
+          Press Enter and click the arrow to get started
         </div>
       </div>
 

@@ -64,8 +64,14 @@ const ServicesSlider: React.FC = () => {
     }
   };
 
-  // Updated services with their respective paths
+  // ✅ Updated services with new #4 and Legal kept as #5
   const services = [
+    {
+      // You can replace this image with your preferred AI Agents artwork later
+      image: "https://i.ibb.co/BHQRnqZv/AI-AGENT.png",
+      title: "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
+      path: "/services/6e44/ai-agents-2-earn-money-zero-in",
+    },
     {
       image: "https://iili.io/FENcMAb.md.png",
       title: "Invest & Earn",
@@ -76,16 +82,12 @@ const ServicesSlider: React.FC = () => {
       title: "Study Abroad",
       path: "/studyabroad",
     },
-    // {
-    //   image: "https://iili.io/FEwOOdv.md.png",
-    //   title: "Free Rudraksha",
-    //   path: "/services/freerudraksha",
-    // },
     {
       image: "https://iili.io/FGCrmbV.md.png",
       title: "Free AI & GEN AI Training",
       path: "/services/freeai-genai",
     },
+
     {
       image: "https://iili.io/FGomRzF.md.png",
       title: "Legal Knowledge Hub",
@@ -130,16 +132,22 @@ const ServicesSlider: React.FC = () => {
       : jobs.slice(0, 5)
     : [];
 
-  // Combine manual services and API services for unified display
   const allServices = showAllServices
     ? [
         ...services,
-        ...nonBlogCampaigns.map((campaign) => ({
-          image: campaign.imageUrls?.[0]?.imageUrl || "",
-          title: campaign.campaignType,
-          path: "", // Will be handled by click handler
-          campaign: campaign,
-        })),
+        ...nonBlogCampaigns
+          // ✅ Hide API version of AI Agents (because we already added it manually)
+          .filter(
+            (campaign) =>
+              campaign.campaignType.trim() !==
+              "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS"
+          )
+          .map((campaign) => ({
+            image: campaign.imageUrls?.[0]?.imageUrl || "",
+            title: campaign.campaignType,
+            path: "", // Will be handled by click handler
+            campaign: campaign,
+          })),
       ]
     : services.slice(0, 4);
 

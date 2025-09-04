@@ -419,6 +419,9 @@ const GenOxy: React.FC = () => {
   const [insuranceAssistantId, setInsuranceAssistantId] = useState<string>("");
   const [generalCategory, setGeneralCategory] =
     useState<GeneralCategoryKey | null>(null);
+  
+  const [questionCount, setQuestionCount] = useState<number>(0);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -495,6 +498,9 @@ const GenOxy: React.FC = () => {
     abortControllerRef,
     remainingPrompts,
     setRemainingPrompts,
+    questionCount,
+    setQuestionCount,
+    setShowModal,
   });
 
   function resetChatForNewAssistant(nextAssistantSlug?: string | null) {
@@ -801,11 +807,14 @@ const GenOxy: React.FC = () => {
   const TieStarter: React.FC = () => (
     <div className="w-full">
       <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 md:px-6 py-5 md:py-7">
-        <div className="rounded-xl bg-[#6b4cd6] dark:bg-[#6b4cd6]/85 text-white p-5 sm:p-6 md:p-7 shadow text-center">
+        <div
+          className="  p-5 sm:p-6 md:p-7  text-center  bg-white 
+                   dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
+        >
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">
             TiE Hyderabad Conversations
           </h2>
-          <p className="mt-1 text-white/90 text-xs sm:text-sm max-w-xl mx-auto leading-snug">
+          <p className="mt-1  text-xs sm:text-sm max-w-xl text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 mx-auto leading-snug">
             Ask anything about TiE Hyderabad chapter members, investors &
             experts. Let the Assistant guide you.
           </p>
@@ -837,7 +846,6 @@ const GenOxy: React.FC = () => {
                    hover:shadow-sm transition text-left"
                 aria-label={`Ask: ${q}`}
               >
-                <span className="inline-block w-2 h-2 rounded-full bg-purple-500 shrink-0" />
                 <span className="text-sm md:text-[13px] font-medium text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200">
                   {q}
                 </span>
@@ -859,6 +867,7 @@ const GenOxy: React.FC = () => {
       <div className="w-full">
         <div className="max-w-4xl mx-auto px-3 sm:px-5 lg:px-6 py-6 md:py-8">
           <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 p-5 sm:p-6 shadow text-center">
+            {/* Title */}
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
               KLM Fashions AI LLM
             </h2>
@@ -866,30 +875,33 @@ const GenOxy: React.FC = () => {
               Choose how you want to begin.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+            {/* Options Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+              {/* Role-based */}
               <button
                 onClick={() => setKlmMode("role")}
-                className="group rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow px-4 py-5 transition text-left"
+                className="group flex flex-col items-center justify-center rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-lg px-6 py-6 transition text-center"
               >
-                <div className="text-xl">🧑‍💼</div>
-                <div className="mt-1 font-semibold text-purple-700 dark:text-purple-200 text-sm">
+                <div className="text-2xl">🧑‍💼</div>
+                <div className="mt-2 font-semibold text-purple-700 dark:text-purple-200 text-sm sm:text-base">
                   Role-based Conversations
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                  Pick a role (CXO, HR, IT, etc.).
+                <div className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                  Pick a role (CXO, HR, IT, etc.)
                 </div>
               </button>
 
+              {/* Generic */}
               <button
                 onClick={() => setKlmMode("generic")}
-                className="group rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow px-4 py-5 transition text-left"
+                className="group flex flex-col items-center justify-center rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-lg px-6 py-6 transition text-center"
               >
-                <div className="text-xl">💬</div>
-                <div className="mt-1 font-semibold text-purple-700 dark:text-purple-200 text-sm">
+                <div className="text-2xl">💬</div>
+                <div className="mt-2 font-semibold text-purple-700 dark:text-purple-200 text-sm sm:text-base">
                   Generic Conversations
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                  Start with quick questions.
+                <div className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                  Start with quick questions
                 </div>
               </button>
             </div>
@@ -1197,10 +1209,16 @@ const GenOxy: React.FC = () => {
       <div className="w-full">
         {/* ===== Insurance AI LLM – Polished, Mobile-First UI (drop-in) ===== */}
         <div className="max-w-6xl mx-auto w-full px-3 sm:px-5 py-5">
-          <div className="rounded-2xl bg-gradient-to-b from-white to-gray-50 border border-gray-200 p-3 sm:p-7 shadow-sm">
+          <div
+            className="rounded-2xl  bg-white 
+                   dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 p-3 sm:p-7 "
+          >
             {/* Header */}
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
+              <h2
+                className="text-lg sm:text-2xl font-bold  bg-white 
+                   dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
+              >
                 Insurance AI LLM
               </h2>
 
@@ -1218,13 +1236,22 @@ const GenOxy: React.FC = () => {
             {/* Step 0: Landing */}
             {insuranceLanding && (
               <div className="mt-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4 shadow-xs">
-                  <div className="text-[11px] sm:text-sm text-gray-700">
+                <div
+                  className="rounded-xl border border-gray-200  bg-white  
+                   dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 p-3 sm:p-4 shadow-xs"
+                >
+                  <div
+                    className="text-[11px] sm:text-sm  bg-white 
+                   dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
+                  >
                     {BIMA_STRIP}
                   </div>
                 </div>
 
-                <div className="mt-3 text-xs sm:text-sm leading-relaxed text-gray-700">
+                <div
+                  className="mt-3 text-xs sm:text-sm leading-relaxed  bg-white 
+                   dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
+                >
                   <p>
                     In India, insurance is commonly called{" "}
                     <strong>Bīma (बीमा / బీమా)</strong> across most languages.
@@ -1252,7 +1279,14 @@ const GenOxy: React.FC = () => {
                   >
                     Let’s Explore Life &amp; General Insurance →
                   </button>
-
+                  <button
+                    onClick={() => {
+                      navigate("/insurancevoice");
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    Let's explore Voice Agent
+                  </button>
                   {/* New Buttons */}
                   <button
                     onClick={() => navigate("/genoxy/llm-faqs")}
@@ -1274,39 +1308,51 @@ const GenOxy: React.FC = () => {
             {/* Step 1: Type cards */}
             {!insuranceLanding && !insuranceType && (
               <div className="mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Life Insurance */}
                   <button
                     onClick={() => pickType("Life Insurance")}
-                    className="group w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="group w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 
+               hover:border-indigo-400 hover:shadow-md transition 
+               active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                        <span className="text-xl sm:text-2xl">🫶</span>
+                    <div className="flex items-center gap-4">
+                      {/* Icon */}
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 shrink-0">
+                        <span className="text-2xl sm:text-3xl">🫶</span>
                       </div>
-                      <div>
-                        <div className="font-semibold text-indigo-700 text-sm sm:text-base">
+
+                      {/* Text */}
+                      <div className="flex flex-col justify-center">
+                        <div className="font-semibold text-indigo-700 text-base sm:text-lg">
                           Life Insurance
                         </div>
-                        <div className="text-[11px] sm:text-xs text-gray-600 mt-0.5">
+                        <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-snug">
                           Term, savings/ULIP, riders, claims &amp; more.
                         </div>
                       </div>
                     </div>
                   </button>
 
+                  {/* General Insurance */}
                   <button
                     onClick={() => pickType("General Insurance")}
-                    className="group w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="group w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 
+               hover:border-indigo-400 hover:shadow-md transition 
+               active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                        <span className="text-xl sm:text-2xl">🛡️</span>
+                    <div className="flex items-center gap-4">
+                      {/* Icon */}
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 shrink-0">
+                        <span className="text-2xl sm:text-3xl">🛡️</span>
                       </div>
-                      <div>
-                        <div className="font-semibold text-indigo-700 text-sm sm:text-base">
+
+                      {/* Text */}
+                      <div className="flex flex-col justify-center">
+                        <div className="font-semibold text-indigo-700 text-base sm:text-lg">
                           General Insurance
                         </div>
-                        <div className="text-[11px] sm:text-xs text-gray-600 mt-0.5">
+                        <div className="text-xs sm:text-sm text-gray-600 mt-1 leading-snug">
                           Motor, health, home, travel, SME, cyber &amp; more.
                         </div>
                       </div>
@@ -1319,12 +1365,13 @@ const GenOxy: React.FC = () => {
             {/* Step 2A: Life → 8 questions */}
             {lifeStage && (
               <>
+                {/* Header Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
                   <div className="text-xs sm:text-sm">
                     <span className="font-semibold text-indigo-700">
                       Life Insurance
                     </span>{" "}
-                    — quick conversations
+                    — Quick conversations
                   </div>
                   <div className="flex items-center gap-3">
                     <button
@@ -1332,36 +1379,41 @@ const GenOxy: React.FC = () => {
                         setInsuranceType(null);
                         setInsuranceAssistantId("");
                       }}
-                      className="text-[11px] sm:text-xs underline decoration-dotted"
+                      className="text-[11px] sm:text-xs underline decoration-dotted hover:text-indigo-700 transition"
                     >
                       ← Change type
                     </button>
                   </div>
                 </div>
-                {/* Life Insurance Intro */}
-                <div className="mt-2 rounded-lg bg-indigo-50 border border-indigo-100 p-3 sm:p-4 text-[13px] sm:text-sm text-indigo-800">
-                  🛡 Life Insurance — Welcome! I can guide you through
-                  life insurance, explain benefits, compare policies, estimate
-                  premiums, highlight exclusions, and simplify claim processes.
+
+                {/* Intro Card */}
+                <div className="mt-2 rounded-lg bg-indigo-50 border border-indigo-100 p-3 sm:p-4 text-[13px] sm:text-sm text-indigo-800 shadow-sm">
+                  🛡{" "}
+                  <span className="font-semibold">
+                    Life Insurance — Welcome!
+                  </span>
+                  I can guide you through life insurance, explain benefits,
+                  compare policies, estimate premiums, highlight exclusions, and
+                  simplify claim processes.
                 </div>
 
-                {/* Mobile scroll area with safe spacing below */}
+                {/* Questions Area */}
                 <div
                   className="
-            mt-2
-            max-h-[calc(100dvh-220px)]
-            overflow-y-auto pr-1 pb-[88px]
-            sm:max-h-none sm:overflow-visible sm:pb-0
-          "
+        mt-3
+        max-h-[calc(100dvh-220px)]
+        overflow-y-auto pr-1 pb-[88px]
+        sm:max-h-none sm:overflow-visible sm:pb-0
+      "
                 >
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {LIFE_QUESTIONS.map((q) => (
                       <button
                         key={q}
                         onClick={() => sendText(q)}
-                        className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 text-left active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <span className="mt-1 inline-block w-2 h-2 rounded-full bg-indigo-500" />
+                        <span className="mt-1 inline-block w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0" />
                         <span className="text-[14px] sm:text-sm font-medium text-gray-800">
                           {q}
                         </span>
@@ -1405,8 +1457,8 @@ const GenOxy: React.FC = () => {
                 </div>
                 {/* General Insurance Intro */}
                 <div className="mt-2 rounded-lg bg-purple-50 border border-purple-100 p-3 sm:p-4 text-[13px] sm:text-sm text-purple-800">
-                  🌍 General Insurance — Welcome! I can help you explore
-                  health, motor, travel, property, and other general insurances,
+                  🌍 General Insurance — Welcome! I can help you explore health,
+                  motor, travel, property, and other general insurances,
                   understand coverage, compare options, and guide claims.
                 </div>
 
@@ -1447,7 +1499,7 @@ const GenOxy: React.FC = () => {
                         }
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                         {GENERAL_CATEGORIES.find(
                           (x) => x.key === generalCategory
                         )!
@@ -1458,10 +1510,12 @@ const GenOxy: React.FC = () => {
                               onClick={() =>
                                 sendText(`[${generalCategory}] ${q}`)
                               }
-                              className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:shadow transition text-left active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-gray-200 
+                   hover:border-indigo-400 hover:shadow-md transition 
+                   text-left active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
-                              <span className="mt-1 inline-block w-2 h-2 rounded-full bg-indigo-500" />
-                              <span className="text-[14px] sm:text-sm font-medium text-gray-800">
+                              <span className="inline-block w-3 h-3 rounded-full bg-indigo-500 flex-shrink-0" />
+                              <span className="text-sm sm:text-base font-medium text-gray-800 leading-snug">
                                 {q}
                               </span>
                             </button>
@@ -1649,6 +1703,9 @@ const GenOxy: React.FC = () => {
                       ? disclaimerForAssistant(activeAssistant.name)
                       : null
                   }
+                  questionCount={questionCount}
+                  showModal={showModal}
+                  setShowModal={setShowModal}
                 />
               )}
             </div>
