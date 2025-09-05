@@ -134,13 +134,16 @@ const BharatAgentsStore: React.FC = () => {
   }, [fetchAssistants]);
 
   // Search filter with useMemo
-  const filteredAssistants = useMemo(() => {
-    return assistants.filter(
-      (assistant) =>
-        assistant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        assistant.description.toLowerCase().includes(searchTerm.toLowerCase())
+const filteredAssistants = useMemo(() => {
+  return assistants.filter((assistant) => {
+    const name = assistant.name?.toLowerCase() || "";
+    const description = assistant.description?.toLowerCase() || "";
+    return (
+      name.includes(searchTerm.toLowerCase()) ||
+      description.includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm, assistants]);
+  });
+}, [searchTerm, assistants]);
 
   // -------------------- UI --------------------
   if (loading && assistants.length === 0) {
