@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Search, Bot } from "lucide-react";
+import {
+  Search,
+  Bot,
+  Sparkles,
+  Lightbulb,
+  Globe,
+  Brain,
+  Shield,
+} from "lucide-react";
 import BASE_URL from "../Config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -47,14 +55,10 @@ async function getAssistants(
   limit = 50,
   after?: string
 ): Promise<AssistantsResponse> {
-  const token = localStorage.getItem("accessToken");
-  if (!token)
-    throw new Error("No authorization token found. Please log in again.");
-
   const res = await apiClient.get("/student-service/user/getAllAssistants", {
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
     },
     params: { limit, after },
   });
@@ -62,23 +66,61 @@ async function getAssistants(
   return res.data;
 }
 
+// -------------------- Icon Colors --------------------
+const iconStyles = [
+  {
+    icon: Bot,
+    bg: "bg-purple-100 dark:bg-purple-900",
+    text: "text-purple-700 dark:text-purple-300",
+  },
+  {
+    icon: Sparkles,
+    bg: "bg-pink-100 dark:bg-pink-900",
+    text: "text-pink-700 dark:text-pink-300",
+  },
+  {
+    icon: Lightbulb,
+    bg: "bg-yellow-100 dark:bg-yellow-900",
+    text: "text-yellow-700 dark:text-yellow-300",
+  },
+  {
+    icon: Globe,
+    bg: "bg-green-100 dark:bg-green-900",
+    text: "text-green-700 dark:text-green-300",
+  },
+  {
+    icon: Brain,
+    bg: "bg-indigo-100 dark:bg-indigo-900",
+    text: "text-indigo-700 dark:text-indigo-300",
+  },
+  {
+    icon: Shield,
+    bg: "bg-teal-100 dark:bg-teal-900",
+    text: "text-teal-700 dark:text-teal-300",
+  },
+];
+
 // -------------------- Reusable Assistant Card --------------------
 const AssistantCard: React.FC<{
   assistant: Assistant;
   onClick: () => void;
-}> = ({ assistant, onClick }) => {
+  index: number;
+}> = ({ assistant, onClick, index }) => {
+  const { icon: Icon, bg, text } = iconStyles[index % iconStyles.length];
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-md hover:shadow-xl p-6 cursor-pointer transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex flex-col items-center text-center"
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl p-6 cursor-pointer transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex flex-col items-center text-center"
     >
-      <div className="bg-indigo-100 text-indigo-600 w-12 h-12 flex items-center justify-center rounded-full mb-4">
-        <Bot className="w-6 h-6" />
+      <div
+        className={`${bg} ${text} w-12 h-12 flex items-center justify-center rounded-full mb-4`}
+      >
+        <Icon className="w-6 h-6" />
       </div>
-      <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
+      <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-300 mb-2 ">
         {assistant.name}
       </h3>
-      <p className="text-gray-500 text-sm line-clamp-2">
+      <p className="text-indigo-600 dark:text-indigo-300 text-sm line-clamp-2">
         {assistant.description}
       </p>
     </div>
@@ -134,25 +176,25 @@ const BharatAgentsStore: React.FC = () => {
   }, [fetchAssistants]);
 
   // Search filter with useMemo
-const filteredAssistants = useMemo(() => {
-  return assistants.filter((assistant) => {
-    const name = assistant.name?.toLowerCase() || "";
-    const description = assistant.description?.toLowerCase() || "";
-    return (
-      name.includes(searchTerm.toLowerCase()) ||
-      description.includes(searchTerm.toLowerCase())
-    );
-  });
-}, [searchTerm, assistants]);
+  const filteredAssistants = useMemo(() => {
+    return assistants.filter((assistant) => {
+      const name = assistant.name?.toLowerCase() || "";
+      const description = assistant.description?.toLowerCase() || "";
+      return (
+        name.includes(searchTerm.toLowerCase()) ||
+        description.includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [searchTerm, assistants]);
 
   // -------------------- UI --------------------
   if (loading && assistants.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300">
         <div className="flex flex-col items-center animate-pulse">
-          <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600 text-lg font-medium">
-            Loading Bharat Agent Store...
+          <div className="h-10 w-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-purple-700 dark:text-purple-300 text-lg font-medium">
+            Loading Bharat AI Store...
           </p>
         </div>
       </div>
@@ -161,16 +203,16 @@ const filteredAssistants = useMemo(() => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center max-w-md">
           <div className="text-red-500 text-4xl mb-3">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-purple-700 dark:text-purple-300 mb-2">
             Error Loading Assistants
           </h2>
-          <p className="text-gray-500 mb-5">{error}</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-5">{error}</p>
           <button
             onClick={() => fetchAssistants()}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300"
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-300"
           >
             Try Again
           </button>
@@ -180,14 +222,18 @@ const filteredAssistants = useMemo(() => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300">
       {/* Header */}
-      <header className="border-b bg-white/90 backdrop-blur-md sticky top-0 z-20">
+      <header className="border-b bg-purple-50/70 dark:bg-gray-800/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-            Bharath AI Expert Store
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+            <span className="text-purple-700 dark:text-purple-300">Bharat</span>{" "}
+            <span className="bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent dark:from-pink-300 dark:to-fuchsia-400">
+              AI
+            </span>{" "}
+            <span className="text-indigo-600 dark:text-indigo-300">Store</span>
           </h1>
-          <p className="text-gray-500 text-sm sm:text-base max-w-2xl mx-auto">
+          <p className="text-purple-700 dark:text-gray-400 text-sm sm:text-base max-w-2xl mx-auto">
             Discover and explore AI Assistants tailored for Indian businesses
             and citizens.
           </p>
@@ -196,13 +242,13 @@ const filteredAssistants = useMemo(() => {
         {/* Search Bar */}
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search assistants by name or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-purple-200 dark:border-gray-700 bg-white/80 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-300"
             />
           </div>
         </div>
@@ -213,18 +259,21 @@ const filteredAssistants = useMemo(() => {
         {filteredAssistants.length === 0 ? (
           <div className="text-center py-16">
             <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-300">
               No Assistants Found
             </h3>
-            <p className="text-gray-500">Try adjusting your search terms</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Try adjusting your search terms
+            </p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredAssistants.map((assistant) => (
+              {filteredAssistants.map((assistant, index) => (
                 <AssistantCard
                   key={assistant.id}
                   assistant={assistant}
+                  index={index}
                   onClick={() =>
                     navigate(`/bharathaiexpertstore/${assistant.id}`)
                   }
@@ -238,7 +287,7 @@ const filteredAssistants = useMemo(() => {
                 <button
                   disabled={loading}
                   onClick={() => fetchAssistants(pagination.lastId, true)}
-                  className="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition duration-300 disabled:opacity-50"
+                  className="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition duration-300 disabled:opacity-50"
                 >
                   {loading ? "Loading..." : "Load More"}
                 </button>
