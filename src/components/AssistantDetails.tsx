@@ -199,14 +199,14 @@ bg-gradient-to-t from-white via-white/95 to-transparent backdrop-blur-md
   sticky top-0 z-20 py-1"
       >
         {/* Left Side - Assistant Name */}
-        <button
-          onClick={handleBack}
+        <div
+         
           className="flex  items-center flex-1 min-w-0"
         >
-          <h1 className="text-base sm:text-lg font-semibold text-gray-800 ">
+          <button  onClick={handleBack} className="text-base sm:text-lg font-semibold text-gray-800 ">
             {assistant?.name || "Assistant"}
-          </h1>
-        </button>
+          </button>
+        </div>
 
         {/* Right Side - New Chat Button */}
         <div className="flex items-center ml-4">
