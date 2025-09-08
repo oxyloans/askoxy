@@ -47,9 +47,7 @@ interface PaginationState {
 }
 
 // -------------------- API Client --------------------
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-});
+const apiClient = axios.create({ baseURL: BASE_URL });
 
 async function getAssistants(
   limit = 50,
@@ -62,11 +60,10 @@ async function getAssistants(
     },
     params: { limit, after },
   });
-
   return res.data;
 }
 
-// -------------------- Icon Colors --------------------
+// -------------------- Card Icon styles --------------------
 const iconStyles = [
   {
     icon: Bot,
@@ -135,11 +132,34 @@ const BharatAgentsStore: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // target after login
+  const NEXT_PATH = "/create-aiagent";
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageSize: 12,
     hasMore: true,
     total: 0,
   });
+
+  const handleCreateAgentClick = () => {
+    try {
+      setLoading(true);
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // already logged in → go directly
+        navigate(NEXT_PATH);
+      } else {
+        // store fallback AND pass `next` param so WhatsappLogin can read it
+        sessionStorage.setItem("redirectPath", NEXT_PATH);
+        navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
+      }
+    } catch (e) {
+      console.error("Create Agent CTA error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch Assistants
   const fetchAssistants = useCallback(
@@ -225,31 +245,48 @@ const BharatAgentsStore: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-300">
       {/* Header */}
       <header className="border-b bg-purple-50/70 dark:bg-gray-800/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-            <span className="text-purple-700 dark:text-purple-300">Bharat</span>{" "}
-            <span className="bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent dark:from-pink-300 dark:to-fuchsia-400">
-              AI
-            </span>{" "}
-            <span className="text-indigo-600 dark:text-indigo-300">Store</span>
-          </h1>
-          <p className="text-purple-700 dark:text-gray-400 text-sm sm:text-base max-w-2xl mx-auto">
-            Discover and explore AI Assistants tailored for Indian businesses
-            and citizens.
-          </p>
-        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Top Row: Title + CTA */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6">
+            {/* Title + subtitle */}
+            <div className="text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl font-bold">
+                <span className="text-purple-700 dark:text-purple-300">
+                  Bharat
+                </span>{" "}
+                <span className="bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent dark:from-pink-300 dark:to-fuchsia-400">
+                  AI
+                </span>{" "}
+                <span className="text-indigo-600 dark:text-indigo-300">
+                  Store
+                </span>
+              </h1>
+              <p className="mt-1 text-purple-700 dark:text-gray-400 text-sm sm:text-base">
+                Discover and explore AI Assistants tailored for Indian
+                businesses and citizens.
+              </p>
+            </div>
 
-        {/* Search Bar */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search assistants by name or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-purple-200 dark:border-gray-700 bg-white/80 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-300"
-            />
+            {/* Right CTA cluster */}
+            <div className="flex justify-center sm:justify-end items-center gap-3">
+              {/* Optional image as CTA (add image src if needed) */}
+              <button
+                onClick={handleCreateAgentClick}
+                className="hidden sm:block rounded-xl overflow-hidden ring-2 ring-purple-200 hover:ring-purple-400 transition"
+                aria-label="Create Agent"
+                title="Create Agent"
+              >
+                {/* <img src={CREATE_AGENT_IMAGE} alt="Create Agent" className="h-12 w-12 object-cover" /> */}
+              </button>
+
+              {/* Primary Button CTA */}
+              <button
+                onClick={handleCreateAgentClick}
+                className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 active:scale-[.98] transition"
+              >
+                + Create Agent
+              </button>
+            </div>
           </div>
         </div>
       </header>

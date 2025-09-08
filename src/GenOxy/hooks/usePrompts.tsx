@@ -20,7 +20,9 @@ export const usePrompts = (
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
   const [relatedOptions, setRelatedOptions] = useState<string[]>([]);
-  const [afterSelectScrollTarget, setAfterSelectScrollTarget] = useState<(() => void) | null>(null);
+  const [afterSelectScrollTarget, setAfterSelectScrollTarget] = useState<
+    (() => void) | null
+  >(null);
 
   const suggestionPrompts: Prompt[] = [
     {
@@ -30,42 +32,25 @@ export const usePrompts = (
       related: [
         "Generate a landscape image",
         "Generate a realistic product mockup image",
-        "Generate a corporate banner image",
-        "Generate an infographic image",
       ],
     },
     {
       text: "Learning",
       icon: <AcademicCapIcon className="w-4 h-4" />,
       gradient: "from-pink-600 to-red-600",
-      related: [
-        "Top skills for 2025",
-        "Remote learning tips",
-        "AI for professional growth",
-        "Create a learning plan",
-      ],
+      related: ["Top skills for 2025", "Remote learning tips"],
     },
     {
       text: "Development",
       icon: <CodeBracketIcon className="w-4 h-4" />,
       gradient: "from-indigo-600 to-purple-700",
-      related: [
-        "React authentication",
-        "Optimize Node.js API",
-        "Clean code practices",
-        "Async JavaScript explained",
-      ],
+      related: ["React authentication", "Optimize Node.js API"],
     },
     {
       text: "News",
       icon: <NewspaperIcon className="w-4 h-4" />,
       gradient: "from-yellow-600 to-orange-600",
-      related: [
-        "Latest AI research",
-        "2025 market trends",
-        "Technology policy updates",
-        "Financial news summary",
-      ],
+      related: ["Latest AI research", "2025 market trends"],
     },
   ];
 

@@ -111,7 +111,6 @@ const InsuranceLLmVoice: React.FC = () => {
     },
   ];
 
-  // Timer effect
   useEffect(() => {
     if (timerActive && timeRemaining > 0) {
       timerRef.current = setTimeout(() => {
@@ -260,9 +259,9 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
         hi: "टेक्स्ट में बदलें",
       },
       free_trial_notice: {
-        en: "🎁 Free Trial: 80 seconds voice interaction",
-        te: "🎁 ఉచిత ట్రయల్: 80 సెకన్ల వాయిస్ ఇంటరాక్షన్",
-        hi: "🎁 मुफ्त परीक्षण: 80 सेकंड वॉयस इंटरैक्शन",
+        en: "🎁 Start your free 80-second voice chat now!",
+        te: "🎁 మీ ఉచిత 80-సెకన్ల వాయిస్ చాట్‌ను ఇప్పుడే ప్రారంభించండి!",
+        hi: "🎁 अपनी मुफ्त 80-सेकंड की वॉइस चैट अभी शुरू करें!",
       },
       time_remaining: {
         en: "Time Remaining",
@@ -306,7 +305,7 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
     setCurrentView("conversation");
   };
 
-  const handleLanguageChange = (lang: LanguageConfig) => {
+  const handleLanguageChange = async (lang: LanguageConfig) => {
     const updatedLang = {
       ...lang,
       assistantName: selectedAssistant
@@ -314,7 +313,52 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
         : lang.assistantName,
       imageUrl: lang.imageUrl,
     };
-    setSelectedLanguage(updatedLang);
+
+    // If voice session is active, stop it and restart with new language
+    if (isListening) {
+      // Stop current session
+      voiceSessionService.stopSession();
+      setIsListening(false);
+      setTimerActive(false);
+      setChat([]); // Clear existing chat
+      setCurrentConversation("");
+
+      // Update language
+      setSelectedLanguage(updatedLang);
+
+      // Small delay to ensure session is properly stopped
+      setTimeout(async () => {
+        // Restart session with new language
+        setIsListening(true);
+        setTimerActive(true);
+        setTimeRemaining(80); // Reset timer
+
+        try {
+          await voiceSessionService.startSession(
+            selectedAssistant!.assistantId,
+            updatedLang,
+            getInstructionsForLang(updatedLang),
+            (message: ChatMessage) => {
+              setChat((prev) => [...prev, message]);
+              setCurrentConversation(message.text);
+            },
+            setIsAssistantSpeaking,
+            () => {
+              setIsListening(false);
+              setTimerActive(false);
+              setCurrentView("selection");
+            }
+          );
+        } catch (error) {
+          console.error("Failed to restart voice conversation:", error);
+          setIsListening(false);
+          setTimerActive(false);
+          disableCamera();
+        }
+      }, 500);
+    } else {
+      setSelectedLanguage(updatedLang);
+    }
   };
 
   const enableCamera = async () => {
@@ -323,13 +367,14 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: { exact: "user" }, // Force front camera
         },
       });
+      console.log("video.current" + videoRef.current);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        videoRef.current.play();
       }
       setIsCameraEnabled(true);
     } catch (error) {
@@ -849,17 +894,21 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
 
           {/* Right - User Camera */}
           <div className="w-full md:w-1/3 p-6 flex flex-col items-center justify-center relative">
-            <div className="w-96 h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 shadow-2xl">
-              {isCameraEnabled ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
+            <div className="w-96 h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 shadow-2xl relative">
+              {/* Video element always mounted */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`w-full h-full object-cover ${
+                  isCameraEnabled ? "block" : "hidden"
+                }`}
+              />
+
+              {/* Placeholder shown only when camera is not enabled */}
+              {!isCameraEnabled && (
+                <div className="w-full h-full flex items-center justify-center absolute top-0 left-0">
                   <div className="text-center">
                     <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-gray-600 to-gray-700 rounded-full flex items-center justify-center">
                       <span className="text-4xl">👤</span>

@@ -164,6 +164,15 @@ import CarnivalFormPage from "./Retailshop/Pages/CarnivalFormPage";
 import CarnivalListPage from "./Retailshop/Pages/CarnivalListPage";
 import ShopEditForm from "./Retailshop/components/ShopEditForm";
 import CarnivalEditPage from "./Retailshop/Pages/CarnivalEditPage";
+import CreateAgentStep1 from "./AgentStore/CreateAgentpage";
+import CreateAgentMain from "./AgentStore/CreateAgentMain";
+import CreateAgentStep2 from "./AgentStore/AgentBusiness";
+import AgentTarget from "./AgentStore/AgentTarget";
+import AgentProcess from "./AgentStore/AgentProcess";
+import AgentContact from "./AgentStore/AgentContact";
+import AgentGenerate from "./AgentStore/AgentGenerate";
+import VerifyIdentity from "./AgentStore/VerifyAgent";
+import CreateAgentWizard from "./AgentStore/CreateAgentWizard";
 
 
 // *************************STUDY ABRAD****************************//
@@ -415,6 +424,15 @@ const App: React.FC = () => {
               element={<RiceSalePage />}
             /> */}
             <Route path="/qrcode" element={<QR />} />
+             <Route path="/verify-agent" element={<VerifyIdentity  />} />
+              <Route path="/create-aiagent" element={<CreateAgentWizard  />} />
+                 <Route path="/bharat-expert" element={<CreateAgentMain  />} />
+             <Route path="/bharat-agent" element={<CreateAgentStep1 />} />      
+             <Route path="/bharat-agentbusiness" element={<CreateAgentStep2  />} />
+             <Route path="/bharat-agentprocess" element={<AgentProcess  />} />
+              <Route path="/bharat-targetcus" element={<AgentTarget  />} /> 
+              <Route path="/bharat-contact" element={<AgentContact />} />  
+              <Route path="/bharat-generate" element={<AgentGenerate />} />               
             <Route path="/oxygroup" element={<OxyGroup />} />
             <Route path="/pinkfunding" element={<PinkFunding />} />
             <Route path="/climatecrisis" element={<Climatecrisis />} />

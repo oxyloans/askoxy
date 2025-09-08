@@ -57,7 +57,7 @@ export default function HeroSection() {
   };
 
   const tiles: Tile[] = [
-    { id: "s13", src: s13, route: "/genoxy", title: "GenOxy Chat" },
+    { id: "s13", src: s13, route: "/genoxy", title: "GENOXY Chat" },
     {
       id: "s7",
       src: s7,
@@ -86,7 +86,7 @@ export default function HeroSection() {
       id: "s10",
       src: s10,
       route: "/voiceAssistant/welcome",
-      title: "GenOxy Voice Assistant",
+      title: "GENOXY Voice Assistant",
     },
   ];
 

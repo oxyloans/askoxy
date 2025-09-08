@@ -81,7 +81,7 @@ export default function SuperOurApp() {
     }
   };
   const tiles: Tile[] = [
-    { id: "s13", src: s13, route: "/genoxyai-services", title: "GENOXY AI" },
+    { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
     {
       id: "s7",
       src: s7,
@@ -92,7 +92,7 @@ export default function SuperOurApp() {
       id: "s11",
       src: s14,
       onClick: () => handledSignInAiAgents(),
-      title: "AI Agents Earn Money",
+      title: "AI Agents\nEarn Money",
     },
     {
       id: "s12",
