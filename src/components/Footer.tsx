@@ -9,9 +9,13 @@ import {
   Phone,
   ArrowUp,
   Twitter,
+  Youtube,
+  
 } from "lucide-react";
-import Logo from "../assets/img/askoxylogonew.png";
+import { FaXTwitter } from "react-icons/fa6";  // Updated Twitter (X) logo
 
+import Logo from "../assets/img/askoxylogonew.png";
+import { SiThreads } from "react-icons/si";  // Threads icon
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
@@ -36,10 +40,20 @@ const Footer: React.FC = () => {
       label: "LinkedIn",
     },
     {
-      icon: <Twitter className="h-4 w-4" />,
+      icon: <FaXTwitter className="h-4 w-4" />,
       href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
-      label: "Twitter",
-    }
+      label: "FaXTwitter",
+    },
+    {
+      icon: <Youtube className="h-4 w-4" />,
+      href: "https://www.youtube.com/@askoxyDOTai",
+      label: "YouTube",
+    },
+    {
+      icon: <SiThreads className="h-4 w-4" />,
+      href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
+      label: "SiThreads",
+    },
   ];
 
   const services = [
@@ -50,29 +64,30 @@ const Footer: React.FC = () => {
     { name: "We Are Hiring", path: "/main/services/we-are-hiring" },
   ];
 
-  const contactInfo = [
-    {
-      icon: <MapPin className="h-4 w-4" />,
-      content:
-        "OXYKART TECHNOLOGIES PVT LTD, CC-02, Ground Floor, Indu Fortune Fields, KPHB Colony, Hyderabad, Telangana - 500085",
-      type: "text",
-    },
-    {
-      icon: <Mail className="h-4 w-4" />,
-      content: "support@askoxy.ai",
-      type: "email",
-    },
-    {
-      icon: <Phone className="h-4 w-4 mb-1" />,
-      content: "+91 81432 71103",
-      type: "phone",
-    },
-    {
-      icon: <Phone className="h-4 w-4 mb-1" />,
-      content: "+91 91105 64106",
-      type: "phone",
-    },
-  ];
+ const contactInfo = [
+   {
+     icon: <MapPin className="h-4 w-4" />,
+     content:
+       "OXYKART TECHNOLOGIES PVT LTD, Miyapur Metro ASKOXY.AI, Hyderabad, Telangana - 500049",
+     link: "https://www.google.com/maps/place/Metro+Station+Miyapur,+Nadigada+Tanda,+Miyapur,+Hyderabad,+Telangana+500049",
+     type: "map",
+   },
+   {
+     icon: <Mail className="h-4 w-4" />,
+     content: "support@askoxy.ai",
+     type: "email",
+   },
+   {
+     icon: <Phone className="h-4 w-4 mb-1" />,
+     content: "+91 81432 71103",
+     type: "phone",
+   },
+   {
+     icon: <Phone className="h-4 w-4 mb-1" />,
+     content: "+91 91105 64106",
+     type: "phone",
+   },
+ ];
 
   return (
     <footer className="bg-gradient-to-br from-cyan-50 via-purple-50 to-green-50 border-t border-gray-100">
@@ -96,13 +111,28 @@ const Footer: React.FC = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-500 hover:text-purple-600 transition-colors duration-200"
                   aria-label={social.label}
+                  style={{
+                    display: "inline-block",
+                    animation: "colorBounce 1.5s infinite",
+                  }}
                 >
                   {social.icon}
                 </a>
               ))}
             </div>
+
+            <style>
+              {`
+  @keyframes colorBounce {
+    0%   { transform: scale(1);   color: #6B7280; }   /* gray-500 */
+    25%  { transform: scale(1.2); color: #1DA1F2; }   /* Twitter blue */
+    50%  { transform: scale(1);   color: #9333EA; }   /* purple-600 */
+    75%  { transform: scale(1.2); color: #E0245E; }   /* pink/red */
+    100% { transform: scale(1);   color: #6B7280; }   /* back to gray */
+  }
+`}
+            </style>
           </div>
 
           {/* Services */}
@@ -132,19 +162,34 @@ const Footer: React.FC = () => {
               {contactInfo.map((info, index) => (
                 <div key={index} className="flex items-start space-x-2">
                   <div className="text-purple-600 mt-0.5">{info.icon}</div>
-                  {info.type === "text" ? (
-                    <p className="text-xs sm:text-sm text-gray-600 leading-tight">
-                      {info.content}
-                    </p>
-                  ) : (
+
+                  {info.type === "map" ? (
                     <a
-                      href={`${info.type === "email" ? "mailto:" : "tel:"}${
-                        info.content
-                      }`}
+                      href={info.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
                     >
                       {info.content}
                     </a>
+                  ) : info.type === "email" ? (
+                    <a
+                      href={`mailto:${info.content}`}
+                      className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                    >
+                      {info.content}
+                    </a>
+                  ) : info.type === "phone" ? (
+                    <a
+                      href={`tel:${info.content}`}
+                      className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                    >
+                      {info.content}
+                    </a>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-gray-600 leading-tight">
+                      {info.content}
+                    </p>
                   )}
                 </div>
               ))}

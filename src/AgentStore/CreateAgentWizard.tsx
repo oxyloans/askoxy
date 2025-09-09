@@ -1,4 +1,6 @@
+// /src/AgentStore/CreateAgentWizard.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Steps,
   Input,
@@ -17,6 +19,8 @@ import {
   Tag,
   Divider,
   Rate,
+  Tooltip,
+  Radio,
 } from "antd";
 import {
   UserOutlined,
@@ -29,6 +33,7 @@ import {
   EditOutlined,
   SaveOutlined,
   CloseOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 
@@ -64,48 +69,38 @@ type AgentApiResponse = {
   agentId: string | null;
   assistantId: string | null;
   message: string | null;
+  // backend may ignore these if unknown — included for convenience
+  creatorName?: string | null;
 };
-/** Read auth token safely */
-function getAuth(): string {
-  try {
-    return localStorage.getItem("auth_token") || "";
-  } catch {
-    return "";
-  }
-}
 
-/** Strip empty/undefined/blank values so PATCH/POST stays clean */
-function stripEmpty<T extends object>(obj: T): Partial<T> {
-  const out = {} as Partial<T>;
-  (Object.keys(obj) as (keyof T)[]).forEach((k) => {
-    const v = obj[k];
-    if (
-      v !== undefined &&
-      v !== null &&
-      v !== "" &&
-      !(Array.isArray(v) && v.length === 0)
-    ) {
-      out[k] = v;
-    }
-  });
-  return out;
-}
+// --- Catalogs for Domain/SubDomain (10 each + Other) ---
+const DOMAIN_OPTIONS = [
+  "Law",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Technology",
+  "Marketing",
+  "Human Resources",
+  "Operations",
+  "Manufacturing",
+  "Retail",
+  "Other",
+];
 
-/** Clean instruction text (only on generation/publish, not while typing) */
-function cleanInstructionText(txt: string): string {
-  if (!txt) return "";
-  let t = txt
-    .replace(/^\uFEFF/, "") // strip BOM
-    .replace(/```[\s\S]*?```/g, "") // drop fenced code blocks
-    .replace(/^#+\s?/gm, "") // remove markdown headings
-    .replace(/\*+/g, "") // remove asterisks
-    .replace(/[ \t]+/g, " ") // collapse spaces/tabs
-    .replace(/\r\n?/g, "\n") // normalize newlines
-    .replace(/[ \t]*\n[ \t]*/g, "\n") // trim around newlines
-    .replace(/\n{3,}/g, "\n\n") // max one blank line
-    .trim();
-  return t.slice(0, 7000); // hard cap
-}
+const SUBDOMAIN_OPTIONS = [
+  "Civil Law",
+  "Corporate Law",
+  "Taxation",
+  "Personal Finance",
+  "Data Analytics",
+  "Software Development",
+  "Digital Marketing",
+  "Recruitment",
+  "Supply Chain",
+  "Customer Support",
+  "Other",
+];
 
 const TARGET_USER_OPTIONS = [
   "IT Professionals",
@@ -156,58 +151,123 @@ const FALLBACK_MODELS: ModelInfo[] = [
   { id: "gpt-4o-mini", owned_by: "openai" },
 ];
 
+/** Read auth token safely */
+function getAuth(): string {
+  try {
+    return localStorage.getItem("auth_token") || "";
+  } catch {
+    return "";
+  }
+}
+
+/** Strip empty/undefined/blank values so PATCH/POST stays clean */
+function stripEmpty<T extends object>(obj: T): Partial<T> {
+  const out = {} as Partial<T>;
+  (Object.keys(obj) as (keyof T)[]).forEach((k) => {
+    const v = obj[k];
+    if (
+      v !== undefined &&
+      v !== null &&
+      v !== "" &&
+      !(Array.isArray(v) && v.length === 0)
+    ) {
+      out[k] = v;
+    }
+  });
+  return out;
+}
+
+/** Clean instruction text (only on generation/publish, not while typing) */
+function cleanInstructionText(txt: string): string {
+  if (!txt) return "";
+  let t = txt
+    .replace(/^\uFEFF/, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/^#+\s?/gm, "")
+    .replace(/\*+/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return t.slice(0, 7000);
+}
+
 const CreateAgentWizard: React.FC = () => {
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [loading, setLoading] = useState(false);
 
   // Step 1 - Profile
+  const [creatorName, setCreatorName] = useState("");
   const [acheivements, setAcheivements] = useState("");
   const [agentName, setAgentName] = useState("");
   const [userRole, setUserRole] = useState("Advocate");
+  const [userRoleOther, setUserRoleOther] = useState("");
   const [userExperienceSummary, setUserExperienceSummary] = useState("");
   const [description, setDescription] = useState("");
   const [strength, setStrength] = useState("");
-  const [genderSelections, setGenderSelections] = useState<string[]>([]);
   const [language, setLanguage] = useState("English");
+
   // Step 4 fields
-  const [rateThisPlatform, setRateThisPlatform] = useState<number>(0); // 0–5
-  const [shareYourFeedback, setShareYourFeedback] = useState<string>(""); // free text
+  const [rateThisPlatform, setRateThisPlatform] = useState<number>(0);
+  const [shareYourFeedback, setShareYourFeedback] = useState<string>("");
   const [successData, setSuccessData] = useState<AgentApiResponse | null>(null);
 
-  // Step 2 - Business & Model & Target & Age
+  // Step 2 - Business & Model & Problem
   const [business, setBusiness] = useState("");
-  const [domain, setDomain] = useState("");
-  const [subDomain, setSubDomain] = useState("");
-  const [targetUser, setTargetUser] = useState("");
-  const [targetUserOther, setTargetUserOther] = useState("");
-  const [ageLimit, setAgeLimit] = useState("");
-  const [selectedModelId, setSelectedModelId] = useState("");
+  // NOTE: use undefined so Select shows placeholder
+  const [domain, setDomain] = useState<string | undefined>(undefined);
+  const [domainOther, setDomainOther] = useState("");
+  const [subDomain, setSubDomain] = useState<string | undefined>(undefined);
+  const [subDomainOther, setSubDomainOther] = useState("");
+  const [selectedModelId, setSelectedModelId] = useState<string | undefined>(undefined);
   const [models, setModels] = useState<ModelInfo[]>([]);
-
-  // Step 3 - Problem, Solution, Tone, Response Format, Capabilities, Instructions
-  const [mainProblemSolved, setMainProblemSolved] = useState("");
+  const [solveProblem, setSolveProblem] = useState<"YES" | "NO" | "">("");
+  const [mainProblemText, setMainProblemText] = useState("");
+  // Unique Solution is always visible (per requirement)
   const [uniqueSolution, setUniqueSolution] = useState("");
-  const [converstionTone, setConverstionTone] = useState(TONE_OPTIONS[0]);
+    const location = useLocation() as any;
+
+  const [headerTitle, setHeaderTitle] = useState<string>(
+    location?.state?.headerTitle === "AI Enabler" ? "AI Enabler" : "AI Twin"
+  );
+  const [headerStatus, setHeaderStatus] = useState<boolean>(
+    typeof location?.state?.headerStatus === "boolean"
+      ? Boolean(location.state.headerStatus)
+      : false // as required, always send false now
+  );
+
+  // Step 3 - Audience + Config
+  const [targetUser, setTargetUser] = useState<string | undefined>(undefined);
+  const [targetUserOther, setTargetUserOther] = useState("");
+  const [genderSelections, setGenderSelections] = useState<string[]>([]);
+  const [ageLimit, setAgeLimit] = useState<string | undefined>(undefined);
+  const [converstionTone, setConverstionTone] = useState<string | undefined>(undefined);
   const [responseFormat, setResponseFormat] =
-    useState<(typeof RESPONSE_FORMATS)[number]>("auto");
-  const [capCodeInterpreter, setCapCodeInterpreter] = useState(false);
-  const [capFileSearch, setCapFileSearch] = useState(false);
-  const [fileSearchFiles, setFileSearchFiles] = useState<File[]>([]);
+    useState<(typeof RESPONSE_FORMATS)[number] | undefined>(undefined);
   const [instructions, setInstructions] = useState("");
   const [generated, setGenerated] = useState(false);
   const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const [tempInstructions, setTempInstructions] = useState("");
-  const [agentId, setAgentId] = useState<string>("");
 
-  // Step 4 - Contact, Starters, Usage Model & Publish
+  // IDs & flags
+  const [agentId, setAgentId] = useState<string>("");
+  const [assistantId, setAssistantId] = useState<string>("");
+
+  // Step 4 - Contact, Starters, Status
+  const [shareContact, setShareContact] = useState<"YES" | "NO">("NO");
   const [contactDetails, setContactDetails] = useState("");
   const [conStarter1, setConStarter1] = useState("");
   const [conStarter2, setConStarter2] = useState("");
   const [conStarter3, setConStarter3] = useState("");
   const [conStarter4, setConStarter4] = useState("");
   const [activeStatus, setActiveStatus] = useState(true);
-  const [voiceStatus, setVoiceStatus] = useState(true);
-  const [assistantId, setAssistantId] = useState<string>("");
+
+  // Voice: default inactive, no edit
+  const [voiceStatus] = useState<boolean>(false);
+
+  // Static channel: Text Chat active (no edit)
+  const textChatActive = true;
 
   // Preview modal
   const [showPreview, setShowPreview] = useState(false);
@@ -217,9 +277,14 @@ const CreateAgentWizard: React.FC = () => {
     { role: "user" | "assistant"; text: string }[]
   >([]);
   const [previewInput, setPreviewInput] = useState("");
-  const userId = localStorage.getItem("userId") || "";
 
-  // theme helpers
+  const userId = localStorage.getItem("userId") || "";
+  const navigate = useNavigate();
+  const isEditMode = location?.state?.mode === "edit";
+  const editSeed:
+    | (Partial<AgentApiResponse & Record<string, any>> | undefined)
+    | undefined = location?.state?.seed;
+
   const purpleBtn = {
     background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
     border: "none",
@@ -237,26 +302,40 @@ const CreateAgentWizard: React.FC = () => {
     boxShadow: "0 0 0 2px rgba(114, 46, 209, 0.1)",
   };
 
+  const effectiveUserRole = useMemo(() => {
+    return userRole === "Other" ? userRoleOther.trim() || "Other" : userRole;
+  }, [userRole, userRoleOther]);
+
+  // For classify text
   const genderForText = useMemo(
     () => genderSelections.filter(Boolean).join(", "),
     [genderSelections]
   );
-  // Concise context string the API can use to classify / generate instructions
+
+  const resolvedDomain = useMemo(() => {
+    return domain === "Other" ? domainOther.trim() || "Other" : (domain || "");
+  }, [domain, domainOther]);
+
+  const resolvedSubDomain = useMemo(() => {
+    return subDomain === "Other" ? subDomainOther.trim() || "Other" : (subDomain || "");
+  }, [subDomain, subDomainOther]);
+
   const classifyText = useMemo(() => {
     const tgt =
-      targetUser === "Other" ? targetUserOther?.trim() || "Other" : targetUser;
+      targetUser === "Other" ? targetUserOther?.trim() || "Other" : (targetUser || "");
 
     const parts = [
       description?.trim(),
-      mainProblemSolved?.trim() && `Main Problem: ${mainProblemSolved.trim()}`,
+      solveProblem && `Solving Problem: ${solveProblem}`,
       uniqueSolution?.trim() && `Solution: ${uniqueSolution.trim()}`,
-      (domain?.trim() || subDomain?.trim()) &&
-        `Domain: ${[domain?.trim(), subDomain?.trim()]
+      (resolvedDomain?.trim() || resolvedSubDomain?.trim()) &&
+        `Domain: ${[resolvedDomain?.trim(), resolvedSubDomain?.trim()]
           .filter(Boolean)
           .join(" / ")}`,
       business?.trim() && `Business: ${business.trim()}`,
       tgt?.trim() && `Target: ${tgt.trim()}`,
       genderForText && `Gender: ${genderForText}`,
+      ageLimit && `Age: ${ageLimit}`,
       converstionTone?.trim() && `Tone: ${converstionTone.trim()}`,
       responseFormat && `Response: ${responseFormat}`,
       selectedModelId?.trim() && `Model: ${selectedModelId.trim()}`,
@@ -266,19 +345,95 @@ const CreateAgentWizard: React.FC = () => {
     return parts.join(" | ");
   }, [
     description,
-    mainProblemSolved,
+    solveProblem,
     uniqueSolution,
-    domain,
-    subDomain,
+    resolvedDomain,
+    resolvedSubDomain,
     business,
     targetUser,
     targetUserOther,
     genderForText,
+    ageLimit,
     converstionTone,
     responseFormat,
     selectedModelId,
     language,
   ]);
+
+  // Prefill all steps when in edit mode
+  useEffect(() => {
+    if (!isEditMode || !editSeed) return;
+
+     if (typeof editSeed.headerStatus === "boolean") {
+      setHeaderStatus(Boolean(editSeed.headerStatus));
+    }
+    if (typeof editSeed.headerTitle === "string" && editSeed.headerTitle.length) {
+      setHeaderTitle(editSeed.headerTitle === "AI Enabler" ? "AI Enabler" : "AI Twin");
+    }
+
+    // IDs
+    setAgentId(String(editSeed.id || editSeed.agentId || ""));
+    setAssistantId(String(editSeed.assistantId || ""));
+    setCreatorName(String(editSeed.creatorName || ""));
+
+    // Step 1 – Profile
+    setAgentName(editSeed.agentName || editSeed.name || "");
+    setDescription(editSeed.description || "");
+    setLanguage(editSeed.language || "English");
+    setUserExperienceSummary(editSeed.userExperienceSummary || "");
+    setUserRole(editSeed.userRole || "Advocate");
+
+    // Step 2 – Business & Model & Problem
+    const d = editSeed.domain || "";
+    setDomain(DOMAIN_OPTIONS.includes(d) ? d : d ? "Other" : undefined);
+    setDomainOther(!DOMAIN_OPTIONS.includes(d) ? d : "");
+
+    const sd = editSeed.subDomain || "";
+    setSubDomain(SUBDOMAIN_OPTIONS.includes(sd) ? sd : sd ? "Other" : undefined);
+    setSubDomainOther(!SUBDOMAIN_OPTIONS.includes(sd) ? sd : "");
+
+    setBusiness(editSeed.business || "");
+    setSelectedModelId(editSeed.usageModel || undefined);
+
+    // Problem radio + fields
+    const priorProblem = String(editSeed.mainProblemSolved || "").trim();
+    const priorSolution = String(editSeed.uniqueSolution || "").trim();
+    setMainProblemText(priorProblem);
+    setUniqueSolution(priorSolution);
+    setSolveProblem(priorProblem ? "YES" : ""); // only set YES if a problem text exists
+
+    // Step 3 – Audience + Config
+    setTargetUser(editSeed.targetUser || undefined);
+    setAgeLimit(editSeed.ageLimit || undefined);
+    if (editSeed?.gender) {
+      setGenderSelections(
+        String(editSeed.gender)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      );
+    }
+    setConverstionTone(editSeed.converstionTone || undefined);
+    setResponseFormat((editSeed.responseFormat as any) || undefined);
+    setInstructions(editSeed.instructions || "");
+
+    // Step 4 – Contact etc.
+    const cd = String(editSeed.contactDetails || "");
+    if (cd) {
+      setShareContact("YES");
+      setContactDetails(cd);
+    } else {
+      setShareContact("NO");
+      setContactDetails("");
+    }
+    setConStarter1(editSeed.conStarter1 || "");
+    setConStarter2(editSeed.conStarter2 || "");
+    setConStarter3(editSeed.conStarter3 || "");
+    setConStarter4(editSeed.conStarter4 || "");
+    setActiveStatus(Boolean(editSeed.activeStatus));
+
+    setStep(0);
+  }, [isEditMode, editSeed]);
 
   /** Load Models on Step 2 (index 1); fallback if API returns nothing */
   useEffect(() => {
@@ -322,9 +477,10 @@ const CreateAgentWizard: React.FC = () => {
   const validateStep0 = (): boolean => {
     const missing: string[] = [];
     if (!agentName.trim()) missing.push("Agent Name");
-    if (!userRole.trim()) missing.push("Professional Identity");
+    if (!creatorName.trim()) missing.push("Creator Name");
+    if (!(effectiveUserRole || "").trim())
+      missing.push("Professional Identity");
     if (!description.trim()) missing.push("Description");
-    if (genderSelections.length === 0) missing.push("Gender");
     if (!language.trim()) missing.push("Language");
 
     if (missing.length) {
@@ -342,13 +498,24 @@ const CreateAgentWizard: React.FC = () => {
   const validateStep1 = (): boolean => {
     const missing: string[] = [];
     if (!business.trim()) missing.push("Business/Idea");
-    if (!targetUser.trim()) missing.push("Target User");
-    if (targetUser === "Other" && !targetUserOther.trim())
-      missing.push("Target User (Other)");
-    if (!domain.trim()) missing.push("Domain");
-    if (!subDomain.trim()) missing.push("Sub-Domain");
-    if (!ageLimit.trim()) missing.push("Age Limit");
-    if (!selectedModelId.trim()) missing.push("Model");
+    if (!(resolvedDomain || "").trim()) missing.push("Domain/Sector");
+    if (!(resolvedSubDomain || "").trim()) missing.push("Sub-Domain/Subsector");
+    if (!selectedModelId?.trim()) missing.push("GPT Model");
+    if (!solveProblem) missing.push("Are you solving a problem?");
+
+    // If solving problem, both distinct fields are required
+    if (solveProblem === "YES") {
+      if (!mainProblemText.trim()) missing.push("Main Problem to Solve");
+      if (!uniqueSolution.trim()) missing.push("Unique Solution Method");
+      if (mainProblemText.length > 100) {
+        message.error("Main Problem to Solve must be 100 characters or less.");
+        return false;
+      }
+      if (uniqueSolution.length > 100) {
+        message.error("Unique Solution Method must be 100 characters or less.");
+        return false;
+      }
+    }
 
     if (missing.length) {
       message.error({
@@ -364,8 +531,12 @@ const CreateAgentWizard: React.FC = () => {
 
   const validateStep2 = (): boolean => {
     const missing: string[] = [];
-    if (!converstionTone.trim()) missing.push("Conversation Tone");
-    if (!uniqueSolution.trim()) missing.push("Unique Solution");
+    if (!targetUser?.trim()) missing.push("Target Customer");
+    if (targetUser === "Other" && !targetUserOther.trim())
+      missing.push("Target Customer (Other)");
+    if (genderSelections.length === 0) missing.push("Target Audience Gender");
+    if (!ageLimit?.trim()) missing.push("Target Age Limit");
+    if (!converstionTone?.trim()) missing.push("Conversation Tone");
 
     if (missing.length) {
       message.error({
@@ -390,10 +561,12 @@ const CreateAgentWizard: React.FC = () => {
     if (step > 0) setStep((step - 1) as any);
   };
 
-  /** Generate Instructions with validation (API call + timeout + robust parsing) */
+  /** Generate Instructions */
   const handleGenerate = async () => {
-    // Validate: need either Description OR Unique Solution
-    if (!description.trim() && !uniqueSolution.trim()) {
+    if (
+      !description.trim() &&
+      !(solveProblem === "YES" && uniqueSolution.trim())
+    ) {
       message.error(
         "Please fill either ‘Problems Solved in the Past (Description)’ or ‘Unique Solution / Method’ before generating instructions."
       );
@@ -401,7 +574,7 @@ const CreateAgentWizard: React.FC = () => {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
       setLoading(true);
@@ -414,30 +587,25 @@ const CreateAgentWizard: React.FC = () => {
         Authorization: `Bearer ${getAuth()}`,
       };
 
-      // Try with JSON body first (extra context)
       let res = await fetch(url, {
         method: "POST",
         headers: { ...baseHeaders, "Content-Type": "application/json" },
         body: JSON.stringify(
           stripEmpty({
             description,
-            domain,
-            subDomain,
+            domain: resolvedDomain,
+            subDomain: resolvedSubDomain,
             targetUser: targetUser === "Other" ? targetUserOther : targetUser,
             language,
             model: selectedModelId,
             tone: converstionTone,
             format: responseFormat,
-            capabilities: [
-              capCodeInterpreter ? "code_interpreter" : null,
-              capFileSearch ? "file_search" : null,
-            ].filter(Boolean),
+            capabilities: [],
           })
         ),
         signal: controller.signal,
       });
 
-      // Fallback: servers that don't accept JSON body
       if (!res.ok && (res.status === 400 || res.status === 415)) {
         res = await fetch(url, {
           method: "POST",
@@ -458,8 +626,6 @@ const CreateAgentWizard: React.FC = () => {
             : data.instructions || data.message || JSON.stringify(data);
       } else {
         raw = await res.text();
-        // Some servers return plain text that *looks* like JSON or includes markdown headings
-        // Try to parse; if it fails, continue with the raw text
         try {
           const maybe = JSON.parse(raw);
           raw =
@@ -467,12 +633,10 @@ const CreateAgentWizard: React.FC = () => {
               ? maybe
               : maybe.instructions || maybe.message || raw;
         } catch {
-          // Strip obvious markdown headings like "# Instruct" before final clean
           raw = raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
         }
       }
 
-      // Clean only on generation (not on every keystroke)
       const cleaned = cleanInstructionText(raw);
       setInstructions(cleaned);
       setGenerated(true);
@@ -515,7 +679,8 @@ const CreateAgentWizard: React.FC = () => {
     try {
       setLoading(true);
 
-      const payload = stripEmpty({
+    const basePayload = stripEmpty({
+        creatorName,
         acheivements,
         activeStatus,
         ageLimit,
@@ -526,33 +691,41 @@ const CreateAgentWizard: React.FC = () => {
         conStarter2,
         conStarter3,
         conStarter4,
-        contactDetails,
+        contactDetails: shareContact === "YES" ? contactDetails : undefined,
         converstionTone,
         description,
-        domain,
+        domain: resolvedDomain,
         gender: genderForText || genderSelections.join(",") || undefined,
         instructions: cleanInstructionText(instructions),
         language,
-        mainProblemSolved,
+        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
+        uniqueSolution: solveProblem === "YES" ? uniqueSolution : undefined,
         rateThisPlatform,
         responseFormat,
         shareYourFeedback,
         status: "REQUESTED",
-        subDomain,
+        subDomain: resolvedSubDomain,
         targetUser: targetUser === "Other" ? targetUserOther : targetUser,
-        uniqueSolution,
-
-        // ✅ FIXES
         usageModel: selectedModelId,
-
-        // keep types clean
         userExperience: Number(userExperienceSummary) || 0,
         userExperienceSummary,
-
         userId,
-        userRole: userRole || "Developer",
-        voiceStatus: voiceStatus ?? true,
+        userRole: effectiveUserRole || "Developer",
+        voiceStatus: false,
+
+        // >>> NEW FIELDS <<<
+        headerTitle,          // "AI Twin" | "AI Enabler"
+        headerStatus: false,  // as per request, always send false now
       });
+
+
+      // IDs only when editing (safe to always include if set)
+      const idPayload = stripEmpty({
+        agentId: agentId || undefined,
+        assistantId: assistantId || undefined,
+      });
+
+      const payload = { ...basePayload, ...idPayload };
 
       const res = await fetch(`${BASE_URL}/ai-service/agent/agentCreation`, {
         method: "PATCH",
@@ -569,11 +742,10 @@ const CreateAgentWizard: React.FC = () => {
       }
       const json = await res.json().catch(() => null);
       setShowPreview(false);
-      setSuccessData(json as AgentApiResponse); // open success modal
+      setSuccessData(json as AgentApiResponse);
       message.success("Agent published successfully!");
 
-      setShowPreview(false);
-      message.success("Agent published successfully!");
+      navigate("/bharath-aistore/agents", { replace: true });
     } catch (e: any) {
       message.error(e?.message || "Failed to publish agent");
     } finally {
@@ -583,11 +755,20 @@ const CreateAgentWizard: React.FC = () => {
 
   const steps = [
     { title: "Profile", icon: <UserOutlined /> },
-    { title: "Business & Model", icon: <SettingOutlined /> },
-    { title: "Configuration", icon: <BulbOutlined /> },
+    { title: "Business & GPT Model", icon: <SettingOutlined /> },
+    { title: "Audience & Configuration", icon: <BulbOutlined /> },
     { title: "Publish", icon: <RocketOutlined /> },
   ];
-  // 4) Add this helper UI component (below the main return, above export default is fine)
+
+  const labelWithInfo = (label: string, tip: string) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <Text strong>{label}</Text>
+      <Tooltip title={tip}>
+        <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+      </Tooltip>
+    </div>
+  );
+
   const SuccessAgentCard: React.FC<{
     data: AgentApiResponse;
     onClose: () => void;
@@ -851,18 +1032,16 @@ const CreateAgentWizard: React.FC = () => {
                   }}
                 >
                   <UserOutlined style={{ marginRight: "8px" }} />
-                  Agent Profile
+                  Agent Creator Profile
                 </Title>
 
                 <Row gutter={[16, 12]}>
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Agent Name *
-                      </Text>
+                      {labelWithInfo(
+                        "AI Agent Name *",
+                        "Example: 'TaxBuddy Pro', 'Visa Mentor', 'HealthCare FAQ Bot'"
+                      )}
                       <Input
                         value={agentName}
                         onChange={(e) => setAgentName(e.target.value)}
@@ -881,37 +1060,59 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
+                  {/* Creator Name */}
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Professional Identity *
-                      </Text>
+                      {labelWithInfo(
+                        "Creator Name *",
+                        "Your full name or brand representative name."
+                      )}
+                      <Input
+                        value={creatorName}
+                        onChange={(e) => setCreatorName(e.target.value)}
+                        placeholder="Enter creator name"
+                        style={compactInputStyle}
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Professional Identity of the Creator *",
+                        "Select your profession. Choose 'Other' to type a custom title. Example: 'Startup Consultant', 'Legal Researcher'."
+                      )}
                       <Select
                         value={userRole}
                         onChange={setUserRole}
-                        style={{ width: "100%", ...compactInputStyle }}
                         placeholder="Select your role"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
                       >
                         <Option value="Advocate">Advocate</Option>
-                        <Option value="CA/CS">CA/CS</Option>
+                        <Option value="CA">CA</Option>
+                        <Option value="CS">CS</Option>
                         <Option value="Consultant">Consultant</Option>
                         <Option value="Teacher">Teacher</Option>
                         <Option value="Other">Other</Option>
                       </Select>
+                      {userRole === "Other" && (
+                        <Input
+                          value={userRoleOther}
+                          onChange={(e) => setUserRoleOther(e.target.value)}
+                          placeholder="Enter your profession"
+                          style={{ marginTop: 8, ...compactInputStyle }}
+                        />
+                      )}
                     </div>
                   </Col>
 
                   <Col xs={24}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Your Experience Summary
-                      </Text>
+                      {labelWithInfo(
+                        "Creator Experience Overview",
+                        "Optional 1–2 lines. Example: '8+ years in corporate law, 200+ cases handled.'"
+                      )}
                       <Input
                         value={userExperienceSummary}
                         onChange={(e) =>
@@ -931,12 +1132,10 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Problems Solved in the Past (Description) *
-                      </Text>
+                      {labelWithInfo(
+                        "Problems Solved in the Past (Description) *",
+                        "Give 2–3 representative cases. Example: 'Helped startups register within 3 days', 'Drafted 100+ GST filings monthly'."
+                      )}
                       <TextArea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -960,12 +1159,10 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Your Strengths
-                      </Text>
+                      {labelWithInfo(
+                        "Your Strengths in the Field",
+                        "Optional. Example: 'Contract drafting', 'Appeals', 'Financial modeling'."
+                      )}
                       <Input
                         value={strength}
                         onChange={(e) => setStrength(e.target.value)}
@@ -983,39 +1180,21 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Language *
-                      </Text>
+                      {labelWithInfo(
+                        "Preferred Language *",
+                        "The language you prefer for conversations and output."
+                      )}
                       <Select
                         value={language}
                         onChange={setLanguage}
+                        placeholder="Choose preferred language"
+                        allowClear
                         style={{ width: "100%", ...compactInputStyle }}
                       >
                         <Option value="English">English</Option>
                         <Option value="తెలుగు">తెలుగు</Option>
                         <Option value="हिंदी">हिंदी</Option>
                       </Select>
-                    </div>
-                  </Col>
-
-                  <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Gender (select at least one) *
-                      </Text>
-                      <Checkbox.Group
-                        options={["Male", "Female", "Other"]}
-                        value={genderSelections}
-                        onChange={(vals) =>
-                          setGenderSelections(vals as string[])
-                        }
-                      />
                     </div>
                   </Col>
                 </Row>
@@ -1035,18 +1214,16 @@ const CreateAgentWizard: React.FC = () => {
                   }}
                 >
                   <SettingOutlined style={{ marginRight: "8px" }} />
-                  Business Context & Model
+                  Business Context & GPT Model
                 </Title>
 
                 <Row gutter={[16, 12]}>
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Business/Idea *
-                      </Text>
+                      {labelWithInfo(
+                        "Business/Idea *",
+                        "Your brand, firm or practice. Example: 'ABC Legal', 'FinTax Advisors'."
+                      )}
                       <Input
                         value={business}
                         onChange={(e) => setBusiness(e.target.value)}
@@ -1056,18 +1233,191 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
+                  {/* Domain dropdown + 'Other' text */}
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
+                      {labelWithInfo(
+                        "Domain/Sector *",
+                        "Pick from common domains or choose 'Other' to type your own."
+                      )}
+                      <Select
+                        value={domain}
+                        onChange={setDomain}
+                        placeholder="Select a domain"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
                       >
-                        Target User *
+                        {DOMAIN_OPTIONS.map((d) => (
+                          <Option key={d} value={d}>
+                            {d}
+                          </Option>
+                        ))}
+                      </Select>
+                      {domain === "Other" && (
+                        <Input
+                          style={{ marginTop: 8, ...compactInputStyle }}
+                          placeholder="Enter custom domain/sector"
+                          value={domainOther}
+                          onChange={(e) => setDomainOther(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </Col>
+
+                  {/* SubDomain dropdown + 'Other' text */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Sub-Domain/Subsector *",
+                        "Pick from common subsectors or choose 'Other' to type your own."
+                      )}
+                      <Select
+                        value={subDomain}
+                        onChange={setSubDomain}
+                        placeholder="Select a sub-domain"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        {SUBDOMAIN_OPTIONS.map((d) => (
+                          <Option key={d} value={d}>
+                            {d}
+                          </Option>
+                        ))}
+                      </Select>
+                      {subDomain === "Other" && (
+                        <Input
+                          style={{ marginTop: 8, ...compactInputStyle }}
+                          placeholder="Enter custom sub-domain/subsector"
+                          value={subDomainOther}
+                          onChange={(e) => setSubDomainOther(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </Col>
+
+                  {/* GPT Model */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "GPT Model *",
+                        "Example: gpt-4o, gpt-4. Pick a capable model for better reasoning."
+                      )}
+                      <Select
+                        value={selectedModelId}
+                        onChange={setSelectedModelId}
+                        placeholder="Select GPT model"
+                        style={{ width: "100%", ...compactInputStyle }}
+                        loading={loading}
+                        allowClear
+                      >
+                        {models.map((m) => (
+                          <Option key={m.id} value={m.id}>
+                            {m.id} {m.owned_by ? `· ${m.owned_by}` : ""}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+
+                  {/* Are you solving a problem? */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: 12 }}>
+                      {labelWithInfo(
+                        "Are you solving a problem? *",
+                        "If Yes, specify the problem and (also) your unique solution."
+                      )}
+                      <Radio.Group
+                        value={solveProblem}
+                        onChange={(e) => setSolveProblem(e.target.value)}
+                      >
+                        <Radio value="YES">Yes</Radio>
+                        <Radio value="NO">No</Radio>
+                      </Radio.Group>
+                    </div>
+                  </Col>
+
+                  {/* Main Problem only when YES */}
+                  {solveProblem === "YES" && (
+                    <Col xs={24}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Main Problem to Solve * (max 100 chars)",
+                          "What exact user problem are you solving?"
+                        )}
+                        <TextArea
+                          value={mainProblemText}
+                          onChange={(e) => setMainProblemText(e.target.value)}
+                          placeholder="e.g., 'Early-stage startups struggle to choose the right company structure and miss compliance deadlines.'"
+                          rows={2}
+                          maxLength={100}
+                          style={compactInputStyle}
+                        />
+                        <Text
+                          type="secondary"
+                          style={{ fontSize: 12, float: "right" }}
+                        >
+                          {mainProblemText.length}/100
+                        </Text>
+                      </div>
+                    </Col>
+                  )}
+
+                  {/* Unique Solution ALWAYS visible */}
+                  <Col xs={24}>
+                    <div style={{ marginBottom: 12 }}>
+                      {labelWithInfo(
+                        "Unique Solution Method (max 100 chars)",
+                        "How is your approach different/better?"
+                      )}
+                      <TextArea
+                        value={uniqueSolution}
+                        onChange={(e) => setUniqueSolution(e.target.value)}
+                        placeholder="e.g., 'Fast triage + templates + compliance checklist with reminders.'"
+                        rows={2}
+                        maxLength={100}
+                        style={compactInputStyle}
+                      />
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 12, float: "right" }}
+                      >
+                        {uniqueSolution.length}/100
                       </Text>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            )}
+
+            {/* STEP 3 */}
+            {step === 2 && (
+              <div>
+                <Title
+                  level={4}
+                  style={{
+                    color: "#722ed1",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <BulbOutlined style={{ marginRight: "8px" }} />
+                  Audience & Configuration
+                </Title>
+
+                <Row gutter={[16, 12]}>
+                  {/* Target audience */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Target Customer *",
+                        "Who will use this agent? Example: 'Startups', 'SMBs', 'Students'."
+                      )}
                       <Select
                         value={targetUser}
                         onChange={setTargetUser}
                         placeholder="Select target audience"
+                        allowClear
                         style={{ width: "100%", ...compactInputStyle }}
                       >
                         {TARGET_USER_OPTIONS.map((option) => (
@@ -1089,50 +1439,31 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Domain *
-                      </Text>
-                      <Input
-                        value={domain}
-                        onChange={(e) => setDomain(e.target.value)}
-                        placeholder="e.g., Law"
-                        style={compactInputStyle}
+                      {labelWithInfo(
+                        "Target Audience Gender *",
+                        "Pick one or more if your audience is specific."
+                      )}
+                      <Checkbox.Group
+                        options={["Male", "Female", "Other"]}
+                        value={genderSelections}
+                        onChange={(vals) =>
+                          setGenderSelections(vals as string[])
+                        }
                       />
                     </div>
                   </Col>
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Sub-Domain *
-                      </Text>
-                      <Input
-                        value={subDomain}
-                        onChange={(e) => setSubDomain(e.target.value)}
-                        placeholder="e.g., Civil, Corporate"
-                        style={compactInputStyle}
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Age Limit *
-                      </Text>
+                      {labelWithInfo(
+                        "Target Audience Age Limit *",
+                        "Example: 18–25 for students, 26–40 for working professionals."
+                      )}
                       <Select
                         value={ageLimit}
                         onChange={setAgeLimit}
                         placeholder="Select age range"
+                        allowClear
                         style={{ width: "100%", ...compactInputStyle }}
                       >
                         {AGE_LIMIT_OPTIONS.map((option) => (
@@ -1144,96 +1475,18 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
+                  {/* Tone & Response Format */}
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Model *
-                      </Text>
-                      <Select
-                        value={selectedModelId}
-                        onChange={setSelectedModelId}
-                        placeholder="Select AI model"
-                        style={{ width: "100%", ...compactInputStyle }}
-                        loading={loading}
-                      >
-                        {models.map((m) => (
-                          <Option key={m.id} value={m.id}>
-                            {m.id} {m.owned_by ? `· ${m.owned_by}` : ""}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
-            )}
-
-            {/* STEP 3 */}
-            {step === 2 && (
-              <div>
-                <Title
-                  level={4}
-                  style={{
-                    color: "#722ed1",
-                    marginBottom: "20px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <BulbOutlined style={{ marginRight: "8px" }} />
-                  Agent Configuration
-                </Title>
-
-                <Row gutter={[16, 12]}>
-                  <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Main Problem to Solve
-                      </Text>
-                      <Input
-                        value={mainProblemSolved}
-                        onChange={(e) => setMainProblemSolved(e.target.value)}
-                        placeholder="(optional)"
-                        style={compactInputStyle}
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Unique Solution / Method *
-                      </Text>
-                      <TextArea
-                        value={uniqueSolution}
-                        onChange={(e) => setUniqueSolution(e.target.value)}
-                        placeholder="Describe your unique approach"
-                        rows={3}
-                        style={compactInputStyle}
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Conversation Tone *
-                      </Text>
+                      {labelWithInfo(
+                        "Conversation Tone *",
+                        "Example: Helpful & Professional for legal/finance agents."
+                      )}
                       <Select
                         value={converstionTone}
                         onChange={setConverstionTone}
+                        placeholder="Select a conversation tone"
+                        allowClear
                         style={{ width: "100%", ...compactInputStyle }}
                       >
                         {TONE_OPTIONS.map((t) => (
@@ -1247,15 +1500,15 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Response Format
-                      </Text>
+                      {labelWithInfo(
+                        "Response Format",
+                        "auto (natural text) or json_object (structured output)."
+                      )}
                       <Select
                         value={responseFormat}
                         onChange={setResponseFormat}
+                        placeholder="Select response format"
+                        allowClear
                         style={{ width: "100%", ...compactInputStyle }}
                       >
                         {RESPONSE_FORMATS.map((f) => (
@@ -1267,63 +1520,7 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
-                  {/* Capabilities (unchanged) */}
-                  <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text strong>Capabilities</Text>
-                      <Space direction="vertical" style={{ width: "100%" }}>
-                        <Checkbox
-                          checked={capCodeInterpreter}
-                          onChange={(e) =>
-                            setCapCodeInterpreter(e.target.checked)
-                          }
-                        >
-                          Code Interpreter
-                        </Checkbox>
-                        <Checkbox
-                          checked={capFileSearch}
-                          onChange={(e) => setCapFileSearch(e.target.checked)}
-                        >
-                          File Search
-                        </Checkbox>
-                        {capFileSearch && (
-                          <div>
-                            <Upload
-                              multiple
-                              beforeUpload={(file) => {
-                                setFileSearchFiles((prev) => [...prev, file]);
-                                return false;
-                              }}
-                              fileList={[]}
-                            >
-                              <Button icon={<UploadOutlined />} size="small">
-                                Upload Files
-                              </Button>
-                            </Upload>
-                            {fileSearchFiles.length > 0 && (
-                              <div style={{ marginTop: "8px" }}>
-                                {fileSearchFiles.map((file, index) => (
-                                  <Tag
-                                    key={index}
-                                    closable
-                                    onClose={() =>
-                                      setFileSearchFiles((prev) =>
-                                        prev.filter((_, i) => i !== index)
-                                      )
-                                    }
-                                  >
-                                    {file.name}
-                                  </Tag>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </Space>
-                    </div>
-                  </Col>
-
-                  {/* Instructions (unchanged logic) */}
+                  {/* Instructions */}
                   <Col xs={24}>
                     <div style={{ marginBottom: "12px" }}>
                       <div
@@ -1332,9 +1529,13 @@ const CreateAgentWizard: React.FC = () => {
                           alignItems: "center",
                           justifyContent: "space-between",
                           marginBottom: "8px",
+                          gap: 8,
                         }}
                       >
-                        <Text strong>Instructions</Text>
+                        {labelWithInfo(
+                          "Instructions",
+                          "Click Generate to auto-create; you can then Edit. Keep it concise and actionable."
+                        )}
                         <Space>
                           <Button
                             type="primary"
@@ -1361,14 +1562,16 @@ const CreateAgentWizard: React.FC = () => {
                       {!isEditingInstructions ? (
                         <div
                           style={{
-                            minHeight: "120px",
+                            minHeight: 140,
+                            maxHeight: 240,
                             padding: "12px",
                             border: "2px solid #f0f0f0",
                             borderRadius: "8px",
                             background: instructions ? "#fafafa" : "#f9f9f9",
                             whiteSpace: "pre-wrap",
                             fontSize: "14px",
-                            lineHeight: "1.4",
+                            lineHeight: 1.4,
+                            overflowY: "auto",
                           }}
                         >
                           {instructions ||
@@ -1381,9 +1584,9 @@ const CreateAgentWizard: React.FC = () => {
                             onChange={(e) =>
                               setTempInstructions(e.target.value)
                             }
-                            rows={8}
+                            rows={10}
                             maxLength={7000}
-                            style={compactInputStyle}
+                            style={{ ...compactInputStyle, maxHeight: 320 }}
                           />
                           <div
                             style={{
@@ -1426,7 +1629,7 @@ const CreateAgentWizard: React.FC = () => {
               </div>
             )}
 
-            {/* STEP 4 (unchanged UI) */}
+            {/* STEP 4 */}
             {step === 3 && (
               <div>
                 <Title
@@ -1439,35 +1642,51 @@ const CreateAgentWizard: React.FC = () => {
                   }}
                 >
                   <RocketOutlined style={{ marginRight: "8px" }} />
-                  Contact, Starters & Publish
+                  Contact, Conversations & Publish
                 </Title>
 
                 <Row gutter={[16, 12]}>
-                  <Col xs={24}>
+                  {/* Share contact? */}
+                  <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
+                      {labelWithInfo(
+                        "Do you want to share Contact Details? *",
+                        "Choose Yes to display your contact on the agent card."
+                      )}
+                      <Radio.Group
+                        value={shareContact}
+                        onChange={(e) => setShareContact(e.target.value)}
                       >
-                        Contact Details (optional)
-                      </Text>
-                      <Input
-                        value={contactDetails}
-                        onChange={(e) => setContactDetails(e.target.value)}
-                        placeholder="Email/Phone/Website"
-                        style={compactInputStyle}
-                      />
+                        <Radio value="YES">Yes</Radio>
+                        <Radio value="NO">No</Radio>
+                      </Radio.Group>
                     </div>
                   </Col>
 
+                  {/* Contact field only when YES */}
+                  {shareContact === "YES" && (
+                    <Col xs={24}>
+                      <div style={{ marginBottom: "12px" }}>
+                        {labelWithInfo(
+                          "Contact Details",
+                          "Email / Phone / Website for users to reach you."
+                        )}
+                        <Input
+                          value={contactDetails}
+                          onChange={(e) => setContactDetails(e.target.value)}
+                          placeholder="Email/Phone/Website"
+                          style={compactInputStyle}
+                        />
+                      </div>
+                    </Col>
+                  )}
+
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Conversation Starter 1
-                      </Text>
+                      {labelWithInfo(
+                        "Conversation Starter 1",
+                        'Example: "What service do you need help with today?"'
+                      )}
                       <Input
                         value={conStarter1}
                         onChange={(e) => setConStarter1(e.target.value)}
@@ -1479,12 +1698,10 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Conversation Starter 2
-                      </Text>
+                      {labelWithInfo(
+                        "Conversation Starter 2",
+                        'Example: "Share your case details..."'
+                      )}
                       <Input
                         value={conStarter2}
                         onChange={(e) => setConStarter2(e.target.value)}
@@ -1496,12 +1713,10 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Conversation Starter 3
-                      </Text>
+                      {labelWithInfo(
+                        "Conversation Starter 3",
+                        'Example: "Do you want a document template?"'
+                      )}
                       <Input
                         value={conStarter3}
                         onChange={(e) => setConStarter3(e.target.value)}
@@ -1513,12 +1728,10 @@ const CreateAgentWizard: React.FC = () => {
 
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Conversation Starter 4
-                      </Text>
+                      {labelWithInfo(
+                        "Conversation Starter 4",
+                        'Example: "Prefer English/తెలుగు/हिंदी?"'
+                      )}
                       <Input
                         value={conStarter4}
                         onChange={(e) => setConStarter4(e.target.value)}
@@ -1528,66 +1741,12 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
-                  {/* Rate this Platform (0–5) */}
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Rate this Platform
-                      </Text>
-                      {/* Stars prevent invalid strings like "GOOD" */}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <Rate
-                          value={rateThisPlatform}
-                          onChange={(val) => setRateThisPlatform(val)}
-                          allowClear
-                        />
-                        <Text type="secondary">{rateThisPlatform}/5</Text>
-                      </div>
-                    </div>
-                  </Col>
-
-                  {/* Share Your Feedback (string) */}
-                  <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "4px" }}
-                      >
-                        Share Your Feedback (optional)
-                      </Text>
-                      <TextArea
-                        rows={3}
-                        value={shareYourFeedback}
-                        onChange={(e) => setShareYourFeedback(e.target.value)}
-                        placeholder="Any suggestions, thoughts, or issues?"
-                        style={compactInputStyle}
-                        maxLength={1000}
-                      />
-                      <div style={{ textAlign: "right" }}>
-                        <Text type="secondary">
-                          {shareYourFeedback.length}/1000
-                        </Text>
-                      </div>
-                    </div>
-                  </Col>
-
                   <Col xs={24} md={8}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "8px" }}
-                      >
-                        Active Status
-                      </Text>
+                      {labelWithInfo(
+                        "Active Status",
+                        "Toggle whether this agent is visible/usable."
+                      )}
                       <Switch
                         checked={activeStatus}
                         onChange={setActiveStatus}
@@ -1597,20 +1756,36 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
+                  {/* Channels (static) */}
                   <Col xs={24} md={8}>
                     <div style={{ marginBottom: "12px" }}>
-                      <Text
-                        strong
-                        style={{ display: "block", marginBottom: "8px" }}
+                      {labelWithInfo(
+                        "Text Chat",
+                        "Enabled by default and always available."
+                      )}
+                      <Tag color="green" style={{ borderRadius: 6 }}>
+                        Active (default)
+                      </Tag>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={8}>
+                    <div style={{ marginBottom: "12px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
                       >
-                        Voice Enabled
-                      </Text>
-                      <Switch
-                        checked={voiceStatus}
-                        onChange={setVoiceStatus}
-                        checkedChildren="Enabled"
-                        unCheckedChildren="Disabled"
-                      />
+                        <Text strong>Voice</Text>
+                        <Tooltip title="It may launch soon and price is applicable.">
+                          <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                        </Tooltip>
+                      </div>
+                      <Tag color="default" style={{ borderRadius: 6 }}>
+                        Disabled
+                      </Tag>
                     </div>
                   </Col>
                 </Row>
@@ -1725,96 +1900,14 @@ const CreateAgentWizard: React.FC = () => {
           </Card>
 
           <Card
-            title="Test Chat"
-            size="small"
-            style={{
-              marginBottom: "16px",
-              border: "1px solid #e6e6ff",
-              borderRadius: "8px",
-            }}
-          >
-            <div
-              style={{
-                height: "150px",
-                overflowY: "auto",
-                padding: "8px",
-                background: "#fafafa",
-                borderRadius: "6px",
-                marginBottom: "8px",
-              }}
-            >
-              {previewChat.map((m, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    justifyContent:
-                      m.role === "user" ? "flex-end" : "flex-start",
-                    marginBottom: "6px",
-                  }}
-                >
-                  <div
-                    style={{
-                      maxWidth: "80%",
-                      padding: "6px 10px",
-                      borderRadius: "10px",
-                      background: m.role === "user" ? "#722ed1" : "#f0f0f0",
-                      color: m.role === "user" ? "white" : "#333",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {m.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ display: "flex", gap: "6px" }}>
-              <Input
-                size="small"
-                value={previewInput}
-                onChange={(e) => setPreviewInput(e.target.value)}
-                placeholder="Ask a sample question..."
-                onPressEnter={() => {
-                  const q = previewInput.trim();
-                  if (!q) return;
-                  const mock = `(${
-                    agentName || "Agent"
-                  }) would respond based on your instructions. You asked: "${q}".`;
-                  setPreviewChat((c) => [
-                    ...c,
-                    { role: "user", text: q },
-                    { role: "assistant", text: mock },
-                  ]);
-                  setPreviewInput("");
-                }}
-              />
-              <Button
-                size="small"
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={() => {
-                  const q = previewInput.trim();
-                  if (!q) return;
-                  const mock = `(${
-                    agentName || "Agent"
-                  }) would respond based on your instructions. You asked: "${q}".`;
-                  setPreviewChat((c) => [
-                    ...c,
-                    { role: "user", text: q },
-                    { role: "assistant", text: mock },
-                  ]);
-                  setPreviewInput("");
-                }}
-                style={purpleBtn}
-              >
-                Send
-              </Button>
-            </div>
-          </Card>
-
-          <Card
-            title="Choose Stores"
+            title={
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Text strong>Choose Stores</Text>
+                <Tooltip title="It may launch soon and price is applicable.">
+                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                </Tooltip>
+              </div>
+            }
             size="small"
             style={{
               marginBottom: "16px",
@@ -1850,11 +1943,23 @@ const CreateAgentWizard: React.FC = () => {
                   onChange={(e) => setStoreOxy(e.target.checked)}
                 >
                   <div>
-                    <Text strong style={{ fontSize: "14px" }}>
-                      OXY GPT Store
-                    </Text>
-                    <br />
-                    <Text style={{ fontSize: "12px" }}>$19</Text>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <Text strong style={{ fontSize: "14px" }}>
+                        OXY GPT Store
+                      </Text>
+                      <Tooltip title="It may launch soon and price is applicable.">
+                        <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                      </Tooltip>
+                    </div>
+                    <Text style={{ fontSize: "12px" }}>$19</Text>{" "}
+                    <Tag
+                      color="blue"
+                      style={{ borderRadius: 6, marginLeft: 4 }}
+                    >
+                      Free for now
+                    </Tag>
                   </div>
                 </Checkbox>
               </Col>

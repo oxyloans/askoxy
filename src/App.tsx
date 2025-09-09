@@ -210,8 +210,10 @@ import FaqLLMSlides from "./GenOxy/FaqSildes";
 import LLMFAQPage from "./GenOxy/FaqLLM";
 import AiVideosGenerated from "./FREEAIBOOK/AiVideosGenerated";
 import BharatAgentsStore from "./components/BharatAgentsStore";
-import AssistantDetails from "./components/AssistantDetails";
-
+import AllAgentsPage from "./AgentStore/AllAgentsPage";
+import AssistantDetails from "./BharathAIStore/pages/AssistantDetails";
+import AiResources from "./BharathAIStore/pages/AIResources";
+import AppRoutes from "./BharathAIStore/routes/Landingpage";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -238,6 +240,7 @@ const App: React.FC = () => {
       "/studyabroad",
       "/FreeAIBook",
       "/genoxyai-services",
+      "/bharath-aistore",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -294,6 +297,12 @@ const App: React.FC = () => {
             />
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
+            <Route path="/bharath-aistore" element={<AppRoutes />} />
+            <Route path="/ai-initiatives" element={<AiResources />} />
+            <Route
+              path="/bharath-aistore/assistant/:id"
+              element={<AssistantDetails />}
+            />
             <Route path="/jobstreet" element={<JobStreet />} />
             <Route path="/myblogs" element={<BlogsPage />} />
             <Route
@@ -345,14 +354,11 @@ const App: React.FC = () => {
               element={<Navigate to="/genoxy/welcome" replace />}
             />
             <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
-            <Route
+            {/* <Route
               path="/bharathaiexpertstore"
               element={<BharatAgentsStore />}
-            />
-            <Route
-              path="/bharathaiexpertstore/:id"
-              element={<AssistantDetails />}
-            />
+            /> */}
+            <Route path="/bharath-aistore/agents" element={<AllAgentsPage />} />
             <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
             <Route path="/genoxy" element={<GenOxy />} />
             <Route
@@ -424,15 +430,18 @@ const App: React.FC = () => {
               element={<RiceSalePage />}
             /> */}
             <Route path="/qrcode" element={<QR />} />
-             <Route path="/verify-agent" element={<VerifyIdentity  />} />
-              <Route path="/create-aiagent" element={<CreateAgentWizard  />} />
-                 <Route path="/bharat-expert" element={<CreateAgentMain  />} />
-             <Route path="/bharat-agent" element={<CreateAgentStep1 />} />      
-             <Route path="/bharat-agentbusiness" element={<CreateAgentStep2  />} />
-             <Route path="/bharat-agentprocess" element={<AgentProcess  />} />
-              <Route path="/bharat-targetcus" element={<AgentTarget  />} /> 
-              <Route path="/bharat-contact" element={<AgentContact />} />  
-              <Route path="/bharat-generate" element={<AgentGenerate />} />               
+            <Route path="/verify-agent" element={<VerifyIdentity />} />
+            <Route path="/create-aiagent" element={<CreateAgentWizard />} />
+            <Route path="/bharat-expert" element={<CreateAgentMain />} />
+            <Route path="/bharat-agent" element={<CreateAgentStep1 />} />
+            <Route
+              path="/bharat-agentbusiness"
+              element={<CreateAgentStep2 />}
+            />
+            <Route path="/bharat-agentprocess" element={<AgentProcess />} />
+            <Route path="/bharat-targetcus" element={<AgentTarget />} />
+            <Route path="/bharat-contact" element={<AgentContact />} />
+            <Route path="/bharat-generate" element={<AgentGenerate />} />
             <Route path="/oxygroup" element={<OxyGroup />} />
             <Route path="/pinkfunding" element={<PinkFunding />} />
             <Route path="/climatecrisis" element={<Climatecrisis />} />
