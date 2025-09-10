@@ -470,6 +470,7 @@ import {
   getAssistantDetails,
   askAssistant,
 } from "../../AskoxyAdmin/Assistants/assistantApi";
+import AppShell from "../components/AppShell";
 
 interface Assistant {
   id: string;
@@ -758,6 +759,9 @@ const AssistantDetails: React.FC = () => {
   };
 
   return (
+          <AppShell
+          allAgentsHref="/bharath-aistore/agents"
+        >
     <div
       className={`flex flex-col h-screen overflow-auto bg-white dark:bg-gray-800 text-purple-700 dark:text-white`}
     >
@@ -1057,6 +1061,7 @@ backdrop-blur-md sticky top-0 z-20 "
         </>
       )}
     </div>
+    </AppShell>
   );
 };
 

@@ -174,7 +174,6 @@ import AgentGenerate from "./AgentStore/AgentGenerate";
 import VerifyIdentity from "./AgentStore/VerifyAgent";
 import CreateAgentWizard from "./AgentStore/CreateAgentWizard";
 
-
 // *************************STUDY ABRAD****************************//
 import CoursesPage from "./StudyAbroad/Course";
 import UserSelectionPage from "./StudyAbroad/Homepage";

@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import AppShell from "../BharathAIStore/components/AppShell";
 
 type Lang = "en" | "te" | "hi";
 
@@ -29,6 +30,10 @@ interface Translations {
 
 export default function CreateAgentMain() {
   const navigate = useNavigate();
+  // NEW: required refs for DashboardHeader
+  const bharatAgentsStoreRef = useRef<HTMLDivElement>(null);
+  const aiResourcesRef = useRef<HTMLDivElement>(null);
+  const freeAIBookRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<Lang>("en");
 
   // pass the chosen headerTitle into the wizard + force headerStatus=false there
@@ -55,7 +60,8 @@ export default function CreateAgentMain() {
         twinDesc2Bold: "Meaning:",
         twinDesc2:
           " Your expertise powers the assistant (e.g., Doctor, CA/CS, Advocate).",
-        twinDoctorUsecaseTitle: "Doctor Twin – Example (AI Enabler style reply)",
+        twinDoctorUsecaseTitle:
+          "Doctor Twin – Example (AI Enabler style reply)",
         twinDoctorUsecase: `Patient: "I often feel a heavy sensation in my chest after climbing stairs. Should I be worried?"
 
 AI Twin (Doctor): "I understand your concern. Chest heaviness can be related to the heart, lungs, or simple fatigue. If it’s accompanied by dizziness, sweating, or pain radiating to your arm or jaw, please seek immediate care. For now, do you have any history of high BP, diabetes, or heart disease?"`,
@@ -94,8 +100,7 @@ AI ట్విన్ (డాక్టర్): "మీ ఆందోళన అర
         twinCta: "AI ట్విన్‌గా కొనసాగండి",
 
         enablerTitle: "AI ఎనేబ్లర్",
-        enablerDesc1:
-          "లైసెన్స్ లేకపోయినా మీ అనుభవంతో సహాయకులను నిర్మించండి.",
+        enablerDesc1: "లైసెన్స్ లేకపోయినా మీ అనుభవంతో సహాయకులను నిర్మించండి.",
         enablerDesc2Bold: "అర్థం:",
         enablerDesc2:
           " సమస్యలు ఎదుర్కొన్న సీనియర్ (పేషెంట్/మెంటర్) పరిష్కారాలు రూపొందించి, వాటితో అసిస్టెంట్‌ను శక్తివంతం చేస్తాడు.",
@@ -126,8 +131,7 @@ AI ट्विन (डॉक्टर): "आपकी चिंता समझ
         twinCta: "AI ट्विन के रूप में जारी रखें",
 
         enablerTitle: "AI एनेबलर",
-        enablerDesc1:
-          "बिना लाइसेंस के भी अपने अनुभव से सहायक बनाएँ।",
+        enablerDesc1: "बिना लाइसेंस के भी अपने अनुभव से सहायक बनाएँ।",
         enablerDesc2Bold: "अर्थ:",
         enablerDesc2:
           " समस्याएँ झेल चुके वरिष्ठ (मरीज़/मेंटोर) समाधान बनाते हैं और असिस्टेंट को सक्षम करते हैं ताकि वही समस्या वाले लोगों की मदद हो सके।",
@@ -146,206 +150,214 @@ AI एनेबलर असिस्टेंट: "समझ गया/गई�
   }, [lang]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-purple-950 to-violet-900" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-900/20 to-cyan-900/30" />
-      </div>
-
-      {/* Main */}
-      <div className="relative z-10 mx-auto max-w-5xl px-4 py-8">
-        {/* Language toggle */}
-        <div className="mb-6 flex items-center justify-end gap-2">
-          <button
-            onClick={() => setLang("en")}
-            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
-              lang === "en"
-                ? "bg-gradient-to-r from-sky-400 to-blue-500 text-white shadow"
-                : "bg-white/10 text-slate-200 hover:bg-white/20"
-            }`}
-            aria-pressed={lang === "en"}
-          >
-            English
-          </button>
-          <button
-            onClick={() => setLang("te")}
-            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
-              lang === "te"
-                ? "bg-gradient-to-r from-amber-400 to-pink-500 text-white shadow"
-                : "bg-white/10 text-slate-200 hover:bg-white/20"
-            }`}
-            aria-pressed={lang === "te"}
-          >
-            {T.telugu}
-          </button>
-          <button
-            onClick={() => setLang("hi")}
-            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
-              lang === "hi"
-                ? "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow"
-                : "bg-white/10 text-slate-200 hover:bg-white/20"
-            }`}
-            aria-pressed={lang === "hi"}
-          >
-            {T.hindi}
-          </button>
+      <AppShell
+          allAgentsHref="/bharath-aistore/agents"
+          createAgentHref="/create-aiagent"
+        >
+   <div className="min-h-screen">
+      <div className="relative min-h-screen overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 -z-20">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-purple-950 to-violet-900" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-900/20 to-cyan-900/30" />
         </div>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-            {T.pageTitle}
-          </h1>
-          <p className="text-lg text-slate-300 max-w-xl mx-auto">{T.pageSub}</p>
-        </div>
+        {/* Main */}
+        <div className="relative z-10 mx-auto max-w-5xl px-4 py-8">
+          {/* Language toggle */}
+          <div className="mb-6 flex items-center justify-end gap-2">
+            <button
+              onClick={() => setLang("en")}
+              className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
+                lang === "en"
+                  ? "bg-gradient-to-r from-sky-400 to-blue-500 text-white shadow"
+                  : "bg-white/10 text-slate-200 hover:bg-white/20"
+              }`}
+              aria-pressed={lang === "en"}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setLang("te")}
+              className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
+                lang === "te"
+                  ? "bg-gradient-to-r from-amber-400 to-pink-500 text-white shadow"
+                  : "bg-white/10 text-slate-200 hover:bg-white/20"
+              }`}
+              aria-pressed={lang === "te"}
+            >
+              {T.telugu}
+            </button>
+            <button
+              onClick={() => setLang("hi")}
+              className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
+                lang === "hi"
+                  ? "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow"
+                  : "bg-white/10 text-slate-200 hover:bg-white/20"
+              }`}
+              aria-pressed={lang === "hi"}
+            >
+              {T.hindi}
+            </button>
+          </div>
 
-        {/* Cards: equal heights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
-          {/* AI Twin */}
-          <div className="relative group transition-all duration-300 hover:scale-[1.02] h-full">
-            <div className="relative h-full flex flex-col rounded-2xl p-6 border backdrop-blur-lg transition-all duration-300 border-white/20 bg-white/10 hover:border-violet-300/50 hover:bg-white/12 shadow-xl shadow-violet-500/10">
-              {/* Icon + Title */}
-              <div className="mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-3">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              {T.pageTitle}
+            </h1>
+            <p className="text-lg text-slate-300 max-w-xl mx-auto">
+              {T.pageSub}
+            </p>
+          </div>
+
+          {/* Cards: equal heights */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+            {/* AI Twin */}
+            <div className="relative group transition-all duration-300 hover:scale-[1.02] h-full">
+              <div className="relative h-full flex flex-col rounded-2xl p-6 border backdrop-blur-lg transition-all duration-300 border-white/20 bg-white/10 hover:border-violet-300/50 hover:bg-white/12 shadow-xl shadow-violet-500/10">
+                {/* Icon + Title */}
+                <div className="mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-3">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-white mb-2">
+                    {T.twinTitle}
+                  </h2>
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">
-                  {T.twinTitle}
-                </h2>
-              </div>
 
-              {/* Description */}
-              <div className="space-y-2 mb-4">
-                <p className="text-slate-200 text-sm leading-relaxed">
-                  {T.twinDesc1}
-                </p>
-                <p className="text-slate-200 text-sm leading-relaxed">
-                  <span className="font-semibold">{T.twinDesc2Bold}</span>
-                  {T.twinDesc2}
-                </p>
-              </div>
+                {/* Description */}
+                <div className="space-y-2 mb-4">
+                  <p className="text-slate-200 text-sm leading-relaxed">
+                    {T.twinDesc1}
+                  </p>
+                  <p className="text-slate-200 text-sm leading-relaxed">
+                    <span className="font-semibold">{T.twinDesc2Bold}</span>
+                    {T.twinDesc2}
+                  </p>
+                </div>
 
-              {/* Example */}
-              <div className="mb-6 rounded-lg bg-black/20 border border-white/10 p-4">
-                <p className="text-slate-200 text-sm font-semibold mb-2">
-                  {T.twinDoctorUsecaseTitle}
-                </p>
-                <pre className="whitespace-pre-wrap text-slate-300 text-xs leading-5">
-                  {T.twinDoctorUsecase}
-                </pre>
-              </div>
+                {/* Example */}
+                <div className="mb-6 rounded-lg bg-black/20 border border-white/10 p-4">
+                  <p className="text-slate-200 text-sm font-semibold mb-2">
+                    {T.twinDoctorUsecaseTitle}
+                  </p>
+                  <pre className="whitespace-pre-wrap text-slate-300 text-xs leading-5">
+                    {T.twinDoctorUsecase}
+                  </pre>
+                </div>
 
-              {/* Footer button pinned to bottom */}
-              <div className="mt-auto flex justify-end">
-                <button
-                  onClick={() => goNext("ai-twin")}
-                  className="px-5 py-2.5 rounded-lg font-semibold text-white transition-all duration-300 flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.99] shadow-md hover:shadow-lg"
-                >
-                  {T.twinCta}
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Footer button pinned to bottom */}
+                <div className="mt-auto flex justify-end">
+                  <button
+                    onClick={() => goNext("ai-twin")}
+                    className="px-5 py-2.5 rounded-lg font-semibold text-white transition-all duration-300 flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.99] shadow-md hover:shadow-lg"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 7l5 5m0 0l-5 5m5-5H6"
-                    />
-                  </svg>
-                </button>
+                    {T.twinCta}
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Enabler */}
+            <div className="relative group transition-all duration-300 hover:scale-[1.02] h-full">
+              <div className="relative h-full flex flex-col rounded-2xl p-6 border backdrop-blur-lg transition-all duration-300 border-white/20 bg-white/10 hover:border-emerald-300/50 hover:bg-white/12 shadow-xl shadow-emerald-500/10">
+                {/* Icon + Title */}
+                <div className="mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-white mb-2">
+                    {T.enablerTitle}
+                  </h2>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2 mb-4">
+                  <p className="text-slate-200 text-sm leading-relaxed">
+                    {T.enablerDesc1}
+                  </p>
+                  <p className="text-slate-200 text-sm leading-relaxed">
+                    <span className="font-semibold">{T.enablerDesc2Bold}</span>
+                    {T.enablerDesc2}
+                  </p>
+                </div>
+
+                {/* Example */}
+                <div className="mb-6 rounded-lg bg-black/20 border border-white/10 p-4">
+                  <p className="text-slate-200 text-sm font-semibold mb-2">
+                    {T.enablerExampleTitle}
+                  </p>
+                  <pre className="whitespace-pre-wrap text-slate-300 text-xs leading-5">
+                    {T.enablerExample}
+                  </pre>
+                </div>
+
+                {/* Footer button pinned to bottom */}
+                <div className="mt-auto flex justify-end">
+                  <button
+                    onClick={() => goNext("ai-enabler")}
+                    className="px-5 py-2.5 rounded-lg font-semibold text-white transition-all duration-300 flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] shadow-md hover:shadow-lg"
+                  >
+                    {T.enablerCta}
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* AI Enabler */}
-          <div className="relative group transition-all duration-300 hover:scale-[1.02] h-full">
-            <div className="relative h-full flex flex-col rounded-2xl p-6 border backdrop-blur-lg transition-all duration-300 border-white/20 bg-white/10 hover:border-emerald-300/50 hover:bg-white/12 shadow-xl shadow-emerald-500/10">
-              {/* Icon + Title */}
-              <div className="mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-bold text-white mb-2">
-                  {T.enablerTitle}
-                </h2>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2 mb-4">
-                <p className="text-slate-200 text-sm leading-relaxed">
-                  {T.enablerDesc1}
-                </p>
-                <p className="text-slate-200 text-sm leading-relaxed">
-                  <span className="font-semibold">{T.enablerDesc2Bold}</span>
-                  {T.enablerDesc2}
-                </p>
-              </div>
-
-              {/* Example */}
-              <div className="mb-6 rounded-lg bg-black/20 border border-white/10 p-4">
-                <p className="text-slate-200 text-sm font-semibold mb-2">
-                  {T.enablerExampleTitle}
-                </p>
-                <pre className="whitespace-pre-wrap text-slate-300 text-xs leading-5">
-                  {T.enablerExample}
-                </pre>
-              </div>
-
-              {/* Footer button pinned to bottom */}
-              <div className="mt-auto flex justify-end">
-                <button
-                  onClick={() => goNext("ai-enabler")}
-                  className="px-5 py-2.5 rounded-lg font-semibold text-white transition-all duration-300 flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] shadow-md hover:shadow-lg"
-                >
-                  {T.enablerCta}
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 7l5 5m0 0l-5 5m5-5H6"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
-
       </div>
     </div>
+    </AppShell>
   );
 }

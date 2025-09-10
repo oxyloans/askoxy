@@ -1,4 +1,4 @@
-
+// /src/AgentStore/BharatAgentsStore.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Bot, Shield, Loader2 } from "lucide-react";
 import BASE_URL from "../../Config";
@@ -6,10 +6,14 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Highlighter from "../components/Highlighter";
-
+import CA1image from "../../assets/img/ca1.png";
+import CA2image from "../../assets/img/ca2.png";
+import CA3image from "../../assets/img/ca3.png";
+import CA4image from "../../assets/img/ca4.png";
 // ---------- types ----------
 interface Assistant {
   id: string;
+  assistantId:string;
   object: string;
   created_at: number;
   name: string;
@@ -23,6 +27,9 @@ interface Assistant {
   tool_resources: any;
   metadata: any;
   response_format: string;
+  // NEW:
+  status?: string;
+  agentStatus?: string;
 }
 
 interface AssistantsResponse {
@@ -48,7 +55,7 @@ async function getAssistants(
   limit = 50,
   after?: string
 ): Promise<AssistantsResponse> {
-  const res = await apiClient.get("/student-service/user/getAllAssistants", {
+  const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
@@ -60,34 +67,41 @@ async function getAssistants(
 
 // ---------- image mapping ----------
 const IMAGE_MAP: { [key: string]: string } = {
-  ai: "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?q=80&w=1200&auto=format&fit=crop", // robot/ai hand
-  code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop", // code/terminal
+  ai: "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?q=80&w=1200&auto=format&fit=crop",
+  code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
   finance:
-    "https://img.etimg.com/thumb/width-1200,height-900,imgsize-42978,resizemode-75,msid-115767455/news/company/corporate-trends/most-cfos-in-india-believe-generative-ai-will-enhance-effectiveness-of-tax-functions-report.jpg", // Finance AI
+    "https://img.etimg.com/thumb/width-1200,height-900,imgsize-42978,resizemode-75,msid-115767455/news/company/corporate-trends/most-cfos-in-india-believe-generative-ai-will-enhance-effectiveness-of-tax-functions-report.jpg",
   business:
-    "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=", // Business analytics
+    "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
   globaleducation:
-    "https://www.linkysoft.com/images/kb/430_Artificial-Intelligence-and-Educational-Robots.jpg", // AI learning concept
-  gst: "https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_750,h_394/https://authbridge.com/wp-content/uploads/2025/08/RBI-free-ai-blog-image-1024x538.jpg", // RBI AI framework
-  law: "https://static.vecteezy.com/system/resources/previews/035/637/000/large_2x/ai-generated-law-legal-system-justice-photo.jpg", // AI transformative impact
+    "https://www.linkysoft.com/images/kb/430_Artificial-Intelligence-and-Educational-Robots.jpg",
+  gst: "https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_750,h_394/https://authbridge.com/wp-content/uploads/2025/08/RBI-free-ai-blog-image-1024x538.jpg",
+  law: "https://static.vecteezy.com/system/resources/previews/035/637/000/large_2x/ai-generated-law-legal-system-justice-photo.jpg",
 };
 
-// Updated: Keep DEFAULT_IMAGE as an array with two URLs
+// Keep DEFAULT_IMAGE array
 const DEFAULT_IMAGE = [
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-nZe2pShSDeDXC_jxD7_rKF5w-0TQPUmj1Q&s",
-  "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg"
+  "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+];
+
+// ---------- NEW: featured tiles (no-crop images) ----------
+const FEATURE_TILES = [
+  { src: CA1image, label: "Create AI Agent", to: "/create-aiagent" },
+  { src: CA2image, label: "GLMS", to: "/glms" },
+  { src: CA4image, label: "Free AI Book", to: "/freeaibook" },
+  { src: CA3image, label: "OXYGPT", to: "/genoxy" },
 ];
 
 // ---------- helpers ----------
 const gradientFor = (seed: string) => {
-  const hues = [265, 210, 155, 120, 35]; // purple, blue, pink, green, amber
+  const hues = [265, 210, 155, 120, 35];
   let sum = 0;
   for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i);
   const h = hues[sum % hues.length];
   return `from-[hsl(${h}deg_90%_60%)] to-[hsl(${(h + 30) % 360}deg_90%_50%)]`;
 };
 
-// Kept: initialsThumb for potential future use
 const initialsThumb = (title: string, seed: string) => {
   const initials = (title || "AI")
     .split(" ")
@@ -120,7 +134,6 @@ const initialsThumb = (title: string, seed: string) => {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 };
 
-// Updated: Modified selectImage to randomly select one default image from DEFAULT_IMAGE array
 const selectImage = (name: string, seed: string) => {
   const nameLower = name.toLowerCase();
   for (const [keyword, imageUrl] of Object.entries(IMAGE_MAP)) {
@@ -128,7 +141,6 @@ const selectImage = (name: string, seed: string) => {
       return imageUrl;
     }
   }
-  // Randomly select one of the default images
   const randomIndex = Math.floor(Math.random() * DEFAULT_IMAGE.length);
   return DEFAULT_IMAGE[randomIndex];
 };
@@ -143,8 +155,6 @@ const AssistantCard: React.FC<{
   const seed = assistant.name || `A${index}`;
   const badge =
     (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
-
-  // Select image based on assistant name
   const chosenThumb = selectImage(assistant.name || "AI", seed);
 
   return (
@@ -178,7 +188,6 @@ const AssistantCard: React.FC<{
       </div>
 
       <div className="pt-8 px-4 pb-4">
-        {/* title + badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="font-semibold text-[15px] text-gray-900">
@@ -194,9 +203,6 @@ const AssistantCard: React.FC<{
           </span>
         </div>
 
-        {/* No metrics row (installs, rating, download, free text removed) */}
-
-        {/* actions */}
         <div className="mt-4 flex items-center gap-2">
           <button
             onClick={onOpen}
@@ -256,17 +262,26 @@ const BharatAgentsStore: React.FC = () => {
     fetchAssistants();
   }, [fetchAssistants]);
 
+  // NEW: keep only APPROVED
+  const approvedAssistants = useMemo(() => {
+    return assistants.filter((a) => {
+      const s = (a.status || a.agentStatus || "").toString().toUpperCase();
+      return s === "APPROVED";
+    });
+  }, [assistants]);
+
+  // Search within APPROVED list
   const filteredAssistants = useMemo(() => {
     const term = (q || "").trim().toLowerCase();
-    if (!term) return assistants;
-    return assistants.filter((a) => {
+    const base = approvedAssistants;
+    if (!term) return base;
+    return base.filter((a) => {
       const name = a.name?.toLowerCase() || "";
       const desc = a.description?.toLowerCase() || "";
       return name.includes(term) || desc.includes(term);
     });
-  }, [assistants, q]);
+  }, [approvedAssistants, q]);
 
-  // Updated: Modified SkeletonCard to match AssistantCard (single button)
   const SkeletonCard = () => (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse">
       <div className="h-0 pb-[56%] w-full bg-gray-100" />
@@ -283,15 +298,48 @@ const BharatAgentsStore: React.FC = () => {
   if (loading && assistants.length === 0) {
     return (
       <div className="min-h-screen bg-white">
+        {/* Featured 4 tiles (no-crop) */}
+
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <section className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+              {FEATURE_TILES.map((tile) => (
+                <button
+                  key={tile.to}
+                  onClick={() => navigate(tile.to)}
+                  className="group text-left"
+                  aria-label={tile.label}
+                >
+                  <div className="relative w-full rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-105">
+                    <div className="w-full aspect-[288/161] flex items-center justify-center">
+                      <img
+                        src={tile.src}
+                        alt={tile.label}
+                        className="max-h-full max-w-full object-contain select-none"
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center text-[13px] font-semibold text-gray-800">
+                    {tile.label}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+
           <div className="mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
               Bharat AI Store
             </h2>
             <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-              Discover expert AI assistants. Search by domain, name, or description.
+              Discover expert AI assistants. Search by domain, name, or
+              description.
             </p>
           </div>
+
           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
             {Array.from({ length: 10 }).map((_, i) => (
               <SkeletonCard key={i} />
@@ -325,13 +373,43 @@ const BharatAgentsStore: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Featured 4 tiles (no-crop) */}
+         <section className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+              {FEATURE_TILES.map((tile) => (
+                <button
+                  key={tile.to}
+                  onClick={() => navigate(tile.to)}
+                  className="group text-left"
+                  aria-label={tile.label}
+                >
+                  <div className="relative w-full rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-105">
+                    <div className="w-full aspect-[288/161] flex items-center justify-center">
+                      <img
+                        src={tile.src}
+                        alt={tile.label}
+                        className="max-h-full max-w-full object-contain select-none"
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center text-[13px] font-semibold text-gray-800">
+                    {tile.label}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
         {/* title */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
             Bharat AI Store
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-            Discover expert AI assistants. Search by domain, name, or description.
+            Discover expert AI assistants. Search by domain, name, or
+            description.
           </p>
         </div>
 
@@ -349,12 +427,12 @@ const BharatAgentsStore: React.FC = () => {
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
               {filteredAssistants.map((assistant, index) => (
                 <AssistantCard
-                  key={assistant.id}
+                  key={assistant.assistantId}
                   assistant={assistant}
                   index={index}
                   q={q}
                   onOpen={() =>
-                    navigate(`/bharath-aistore/assistant/${assistant.id}`)
+                    navigate(`/bharath-aistore/assistant/${assistant.assistantId}`)
                   }
                 />
               ))}
@@ -388,4 +466,3 @@ const BharatAgentsStore: React.FC = () => {
 };
 
 export default BharatAgentsStore;
-

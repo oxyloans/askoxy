@@ -101,7 +101,7 @@ export async function getAssistants(
 
 export async function getAssistantDetails(id: string): Promise<Assistant> {
   const res = await apiClient.get(
-    `/student-service/user/getAssistantbyid/${id}`,
+    `/ai-service/agent/getAssistantbyid/${id}`,
     {
       headers: {
         "Content-Type": "application/json",
