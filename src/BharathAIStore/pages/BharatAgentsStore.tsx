@@ -230,6 +230,13 @@ const BharatAgentsStore: React.FC = () => {
     hasMore: true,
     total: 0,
   });
+  const ALWAYS_SHOW_NAMES = new Set([
+  "IRDAI",
+  "Tie - Hyderabad",
+  "GST Reform GPT",
+  "General Insurance Discovery",
+  "Life Insurance Citizen Discovery",
+]);
 
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
@@ -262,13 +269,19 @@ const BharatAgentsStore: React.FC = () => {
     fetchAssistants();
   }, [fetchAssistants]);
 
-  // NEW: keep only APPROVED
-  const approvedAssistants = useMemo(() => {
-    return assistants.filter((a) => {
-      const s = (a.status || a.agentStatus || "").toString().toUpperCase();
-      return s === "APPROVED";
-    });
-  }, [assistants]);
+// NEW: keep APPROVED + whitelist by name
+const approvedAssistants = useMemo(() => {
+  return assistants.filter((a) => {
+    const s = (a.status || a.agentStatus || "").toString().toUpperCase();
+    const name = (a.name || "").trim().toLowerCase();
+    const isApproved = s === "APPROVED";
+    const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
+      (n) => n.toLowerCase() === name
+    );
+    return isApproved || isWhitelisted;
+  });
+}, [assistants]);
+
 
   // Search within APPROVED list
   const filteredAssistants = useMemo(() => {
