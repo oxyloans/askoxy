@@ -14,7 +14,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenMenu }) => {
   const [compact, setCompact] = useState(false);
 
   const handleSignout = () => {
-    const entryPoint = localStorage.getItem("entryPoint") || "/";
+    const entryPoint = localStorage.getItem("entryPoint") || "/bharath-aistore";
     localStorage.clear();
     sessionStorage.clear();
     localStorage.setItem("entryPoint", entryPoint);
@@ -37,7 +37,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenMenu }) => {
       aria-label="Dashboard header"
     >
       <header className="h-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-full">
+        <div className="mx-auto max-w-8xl px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex h-full items-center justify-between gap-3">
             {/* LEFT: Hamburger (mobile) + Logo */}
             <div className="flex items-center gap-2 min-w-0">

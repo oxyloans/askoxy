@@ -43,12 +43,6 @@ const gradientFor = (seed: string) => {
   return `from-[hsl(${h}deg_90%_60%)] to-[hsl(${(h + 30) % 360}deg_90%_50%)]`;
 };
 
-const prettyInstalls = (n: number) =>
-  n >= 1_000_000
-    ? `${(n / 1_000_000).toFixed(1)}M+`
-    : n >= 1000
-    ? `${Math.floor(n / 1000)}k+`
-    : `${n}`;
 
 // ---------- Assistants ----------
 const STATIC_ASSISTANTS: Assistant[] = [

@@ -1,3 +1,4 @@
+// src/components/Footer.tsx
 import React from "react";
 import { Link } from "react-router-dom";
 import Logo from "../../assets/img/bharatAI.png";
@@ -6,52 +7,65 @@ import {
   Phone,
   Instagram,
   Youtube,
-  Twitter,
   Facebook,
   Linkedin,
 } from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
+import { SiThreads } from "react-icons/si";
 
 const year = new Date().getFullYear();
 
 const Footer: React.FC = () => {
-  const socialLinks = [
+  // ✅ Your requested social links (with consistent sizing & hover states)
+  const socialLinks: {
+    icon: React.ReactNode;
+    href: string;
+    label: string;
+    color: string;
+  }[] = [
     {
-      icon: Instagram,
-      url: "https://www.instagram.com/askoxy.ai/",
-      label: "Instagram",
-      color: "text-pink-500 hover:text-pink-600",
-    },
-    {
-      icon: Youtube,
-      url: "https://www.youtube.com/@askoxyDOTai",
-      label: "YouTube",
-      color: "text-red-600 hover:text-red-700",
-    },
-    {
-      icon: Linkedin,
-      url: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
-      label: "LinkedIn",
-      color: "text-blue-700 hover:text-blue-800",
-    },
-    {
-      icon: Facebook,
-      url: "https://www.facebook.com/profile.php?id=61572388385568",
+      icon: <Facebook className="h-5 w-5" aria-hidden="true" />,
+      href: "https://www.facebook.com/profile.php?id=61572388385568",
       label: "Facebook",
       color: "text-blue-600 hover:text-blue-700",
     },
     {
-      icon: Twitter,
-      url: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
-      label: "X (Twitter)",
+      icon: <Instagram className="h-5 w-5" aria-hidden="true" />,
+      href: "https://www.instagram.com/askoxy.ai/",
+      label: "Instagram",
+      color: "text-pink-500 hover:text-pink-600",
+    },
+    {
+      icon: <Linkedin className="h-5 w-5" aria-hidden="true" />,
+      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
+      label: "LinkedIn",
+      color: "text-blue-700 hover:text-blue-800",
+    },
+    {
+      icon: <FaXTwitter className="h-5 w-5" aria-hidden="true" />,
+      href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
+      label: "FaXTwitter",
+      color: "text-black hover:text-gray-700",
+    },
+    {
+      icon: <Youtube className="h-5 w-5" aria-hidden="true" />,
+      href: "https://www.youtube.com/@askoxyDOTai",
+      label: "YouTube",
+      color: "text-red-600 hover:text-red-700",
+    },
+    {
+      icon: <SiThreads className="h-5 w-5" aria-hidden="true" />,
+      href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
+      label: "SiThreads",
       color: "text-black hover:text-gray-700",
     },
   ];
 
   return (
-    <footer className="bg-white border-t border-gray-200">
+    <footer className="bg-white border-t border-gray-200" role="contentinfo">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         {/* Top Section */}
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand + About */}
           <section aria-labelledby="footer-about">
             <div className="flex items-start gap-3">
@@ -68,17 +82,18 @@ const Footer: React.FC = () => {
             </p>
 
             {/* Social Links */}
-            <div className="mt-4 flex items-center gap-4">
-              {socialLinks.map(({ icon: Icon, url, label, color }) => (
+            <div className="mt-4 flex flex-wrap items-center gap-3 sm:gap-4">
+              {socialLinks.map(({ icon, href, label, color }) => (
                 <a
                   key={label}
-                  aria-label={label}
-                  href={url}
+                  href={href}
                   target="_blank"
-                  rel="noreferrer"
-                  className={`${color} transition-colors`}
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  title={label}
+                  className={`${color} transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-300 rounded`}
                 >
-                  <Icon className="h-5 w-5" />
+                  {icon}
                 </a>
               ))}
             </div>
@@ -95,7 +110,7 @@ const Footer: React.FC = () => {
             <ul className="mt-4 space-y-2 text-sm">
               <li>
                 <Link
-                  to="/ai-training"
+                  to="/bharath-aistore"
                   className="text-gray-600 hover:text-gray-900"
                 >
                   Bharat AI Store
@@ -103,7 +118,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  to="/ai-resources"
+                  to="/bharath-aistore/ai-initiatives"
                   className="text-gray-600 hover:text-gray-900"
                 >
                   AI Resources
@@ -130,7 +145,7 @@ const Footer: React.FC = () => {
             </h2>
             <address className="mt-4 space-y-3 not-italic text-sm text-gray-600">
               <p className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-500" />
+                <Mail className="h-4 w-4 text-gray-500" aria-hidden="true" />
                 <a
                   href="mailto:support@askoxy.ai"
                   className="hover:text-gray-900"
@@ -140,7 +155,7 @@ const Footer: React.FC = () => {
               </p>
               {["+91 81432 71103", "+91 91105 64106"].map((phone) => (
                 <p key={phone} className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
+                  <Phone className="h-4 w-4 text-gray-500" aria-hidden="true" />
                   <a
                     href={`tel:${phone.replace(/\s+/g, "")}`}
                     className="hover:text-gray-900"
@@ -163,7 +178,7 @@ const Footer: React.FC = () => {
             <p className="mt-4 text-sm text-gray-600">
               Download ASKOXY.AI for a seamless experience.
             </p>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
+            <div className="mt-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center">
               <a
                 href="https://apps.apple.com/in/app/oxyrice-rice-grocery-delivery/id6738732000"
                 target="_blank"
@@ -220,7 +235,7 @@ const Footer: React.FC = () => {
             </Link>
             <a
               href="#top"
-              className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
               aria-label="Back to top"
             >
               Back to top <span aria-hidden>↑</span>

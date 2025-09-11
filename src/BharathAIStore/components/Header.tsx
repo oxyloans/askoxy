@@ -24,6 +24,7 @@ const Header: React.FC<HeaderProps> = ({
   aiResourcesRef,
   freeAIBookRef,
 }) => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { query, setQuery } = useSearch();
 
@@ -32,12 +33,7 @@ const Header: React.FC<HeaderProps> = ({
   const [compact, setCompact] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isLoading, setLoading] = useState(false);
-
   const [activeSection, setActiveSection] = useState<string>("");
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth < 768;
-  });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -53,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({
     },
     {
       label: "AI INITIATIVES",
-      to: "/ai-initiatives",
+      to: "/bharath-aistore/ai-initiatives",
       sectionId: "ai-initiatives",
       scrollTo: () => {
         aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  // Section observer
+  // Observe sections to set active nav highlight
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -90,11 +86,18 @@ const Header: React.FC<HeaderProps> = ({
           }
         });
       },
-      { root: null, rootMargin: "-20% 0px -20% 0px", threshold: 0.5 }
+      {
+        root: null,
+        rootMargin: "-20% 0px -20% 0px",
+        threshold: 0.5,
+      }
     );
 
     if (bharatAgentsStoreRef.current) {
-      bharatAgentsStoreRef.current.setAttribute("data-section-id", "bharat-ai-store");
+      bharatAgentsStoreRef.current.setAttribute(
+        "data-section-id",
+        "bharat-ai-store"
+      );
       observer.observe(bharatAgentsStoreRef.current);
     }
     if (aiResourcesRef.current) {
@@ -107,27 +110,22 @@ const Header: React.FC<HeaderProps> = ({
     }
 
     return () => {
-      if (bharatAgentsStoreRef.current) observer.unobserve(bharatAgentsStoreRef.current);
+      if (bharatAgentsStoreRef.current)
+        observer.unobserve(bharatAgentsStoreRef.current);
       if (aiResourcesRef.current) observer.unobserve(aiResourcesRef.current);
       if (freeAIBookRef.current) observer.unobserve(freeAIBookRef.current);
     };
   }, [bharatAgentsStoreRef, aiResourcesRef, freeAIBookRef]);
 
-  // Focus when mobile search opens
   useEffect(() => {
     if (isMobileSearchOpen && inputRef.current) inputRef.current.focus();
   }, [isMobileSearchOpen]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "/") {
         e.preventDefault();
-        if (isMobile) {
-          setIsMobileSearchOpen(true);
-        } else if (inputRef.current) {
-          inputRef.current.focus();
-        }
+        setIsMobileSearchOpen(true);
       }
       if (e.key === "Escape") {
         setIsMobileSearchOpen(false);
@@ -137,9 +135,8 @@ const Header: React.FC<HeaderProps> = ({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isMobile]);
+  }, []);
 
-  // Header compact on scroll
   useEffect(() => {
     const onScroll = () => setCompact(window.scrollY > 6);
     onScroll();
@@ -147,7 +144,6 @@ const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close profile on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -158,15 +154,12 @@ const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // Resize watcher for mobile
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    onResize();
-    window.addEventListener("resize", onResize, { passive: true });
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  const isActive = (sectionId: string) => activeSection === sectionId;
+// AFTER:
+const isActive = (sectionId: string) => {
+  if (location.pathname === "/ai-initiatives" && sectionId === "ai-initiatives") return true;
+  if (location.pathname === "/bharath-aistore" && sectionId === "bharat-ai-store") return true;
+  return activeSection === sectionId;
+};
 
   const stored =
     localStorage.getItem("display_name") ||
@@ -181,6 +174,17 @@ const Header: React.FC<HeaderProps> = ({
   const initials = getInitials(stored || "");
   const isRegistered = Boolean(initials);
 
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth < 768;
+  });
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   return (
     <div
       className={[
@@ -189,9 +193,12 @@ const Header: React.FC<HeaderProps> = ({
       ].join(" ")}
       aria-label="Site header"
     >
-      <header className={`transition-all duration-200 ${compact ? "h-16" : "h-16"}`} aria-label="Site header">
+      <header
+        className={`transition-all duration-200 ${compact ? "h-16" : "h-16"}`}
+        aria-label="Site header"
+      >
         <div className="mx-auto max-w-8xl px-4 sm:px-6 lg:px-8 h-full">
-          {/* ---------- MOBILE SEARCH ROW ---------- */}
+          {/* ---------- MOBILE SEARCH (slide-in row) ---------- */}
           {isMobileSearchOpen ? (
             <div className="flex h-full items-center gap-3 md:hidden">
               <button
@@ -199,7 +206,14 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => setIsMobileSearchOpen(false)}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
               >
-                <svg viewBox="0 0 24 24" className="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-6 w-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
               </button>
@@ -216,7 +230,7 @@ const Header: React.FC<HeaderProps> = ({
                       ref={inputRef}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search assistants, agents"
+                      placeholder="Search agents.."
                       className="w-full bg-transparent outline-none text-[15px] placeholder:text-gray-400"
                       aria-label="Search assistants"
                     />
@@ -227,7 +241,14 @@ const Header: React.FC<HeaderProps> = ({
                         onClick={() => setQuery("")}
                         className="rounded-full p-1 hover:bg-gray-100"
                       >
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5 text-gray-700"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          aria-hidden="true"
+                        >
                           <path d="M6 6l12 12M18 6l-12 12" />
                         </svg>
                       </button>
@@ -238,9 +259,9 @@ const Header: React.FC<HeaderProps> = ({
             </div>
           ) : (
             /* ---------- DEFAULT ROW ---------- */
-            <div className="flex h-full items-center justify-between gap-3">
-              {/* LEFT: Logo + NAV (as "buttons") */}
-              <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="flex h-full items-center justify-between gap-4">
+              {/* LEFT: Logo */}
+              <div className="flex items-center gap-2 min-w-0">
                 <button
                   onClick={() => navigate("/")}
                   className="flex items-center gap-2 min-w-0"
@@ -249,78 +270,83 @@ const Header: React.FC<HeaderProps> = ({
                 >
                   <img src={Logo} alt="Bharat AI Store" className="h-10 w-auto" />
                 </button>
+              </div>
 
-                {/* Desktop nav as subtle buttons */}
-                <nav className="hidden md:flex items-center gap-2">
-                  {nav.map((item) => (
+              {/* CENTER: Desktop nav */}
+              <nav className="hidden md:flex items-center gap-6">
+                {nav.map((item) => {
+                  const active = isActive(item.sectionId);
+                  return (
                     <Link
                       key={item.to}
                       to={item.to}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        item.scrollTo();
+                      onClick={() => {
+                        if (location.pathname === item.to) {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }
                       }}
                       className={[
-                        "px-3 py-2 rounded-full text-[14px] font-semibold transition-colors border",
-                        isActive(item.sectionId)
-                          ? "text-purple-800 border-purple-200 bg-purple-50"
-                          : "text-gray-700 border-gray-200 hover:bg-gray-50",
+                        "relative text-[15px] font-semibold transition-colors",
+                        active
+                          ? "text-purple-800"
+                          : "text-gray-700 hover:text-purple-700",
                       ].join(" ")}
                     >
                       {item.label}
+                      {/* underline accent on hover/active */}
+                      <span
+                        className={[
+                          "pointer-events-none absolute -bottom-1 left-0 h-0.5 w-full origin-left scale-x-0 bg-purple-700 transition-transform duration-200",
+                          active ? "scale-x-100" : "group-hover:scale-x-100",
+                        ].join(" ")}
+                      />
                     </Link>
-                  ))}
-                </nav>
+                  );
+                })}
+              </nav>
 
-                {/* Desktop search integrated in header */}
-                <div className="hidden md:flex flex-1 max-w-md ml-4">
-                  <div className="w-full flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-600">
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-600" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="M20 20l-3.5-3.5" />
-                    </svg>
-                    <input
-                      ref={inputRef}
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search assistants, agents…"
-                      className="w-full bg-transparent outline-none text-[15px] placeholder:text-gray-400"
-                      aria-label="Search assistants"
-                    />
-                    {!!query && (
-                      <button
-                        type="button"
-                        aria-label="Clear search"
-                        onClick={() => setQuery("")}
-                        className="rounded-full p-1 hover:bg-gray-100"
-                      >
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                          <path d="M6 6l12 12M18 6l-12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT: Create Agent CTA */}
-              <div className="flex items-center gap-2">
-                {/* Create Agent — make it primary/attractive */}
-                <button
-                  onClick={handleCreateAgentClick}
-                  disabled={isLoading}
-                  className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm md:text-base font-semibold px-5 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all relative overflow-hidden group"
-                  aria-label="Create Agent"
-                  title="Create Agent"
-                >
-                  {/* Shine effect */}
-                  <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 -rotate-12 transform group-hover:translate-x-16"></span>
-                  
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path d="M12 5v14M5 12h14" />
+              {/* RIGHT: Desktop search + CTA (with improved spacing) | Mobile icons */}
+              <div className="flex items-center">
+                {/* Desktop search */}
+                <div className="hidden md:flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-600 w-[22rem] mr-3">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 text-gray-600"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20l-3.5-3.5" />
                   </svg>
-                  {isLoading ? "Loading..." : "Create Agent"}
-                </button>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search agents…"
+                    className="w-full bg-transparent outline-none text-[15px] placeholder:text-gray-400"
+                    aria-label="Search agents"
+                  />
+                  {!!query && (
+                    <button
+                      type="button"
+                      aria-label="Clear search"
+                      onClick={() => setQuery("")}
+                      className="rounded-full p-1 hover:bg-gray-100"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5 text-gray-700"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
+                        <path d="M6 6l12 12M18 6l-12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
 
                 {/* Mobile icons */}
                 {isMobile && (
@@ -329,36 +355,77 @@ const Header: React.FC<HeaderProps> = ({
                       onClick={() => setIsMobileSearchOpen(true)}
                       aria-label="Open search"
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
+                      title="Search"
                     >
-                      <svg viewBox="0 0 24 24" className="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-6 w-6 text-gray-700"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
                         <circle cx="11" cy="11" r="7" />
                         <path d="M20 20l-3.5-3.5" />
                       </svg>
                     </button>
+
+                    {/* Mobile CTA (icon only) */}
                     <button
                       onClick={handleCreateAgentClick}
-                      disabled={isLoading}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100 relative overflow-hidden group"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
                       aria-label="Create Agent"
                       title="Create Agent"
                     >
-                      {/* Shine effect */}
-                      <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 -rotate-12 transform group-hover:translate-x-8"></span>
-                      <svg viewBox="0 0 24 24" className="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-6 w-6 text-gray-700"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
                         <path d="M12 5v14M5 12h14" />
                       </svg>
                     </button>
+
                     <button
                       onClick={() => setIsMobileMenuOpen(true)}
                       aria-label="Open menu"
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
                     >
-                      <svg viewBox="0 0 24 24" className="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-6 w-6 text-gray-700"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
                         <path d="M4 6h16M4 12h16M4 18h16" />
                       </svg>
                     </button>
                   </div>
                 )}
+
+                {/* Desktop CTA with pulse animation & comfortable gap */}
+                <button
+                  onClick={handleCreateAgentClick}
+                  className={[
+                    "relative hidden md:inline-flex items-center justify-center",
+                    "bg-purple-600 hover:bg-purple-700 text-white font-semibold",
+                    "px-5 py-2.5 rounded-full shadow",
+                    "ring-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                    // subtle animated glow
+                    "shadow-purple-400/60",
+                    "after:absolute after:-inset-[2px] after:rounded-full after:content-[''] after:-z-10",
+                    "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)]",
+                    "animate-pulse",
+                  ].join(" ")}
+                  aria-label="Create Agent"
+                >
+                  {isLoading ? "Loading…" : "Create Agent"}
+                </button>
               </div>
             </div>
           )}
@@ -368,7 +435,12 @@ const Header: React.FC<HeaderProps> = ({
       {/* ---------- MOBILE NAV DRAWER ---------- */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-[60]">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileMenuOpen(false)} />
+          {/* backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          {/* panel */}
           <div className="absolute right-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-2xl p-4 overflow-y-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -379,7 +451,14 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
               >
-                <svg viewBox="0 0 24 24" className="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-6 w-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path d="M6 6l12 12M18 6l-12 12" />
                 </svg>
               </button>
@@ -390,34 +469,24 @@ const Header: React.FC<HeaderProps> = ({
                 <Link
                   key={n.to}
                   to={n.to}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    n.scrollTo();
-                    setIsMobileMenuOpen(false);
-                  }}
+                  onClick={() => {
+    setIsMobileMenuOpen(false);
+  }}
                   className="block rounded-lg px-3 py-3 text-base font-semibold text-gray-800 hover:bg-gray-100"
                 >
                   {n.label}
                 </Link>
               ))}
 
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleCreateAgentClick();
-                  }}
-                  disabled={isLoading}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold px-4 py-3 rounded-xl shadow-md relative overflow-hidden group"
-                >
-                  {/* Shine effect */}
-                  <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 -rotate-12 transform group-hover:translate-x-16"></span>
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  {isLoading ? "Loading..." : "Create Agent"}
-                </button>
-              </div>
+              <hr className="my-3" />
+
+              {/* Mobile CTA (full-width with pulse) */}
+              <button
+                onClick={handleCreateAgentClick}
+                className="w-full rounded-full bg-purple-600 text-white font-semibold py-3 shadow shadow-purple-400/60 animate-pulse hover:bg-purple-700"
+              >
+                {isLoading ? "Loading…" : "Create Agent"}
+              </button>
             </div>
           </div>
         </div>

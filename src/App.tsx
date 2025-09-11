@@ -208,11 +208,14 @@ import AssistantOverview from "./AskoxyAdmin/Assistants/AssistantOverview";
 import FaqLLMSlides from "./GenOxy/FaqSildes";
 import LLMFAQPage from "./GenOxy/FaqLLM";
 import AiVideosGenerated from "./FREEAIBOOK/AiVideosGenerated";
-import BharatAgentsStore from "./components/BharatAgentsStore";
+
 import AllAgentsPage from "./AgentStore/AllAgentsPage";
 import AssistantDetails from "./BharathAIStore/pages/AssistantDetails";
+import ChatInterface1 from "./BharathAIStore/pages/ChatInterface";
 import AiResources from "./BharathAIStore/pages/AIResources";
 import AppRoutes from "./BharathAIStore/routes/Landingpage";
+import Layout from "./BharathAIStore/routes/Landingpage";
+import BharatAgentsStore from "./BharathAIStore/pages/BharatAgentsStore";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -296,13 +299,19 @@ const App: React.FC = () => {
             />
             <Route path="/userregister" element={<UserRegister />} />
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
-            <Route path="/bharath-aistore" element={<AppRoutes />} />
-            <Route path="/ai-initiatives" element={<AiResources />} />
+            <Route element={<Layout />}>
+              <Route path="/bharath-aistore" element={<BharatAgentsStore />} />
+              <Route
+                path="/bharath-aistore/ai-initiatives"
+                element={<AiResources />}
+              />
+            </Route>
+            <Route path="/jobstreet" element={<JobStreet />} />
             <Route
               path="/bharath-aistore/assistant/:id"
               element={<AssistantDetails />}
             />
-            <Route path="/jobstreet" element={<JobStreet />} />
+            <Route path="/chatinterface/assistant/:id" element={<ChatInterface1 />} />
             <Route path="/myblogs" element={<BlogsPage />} />
             <Route
               path="/termsandconditions"
@@ -347,16 +356,6 @@ const App: React.FC = () => {
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
             />
-            {/* <Route path="/generateimage" element={<AskoxyAi />} /> */}
-            {/* <Route
-              path="/genoxy"
-              element={<Navigate to="/genoxy/welcome" replace />}
-            />
-            <Route path="/genoxy/:chat" element={<GenOxy />} /> */}
-            {/* <Route
-              path="/bharathaiexpertstore"
-              element={<BharatAgentsStore />}
-            /> */}
             <Route path="/bharath-aistore/agents" element={<AllAgentsPage />} />
             <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
             <Route path="/genoxy" element={<GenOxy />} />

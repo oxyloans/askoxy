@@ -34,7 +34,7 @@ import {
   AudioMutedOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
-import AppShell from "../BharathAIStore/components/AppShell";
+import BharathAIStoreLayout from "../BharathAIStore/components/Layout";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -508,7 +508,30 @@ const CreateAgentWizard: React.FC = () => {
     setStep(0);
   }, [isEditMode, editSeed]);
 
-  /** Load Models on Step 2 (index 1); fallback if API returns nothing */
+  // ✅ Allowed Models Only
+  const ALLOWED_MODELS = [
+    "chatgpt-4o-latest",
+    "gpt-4o",
+    "gpt-4o-2024-05-13",
+    "gpt-4o-2024-08-06",
+    "gpt-4o-2024-11-20",
+    "gpt-4o-mini",
+    "gpt-4o-mini-2024-07-18",
+    "gpt-3.5-turbo",
+    "gpt-3.5-turbo-16k",
+    "gpt-3.5-turbo-1106",
+    "gpt-3.5-turbo-0125",
+    "gpt-3.5-turbo-instruct",
+    "gpt-3.5-turbo-instruct-0914",
+  ];
+
+  // Replace FALLBACK_MODELS with only allowed ones
+  const FALLBACK_MODELS: ModelInfo[] = ALLOWED_MODELS.map((id) => ({
+    id,
+    owned_by: "openai",
+  }));
+
+  // In useEffect where models are loaded:
   useEffect(() => {
     if (step !== 1) return;
 
@@ -525,9 +548,16 @@ const CreateAgentWizard: React.FC = () => {
 
         const data = await res.json();
         const arr = Array.isArray(data?.data) ? data.data : [];
-        setModels(arr.length ? arr : FALLBACK_MODELS);
-        if (!arr.length) {
-          message.warning("Models API returned empty list. Using defaults.");
+
+        // ✅ Only keep allowed models
+        const filtered = arr.filter((m: any) => ALLOWED_MODELS.includes(m.id));
+
+        setModels(filtered.length ? filtered : FALLBACK_MODELS);
+
+        if (!filtered.length) {
+          message.warning(
+            "Models API returned empty/unsupported list. Using defaults."
+          );
         }
       } catch (err: any) {
         setModels(FALLBACK_MODELS);
@@ -796,7 +826,15 @@ const CreateAgentWizard: React.FC = () => {
       // Build final strings for target users and age limits
       const finalTargetUsers = resolvedTargetUsersString || undefined;
       const finalAgeLimits = resolvedAgeLimitsString || undefined;
-
+      // derive "chooseStore" from the two checkboxes
+      const chooseStore =
+        storeBharat && storeOxy
+          ? "BharatAIStore,OxyGPTStore"
+          : storeBharat
+          ? "BharatAIStore"
+          : storeOxy
+          ? "OxyGPTStore"
+          : "";
       const basePayload = stripEmpty({
         creatorName,
         acheivements,
@@ -834,6 +872,7 @@ const CreateAgentWizard: React.FC = () => {
         // NEW FIELDS
         headerTitle, // "AI Twin" | "AI Enabler"
         headerStatus: false, // per requirement, always send false now
+        chooseStore: chooseStore || undefined,
       });
 
       // IDs only when editing (safe to always include if set)
@@ -1105,9 +1144,8 @@ const CreateAgentWizard: React.FC = () => {
   };
 
   return (
-    <AppShell
-      allAgentsHref="/bharath-aistore/agents"
-      createAgentHref="/create-aiagent"
+    <BharathAIStoreLayout
+    
     >
       <div
         style={{ minHeight: "100vh", background: "#f8f9fa", padding: "16px" }}
@@ -1217,10 +1255,48 @@ const CreateAgentWizard: React.FC = () => {
                           style={{ width: "100%", ...compactInputStyle }}
                         >
                           <Option value="Advocate">Advocate</Option>
-                          <Option value="CA">CA</Option>
-                          <Option value="CS">CS</Option>
+                          <Option value="CA">Chartered Accountant (CA)</Option>
+                          <Option value="CS">Company Secretary (CS)</Option>
                           <Option value="Consultant">Consultant</Option>
                           <Option value="Teacher">Teacher</Option>
+                          <Option value="Doctor">Doctor</Option>
+                          <Option value="Engineer">Engineer</Option>
+                          <Option value="Lawyer">Lawyer</Option>
+                          <Option value="Startup Founder">
+                            Startup Founder
+                          </Option>
+                          <Option value="Entrepreneur">Entrepreneur</Option>
+                          <Option value="Investor">Investor</Option>
+                          <Option value="Banker">Banker</Option>
+                          <Option value="Software Developer">
+                            Software Developer
+                          </Option>
+                          <Option value="Data Scientist">Data Scientist</Option>
+                          <Option value="AI/ML Expert">AI / ML Expert</Option>
+                          <Option value="Researcher">Researcher</Option>
+                          <Option value="Designer">Designer</Option>
+                          <Option value="Marketing Specialist">
+                            Marketing Specialist
+                          </Option>
+                          <Option value="HR Professional">
+                            HR Professional
+                          </Option>
+                          <Option value="Operations Manager">
+                            Operations Manager
+                          </Option>
+                          <Option value="Sales Executive">
+                            Sales Executive
+                          </Option>
+                          <Option value="Product Manager">
+                            Product Manager
+                          </Option>
+                          <Option value="CXO">
+                            CXO (CEO / CTO / CFO etc.)
+                          </Option>
+                          <Option value="Freelancer">Freelancer</Option>
+                          <Option value="Consultant">
+                            Business Consultant
+                          </Option>
                           <Option value="Other">Other</Option>
                         </Select>
                         {userRole === "Other" && (
@@ -2287,7 +2363,7 @@ const CreateAgentWizard: React.FC = () => {
           />
         )}
       </div>
-    </AppShell>
+    </BharathAIStoreLayout>
   );
 };
 

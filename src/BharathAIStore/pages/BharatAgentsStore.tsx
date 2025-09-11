@@ -87,11 +87,11 @@ const DEFAULT_IMAGE = [
 
 // ---------- NEW: featured tiles (no-crop images) ----------
 const FEATURE_TILES = [
-  { src: CA1image, label: "Create AI Agent", to: "/create-aiagent" },
-  { src: CA2image, label: "GLMS", to: "/glms" },
-  { src: CA4image, label: "Free AI Book", to: "/freeaibook" },
-  { src: CA3image, label: "OXYGPT", to: "/genoxy" },
+  { src: CA3image, to: "/bharat-expert" },
+
 ];
+
+
 
 // ---------- helpers ----------
 const gradientFor = (seed: string) => {
@@ -225,6 +225,8 @@ const BharatAgentsStore: React.FC = () => {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageSize: 40,
     hasMore: true,
@@ -237,7 +239,23 @@ const BharatAgentsStore: React.FC = () => {
   "General Insurance Discovery",
   "Life Insurance Citizen Discovery",
 ]);
-
+const NEXT_PATH = "/bharat-expert";
+const handleCreateAgentClick = () => {
+  try {
+    setLoading(true);
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      navigate(NEXT_PATH);
+    } else {
+      sessionStorage.setItem("redirectPath", NEXT_PATH);
+      navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
+    }
+  } catch (e) {
+    console.error("Create Agent CTA error:", e);
+  } finally {
+    setLoading(false);
+  }
+};
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
       setLoading(true);
@@ -315,31 +333,17 @@ const approvedAssistants = useMemo(() => {
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <section className="mb-6 sm:mb-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-              {FEATURE_TILES.map((tile) => (
-                <button
-                  key={tile.to}
-                  onClick={() => navigate(tile.to)}
-                  className="group text-left"
-                  aria-label={tile.label}
-                >
-                  <div className="relative w-full rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-105">
-                    <div className="w-full aspect-[288/161] flex items-center justify-center">
-                      <img
-                        src={tile.src}
-                        alt={tile.label}
-                        className="max-h-full max-w-full object-contain select-none"
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-2 text-center text-[13px] font-semibold text-gray-800">
-                    {tile.label}
-                  </div>
-                </button>
-              ))}
+            <div className="relative w-full rounded-2xl overflow-hidden">
+              <div className="w-full">
+                <img
+                  src={CA3image}
+                  alt="Header"
+                  className="w-full h-full object-cover cursor-pointer"
+                  onClick={handleCreateAgentClick}
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
             </div>
           </section>
 
@@ -348,8 +352,7 @@ const approvedAssistants = useMemo(() => {
               Bharat AI Store
             </h2>
             <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-              Discover expert AI assistants. Search by domain, name, or
-              description.
+              Discover expert AI assistants.
             </p>
           </div>
 
@@ -387,42 +390,27 @@ const approvedAssistants = useMemo(() => {
     <div className="min-h-screen bg-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Featured 4 tiles (no-crop) */}
-         <section className="mb-6 sm:mb-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-              {FEATURE_TILES.map((tile) => (
-                <button
-                  key={tile.to}
-                  onClick={() => navigate(tile.to)}
-                  className="group text-left"
-                  aria-label={tile.label}
-                >
-                  <div className="relative w-full rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-105">
-                    <div className="w-full aspect-[288/161] flex items-center justify-center">
-                      <img
-                        src={tile.src}
-                        alt={tile.label}
-                        className="max-h-full max-w-full object-contain select-none"
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-2 text-center text-[13px] font-semibold text-gray-800">
-                    {tile.label}
-                  </div>
-                </button>
-              ))}
+        <section className="mb-6 sm:mb-8">
+          <div className="relative w-full rounded-2xl overflow-hidden">
+            <div className="w-full">
+              <img
+                src={CA3image}
+                alt="Header"
+                className="w-full h-full object-cover cursor-pointer"
+                onClick={handleCreateAgentClick}
+                loading="eager"
+                decoding="async"
+              />
             </div>
-          </section>
+          </div>
+        </section>
         {/* title */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
             Bharat AI Store
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-            Discover expert AI assistants. Search by domain, name, or
-            description.
+            Discover expert AI assistants.
           </p>
         </div>
 
@@ -445,7 +433,9 @@ const approvedAssistants = useMemo(() => {
                   index={index}
                   q={q}
                   onOpen={() =>
-                    navigate(`/bharath-aistore/assistant/${assistant.assistantId}`)
+                    navigate(
+                      `/bharath-aistore/assistant/${assistant.assistantId}`
+                    )
                   }
                 />
               ))}
