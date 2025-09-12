@@ -327,6 +327,7 @@ export const useMessages = ({
 
   return { handleSend, handleEdit, handleFileUpload };
 };
+
 class VoiceSessionService {
   private peerConnection: RTCPeerConnection | null = null;
   private micStream: MediaStream | null = null;
@@ -417,14 +418,8 @@ class VoiceSessionService {
         onAssistantSpeaking,
         assistantId
       );
-      this.sessionTimeoutId = window.setTimeout(() => {
-        console.log("⏰ Session auto-expired after 80s");
-        message.info(
-          "⏳ Your free voice session has ended. Upgrade to Premium to continue unlimited conversations!"
-        );
-        navigate("/voiceAssistant");
-        this.stopSession();
-      }, 80 * 1000);
+
+      // ✅ Removed 80s session timeout
 
       return dc;
     } catch (error) {
@@ -457,7 +452,7 @@ class VoiceSessionService {
           timestamp: new Date().toLocaleTimeString(),
         };
         onMessage(msg);
-        this.sendMessage(transcript);
+        // this.sendMessage(transcript);
       }
     };
 

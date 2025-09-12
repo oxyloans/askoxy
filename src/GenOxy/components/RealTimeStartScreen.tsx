@@ -93,7 +93,7 @@ export default function StartScreen({
             Disclaimer
           </h4>
           <p className="text-gray-400 text-sm leading-relaxed">
-            GENOXY is a real-time AI assistant. While you can select your
+            ASKOXY.AI is a real-time AI assistant. While you can select your
             preferred language above, we cannot guarantee 100% adherence to the
             selected language throughout the conversation. The AI may occasionally
             respond in English or mix languages based on context and system

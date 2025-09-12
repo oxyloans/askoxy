@@ -32,7 +32,7 @@ export default function Header({
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              GENOXY
+              ASKOXY.AI
             </h1>
             {!hideButtons && (
               <p className="text-cyan-300 text-xs sm:text-sm tracking-wider">
