@@ -308,7 +308,7 @@ const App: React.FC = () => {
             </Route>
             <Route path="/jobstreet" element={<JobStreet />} />
             <Route
-              path="/bharath-aistore/assistant/:id"
+              path="/bharath-aistore/assistant/:id/:agentId"
               element={<AssistantDetails />}
             />
             <Route path="/chatinterface/assistant/:id" element={<ChatInterface1 />} />

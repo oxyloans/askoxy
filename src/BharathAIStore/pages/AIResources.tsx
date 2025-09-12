@@ -1,5 +1,6 @@
+// /src/AgentStore/AIResources.tsx
 import React, { useMemo, useState, useEffect } from "react";
-import { Bot, Star, Shield } from "lucide-react";
+import { Bot, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Highlighter from "../components/Highlighter";
@@ -31,7 +32,7 @@ interface Assistant {
   metadata: any;
   response_format: string;
   image?: string;
-  link: string; // 👈 Added link
+  link: string;
 }
 
 // ---------- Helpers ----------
@@ -42,7 +43,6 @@ const gradientFor = (seed: string) => {
   const h = hues[sum % hues.length];
   return `from-[hsl(${h}deg_90%_60%)] to-[hsl(${(h + 30) % 360}deg_90%_50%)]`;
 };
-
 
 // ---------- Assistants ----------
 const STATIC_ASSISTANTS: Assistant[] = [
@@ -207,7 +207,7 @@ const AssistantSkeleton: React.FC = () => {
   );
 };
 
-// ---------- Card Component ----------
+// ---------- Card Component (with outer glow wrapper) ----------
 const AssistantCard: React.FC<{
   assistant: Assistant;
   index: number;
@@ -215,64 +215,79 @@ const AssistantCard: React.FC<{
 }> = ({ assistant, index, q }) => {
   const navigate = useNavigate();
   const seed = assistant.name || `A${index}`;
-  
   const badge =
     (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
 
   return (
+    // OUTER WRAPPER → holds the glow (not clipped)
     <div
-      className="group rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:bg-gray-50 hover:-translate-y-0.5 transition overflow-hidden cursor-pointer"
-      onClick={() => navigate(assistant.link)} // 👈 Navigate on click
       role="button"
       tabIndex={0}
+      onClick={() => navigate(assistant.link)}
+      onKeyDown={(e) =>
+        e.key === "Enter" || e.key === " " ? navigate(assistant.link) : null
+      }
+      className={[
+        "relative group cursor-pointer rounded-2xl",
+        // subtle animated glow
+        "shadow-purple-400/60",
+        "after:absolute after:-inset-[2px] after:rounded-2xl after:content-[''] after:-z-10",
+        "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)]",
+        "after:pointer-events-none after:animate-pulse",
+        "transition-transform hover:-translate-y-0.5",
+      ].join(" ")}
       aria-label={`Open ${assistant.name}`}
     >
-      <div className="relative w-full">
-        <div
-          className={`h-0 w-full pb-[56%] bg-gradient-to-br ${gradientFor(
-            seed
-          )} overflow-hidden`}
-          aria-hidden="true"
-        >
-          <img
-            src={assistant.image}
-            alt={`${assistant.name} thumbnail`}
-            className="absolute inset-0 w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-        <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
-          <Bot className="h-6 w-6 text-purple-700" />
-        </div>
-      </div>
-
-      <div className="pt-8 px-4 pb-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="font-semibold text-[15px] text-gray-900">
-              <Highlighter text={assistant.name || ""} query={q} />
-            </h3>
-            <p className="text-[13px] text-gray-600 line-clamp-3 mt-0.5">
-              <Highlighter text={assistant.description || ""} query={q} />
-            </p>
-          </div>
-          <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
-            <Shield className="h-3.5 w-3.5" />
-            {badge}
-          </span>
-        </div>
-
-       
-
-        <div className="mt-4">
-          <button
-            onClick={() => navigate(assistant.link)} // 👈 Navigate on click
-            className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-3.5 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition w-full"
-            aria-label={`Open ${assistant.name}`}
+      {/* INNER CARD → can clip content cleanly */}
+      <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:bg-gray-50 transition overflow-hidden">
+        <div className="relative w-full">
+          <div
+            className={`h-0 w-full pb-[56%] bg-gradient-to-br ${gradientFor(
+              seed
+            )} overflow-hidden`}
+            aria-hidden="true"
           >
-            View
-          </button>
+            <img
+              src={assistant.image}
+              alt={`${assistant.name} thumbnail`}
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
+            <Bot className="h-6 w-6 text-purple-700" />
+          </div>
+        </div>
+
+        <div className="pt-8 px-4 pb-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-[15px] text-gray-900">
+                <Highlighter text={assistant.name || ""} query={q} />
+              </h3>
+              <p className="text-[13px] text-gray-600 line-clamp-3 mt-0.5">
+                <Highlighter text={assistant.description || ""} query={q} />
+              </p>
+            </div>
+            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
+              <Shield className="h-3.5 w-3.5" />
+              {badge}
+            </span>
+          </div>
+
+          <div className="mt-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(assistant.link);
+              }}
+              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-3.5 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition w-full"
+              aria-label={`Open ${assistant.name}`}
+            >
+              View
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -284,7 +299,6 @@ const AiResources: React.FC = () => {
   const { debouncedQuery: q } = useSearch();
   const [loading, setLoading] = useState(true);
 
-  // simulate API loading
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200);
     return () => clearTimeout(timer);

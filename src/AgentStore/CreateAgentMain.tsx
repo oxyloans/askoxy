@@ -48,25 +48,24 @@ export default function CreateAgentMain() {
       }
     > = {
       en: {
-        title: "Before You Begin Create Agent: Choose Your AI Role",
-sub:"",
+        title: "Choose your AI role",
+        sub: "Pick how you want to proceed. You can change this anytime.",
         continuePrefix: "Continue as",
         english: "English",
         telugu: "తెలుగు",
         hindi: "हिंदी",
       },
       hi: {
-        title: "एजेंट बनाना शुरू करने से पहले: अपनी AI भूमिका चुनें",
-sub:"",
+        title: "अपनी AI भूमिका चुनें",
+        sub: "आप कैसे आगे बढ़ना चाहते हैं, चुनें। इसे कभी भी बदल सकते हैं।",
         continuePrefix: "के रूप में जारी रखें",
         english: "English",
         telugu: "తెలుగు",
         hindi: "हिंदी",
       },
       te: {
-        title:
-          "మీరు ఏజెంట్‌ను సృష్టించడం ప్రారంభించడానికి ముందు: మీ AI పాత్రను ఎంచుకోండి",
-sub:"",
+        title: "మీ AI పాత్రను ఎంచుకోండి",
+        sub: "ఎలా ముందుకు వెళ్లాలనుకుంటున్నారో ఎంచుకోండి. ఎప్పుడైనా మార్చుకోవచ్చు.",
         continuePrefix: "గా కొనసాగండి",
         english: "English",
         telugu: "తెలుగు",

@@ -77,6 +77,7 @@ const DOMAIN_OPTIONS = [
   "Law",
   "Finance",
   "Healthcare",
+  "Taxation",
   "Education",
   "Technology",
   "Marketing",
@@ -90,7 +91,7 @@ const DOMAIN_OPTIONS = [
 const SUBDOMAIN_OPTIONS = [
   "Civil Law",
   "Corporate Law",
-  "Taxation",
+  "GST",
   "Personal Finance",
   "Data Analytics",
   "Software Development",
@@ -510,19 +511,19 @@ const CreateAgentWizard: React.FC = () => {
 
   // ✅ Allowed Models Only
   const ALLOWED_MODELS = [
-    "chatgpt-4o-latest",
+    // "chatgpt-4o-latest",
     "gpt-4o",
-    "gpt-4o-2024-05-13",
-    "gpt-4o-2024-08-06",
-    "gpt-4o-2024-11-20",
-    "gpt-4o-mini",
-    "gpt-4o-mini-2024-07-18",
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo-16k",
-    "gpt-3.5-turbo-1106",
-    "gpt-3.5-turbo-0125",
-    "gpt-3.5-turbo-instruct",
-    "gpt-3.5-turbo-instruct-0914",
+    // "gpt-4o-2024-05-13",
+    // "gpt-4o-2024-08-06",
+    // "gpt-4o-2024-11-20",
+    // "gpt-4o-mini",
+    // "gpt-4o-mini-2024-07-18",
+    // "gpt-3.5-turbo",
+    // "gpt-3.5-turbo-16k",
+    // "gpt-3.5-turbo-1106",
+    // "gpt-3.5-turbo-0125",
+    // "gpt-3.5-turbo-instruct",
+    // "gpt-3.5-turbo-instruct-0914",
   ];
 
   // Replace FALLBACK_MODELS with only allowed ones
@@ -631,29 +632,47 @@ const CreateAgentWizard: React.FC = () => {
     return true;
   };
 
-  const validateStep2 = (): boolean => {
-    const missing: string[] = [];
-    if (!targetUsers.length) missing.push("Target Customers");
-    if (targetUsers.includes("Other") && !targetUserOther.trim())
-      missing.push("Target Customers (Other)");
-    if (genderSelections.length === 0) missing.push("Target Audience Gender");
-    if (!ageLimits.length) missing.push("Target Age Limit(s)");
-    // ✅ Require custom age when "Other" is chosen
-    if (ageLimits.includes("Other") && !ageOther.trim())
-      missing.push("Custom Age Limit (Other)");
-    if (!converstionTone?.trim()) missing.push("Conversation Tone");
+  const isAllSelected = (selected: string[], allOptions: string[]) =>
+  allOptions.every((opt) => selected.includes(opt));
 
-    if (missing.length) {
-      message.error({
-        content: `Please fill the following before Continue: ${missing.join(
-          ", "
-        )}`,
-        style: { color: "#722ed1" },
-      });
-      return false;
-    }
-    return true;
-  };
+const validateStep2 = (): boolean => {
+  const missing: string[] = [];
+
+  // Target Customers
+  const allCustomersSelected = isAllSelected(targetUsers, TARGET_USER_OPTIONS);
+  if (!targetUsers.length) missing.push("Target Customers");
+  // Only require "Other" text when "Other" picked AND not all selected
+  if (
+    targetUsers.includes("Other") &&
+    !allCustomersSelected &&
+    !targetUserOther.trim()
+  ) {
+    missing.push("Target Customers (Other)");
+  }
+
+  // Gender
+  if (genderSelections.length === 0) missing.push("Target Audience Gender");
+
+  // Age Limits
+  const allAgesSelected = isAllSelected(ageLimits, AGE_LIMIT_OPTIONS);
+  if (!ageLimits.length) missing.push("Target Age Limit(s)");
+  // Only require custom age when "Other" picked AND not all selected
+  if (ageLimits.includes("Other") && !allAgesSelected && !ageOther.trim()) {
+    missing.push("Custom Age Limit (Other)");
+  }
+
+  // Tone
+  if (!converstionTone?.trim()) missing.push("Conversation Tone");
+
+  if (missing.length) {
+    message.error({
+      content: `Please fill the following before Continue: ${missing.join(", ")}`,
+      style: { color: "#722ed1" },
+    });
+    return false;
+  }
+  return true;
+};
 
   const next = () => {
     if (step === 0 && !validateStep0()) return;
@@ -1144,9 +1163,7 @@ const CreateAgentWizard: React.FC = () => {
   };
 
   return (
-    <BharathAIStoreLayout
-    
-    >
+    <BharathAIStoreLayout>
       <div
         style={{ minHeight: "100vh", background: "#f8f9fa", padding: "16px" }}
       >
@@ -1431,7 +1448,13 @@ const CreateAgentWizard: React.FC = () => {
                           value={business}
                           onChange={(e) => setBusiness(e.target.value)}
                           placeholder="Firm/brand/practice"
+                          maxLength={100} // ✅ 100-character limit
                           style={compactInputStyle}
+                          suffix={
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              {business.length}/100
+                            </Text>
+                          }
                         />
                       </div>
                     </Col>
@@ -1609,7 +1632,7 @@ const CreateAgentWizard: React.FC = () => {
                   </Title>
 
                   <Row gutter={[16, 12]}>
-                    {/* Target audience (UPDATED: multiple) */}
+                    {/* Target audience (Select All + compact tags) */}
                     <Col xs={24} md={12}>
                       <div style={{ marginBottom: "12px" }}>
                         {labelWithInfo(
@@ -1619,17 +1642,30 @@ const CreateAgentWizard: React.FC = () => {
                         <Select
                           mode="multiple"
                           value={targetUsers}
-                          onChange={setTargetUsers}
+                          onChange={(vals) => {
+                            if (vals.includes("Select All")) {
+                              // when "Select All" picked, fill with all options
+                              setTargetUsers(TARGET_USER_OPTIONS);
+                            } else {
+                              setTargetUsers(vals);
+                            }
+                          }}
                           placeholder="Select target audience"
                           allowClear
+                          // 👇 prevents the field from growing too tall
+                          maxTagCount="responsive"
                           style={{ width: "100%", ...compactInputStyle }}
                         >
+                          <Option key="Select All" value="Select All">
+                            Select All
+                          </Option>
                           {TARGET_USER_OPTIONS.map((option) => (
                             <Option key={option} value={option}>
                               {option}
                             </Option>
                           ))}
                         </Select>
+
                         {targetUsers.includes("Other") && (
                           <Input
                             style={{ marginTop: "8px", ...compactInputStyle }}
@@ -1658,7 +1694,7 @@ const CreateAgentWizard: React.FC = () => {
                       </div>
                     </Col>
 
-                    {/* Age limits (with "Select All" option in the list) */}
+                    {/* Age limits (Select All + compact tags) */}
                     <Col xs={24} md={12}>
                       <div style={{ marginBottom: "12px" }}>
                         {labelWithInfo(
@@ -1670,11 +1706,11 @@ const CreateAgentWizard: React.FC = () => {
                           value={ageLimits}
                           onChange={(vals) => {
                             if (vals.includes("Select All")) {
-                              // If "Select All" picked, replace with all options
+                              // If "Select All" picked, fill with all available options
                               setAgeLimits(AGE_LIMIT_OPTIONS);
-                              // clear custom age only if "Other" not included
-                              if (!AGE_LIMIT_OPTIONS.includes("Other"))
+                              if (!AGE_LIMIT_OPTIONS.includes("Other")) {
                                 setAgeOther("");
+                              }
                             } else {
                               setAgeLimits(vals);
                               if (!vals.includes("Other")) setAgeOther("");
@@ -1682,6 +1718,8 @@ const CreateAgentWizard: React.FC = () => {
                           }}
                           placeholder="Select age range(s)"
                           allowClear
+                          // 👇 keeps the field compact when many are selected
+                          maxTagCount="responsive"
                           style={{ width: "100%", ...compactInputStyle }}
                         >
                           <Option key="Select All" value="Select All">
@@ -1729,6 +1767,7 @@ const CreateAgentWizard: React.FC = () => {
                       </div>
                     </Col>
 
+                    {/* Response Format (default auto, dropdown still available) */}
                     <Col xs={24} md={12}>
                       <div style={{ marginBottom: "12px" }}>
                         {labelWithInfo(
@@ -1736,10 +1775,10 @@ const CreateAgentWizard: React.FC = () => {
                           "auto (natural text) or json_object (structured output)."
                         )}
                         <Select
-                          value={responseFormat}
+                          value={responseFormat || "auto"} // 👈 default to auto
                           onChange={setResponseFormat}
                           placeholder="Select response format"
-                          allowClear
+                          allowClear={false} // 👈 don't allow clearing, always something selected
                           style={{ width: "100%", ...compactInputStyle }}
                         >
                           {RESPONSE_FORMATS.map((f) => (
@@ -2363,7 +2402,7 @@ const CreateAgentWizard: React.FC = () => {
           />
         )}
       </div>
-    </BharathAIStoreLayout>
+    </BharathAIStoreLayout  >
   );
 };
 

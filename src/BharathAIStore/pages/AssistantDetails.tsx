@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate,useLocation } from "react-router-dom";
 import { Loader2, Send, User, Bot, Mic } from "lucide-react";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import {
   Copy,
   Share2,
@@ -16,7 +17,8 @@ import {
   getAssistantDetails,
   askAssistant,
 } from "../../AskoxyAdmin/Assistants/assistantApi";
-
+import axios from "axios"; // Updated: Import axios for fetching conversation starters
+import BASE_URL from "../../Config";
 interface Assistant {
   id: string;
   name: string;
@@ -51,8 +53,9 @@ declare global {
 }
 
 const AssistantDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, agentId } = useParams<{ id: string; agentId: string }>();
   const navigate = useNavigate();
+
 
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -65,28 +68,24 @@ const AssistantDetails: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const isStopped = useRef(false); // Updated: Ref to track if generation is stopped
-  const [editingIndex, setEditingIndex] = useState<number | null>(null); // Updated: State for editing message index
-  const [editingContent, setEditingContent] = useState(""); // Updated: State for editing content
+  const [editingIndex, setEditingIndex] = useState<number | null>(null); // Updated: State for editing index (assuming this was truncated in the original)
+  const [editingContent, setEditingContent] = useState(""); // Updated: State for editing content (assuming this was truncated in the original)
 
-  // Example dynamic prompts based on assistant (hardcoded for demo; can be fetched or generated dynamically in real scenarios)
-  const [prompts, setPrompts] = useState<string[]>([
-    "Tell me about your features.",
-    "How can you help with productivity?",
-    "What's the latest news?",
-    "Explain quantum computing simply.",
-  ]);
+  // Updated: Initialize prompts as empty array; will be populated dynamically from API
+  const [prompts, setPrompts] = useState<string[]>([]);
 
-  // Update prompts dynamically when assistant changes (e.g., prepend assistant name for personalization)
-  useEffect(() => {
-    if (assistant?.name) {
-      setPrompts([
-        `Hello ${assistant.name}, tell me about your features.`,
-        `How can ${assistant.name} help with productivity?`,
-        `${assistant.name}, what's the latest news?`,
-        `Explain quantum computing simply using ${assistant.name}.`,
-      ]);
-    }
-  }, [assistant]);
+  // Updated: Added function to fetch dynamic conversation starters using agentId (which is the same as assistant.id)
+  const getConversationStarters = async (agentId: string) => {
+    const response = await axios.get(
+      `${BASE_URL}/ai-service/agent/getConversation/${agentId}`,
+      {
+        headers: { 
+          Authorization: `Bearer ${localStorage.getItem("token") }`,
+         },
+      }
+    );
+    return response.data;
+  };
 
   const handleReadAloud = (content: string, idx: number) => {
     const synth = window.speechSynthesis;
@@ -109,11 +108,40 @@ const AssistantDetails: React.FC = () => {
 
   useEffect(() => {
     const fetchAssistant = async () => {
-      if (!id) return;
+      if (!id || !agentId) {
+        message.error("Invalid assistant or agent ID.");
+        navigate(-1);
+        return;
+      }
       setIsFetchingAssistant(true);
       try {
         const data = await getAssistantDetails(id);
         setAssistant(data);
+
+        // Updated: Fetch dynamic prompts from conversation starters API after loading assistant
+        try {
+          if (agentId) {
+            const convData = await getConversationStarters(agentId); // id is agentId
+            if (convData && convData.length > 0) {
+              const starters = [
+                convData[0].conStarter1,
+                convData[0].conStarter2,
+                convData[0].conStarter3,
+                convData[0].conStarter4,
+              ].filter((s: string) => s && s.trim()) as string[]; // Filter out empty starters
+              setPrompts(starters);
+            } else {
+              // Fallback to empty if no data
+              setPrompts([]);
+            }
+          } else {
+            setPrompts([]);
+          }
+        } catch (convError) {
+          console.error("Error fetching conversation starters:", convError);
+          message.warning("Could not load suggested prompts.");
+          setPrompts([]); // Fallback to empty
+        }
       } catch {
         message.error("Failed to load assistant details.");
         navigate(-1);
@@ -122,7 +150,7 @@ const AssistantDetails: React.FC = () => {
       }
     };
     fetchAssistant();
-  }, [id, navigate]);
+  }, [agentId, id,navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -317,8 +345,9 @@ backdrop-blur-md sticky top-0 z-20 "
         <div className="min-w-0">
           <button
             onClick={handleBack}
-            className="text-base sm:text-lg  text-black dark:text-white"
+            className="flex items-center gap-2 text-base sm:text-lg text-black dark:text-white"
           >
+            <ArrowLeftIcon className="h-5 w-5" />
             {assistant?.name || "Assistant"}
           </button>
         </div>
@@ -367,8 +396,8 @@ backdrop-blur-md sticky top-0 z-20 "
                   {assistant?.description ||
                     "Start chatting to explore how this assistant can help you."}
                 </p>
-                {/* Added dynamic prompt suggestions for better UX: 2 on mobile, 4 on larger screens */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 w-full max-w-3xl">
+                {/* Updated: Display dynamic prompts from API (conStarter1-4), remove static questions; show 2 on mobile, 4 on larger screens */}
+                <div className="grid  grid-cols-2 sm:grid-cols-4 gap-4 mt-8 w-full max-w-3xl">
                   {prompts
                     .slice(0, window.innerWidth < 768 ? 2 : 4)
                     .map((prompt, idx) => (
