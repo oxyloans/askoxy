@@ -788,7 +788,7 @@ const Home: React.FC = () => {
     return [
       {
         id: "1",
-        title: "GENOXY",
+        title: "OXYGPT",
         image:
           "https://i.ibb.co/7dFHq44H/study-abroad-b44df112b4ab2a4c2bc9.png",
         description: "AI-powered guidance for all services",

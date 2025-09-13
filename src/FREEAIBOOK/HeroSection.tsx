@@ -250,7 +250,7 @@ const handledAiVideos = () =>
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.05 }}
             >
-              Visit GENOXY
+              Visit OXYGPT
               <ArrowRight className="w-5 h-5" />
             </motion.button>
           </motion.div>

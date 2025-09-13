@@ -362,7 +362,7 @@ const RealTimeVoice: React.FC = () => {
               <div className="text-center mt-8 space-y-4">
                 <h2 className="text-2xl sm:text-4xl font-bold mb-4 relative">
                   <span className="bg-gradient-to-r from-orange-400 via-yellow-500 to-red-500 bg-clip-text text-transparent animate-bounce font-black tracking-wider drop-shadow-lg">
-                    Welcome to GENOXY Voice Assistant
+                    Welcome to OXY Voice Assistant
                   </span>
                 </h2>
                 <p className="text-xl text-gray-300 max-w-md mx-auto text-center">

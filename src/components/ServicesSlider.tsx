@@ -68,7 +68,7 @@ const ServicesSlider: React.FC = () => {
   const services = [
     {
       // You can replace this image with your preferred AI Agents artwork later
-      image: "https://i.ibb.co/BHQRnqZv/AI-AGENT.png",
+      image: "https://i.ibb.co/fVM4VfTF/aiagent1.png",
       title: "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
       path: "/services/6e44/ai-agents-2-earn-money-zero-in",
     },

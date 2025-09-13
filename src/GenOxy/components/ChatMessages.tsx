@@ -178,7 +178,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-md">
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      GENOXY is thinking
+                      OXYGPT is thinking
                     </span>
                     <div className="flex gap-1">
                       <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.3s] bg-indigo-500" />

@@ -83,7 +83,7 @@ const Genoxy: React.FC = () => {
       <div className="relative z-10 w-full max-w-5xl text-center">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
           <span className="bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
-            GENOXY
+            OXY GPT
           </span>
         </h2>
 

@@ -66,7 +66,7 @@ const tiles: Tile[] = [
     id: "s10",
     src: s10,
     route: "/voiceAssistant/welcome",
-    title: "GENOXY Voice Assistant",
+    title: "OXY Voice Assistant",
   },
 ];
 

@@ -124,14 +124,7 @@ const Footer: React.FC = () => {
                   AI Resources
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/free-ai-book"
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  Free AI Book
-                </Link>
-              </li>
+             
             </ul>
           </nav>
 

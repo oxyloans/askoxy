@@ -152,7 +152,7 @@ const Header: React.FC<HeaderProps> = ({
               <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 hover:dark:bg-gray-700 px-2  rounded-md">
                 <Sparkles className="w-5 h-5 text-purple-700 dark:text-white" />
                 <span className="font-semibold text-purple-700 text-sm dark:text-white">
-                  GENOXY
+                  OXYGPT
                 </span>
               </div>
 

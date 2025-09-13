@@ -14,7 +14,7 @@ import Logo5 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.png";
 import Logo6 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_14 AM.png";
 import Logo7 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_50 AM.png";
 import Logo8 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_34_01 AM.png";
-
+import Logo9 from "../../assets/img/Askoxy_resized.png";
 // ---------- Types ----------
 interface Assistant {
   id: string;
@@ -50,6 +50,25 @@ const STATIC_ASSISTANTS: Assistant[] = [
     id: "1",
     object: "assistant",
     created_at: 1697059200000,
+    name: "Askoxy.AI",
+    description:
+      "AI-Based Marketplace for Products and Services - Unlimited ChatGPT prompts at no cost.",
+    model: "gpt-4",
+    instructions: "Provide conversational AI chat support",
+    tools: [],
+    top_p: 1,
+    temperature: 0.7,
+    reasoning_effort: null,
+    tool_resources: {},
+    metadata: { category: "Chat" },
+    response_format: "text",
+    image: Logo9,
+    link: "/",
+  },
+  {
+    id: "2",
+    object: "assistant",
+    created_at: 1697059200000,
     name: "OXYGPT Chat",
     description: "A conversational AI assistant for human-like chat.",
     model: "gpt-4",
@@ -64,8 +83,9 @@ const STATIC_ASSISTANTS: Assistant[] = [
     image: Logo2,
     link: "/genoxy",
   },
+
   {
-    id: "2",
+    id: "3",
     object: "assistant",
     created_at: 1697145600000,
     name: "OXYGPT Voice Assistant",
@@ -83,7 +103,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/voiceAssistant/welcome",
   },
   {
-    id: "3",
+    id: "4",
     object: "assistant",
     created_at: 1697232000000,
     name: "AI LLMs",
@@ -101,7 +121,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/genoxy/chat",
   },
   {
-    id: "4",
+    id: "5",
     object: "assistant",
     created_at: 1697318400000,
     name: "AI Video Generation",
@@ -119,7 +139,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/ai-videos",
   },
   {
-    id: "5",
+    id: "6",
     object: "assistant",
     created_at: 1697059200000,
     name: "Free Ai Book",
@@ -137,7 +157,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/freeaibook",
   },
   {
-    id: "6",
+    id: "7",
     object: "assistant",
     created_at: 1697145600000,
     name: "Glms",
@@ -155,7 +175,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/glms",
   },
   {
-    id: "7",
+    id: "8",
     object: "assistant",
     created_at: 1697232000000,
     name: "Job street",
@@ -173,7 +193,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/jobstreet",
   },
   {
-    id: "8",
+    id: "9",
     object: "assistant",
     created_at: 1697318400000,
     name: "BillionAIre Hub",
