@@ -1163,7 +1163,7 @@ const validateStep2 = (): boolean => {
   };
 
   return (
-    <BharathAIStoreLayout>
+   
       <div
         style={{ minHeight: "100vh", background: "#f8f9fa", padding: "16px" }}
       >
@@ -2402,7 +2402,7 @@ const validateStep2 = (): boolean => {
           />
         )}
       </div>
-    </BharathAIStoreLayout  >
+   
   );
 };
 

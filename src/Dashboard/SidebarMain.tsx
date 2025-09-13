@@ -15,6 +15,8 @@ import {
   LogOut,
   FileText,
   Briefcase,
+  PlusCircle,
+  Bot,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -61,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <ShoppingCart size={18} />,
       label: "My Orders",
     },
+
     {
       to: "/main/profile",
       icon: <User size={18} />,
@@ -90,6 +93,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       to: "/main/crypto",
       icon: <Coins size={18} />,
       label: "My Crypto",
+    },
+    {
+      to: "/main/bharat-expert",
+      icon: <PlusCircle size={18} />,
+      label: "Create Agent",
+    },
+    {
+      to: "/main/bharath-aistore/agents",
+      icon: <Bot size={18} />,
+      label: "All Agents",
     },
     {
       to: "/main/dashboard/myservices",

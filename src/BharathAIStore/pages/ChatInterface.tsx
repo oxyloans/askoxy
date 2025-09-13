@@ -16,7 +16,7 @@ import {
   getAssistantDetails,
   askAssistant,
 } from "../../AskoxyAdmin/Assistants/assistantApi";
-import BharathAIStoreLayout from "../components/Layout";
+
 interface Assistant {
   id: string;
   name: string;
@@ -304,7 +304,7 @@ const ChatInterface1: React.FC = () => {
   };
 
   return (
-    <BharathAIStoreLayout>
+   
       <div
         className={`flex flex-col h-screen overflow-auto bg-white dark:bg-gray-800 text-purple-700 dark:text-white`}
       >
@@ -607,7 +607,7 @@ backdrop-blur-md sticky top-0 z-20 "
           </>
         )}
       </div>
-    </BharathAIStoreLayout>
+   
   );
 };
 

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import {
   message,
 } from "antd";
-import BharathAIStoreLayout from "../BharathAIStore/components/Layout";
+
 
 /** -------- Auth helpers -------- */
 function getAccessToken(): string | null {
@@ -423,10 +423,10 @@ const uploadImage = async (assistantId: string, file: File) => {
     }
   };
 
-  const gotoStore = () => navigate("/bharat-expert");
+  const gotoStore = () => navigate("/main/bharat-expert");
 
   return (
-    <BharathAIStoreLayout>
+    
       <div className="min-h-screen">
         {/* Body */}
         <main className="mx-auto max-w-7xl px-4 py-6">
@@ -476,12 +476,12 @@ const uploadImage = async (assistantId: string, file: File) => {
                     const conv = conversationsByAgent[a.id] || [];
                     return (
                       <div
-                        key={a.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() =>
-                          navigate(`/chatinterface/assistant/${a.assistantId}`)
-                        }
+                        // key={a.id}
+                        // role="button"
+                        // tabIndex={0}
+                        // onClick={() =>
+                        //   navigate(`/chatinterface/assistant/${a.assistantId}`)
+                        // }
                         className="rounded-2xl border border-purple-200 bg-white shadow-sm hover:shadow-lg transition-all duration-300 p-5 flex flex-col"
                       >
                         {/* Top: Avatar/Name/Badges */}
@@ -898,7 +898,7 @@ const uploadImage = async (assistantId: string, file: File) => {
           </div>
         )}
       </div>
-    </BharathAIStoreLayout>
+   
   );
 };
 

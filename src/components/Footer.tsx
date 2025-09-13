@@ -69,7 +69,7 @@ const Footer: React.FC = () => {
      icon: <MapPin className="h-4 w-4" />,
      content:
        "OXYKART TECHNOLOGIES PVT LTD, Miyapur Metro ASKOXY.AI, Hyderabad, Telangana - 500049",
-     link: "https://www.google.com/maps/place/Metro+Station+Miyapur,+Nadigada+Tanda,+Miyapur,+Hyderabad,+Telangana+500049",
+     link: "https://www.google.com/maps/search/ASKOXY.AI/@17.4964402,78.3733327,17z",
      type: "map",
    },
    {
@@ -114,7 +114,7 @@ const Footer: React.FC = () => {
                   aria-label={social.label}
                   style={{
                     display: "inline-block",
-                    animation: "colorBounce 1.5s infinite",
+                    animation: "pulseColor 5s infinite ease-in-out",
                   }}
                 >
                   {social.icon}
@@ -124,12 +124,27 @@ const Footer: React.FC = () => {
 
             <style>
               {`
-  @keyframes colorBounce {
-    0%   { transform: scale(1);   color: #6B7280; }   /* gray-500 */
-    25%  { transform: scale(1.2); color: #1DA1F2; }   /* Twitter blue */
-    50%  { transform: scale(1);   color: #9333EA; }   /* purple-600 */
-    75%  { transform: scale(1.2); color: #E0245E; }   /* pink/red */
-    100% { transform: scale(1);   color: #6B7280; }   /* back to gray */
+  @keyframes pulseColor {
+    0% {
+      transform: scale(1);
+      color: #6B7280; /* gray-500 */
+    }
+    25% {
+      transform: scale(1.1);
+      color: #1DA1F2; /* twitter blue */
+    }
+    50% {
+      transform: scale(1.2);
+      color: #9333EA; /* purple-600 */
+    }
+    75% {
+      transform: scale(1.1);
+      color: #E0245E; /* pink/red */
+    }
+    100% {
+      transform: scale(1);
+      color: #6B7280; /* back to gray */
+    }
   }
 `}
             </style>

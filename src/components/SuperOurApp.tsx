@@ -41,7 +41,7 @@ export default function SuperOurApp() {
       setIsLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/6e44/ai-agents-2-earn-money-zero-in"; // your desired path
+      const redirectPath = "/bharath-aistore"; // your desired path
 
       if (userId) {
         // User is already logged in
@@ -90,9 +90,9 @@ export default function SuperOurApp() {
     },
     {
       id: "s11",
-      src: s14,
-      onClick: () => handledSignInAiAgents(),
-      title: "AI Agents\nEarn Money",
+      src: s2,
+      onClick: () => navigate("/bharath-aistore"),
+      title: "Bharat\nAI Store",
     },
     {
       id: "s12",

@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({
     },
   ];
 
-  const NEXT_PATH = "/bharat-expert";
+  const NEXT_PATH = "/main/bharat-expert";
   const handleCreateAgentClick = () => {
     try {
       setLoading(true);

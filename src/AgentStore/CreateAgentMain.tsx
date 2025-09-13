@@ -157,7 +157,7 @@ export default function CreateAgentMain() {
   }, [lang, headers]);
 
   const handleContinue = (headerTitle: string) => {
-    navigate("/create-aiagent", {
+    navigate("/main/create-aiagent", {
       state: { headerTitle, headerStatus: false, mode: "create" },
     });
   };
@@ -170,7 +170,7 @@ export default function CreateAgentMain() {
     (lang !== "en" ? h.translations?.[lang]?.desc : null) || h.discription;
 
   return (
-    <BharathAIStoreLayout>
+   
       <div className="min-h-screen bg-gradient-to-b from-white via-purple-50/30 to-white">
         {/* Top Bar */}
         <div className="mx-auto max-w-6xl px-4 pt-6">
@@ -289,6 +289,6 @@ export default function CreateAgentMain() {
           )}
         </div>
       </div>
-    </BharathAIStoreLayout>
+   
   );
 }

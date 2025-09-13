@@ -9,24 +9,36 @@ import oxybricksLogo from "../assets/img/image2.png";
 import bmvcoinLogo from "../assets/img/image4.png";
 import oxyfoundationLogo from "../assets/img/image5.png";
 
-// Custom arrow components with responsive visibility
-const CustomPrevArrow = (props: any) => (
-  <button
-    {...props}
-    className="hidden md:block absolute left-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
-  >
-    ❮
-  </button>
-);
+// CustomPrevArrow
+const CustomPrevArrow = (props: any) => {
+  const { className, style, onClick } = props; // take only needed props
+  return (
+    <button
+      type="button"
+      className={`hidden md:block absolute left-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10 ${className || ""}`}
+      style={style}
+      onClick={onClick}
+    >
+      ❮
+    </button>
+  );
+};
 
-const CustomNextArrow = (props: any) => (
-  <button
-    {...props}
-    className="hidden md:block absolute right-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10"
-  >
-    ❯
-  </button>
-);
+// CustomNextArrow
+const CustomNextArrow = (props: any) => {
+  const { className, style, onClick } = props;
+  return (
+    <button
+      type="button"
+      className={`hidden md:block absolute right-[-40px] top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 text-3xl z-10 ${className || ""}`}
+      style={style}
+      onClick={onClick}
+    >
+      ❯
+    </button>
+  );
+};
+
 
 const OXYGroupCompanies = () => {
   const companies = [

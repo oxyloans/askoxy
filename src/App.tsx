@@ -9,7 +9,7 @@ import TermsAndConditions from "./kart/TermsAndConditions";
 import RCSConsentForm from "./kart/RCSConsentForm";
 import FreeSample from "./components/Services/FreeSample";
 import FreeAiandGenAi from "./components/Services/FreeAi&GenAi";
-import StudyAbroad from "./components/Services/StudyAbroad";
+
 import MachinesManufacturingServices from "./components/Services/Machines&ManufacturingService";
 import LegalService from "./components/Services/LegalService";
 import MyRotaryServices from "./components/Services/MyRotary";
@@ -164,18 +164,14 @@ import CarnivalFormPage from "./Retailshop/Pages/CarnivalFormPage";
 import CarnivalListPage from "./Retailshop/Pages/CarnivalListPage";
 import ShopEditForm from "./Retailshop/components/ShopEditForm";
 import CarnivalEditPage from "./Retailshop/Pages/CarnivalEditPage";
-import CreateAgentStep1 from "./AgentStore/CreateAgentpage";
+
 import CreateAgentMain from "./AgentStore/CreateAgentMain";
 import CreateAgentStep2 from "./AgentStore/AgentBusiness";
-import AgentTarget from "./AgentStore/AgentTarget";
-import AgentProcess from "./AgentStore/AgentProcess";
-import AgentContact from "./AgentStore/AgentContact";
-import AgentGenerate from "./AgentStore/AgentGenerate";
-import VerifyIdentity from "./AgentStore/VerifyAgent";
+
 import CreateAgentWizard from "./AgentStore/CreateAgentWizard";
 
 // *************************STUDY ABRAD****************************//
-import CoursesPage from "./StudyAbroad/Course";
+
 import UserSelectionPage from "./StudyAbroad/Homepage";
 
 import UniversityListPage from "./StudyAbroad/Universitylist";
@@ -184,7 +180,7 @@ import LandingPage1 from "./AIServicesHub/LandingPage";
 import StudyAbroadLandingPage from "./StudyAbroad/StudyAbroadLandingPage";
 import StudentMainDashboard from "./StudyAbroad/StudentMainDashboard";
 import BlogDetails from "./components/BlogDetails";
-import AskoxyAi from "./components/OpenAi";
+
 import GenOxy from "./GenOxy/Genoxy";
 import RealtimePage from "./GenOxy/components/RealTimeMainscreen";
 import JobDetails from "./components/JobDetails";
@@ -311,7 +307,10 @@ const App: React.FC = () => {
               path="/bharath-aistore/assistant/:id/:agentId"
               element={<AssistantDetails />}
             />
-            <Route path="/chatinterface/assistant/:id" element={<ChatInterface1 />} />
+            <Route
+              path="/chatinterface/assistant/:id"
+              element={<ChatInterface1 />}
+            />
             <Route path="/myblogs" element={<BlogsPage />} />
             <Route
               path="/termsandconditions"
@@ -356,7 +355,6 @@ const App: React.FC = () => {
               path="/aiblockchainanditservices"
               element={<AIBlockchainAndItServices />}
             />
-            <Route path="/bharath-aistore/agents" element={<AllAgentsPage />} />
             <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
             <Route path="/genoxy" element={<GenOxy />} />
             <Route
@@ -428,18 +426,16 @@ const App: React.FC = () => {
               element={<RiceSalePage />}
             /> */}
             <Route path="/qrcode" element={<QR />} />
-            <Route path="/verify-agent" element={<VerifyIdentity />} />
-            <Route path="/create-aiagent" element={<CreateAgentWizard />} />
-            <Route path="/bharat-expert" element={<CreateAgentMain />} />
-            <Route path="/bharat-agent" element={<CreateAgentStep1 />} />
+            {/* <Route path="/verify-agent" element={<VerifyIdentity />} /> */}
+            {/* <Route path="/bharat-agent" element={<CreateAgentStep1 />} /> */}
             <Route
               path="/bharat-agentbusiness"
               element={<CreateAgentStep2 />}
             />
-            <Route path="/bharat-agentprocess" element={<AgentProcess />} />
-            <Route path="/bharat-targetcus" element={<AgentTarget />} />
+            {/* <Route path="/bharat-agentprocess" element={<AgentProcess />} /> */}
+            {/* <Route path="/bharat-targetcus" element={<AgentTarget />} />
             <Route path="/bharat-contact" element={<AgentContact />} />
-            <Route path="/bharat-generate" element={<AgentGenerate />} />
+            <Route path="/bharat-generate" element={<AgentGenerate />} /> */}
             <Route path="/oxygroup" element={<OxyGroup />} />
             <Route path="/pinkfunding" element={<PinkFunding />} />
             <Route path="/climatecrisis" element={<Climatecrisis />} />
@@ -605,6 +601,12 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
+              <Route
+                path="bharath-aistore/agents"
+                element={<AllAgentsPage />}
+              />
+              <Route path="create-aiagent" element={<CreateAgentWizard />} />
+              <Route path="bharat-expert" element={<CreateAgentMain />} />
               <Route path="mycart" element={<CartPage />} />
               <Route
                 path="myorders"
