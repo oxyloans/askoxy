@@ -34,7 +34,7 @@ import {
   AudioMutedOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
-import BharathAIStoreLayout from "../BharathAIStore/components/Layout";
+import axios from "axios";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -69,7 +69,6 @@ type AgentApiResponse = {
   agentId: string | null;
   assistantId: string | null;
   message: string | null;
-  // backend may ignore these if unknown — included for convenience
   creatorName?: string | null;
 };
 
@@ -131,7 +130,6 @@ const TARGET_USER_OPTIONS = [
   "Other",
 ];
 
-// ✅ Added "Other"
 const AGE_LIMIT_OPTIONS = [
   "Below 18",
   "18-25",
@@ -140,7 +138,6 @@ const AGE_LIMIT_OPTIONS = [
   "55+",
   "Other",
 ];
-const allAgeValues = [...AGE_LIMIT_OPTIONS];
 const TONE_OPTIONS = [
   "Helpful, Professional",
   "Friendly, Supportive",
@@ -148,18 +145,9 @@ const TONE_OPTIONS = [
   "Expert, Analytical",
   "Casual, Empathetic",
 ];
-
 const RESPONSE_FORMATS = ["auto", "json_object"] as const;
 
-const FALLBACK_MODELS: ModelInfo[] = [
-  { id: "gpt-4-0613", owned_by: "openai" },
-  { id: "gpt-4", owned_by: "openai" },
-  { id: "gpt-3.5-turbo", owned_by: "openai" },
-  { id: "gpt-4o", owned_by: "openai" },
-  { id: "gpt-4o-mini", owned_by: "openai" },
-];
-
-/** Read auth token safely */
+// ===== Helpers =====
 function getAuth(): string {
   try {
     return localStorage.getItem("auth_token") || "";
@@ -167,8 +155,6 @@ function getAuth(): string {
     return "";
   }
 }
-
-/** Strip empty/undefined/blank values so PATCH/POST stays clean */
 function stripEmpty<T extends object>(obj: T): Partial<T> {
   const out = {} as Partial<T>;
   (Object.keys(obj) as (keyof T)[]).forEach((k) => {
@@ -185,7 +171,6 @@ function stripEmpty<T extends object>(obj: T): Partial<T> {
   return out;
 }
 
-/** Clean instruction text (only on generation/publish, not while typing) */
 function cleanInstructionText(txt: string): string {
   if (!txt) return "";
   let t = txt
@@ -215,7 +200,6 @@ const CreateAgentWizard: React.FC = () => {
   const [description, setDescription] = useState("");
   const [strength, setStrength] = useState("");
   const [language, setLanguage] = useState("English");
-  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
 
   // Step 4 fields
   const [rateThisPlatform, setRateThisPlatform] = useState<number>(0);
@@ -234,26 +218,38 @@ const CreateAgentWizard: React.FC = () => {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [solveProblem, setSolveProblem] = useState<"YES" | "NO" | "">("");
   const [mainProblemText, setMainProblemText] = useState("");
-  // Unique Solution is always visible (per requirement)
   const [uniqueSolution, setUniqueSolution] = useState("");
 
   const location = useLocation() as any;
+  // Allowed header titles
+  const HEADER_TITLES = [
+    "AI Twin",
+    "AI Enabler",
+    "AI Discovery",
+    "AI Companion",
+    "AI Executor",
+    "AI Validator",
+  ] as const;
+  type HeaderTitle = (typeof HEADER_TITLES)[number];
 
-  const [headerTitle, setHeaderTitle] = useState<string>(
-    location?.state?.headerTitle === "AI Enabler" ? "AI Enabler" : "AI Twin"
-  );
-  const [headerStatus, setHeaderStatus] = useState<boolean>(
-    typeof location?.state?.headerStatus === "boolean"
-      ? Boolean(location.state.headerStatus)
-      : false // per requirement: send false
-  );
+  // Normalize any incoming title to one of the 6 (fallback: "AI Twin")
+  function normalizeHeaderTitle(s?: string): HeaderTitle {
+    const v = (s || "").trim();
+    return (HEADER_TITLES as readonly string[]).includes(v)
+      ? (v as HeaderTitle)
+      : "AI Twin";
+  }
 
-  // Step 3 - Audience + Config (UPDATED: multi-select targetUsers & ageLimits)
+  const [headerTitle, setHeaderTitle] = useState<HeaderTitle>(
+    normalizeHeaderTitle((location as any)?.state?.headerTitle)
+  );
+  const [headerStatus] = useState<boolean>(false); // always send false per requirement
+
+  // Step 3 - Audience + Config
   const [targetUsers, setTargetUsers] = useState<string[]>([]);
   const [targetUserOther, setTargetUserOther] = useState("");
   const [genderSelections, setGenderSelections] = useState<string[]>([]);
   const [ageLimits, setAgeLimits] = useState<string[]>([]);
-  // ✅ New: custom age when "Other" is selected
   const [ageOther, setAgeOther] = useState<string>("");
 
   const [converstionTone, setConverstionTone] = useState<string | undefined>(
@@ -272,7 +268,7 @@ const CreateAgentWizard: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  // IDs & flags
+  // IDs
   const [agentId, setAgentId] = useState<string>("");
   const [assistantId, setAssistantId] = useState<string>("");
 
@@ -285,22 +281,27 @@ const CreateAgentWizard: React.FC = () => {
   const [conStarter4, setConStarter4] = useState("");
   const [activeStatus, setActiveStatus] = useState(true);
 
-  // Voice: default inactive, no edit
+  // Voice: default inactive
   const [voiceStatus] = useState<boolean>(false);
 
-  // Static channel: Text Chat active (no edit)
-  const textChatActive = true;
+  // profile cache (so we can use it when Share Contact toggles)
+  const profileRef = useRef<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    mobileNumber?: string;
+    whatsappNumber?: string;
+  } | null>(null);
 
-  // Preview modal
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  // Preview modal + Store choices
   const [showPreview, setShowPreview] = useState(false);
   const [storeBharat, setStoreBharat] = useState(false);
   const [storeOxy, setStoreOxy] = useState(false);
 
   const userId = localStorage.getItem("userId") || "";
   const navigate = useNavigate();
-  const bharatAgentsStoreRef = useRef<HTMLDivElement>(null);
-  const aiResourcesRef = useRef<HTMLDivElement>(null);
-  const freeAIBookRef = useRef<HTMLDivElement>(null);
   const isEditMode = location?.state?.mode === "edit";
   const editSeed:
     | (Partial<AgentApiResponse & Record<string, any>> | undefined)
@@ -352,13 +353,75 @@ const CreateAgentWizard: React.FC = () => {
     return list.join(", ");
   }, [targetUsers, targetUserOther]);
 
-  // ✅ Replace "Other" with the custom age, if provided
   const resolvedAgeLimitsString = useMemo(() => {
     return ageLimits
       .map((a) => (a === "Other" ? ageOther.trim() || "Other" : a))
       .filter(Boolean)
       .join(", ");
   }, [ageLimits, ageOther]);
+
+  function getUiToken(): string {
+    return (
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("id_token") ||
+      localStorage.getItem("auth_token") ||
+      ""
+    );
+  }
+  const uiToken = getUiToken();
+
+  // prefer explicit customerId; fallback to userId already in your state
+  const customerIdFromStorage =
+    localStorage.getItem("customerId") || userId || "";
+
+  const fetchProfileData = async () => {
+    try {
+      setIsLoadingProfile(true);
+      const response = await axios.get(
+        `${BASE_URL}/user-service/customerProfileDetails`,
+        {
+          params: { customerId: customerIdFromStorage },
+          headers: { Authorization: `Bearer ${uiToken}` },
+        }
+      );
+
+      const data = response?.data || {};
+      profileRef.current = {
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        email: data.email || "",
+        mobileNumber: data.mobileNumber || "",
+        whatsappNumber: data.whatsappNumber || "",
+      };
+
+      // Prefill Creator Name if empty
+      const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+      if (!creatorName && fullName) {
+        setCreatorName(fullName);
+      }
+
+      // If user already chose to share contact and field is empty, prefill it
+      if (shareContact === "YES" && !contactDetails) {
+        const best =
+          data.mobileNumber || data.whatsappNumber || data.email || "";
+        if (best) setContactDetails(best);
+      }
+    } catch (e) {
+      // silent fail: just don't prefill
+      // optionally: message.warning("Could not fetch profile");
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  useEffect(() => {
+    // only attempt if we have auth + some id
+    if (uiToken && customerIdFromStorage) {
+      fetchProfileData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerIdFromStorage, uiToken]);
 
   const classifyText = useMemo(() => {
     const parts = [
@@ -396,146 +459,15 @@ const CreateAgentWizard: React.FC = () => {
     language,
   ]);
 
-  // Prefill all steps when in edit mode
-  useEffect(() => {
-    if (!isEditMode || !editSeed) return;
-
-    if (typeof editSeed.headerStatus === "boolean") {
-      setHeaderStatus(Boolean(editSeed.headerStatus));
-    }
-    if (
-      typeof editSeed.headerTitle === "string" &&
-      editSeed.headerTitle.length
-    ) {
-      setHeaderTitle(
-        editSeed.headerTitle === "AI Enabler" ? "AI Enabler" : "AI Twin"
-      );
-    }
-
-    // IDs
-    setAgentId(String(editSeed.id || editSeed.agentId || ""));
-    setAssistantId(String(editSeed.assistantId || ""));
-    setCreatorName(String(editSeed.creatorName || ""));
-
-    // Step 1 – Profile
-    setAgentName(editSeed.agentName || editSeed.name || "");
-    setDescription(editSeed.description || "");
-    setLanguage(editSeed.language || "English");
-    setUserExperienceSummary(editSeed.userExperienceSummary || "");
-    setUserRole(editSeed.userRole || "Advocate");
-
-    // Step 2 – Business & Model & Problem
-    const d = editSeed.domain || "";
-    setDomain(DOMAIN_OPTIONS.includes(d) ? d : d ? "Other" : undefined);
-    setDomainOther(!DOMAIN_OPTIONS.includes(d) ? d : "");
-
-    const sd = editSeed.subDomain || "";
-    setSubDomain(
-      SUBDOMAIN_OPTIONS.includes(sd) ? sd : sd ? "Other" : undefined
-    );
-    setSubDomainOther(!SUBDOMAIN_OPTIONS.includes(sd) ? sd : "");
-
-    setBusiness(editSeed.business || "");
-    setSelectedModelId(editSeed.usageModel || undefined);
-
-    const priorProblem = String(editSeed.mainProblemSolved || "").trim();
-    const priorSolution = String(editSeed.uniqueSolution || "").trim();
-    setMainProblemText(priorProblem);
-    setUniqueSolution(priorSolution);
-    setSolveProblem(priorProblem ? "YES" : "");
-
-    // Step 3 – Audience + Config
-    const priorTarget = String(editSeed.targetUser || "").trim();
-    if (priorTarget) {
-      const arr = priorTarget
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      setTargetUsers(arr);
-    }
-
-    // ✅ Parse age: if not in known options, set as custom "Other"
-    const priorAge = String(editSeed.ageLimit || "").trim();
-    if (priorAge) {
-      const tokens = priorAge
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const known = new Set(AGE_LIMIT_OPTIONS);
-      const nextAges: string[] = [];
-      let customFound = "";
-
-      tokens.forEach((t) => {
-        if (known.has(t) && t !== "Other") {
-          nextAges.push(t);
-        } else {
-          // treat as custom
-          customFound = t;
-          nextAges.push("Other");
-        }
-      });
-
-      setAgeLimits(Array.from(new Set(nextAges)));
-      if (customFound) setAgeOther(customFound);
-    }
-
-    if (editSeed?.gender) {
-      setGenderSelections(
-        String(editSeed.gender)
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      );
-    }
-    setConverstionTone(editSeed.converstionTone || undefined);
-    setResponseFormat((editSeed.responseFormat as any) || undefined);
-    setInstructions(editSeed.instructions || "");
-
-    // Step 4 – Contact etc.
-    const cd = String(editSeed.contactDetails || "");
-    if (cd) {
-      setShareContact("YES");
-      setContactDetails(cd);
-    } else {
-      setShareContact("NO");
-      setContactDetails("");
-    }
-    setConStarter1(editSeed.conStarter1 || "");
-    setConStarter2(editSeed.conStarter2 || "");
-    setConStarter3(editSeed.conStarter3 || "");
-    setConStarter4(editSeed.conStarter4 || "");
-    setActiveStatus(Boolean(editSeed.activeStatus));
-
-    setStep(0);
-  }, [isEditMode, editSeed]);
-
-  // ✅ Allowed Models Only
-  const ALLOWED_MODELS = [
-    // "chatgpt-4o-latest",
-    "gpt-4o",
-    // "gpt-4o-2024-05-13",
-    // "gpt-4o-2024-08-06",
-    // "gpt-4o-2024-11-20",
-    // "gpt-4o-mini",
-    // "gpt-4o-mini-2024-07-18",
-    // "gpt-3.5-turbo",
-    // "gpt-3.5-turbo-16k",
-    // "gpt-3.5-turbo-1106",
-    // "gpt-3.5-turbo-0125",
-    // "gpt-3.5-turbo-instruct",
-    // "gpt-3.5-turbo-instruct-0914",
-  ];
-
-  // Replace FALLBACK_MODELS with only allowed ones
-  const FALLBACK_MODELS: ModelInfo[] = ALLOWED_MODELS.map((id) => ({
+  // ===== Allowed Models (kept as before) =====
+  const ALLOWED_MODELS = ["gpt-4o"]; // trimmed to your allowed list
+  const FALLBACK_MODELS_ALLOWED: ModelInfo[] = ALLOWED_MODELS.map((id) => ({
     id,
     owned_by: "openai",
   }));
 
-  // In useEffect where models are loaded:
   useEffect(() => {
     if (step !== 1) return;
-
     (async () => {
       try {
         setLoading(true);
@@ -546,22 +478,17 @@ const CreateAgentWizard: React.FC = () => {
           },
         });
         if (!res.ok) throw new Error(`Models failed: ${res.status}`);
-
         const data = await res.json();
         const arr = Array.isArray(data?.data) ? data.data : [];
-
-        // ✅ Only keep allowed models
         const filtered = arr.filter((m: any) => ALLOWED_MODELS.includes(m.id));
-
-        setModels(filtered.length ? filtered : FALLBACK_MODELS);
-
+        setModels(filtered.length ? filtered : FALLBACK_MODELS_ALLOWED);
         if (!filtered.length) {
           message.warning(
             "Models API returned empty/unsupported list. Using defaults."
           );
         }
       } catch (err: any) {
-        setModels(FALLBACK_MODELS);
+        setModels(FALLBACK_MODELS_ALLOWED);
         message.warning(
           err?.message || "Failed to load models — using defaults."
         );
@@ -577,7 +504,7 @@ const CreateAgentWizard: React.FC = () => {
     );
   };
 
-  // ====== VALIDATION PER STEP (MANDATORY FIELDS) ======
+  // ===== VALIDATION =====
   const validateStep0 = (): boolean => {
     const missing: string[] = [];
     if (!agentName.trim()) missing.push("Agent Name");
@@ -586,14 +513,10 @@ const CreateAgentWizard: React.FC = () => {
       missing.push("Professional Identity");
     if (!description.trim()) missing.push("Description");
     if (!language.trim()) missing.push("Language");
-
     if (missing.length) {
-      message.error({
-        content: `Please fill the following before Continue: ${missing.join(
-          ", "
-        )}`,
-        style: { color: "#722ed1" },
-      });
+      message.error(
+        `Please fill the following before Continue: ${missing.join(", ")}`
+      );
       return false;
     }
     return true;
@@ -606,111 +529,232 @@ const CreateAgentWizard: React.FC = () => {
     if (!(resolvedSubDomain || "").trim()) missing.push("Sub-Domain/Subsector");
     if (!selectedModelId?.trim()) missing.push("GPT Model");
     if (!solveProblem) missing.push("Are you solving a problem?");
-
     if (solveProblem === "YES") {
       if (!mainProblemText.trim()) missing.push("Main Problem to Solve");
       if (!uniqueSolution.trim()) missing.push("Unique Solution Method");
       if (mainProblemText.length > 100) {
-        message.error("Main Problem to Solve must be 100 characters or less.");
+        message.error("Main Problem to Solve must be ≤ 100 characters.");
         return false;
       }
       if (uniqueSolution.length > 100) {
-        message.error("Unique Solution Method must be 100 characters or less.");
+        message.error("Unique Solution Method must be ≤ 100 characters.");
         return false;
       }
     }
-
     if (missing.length) {
-      message.error({
-        content: `Please fill the following before Continue: ${missing.join(
-          ", "
-        )}`,
-        style: { color: "#722ed1" },
-      });
+      message.error(
+        `Please fill the following before Continue: ${missing.join(", ")}`
+      );
       return false;
     }
     return true;
   };
 
   const isAllSelected = (selected: string[], allOptions: string[]) =>
-  allOptions.every((opt) => selected.includes(opt));
+    allOptions.every((opt) => selected.includes(opt));
+  const validateStep2 = (): boolean => {
+    const missing: string[] = [];
+    // Target Customers
+    const allCustomersSelected = isAllSelected(
+      targetUsers,
+      TARGET_USER_OPTIONS
+    );
+    if (!targetUsers.length) missing.push("Target Customers");
+    if (
+      targetUsers.includes("Other") &&
+      !allCustomersSelected &&
+      !targetUserOther.trim()
+    ) {
+      missing.push("Target Customers (Other)");
+    }
+    // Gender
+    if (genderSelections.length === 0) missing.push("Target Audience Gender");
+    // Age
+    const allAgesSelected = isAllSelected(ageLimits, AGE_LIMIT_OPTIONS);
+    if (!ageLimits.length) missing.push("Target Age Limit(s)");
+    if (ageLimits.includes("Other") && !allAgesSelected && !ageOther.trim()) {
+      missing.push("Custom Age Limit (Other)");
+    }
+    // Tone
+    if (!converstionTone?.trim()) missing.push("Conversation Tone");
 
-const validateStep2 = (): boolean => {
-  const missing: string[] = [];
-
-  // Target Customers
-  const allCustomersSelected = isAllSelected(targetUsers, TARGET_USER_OPTIONS);
-  if (!targetUsers.length) missing.push("Target Customers");
-  // Only require "Other" text when "Other" picked AND not all selected
-  if (
-    targetUsers.includes("Other") &&
-    !allCustomersSelected &&
-    !targetUserOther.trim()
-  ) {
-    missing.push("Target Customers (Other)");
-  }
-
-  // Gender
-  if (genderSelections.length === 0) missing.push("Target Audience Gender");
-
-  // Age Limits
-  const allAgesSelected = isAllSelected(ageLimits, AGE_LIMIT_OPTIONS);
-  if (!ageLimits.length) missing.push("Target Age Limit(s)");
-  // Only require custom age when "Other" picked AND not all selected
-  if (ageLimits.includes("Other") && !allAgesSelected && !ageOther.trim()) {
-    missing.push("Custom Age Limit (Other)");
-  }
-
-  // Tone
-  if (!converstionTone?.trim()) missing.push("Conversation Tone");
-
-  if (missing.length) {
-    message.error({
-      content: `Please fill the following before Continue: ${missing.join(", ")}`,
-      style: { color: "#722ed1" },
-    });
-    return false;
-  }
-  return true;
-};
-
-  const next = () => {
-    if (step === 0 && !validateStep0()) return;
-    if (step === 1 && !validateStep1()) return;
-    if (step === 2 && !validateStep2()) return;
-    if (step < 3) setStep((step + 1) as any);
+    if (missing.length) {
+      message.error(
+        `Please fill the following before Continue: ${missing.join(", ")}`
+      );
+      return false;
+    }
+    return true;
   };
 
+  // ====== NEW: step PATCH helpers ======
+  async function doPatch(path: string, payload: Record<string, any>) {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getAuth()}`,
+      },
+      body: JSON.stringify(stripEmpty(payload)),
+    });
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (!res.ok) {
+      const errTxt = await res.text().catch(() => "");
+      throw new Error(`${res.status} ${errTxt}`);
+    }
+    return ct.includes("application/json") ? res.json() : res.text();
+  }
+
+  // Step 1 save
+  const saveStep0 = async () => {
+    if (!validateStep0()) return false;
+    setLoading(true);
+    try {
+      const payload = {
+        // IDs (if continuing edit, backend can upsert)
+        agentId: agentId || undefined,
+        assistantId: assistantId || undefined,
+        userId,
+        // Header
+        headerTitle,
+        headerStatus: false,
+        // Profile
+        agentName,
+        creatorName,
+        userRole: effectiveUserRole || "Developer",
+        userExperienceSummary,
+        acheivements,
+        description,
+        strength,
+        language,
+        voiceStatus: false,
+      };
+      const data = await doPatch("/ai-service/agent/agentScreen1", payload);
+      // Capture IDs if backend returns them
+      const aId = data?.agentId || data?.id || "";
+      const asstId = data?.assistantId || "";
+      if (aId) setAgentId(String(aId));
+      if (asstId) setAssistantId(String(asstId));
+      message.success("Saved step 1");
+      return true;
+    } catch (e: any) {
+      message.error(e?.message || "Failed to save step 1");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2 save
+  const saveStep1 = async () => {
+    if (!validateStep1()) return false;
+    setLoading(true);
+    try {
+      const payload = {
+        agentId: agentId || undefined,
+        assistantId: assistantId || undefined,
+        userId,
+        business,
+        domain: resolvedDomain,
+        subDomain: resolvedSubDomain,
+        usageModel: selectedModelId,
+        solveProblem,
+        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
+        uniqueSolution,
+      };
+      const data = await doPatch("/ai-service/agent/agentScreen2", payload);
+      const aId = data?.agentId || data?.id || "";
+      const asstId = data?.assistantId || "";
+      if (aId) setAgentId(String(aId));
+      if (asstId) setAssistantId(String(asstId));
+      message.success("Saved step 2");
+      return true;
+    } catch (e: any) {
+      message.error(e?.message || "Failed to save step 2");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 3 save
+  const saveStep2 = async () => {
+    if (!validateStep2()) return false;
+    setLoading(true);
+    try {
+      const finalTargetUsers = resolvedTargetUsersString || undefined;
+      const finalAgeLimits = resolvedAgeLimitsString || undefined;
+
+      const payload = {
+        agentId: agentId || undefined,
+        assistantId: assistantId || undefined,
+        userId,
+        // audience/config
+        targetUser: finalTargetUsers,
+        gender: genderForText || genderSelections.join(",") || undefined,
+        ageLimit: finalAgeLimits,
+        converstionTone,
+        responseFormat: responseFormat || "auto",
+        // instructions (draft or generated)
+        instructions,
+      };
+      const data = await doPatch("/ai-service/agent/agentScreen3", payload);
+      const aId = data?.agentId || data?.id || "";
+      const asstId = data?.assistantId || "";
+      if (aId) setAgentId(String(aId));
+      if (asstId) setAssistantId(String(asstId));
+      message.success("Saved step 3");
+      return true;
+    } catch (e: any) {
+      message.error(e?.message || "Failed to save step 3");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Next/Prev orchestrators: SAVE & CONTINUE
+  const next = async () => {
+    if (step === 0) {
+      const ok = await saveStep0();
+      if (!ok) return;
+      setStep(1);
+    } else if (step === 1) {
+      const ok = await saveStep1();
+      if (!ok) return;
+      setStep(2);
+    } else if (step === 2) {
+      const ok = await saveStep2();
+      if (!ok) return;
+      setStep(3);
+    }
+  };
   const prev = () => {
     if (step > 0) setStep((step - 1) as any);
   };
 
-  /** Generate Instructions */
+  // ===== classify/generate instructions (unchanged logic) =====
   const handleGenerate = async () => {
     if (
       !description.trim() &&
       !(solveProblem === "YES" && uniqueSolution.trim())
     ) {
       message.error(
-        "Please fill either ‘Problems Solved in the Past (Description)’ or ‘Unique Solution / Method’ before generating instructions."
+        "Please fill either ‘Description’ or ‘Unique Solution’ before generating instructions."
       );
       return;
     }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
-
     try {
       setLoading(true);
       const desc = encodeURIComponent(
         classifyText || description || "Create helpful assistant instructions"
       );
       const url = `${BASE_URL}/ai-service/agent/classifyInstruct?description=${desc}`;
-
       const baseHeaders: Record<string, string> = {
         Authorization: `Bearer ${getAuth()}`,
       };
-
       let res = await fetch(url, {
         method: "POST",
         headers: { ...baseHeaders, "Content-Type": "application/json" },
@@ -729,7 +773,6 @@ const validateStep2 = (): boolean => {
         ),
         signal: controller.signal,
       });
-
       if (!res.ok && (res.status === 400 || res.status === 415)) {
         res = await fetch(url, {
           method: "POST",
@@ -738,10 +781,8 @@ const validateStep2 = (): boolean => {
         });
       }
       if (!res.ok) throw new Error(`classifyInstruct failed: ${res.status}`);
-
       const ct = (res.headers.get("content-type") || "").toLowerCase();
       let raw: string;
-
       if (ct.includes("application/json")) {
         const data = await res.json();
         raw =
@@ -760,7 +801,6 @@ const validateStep2 = (): boolean => {
           raw = raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
         }
       }
-
       const cleaned = cleanInstructionText(raw);
       setInstructions(cleaned);
       setGenerated(true);
@@ -779,14 +819,10 @@ const validateStep2 = (): boolean => {
     }
   };
 
-  const handleEditInstructions = () => {
-    setTempInstructions(instructions);
-    setIsEditingInstructions(true);
-  };
-
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const handleSaveInstructions = () => {
     setInstructions(tempInstructions);
-    setIsEditingInstructions(false);
+    setShowInstructionsModal(false);
     message.success("Instructions updated!");
   };
 
@@ -821,7 +857,6 @@ const validateStep2 = (): boolean => {
       setIsRecording(false);
     }
   };
-
   const stopRecording = () => {
     try {
       recognitionRef.current?.stop?.();
@@ -829,7 +864,10 @@ const validateStep2 = (): boolean => {
     setIsRecording(false);
   };
 
-  const handleOpenPreview = () => {
+  // Preview modal gate
+  const handleOpenPreview = async () => {
+    // Always make sure latest step 3 data is saved before preview
+    if (!(await saveStep2())) return;
     if (!agentName.trim()) {
       message.error("Please add an Agent Name before preview.");
       return;
@@ -837,15 +875,10 @@ const validateStep2 = (): boolean => {
     setShowPreview(true);
   };
 
-  /** Confirm publish from preview modal (real API) */
+  // ====== PUBLISH (final PATCH) ======
   const handleConfirmPublish = async () => {
     try {
       setLoading(true);
-
-      // Build final strings for target users and age limits
-      const finalTargetUsers = resolvedTargetUsersString || undefined;
-      const finalAgeLimits = resolvedAgeLimitsString || undefined;
-      // derive "chooseStore" from the two checkboxes
       const chooseStore =
         storeBharat && storeOxy
           ? "BharatAIStore,OxyGPTStore"
@@ -854,73 +887,63 @@ const validateStep2 = (): boolean => {
           : storeOxy
           ? "OxyGPTStore"
           : "";
-      const basePayload = stripEmpty({
-        creatorName,
-        acheivements,
-        activeStatus,
-        ageLimit: finalAgeLimits,
+
+      const payload = {
+        // IDs
+        agentId: agentId || undefined,
+        assistantId: assistantId || undefined,
+        userId,
+        // From all steps (server already has them, but sending is safe for idempotence)
+        headerTitle,
+        headerStatus: false,
         agentName,
-        agentStatus: "CREATED",
+        creatorName,
+        userRole: effectiveUserRole || "Developer",
+        userExperienceSummary,
+        acheivements,
+        description,
+        strength,
+        language,
+        voiceStatus: false,
+
         business,
+        domain: resolvedDomain,
+        subDomain: resolvedSubDomain,
+        usageModel: selectedModelId,
+        solveProblem,
+        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
+        uniqueSolution,
+
+        targetUser: resolvedTargetUsersString || undefined,
+        gender: genderForText || genderSelections.join(",") || undefined,
+        ageLimit: resolvedAgeLimitsString || undefined,
+        converstionTone,
+        responseFormat: responseFormat || "auto",
+        instructions: cleanInstructionText(instructions),
+
+        // Step 4 extras
+        contactDetails: shareContact === "YES" ? contactDetails : undefined,
         conStarter1,
         conStarter2,
         conStarter3,
         conStarter4,
-        contactDetails: shareContact === "YES" ? contactDetails : undefined,
-        converstionTone,
-        description,
-        domain: resolvedDomain,
-        gender: genderForText || genderSelections.join(",") || undefined,
-        instructions: cleanInstructionText(instructions),
-        language,
-        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
-        uniqueSolution: solveProblem === "YES" ? uniqueSolution : undefined,
+        activeStatus,
         rateThisPlatform,
-        responseFormat,
         shareYourFeedback,
-        status: "REQUESTED",
-        subDomain: resolvedSubDomain,
-        targetUser: finalTargetUsers,
-        usageModel: selectedModelId,
-        userExperience: Number(userExperienceSummary) || 0,
-        userExperienceSummary,
-        userId,
-        userRole: effectiveUserRole || "Developer",
-        voiceStatus: false,
 
-        // NEW FIELDS
-        headerTitle, // "AI Twin" | "AI Enabler"
-        headerStatus: false, // per requirement, always send false now
+        // store selection
         chooseStore: chooseStore || undefined,
-      });
 
-      // IDs only when editing (safe to always include if set)
-      const idPayload = stripEmpty({
-        agentId: agentId || undefined,
-        assistantId: assistantId || undefined,
-      });
+        // status hints
+        agentStatus: "CREATED",
+        status: "REQUESTED",
+      };
 
-      const payload = { ...basePayload, ...idPayload };
-
-      const res = await fetch(`${BASE_URL}/ai-service/agent/agentCreation`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAuth()}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const t = await res.text().catch(() => "");
-        throw new Error(`Publish failed: ${res.status} ${t}`);
-      }
-      const json = await res.json().catch(() => null);
+      const data = await doPatch("/ai-service/agent/agentPublish", payload);
       setShowPreview(false);
-      setSuccessData(json as AgentApiResponse);
+      setSuccessData(data as AgentApiResponse);
       message.success("Agent published successfully!");
-
-      navigate("/bharath-aistore/agents", { replace: true });
+      navigate("/main/bharath-aistore/agents", { replace: true });
     } catch (e: any) {
       message.error(e?.message || "Failed to publish agent");
     } finally {
@@ -928,6 +951,116 @@ const validateStep2 = (): boolean => {
     }
   };
 
+  // ====== Prefill in edit mode (unchanged from your file) ======
+  useEffect(() => {
+    if (!isEditMode || !editSeed) return;
+
+    if (typeof editSeed.headerStatus === "boolean") {
+      /* kept for completeness */
+    }
+    // AFTER:
+    if (
+      typeof editSeed.headerTitle === "string" &&
+      editSeed.headerTitle.length
+    ) {
+      setHeaderTitle(normalizeHeaderTitle(editSeed.headerTitle));
+    }
+
+    // IDs
+    setAgentId(String(editSeed.id || editSeed.agentId || ""));
+    setAssistantId(String(editSeed.assistantId || ""));
+
+    // Step 1 – Profile
+    setAgentName(editSeed.agentName || (editSeed as any).name || "");
+    setDescription(editSeed.description || "");
+    setLanguage(editSeed.language || "English");
+    setUserExperienceSummary((editSeed as any).userExperienceSummary || "");
+    setUserRole(editSeed.userRole || "Advocate");
+    setCreatorName(String(editSeed.creatorName || ""));
+    setAcheivements(String(editSeed.acheivements || ""));
+
+    // Step 2 – Business & Model & Problem
+    const d = editSeed.domain || "";
+    setDomain(DOMAIN_OPTIONS.includes(d) ? d : d ? "Other" : undefined);
+    setDomainOther(!DOMAIN_OPTIONS.includes(d) ? d : "");
+
+    const sd = editSeed.subDomain || "";
+    setSubDomain(
+      SUBDOMAIN_OPTIONS.includes(sd) ? sd : sd ? "Other" : undefined
+    );
+    setSubDomainOther(!SUBDOMAIN_OPTIONS.includes(sd) ? sd : "");
+
+    setBusiness(editSeed.business || "");
+    setSelectedModelId(editSeed.usageModel || undefined);
+
+    const priorProblem = String(editSeed.mainProblemSolved || "").trim();
+    const priorSolution = String(editSeed.uniqueSolution || "").trim();
+    setMainProblemText(priorProblem);
+    setUniqueSolution(priorSolution);
+    setSolveProblem(priorProblem ? "YES" : "");
+
+    // Step 3 – Audience + Config
+    const priorTarget = String(editSeed.targetUser || "").trim();
+    if (priorTarget) {
+      const arr = priorTarget
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      setTargetUsers(arr);
+    }
+
+    const priorAge = String((editSeed as any).ageLimit || "").trim();
+    if (priorAge) {
+      const tokens = priorAge
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const known = new Set(AGE_LIMIT_OPTIONS);
+      const nextAges: string[] = [];
+      let customFound = "";
+      tokens.forEach((t) => {
+        if (known.has(t) && t !== "Other") {
+          nextAges.push(t);
+        } else {
+          customFound = t;
+          nextAges.push("Other");
+        }
+      });
+      setAgeLimits(Array.from(new Set(nextAges)));
+      if (customFound) setAgeOther(customFound);
+    }
+
+    if ((editSeed as any)?.gender) {
+      setGenderSelections(
+        String((editSeed as any).gender)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      );
+    }
+    setConverstionTone((editSeed as any).converstionTone || undefined);
+    setResponseFormat((editSeed.responseFormat as any) || undefined);
+    setInstructions(editSeed.instructions || "");
+
+    // Step 4 – Contact etc.
+    const cd = String((editSeed as any).contactDetails || "");
+    if (cd) {
+      setShareContact("YES");
+      setContactDetails(cd);
+    } else {
+      setShareContact("NO");
+      setContactDetails("");
+    }
+    setConStarter1((editSeed as any).conStarter1 || "");
+    setConStarter2((editSeed as any).conStarter2 || "");
+    setConStarter3((editSeed as any).conStarter3 || "");
+    setConStarter4((editSeed as any).conStarter4 || "");
+    setActiveStatus(Boolean(editSeed.activeStatus));
+
+    setStep(0);
+  }, [isEditMode, editSeed]);
+
+  // ===== UI =====
   const steps = [
     { title: "Profile", icon: <UserOutlined /> },
     { title: "Business & GPT Model", icon: <SettingOutlined /> },
@@ -966,7 +1099,6 @@ const validateStep2 = (): boolean => {
           {v}
         </span>
       ) : null;
-
     return (
       <Modal
         open
@@ -1163,442 +1295,400 @@ const validateStep2 = (): boolean => {
   };
 
   return (
-   
-      <div
-        style={{ minHeight: "100vh", background: "#f8f9fa", padding: "16px" }}
-      >
-        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-          {/* Header */}
-          <div
-            style={{
-              background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
-              borderRadius: "12px",
-              padding: "20px",
-              marginBottom: "16px",
-              textAlign: "center",
-            }}
+    <div style={{ minHeight: "100vh", background: "#f8f9fa", padding: "16px" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {/* Header */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
+            borderRadius: "12px",
+            padding: "20px",
+            marginBottom: "16px",
+            textAlign: "center",
+          }}
+        >
+          <Title
+            level={3}
+            style={{ color: "white", margin: 0, fontWeight: 600 }}
           >
-            <Title
-              level={3}
-              style={{ color: "white", margin: 0, fontWeight: 600 }}
-            >
-              Create Your AI Agent
-            </Title>
-            <Text style={{ color: "rgba(255,255,255,0.9)" }}>
-              Build intelligent agents tailored to your expertise
-            </Text>
-          </div>
+            Create Your AI Agent
+          </Title>
+          <Text style={{ color: "rgba(255,255,255,0.9)" }}>
+            Build intelligent agents tailored to your expertise
+          </Text>
+        </div>
 
-          <Card
-            style={{
-              marginBottom: "16px",
-              borderRadius: "12px",
-              padding: "8px",
-            }}
-          >
-            <Steps current={step} items={steps} size="small" />
-          </Card>
+        <Card
+          style={{ marginBottom: "16px", borderRadius: "12px", padding: "8px" }}
+        >
+          <Steps
+            current={step}
+            items={[
+              { title: "Profile", icon: <UserOutlined /> },
+              { title: "Business & GPT Model", icon: <SettingOutlined /> },
+              { title: "Audience & Configuration", icon: <BulbOutlined /> },
+              { title: "Publish", icon: <RocketOutlined /> },
+            ]}
+            size="small"
+          />
+        </Card>
 
-          <Card style={{ borderRadius: "12px", minHeight: "400px" }}>
-            <div style={{ padding: "20px" }}>
-              {/* STEP 1 */}
-              {step === 0 && (
-                <div>
-                  <Title
-                    level={4}
-                    style={{
-                      color: "#722ed1",
-                      marginBottom: "20px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <UserOutlined style={{ marginRight: "8px" }} />
-                    Agent Creator Profile
-                  </Title>
+        <Card style={{ borderRadius: "12px", minHeight: "400px" }}>
+          <div style={{ padding: "20px" }}>
+            {/* STEP 1 */}
+            {step === 0 && (
+              <div>
+                <Title
+                  level={4}
+                  style={{
+                    color: "#722ed1",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <UserOutlined style={{ marginRight: "8px" }} />
+                  Agent Creator Profile
+                </Title>
 
-                  <Row gutter={[16, 12]}>
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "AI Agent Name *",
-                          "Example: 'TaxBuddy Pro', 'Visa Mentor', 'HealthCare FAQ Bot'"
-                        )}
+                <Row gutter={[16, 12]}>
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "AI Agent Name *",
+                        "Example: 'TaxBuddy Pro', 'Visa Mentor', 'HealthCare FAQ Bot'"
+                      )}
+                      <Input
+                        value={agentName}
+                        onChange={(e) => setAgentName(e.target.value)}
+                        placeholder="Enter agent name"
+                        style={compactInputStyle}
+                        onFocus={(e) =>
+                          Object.assign(e.target.style, focusStyle)
+                        }
+                        onBlur={(e) =>
+                          Object.assign(e.target.style, {
+                            borderColor: "#f0f0f0",
+                            boxShadow: "none",
+                          })
+                        }
+                      />
+                    </div>
+                  </Col>
+
+                  {/* Creator Name */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Creator Name *",
+                        "Your full name or brand representative name."
+                      )}
+                      <Input
+                        value={creatorName}
+                        onChange={(e) => setCreatorName(e.target.value)}
+                        placeholder="Enter creator name"
+                        style={compactInputStyle}
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Professional Identity of the Creator *",
+                        "Select your profession. Choose 'Other' to type a custom title."
+                      )}
+                      <Select
+                        value={userRole}
+                        onChange={setUserRole}
+                        placeholder="Select your role"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        <Option value="Advocate">Advocate</Option>
+                        <Option value="CA">Chartered Accountant (CA)</Option>
+                        <Option value="CS">Company Secretary (CS)</Option>
+                        <Option value="Consultant">Consultant</Option>
+                        <Option value="Teacher">Teacher</Option>
+                        <Option value="Doctor">Doctor</Option>
+                        <Option value="Engineer">Engineer</Option>
+                        <Option value="Lawyer">Lawyer</Option>
+                        <Option value="Startup Founder">Startup Founder</Option>
+                        <Option value="Entrepreneur">Entrepreneur</Option>
+                        <Option value="Investor">Investor</Option>
+                        <Option value="Banker">Banker</Option>
+                        <Option value="Software Developer">
+                          Software Developer
+                        </Option>
+                        <Option value="Data Scientist">Data Scientist</Option>
+                        <Option value="AI/ML Expert">AI / ML Expert</Option>
+                        <Option value="Researcher">Researcher</Option>
+                        <Option value="Designer">Designer</Option>
+                        <Option value="Marketing Specialist">
+                          Marketing Specialist
+                        </Option>
+                        <Option value="HR Professional">HR Professional</Option>
+                        <Option value="Operations Manager">
+                          Operations Manager
+                        </Option>
+                        <Option value="Sales Executive">Sales Executive</Option>
+                        <Option value="Product Manager">Product Manager</Option>
+                        <Option value="CXO">CXO (CEO / CTO / CFO etc.)</Option>
+                        <Option value="Freelancer">Freelancer</Option>
+                        <Option value="Consultant">Business Consultant</Option>
+                        <Option value="Other">Other</Option>
+                      </Select>
+                      {userRole === "Other" && (
                         <Input
-                          value={agentName}
-                          onChange={(e) => setAgentName(e.target.value)}
-                          placeholder="Enter agent name"
-                          style={compactInputStyle}
-                          onFocus={(e) =>
-                            Object.assign(e.target.style, focusStyle)
-                          }
-                          onBlur={(e) =>
-                            Object.assign(e.target.style, {
-                              borderColor: "#f0f0f0",
-                              boxShadow: "none",
-                            })
-                          }
+                          value={userRoleOther}
+                          onChange={(e) => setUserRoleOther(e.target.value)}
+                          placeholder="Enter your profession"
+                          style={{ marginTop: 8, ...compactInputStyle }}
                         />
-                      </div>
-                    </Col>
+                      )}
+                    </div>
+                  </Col>
 
-                    {/* Creator Name */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Creator Name *",
-                          "Your full name or brand representative name."
-                        )}
-                        <Input
-                          value={creatorName}
-                          onChange={(e) => setCreatorName(e.target.value)}
-                          placeholder="Enter creator name"
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Professional Identity of the Creator *",
-                          "Select your profession. Choose 'Other' to type a custom title. Example: 'Startup Consultant', 'Legal Researcher'."
-                        )}
-                        <Select
-                          value={userRole}
-                          onChange={setUserRole}
-                          placeholder="Select your role"
-                          allowClear
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          <Option value="Advocate">Advocate</Option>
-                          <Option value="CA">Chartered Accountant (CA)</Option>
-                          <Option value="CS">Company Secretary (CS)</Option>
-                          <Option value="Consultant">Consultant</Option>
-                          <Option value="Teacher">Teacher</Option>
-                          <Option value="Doctor">Doctor</Option>
-                          <Option value="Engineer">Engineer</Option>
-                          <Option value="Lawyer">Lawyer</Option>
-                          <Option value="Startup Founder">
-                            Startup Founder
-                          </Option>
-                          <Option value="Entrepreneur">Entrepreneur</Option>
-                          <Option value="Investor">Investor</Option>
-                          <Option value="Banker">Banker</Option>
-                          <Option value="Software Developer">
-                            Software Developer
-                          </Option>
-                          <Option value="Data Scientist">Data Scientist</Option>
-                          <Option value="AI/ML Expert">AI / ML Expert</Option>
-                          <Option value="Researcher">Researcher</Option>
-                          <Option value="Designer">Designer</Option>
-                          <Option value="Marketing Specialist">
-                            Marketing Specialist
-                          </Option>
-                          <Option value="HR Professional">
-                            HR Professional
-                          </Option>
-                          <Option value="Operations Manager">
-                            Operations Manager
-                          </Option>
-                          <Option value="Sales Executive">
-                            Sales Executive
-                          </Option>
-                          <Option value="Product Manager">
-                            Product Manager
-                          </Option>
-                          <Option value="CXO">
-                            CXO (CEO / CTO / CFO etc.)
-                          </Option>
-                          <Option value="Freelancer">Freelancer</Option>
-                          <Option value="Consultant">
-                            Business Consultant
-                          </Option>
-                          <Option value="Other">Other</Option>
-                        </Select>
-                        {userRole === "Other" && (
-                          <Input
-                            value={userRoleOther}
-                            onChange={(e) => setUserRoleOther(e.target.value)}
-                            placeholder="Enter your profession"
-                            style={{ marginTop: 8, ...compactInputStyle }}
-                          />
-                        )}
-                      </div>
-                    </Col>
-
-                    <Col xs={24}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Creator Experience Overview",
-                          "Optional 1–2 lines. Example: '8+ years in corporate law, 200+ cases handled.'"
-                        )}
-                        <Input
-                          value={userExperienceSummary}
-                          onChange={(e) =>
-                            setUserExperienceSummary(e.target.value)
-                          }
-                          placeholder="Brief summary (optional)"
-                          maxLength={120}
-                          style={compactInputStyle}
-                          suffix={
-                            <Text type="secondary" style={{ fontSize: "12px" }}>
-                              {userExperienceSummary.length}/120
-                            </Text>
-                          }
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Problems Solved in the Past (Description) *",
-                          "Give 2–3 representative cases. Example: 'Helped startups register within 3 days', 'Drafted 100+ GST filings monthly'."
-                        )}
-                        <TextArea
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder="2–3 representative cases…"
-                          maxLength={250}
-                          rows={3}
-                          style={compactInputStyle}
-                        />
-                        <Text
-                          type="secondary"
-                          style={{
-                            fontSize: "12px",
-                            float: "right",
-                            marginTop: "2px",
-                          }}
-                        >
-                          {description.length}/250
-                        </Text>
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Your Strengths in the Field",
-                          "Optional. Example: 'Contract drafting', 'Appeals', 'Financial modeling'."
-                        )}
-                        <Input
-                          value={strength}
-                          onChange={(e) => setStrength(e.target.value)}
-                          placeholder="(optional)"
-                          maxLength={100}
-                          style={compactInputStyle}
-                          suffix={
-                            <Text type="secondary" style={{ fontSize: "12px" }}>
-                              {strength.length}/100
-                            </Text>
-                          }
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Preferred Language *",
-                          "The language you prefer for conversations and output."
-                        )}
-                        <Select
-                          value={language}
-                          onChange={setLanguage}
-                          placeholder="Choose preferred language"
-                          allowClear
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          <Option value="English">English</Option>
-                          <Option value="తెలుగు">తెలుగు</Option>
-                          <Option value="हिंदी">हिंदी</Option>
-                        </Select>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-              )}
-
-              {/* STEP 2 */}
-              {step === 1 && (
-                <div>
-                  <Title
-                    level={4}
-                    style={{
-                      color: "#722ed1",
-                      marginBottom: "20px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <SettingOutlined style={{ marginRight: "8px" }} />
-                    Business Context & GPT Model
-                  </Title>
-
-                  <Row gutter={[16, 12]}>
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Business/Idea *",
-                          "Your brand, firm or practice. Example: 'ABC Legal', 'FinTax Advisors'."
-                        )}
-                        <Input
-                          value={business}
-                          onChange={(e) => setBusiness(e.target.value)}
-                          placeholder="Firm/brand/practice"
-                          maxLength={100} // ✅ 100-character limit
-                          style={compactInputStyle}
-                          suffix={
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {business.length}/100
-                            </Text>
-                          }
-                        />
-                      </div>
-                    </Col>
-
-                    {/* Domain dropdown + 'Other' text */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Domain/Sector *",
-                          "Pick from common domains or choose 'Other' to type your own."
-                        )}
-                        <Select
-                          value={domain}
-                          onChange={setDomain}
-                          placeholder="Select a domain"
-                          allowClear
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          {DOMAIN_OPTIONS.map((d) => (
-                            <Option key={d} value={d}>
-                              {d}
-                            </Option>
-                          ))}
-                        </Select>
-                        {domain === "Other" && (
-                          <Input
-                            style={{ marginTop: 8, ...compactInputStyle }}
-                            placeholder="Enter custom domain/sector"
-                            value={domainOther}
-                            onChange={(e) => setDomainOther(e.target.value)}
-                          />
-                        )}
-                      </div>
-                    </Col>
-
-                    {/* SubDomain dropdown + 'Other' text */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Sub-Domain/Subsector *",
-                          "Pick from common subsectors or choose 'Other' to type your own."
-                        )}
-                        <Select
-                          value={subDomain}
-                          onChange={setSubDomain}
-                          placeholder="Select a sub-domain"
-                          allowClear
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          {SUBDOMAIN_OPTIONS.map((d) => (
-                            <Option key={d} value={d}>
-                              {d}
-                            </Option>
-                          ))}
-                        </Select>
-                        {subDomain === "Other" && (
-                          <Input
-                            style={{ marginTop: 8, ...compactInputStyle }}
-                            placeholder="Enter custom sub-domain/subsector"
-                            value={subDomainOther}
-                            onChange={(e) => setSubDomainOther(e.target.value)}
-                          />
-                        )}
-                      </div>
-                    </Col>
-
-                    {/* GPT Model */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "GPT Model *",
-                          "Example: gpt-4o, gpt-4. Pick a capable model for better reasoning."
-                        )}
-                        <Select
-                          value={selectedModelId}
-                          onChange={setSelectedModelId}
-                          placeholder="Select GPT model"
-                          style={{ width: "100%", ...compactInputStyle }}
-                          loading={loading}
-                          allowClear
-                        >
-                          {models.map((m) => (
-                            <Option key={m.id} value={m.id}>
-                              {m.id} {m.owned_by ? `· ${m.owned_by}` : ""}
-                            </Option>
-                          ))}
-                        </Select>
-                      </div>
-                    </Col>
-
-                    {/* Are you solving a problem? */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: 12 }}>
-                        {labelWithInfo(
-                          "Are you solving a problem? *",
-                          "If Yes, specify the problem and (also) your unique solution."
-                        )}
-                        <Radio.Group
-                          value={solveProblem}
-                          onChange={(e) => setSolveProblem(e.target.value)}
-                        >
-                          <Radio value="YES">Yes</Radio>
-                          <Radio value="NO">No</Radio>
-                        </Radio.Group>
-                      </div>
-                    </Col>
-
-                    {/* Main Problem only when YES */}
-                    {solveProblem === "YES" && (
-                      <Col xs={24}>
-                        <div style={{ marginBottom: 12 }}>
-                          {labelWithInfo(
-                            "Main Problem to Solve * (max 100 chars)",
-                            "What exact user problem are you solving?"
-                          )}
-                          <TextArea
-                            value={mainProblemText}
-                            onChange={(e) => setMainProblemText(e.target.value)}
-                            placeholder="e.g., 'Early-stage startups struggle to choose the right company structure and miss compliance deadlines.'"
-                            rows={2}
-                            maxLength={100}
-                            style={compactInputStyle}
-                          />
-                          <Text
-                            type="secondary"
-                            style={{ fontSize: 12, float: "right" }}
-                          >
-                            {mainProblemText.length}/100
+                  <Col xs={24}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Creator Experience Overview",
+                        "Optional 1–2 lines."
+                      )}
+                      <Input
+                        value={userExperienceSummary}
+                        onChange={(e) =>
+                          setUserExperienceSummary(e.target.value)
+                        }
+                        placeholder="Brief summary (optional)"
+                        maxLength={120}
+                        style={compactInputStyle}
+                        suffix={
+                          <Text type="secondary" style={{ fontSize: "12px" }}>
+                            {userExperienceSummary.length}/120
                           </Text>
-                        </div>
-                      </Col>
-                    )}
+                        }
+                      />
+                    </div>
+                  </Col>
 
-                    {/* Unique Solution ALWAYS visible */}
+                  <Col xs={24}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Problems Solved in the Past (Description) *",
+                        "Give 2–3 representative cases."
+                      )}
+                      <TextArea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="2–3 representative cases…"
+                        maxLength={250}
+                        rows={3}
+                        style={compactInputStyle}
+                      />
+                      <Text
+                        type="secondary"
+                        style={{
+                          fontSize: "12px",
+                          float: "right",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {description.length}/250
+                      </Text>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Your Strengths in the Field",
+                        "Optional."
+                      )}
+                      <Input
+                        value={strength}
+                        onChange={(e) => setStrength(e.target.value)}
+                        placeholder="(optional)"
+                        maxLength={100}
+                        style={compactInputStyle}
+                        suffix={
+                          <Text type="secondary" style={{ fontSize: "12px" }}>
+                            {strength.length}/100
+                          </Text>
+                        }
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Preferred Language *",
+                        "The language you prefer for conversations and output."
+                      )}
+                      <Select
+                        value={language}
+                        onChange={setLanguage}
+                        placeholder="Choose preferred language"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        <Option value="English">English</Option>
+                        <Option value="తెలుగు">తెలుగు</Option>
+                        <Option value="हिंदी">हिंदी</Option>
+                      </Select>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            )}
+
+            {/* STEP 2 */}
+            {step === 1 && (
+              <div>
+                <Title
+                  level={4}
+                  style={{
+                    color: "#722ed1",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <SettingOutlined style={{ marginRight: "8px" }} />
+                  Business Context & GPT Model
+                </Title>
+
+                <Row gutter={[16, 12]}>
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Business/Idea *",
+                        "Your brand, firm or practice."
+                      )}
+                      <Input
+                        value={business}
+                        onChange={(e) => setBusiness(e.target.value)}
+                        placeholder="Firm/brand/practice"
+                        maxLength={100}
+                        style={compactInputStyle}
+                        suffix={
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            {business.length}/100
+                          </Text>
+                        }
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Domain/Sector *",
+                        "Pick from common domains or choose 'Other'."
+                      )}
+                      <Select
+                        value={domain}
+                        onChange={setDomain}
+                        placeholder="Select a domain"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        {DOMAIN_OPTIONS.map((d) => (
+                          <Option key={d} value={d}>
+                            {d}
+                          </Option>
+                        ))}
+                      </Select>
+                      {domain === "Other" && (
+                        <Input
+                          style={{ marginTop: 8, ...compactInputStyle }}
+                          placeholder="Enter custom domain/sector"
+                          value={domainOther}
+                          onChange={(e) => setDomainOther(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Sub-Domain/Subsector *",
+                        "Pick from common subsectors or choose 'Other'."
+                      )}
+                      <Select
+                        value={subDomain}
+                        onChange={setSubDomain}
+                        placeholder="Select a sub-domain"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        {SUBDOMAIN_OPTIONS.map((d) => (
+                          <Option key={d} value={d}>
+                            {d}
+                          </Option>
+                        ))}
+                      </Select>
+                      {subDomain === "Other" && (
+                        <Input
+                          style={{ marginTop: 8, ...compactInputStyle }}
+                          placeholder="Enter custom sub-domain/subsector"
+                          value={subDomainOther}
+                          onChange={(e) => setSubDomainOther(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo("GPT Model *", "Example: gpt-4o.")}
+                      <Select
+                        value={selectedModelId}
+                        onChange={setSelectedModelId}
+                        placeholder="Select GPT model"
+                        style={{ width: "100%", ...compactInputStyle }}
+                        loading={loading}
+                        allowClear
+                      >
+                        {models.map((m) => (
+                          <Option key={m.id} value={m.id}>
+                            {m.id}
+                            {m.owned_by ? ` · ${m.owned_by}` : ""}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: 12 }}>
+                      {labelWithInfo(
+                        "Are you solving a problem? *",
+                        "If Yes, specify the problem and your unique solution."
+                      )}
+                      <Radio.Group
+                        value={solveProblem}
+                        onChange={(e) => setSolveProblem(e.target.value)}
+                      >
+                        <Radio value="YES">Yes</Radio>
+                        <Radio value="NO">No</Radio>
+                      </Radio.Group>
+                    </div>
+                  </Col>
+
+                  {solveProblem === "YES" && (
                     <Col xs={24}>
                       <div style={{ marginBottom: 12 }}>
                         {labelWithInfo(
-                          "Unique Solution Method (max 100 chars)",
-                          "How is your approach different/better?"
+                          "Main Problem to Solve * (max 100 chars)",
+                          "What exact user problem are you solving?"
                         )}
                         <TextArea
-                          value={uniqueSolution}
-                          onChange={(e) => setUniqueSolution(e.target.value)}
-                          placeholder="e.g., 'Fast triage + templates + compliance checklist with reminders.'"
+                          value={mainProblemText}
+                          onChange={(e) => setMainProblemText(e.target.value)}
+                          placeholder="e.g., 'Early-stage startups struggle to choose the right structure and miss deadlines.'"
                           rows={2}
                           maxLength={100}
                           style={compactInputStyle}
@@ -1607,661 +1697,420 @@ const validateStep2 = (): boolean => {
                           type="secondary"
                           style={{ fontSize: 12, float: "right" }}
                         >
-                          {uniqueSolution.length}/100
+                          {mainProblemText.length}/100
                         </Text>
                       </div>
                     </Col>
-                  </Row>
-                </div>
-              )}
-
-              {/* STEP 3 */}
-              {step === 2 && (
-                <div>
-                  <Title
-                    level={4}
-                    style={{
-                      color: "#722ed1",
-                      marginBottom: "20px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <BulbOutlined style={{ marginRight: "8px" }} />
-                    Audience & Configuration
-                  </Title>
-
-                  <Row gutter={[16, 12]}>
-                    {/* Target audience (Select All + compact tags) */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Target Customers *",
-                          "You can select multiple. Example: 'Startups', 'SMBs', 'Students'."
-                        )}
-                        <Select
-                          mode="multiple"
-                          value={targetUsers}
-                          onChange={(vals) => {
-                            if (vals.includes("Select All")) {
-                              // when "Select All" picked, fill with all options
-                              setTargetUsers(TARGET_USER_OPTIONS);
-                            } else {
-                              setTargetUsers(vals);
-                            }
-                          }}
-                          placeholder="Select target audience"
-                          allowClear
-                          // 👇 prevents the field from growing too tall
-                          maxTagCount="responsive"
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          <Option key="Select All" value="Select All">
-                            Select All
-                          </Option>
-                          {TARGET_USER_OPTIONS.map((option) => (
-                            <Option key={option} value={option}>
-                              {option}
-                            </Option>
-                          ))}
-                        </Select>
-
-                        {targetUsers.includes("Other") && (
-                          <Input
-                            style={{ marginTop: "8px", ...compactInputStyle }}
-                            placeholder="Specify your target user(s)"
-                            value={targetUserOther}
-                            onChange={(e) => setTargetUserOther(e.target.value)}
-                          />
-                        )}
-                      </div>
-                    </Col>
-
-                    {/* Gender */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Target Audience Gender *",
-                          "Pick one or more if your audience is specific."
-                        )}
-                        <Checkbox.Group
-                          options={["Male", "Female", "Other"]}
-                          value={genderSelections}
-                          onChange={(vals) =>
-                            setGenderSelections(vals as string[])
-                          }
-                        />
-                      </div>
-                    </Col>
-
-                    {/* Age limits (Select All + compact tags) */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Target Audience Age Limit *",
-                          "Select one or more relevant age ranges. Choose 'Select All' to pick everything."
-                        )}
-                        <Select
-                          mode="multiple"
-                          value={ageLimits}
-                          onChange={(vals) => {
-                            if (vals.includes("Select All")) {
-                              // If "Select All" picked, fill with all available options
-                              setAgeLimits(AGE_LIMIT_OPTIONS);
-                              if (!AGE_LIMIT_OPTIONS.includes("Other")) {
-                                setAgeOther("");
-                              }
-                            } else {
-                              setAgeLimits(vals);
-                              if (!vals.includes("Other")) setAgeOther("");
-                            }
-                          }}
-                          placeholder="Select age range(s)"
-                          allowClear
-                          // 👇 keeps the field compact when many are selected
-                          maxTagCount="responsive"
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          <Option key="Select All" value="Select All">
-                            Select All
-                          </Option>
-                          {AGE_LIMIT_OPTIONS.map((option) => (
-                            <Option key={option} value={option}>
-                              {option}
-                            </Option>
-                          ))}
-                        </Select>
-
-                        {ageLimits.includes("Other") && (
-                          <Input
-                            style={{ marginTop: "8px", ...compactInputStyle }}
-                            placeholder="Enter custom age (e.g., 21-30 or 16+)"
-                            value={ageOther}
-                            onChange={(e) => setAgeOther(e.target.value)}
-                            maxLength={20}
-                          />
-                        )}
-                      </div>
-                    </Col>
-
-                    {/* Tone & Response Format */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Conversation Tone *",
-                          "Example: Helpful & Professional for legal/finance agents."
-                        )}
-                        <Select
-                          value={converstionTone}
-                          onChange={setConverstionTone}
-                          placeholder="Select a conversation tone"
-                          allowClear
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          {TONE_OPTIONS.map((t) => (
-                            <Option key={t} value={t}>
-                              {t}
-                            </Option>
-                          ))}
-                        </Select>
-                      </div>
-                    </Col>
-
-                    {/* Response Format (default auto, dropdown still available) */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Response Format",
-                          "auto (natural text) or json_object (structured output)."
-                        )}
-                        <Select
-                          value={responseFormat || "auto"} // 👈 default to auto
-                          onChange={setResponseFormat}
-                          placeholder="Select response format"
-                          allowClear={false} // 👈 don't allow clearing, always something selected
-                          style={{ width: "100%", ...compactInputStyle }}
-                        >
-                          {RESPONSE_FORMATS.map((f) => (
-                            <Option key={f} value={f}>
-                              {f}
-                            </Option>
-                          ))}
-                        </Select>
-                      </div>
-                    </Col>
-
-                    {/* Instructions (with Mic while editing) */}
-                    <Col xs={24}>
-                      <div style={{ marginBottom: "12px" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            marginBottom: "8px",
-                            gap: 8,
-                          }}
-                        >
-                          {labelWithInfo(
-                            "Instructions",
-                            "Click Generate to auto-create; you can then Edit. Keep it concise and actionable."
-                          )}
-                          <Space>
-                            <Button
-                              type="primary"
-                              size="small"
-                              onClick={handleGenerate}
-                              loading={loading}
-                              style={purpleBtn}
-                            >
-                              Generate
-                            </Button>
-                            {instructions && (
-                              <Button
-                                size="small"
-                                icon={<EditOutlined />}
-                                onClick={() => {
-                                  setTempInstructions(instructions);
-                                  setShowInstructionsModal(true);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            )}
-                          </Space>
-                        </div>
-
-                        {!isEditingInstructions ? (
-                          <div
-                            style={{
-                              minHeight: 140,
-                              maxHeight: 240,
-                              padding: "12px",
-                              border: "2px solid #f0f0f0",
-                              borderRadius: "8px",
-                              background: instructions ? "#fafafa" : "#f9f9f9",
-                              whiteSpace: "pre-wrap",
-                              fontSize: "14px",
-                              lineHeight: 1.4,
-                              overflowY: "auto",
-                            }}
-                          >
-                            {instructions ||
-                              "Click 'Generate' to create instructions automatically, then use 'Edit' to customize them."}
-                          </div>
-                        ) : (
-                          <div>
-                            <TextArea
-                              value={tempInstructions}
-                              onChange={(e) =>
-                                setTempInstructions(e.target.value)
-                              }
-                              rows={10}
-                              maxLength={7000}
-                              style={{ ...compactInputStyle, maxHeight: 320 }}
-                            />
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginTop: "8px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <Text
-                                  type="secondary"
-                                  style={{ fontSize: "12px" }}
-                                >
-                                  {tempInstructions.length}/7000
-                                </Text>
-                                <Tooltip
-                                  title={
-                                    isRecording
-                                      ? "Stop mic"
-                                      : "Use mic to dictate"
-                                  }
-                                >
-                                  <Button
-                                    size="small"
-                                    icon={
-                                      isRecording ? (
-                                        <AudioMutedOutlined />
-                                      ) : (
-                                        <AudioOutlined />
-                                      )
-                                    }
-                                    onClick={
-                                      isRecording
-                                        ? stopRecording
-                                        : startRecording
-                                    }
-                                  >
-                                    {isRecording ? "Stop" : "Mic"}
-                                  </Button>
-                                </Tooltip>
-                              </div>
-                              <Space>
-                                <Button
-                                  size="small"
-                                  onClick={() => {
-                                    stopRecording();
-                                    setTempInstructions("");
-                                    setIsEditingInstructions(false);
-                                  }}
-                                  icon={<CloseOutlined />}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  type="primary"
-                                  size="small"
-                                  onClick={() => {
-                                    stopRecording();
-                                    handleSaveInstructions();
-                                  }}
-                                  icon={<SaveOutlined />}
-                                  style={purpleBtn}
-                                >
-                                  Save
-                                </Button>
-                              </Space>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-              )}
-
-              {/* STEP 4 */}
-              {step === 3 && (
-                <div>
-                  <Title
-                    level={4}
-                    style={{
-                      color: "#722ed1",
-                      marginBottom: "20px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <RocketOutlined style={{ marginRight: "8px" }} />
-                    Contact, Conversations & Publish
-                  </Title>
-
-                  <Row gutter={[16, 12]}>
-                    {/* Share contact? */}
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Do you want to share Contact Details? *",
-                          "Choose Yes to display your contact on the agent card."
-                        )}
-                        <Radio.Group
-                          value={shareContact}
-                          onChange={(e) => setShareContact(e.target.value)}
-                        >
-                          <Radio value="YES">Yes</Radio>
-                          <Radio value="NO">No</Radio>
-                        </Radio.Group>
-                      </div>
-                    </Col>
-
-                    {/* Contact field only when YES */}
-                    {shareContact === "YES" && (
-                      <Col xs={24}>
-                        <div style={{ marginBottom: "12px" }}>
-                          {labelWithInfo(
-                            "Contact Details",
-                            "Email / Phone / Website for users to reach you."
-                          )}
-                          <Input
-                            value={contactDetails}
-                            onChange={(e) => setContactDetails(e.target.value)}
-                            placeholder="Email/Phone/Website"
-                            style={compactInputStyle}
-                          />
-                        </div>
-                      </Col>
-                    )}
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Conversation Starter 1",
-                          'Example: "What service do you need help with today?"'
-                        )}
-                        <Input
-                          value={conStarter1}
-                          onChange={(e) => setConStarter1(e.target.value)}
-                          placeholder='e.g., "What service do you need help with today?"'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Conversation Starter 2",
-                          'Example: "Share your case details..."'
-                        )}
-                        <Input
-                          value={conStarter2}
-                          onChange={(e) => setConStarter2(e.target.value)}
-                          placeholder='e.g., "Share your case details..."'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Conversation Starter 3",
-                          'Example: "Do you want a document template?"'
-                        )}
-                        <Input
-                          value={conStarter3}
-                          onChange={(e) => setConStarter3(e.target.value)}
-                          placeholder='e.g., "Do you want a document template?"'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Conversation Starter 4",
-                          'Example: "Prefer English/తెలుగు/हिंदी?"'
-                        )}
-                        <Input
-                          value={conStarter4}
-                          onChange={(e) => setConStarter4(e.target.value)}
-                          placeholder='e.g., "Prefer English/తెలుగు/हिंदी?"'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={8}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Active Status",
-                          "Toggle whether this agent is visible/usable."
-                        )}
-                        <Switch
-                          checked={activeStatus}
-                          onChange={setActiveStatus}
-                          checkedChildren="Active"
-                          unCheckedChildren="Inactive"
-                        />
-                      </div>
-                    </Col>
-
-                    {/* Channels (static) */}
-                    <Col xs={24} md={8}>
-                      <div style={{ marginBottom: "12px" }}>
-                        {labelWithInfo(
-                          "Text Chat",
-                          "Enabled by default and always available."
-                        )}
-                        <Tag color="green" style={{ borderRadius: 6 }}>
-                          Active (default)
-                        </Tag>
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={8}>
-                      <div style={{ marginBottom: "12px" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <Text strong>Voice</Text>
-                          <Tooltip title="It may launch soon and price is applicable.">
-                            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                          </Tooltip>
-                        </div>
-                        <Tag color="default" style={{ borderRadius: 6 }}>
-                          Disabled
-                        </Tag>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-              )}
-
-              <Divider style={{ margin: "20px 0" }} />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Button
-                  size="large"
-                  onClick={prev}
-                  disabled={step === 0}
-                  style={{ minWidth: "100px" }}
-                >
-                  Previous
-                </Button>
-
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                >
-                  {loading && <Text type="secondary">Working...</Text>}
-
-                  {step < 3 ? (
-                    <Button
-                      type="primary"
-                      size="large"
-                      onClick={next}
-                      loading={loading}
-                      style={{ minWidth: "120px", ...purpleBtn }}
-                    >
-                      Continue
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      size="large"
-                      onClick={handleOpenPreview}
-                      loading={loading}
-                      icon={<EyeOutlined />}
-                      style={{ minWidth: "140px", ...purpleBtn }}
-                    >
-                      Preview & Publish
-                    </Button>
                   )}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
 
-        {/* PREVIEW MODAL */}
-        <Modal
-          title={
-            <div style={{ textAlign: "center", padding: "8px" }}>
-              <Title level={4} style={{ color: "white", margin: 0 }}>
-                Preview & Final Checks
-              </Title>
-            </div>
-          }
-          open={showPreview}
-          onCancel={() => setShowPreview(false)}
-          width={700}
-          footer={null}
-          styles={{
-            header: {
-              background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
-              borderRadius: "8px 8px 0 0",
-            },
-          }}
-        >
-          <div style={{ padding: "16px 0" }}>
-            <Card
-              style={{
-                marginBottom: "16px",
-                border: "1px solid #e6e6ff",
-                borderRadius: "8px",
-              }}
-            >
-              <Title
-                level={4}
-                style={{ color: "#722ed1", marginBottom: "8px" }}
-              >
-                {agentName || "Agent Name"}
-              </Title>
-              <Paragraph
-                style={{
-                  color: "#666",
-                  marginBottom: "12px",
-                  fontSize: "14px",
-                }}
-              >
-                {description || uniqueSolution || "No description provided."}
-              </Paragraph>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {[conStarter1, conStarter2, conStarter3, conStarter4]
-                  .filter(Boolean)
-                  .map((starter, index) => (
-                    <Tag
-                      key={index}
-                      color="gold"
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        border: "1px solid #fa8c16",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {starter}
-                    </Tag>
-                  ))}
-              </div>
-            </Card>
-
-            <Card
-              title={
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <Text strong>Choose Stores</Text>
-                  <Tooltip title="It may launch soon and price is applicable.">
-                    <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                  </Tooltip>
-                </div>
-              }
-              size="small"
-              style={{
-                marginBottom: "16px",
-                border: "1px solid #e6e6ff",
-                borderRadius: "8px",
-              }}
-            >
-              <Row gutter={[12, 12]}>
-                <Col xs={24} md={12}>
-                  <Checkbox
-                    checked={storeBharat}
-                    onChange={(e) => setStoreBharat(e.target.checked)}
-                  >
-                    <div>
-                      <Text strong style={{ fontSize: "14px" }}>
-                        Bharat AI Store
-                      </Text>
-                      <br />
-                      <Text type="success" style={{ fontSize: "12px" }}>
-                        Free
-                      </Text>
-                      <Text type="secondary" style={{ fontSize: "12px" }}>
-                        {" "}
-                        (Label: INR 1000)
+                  <Col xs={24}>
+                    <div style={{ marginBottom: 12 }}>
+                      {labelWithInfo(
+                        "Unique Solution Method (max 100 chars)",
+                        "How is your approach different/better?"
+                      )}
+                      <TextArea
+                        value={uniqueSolution}
+                        onChange={(e) => setUniqueSolution(e.target.value)}
+                        placeholder="e.g., 'Fast triage + templates + compliance checklist with reminders.'"
+                        rows={2}
+                        maxLength={100}
+                        style={compactInputStyle}
+                      />
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 12, float: "right" }}
+                      >
+                        {uniqueSolution.length}/100
                       </Text>
                     </div>
-                  </Checkbox>
-                </Col>
+                  </Col>
+                </Row>
+              </div>
+            )}
 
-                <Col xs={24} md={12}>
-                  <Checkbox
-                    checked={storeOxy}
-                    onChange={(e) => setStoreOxy(e.target.checked)}
-                  >
-                    <div>
+            {/* STEP 3 */}
+            {step === 2 && (
+              <div>
+                <Title
+                  level={4}
+                  style={{
+                    color: "#722ed1",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <BulbOutlined style={{ marginRight: "8px" }} />
+                  Audience & Configuration
+                </Title>
+
+                <Row gutter={[16, 12]}>
+                  {/* Target audience */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Target Customers *",
+                        "You can select multiple."
+                      )}
+                      <Select
+                        mode="multiple"
+                        value={targetUsers}
+                        onChange={(vals) => {
+                          if (vals.includes("Select All")) {
+                            setTargetUsers(TARGET_USER_OPTIONS);
+                          } else {
+                            setTargetUsers(vals);
+                          }
+                        }}
+                        placeholder="Select target audience"
+                        allowClear
+                        maxTagCount="responsive"
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        <Option key="Select All" value="Select All">
+                          Select All
+                        </Option>
+                        {TARGET_USER_OPTIONS.map((option) => (
+                          <Option key={option} value={option}>
+                            {option}
+                          </Option>
+                        ))}
+                      </Select>
+
+                      {targetUsers.includes("Other") && (
+                        <Input
+                          style={{ marginTop: "8px", ...compactInputStyle }}
+                          placeholder="Specify your target user(s)"
+                          value={targetUserOther}
+                          onChange={(e) => setTargetUserOther(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </Col>
+
+                  {/* Gender */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Target Audience Gender *",
+                        "Pick one or more if your audience is specific."
+                      )}
+                      <Checkbox.Group
+                        options={["Male", "Female", "Other"]}
+                        value={genderSelections}
+                        onChange={(vals) =>
+                          setGenderSelections(vals as string[])
+                        }
+                      />
+                    </div>
+                  </Col>
+
+                  {/* Age limits */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Target Audience Age Limit *",
+                        "Select one or more relevant age ranges."
+                      )}
+                      <Select
+                        mode="multiple"
+                        value={ageLimits}
+                        onChange={(vals) => {
+                          if (vals.includes("Select All")) {
+                            setAgeLimits(AGE_LIMIT_OPTIONS);
+                            if (!AGE_LIMIT_OPTIONS.includes("Other"))
+                              setAgeOther("");
+                          } else {
+                            setAgeLimits(vals);
+                            if (!vals.includes("Other")) setAgeOther("");
+                          }
+                        }}
+                        placeholder="Select age range(s)"
+                        allowClear
+                        maxTagCount="responsive"
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        <Option key="Select All" value="Select All">
+                          Select All
+                        </Option>
+                        {AGE_LIMIT_OPTIONS.map((option) => (
+                          <Option key={option} value={option}>
+                            {option}
+                          </Option>
+                        ))}
+                      </Select>
+
+                      {ageLimits.includes("Other") && (
+                        <Input
+                          style={{ marginTop: "8px", ...compactInputStyle }}
+                          placeholder="Enter custom age (e.g., 21-30 or 16+)"
+                          value={ageOther}
+                          onChange={(e) => setAgeOther(e.target.value)}
+                          maxLength={20}
+                        />
+                      )}
+                    </div>
+                  </Col>
+
+                  {/* Tone & Response Format */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Conversation Tone *",
+                        "Example: Helpful & Professional."
+                      )}
+                      <Select
+                        value={converstionTone}
+                        onChange={setConverstionTone}
+                        placeholder="Select a conversation tone"
+                        allowClear
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        {TONE_OPTIONS.map((t) => (
+                          <Option key={t} value={t}>
+                            {t}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Response Format",
+                        "auto (natural text) or json_object (structured)."
+                      )}
+                      <Select
+                        value={responseFormat || "auto"}
+                        onChange={setResponseFormat}
+                        allowClear={false}
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        {RESPONSE_FORMATS.map((f) => (
+                          <Option key={f} value={f}>
+                            {f}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+
+                  {/* Instructions */}
+                  <Col xs={24}>
+                    <div style={{ marginBottom: "12px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: "8px",
+                          gap: 8,
+                        }}
+                      >
+                        {labelWithInfo(
+                          "Instructions",
+                          "Click Generate to auto-create; you can then Edit."
+                        )}
+                        <Space>
+                          <Button
+                            type="primary"
+                            size="small"
+                            onClick={handleGenerate}
+                            loading={loading}
+                            style={purpleBtn}
+                          >
+                            Generate
+                          </Button>
+                          {instructions && (
+                            <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => {
+                                setTempInstructions(instructions);
+                                setShowInstructionsModal(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </Space>
+                      </div>
+
+                      <div
+                        style={{
+                          minHeight: 140,
+                          maxHeight: 240,
+                          padding: "12px",
+                          border: "2px solid #f0f0f0",
+                          borderRadius: "8px",
+                          background: instructions ? "#fafafa" : "#f9f9f9",
+                          whiteSpace: "pre-wrap",
+                          fontSize: "14px",
+                          lineHeight: 1.4,
+                          overflowY: "auto",
+                        }}
+                      >
+                        {instructions ||
+                          "Click 'Generate' to create instructions automatically, then use 'Edit' to customize them."}
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            )}
+
+            {/* STEP 4 */}
+            {step === 3 && (
+              <div>
+                <Title
+                  level={4}
+                  style={{
+                    color: "#722ed1",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <RocketOutlined style={{ marginRight: "8px" }} />
+                  Contact, Conversations & Publish
+                </Title>
+
+                <Row gutter={[16, 12]}>
+                  {/* Share contact? */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Do you want to share Contact Details? *",
+                        "Choose Yes to display your contact on the agent card."
+                      )}
+                      <Radio.Group
+                        value={shareContact}
+                        onChange={(e) => {
+                          const val = e.target.value as "YES" | "NO";
+                          setShareContact(val);
+
+                          if (val === "YES") {
+                            // if no value typed yet, try to prefill from profile cache
+                            const p = profileRef.current || {};
+                            if (!contactDetails) {
+                              const best =
+                                p.mobileNumber ||
+                                p.whatsappNumber ||
+                                p.email ||
+                                "";
+                              if (best) setContactDetails(best);
+                            }
+                          } else {
+                            // user chose not to share; you can keep what they typed or clear it
+                            // setContactDetails("");
+                          }
+                        }}
+                      >
+                        <Radio value="YES">Yes</Radio>
+                        <Radio value="NO">No</Radio>
+                      </Radio.Group>
+                    </div>
+                  </Col>
+
+                  {shareContact === "YES" && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {isLoadingProfile
+                        ? "Checking your profile…"
+                        : "we auto-filled from your profile."}
+                    </Text>
+                  )}
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Conversation Starter 1",
+                        'Example: "What service do you need help with today?"'
+                      )}
+                      <Input
+                        value={conStarter1}
+                        onChange={(e) => setConStarter1(e.target.value)}
+                        placeholder='e.g., "What service do you need help with today?"'
+                        style={compactInputStyle}
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Conversation Starter 2",
+                        'Example: "Share your case details..."'
+                      )}
+                      <Input
+                        value={conStarter2}
+                        onChange={(e) => setConStarter2(e.target.value)}
+                        placeholder='e.g., "Share your case details..."'
+                        style={compactInputStyle}
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Conversation Starter 3",
+                        'Example: "Do you want a document template?"'
+                      )}
+                      <Input
+                        value={conStarter3}
+                        onChange={(e) => setConStarter3(e.target.value)}
+                        placeholder='e.g., "Do you want a document template?"'
+                        style={compactInputStyle}
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Conversation Starter 4",
+                        'Example: "Prefer English/తెలుగు/हिंदी?"'
+                      )}
+                      <Input
+                        value={conStarter4}
+                        onChange={(e) => setConStarter4(e.target.value)}
+                        placeholder='e.g., "Prefer English/తెలుగు/हिंदी?"'
+                        style={compactInputStyle}
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={8}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Active Status",
+                        "Toggle whether this agent is visible/usable."
+                      )}
+                      <Switch
+                        checked={activeStatus}
+                        onChange={setActiveStatus}
+                        checkedChildren="Active"
+                        unCheckedChildren="Inactive"
+                      />
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={8}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Text Chat",
+                        "Enabled by default and always available."
+                      )}
+                      <Tag color="green" style={{ borderRadius: 6 }}>
+                        Active (default)
+                      </Tag>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={8}>
+                    <div style={{ marginBottom: "12px" }}>
                       <div
                         style={{
                           display: "flex",
@@ -2269,140 +2118,249 @@ const validateStep2 = (): boolean => {
                           gap: 6,
                         }}
                       >
-                        <Text strong style={{ fontSize: "14px" }}>
-                          OXY GPT Store
-                        </Text>
+                        <Text strong>Voice</Text>
                         <Tooltip title="It may launch soon and price is applicable.">
                           <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
                         </Tooltip>
                       </div>
-                      <Text style={{ fontSize: "12px" }}>$19</Text>{" "}
-                      <Tag
-                        color="blue"
-                        style={{ borderRadius: 6, marginLeft: 4 }}
-                      >
-                        Free for now
+                      <Tag color="default" style={{ borderRadius: 6 }}>
+                        Disabled
                       </Tag>
                     </div>
-                  </Checkbox>
-                </Col>
-              </Row>
-            </Card>
+                  </Col>
+                </Row>
+              </div>
+            )}
 
+            <Divider style={{ margin: "20px 0" }} />
             <div
               style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "8px",
-              }}
-            >
-              <Button onClick={() => setShowPreview(false)}>
-                Back to Edit
-              </Button>
-              <Button
-                type="primary"
-                onClick={handleConfirmPublish}
-                loading={loading}
-                style={purpleBtn}
-              >
-                Confirm & Publish
-              </Button>
-            </div>
-          </div>
-        </Modal>
-
-        {/* Fullscreen Instructions Modal */}
-        <Modal
-          open={showInstructionsModal}
-          onCancel={() => {
-            stopRecording();
-            setShowInstructionsModal(false);
-          }}
-          width="90%"
-          style={{ top: 20 }}
-          bodyStyle={{ height: "80vh", padding: 0 }}
-          footer={null}
-        >
-          <div
-            style={{ display: "flex", flexDirection: "column", height: "100%" }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: "12px 16px",
-                borderBottom: "1px solid #f0f0f0",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
             >
-              <Text strong>Edit Instructions</Text>
-              <Space>
-                {/* Mic button */}
-                <Tooltip
-                  title={isRecording ? "Stop Mic" : "Use mic to dictate"}
-                >
+              <Button
+                size="large"
+                onClick={prev}
+                disabled={step === 0}
+                style={{ minWidth: "100px" }}
+              >
+                Previous
+              </Button>
+
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                {loading && <Text type="secondary">Working...</Text>}
+                {step < 3 ? (
                   <Button
-                    size="small"
-                    icon={
-                      isRecording ? <AudioMutedOutlined /> : <AudioOutlined />
-                    }
-                    onClick={isRecording ? stopRecording : startRecording}
+                    type="primary"
+                    size="large"
+                    onClick={next}
+                    loading={loading}
+                    style={{ minWidth: "120px", ...purpleBtn }}
                   >
-                    {isRecording ? "Stop" : "Mic"}
+                    Save & Continue
                   </Button>
-                </Tooltip>
-
-                <Button
-                  onClick={() => {
-                    stopRecording();
-                    setShowInstructionsModal(false);
-                  }}
-                  icon={<CloseOutlined />}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<SaveOutlined />}
-                  onClick={() => {
-                    stopRecording();
-                    setInstructions(tempInstructions);
-                    setShowInstructionsModal(false);
-                    message.success("Instructions updated!");
-                  }}
-                  style={purpleBtn}
-                >
-                  Save
-                </Button>
-              </Space>
+                ) : (
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={handleOpenPreview}
+                    loading={loading}
+                    icon={<EyeOutlined />}
+                    style={{ minWidth: "140px", ...purpleBtn }}
+                  >
+                    Preview & Publish
+                  </Button>
+                )}
+              </div>
             </div>
-
-            {/* Textarea */}
-            <TextArea
-              value={tempInstructions}
-              onChange={(e) => setTempInstructions(e.target.value)}
-              style={{
-                flex: 1,
-                border: "none",
-                borderRadius: 0,
-                padding: 16,
-                fontSize: 15,
-                lineHeight: 1.5,
-              }}
-              autoSize={{ minRows: 20 }}
-            />
           </div>
-        </Modal>
-
-        {successData && (
-          <SuccessAgentCard
-            data={successData}
-            onClose={() => setSuccessData(null)}
-          />
-        )}
+        </Card>
       </div>
-   
+
+      {/* PREVIEW MODAL */}
+      <Modal
+        title={
+          <div style={{ textAlign: "center", padding: "8px" }}>
+            <Title level={4} style={{ color: "white", margin: 0 }}>
+              Preview & Final Checks
+            </Title>
+          </div>
+        }
+        open={showPreview}
+        onCancel={() => setShowPreview(false)}
+        width={700}
+        footer={null}
+        styles={{
+          header: {
+            background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
+            borderRadius: "8px 8px 0 0",
+          },
+        }}
+      >
+        <div style={{ padding: "16px 0" }}>
+          <Card
+            style={{
+              marginBottom: "16px",
+              border: "1px solid #e6e6ff",
+              borderRadius: "8px",
+            }}
+          >
+            <Title level={4} style={{ color: "#722ed1", marginBottom: "8px" }}>
+              {agentName || "Agent Name"}
+            </Title>
+            <Paragraph
+              style={{ color: "#666", marginBottom: "12px", fontSize: "14px" }}
+            >
+              {description || uniqueSolution || "No description provided."}
+            </Paragraph>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {[conStarter1, conStarter2, conStarter3, conStarter4]
+                .filter(Boolean)
+                .map((starter, index) => (
+                  <Tag
+                    key={index}
+                    color="gold"
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      border: "1px solid #fa8c16",
+                      fontSize: "12px",
+                    }}
+                  >
+                    {starter}
+                  </Tag>
+                ))}
+            </div>
+          </Card>
+
+          <Card
+            title={
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Text strong>Choose Stores</Text>
+                <Tooltip title="It may launch soon and price is applicable.">
+                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                </Tooltip>
+              </div>
+            }
+            size="small"
+            style={{
+              marginBottom: "16px",
+              border: "1px solid #e6e6ff",
+              borderRadius: "8px",
+            }}
+          >
+            <Row gutter={[12, 12]}>
+              <Col xs={24} md={12}>
+                <Checkbox
+                  checked={storeBharat}
+                  onChange={(e) => setStoreBharat(e.target.checked)}
+                >
+                  <div>
+                    <Text strong style={{ fontSize: "14px" }}>
+                      Bharat AI Store
+                    </Text>
+                    <br />
+                    <Text type="success" style={{ fontSize: "12px" }}>
+                      Free
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                      {" "}
+                      (Label: INR 1000)
+                    </Text>
+                  </div>
+                </Checkbox>
+              </Col>
+              <Col xs={24} md={12}>
+                <Checkbox
+                  checked={storeOxy}
+                  onChange={(e) => setStoreOxy(e.target.checked)}
+                >
+                  <div>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <Text strong style={{ fontSize: "14px" }}>
+                        OXY GPT Store
+                      </Text>
+                      <Tooltip title="It may launch soon and price is applicable.">
+                        <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                      </Tooltip>
+                    </div>
+                    <Text style={{ fontSize: "12px" }}>$19</Text>{" "}
+                    <Tag color="blue" style={{ borderRadius: 6 }}>
+                      Coming soon
+                    </Tag>
+                  </div>
+                </Checkbox>
+              </Col>
+            </Row>
+          </Card>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button onClick={() => setShowPreview(false)}>Cancel</Button>
+            <Button
+              type="primary"
+              icon={<RocketOutlined />}
+              style={purpleBtn}
+              onClick={handleConfirmPublish}
+            >
+              Publish
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* EDIT INSTRUCTIONS MODAL */}
+      <Modal
+        open={showInstructionsModal}
+        onCancel={() => setShowInstructionsModal(false)}
+        onOk={handleSaveInstructions}
+        okText="Save"
+        title="Edit Instructions"
+      >
+        <TextArea
+          value={tempInstructions}
+          onChange={(e) => setTempInstructions(e.target.value)}
+          rows={10}
+          maxLength={7000}
+          style={compactInputStyle}
+        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 8,
+          }}
+        >
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {tempInstructions.length}/7000
+          </Text>
+          <Space>
+            <Button
+              size="small"
+              icon={isRecording ? <AudioMutedOutlined /> : <AudioOutlined />}
+              onClick={isRecording ? stopRecording : startRecording}
+            >
+              {isRecording ? "Stop" : "Mic"}
+            </Button>
+          </Space>
+        </div>
+      </Modal>
+
+      {/* SUCCESS MODAL (optional) */}
+      {successData && (
+        <SuccessAgentCard
+          data={successData}
+          onClose={() => setSuccessData(null)}
+        />
+      )}
+    </div>
   );
 };
 

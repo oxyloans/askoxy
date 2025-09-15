@@ -83,7 +83,7 @@ const Genoxy: React.FC = () => {
       <div className="relative z-10 w-full max-w-5xl text-center">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
           <span className="bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
-            OXY GPT
+            OXYGPT
           </span>
         </h2>
 
@@ -91,7 +91,7 @@ const Genoxy: React.FC = () => {
 
         <p className="max-w-3xl mx-auto mb-10 text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
           Your AI-powered partner for mentorship, funding guidance, and business
-          growth — accessible anytime, anywhere. Genoxy helps you unlock new
+          growth — accessible anytime, anywhere. Oxygpt helps you unlock new
           opportunities, connect with industry experts, and accelerate your
           projects with intelligent insights. Refine your ideas, secure funding,
           and scale your business effortlessly with personalized guidance.

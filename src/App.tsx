@@ -307,10 +307,6 @@ const App: React.FC = () => {
               path="/bharath-aistore/assistant/:id/:agentId"
               element={<AssistantDetails />}
             />
-            <Route
-              path="/chatinterface/assistant/:id"
-              element={<ChatInterface1 />}
-            />
             <Route path="/myblogs" element={<BlogsPage />} />
             <Route
               path="/termsandconditions"
@@ -607,6 +603,10 @@ const App: React.FC = () => {
               />
               <Route path="create-aiagent" element={<CreateAgentWizard />} />
               <Route path="bharat-expert" element={<CreateAgentMain />} />
+              <Route
+                path="chatinterface/assistant/:id/:agentId"
+                element={<ChatInterface1 />}
+              />
               <Route path="mycart" element={<CartPage />} />
               <Route
                 path="myorders"

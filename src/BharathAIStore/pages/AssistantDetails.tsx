@@ -397,7 +397,7 @@ backdrop-blur-md sticky top-0 z-20 "
                     "Start chatting to explore how this assistant can help you."}
                 </p>
                 {/* Updated: Display dynamic prompts from API (conStarter1-4), remove static questions; show 2 on mobile, 4 on larger screens */}
-                <div className="grid  grid-cols-2 sm:grid-cols-4 gap-4 mt-8 w-full max-w-3xl">
+                <div className="grid   grid-cols-2 sm:grid-cols-4 gap-4 mt-8 w-full max-w-3xl">
                   {prompts
                     .slice(0, window.innerWidth < 768 ? 2 : 4)
                     .map((prompt, idx) => (

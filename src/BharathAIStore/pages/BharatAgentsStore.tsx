@@ -184,6 +184,7 @@ const AssistantCard: React.FC<{
       aria-label={`Open ${assistant.name}`}
     >
       <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden">
+        {/* Thumbnail / Header */}
         <div className="relative w-full">
           <div
             className={`h-0 w-full pb-[56%] bg-gradient-to-br ${gradientFor(
@@ -204,26 +205,33 @@ const AssistantCard: React.FC<{
           </div>
         </div>
 
-        <div className="pt-8 px-4 pb-4">
+        {/* Content */}
+        <div className="pt-8 px-5 pb-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-semibold text-[15px] text-gray-900">
+              {/* Title */}
+              <h3 className="font-semibold text-[16px] text-gray-900 leading-snug">
                 <Highlighter text={assistant.name || ""} query={q} />
               </h3>
-              <p className="text-[13px] text-gray-600 line-clamp-3 mt-0.5">
+
+              {/* ✅ Better description styling */}
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed ">
                 <Highlighter text={assistant.description || ""} query={q} />
               </p>
             </div>
+
+            {/* Badge */}
             <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
               <Shield className="h-3.5 w-3.5" />
               {badge}
             </span>
           </div>
 
-          <div className="mt-4 flex items-center gap-2">
+          {/* Buttons */}
+          <div className="mt-5 flex items-center gap-2">
             <button
               onClick={onOpen}
-              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-3.5 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
             >
               Open
             </button>
@@ -253,9 +261,8 @@ const BharatAgentsStore: React.FC = () => {
   });
 
   const ALWAYS_SHOW_NAMES = new Set([
-    "IRDAI",
-    "Tie - Hyderabad",
-    "GST Reform GPT",
+    
+   
     "General Insurance Discovery",
     "Life Insurance Citizen Discovery",
   ]);
@@ -405,7 +412,7 @@ const BharatAgentsStore: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
             {Array.from({ length: 10 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -477,7 +484,7 @@ const BharatAgentsStore: React.FC = () => {
         {isSearching && searchLoading && (
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Searching “{q}”… 
+            Searching “{q}”…
           </div>
         )}
         {isSearching && searchError && (
@@ -491,15 +498,22 @@ const BharatAgentsStore: React.FC = () => {
               {isSearching ? "No results found" : "No Assistants Found"}
             </h3>
             <p className="text-gray-600">
-              {isSearching ? "Try a different search term." : "Try a different search term."}
+              {isSearching
+                ? "Try a different search term."
+                : "Try a different search term."}
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
+            <div className="grid grid grid-cols-3 gap-6  sm:gap-6">
               {shownAssistants.map((assistant, index) => (
                 <AssistantCard
-                  key={(assistant.assistantId || assistant.id || assistant.agentId || `${index}`) as string}
+                  key={
+                    (assistant.assistantId ||
+                      assistant.id ||
+                      assistant.agentId ||
+                      `${index}`) as string
+                  }
                   assistant={assistant}
                   index={index}
                   q={q || ""}

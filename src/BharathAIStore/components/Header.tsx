@@ -146,7 +146,10 @@ const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
         setProfileOpen(false);
       }
     };
@@ -154,12 +157,20 @@ const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-// AFTER:
-const isActive = (sectionId: string) => {
-  if (location.pathname === "/ai-initiatives" && sectionId === "ai-initiatives") return true;
-  if (location.pathname === "/bharath-aistore" && sectionId === "bharat-ai-store") return true;
-  return activeSection === sectionId;
-};
+  // AFTER:
+  const isActive = (sectionId: string) => {
+    if (
+      location.pathname === "/ai-initiatives" &&
+      sectionId === "ai-initiatives"
+    )
+      return true;
+    if (
+      location.pathname === "/bharath-aistore" &&
+      sectionId === "bharat-ai-store"
+    )
+      return true;
+    return activeSection === sectionId;
+  };
 
   const stored =
     localStorage.getItem("display_name") ||
@@ -200,15 +211,16 @@ const isActive = (sectionId: string) => {
         <div className="mx-auto max-w-8xl px-4 sm:px-6 lg:px-8 h-full">
           {/* ---------- MOBILE SEARCH (slide-in row) ---------- */}
           {isMobileSearchOpen ? (
-            <div className="flex h-full items-center gap-3 md:hidden">
+            <div className="md:hidden flex h-12 items-center gap-2">
+              {/* Back/close */}
               <button
                 aria-label="Close search"
                 onClick={() => setIsMobileSearchOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-gray-100 active:scale-[.98] transition"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="h-6 w-6 text-gray-700"
+                  className="h-5 w-5 text-gray-700"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -218,28 +230,35 @@ const isActive = (sectionId: string) => {
                 </svg>
               </button>
 
-              <div className="flex-1">
+              {/* Search */}
+              <div className="flex-1 min-w-0">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     setIsMobileSearchOpen(false);
                   }}
                 >
-                  <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-600">
+                  {/* Fixed-height input wrapper */}
+                  <div className="flex h-10 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 shadow-sm focus-within:ring-1 focus-within:ring-purple-600">
                     <input
                       ref={inputRef}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search agents.."
-                      className="w-full bg-transparent outline-none text-[15px] placeholder:text-gray-400"
+                      placeholder="Search agents…"
+                      className="w-full bg-transparent outline-none text-[16px] leading-5 placeholder:text-gray-400"
                       aria-label="Search assistants"
+                      enterKeyHint="search"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoFocus
                     />
                     {!!query && (
                       <button
                         type="button"
                         aria-label="Clear search"
                         onClick={() => setQuery("")}
-                        className="rounded-full p-1 hover:bg-gray-100"
+                        className="grid h-8 w-8 place-items-center rounded-full hover:bg-gray-100 transition"
                       >
                         <svg
                           viewBox="0 0 24 24"
@@ -268,7 +287,11 @@ const isActive = (sectionId: string) => {
                   aria-label="Go to Home"
                   title="Bharat AI Store"
                 >
-                  <img src={Logo} alt="Bharat AI Store" className="h-10 w-auto" />
+                  <img
+                    src={Logo}
+                    alt="Bharat AI Store"
+                    className="h-10 w-auto"
+                  />
                 </button>
               </div>
 
@@ -305,10 +328,10 @@ const isActive = (sectionId: string) => {
                 })}
               </nav>
 
-              {/* RIGHT: Desktop search + CTA (with improved spacing) | Mobile icons */}
-              <div className="flex items-center">
+              {/* RIGHT: Desktop search + CTA (now with uniform gap) | Mobile icons */}
+              <div className="flex items-center gap-6 lg:gap-8 xl:gap-12 2xl:gap-16">
                 {/* Desktop search */}
-                <div className="hidden md:flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-600 w-[22rem] mr-3">
+                <div className="hidden md:flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-600 w-[22rem]">
                   <svg
                     viewBox="0 0 24 24"
                     className="h-5 w-5 text-gray-600"
@@ -416,7 +439,6 @@ const isActive = (sectionId: string) => {
                     "bg-purple-600 hover:bg-purple-700 text-white font-semibold",
                     "px-5 py-2.5 rounded-full shadow",
                     "ring-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-                    // subtle animated glow
                     "shadow-purple-400/60",
                     "after:absolute after:-inset-[2px] after:rounded-full after:content-[''] after:-z-10",
                     "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)]",
@@ -470,8 +492,8 @@ const isActive = (sectionId: string) => {
                   key={n.to}
                   to={n.to}
                   onClick={() => {
-    setIsMobileMenuOpen(false);
-  }}
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="block rounded-lg px-3 py-3 text-base font-semibold text-gray-800 hover:bg-gray-100"
                 >
                   {n.label}

@@ -342,8 +342,7 @@ const AiResources: React.FC = () => {
             AI Initiatives
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-            Explore our curated AI initiatives. Search by domain, name, or
-            description.
+            Explore our curated AI initiatives.
           </p>
         </div>
 

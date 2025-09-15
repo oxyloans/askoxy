@@ -1927,12 +1927,12 @@ const Home: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <Bot className="mr-2 text-purple-600" size={24} />
-                GENOXY
+              OXYGPT
               </h2>
               <button
                 onClick={() => navigate("/genoxy")}
                 className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
-                aria-label="Explore GENOXY"
+                aria-label="Explore OXYGpt"
               >
                 Explore <ArrowRight size={16} className="ml-2" />
               </button>
