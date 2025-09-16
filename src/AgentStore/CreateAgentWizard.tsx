@@ -1,6 +1,6 @@
 // /src/AgentStore/CreateAgentWizard.tsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   Steps,
   Input,
@@ -221,6 +221,28 @@ const CreateAgentWizard: React.FC = () => {
   const [uniqueSolution, setUniqueSolution] = useState("");
 
   const location = useLocation() as any;
+  const [search] = useSearchParams();
+  // --- ID hydration: URL params -> state; fallback to sessionStorage ---
+  useEffect(() => {
+    const fromUrlAgent = (search.get("agentId") || "").trim();
+    const fromUrlAsst = (search.get("assistantId") || "").trim();
+
+    // 1) Prefer URL if present
+    if (fromUrlAgent && !agentId) setAgentId(fromUrlAgent);
+    if (fromUrlAsst && !assistantId) setAssistantId(fromUrlAsst);
+
+    // 2) Fallback to sessionStorage (handles hard refresh on edit)
+    if (!fromUrlAgent && !agentId) {
+      const ssAgent = sessionStorage.getItem("edit_agentId") || "";
+      if (ssAgent) setAgentId(ssAgent);
+    }
+    if (!fromUrlAsst && !assistantId) {
+      const ssAsst = sessionStorage.getItem("edit_assistantId") || "";
+      if (ssAsst) setAssistantId(ssAsst);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Allowed header titles
   const HEADER_TITLES = [
     "AI Twin",
@@ -302,7 +324,8 @@ const CreateAgentWizard: React.FC = () => {
 
   const userId = localStorage.getItem("userId") || "";
   const navigate = useNavigate();
-  const isEditMode = location?.state?.mode === "edit";
+  const isEditMode =
+    location?.state?.mode === "edit" || search.get("mode") === "edit";
   const editSeed:
     | (Partial<AgentApiResponse & Record<string, any>> | undefined)
     | undefined = location?.state?.seed;
@@ -607,7 +630,14 @@ const CreateAgentWizard: React.FC = () => {
 
   // Step 1 save
   const saveStep0 = async () => {
+    if (isEditMode && !agentId) {
+      message.error(
+        "Missing agentId in edit mode. Please reopen from All Agents."
+      );
+      return; // instead of `return false as any`
+    }
     if (!validateStep0()) return false;
+
     setLoading(true);
     try {
       const payload = {
@@ -615,19 +645,32 @@ const CreateAgentWizard: React.FC = () => {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
+
         // Header
         headerTitle,
         headerStatus: false,
+
         // Profile
         agentName,
         creatorName,
         userRole: effectiveUserRole || "Developer",
-        userExperienceSummary,
-        acheivements,
+
+        // Send BOTH summary names to satisfy old/new DTOs
+        userExperienceSummary, // new name (string summary)
+        userExperience: undefined, // keep numeric years separate if you add it later
+
+        acheivements, // (server uses this misspelling)
         description,
+        discription: description,
+
         strength,
         language,
+
+        // Voice
         voiceStatus: false,
+
+        // EXTRA compatibility: some APIs also accept `name`
+        name: agentName,
       };
       const data = await doPatch("/ai-service/agent/agentScreen1", payload);
       // Capture IDs if backend returns them
@@ -647,9 +690,16 @@ const CreateAgentWizard: React.FC = () => {
 
   // Step 2 save
   const saveStep1 = async () => {
+    if (isEditMode && !agentId) {
+      message.error(
+        "Missing agentId in edit mode. Please reopen from All Agents."
+      );
+      return; // instead of `return false as any`
+    }
     if (!validateStep1()) return false;
     setLoading(true);
     try {
+      // BEFORE (excerpt) …business/domain/subDomain/usageModel/solveProblem…
       const payload = {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
@@ -661,7 +711,10 @@ const CreateAgentWizard: React.FC = () => {
         solveProblem,
         mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
         uniqueSolution,
+        // ADD:
+        responseFormat: responseFormat || "auto",
       };
+
       const data = await doPatch("/ai-service/agent/agentScreen2", payload);
       const aId = data?.agentId || data?.id || "";
       const asstId = data?.assistantId || "";
@@ -679,6 +732,12 @@ const CreateAgentWizard: React.FC = () => {
 
   // Step 3 save
   const saveStep2 = async () => {
+    if (isEditMode && !agentId) {
+      message.error(
+        "Missing agentId in edit mode. Please reopen from All Agents."
+      );
+      return; // instead of `return false as any`
+    }
     if (!validateStep2()) return false;
     setLoading(true);
     try {
@@ -689,13 +748,10 @@ const CreateAgentWizard: React.FC = () => {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
-        // audience/config
         targetUser: finalTargetUsers,
         gender: genderForText || genderSelections.join(",") || undefined,
         ageLimit: finalAgeLimits,
         converstionTone,
-        responseFormat: responseFormat || "auto",
-        // instructions (draft or generated)
         instructions,
       };
       const data = await doPatch("/ai-service/agent/agentScreen3", payload);
@@ -726,7 +782,17 @@ const CreateAgentWizard: React.FC = () => {
     } else if (step === 2) {
       const ok = await saveStep2();
       if (!ok) return;
-      setStep(3);
+
+      if (isEditMode) {
+        Modal.success({
+          title: "Agent updated",
+          content: "Your changes have been saved.",
+          onOk: () =>
+            navigate("/main/bharath-aistore/agents", { replace: true }),
+        });
+      } else {
+        setStep(3); // only new agents proceed to Publish
+      }
     }
   };
   const prev = () => {
@@ -877,6 +943,12 @@ const CreateAgentWizard: React.FC = () => {
 
   // ====== PUBLISH (final PATCH) ======
   const handleConfirmPublish = async () => {
+    if (isEditMode && !agentId) {
+      message.error(
+        "Missing agentId in edit mode. Please reopen from All Agents."
+      );
+      return; // instead of `return false as any`
+    }
     try {
       setLoading(true);
       const chooseStore =
@@ -893,34 +965,7 @@ const CreateAgentWizard: React.FC = () => {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
-        // From all steps (server already has them, but sending is safe for idempotence)
-        headerTitle,
-        headerStatus: false,
-        agentName,
-        creatorName,
-        userRole: effectiveUserRole || "Developer",
-        userExperienceSummary,
-        acheivements,
-        description,
-        strength,
-        language,
-        voiceStatus: false,
-
-        business,
-        domain: resolvedDomain,
-        subDomain: resolvedSubDomain,
-        usageModel: selectedModelId,
-        solveProblem,
-        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
-        uniqueSolution,
-
-        targetUser: resolvedTargetUsersString || undefined,
-        gender: genderForText || genderSelections.join(",") || undefined,
-        ageLimit: resolvedAgeLimitsString || undefined,
-        converstionTone,
-        responseFormat: responseFormat || "auto",
-        instructions: cleanInstructionText(instructions),
-
+       
         // Step 4 extras
         contactDetails: shareContact === "YES" ? contactDetails : undefined,
         conStarter1,
@@ -950,7 +995,11 @@ const CreateAgentWizard: React.FC = () => {
       setLoading(false);
     }
   };
-
+  useEffect(() => {
+    if (isEditMode && agentId) sessionStorage.setItem("edit_agentId", agentId);
+    if (isEditMode && assistantId)
+      sessionStorage.setItem("edit_assistantId", assistantId);
+  }, [isEditMode, agentId, assistantId]);
   // ====== Prefill in edit mode (unchanged from your file) ======
   useEffect(() => {
     if (!isEditMode || !editSeed) return;
@@ -1060,13 +1109,18 @@ const CreateAgentWizard: React.FC = () => {
     setStep(0);
   }, [isEditMode, editSeed]);
 
-  // ===== UI =====
-  const steps = [
-    { title: "Profile", icon: <UserOutlined /> },
-    { title: "Business & GPT Model", icon: <SettingOutlined /> },
-    { title: "Audience & Configuration", icon: <BulbOutlined /> },
-    { title: "Publish", icon: <RocketOutlined /> },
-  ];
+  const steps = isEditMode
+    ? [
+        { title: "Profile", icon: <UserOutlined /> },
+        { title: "Business & GPT Model", icon: <SettingOutlined /> },
+        { title: "Audience & Configuration", icon: <BulbOutlined /> },
+      ]
+    : [
+        { title: "Profile", icon: <UserOutlined /> },
+        { title: "Business & GPT Model", icon: <SettingOutlined /> },
+        { title: "Audience & Configuration", icon: <BulbOutlined /> },
+        { title: "Publish", icon: <RocketOutlined /> },
+      ];
 
   const labelWithInfo = (label: string, tip: string) => (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1663,6 +1717,27 @@ const CreateAgentWizard: React.FC = () => {
                   </Col>
 
                   <Col xs={24} md={12}>
+                    <div style={{ marginBottom: "12px" }}>
+                      {labelWithInfo(
+                        "Response Format",
+                        "auto (natural text) or json_object (structured)."
+                      )}
+                      <Select
+                        value={responseFormat || "auto"}
+                        onChange={setResponseFormat}
+                        allowClear={false}
+                        style={{ width: "100%", ...compactInputStyle }}
+                      >
+                        {RESPONSE_FORMATS.map((f) => (
+                          <Option key={f} value={f}>
+                            {f}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={12}>
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Are you solving a problem? *",
@@ -1870,27 +1945,6 @@ const CreateAgentWizard: React.FC = () => {
                         {TONE_OPTIONS.map((t) => (
                           <Option key={t} value={t}>
                             {t}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
-                      {labelWithInfo(
-                        "Response Format",
-                        "auto (natural text) or json_object (structured)."
-                      )}
-                      <Select
-                        value={responseFormat || "auto"}
-                        onChange={setResponseFormat}
-                        allowClear={false}
-                        style={{ width: "100%", ...compactInputStyle }}
-                      >
-                        {RESPONSE_FORMATS.map((f) => (
-                          <Option key={f} value={f}>
-                            {f}
                           </Option>
                         ))}
                       </Select>

@@ -124,6 +124,7 @@ const IMAGE_MAP: { [key: string]: string } = {
     "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
   technology:
     "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+  og:"https://i.ibb.co/gZjkJyQ8/1a.png",
   irdai:
     "https://www.livemint.com/lm-img/img/2024/05/30/600x338/Irdai_health_insurance_1717036677791_1717036677946.png",
   gst: "https://zetran.com/wp-content/uploads/2025/02/GST-Compliance-and-Fraud-Detection-using-AI.jpg",

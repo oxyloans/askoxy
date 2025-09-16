@@ -62,7 +62,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     tool_resources: {},
     metadata: { category: "Chat" },
     response_format: "text",
-    image: Logo9,
+    image: "https://i.ibb.co/SXsSVTXn/ask1.png",
     link: "/",
   },
   {
@@ -282,6 +282,7 @@ const AssistantCard: React.FC<{
 
         <div className="pt-8 px-4 pb-4">
           <div className="flex items-start justify-between gap-3">
+            {/* Left: Name + Description */}
             <div className="min-w-0">
               <h3 className="font-semibold text-[15px] text-gray-900">
                 <Highlighter text={assistant.name || ""} query={q} />
@@ -290,23 +291,24 @@ const AssistantCard: React.FC<{
                 <Highlighter text={assistant.description || ""} query={q} />
               </p>
             </div>
-            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
-              <Shield className="h-3.5 w-3.5" />
-              {badge}
-            </span>
-          </div>
 
-          <div className="mt-4">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(assistant.link);
-              }}
-              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-3.5 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition w-full"
-              aria-label={`Open ${assistant.name}`}
-            >
-              View
-            </button>
+            {/* Right: Badge + Button in same row */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
+                <Shield className="h-3.5 w-3.5" />
+                {badge}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(assistant.link);
+                }}
+                className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-3 py-1.5 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
+                aria-label={`Open ${assistant.name}`}
+              >
+                View
+              </button>
+            </div>
           </div>
         </div>
       </div>
