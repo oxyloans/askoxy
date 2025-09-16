@@ -116,7 +116,7 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
 
 // ---------- image mapping ----------
 const IMAGE_MAP: { [key: string]: string } = {
-  ai: "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?q=80&w=1200&auto=format&fit=crop",
+ 
   code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
   finance:
     "https://media.licdn.com/dms/image/v2/D4D12AQH9ZTLfemnJgA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1730530043865?e=2147483647&v=beta&t=3GgdQbowwhu3jbuft6-XG2_jPZUSLa0XiCRgSz6AqBg",
@@ -124,15 +124,17 @@ const IMAGE_MAP: { [key: string]: string } = {
     "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
   technology:
     "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
-  globaleducation:
-    "https://www.linkysoft.com/images/kb/430_Artificial-Intelligence-and-Educational-Robots.jpg",
+  irdai:
+    "https://www.livemint.com/lm-img/img/2024/05/30/600x338/Irdai_health_insurance_1717036677791_1717036677946.png",
   gst: "https://zetran.com/wp-content/uploads/2025/02/GST-Compliance-and-Fraud-Detection-using-AI.jpg",
   law: "https://royalsociety.org/-/media/events/2025/9/ai-and-the-law/ai-and-the-law-image.jpg",
 };
 
 const DEFAULT_IMAGE = [
-  "https://plus.unsplash.com/premium_photo-1683121710572-7723bd2e235d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YXJ0aWZpY2lhbCUyMGludGVsbGlnZW5jZXxlbnwwfHwwfHx8MA%3D%3D",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFQjSgjdQbvnhDH7go4ETwAOEu05VpFIAOVg&s",
   "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+ 
+  // "https://www.drugtargetreview.com/wp-content/uploads/artificial-intelligence-3.jpg",
 ];
 
 // ---------- helpers ----------
@@ -210,12 +212,12 @@ const AssistantCard: React.FC<{
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               {/* Title */}
-              <h3 className="font-semibold text-[16px] text-gray-900 leading-snug">
+              <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-1 leading-snug">
                 <Highlighter text={assistant.name || ""} query={q} />
               </h3>
 
               {/* ✅ Better description styling */}
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed ">
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-5 ">
                 <Highlighter text={assistant.description || ""} query={q} />
               </p>
             </div>
@@ -505,20 +507,24 @@ const BharatAgentsStore: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid grid-cols-3 gap-6  sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
               {shownAssistants.map((assistant, index) => (
-                <AssistantCard
+                <div
                   key={
-                    (assistant.assistantId ||
-                      assistant.id ||
-                      assistant.agentId ||
-                      `${index}`) as string
+                    assistant.assistantId ||
+                    assistant.id ||
+                    assistant.agentId ||
+                    `${index}`
                   }
-                  assistant={assistant}
-                  index={index}
-                  q={q || ""}
-                  onOpen={() => handleOpen(assistant)}
-                />
+                  className="flex flex-col h-full"
+                >
+                  <AssistantCard
+                    assistant={assistant}
+                    index={index}
+                    q={q || ""}
+                    onOpen={() => handleOpen(assistant)}
+                  />
+                </div>
               ))}
             </div>
 
