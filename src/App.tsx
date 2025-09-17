@@ -212,6 +212,7 @@ import AiResources from "./BharathAIStore/pages/AIResources";
 import AppRoutes from "./BharathAIStore/routes/Landingpage";
 import Layout from "./BharathAIStore/routes/Landingpage";
 import BharatAgentsStore from "./BharathAIStore/pages/BharatAgentsStore";
+import BananaImageGenerate from "./AgentStore/BananaImageGenerate";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -258,6 +259,7 @@ const App: React.FC = () => {
             <Route path="/carnival-form" element={<CarnivalFormPage />} />
             <Route path="/carnival-list" element={<CarnivalListPage />} />
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
+            <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}

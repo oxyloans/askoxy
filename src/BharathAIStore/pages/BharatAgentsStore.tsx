@@ -1,6 +1,6 @@
 // /src/AgentStore/BharatAgentsStore.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Bot, Shield, Loader2 } from "lucide-react";
+import { Bot, Shield, Loader2, Sparkles } from "lucide-react";
 import BASE_URL from "../../Config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,9 @@ import { useSearch } from "../context/SearchContext";
 import Highlighter from "../components/Highlighter";
 
 import CA3image from "../../assets/img/ca3.png";
+
+// ---------- constants ----------
+const OG_IMAGE = "https://i.ibb.co/h1fpCXzw/fanofog.png";
 
 // ---------- types ----------
 interface Assistant {
@@ -54,13 +57,10 @@ interface PaginationState {
 const apiClient = axios.create({ baseURL: BASE_URL });
 
 async function getAssistants(limit = 50, after?: string): Promise<AssistantsResponse> {
-
   const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
     headers: {
       "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
+      ...(`${process.env.AUTH_TOKEN}` ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` } : {}),
     },
     params: { limit, after },
   });
@@ -82,19 +82,14 @@ async function getAssistants(limit = 50, after?: string): Promise<AssistantsResp
 
 // Search API → /ai-service/agent/webSearchForAgent?message=...
 async function searchAssistants(query: string): Promise<Assistant[]> {
- 
-
   const res = await apiClient.get("/ai-service/agent/webSearchForAgent", {
     params: { message: query },
     headers: {
       "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
+      ...(`${process.env.AUTH_TOKEN}` ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` } : {}),
     },
   });
 
-  // Defensive parsing for multiple shapes
   const raw = Array.isArray(res.data)
     ? res.data
     : Array.isArray(res.data?.data)
@@ -103,28 +98,25 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     ? [res.data]
     : [];
 
-  // Normalize fields we rely on
   return raw.map((a: any, idx: number) => ({
     ...a,
     name: a.name ?? `Agent ${idx + 1}`,
     description: a.description ?? a.desc ?? "",
     assistantId: a.assistantId || a.id || a.agentId,
     agentId: a.agentId || a.assistantId || a.id,
-    status: a.status || a.agentStatus, // if present, fine; search results may not filter by status
+    status: a.status || a.agentStatus,
   }));
 }
 
 // ---------- image mapping ----------
 const IMAGE_MAP: { [key: string]: string } = {
- 
   code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
   finance:
     "https://media.licdn.com/dms/image/v2/D4D12AQH9ZTLfemnJgA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1730530043865?e=2147483647&v=beta&t=3GgdQbowwhu3jbuft6-XG2_jPZUSLa0XiCRgSz6AqBg",
   business:
     "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
-  technology:
-    "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
-  og:"https://i.ibb.co/gZjkJyQ8/1a.png",
+  technology: "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+  og: "https://i.ibb.co/gZjkJyQ8/1a.png",
   irdai:
     "https://www.livemint.com/lm-img/img/2024/05/30/600x338/Irdai_health_insurance_1717036677791_1717036677946.png",
   gst: "https://zetran.com/wp-content/uploads/2025/02/GST-Compliance-and-Fraud-Detection-using-AI.jpg",
@@ -134,8 +126,6 @@ const IMAGE_MAP: { [key: string]: string } = {
 const DEFAULT_IMAGE = [
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFQjSgjdQbvnhDH7go4ETwAOEu05VpFIAOVg&s",
   "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
- 
-  // "https://www.drugtargetreview.com/wp-content/uploads/artificial-intelligence-3.jpg",
 ];
 
 // ---------- helpers ----------
@@ -158,7 +148,7 @@ const selectImage = (name: string, seed: string) => {
   return DEFAULT_IMAGE[randomIndex];
 };
 
-// ---------- card ----------
+// ---------- reusable assistant card ----------
 const AssistantCard: React.FC<{
   assistant: Assistant;
   onOpen: () => void;
@@ -212,25 +202,79 @@ const AssistantCard: React.FC<{
         <div className="pt-8 px-5 pb-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              {/* Title */}
               <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-1 leading-snug">
                 <Highlighter text={assistant.name || ""} query={q} />
               </h3>
-
-              {/* ✅ Better description styling */}
               <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-5 ">
                 <Highlighter text={assistant.description || ""} query={q} />
               </p>
             </div>
 
-            {/* Badge */}
             <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
               <Shield className="h-3.5 w-3.5" />
               {badge}
             </span>
           </div>
 
-          {/* Buttons */}
+          <div className="mt-5 flex items-center gap-2">
+            <button
+              onClick={onOpen}
+              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
+            >
+              Open
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ---------- featured first card (OG) ----------
+const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? onOpen() : null)}
+      className="relative group cursor-pointer rounded-2xl shadow-purple-400/60 transition-transform hover:-translate-y-0.5"
+      aria-label="Open THE FAN OF OG"
+    >
+      <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden">
+        {/* Header with supplied image */}
+        <div className="relative w-full h-0 pb-[56%] bg-black">
+          <img
+            src={OG_IMAGE}
+            alt="THE FAN OF OG"
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+          <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
+            <Bot className="h-6 w-6 text-purple-700" />
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="pt-8 px-5 pb-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-[16px] text-gray-900 leading-snug">
+                THE FAN OF OG
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                Create Your OG IMAGE. Just Upload Your Photo
+              </p>
+            </div>
+            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
+              <Shield className="h-3.5 w-3.5" />
+              Tools
+            </span>
+          </div>
+
           <div className="mt-5 flex items-center gap-2">
             <button
               onClick={onOpen}
@@ -264,8 +308,6 @@ const BharatAgentsStore: React.FC = () => {
   });
 
   const ALWAYS_SHOW_NAMES = new Set([
-    
-   
     "General Insurance Discovery",
     "Life Insurance Citizen Discovery",
   ]);
@@ -301,9 +343,7 @@ const BharatAgentsStore: React.FC = () => {
           hasMore: response.has_more,
           firstId: response.first_id,
           lastId: response.last_id,
-          total: isLoadMore
-            ? prev.total + response.data.length
-            : response.data.length,
+          total: isLoadMore ? prev.total + response.data.length : response.data.length,
         }));
       } catch (err) {
         console.error("Error fetching assistants:", err);
@@ -352,9 +392,7 @@ const BharatAgentsStore: React.FC = () => {
         console.error("Search API failed:", e);
         if (!active) return;
         setSearchResults([]);
-        setSearchError(
-          e?.response?.data?.message || e?.message || "Search failed"
-        );
+        setSearchError(e?.response?.data?.message || e?.message || "Search failed");
       } finally {
         if (active) setSearchLoading(false);
       }
@@ -450,11 +488,13 @@ const BharatAgentsStore: React.FC = () => {
     const assistantId = a.assistantId || a.id || a.agentId;
     const agentId = a.agentId || a.assistantId || a.id;
     if (!assistantId) return;
-    // keep your route pattern
     navigate(`/bharath-aistore/assistant/${assistantId}/${agentId}`);
   };
 
   const isSearching = !!(q || "").trim();
+
+  // Route handler for the featured OG card
+  const openOG = () => navigate("/ThefanofOG");
 
   return (
     <div className="min-h-screen bg-white">
@@ -501,14 +541,16 @@ const BharatAgentsStore: React.FC = () => {
               {isSearching ? "No results found" : "No Assistants Found"}
             </h3>
             <p className="text-gray-600">
-              {isSearching
-                ? "Try a different search term."
-                : "Try a different search term."}
+              {isSearching ? "Try a different search term." : "Try a different search term."}
             </p>
           </div>
         ) : (
           <>
+            {/* GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
+              {/* 👉 Featured OG card appears first only when NOT searching */}
+              {!isSearching && <FeaturedOGCard onOpen={openOG} />}
+
               {shownAssistants.map((assistant, index) => (
                 <div
                   key={
