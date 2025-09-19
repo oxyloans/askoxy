@@ -206,7 +206,6 @@ const PlanOfTheDay: React.FC = () => {
           userId: userId,
         }
       );
-
       if (response.data.success) {
         sessionStorage.setItem("taskId", response.data.id);
 

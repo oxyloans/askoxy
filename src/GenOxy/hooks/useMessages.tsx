@@ -173,8 +173,8 @@ export const useMessages = ({
       abortControllerRef,
       location,
       navigate,
-      questionCount, // Updated: Dependency for limit check
-      setQuestionCount, // Updated: Dependency for increment
+      questionCount,
+      setQuestionCount,
       setShowModal, // Updated: Dependency for showing modal
     ]
   );
@@ -419,7 +419,14 @@ class VoiceSessionService {
         assistantId
       );
 
-      // ✅ Removed 80s session timeout
+      this.sessionTimeoutId = window.setTimeout(() => {
+        console.log("⏰ Session auto-expired after 80s");
+        message.info(
+          "⏳ Your free voice session has ended. Upgrade to Premium to continue unlimited conversations!"
+        );
+        navigate("/voiceAssistant");
+        this.stopSession();
+      }, 80 * 1000);
 
       return dc;
     } catch (error) {

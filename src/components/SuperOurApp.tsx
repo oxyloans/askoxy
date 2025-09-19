@@ -121,8 +121,8 @@ export default function SuperOurApp() {
       route: "/goldandsilveranddiamonds",
       title: "Gold, Silver\n& Diamonds",
     },
-    { id: "s8", src: s8, route: "/glms", title: "GLMS" },
-    { id: "s1", src: s1, route: "/caandcsservices", title: "CA CS\nServices" },
+    { id: "s8", src: s8, route: "/glms", title: "GLMS, Blogs\nJob Street" },
+    { id: "s1", src: s1, route: "/caandcsservices", title: "CA & CS\nServices" },
     { id: "s9", src: s9, route: "/studyabroad", title: "Study Abroad" },
   ];
 

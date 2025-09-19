@@ -224,14 +224,23 @@ const AllAgentsPage: React.FC = () => {
     return map;
   }, [data]);
 
-  const openUpdateWizard = (a: Assistant) => {
-    navigate("/create-aiagent", {
-      state: {
-        mode: "edit",
-        seed: a,
-      },
-    });
-  };
+const openUpdateWizard = (a: Assistant) => {
+  // Persist IDs for hard refresh in the wizard
+  sessionStorage.setItem("edit_agentId", a.id);
+  sessionStorage.setItem("edit_assistantId", a.assistantId || "");
+
+  const qs = new URLSearchParams({
+    agentId: a.id,
+    assistantId: a.assistantId || "",
+    mode: "edit",
+  }).toString();
+
+  navigate(`/main/create-aiagent?${qs}`, {
+    state: { mode: "edit", seed: a },
+  });
+};
+
+
   const filteredAssistants = useMemo(() => {
     if (!data) return [];
     return data.assistants.filter(
@@ -379,7 +388,7 @@ const AllAgentsPage: React.FC = () => {
   // IMAGE upload (ASSISTANT level): POST /api/ai-service/agent/{assistantId}/uploadImage
   const uploadImage = async (assistantId: string, file: File) => {
     if (!assistantId) {
-      message.success("Missing assistantId for image upload.");
+      message.error("Missing assistantId for image upload.");
       return;
     }
     setUploading(assistantId);
@@ -416,7 +425,7 @@ const AllAgentsPage: React.FC = () => {
   const setActiveStatus = async (agentId: string, nextActive: boolean) => {
     const uid = resolvedUserId;
     if (!uid) {
-      message.success("Missing userId. Please sign in again.");
+      message.error("Missing userId. Please sign in again.");
       return;
     }
 
@@ -716,13 +725,13 @@ const AllAgentsPage: React.FC = () => {
                           </label>
 
                           <div className="flex gap-2 ml-auto">
-                            {/* Open Edit Flow (optional) */}
-                            {/* <button
-                            onClick={() => openUpdateWizard(a)}
-                            className="rounded-md px-3 py-2 text-xs font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-sm transition-all"
-                          >
-                            Update
-                          </button> */}
+                            <button
+                              onClick={() => openUpdateWizard(a)}
+                              className="rounded-md px-3 py-2 text-xs font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-sm transition-all"
+                              title="Edit"
+                            >
+                              Edit
+                            </button>
 
                             {/* ✅ Delete */}
                             <button

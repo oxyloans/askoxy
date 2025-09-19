@@ -83,7 +83,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         >
           <div>
             <h3 className="m-0 text-[18px] font-semibold">
-              <span className="bg-gradient-to-r from-yellow-500 to-yellow-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-green-500 to-green-300 bg-clip-text text-transparent">
                 {assistantName}
               </span>{" "}
               AI Assistant

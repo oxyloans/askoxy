@@ -769,32 +769,24 @@ const CreateAgentWizard: React.FC = () => {
     }
   };
 
-  // Next/Prev orchestrators: SAVE & CONTINUE
-  const next = async () => {
-    if (step === 0) {
-      const ok = await saveStep0();
-      if (!ok) return;
-      setStep(1);
-    } else if (step === 1) {
-      const ok = await saveStep1();
-      if (!ok) return;
-      setStep(2);
-    } else if (step === 2) {
-      const ok = await saveStep2();
-      if (!ok) return;
+const next = async () => {
+  if (step === 0) {
+    const ok = await saveStep0();
+    if (!ok) return;
+    setStep(1);
+  } else if (step === 1) {
+    const ok = await saveStep1();
+    if (!ok) return;
+    setStep(2);
+  } else if (step === 2) {
+    const ok = await saveStep2();
+    if (!ok) return;
 
-      if (isEditMode) {
-        Modal.success({
-          title: "Agent updated",
-          content: "Your changes have been saved.",
-          onOk: () =>
-            navigate("/main/bharath-aistore/agents", { replace: true }),
-        });
-      } else {
-        setStep(3); // only new agents proceed to Publish
-      }
-    }
-  };
+    // ✅ Always open the Publish step (even in edit mode)
+    setStep(3);
+  }
+};
+
   const prev = () => {
     if (step > 0) setStep((step - 1) as any);
   };
@@ -965,7 +957,7 @@ const CreateAgentWizard: React.FC = () => {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
-       
+
         // Step 4 extras
         contactDetails: shareContact === "YES" ? contactDetails : undefined,
         conStarter1,
@@ -995,6 +987,7 @@ const CreateAgentWizard: React.FC = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (isEditMode && agentId) sessionStorage.setItem("edit_agentId", agentId);
     if (isEditMode && assistantId)
@@ -1109,18 +1102,15 @@ const CreateAgentWizard: React.FC = () => {
     setStep(0);
   }, [isEditMode, editSeed]);
 
-  const steps = isEditMode
-    ? [
-        { title: "Profile", icon: <UserOutlined /> },
-        { title: "Business & GPT Model", icon: <SettingOutlined /> },
-        { title: "Audience & Configuration", icon: <BulbOutlined /> },
-      ]
-    : [
-        { title: "Profile", icon: <UserOutlined /> },
-        { title: "Business & GPT Model", icon: <SettingOutlined /> },
-        { title: "Audience & Configuration", icon: <BulbOutlined /> },
-        { title: "Publish", icon: <RocketOutlined /> },
-      ];
+
+// After: always include Publish
+const steps = [
+  { title: "Profile", icon: <UserOutlined /> },
+  { title: "Business & GPT Model", icon: <SettingOutlined /> },
+  { title: "Audience & Configuration", icon: <BulbOutlined /> },
+  { title: "Publish", icon: <RocketOutlined /> },
+];
+
 
   const labelWithInfo = (label: string, tip: string) => (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -2357,14 +2347,15 @@ const CreateAgentWizard: React.FC = () => {
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button onClick={() => setShowPreview(false)}>Cancel</Button>
-            <Button
-              type="primary"
-              icon={<RocketOutlined />}
-              style={purpleBtn}
-              onClick={handleConfirmPublish}
-            >
-              Publish
-            </Button>
+          <Button
+            size="large"
+            type="primary"
+            onClick={handleConfirmPublish}
+            style={purpleBtn}
+            loading={loading}
+          >
+            Publish
+          </Button>
           </div>
         </div>
       </Modal>
