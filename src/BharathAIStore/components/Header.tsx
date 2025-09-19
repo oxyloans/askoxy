@@ -282,7 +282,7 @@ const Header: React.FC<HeaderProps> = ({
               {/* LEFT: Logo */}
               <div className="flex items-center gap-2 min-w-0">
                 <button
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/bharath-aistore")}
                   className="flex items-center gap-2 min-w-0"
                   aria-label="Go to Home"
                   title="Bharat AI Store"

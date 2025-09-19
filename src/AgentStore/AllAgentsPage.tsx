@@ -158,6 +158,7 @@ const AllAgentsPage: React.FC = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadingMap, setUploadingMap] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AllAgentDataResponse | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -224,22 +225,21 @@ const AllAgentsPage: React.FC = () => {
     return map;
   }, [data]);
 
-const openUpdateWizard = (a: Assistant) => {
-  // Persist IDs for hard refresh in the wizard
-  sessionStorage.setItem("edit_agentId", a.id);
-  sessionStorage.setItem("edit_assistantId", a.assistantId || "");
+  const openUpdateWizard = (a: Assistant) => {
+    // Persist IDs for hard refresh in the wizard
+    sessionStorage.setItem("edit_agentId", a.id);
+    sessionStorage.setItem("edit_assistantId", a.assistantId || "");
 
-  const qs = new URLSearchParams({
-    agentId: a.id,
-    assistantId: a.assistantId || "",
-    mode: "edit",
-  }).toString();
+    const qs = new URLSearchParams({
+      agentId: a.id,
+      assistantId: a.assistantId || "",
+      mode: "edit",
+    }).toString();
 
-  navigate(`/main/create-aiagent?${qs}`, {
-    state: { mode: "edit", seed: a },
-  });
-};
-
+    navigate(`/main/create-aiagent?${qs}`, {
+      state: { mode: "edit", seed: a },
+    });
+  };
 
   const filteredAssistants = useMemo(() => {
     if (!data) return [];
@@ -358,30 +358,67 @@ const openUpdateWizard = (a: Assistant) => {
     }
   };
 
-  // FILE upload (AGENT level): POST /api/ai-service/agent/{agentId}/upload
-  const uploadFile = async (agentId: string, file: File) => {
-    setUploading(agentId);
-    try {
-      const fd = new FormData();
-      fd.append("file", file); // <-- key must be "file"
+  // MULTI-FILE upload (ASSISTANT level)
+  const uploadFiles = async (assistantId: string, files: File[]) => {
+    if (!assistantId) {
+      message.error("Missing assistantId for file upload.");
+      return;
+    }
+    if (!files || files.length === 0) {
+      message.error("Please choose at least one file.");
+      return;
+    }
 
+    // mark this assistant as uploading
+    setUploadingMap((prev) => ({ ...prev, [assistantId]: true }));
+
+    try {
+      // Build FormData (append each file; support both "file" and "files")
+      const fd = new FormData();
+      for (const f of files) {
+        fd.append("file", f); // many backends accept repeated "file" keys
+        fd.append("files", f); // if your backend expects "files", this covers it
+      }
+
+      // Use your authFetch wrapper so the Bearer token is added automatically
       const res = await authFetch(
-        `${BASE_URL}/ai-service/agent/${encodeURIComponent(agentId)}/addfiles`,
+        `${BASE_URL}/ai-service/agent/${encodeURIComponent(
+          assistantId
+        )}/addfiles`,
         {
           method: "POST",
-          body: fd, // <-- do NOT set Content-Type; browser sets boundary
+          // DO NOT set Content-Type; the browser adds the multipart boundary
+          body: fd,
         }
       );
 
+      const text = await res.text().catch(() => "");
       if (!res.ok) {
-        throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+        throw new Error(
+          `Upload failed: ${res.status} ${res.statusText}${
+            text ? ` — ${text}` : ""
+          }`
+        );
       }
-      const data = await res.json();
-      message.success(`Uploaded: ${data.filename} file sucessfully`);
+
+      // Try to read JSON, but tolerate plain text
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        /* ignore JSON parse errors */
+      }
+
+      // Friendly message (show count & optional returned filename)
+      const count = files.length;
+      const suffix = data?.filename ? `: ${data.filename}` : "";
+      message.success(
+        `Uploaded ${count} file${count > 1 ? "s" : ""}${suffix} successfully`
+      );
     } catch (e: any) {
       message.error(e?.message || "File upload failed.");
     } finally {
-      setUploading(null);
+      setUploadingMap((prev) => ({ ...prev, [assistantId]: false }));
     }
   };
 
@@ -414,7 +451,7 @@ const openUpdateWizard = (a: Assistant) => {
       const data = await res.json();
       message.success(`Uploaded: ${data.filename} Image succesfully`);
     } catch (e: any) {
-      message.success(e?.message || "Image upload failed.");
+      message.error(e?.message || "Image upload failed.");
     } finally {
       setUploading(null);
     }
@@ -458,7 +495,7 @@ const openUpdateWizard = (a: Assistant) => {
           : old
       );
     } catch (e: any) {
-      message.success(e?.message || "Failed to update active status.");
+      message.error(e?.message || "Failed to update active status.");
     }
   };
 
@@ -690,16 +727,31 @@ const openUpdateWizard = (a: Assistant) => {
                             </button>
                           )}
 
-                          {/* ✅ Upload File */}
                           <label className="inline-flex items-center gap-2 text-xs cursor-pointer bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors">
-                            <span className="font-medium">Upload File</span>
+                            <span className="font-medium">Upload Files</span>
                             <input
                               type="file"
                               className="hidden"
+                              multiple // <— allow selecting multiple files
                               onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) uploadFile(a.id, f);
-                                e.currentTarget.value = "";
+                                const list = e.target.files;
+                                if (list && list.length > 0) {
+                                  if (a.assistantId) {
+                                    uploadFiles(
+                                      a.assistantId,
+                                      Array.from(list)
+                                    ); // <— pass all files
+                                  } else {
+                                    message.error(
+                                      "This agent has no assistantId yet. Open/Edit & save the agent to create it, then upload."
+                                    );
+                                  }
+                                } else {
+                                  message.error(
+                                    "Please choose at least one file."
+                                  );
+                                }
+                                e.currentTarget.value = ""; // allow re-selecting the same files next time
                               }}
                             />
                           </label>
@@ -716,7 +768,7 @@ const openUpdateWizard = (a: Assistant) => {
                                 if (f && a.assistantId)
                                   uploadImage(a.assistantId, f);
                                 else if (!a.assistantId)
-                                  message.success(
+                                  message.error(
                                     "Missing assistantId for image upload."
                                   );
                                 e.currentTarget.value = "";
@@ -761,7 +813,8 @@ const openUpdateWizard = (a: Assistant) => {
                           </div>
                         </div>
 
-                        {uploading === a.id && (
+                        {/* use assistantId for the busy state check */}
+                        {uploadingMap[a.assistantId || ""] && (
                           <div className="mt-2 text-xs text-purple-600 flex items-center">
                             <svg
                               className="animate-spin -ml-1 mr-2 h-4 w-4 text-purple-600"

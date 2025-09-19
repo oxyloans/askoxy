@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Cpu,
-  Phone,
   Mail,
   MapPin,
   ArrowUp,
   Facebook,
-  Twitter,
   Linkedin,
   Instagram,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
-
+import { FaXTwitter, FaYoutube } from "react-icons/fa6";
+import { SiThreads } from "react-icons/si";
+import { Link, useNavigate } from "react-router-dom";
 const Nyayagptfooter = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const LOGIN_URL = "/whatsapplogin";
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -35,14 +38,67 @@ const Nyayagptfooter = () => {
     { label: "Study Abroad", path: "/studyabroad" },
   ];
 
-  const services = [
-    "Free Rudraksha",
-    "AI & GEN AI Training",
-    "Legal Knowledge",
-    "Study Abroad",
-    "My Rotary",
-    "We Are Hiring",
+  const socialLinks = [
+    {
+      icon: <Facebook className="h-4 w-4" />,
+      href: "https://www.facebook.com/profile.php?id=61572388385568",
+      label: "Facebook",
+    },
+    {
+      icon: <Instagram className="h-4 w-4" />,
+      href: "https://www.instagram.com/askoxy.ai/",
+      label: "Instagram",
+    },
+    {
+      icon: <Linkedin className="h-4 w-4" />,
+      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
+      label: "LinkedIn",
+    },
+    {
+      icon: <FaXTwitter className="h-4 w-4" />,
+      href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
+      label: "X (Twitter)",
+    },
+    {
+      icon: <FaYoutube className="h-4 w-4" />,
+      href: "https://www.youtube.com/@askoxyDOTai",
+      label: "YouTube",
+    },
+    {
+      icon: <SiThreads className="h-4 w-4" />,
+      href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
+      label: "Threads",
+    },
   ];
+
+  const services = [
+    {
+      name: "AI & GEN AI Training",
+      redirectPath: "/main/services/freeai-genai",
+    },
+    { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
+    { name: "Study Abroad", path: "/studyabroad" }, // direct link
+    { name: "My Rotary", redirectPath: "/main/services/myrotary" },
+    { name: "We Are Hiring", redirectPath: "/main/services/we-are-hiring" },
+  ];
+
+  const handleProtectedNavigation = (redirectPath: string) => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <footer className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white py-6 relative overflow-hidden">
@@ -69,42 +125,47 @@ const Nyayagptfooter = () => {
               assistance.
             </p>
             <div className="flex gap-3">
-              {[
-                {
-                  icon: Facebook,
-                  link: "https://www.facebook.com/AIBlockchainIT",
-                  color: "#1877F2",
-                },
-                {
-                  icon: Twitter,
-                  link: "https://twitter.com/AIBlockchainIT",
-                  color: "#1DA1F2",
-                },
-                {
-                  icon: Linkedin,
-                  link: "https://www.linkedin.com/company/aiblockchainit",
-                  color: "#0077B5",
-                },
-                {
-                  icon: Instagram,
-                  link: "https://www.instagram.com/aiblockchainit",
-                  color: "#E4405F",
-                },
-              ].map(({ icon: Icon, link, color }, i) => (
+              {socialLinks.map(({ icon, href, label }, index) => (
                 <a
-                  key={i}
-                  href={link}
+                  key={index}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white p-2 rounded-full border border-gray-200 text-gray-600 hover:scale-105 transition"
-                  style={{ "--hover-color": color } as React.CSSProperties}
+                  className="bg-white p-2 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-cyan-500 transition-colors duration-300"
+                  aria-label={label}
                 >
-                  <Icon size={16} className="hover:text-[var(--hover-color)]" />
+                  {icon}
                 </a>
               ))}
             </div>
           </div>
-
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Our Services</h3>
+            <nav className="space-y-2">
+              {services.map((service) =>
+                service.path ? (
+                  <Link
+                    key={service.name}
+                    to={service.path}
+                    className="block text-sm text-gray-300 hover:text-cyan-400 transition-colors"
+                  >
+                    {service.name}
+                  </Link>
+                ) : (
+                  <button
+                    key={service.name}
+                    onClick={() =>
+                      handleProtectedNavigation(service.redirectPath!)
+                    }
+                    className="block text-left text-sm text-gray-300 hover:text-cyan-400 transition-colors w-full"
+                    disabled={isLoading}
+                  >
+                    {service.name}
+                  </button>
+                )
+              )}
+            </nav>
+          </div>
           {/* Platforms */}
           <div>
             <h3 className="text-md font-semibold mb-3">Our Platforms</h3>
@@ -116,20 +177,6 @@ const Nyayagptfooter = () => {
                     className="hover:text-cyan-500 transition-colors"
                   >
                     {label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Services */}
-          <div>
-            <h3 className="text-md font-semibold mb-3">Our Services</h3>
-            <ul className="space-y-1 text-sm">
-              {services.map((srv, idx) => (
-                <li key={idx}>
-                  <a href="#" className="hover:text-cyan-500 transition-colors">
-                    {srv}
                   </a>
                 </li>
               ))}

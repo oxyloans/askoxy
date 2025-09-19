@@ -27,18 +27,14 @@ import {
   RocketOutlined,
   EyeOutlined,
   EditOutlined,
-  SaveOutlined,
-  CloseOutlined,
   InfoCircleOutlined,
-  AudioOutlined,
-  AudioMutedOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import axios from "axios";
 
 const { TextArea } = Input;
 const { Option } = Select;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 type ModelInfo = {
   id: string;
@@ -222,26 +218,6 @@ const CreateAgentWizard: React.FC = () => {
 
   const location = useLocation() as any;
   const [search] = useSearchParams();
-  // --- ID hydration: URL params -> state; fallback to sessionStorage ---
-  useEffect(() => {
-    const fromUrlAgent = (search.get("agentId") || "").trim();
-    const fromUrlAsst = (search.get("assistantId") || "").trim();
-
-    // 1) Prefer URL if present
-    if (fromUrlAgent && !agentId) setAgentId(fromUrlAgent);
-    if (fromUrlAsst && !assistantId) setAssistantId(fromUrlAsst);
-
-    // 2) Fallback to sessionStorage (handles hard refresh on edit)
-    if (!fromUrlAgent && !agentId) {
-      const ssAgent = sessionStorage.getItem("edit_agentId") || "";
-      if (ssAgent) setAgentId(ssAgent);
-    }
-    if (!fromUrlAsst && !assistantId) {
-      const ssAsst = sessionStorage.getItem("edit_assistantId") || "";
-      if (ssAsst) setAssistantId(ssAsst);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Allowed header titles
   const HEADER_TITLES = [
@@ -254,7 +230,6 @@ const CreateAgentWizard: React.FC = () => {
   ] as const;
   type HeaderTitle = (typeof HEADER_TITLES)[number];
 
-  // Normalize any incoming title to one of the 6 (fallback: "AI Twin")
   function normalizeHeaderTitle(s?: string): HeaderTitle {
     const v = (s || "").trim();
     return (HEADER_TITLES as readonly string[]).includes(v)
@@ -267,7 +242,7 @@ const CreateAgentWizard: React.FC = () => {
   );
   const [headerStatus] = useState<boolean>(false); // always send false per requirement
 
-  // Step 3 - Audience + Config
+  // Step 3 - Audience + Config (+ Contact moved ABOVE Instructions)
   const [targetUsers, setTargetUsers] = useState<string[]>([]);
   const [targetUserOther, setTargetUserOther] = useState("");
   const [genderSelections, setGenderSelections] = useState<string[]>([]);
@@ -283,20 +258,17 @@ const CreateAgentWizard: React.FC = () => {
 
   const [instructions, setInstructions] = useState("");
   const [generated, setGenerated] = useState(false);
-  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const [tempInstructions, setTempInstructions] = useState("");
-
-  // Mic (speech recognition) while editing
-  const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<any>(null);
 
   // IDs
   const [agentId, setAgentId] = useState<string>("");
   const [assistantId, setAssistantId] = useState<string>("");
 
-  // Step 4 - Contact, Starters, Status
+  // Contact (Step 3 — placed BEFORE Instructions now)
   const [shareContact, setShareContact] = useState<"YES" | "NO">("NO");
   const [contactDetails, setContactDetails] = useState("");
+
+  // Step 4 – Starters & Status (min 2 required)
   const [conStarter1, setConStarter1] = useState("");
   const [conStarter2, setConStarter2] = useState("");
   const [conStarter3, setConStarter3] = useState("");
@@ -306,7 +278,7 @@ const CreateAgentWizard: React.FC = () => {
   // Voice: default inactive
   const [voiceStatus] = useState<boolean>(false);
 
-  // profile cache (so we can use it when Share Contact toggles)
+  // profile cache (for Share Contact flow)
   const profileRef = useRef<{
     firstName?: string;
     lastName?: string;
@@ -314,13 +286,25 @@ const CreateAgentWizard: React.FC = () => {
     mobileNumber?: string;
     whatsappNumber?: string;
   } | null>(null);
-
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [openProfileModal, setOpenProfileModal] = useState(false);
 
   // Preview modal + Store choices
   const [showPreview, setShowPreview] = useState(false);
   const [storeBharat, setStoreBharat] = useState(false);
   const [storeOxy, setStoreOxy] = useState(false);
+
+  // simple styles
+  const purpleBtn: React.CSSProperties = {
+    background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
+    border: "none",
+    borderRadius: "8px",
+  };
+  const compactInputStyle: React.CSSProperties = {
+    borderRadius: "8px",
+    border: "2px solid #f0f0f0",
+    transition: "all 0.3s ease",
+  };
 
   const userId = localStorage.getItem("userId") || "";
   const navigate = useNavigate();
@@ -330,22 +314,24 @@ const CreateAgentWizard: React.FC = () => {
     | (Partial<AgentApiResponse & Record<string, any>> | undefined)
     | undefined = location?.state?.seed;
 
-  const purpleBtn = {
-    background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
-    border: "none",
-    borderRadius: "8px",
-  } as React.CSSProperties;
+  // --- ID hydration: URL params -> state; fallback to sessionStorage ---
+  useEffect(() => {
+    const fromUrlAgent = (search.get("agentId") || "").trim();
+    const fromUrlAsst = (search.get("assistantId") || "").trim();
 
-  const compactInputStyle: React.CSSProperties = {
-    borderRadius: "8px",
-    border: "2px solid #f0f0f0",
-    transition: "all 0.3s ease",
-  };
+    if (fromUrlAgent && !agentId) setAgentId(fromUrlAgent);
+    if (fromUrlAsst && !assistantId) setAssistantId(fromUrlAsst);
 
-  const focusStyle = {
-    borderColor: "#722ed1",
-    boxShadow: "0 0 0 2px rgba(114, 46, 209, 0.1)",
-  };
+    if (!fromUrlAgent && !agentId) {
+      const ssAgent = sessionStorage.getItem("edit_agentId") || "";
+      if (ssAgent) setAgentId(ssAgent);
+    }
+    if (!fromUrlAsst && !assistantId) {
+      const ssAsst = sessionStorage.getItem("edit_assistantId") || "";
+      if (ssAsst) setAssistantId(ssAsst);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const effectiveUserRole = useMemo(() => {
     return userRole === "Other" ? userRoleOther.trim() || "Other" : userRole;
@@ -394,7 +380,6 @@ const CreateAgentWizard: React.FC = () => {
   }
   const uiToken = getUiToken();
 
-  // prefer explicit customerId; fallback to userId already in your state
   const customerIdFromStorage =
     localStorage.getItem("customerId") || userId || "";
 
@@ -408,7 +393,6 @@ const CreateAgentWizard: React.FC = () => {
           headers: { Authorization: `Bearer ${uiToken}` },
         }
       );
-
       const data = response?.data || {};
       profileRef.current = {
         firstName: data.firstName || "",
@@ -420,18 +404,14 @@ const CreateAgentWizard: React.FC = () => {
 
       // Prefill Creator Name if empty
       const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-      if (!creatorName && fullName) {
-        setCreatorName(fullName);
-      }
+      if (fullName) setCreatorName(fullName);
 
-      // If user already chose to share contact and field is empty, prefill it
       if (shareContact === "YES" && !contactDetails) {
         const best =
           data.mobileNumber || data.whatsappNumber || data.email || "";
         if (best) setContactDetails(best);
       }
-    } catch (e) {
-      // silent fail: just don't prefill
+    } catch {
       // optionally: message.warning("Could not fetch profile");
     } finally {
       setIsLoadingProfile(false);
@@ -439,12 +419,135 @@ const CreateAgentWizard: React.FC = () => {
   };
 
   useEffect(() => {
-    // only attempt if we have auth + some id
     if (uiToken && customerIdFromStorage) {
       fetchProfileData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerIdFromStorage, uiToken]);
+
+  // ====== NEW: fetch previous agent drafts if user returns (not edit mode) ======
+  useEffect(() => {
+    const preloadFromAllAgents = async () => {
+      try {
+        if (isEditMode) return;
+        if (!userId) return;
+        if (agentId || assistantId || editSeed) return;
+
+        const url = `${BASE_URL}/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(
+          userId
+        )}`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const list: any[] = Array.isArray(data?.assistants)
+          ? data.assistants
+          : [];
+        if (!list.length) return;
+
+        // pick the most recent by created_at
+        list.sort((a, b) => {
+          const ta = new Date(a.created_at || 0).getTime();
+          const tb = new Date(b.created_at || 0).getTime();
+          return tb - ta;
+        });
+        const seed = list[0];
+
+        // IDs
+        setAgentId(String(seed.id || seed.agentId || ""));
+        setAssistantId(String(seed.assistantId || ""));
+
+        // Step 1 – Profile
+        setAgentName(seed.agentName || seed.name || "");
+        setDescription(seed.description || "");
+        setLanguage(seed.language || "English");
+        setUserExperienceSummary(seed.userExperienceSummary || "");
+        setUserRole(seed.userRole || "Advocate");
+        setCreatorName(String(seed.creatorName || ""));
+        setAcheivements(String(seed.acheivements || ""));
+
+        // Step 2 – Business/model/problem
+        const d = seed.domain || "";
+        setDomain(DOMAIN_OPTIONS.includes(d) ? d : d ? "Other" : undefined);
+        setDomainOther(!DOMAIN_OPTIONS.includes(d) ? d : "");
+
+        const sd = seed.subDomain || "";
+        setSubDomain(
+          SUBDOMAIN_OPTIONS.includes(sd) ? sd : sd ? "Other" : undefined
+        );
+        setSubDomainOther(!SUBDOMAIN_OPTIONS.includes(sd) ? sd : "");
+
+        setBusiness(seed.business || "");
+        setSelectedModelId(seed.usageModel || undefined);
+
+        const priorProblem = String(seed.mainProblemSolved || "").trim();
+        const priorSolution = String(seed.uniqueSolution || "").trim();
+        setMainProblemText(priorProblem);
+        setUniqueSolution(priorSolution);
+        setSolveProblem(priorProblem ? "YES" : "");
+
+        // Step 3 – audience/config/contact
+        const priorTarget = String(seed.targetUser || "").trim();
+        if (priorTarget) {
+          const arr = priorTarget
+            .split(",")
+            .map((s: string) => s.trim())
+            .filter(Boolean);
+          setTargetUsers(arr);
+        }
+        const priorAge = String(seed.ageLimit || "").trim();
+        if (priorAge) {
+          const tokens = priorAge
+            .split(",")
+            .map((s: string) => s.trim())
+            .filter(Boolean);
+          const known = new Set(AGE_LIMIT_OPTIONS);
+          const nextAges: string[] = [];
+          let customFound = "";
+          tokens.forEach((t) => {
+            if (known.has(t) && t !== "Other") {
+              nextAges.push(t);
+            } else {
+              customFound = t;
+              nextAges.push("Other");
+            }
+          });
+          setAgeLimits(Array.from(new Set(nextAges)));
+          if (customFound) setAgeOther(customFound);
+        }
+        if (seed.gender) {
+          setGenderSelections(
+            String(seed.gender)
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+          );
+        }
+        setConverstionTone(seed.converstionTone || undefined);
+        setResponseFormat(seed.responseFormat || undefined);
+        setInstructions(seed.instructions || "");
+
+        const cd = String(seed.contactDetails || "");
+        if (cd) {
+          setShareContact("YES");
+          setContactDetails(cd);
+        } else {
+          setShareContact("NO");
+          setContactDetails("");
+        }
+
+        // Step 4 – starters/status
+        setConStarter1(seed.conStarter1 || "");
+        setConStarter2(seed.conStarter2 || "");
+        setConStarter3(seed.conStarter3 || "");
+        setConStarter4(seed.conStarter4 || "");
+        setActiveStatus(Boolean(seed.activeStatus));
+      } catch {
+        // silent
+      }
+    };
+    preloadFromAllAgents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, userId, agentId, assistantId, editSeed]);
 
   const classifyText = useMemo(() => {
     const parts = [
@@ -464,7 +567,6 @@ const CreateAgentWizard: React.FC = () => {
       selectedModelId?.trim() && `Model: ${selectedModelId.trim()}`,
       language?.trim() && `Language: ${language.trim()}`,
     ].filter(Boolean);
-
     return parts.join(" | ");
   }, [
     description,
@@ -482,8 +584,75 @@ const CreateAgentWizard: React.FC = () => {
     language,
   ]);
 
-  // ===== Allowed Models (kept as before) =====
-  const ALLOWED_MODELS = ["gpt-4o"]; // trimmed to your allowed list
+  const resetWizard = () => {
+    // Clear any edit IDs
+    sessionStorage.removeItem("edit_agentId");
+    sessionStorage.removeItem("edit_assistantId");
+
+    // Step + UI
+    setStep(0);
+    setShowPreview(false);
+    setSuccessData(null);
+    setLoading(false);
+
+    // IDs
+    setAgentId("");
+    setAssistantId("");
+
+    // Step 1 – Profile
+    const fullName = `${profileRef.current?.firstName || ""} ${
+      profileRef.current?.lastName || ""
+    }`.trim();
+    setCreatorName(fullName || ""); // prefill from profile again
+    setAcheivements("");
+    setAgentName("");
+    setUserRole("Advocate");
+    setUserRoleOther("");
+    setUserExperienceSummary("");
+    setDescription("");
+    setStrength("");
+    setLanguage("English");
+
+    // Step 2 – Business & Model & Problem
+    setBusiness("");
+    setDomain(undefined);
+    setDomainOther("");
+    setSubDomain(undefined);
+    setSubDomainOther("");
+    setSelectedModelId(undefined);
+    setSolveProblem("");
+    setMainProblemText("");
+    setUniqueSolution("");
+    setResponseFormat(undefined);
+
+    // Step 3 – Audience + Config + Contact
+    setTargetUsers([]);
+    setTargetUserOther("");
+    setGenderSelections([]);
+    setAgeLimits([]);
+    setAgeOther("");
+    setConverstionTone(undefined);
+    setShareContact("NO");
+    setContactDetails("");
+    setInstructions("");
+    setGenerated(false);
+    setTempInstructions("");
+
+    // Step 4 – Starters & Status
+    setConStarter1("");
+    setConStarter2("");
+    setConStarter3("");
+    setConStarter4("");
+    setActiveStatus(true);
+
+    // Optional: refresh profile to ensure creator name stays synced
+    try {
+      fetchProfileData();
+    } catch {}
+  };
+
+  // ===== Allowed Models =====
+  const ALLOWED_MODELS = ["gpt-4o"];
   const FALLBACK_MODELS_ALLOWED: ModelInfo[] = ALLOWED_MODELS.map((id) => ({
     id,
     owned_by: "openai",
@@ -521,12 +690,6 @@ const CreateAgentWizard: React.FC = () => {
     })();
   }, [step]);
 
-  const toggleGender = (g: string) => {
-    setGenderSelections((prev) =>
-      prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]
-    );
-  };
-
   // ===== VALIDATION =====
   const validateStep0 = (): boolean => {
     const missing: string[] = [];
@@ -551,6 +714,7 @@ const CreateAgentWizard: React.FC = () => {
     if (!(resolvedDomain || "").trim()) missing.push("Domain/Sector");
     if (!(resolvedSubDomain || "").trim()) missing.push("Sub-Domain/Subsector");
     if (!selectedModelId?.trim()) missing.push("GPT Model");
+    if (!responseFormat) missing.push("Response Format");
     if (!solveProblem) missing.push("Are you solving a problem?");
     if (solveProblem === "YES") {
       if (!mainProblemText.trim()) missing.push("Main Problem to Solve");
@@ -575,14 +739,17 @@ const CreateAgentWizard: React.FC = () => {
 
   const isAllSelected = (selected: string[], allOptions: string[]) =>
     allOptions.every((opt) => selected.includes(opt));
+
   const validateStep2 = (): boolean => {
     const missing: string[] = [];
+
     // Target Customers
     const allCustomersSelected = isAllSelected(
       targetUsers,
       TARGET_USER_OPTIONS
     );
     if (!targetUsers.length) missing.push("Target Customers");
+    if (!converstionTone?.trim()) missing.push("Conversation Tone");
     if (
       targetUsers.includes("Other") &&
       !allCustomersSelected &&
@@ -590,16 +757,21 @@ const CreateAgentWizard: React.FC = () => {
     ) {
       missing.push("Target Customers (Other)");
     }
+
     // Gender
     if (genderSelections.length === 0) missing.push("Target Audience Gender");
+
     // Age
     const allAgesSelected = isAllSelected(ageLimits, AGE_LIMIT_OPTIONS);
     if (!ageLimits.length) missing.push("Target Age Limit(s)");
     if (ageLimits.includes("Other") && !allAgesSelected && !ageOther.trim()) {
       missing.push("Custom Age Limit (Other)");
     }
-    // Tone
-    if (!converstionTone?.trim()) missing.push("Conversation Tone");
+
+    // Share Contact validation (now appears before Instructions)
+    if (shareContact === "YES" && !contactDetails.trim()) {
+      missing.push("Contact Details (since you chose to share)");
+    }
 
     if (missing.length) {
       message.error(
@@ -610,7 +782,7 @@ const CreateAgentWizard: React.FC = () => {
     return true;
   };
 
-  // ====== NEW: step PATCH helpers ======
+  // ===== PATCH helper =====
   async function doPatch(path: string, payload: Record<string, any>) {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: "PATCH",
@@ -634,14 +806,14 @@ const CreateAgentWizard: React.FC = () => {
       message.error(
         "Missing agentId in edit mode. Please reopen from All Agents."
       );
-      return; // instead of `return false as any`
+      return;
     }
     if (!validateStep0()) return false;
 
     setLoading(true);
     try {
       const payload = {
-        // IDs (if continuing edit, backend can upsert)
+        // IDs
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
@@ -655,27 +827,22 @@ const CreateAgentWizard: React.FC = () => {
         creatorName,
         userRole: effectiveUserRole || "Developer",
 
-        // Send BOTH summary names to satisfy old/new DTOs
-        userExperienceSummary, // new name (string summary)
-        userExperience: undefined, // keep numeric years separate if you add it later
+        userExperienceSummary,
+        userExperience: undefined,
 
-        acheivements, // (server uses this misspelling)
-        description,
-        discription: description,
+        acheivements,
+        description, // keep only 'description' (removed misspelled 'discription')
 
         strength,
         language,
-
-        // Voice
         voiceStatus: false,
 
-        // EXTRA compatibility: some APIs also accept `name`
+        // compatibility
         name: agentName,
       };
       const data = await doPatch("/ai-service/agent/agentScreen1", payload);
-      // Capture IDs if backend returns them
-      const aId = data?.agentId || data?.id || "";
-      const asstId = data?.assistantId || "";
+      const aId = (data as any)?.agentId || (data as any)?.id || "";
+      const asstId = (data as any)?.assistantId || "";
       if (aId) setAgentId(String(aId));
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 1");
@@ -694,12 +861,12 @@ const CreateAgentWizard: React.FC = () => {
       message.error(
         "Missing agentId in edit mode. Please reopen from All Agents."
       );
-      return; // instead of `return false as any`
+      return false;
     }
     if (!validateStep1()) return false;
+
     setLoading(true);
     try {
-      // BEFORE (excerpt) …business/domain/subDomain/usageModel/solveProblem…
       const payload = {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
@@ -709,15 +876,13 @@ const CreateAgentWizard: React.FC = () => {
         subDomain: resolvedSubDomain,
         usageModel: selectedModelId,
         solveProblem,
-        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined,
+        mainProblemSolved: solveProblem === "YES" ? mainProblemText : undefined, // keep this exact key
         uniqueSolution,
-        // ADD:
         responseFormat: responseFormat || "auto",
       };
-
       const data = await doPatch("/ai-service/agent/agentScreen2", payload);
-      const aId = data?.agentId || data?.id || "";
-      const asstId = data?.assistantId || "";
+      const aId = (data as any)?.agentId || (data as any)?.id || "";
+      const asstId = (data as any)?.assistantId || "";
       if (aId) setAgentId(String(aId));
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 2");
@@ -730,15 +895,16 @@ const CreateAgentWizard: React.FC = () => {
     }
   };
 
-  // Step 3 save
+  // Step 3 save (Audience + Config + Contact is BEFORE Instructions in UI, but payload unchanged)
   const saveStep2 = async () => {
     if (isEditMode && !agentId) {
       message.error(
         "Missing agentId in edit mode. Please reopen from All Agents."
       );
-      return; // instead of `return false as any`
+      return false;
     }
     if (!validateStep2()) return false;
+
     setLoading(true);
     try {
       const finalTargetUsers = resolvedTargetUsersString || undefined;
@@ -753,10 +919,13 @@ const CreateAgentWizard: React.FC = () => {
         ageLimit: finalAgeLimits,
         converstionTone,
         instructions,
+        // contact moved in UI but stays in this screen's payload
+        contactDetails: shareContact === "YES" ? contactDetails : undefined,
+        shareContact: shareContact,
       };
       const data = await doPatch("/ai-service/agent/agentScreen3", payload);
-      const aId = data?.agentId || data?.id || "";
-      const asstId = data?.assistantId || "";
+      const aId = (data as any)?.agentId || (data as any)?.id || "";
+      const asstId = (data as any)?.assistantId || "";
       if (aId) setAgentId(String(aId));
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 3");
@@ -769,29 +938,27 @@ const CreateAgentWizard: React.FC = () => {
     }
   };
 
-const next = async () => {
-  if (step === 0) {
-    const ok = await saveStep0();
-    if (!ok) return;
-    setStep(1);
-  } else if (step === 1) {
-    const ok = await saveStep1();
-    if (!ok) return;
-    setStep(2);
-  } else if (step === 2) {
-    const ok = await saveStep2();
-    if (!ok) return;
-
-    // ✅ Always open the Publish step (even in edit mode)
-    setStep(3);
-  }
-};
+  const next = async () => {
+    if (step === 0) {
+      const ok = await saveStep0();
+      if (!ok) return;
+      setStep(1);
+    } else if (step === 1) {
+      const ok = await saveStep1();
+      if (!ok) return;
+      setStep(2);
+    } else if (step === 2) {
+      const ok = await saveStep2();
+      if (!ok) return;
+      setStep(3);
+    }
+  };
 
   const prev = () => {
     if (step > 0) setStep((step - 1) as any);
   };
 
-  // ===== classify/generate instructions (unchanged logic) =====
+  // ===== Generate Instructions (appends contact line if shared) =====
   const handleGenerate = async () => {
     if (
       !description.trim() &&
@@ -846,7 +1013,9 @@ const next = async () => {
         raw =
           typeof data === "string"
             ? data
-            : data.instructions || data.message || JSON.stringify(data);
+            : (data as any).instructions ||
+              (data as any).message ||
+              JSON.stringify(data);
       } else {
         raw = await res.text();
         try {
@@ -859,7 +1028,13 @@ const next = async () => {
           raw = raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
         }
       }
-      const cleaned = cleanInstructionText(raw);
+      let cleaned = cleanInstructionText(raw);
+
+      if (shareContact === "YES" && contactDetails.trim()) {
+        cleaned =
+          `${cleaned}\n\nContact: ${contactDetails.trim()}.\nIf you have any queries, feel free to reach out.`.trim();
+      }
+
       setInstructions(cleaned);
       setGenerated(true);
       message.success(
@@ -877,6 +1052,7 @@ const next = async () => {
     }
   };
 
+  // Instructions edit modal
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const handleSaveInstructions = () => {
     setInstructions(tempInstructions);
@@ -884,48 +1060,26 @@ const next = async () => {
     message.success("Instructions updated!");
   };
 
-  // Mic controls
-  const startRecording = () => {
-    const SR =
-      (window as any).webkitSpeechRecognition ||
-      (window as any).SpeechRecognition;
-    if (!SR) {
-      message.error("Speech recognition is not supported in this browser.");
+  // Require at least 2 conversation starters (before preview/publish)
+  function hasMinStarters() {
+    const starters = [
+      conStarter1,
+      conStarter2,
+      conStarter3,
+      conStarter4,
+    ].filter((s) => (s || "").trim().length > 0);
+    return starters.length >= 2;
+  }
+
+  // PREVIEW gate: ensure latest step 3 is saved + min starters
+  const handleOpenPreview = async () => {
+    if (!(await saveStep2())) return;
+    if (!hasMinStarters()) {
+      message.error(
+        "Please provide at least 2 Conversation Starters before preview."
+      );
       return;
     }
-    const recog = new SR();
-    recog.continuous = true;
-    recog.interimResults = true;
-    recog.lang = "en-US";
-    recog.onresult = (e: any) => {
-      let transcript = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        transcript += e.results[i][0].transcript;
-      }
-      setTempInstructions((prev) =>
-        prev ? prev + " " + transcript : transcript
-      );
-    };
-    recog.onend = () => setIsRecording(false);
-    recognitionRef.current = recog;
-    try {
-      recog.start();
-      setIsRecording(true);
-    } catch {
-      setIsRecording(false);
-    }
-  };
-  const stopRecording = () => {
-    try {
-      recognitionRef.current?.stop?.();
-    } catch {}
-    setIsRecording(false);
-  };
-
-  // Preview modal gate
-  const handleOpenPreview = async () => {
-    // Always make sure latest step 3 data is saved before preview
-    if (!(await saveStep2())) return;
     if (!agentName.trim()) {
       message.error("Please add an Agent Name before preview.");
       return;
@@ -933,13 +1087,17 @@ const next = async () => {
     setShowPreview(true);
   };
 
-  // ====== PUBLISH (final PATCH) ======
+  // ====== PUBLISH / UPDATE ======
   const handleConfirmPublish = async () => {
     if (isEditMode && !agentId) {
       message.error(
         "Missing agentId in edit mode. Please reopen from All Agents."
       );
-      return; // instead of `return false as any`
+      return;
+    }
+    if (!hasMinStarters()) {
+      message.error("Please provide at least 2 Conversation Starters.");
+      return;
     }
     try {
       setLoading(true);
@@ -952,14 +1110,12 @@ const next = async () => {
           ? "OxyGPTStore"
           : "";
 
-      const payload = {
-        // IDs
+      const basePayload: any = {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
 
-        // Step 4 extras
-        contactDetails: shareContact === "YES" ? contactDetails : undefined,
+        // publish page fields
         conStarter1,
         conStarter2,
         conStarter3,
@@ -970,37 +1126,48 @@ const next = async () => {
 
         // store selection
         chooseStore: chooseStore || undefined,
-
-        // status hints
-        agentStatus: "CREATED",
-        status: "REQUESTED",
       };
+
+      // Only include creation-status flags for NEW publish (not edit)
+      const payload = isEditMode
+        ? basePayload
+        : {
+            ...basePayload,
+            agentStatus: "CREATED", // backend expects this only during first publish
+            status: "REQUESTED",
+          };
 
       const data = await doPatch("/ai-service/agent/agentPublish", payload);
       setShowPreview(false);
       setSuccessData(data as AgentApiResponse);
-      message.success("Agent published successfully!");
+      message.success(
+        isEditMode
+          ? "Agent updated successfully!"
+          : "Agent published successfully!"
+      );
+      resetWizard();
       navigate("/main/bharath-aistore/agents", { replace: true });
     } catch (e: any) {
-      message.error(e?.message || "Failed to publish agent");
+      message.error(
+        e?.message ||
+          (isEditMode ? "Failed to update agent" : "Failed to publish agent")
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // Persist ids in edit mode
   useEffect(() => {
     if (isEditMode && agentId) sessionStorage.setItem("edit_agentId", agentId);
     if (isEditMode && assistantId)
       sessionStorage.setItem("edit_assistantId", assistantId);
   }, [isEditMode, agentId, assistantId]);
-  // ====== Prefill in edit mode (unchanged from your file) ======
+
+  // Prefill in edit mode
   useEffect(() => {
     if (!isEditMode || !editSeed) return;
 
-    if (typeof editSeed.headerStatus === "boolean") {
-      /* kept for completeness */
-    }
-    // AFTER:
     if (
       typeof editSeed.headerTitle === "string" &&
       editSeed.headerTitle.length
@@ -1008,7 +1175,6 @@ const next = async () => {
       setHeaderTitle(normalizeHeaderTitle(editSeed.headerTitle));
     }
 
-    // IDs
     setAgentId(String(editSeed.id || editSeed.agentId || ""));
     setAssistantId(String(editSeed.assistantId || ""));
 
@@ -1041,7 +1207,7 @@ const next = async () => {
     setUniqueSolution(priorSolution);
     setSolveProblem(priorProblem ? "YES" : "");
 
-    // Step 3 – Audience + Config
+    // Step 3 – Audience + Config + Contact
     const priorTarget = String(editSeed.targetUser || "").trim();
     if (priorTarget) {
       const arr = priorTarget
@@ -1084,7 +1250,7 @@ const next = async () => {
     setResponseFormat((editSeed.responseFormat as any) || undefined);
     setInstructions(editSeed.instructions || "");
 
-    // Step 4 – Contact etc.
+    // Contact
     const cd = String((editSeed as any).contactDetails || "");
     if (cd) {
       setShareContact("YES");
@@ -1093,6 +1259,8 @@ const next = async () => {
       setShareContact("NO");
       setContactDetails("");
     }
+
+    // Step 4 – Conversation starters & status
     setConStarter1((editSeed as any).conStarter1 || "");
     setConStarter2((editSeed as any).conStarter2 || "");
     setConStarter3((editSeed as any).conStarter3 || "");
@@ -1102,16 +1270,7 @@ const next = async () => {
     setStep(0);
   }, [isEditMode, editSeed]);
 
-
-// After: always include Publish
-const steps = [
-  { title: "Profile", icon: <UserOutlined /> },
-  { title: "Business & GPT Model", icon: <SettingOutlined /> },
-  { title: "Audience & Configuration", icon: <BulbOutlined /> },
-  { title: "Publish", icon: <RocketOutlined /> },
-];
-
-
+  // UI helpers
   const labelWithInfo = (label: string, tip: string) => (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <Text strong>{label}</Text>
@@ -1151,7 +1310,9 @@ const steps = [
         width={620}
         title={
           <div style={{ textAlign: "center", padding: 6, color: "white" }}>
-            <span style={{ fontWeight: 600 }}>Agent Created</span>
+            <span style={{ fontWeight: 600 }}>
+              {isEditMode ? "Agent Updated" : "Agent Created"}
+            </span>
           </div>
         }
         styles={{
@@ -1386,18 +1547,18 @@ const steps = [
                   level={4}
                   style={{
                     color: "#722ed1",
-                    marginBottom: "20px",
+                    marginBottom: 20,
                     display: "flex",
                     alignItems: "center",
                   }}
                 >
-                  <UserOutlined style={{ marginRight: "8px" }} />
+                  <UserOutlined style={{ marginRight: 8 }} />
                   Agent Creator Profile
                 </Title>
 
                 <Row gutter={[16, 12]}>
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "AI Agent Name *",
                         "Example: 'TaxBuddy Pro', 'Visa Mentor', 'HealthCare FAQ Bot'"
@@ -1407,22 +1568,12 @@ const steps = [
                         onChange={(e) => setAgentName(e.target.value)}
                         placeholder="Enter agent name"
                         style={compactInputStyle}
-                        onFocus={(e) =>
-                          Object.assign(e.target.style, focusStyle)
-                        }
-                        onBlur={(e) =>
-                          Object.assign(e.target.style, {
-                            borderColor: "#f0f0f0",
-                            boxShadow: "none",
-                          })
-                        }
                       />
                     </div>
                   </Col>
 
-                  {/* Creator Name */}
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Creator Name *",
                         "Your full name or brand representative name."
@@ -1437,10 +1588,10 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Professional Identity of the Creator *",
-                        "Select your profession. Choose 'Other' to type a custom title."
+                        "Select your profession."
                       )}
                       <Select
                         value={userRole}
@@ -1494,7 +1645,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Creator Experience Overview",
                         "Optional 1–2 lines."
@@ -1508,7 +1659,7 @@ const steps = [
                         maxLength={120}
                         style={compactInputStyle}
                         suffix={
-                          <Text type="secondary" style={{ fontSize: "12px" }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>
                             {userExperienceSummary.length}/120
                           </Text>
                         }
@@ -1517,7 +1668,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Problems Solved in the Past (Description) *",
                         "Give 2–3 representative cases."
@@ -1532,11 +1683,7 @@ const steps = [
                       />
                       <Text
                         type="secondary"
-                        style={{
-                          fontSize: "12px",
-                          float: "right",
-                          marginTop: "2px",
-                        }}
+                        style={{ fontSize: 12, float: "right", marginTop: 2 }}
                       >
                         {description.length}/250
                       </Text>
@@ -1544,7 +1691,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Your Strengths in the Field",
                         "Optional."
@@ -1556,7 +1703,7 @@ const steps = [
                         maxLength={100}
                         style={compactInputStyle}
                         suffix={
-                          <Text type="secondary" style={{ fontSize: "12px" }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>
                             {strength.length}/100
                           </Text>
                         }
@@ -1565,10 +1712,10 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Preferred Language *",
-                        "The language you prefer for conversations and output."
+                        "The language for conversations and output."
                       )}
                       <Select
                         value={language}
@@ -1594,18 +1741,18 @@ const steps = [
                   level={4}
                   style={{
                     color: "#722ed1",
-                    marginBottom: "20px",
+                    marginBottom: 20,
                     display: "flex",
                     alignItems: "center",
                   }}
                 >
-                  <SettingOutlined style={{ marginRight: "8px" }} />
+                  <SettingOutlined style={{ marginRight: 8 }} />
                   Business Context & GPT Model
                 </Title>
 
                 <Row gutter={[16, 12]}>
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Business/Idea *",
                         "Your brand, firm or practice."
@@ -1626,7 +1773,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Domain/Sector *",
                         "Pick from common domains or choose 'Other'."
@@ -1656,7 +1803,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Sub-Domain/Subsector *",
                         "Pick from common subsectors or choose 'Other'."
@@ -1686,7 +1833,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo("GPT Model *", "Example: gpt-4o.")}
                       <Select
                         value={selectedModelId}
@@ -1707,9 +1854,9 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
-                        "Response Format",
+                        "Response Format *",
                         "auto (natural text) or json_object (structured)."
                       )}
                       <Select
@@ -1731,7 +1878,7 @@ const steps = [
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Are you solving a problem? *",
-                        "If Yes, specify the problem and your unique solution."
+                        "If Yes, specify the problem and your solution."
                       )}
                       <Radio.Group
                         value={solveProblem}
@@ -1748,7 +1895,7 @@ const steps = [
                       <div style={{ marginBottom: 12 }}>
                         {labelWithInfo(
                           "Main Problem to Solve * (max 100 chars)",
-                          "What exact user problem are you solving?"
+                          "What exact user problem?"
                         )}
                         <TextArea
                           value={mainProblemText}
@@ -1772,7 +1919,7 @@ const steps = [
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Unique Solution Method (max 100 chars)",
-                        "How is your approach different/better?"
+                        "How is your approach different?"
                       )}
                       <TextArea
                         value={uniqueSolution}
@@ -1794,26 +1941,26 @@ const steps = [
               </div>
             )}
 
-            {/* STEP 3 */}
+            {/* STEP 3 (Audience, Contact BEFORE Instructions) */}
             {step === 2 && (
               <div>
                 <Title
                   level={4}
                   style={{
                     color: "#722ed1",
-                    marginBottom: "20px",
+                    marginBottom: 20,
                     display: "flex",
                     alignItems: "center",
                   }}
                 >
-                  <BulbOutlined style={{ marginRight: "8px" }} />
+                  <BulbOutlined style={{ marginRight: 8 }} />
                   Audience & Configuration
                 </Title>
 
                 <Row gutter={[16, 12]}>
                   {/* Target audience */}
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Target Customers *",
                         "You can select multiple."
@@ -1845,7 +1992,7 @@ const steps = [
 
                       {targetUsers.includes("Other") && (
                         <Input
-                          style={{ marginTop: "8px", ...compactInputStyle }}
+                          style={{ marginTop: 8, ...compactInputStyle }}
                           placeholder="Specify your target user(s)"
                           value={targetUserOther}
                           onChange={(e) => setTargetUserOther(e.target.value)}
@@ -1856,10 +2003,10 @@ const steps = [
 
                   {/* Gender */}
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Target Audience Gender *",
-                        "Pick one or more if your audience is specific."
+                        "Pick one or more if specific."
                       )}
                       <Checkbox.Group
                         options={["Male", "Female", "Other"]}
@@ -1873,7 +2020,7 @@ const steps = [
 
                   {/* Age limits */}
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Target Audience Age Limit *",
                         "Select one or more relevant age ranges."
@@ -1908,7 +2055,7 @@ const steps = [
 
                       {ageLimits.includes("Other") && (
                         <Input
-                          style={{ marginTop: "8px", ...compactInputStyle }}
+                          style={{ marginTop: 8, ...compactInputStyle }}
                           placeholder="Enter custom age (e.g., 21-30 or 16+)"
                           value={ageOther}
                           onChange={(e) => setAgeOther(e.target.value)}
@@ -1918,9 +2065,9 @@ const steps = [
                     </div>
                   </Col>
 
-                  {/* Tone & Response Format */}
+                  {/* Tone */}
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Conversation Tone *",
                         "Example: Helpful & Professional."
@@ -1941,15 +2088,73 @@ const steps = [
                     </div>
                   </Col>
 
+                  {/* Share contact (BEFORE Instructions now) */}
+                  <Col xs={24} md={12}>
+                    <div style={{ marginBottom: 12 }}>
+                      {labelWithInfo(
+                        "Do you want to share Contact Details? *",
+                        "Choose Yes to show your contact."
+                      )}
+                      <Radio.Group
+                        value={shareContact}
+                        onChange={(e) => {
+                          const val = e.target.value as "YES" | "NO";
+                          setShareContact(val);
+                          if (val === "YES") {
+                            const p = profileRef.current || {};
+                            if (!contactDetails) {
+                              const best =
+                                p.mobileNumber ||
+                                p.whatsappNumber ||
+                                p.email ||
+                                "";
+                              if (best) setContactDetails(best);
+                            }
+                            setOpenProfileModal(true);
+                          }
+                        }}
+                      >
+                        <Radio value="YES">Yes</Radio>
+                        <Radio value="NO">No</Radio>
+                      </Radio.Group>
+                      {shareContact === "YES" && (
+                        <div style={{ marginTop: 8 }}>
+                          <Input
+                            value={contactDetails}
+                            onChange={(e) => setContactDetails(e.target.value)}
+                            placeholder="Phone / WhatsApp / Email"
+                            style={compactInputStyle}
+                          />
+                          <div style={{ marginTop: 6 }}>
+                            <Button
+                              size="small"
+                              onClick={() => setOpenProfileModal(true)}
+                            >
+                              View Profile & Autofill
+                            </Button>
+                            <Text
+                              type="secondary"
+                              style={{ marginLeft: 8, fontSize: 12 }}
+                            >
+                              {isLoadingProfile
+                                ? "Checking your profile…"
+                                : "Details from your profile"}
+                            </Text>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Col>
+
                   {/* Instructions */}
                   <Col xs={24}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          marginBottom: "8px",
+                          marginBottom: 8,
                           gap: 8,
                         }}
                       >
@@ -1986,12 +2191,12 @@ const steps = [
                         style={{
                           minHeight: 140,
                           maxHeight: 240,
-                          padding: "12px",
+                          padding: 12,
                           border: "2px solid #f0f0f0",
-                          borderRadius: "8px",
+                          borderRadius: 8,
                           background: instructions ? "#fafafa" : "#f9f9f9",
                           whiteSpace: "pre-wrap",
-                          fontSize: "14px",
+                          fontSize: 14,
                           lineHeight: 1.4,
                           overflowY: "auto",
                         }}
@@ -2005,69 +2210,25 @@ const steps = [
               </div>
             )}
 
-            {/* STEP 4 */}
+            {/* STEP 4 (Publish only) */}
             {step === 3 && (
               <div>
                 <Title
                   level={4}
                   style={{
                     color: "#722ed1",
-                    marginBottom: "20px",
+                    marginBottom: 20,
                     display: "flex",
                     alignItems: "center",
                   }}
                 >
-                  <RocketOutlined style={{ marginRight: "8px" }} />
-                  Contact, Conversations & Publish
+                  <RocketOutlined style={{ marginRight: 8 }} />
+                  Conversations & Publish
                 </Title>
 
                 <Row gutter={[16, 12]}>
-                  {/* Share contact? */}
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
-                      {labelWithInfo(
-                        "Do you want to share Contact Details? *",
-                        "Choose Yes to display your contact on the agent card."
-                      )}
-                      <Radio.Group
-                        value={shareContact}
-                        onChange={(e) => {
-                          const val = e.target.value as "YES" | "NO";
-                          setShareContact(val);
-
-                          if (val === "YES") {
-                            // if no value typed yet, try to prefill from profile cache
-                            const p = profileRef.current || {};
-                            if (!contactDetails) {
-                              const best =
-                                p.mobileNumber ||
-                                p.whatsappNumber ||
-                                p.email ||
-                                "";
-                              if (best) setContactDetails(best);
-                            }
-                          } else {
-                            // user chose not to share; you can keep what they typed or clear it
-                            // setContactDetails("");
-                          }
-                        }}
-                      >
-                        <Radio value="YES">Yes</Radio>
-                        <Radio value="NO">No</Radio>
-                      </Radio.Group>
-                    </div>
-                  </Col>
-
-                  {shareContact === "YES" && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {isLoadingProfile
-                        ? "Checking your profile…"
-                        : "we auto-filled from your profile."}
-                    </Text>
-                  )}
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Conversation Starter 1",
                         'Example: "What service do you need help with today?"'
@@ -2082,7 +2243,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Conversation Starter 2",
                         'Example: "Share your case details..."'
@@ -2097,7 +2258,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Conversation Starter 3",
                         'Example: "Do you want a document template?"'
@@ -2112,7 +2273,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Conversation Starter 4",
                         'Example: "Prefer English/తెలుగు/हिंदी?"'
@@ -2127,7 +2288,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={8}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Active Status",
                         "Toggle whether this agent is visible/usable."
@@ -2142,7 +2303,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={8}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Text Chat",
                         "Enabled by default and always available."
@@ -2154,7 +2315,7 @@ const steps = [
                   </Col>
 
                   <Col xs={24} md={8}>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div style={{ marginBottom: 12 }}>
                       <div
                         style={{
                           display: "flex",
@@ -2188,14 +2349,12 @@ const steps = [
                 size="large"
                 onClick={prev}
                 disabled={step === 0}
-                style={{ minWidth: "100px" }}
+                style={{ minWidth: 100 }}
               >
                 Previous
               </Button>
 
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "12px" }}
-              >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 {loading && <Text type="secondary">Working...</Text>}
                 {step < 3 ? (
                   <Button
@@ -2203,7 +2362,7 @@ const steps = [
                     size="large"
                     onClick={next}
                     loading={loading}
-                    style={{ minWidth: "120px", ...purpleBtn }}
+                    style={{ minWidth: 120, ...purpleBtn }}
                   >
                     Save & Continue
                   </Button>
@@ -2214,9 +2373,9 @@ const steps = [
                     onClick={handleOpenPreview}
                     loading={loading}
                     icon={<EyeOutlined />}
-                    style={{ minWidth: "140px", ...purpleBtn }}
+                    style={{ minWidth: 160, ...purpleBtn }}
                   >
-                    Preview & Publish
+                    {isEditMode ? "Preview & Update" : "Preview & Publish"}
                   </Button>
                 )}
               </div>
@@ -2225,10 +2384,75 @@ const steps = [
         </Card>
       </div>
 
+      {/* PROFILE PREVIEW & AUTOFILL MODAL */}
+      <Modal
+        open={openProfileModal}
+        onCancel={() => setOpenProfileModal(false)}
+        footer={null}
+        title="Profile Details"
+      >
+        <div style={{ lineHeight: 1.8 }}>
+          <div>
+            <b>Name:</b>{" "}
+            {`${profileRef.current?.firstName || ""} ${
+              profileRef.current?.lastName || ""
+            }`.trim() || "—"}
+          </div>
+          <div>
+            <b>Mobile:</b> {profileRef.current?.mobileNumber || "—"}{" "}
+            {profileRef.current?.mobileNumber && (
+              <Button
+                size="small"
+                style={{ marginLeft: 8 }}
+                onClick={() => {
+                  setContactDetails(profileRef.current?.mobileNumber || "");
+                  message.success("Contact filled from Mobile Number");
+                  setOpenProfileModal(false);
+                }}
+              >
+                Use this
+              </Button>
+            )}
+          </div>
+          <div>
+            <b>WhatsApp:</b> {profileRef.current?.whatsappNumber || "—"}{" "}
+            {profileRef.current?.whatsappNumber && (
+              <Button
+                size="small"
+                style={{ marginLeft: 8 }}
+                onClick={() => {
+                  setContactDetails(profileRef.current?.whatsappNumber || "");
+                  message.success("Contact filled from WhatsApp Number");
+                  setOpenProfileModal(false);
+                }}
+              >
+                Use this
+              </Button>
+            )}
+          </div>
+          <div>
+            <b>Email:</b> {profileRef.current?.email || "—"}{" "}
+            {profileRef.current?.email && (
+              <Button
+                size="small"
+                style={{ marginLeft: 8 }}
+                onClick={() => {
+                  setContactDetails(profileRef.current?.email || "");
+                  message.success("Contact filled from Email");
+                  setOpenProfileModal(false);
+                }}
+              >
+                Use this
+              </Button>
+            )}
+          </div>
+        </div>
+      </Modal>
+
       {/* PREVIEW MODAL */}
       <Modal
         title={
-          <div style={{ textAlign: "center", padding: "8px" }}>
+          <div style={{ textAlign: "center", padding: 8 }}>
             <Title level={4} style={{ color: "white", margin: 0 }}>
               Preview & Final Checks
             </Title>
@@ -2248,157 +2472,110 @@ const steps = [
         <div style={{ padding: "16px 0" }}>
           <Card
             style={{
-              marginBottom: "16px",
+              marginBottom: 16,
               border: "1px solid #e6e6ff",
-              borderRadius: "8px",
+              borderRadius: 8,
             }}
           >
-            <Title level={4} style={{ color: "#722ed1", marginBottom: "8px" }}>
-              {agentName || "Agent Name"}
+            <Title level={4} style={{ color: "#722ed1", margin: 0 }}>
+              {agentName || "—"}
             </Title>
-            <Paragraph
-              style={{ color: "#666", marginBottom: "12px", fontSize: "14px" }}
-            >
-              {description || uniqueSolution || "No description provided."}
-            </Paragraph>
+            <div style={{ marginTop: 8, color: "#8c8c8c" }}>
+              <div>
+                <b>Domain:</b> {resolvedDomain || "—"} / <b>Sub-domain:</b>{" "}
+                {resolvedSubDomain || "—"}
+              </div>
+              <div>
+                <b>Target:</b> {resolvedTargetUsersString || "—"} |{" "}
+                <b>Gender:</b> {genderForText || "—"} | <b>Age:</b>{" "}
+                {resolvedAgeLimitsString || "—"}
+              </div>
+              <div>
+                <b>Model:</b> {selectedModelId || "—"} | <b>Response:</b>{" "}
+                {responseFormat || "auto"} | <b>Tone:</b>{" "}
+                {converstionTone || "—"}
+              </div>
+              {shareContact === "YES" && contactDetails && (
+                <div>
+                  <b>Contact:</b> {contactDetails}
+                </div>
+              )}
+            </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-              {[conStarter1, conStarter2, conStarter3, conStarter4]
-                .filter(Boolean)
-                .map((starter, index) => (
-                  <Tag
-                    key={index}
-                    color="gold"
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "12px",
-                      border: "1px solid #fa8c16",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {starter}
-                  </Tag>
-                ))}
+            <div style={{ marginTop: 12 }}>
+              <div style={{ marginBottom: 6, color: "#8c8c8c" }}>
+                Instructions
+              </div>
+              <div
+                style={{
+                  background: "#fff",
+                  border: "1px dashed #e6e6e6",
+                  borderRadius: 8,
+                  padding: 10,
+                  maxHeight: 220,
+                  overflow: "auto",
+                  whiteSpace: "pre-wrap",
+                  fontSize: 13,
+                }}
+              >
+                {instructions || "—"}
+              </div>
+            </div>
+
+            {/* NEW: show conversation starters in preview (at least conStarter1) */}
+            <div style={{ marginTop: 12 }}>
+              <div style={{ marginBottom: 6, color: "#8c8c8c" }}>
+                Conversation Starters
+              </div>
+              <ul style={{ paddingLeft: 18, margin: 0 }}>
+                {[conStarter1, conStarter2, conStarter3, conStarter4]
+                  .filter((s) => (s || "").trim())
+                  .map((s, i) => (
+                    <li key={i} style={{ marginBottom: 4 }}>
+                      {s}
+                    </li>
+                  ))}
+              </ul>
+              {!hasMinStarters() && (
+                <div style={{ color: "#cf1322", marginTop: 6, fontSize: 12 }}>
+                  Please add at least 2 starters.
+                </div>
+              )}
             </div>
           </Card>
 
-          <Card
-            title={
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Text strong>Choose Stores</Text>
-                <Tooltip title="It may launch soon and price is applicable.">
-                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                </Tooltip>
-              </div>
-            }
-            size="small"
-            style={{
-              marginBottom: "16px",
-              border: "1px solid #e6e6ff",
-              borderRadius: "8px",
-            }}
-          >
-            <Row gutter={[12, 12]}>
-              <Col xs={24} md={12}>
-                <Checkbox
-                  checked={storeBharat}
-                  onChange={(e) => setStoreBharat(e.target.checked)}
-                >
-                  <div>
-                    <Text strong style={{ fontSize: "14px" }}>
-                      Bharat AI Store
-                    </Text>
-                    <br />
-                    <Text type="success" style={{ fontSize: "12px" }}>
-                      Free
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                      {" "}
-                      (Label: INR 1000)
-                    </Text>
-                  </div>
-                </Checkbox>
-              </Col>
-              <Col xs={24} md={12}>
-                <Checkbox
-                  checked={storeOxy}
-                  onChange={(e) => setStoreOxy(e.target.checked)}
-                >
-                  <div>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 6 }}
-                    >
-                      <Text strong style={{ fontSize: "14px" }}>
-                        OXY GPT Store
-                      </Text>
-                      <Tooltip title="It may launch soon and price is applicable.">
-                        <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                      </Tooltip>
-                    </div>
-                    <Text style={{ fontSize: "12px" }}>$19</Text>{" "}
-                    <Tag color="blue" style={{ borderRadius: 6 }}>
-                      Coming soon
-                    </Tag>
-                  </div>
-                </Checkbox>
-              </Col>
-            </Row>
-          </Card>
-
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <Button onClick={() => setShowPreview(false)}>Cancel</Button>
-          <Button
-            size="large"
-            type="primary"
-            onClick={handleConfirmPublish}
-            style={purpleBtn}
-            loading={loading}
-          >
-            Publish
-          </Button>
+            <Button onClick={() => setShowPreview(false)}>Back</Button>
+            <Button
+              type="primary"
+              onClick={handleConfirmPublish}
+              loading={loading}
+              style={purpleBtn}
+            >
+              {isEditMode ? "Update Agent" : "Publish"}
+            </Button>
           </div>
         </div>
       </Modal>
 
       {/* EDIT INSTRUCTIONS MODAL */}
       <Modal
+        title="Edit Instructions"
         open={showInstructionsModal}
         onCancel={() => setShowInstructionsModal(false)}
         onOk={handleSaveInstructions}
         okText="Save"
-        title="Edit Instructions"
       >
         <TextArea
+          rows={12}
           value={tempInstructions}
           onChange={(e) => setTempInstructions(e.target.value)}
-          rows={10}
           maxLength={7000}
-          style={compactInputStyle}
+          showCount
         />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: 8,
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {tempInstructions.length}/7000
-          </Text>
-          <Space>
-            <Button
-              size="small"
-              icon={isRecording ? <AudioMutedOutlined /> : <AudioOutlined />}
-              onClick={isRecording ? stopRecording : startRecording}
-            >
-              {isRecording ? "Stop" : "Mic"}
-            </Button>
-          </Space>
-        </div>
       </Modal>
 
-      {/* SUCCESS MODAL (optional) */}
+      {/* SUCCESS CARD */}
       {successData && (
         <SuccessAgentCard
           data={successData}

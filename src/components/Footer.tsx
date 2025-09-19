@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Facebook,
   Instagram,
@@ -8,19 +8,38 @@ import {
   Mail,
   Phone,
   ArrowUp,
-  Twitter,
   Youtube,
-  
 } from "lucide-react";
-import { FaXTwitter } from "react-icons/fa6";  // Updated Twitter (X) logo
-
+import { FaXTwitter } from "react-icons/fa6"; // Updated Twitter (X) logo
+import { SiThreads } from "react-icons/si"; // Threads icon
 import Logo from "../assets/img/askoxylogonew.png";
-import { SiThreads } from "react-icons/si";  // Threads icon
+
 const Footer: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+const LOGIN_URL = "/whatsapplogin";
+
+  // ✅ Login-check navigation
+  const handleProtectedNavigation = (redirectPath: string) => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+
+      if (userId) {
+        // already logged in → go directly
+        navigate(redirectPath);
+      } else {
+        // not logged in → save redirect path then go to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const socialLinks = [
@@ -57,37 +76,44 @@ const Footer: React.FC = () => {
   ];
 
   const services = [
-    { name: "AI & GEN AI Training", path: "/main/services/freeai-genai" },
-    { name: "Legal Knowledge", path: "/main/services/legalservice" },
-    { name: "Study Abroad", path: "/studyabroad" },
-    { name: "My Rotary", path: "/main/services/myrotary" },
-    { name: "We Are Hiring", path: "/main/services/we-are-hiring" },
+    {
+      name: "AI & GEN AI Training",
+      redirectPath: "/main/services/freeai-genai",
+    },
+    { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
+    { name: "Study Abroad", path: "/studyabroad" }, // direct link
+    { name: "My Rotary", redirectPath: "/main/services/myrotary" },
+    { name: "We Are Hiring", redirectPath: "/main/services/we-are-hiring" },
   ];
 
- const contactInfo = [
-   {
-     icon: <MapPin className="h-4 w-4" />,
-     content:
-       "OXYKART TECHNOLOGIES PVT LTD, Miyapur Metro ASKOXY.AI, Hyderabad, Telangana - 500049",
-     link: "https://www.google.com/maps/search/ASKOXY.AI/@17.4964402,78.3733327,17z",
-     type: "map",
-   },
-   {
-     icon: <Mail className="h-4 w-4" />,
-     content: "support@askoxy.ai",
-     type: "email",
-   },
-   {
-     icon: <Phone className="h-4 w-4 mb-1" />,
-     content: "+91 81432 71103",
-     type: "phone",
-   },
-   {
-     icon: <Phone className="h-4 w-4 mb-1" />,
-     content: "+91 91105 64106",
-     type: "phone",
-   },
- ];
+  const contactInfo = [
+    {
+      icon: <MapPin className="h-4 w-4" />,
+      content:
+        "OXYKART TECHNOLOGIES PVT LTD, Miyapur Metro ASKOXY.AI, Hyderabad, Telangana - 500049",
+      link: "https://www.google.com/maps/search/ASKOXY.AI/@17.4964402,78.3733327,17z",
+      type: "map",
+    },
+    {
+      icon: <Mail className="h-4 w-4" />,
+      content: "support@askoxy.ai",
+      type: "email",
+    },
+    {
+      icon: <Phone className="h-4 w-4 mb-1" />,
+      content: "+91 81432 71103",
+      type: "phone",
+    },
+    {
+      icon: <Phone className="h-4 w-4 mb-1" />,
+      content: "+91 91105 64106",
+      type: "phone",
+    },
+  ];
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <footer className="bg-gradient-to-br from-cyan-50 via-purple-50 to-green-50 border-t border-gray-100">
@@ -121,33 +147,6 @@ const Footer: React.FC = () => {
                 </a>
               ))}
             </div>
-
-            <style>
-              {`
-  @keyframes pulseColor {
-    0% {
-      transform: scale(1);
-      color: #6B7280; /* gray-500 */
-    }
-    25% {
-      transform: scale(1.1);
-      color: #1DA1F2; /* twitter blue */
-    }
-    50% {
-      transform: scale(1.2);
-      color: #9333EA; /* purple-600 */
-    }
-    75% {
-      transform: scale(1.1);
-      color: #E0245E; /* pink/red */
-    }
-    100% {
-      transform: scale(1);
-      color: #6B7280; /* back to gray */
-    }
-  }
-`}
-            </style>
           </div>
 
           {/* Services */}
@@ -156,15 +155,30 @@ const Footer: React.FC = () => {
               Our Services
             </h3>
             <nav className="space-y-1">
-              {services.map((service) => (
-                <Link
-                  key={service.name}
-                  to={service.path}
-                  className="block text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
-                >
-                  {service.name}
-                </Link>
-              ))}
+              {services.map((service) =>
+                service.path ? (
+                  // ✅ Study Abroad → direct
+                  <Link
+                    key={service.name}
+                    to={service.path}
+                    className="block text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                  >
+                    {service.name}
+                  </Link>
+                ) : (
+                  // ✅ Protected services
+                  <button
+                    key={service.name}
+                    onClick={() =>
+                      handleProtectedNavigation(service.redirectPath!)
+                    }
+                    className="block text-left text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200 w-full"
+                    disabled={isLoading}
+                  >
+                    {service.name}
+                  </button>
+                )
+              )}
             </nav>
           </div>
 
@@ -177,7 +191,6 @@ const Footer: React.FC = () => {
               {contactInfo.map((info, index) => (
                 <div key={index} className="flex items-start space-x-2">
                   <div className="text-purple-600 mt-0.5">{info.icon}</div>
-
                   {info.type === "map" ? (
                     <a
                       href={info.link}
