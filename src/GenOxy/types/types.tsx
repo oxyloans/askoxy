@@ -38,8 +38,8 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇮🇳",
     speechLang: "te-IN",
     imageUrl:
-      "https://i.ibb.co/p6XPMZdn/Chat-GPT-Image-Aug-13-2025-05-42-43-PM.png",
-    assistantName: "Priya",
+      "https://wallpaperaccess.com/full/2732802.jpg",
+    assistantName: "Sindu",
   },
   {
     code: "en",
@@ -48,7 +48,8 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇺🇸",
     speechLang: "en-US",
     imageUrl:
-      "https://img.freepik.com/premium-photo/woman-suit-with-smile-her-face_662214-22756.jpg",
+      "https://www.visa.co.in/content/dam/VCOM/global/our-purpose/images/partner-a-fintech-800x450.jpg",
+     
     assistantName: "Smaira",
   },
   {
@@ -58,7 +59,7 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇮🇳",
     speechLang: "hi-IN",
     imageUrl:
-      "https://static.vecteezy.com/system/resources/thumbnails/045/782/543/small/professional-businesswoman-in-formal-suit-confident-smile-modern-office-background-corporate-leadership-stock-for-business-marketing-branding-photo.jpg",
-    assistantName: "Praigya",
+      "https://img.freepik.com/premium-photo/woman-suit-with-smile-her-face_662214-22756.jpg",
+    assistantName: "Ananya",
   },
 ];

@@ -419,14 +419,14 @@ class VoiceSessionService {
         assistantId
       );
 
-      this.sessionTimeoutId = window.setTimeout(() => {
-        console.log("⏰ Session auto-expired after 80s");
-        message.info(
-          "⏳ Your free voice session has ended. Upgrade to Premium to continue unlimited conversations!"
-        );
-        navigate("/voiceAssistant");
-        this.stopSession();
-      }, 80 * 1000);
+      // this.sessionTimeoutId = window.setTimeout(() => {
+      //   console.log("⏰ Session auto-expired after 80s");
+      //   message.info(
+      //     "⏳ Your free voice session has ended. Upgrade to Premium to continue unlimited conversations!"
+      //   );
+      //   navigate("/voiceAssistant");
+      //   this.stopSession();
+      // }, 80 * 1000);
 
       return dc;
     } catch (error) {

@@ -143,14 +143,25 @@ const TONE_OPTIONS = [
 ];
 const RESPONSE_FORMATS = ["auto", "json_object"] as const;
 
-// ===== Helpers =====
-function getAuth(): string {
+function getAuthToken(): string {
   try {
-    return localStorage.getItem("auth_token") || "";
+    return (
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("id_token") ||
+      localStorage.getItem("auth_token") ||
+      ""
+    ).trim();
   } catch {
     return "";
   }
 }
+
+function getAuthHeader(): Record<string, string> {
+  const t = getAuthToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
 function stripEmpty<T extends object>(obj: T): Partial<T> {
   const out = {} as Partial<T>;
   (Object.keys(obj) as (keyof T)[]).forEach((k) => {
@@ -252,9 +263,8 @@ const CreateAgentWizard: React.FC = () => {
   const [converstionTone, setConverstionTone] = useState<string | undefined>(
     undefined
   );
-  const [responseFormat, setResponseFormat] = useState<
-    (typeof RESPONSE_FORMATS)[number] | undefined
-  >(undefined);
+  const [responseFormat, setResponseFormat] =
+    useState<(typeof RESPONSE_FORMATS)[number]>("auto");
 
   const [instructions, setInstructions] = useState("");
   const [generated, setGenerated] = useState(false);
@@ -623,7 +633,7 @@ const CreateAgentWizard: React.FC = () => {
     setSolveProblem("");
     setMainProblemText("");
     setUniqueSolution("");
-    setResponseFormat(undefined);
+    setResponseFormat("auto");
 
     // Step 3 – Audience + Config + Contact
     setTargetUsers([]);
@@ -666,9 +676,10 @@ const CreateAgentWizard: React.FC = () => {
         const res = await fetch(`${BASE_URL}/ai-service/agent/models`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${getAuth()}`,
+            ...getAuthHeader(),
           },
         });
+
         if (!res.ok) throw new Error(`Models failed: ${res.status}`);
         const data = await res.json();
         const arr = Array.isArray(data?.data) ? data.data : [];
@@ -714,7 +725,7 @@ const CreateAgentWizard: React.FC = () => {
     if (!(resolvedDomain || "").trim()) missing.push("Domain/Sector");
     if (!(resolvedSubDomain || "").trim()) missing.push("Sub-Domain/Subsector");
     if (!selectedModelId?.trim()) missing.push("GPT Model");
-    if (!responseFormat) missing.push("Response Format");
+    // if (!responseFormat) missing.push("Response Format");
     if (!solveProblem) missing.push("Are you solving a problem?");
     if (solveProblem === "YES") {
       if (!mainProblemText.trim()) missing.push("Main Problem to Solve");
@@ -784,12 +795,14 @@ const CreateAgentWizard: React.FC = () => {
 
   // ===== PATCH helper =====
   async function doPatch(path: string, payload: Record<string, any>) {
+    const auth = getAuthHeader();
+    if (!auth.Authorization) {
+      message.error("You’re not signed in. Please log in and try again.");
+      throw new Error("Missing token");
+    }
     const res = await fetch(`${BASE_URL}${path}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getAuth()}`,
-      },
+      headers: { "Content-Type": "application/json", ...auth },
       body: JSON.stringify(stripEmpty(payload)),
     });
     const ct = (res.headers.get("content-type") || "").toLowerCase();
@@ -977,9 +990,11 @@ const CreateAgentWizard: React.FC = () => {
         classifyText || description || "Create helpful assistant instructions"
       );
       const url = `${BASE_URL}/ai-service/agent/classifyInstruct?description=${desc}`;
-      const baseHeaders: Record<string, string> = {
-        Authorization: `Bearer ${getAuth()}`,
-      };
+      const baseHeaders: Record<string, string> = { ...getAuthHeader() };
+      if (!baseHeaders.Authorization) {
+        message.error("You’re not signed in. Please log in and try again.");
+        return;
+      }
       let res = await fetch(url, {
         method: "POST",
         headers: { ...baseHeaders, "Content-Type": "application/json" },
@@ -992,7 +1007,7 @@ const CreateAgentWizard: React.FC = () => {
             language,
             model: selectedModelId,
             tone: converstionTone,
-            format: responseFormat,
+            format: responseFormat, // already concrete: "auto" | "json_object"
             capabilities: [],
           })
         ),
@@ -1005,6 +1020,7 @@ const CreateAgentWizard: React.FC = () => {
           signal: controller.signal,
         });
       }
+
       if (!res.ok) throw new Error(`classifyInstruct failed: ${res.status}`);
       const ct = (res.headers.get("content-type") || "").toLowerCase();
       let raw: string;
