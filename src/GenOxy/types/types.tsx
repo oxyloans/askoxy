@@ -38,8 +38,8 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇮🇳",
     speechLang: "te-IN",
     imageUrl:
-      "https://i.ibb.co/p6XPMZdn/Chat-GPT-Image-Aug-13-2025-05-42-43-PM.png",
-    assistantName: "Priya",
+      "https://images.mid-day.com/images/images/2016/aug/20-PV.jpg",
+    assistantName: "Sindhu",
   },
   {
     code: "en",

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Logo from "../../assets/img/bharatAI.png";
-
+import Logo1 from "../../assets/img/askoxylogonew.png";
 const getInitials = (nameOrEmail?: string) => {
   if (!nameOrEmail) return "";
   const name = nameOrEmail.replace(/\s+/g, " ").trim();
@@ -55,6 +55,15 @@ const Header: React.FC<HeaderProps> = ({
         aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
       },
     },
+    // inside the `nav` array
+    {
+      label: "AWARDS&REWARDS",
+      to: "/awards-rewards",
+      sectionId: "awards-rewards",
+      scrollTo: () => {
+         aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
+      },
+    },
   ];
 
   const NEXT_PATH = "/main/bharat-expert";
@@ -105,7 +114,7 @@ const Header: React.FC<HeaderProps> = ({
       observer.observe(aiResourcesRef.current);
     }
     if (freeAIBookRef.current) {
-      freeAIBookRef.current.setAttribute("data-section-id", "free-ai-book");
+      freeAIBookRef.current.setAttribute("data-section-id", "awards-rewards");
       observer.observe(freeAIBookRef.current);
     }
 
@@ -167,6 +176,11 @@ const Header: React.FC<HeaderProps> = ({
     if (
       location.pathname === "/bharath-aistore" &&
       sectionId === "bharat-ai-store"
+    )
+      return true;
+    if (
+      location.pathname === "/awards-rewards" &&
+      sectionId === "awards-rewards"
     )
       return true;
     return activeSection === sectionId;
@@ -280,10 +294,11 @@ const Header: React.FC<HeaderProps> = ({
             /* ---------- DEFAULT ROW ---------- */
             <div className="flex h-full items-center justify-between gap-4">
               {/* LEFT: Logo */}
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-4 min-w-0">
+                {/* Logo (always visible) */}
                 <button
                   onClick={() => navigate("/bharath-aistore")}
-                  className="flex items-center gap-2 min-w-0"
+                  className="flex items-center min-w-0"
                   aria-label="Go to Home"
                   title="Bharat AI Store"
                 >
@@ -293,6 +308,20 @@ const Header: React.FC<HeaderProps> = ({
                     className="h-10 w-auto"
                   />
                 </button>
+
+                {/* Logo1 (hidden on mobile, visible on sm and above) */}
+                {/* <button
+                  onClick={() => navigate("/bharath-aistore")}
+                  className="hidden sm:flex items-center min-w-0"
+                  aria-label="Go to Home"
+                  title="Bharat AI Store"
+                >
+                  <img
+                    src={Logo1}
+                    alt="Bharat AI Store"
+                    className="h-10 w-auto"
+                  />
+                </button> */}
               </div>
 
               {/* CENTER: Desktop nav */}

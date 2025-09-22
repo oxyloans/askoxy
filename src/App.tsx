@@ -214,6 +214,7 @@ import Layout from "./BharathAIStore/routes/Landingpage";
 import BharatAgentsStore from "./BharathAIStore/pages/BharatAgentsStore";
 import BananaImageGenerate from "./AgentStore/BananaImageGenerate";
 import InsuranceAgentsPage from "./BharathAIStore/pages/InsuranceAgentsPage";
+import AwardsRewardsVideo from "./BharathAIStore/pages/AwardsRewardsVideo";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -261,7 +262,6 @@ const App: React.FC = () => {
             <Route path="/carnival-list" element={<CarnivalListPage />} />
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
             <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
-            <Route path="/bharath-aistore/insurance" element={<InsuranceAgentsPage />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
@@ -301,6 +301,11 @@ const App: React.FC = () => {
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route element={<Layout />}>
               <Route path="/bharath-aistore" element={<BharatAgentsStore />} />
+              <Route
+                path="/bharath-aistore/insurance"
+                element={<InsuranceAgentsPage />}
+              />
+              <Route path="/awards-rewards" element={<AwardsRewardsVideo />} />
               <Route
                 path="/bharath-aistore/ai-initiatives"
                 element={<AiResources />}

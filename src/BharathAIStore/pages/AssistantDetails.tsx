@@ -139,7 +139,7 @@ const AssistantDetails: React.FC = () => {
           }
         } catch (convError) {
           console.error("Error fetching conversation starters:", convError);
-          message.warning("Could not load suggested prompts.");
+          // message.warning("Could not load suggested prompts.");
           setPrompts([]); // Fallback to empty
         }
       } catch {

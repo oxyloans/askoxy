@@ -11,9 +11,10 @@ const CANONICAL = [
   "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   "IRDAI Enforcement Actions",
   "General Insurance Discovery",
+ "Life Insurance Citizen Discovery"
 ] as const;
 
-type CanonicalName = typeof CANONICAL[number];
+type CanonicalName = (typeof CANONICAL)[number];
 
 // Optional: exclude this one assistantId
 const EXCLUDE_ASSISTANT_IDS = new Set<string>([
@@ -30,6 +31,8 @@ const NAME_TO_IMAGE: Record<CanonicalName, string> = {
     "https://i.ibb.co/6JmrvSXc/Chat-GPT-Image-Sep-21-2025-09-11-37-AM.png",
   "General Insurance Discovery":
     "https://i.ibb.co/BHLgWkHx/Chat-GPT-Image-Sep-21-2025-09-09-37-AM.png",
+   "Life Insurance Citizen Discovery":
+   "https://i.ibb.co/3ybg3TMD/Chat-GPT-Image-Sep-22-2025-12-33-31-PM.png",
 };
 
 type Assistant = {
@@ -58,7 +61,6 @@ interface AssistantsResponse {
   lastId?: string;
 }
 
-// ================= API =================
 function getAuthHeaders() {
   let token =
     (typeof window !== "undefined" &&
@@ -67,20 +69,34 @@ function getAuthHeaders() {
         localStorage.getItem("accessToken") ||
         localStorage.getItem("token"))) ||
     "";
-  if (!token && process.env.AUTH_TOKEN) token = process.env.AUTH_TOKEN as string;
+  if (!token && process.env.AUTH_TOKEN)
+    token = process.env.AUTH_TOKEN as string;
+
+  if (!token) {
+    // Surface a clear error instead of sending a header-less call that may trigger a 500
+    throw new Error("Missing access token. Please login again.");
+  }
 
   return {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    Authorization: `Bearer ${token}`,
   };
 }
 
 const apiClient = axios.create({ baseURL: BASE_URL });
 
-async function getAssistants(limit = 100, after?: string): Promise<AssistantsResponse> {
+async function getAssistants(
+  limit = 100,
+  after?: string
+): Promise<AssistantsResponse> {
   const safeLimit = Math.min(Math.max(limit, 1), 100);
   const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
-    headers: getAuthHeaders(),
+     headers: {
+      "Content-Type": "application/json",
+      ...(`${process.env.AUTH_TOKEN}`
+        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
+        : {}),
+    },
     params: { limit: safeLimit, after },
   });
 
@@ -103,8 +119,13 @@ async function getAssistants(limit = 100, after?: string): Promise<AssistantsRes
 // Search API → /ai-service/agent/webSearchForAgent?message=...
 async function searchAssistants(query: string): Promise<Assistant[]> {
   const res = await apiClient.get("/ai-service/agent/webSearchForAgent", {
+    headers: {
+      "Content-Type": "application/json",
+      ...(`${process.env.AUTH_TOKEN}`
+        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
+        : {}),
+    },
     params: { message: query },
-    headers: getAuthHeaders(),
   });
 
   const raw = Array.isArray(res.data)
@@ -157,6 +178,13 @@ function applyFallbackDescription(view: AssistantView): AssistantView {
         "This agent guides users through all aspects of general insurance—health, motor, home, travel, and more. It solves problems like policy confusion, claim delays, and compliance gaps by explaining coverage clearly, comparing options, and tracking IRDAI updates. With real-time insights, it helps customers, agents, and insurers make smarter, faster, and fairer decisions.",
     };
   }
+    if (emptyDesc && view.displayName === "Life Insurance Citizen Discovery") {
+    return {
+      ...view,
+      description:
+       "This agent simplifies life insurance—term, whole, ULIPs & more. It clears premium confusion, compares plans, tracks IRDAI updates & ensures fair, secure decisions.",
+    };
+  }
   return view;
 }
 
@@ -179,7 +207,8 @@ function buildInsuranceList(all: Assistant[]): AssistantView[] {
 
   // Keep canonical order
   return views.sort(
-    (a, b) => CANONICAL.indexOf(a.displayName) - CANONICAL.indexOf(b.displayName)
+    (a, b) =>
+      CANONICAL.indexOf(a.displayName) - CANONICAL.indexOf(b.displayName)
   );
 }
 
@@ -201,6 +230,7 @@ const SkeletonCard: React.FC = () => (
     </div>
   </div>
 );
+
 
 // ================ UI bits ================
 const ReadMoreModal: React.FC<{
@@ -270,14 +300,19 @@ const AssistantCard: React.FC<{
         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden">
           {/* Header image */}
           <div className="relative w-full">
-            <div className="h-0 w-full pb-[56%] overflow-hidden" aria-hidden="true">
+            <div
+              className="h-0 w-full pb-[56%] overflow-hidden"
+              aria-hidden="true"
+            >
               <img
                 src={imgSrc}
                 alt={title + " thumbnail"}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading="lazy"
                 decoding="async"
-                onError={() => setImgSrc("data:image/gif;base64,R0lGODlhAQABAAAAACw=")}
+                onError={() =>
+                  setImgSrc("data:image/gif;base64,R0lGODlhAQABAAAAACw=")
+                }
               />
             </div>
             <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
@@ -289,9 +324,10 @@ const AssistantCard: React.FC<{
           <div className="pt-8 px-5 pb-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-1 leading-snug">
+                <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-2 leading-snug">
                   {title}
                 </h3>
+
                 <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-5">
                   {a.description || ""}
                 </p>
@@ -349,7 +385,7 @@ const InsuranceAgentsPage: React.FC = () => {
   const [err, setErr] = useState<string | null>(null);
 
   // search state
-  const [q, setQ] = useState<string>("");            // if you already have a search box elsewhere, bind it here
+  const [q, setQ] = useState<string>(""); // if you already have a search box elsewhere, bind it here
   const [searchResults, setSearchResults] = useState<Assistant[] | null>(null);
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -419,9 +455,7 @@ const InsuranceAgentsPage: React.FC = () => {
   // Decide which list to show: search or canonical
   const inSearchMode = (q || "").trim().length > 0;
   const cardsToRender: Array<Partial<AssistantView & Assistant>> =
-    inSearchMode && searchResults
-      ? searchResults
-      : items;
+    inSearchMode && searchResults ? searchResults : items;
 
   return (
     <div className="min-h-screen bg-white">
@@ -431,10 +465,9 @@ const InsuranceAgentsPage: React.FC = () => {
             Insurance Assistants
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-          AI Based Insurance Agents 
+            AI Based Insurance Agents
           </p>
         </div>
-       
 
         {/* Loading / Error / Cards */}
         {inSearchMode ? (
@@ -450,7 +483,9 @@ const InsuranceAgentsPage: React.FC = () => {
           ) : !cardsToRender || cardsToRender.length === 0 ? (
             <div className="text-center py-16">
               <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900">No results</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                No results
+              </h3>
               <p className="text-gray-600">Try a different search term.</p>
             </div>
           ) : (
@@ -464,35 +499,33 @@ const InsuranceAgentsPage: React.FC = () => {
               ))}
             </div>
           )
+        ) : // ------- CANONICAL MODE -------
+        loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonCard key={`init-skel-${i}`} />
+            ))}
+          </div>
+        ) : err ? (
+          <div className="text-sm text-red-600">{err}</div>
+        ) : items.length === 0 ? (
+          <div className="text-center py-16">
+            <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              No Insurance Agents Found
+            </h3>
+            <p className="text-gray-600">Check later or contact the admin.</p>
+          </div>
         ) : (
-          // ------- CANONICAL MODE -------
-          loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <SkeletonCard key={`init-skel-${i}`} />
-              ))}
-            </div>
-          ) : err ? (
-            <div className="text-sm text-red-600">{err}</div>
-          ) : items.length === 0 ? (
-            <div className="text-center py-16">
-              <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                No Insurance Agents Found
-              </h3>
-              <p className="text-gray-600">Check later or contact the admin.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
-              {items.map((a, i) => (
-                <AssistantCard
-                  key={`${a.displayName}-${a.assistantId || a.id || i}`}
-                  a={a}
-                  onOpen={() => handleOpen(a)}
-                />
-              ))}
-            </div>
-          )
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
+            {items.map((a, i) => (
+              <AssistantCard
+                key={`${a.displayName}-${a.assistantId || a.id || i}`}
+                a={a}
+                onOpen={() => handleOpen(a)}
+              />
+            ))}
+          </div>
         )}
       </main>
     </div>

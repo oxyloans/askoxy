@@ -105,7 +105,7 @@ const ChatInterface1: React.FC = () => {
       return response.data;
     } catch (error) {
       console.error("Error fetching conversation starters:", error);
-      message.warning("Could not load suggested prompts.");
+      // message.warning("Could not load suggested prompts.");
       return [];
     }
   };
