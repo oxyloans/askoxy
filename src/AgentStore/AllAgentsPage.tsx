@@ -14,6 +14,12 @@ function getAccessToken(): string | null {
     null
   );
 }
+function copy(text: string) {
+  navigator.clipboard?.writeText(text).then(
+    () => message.success("Link copied"),
+    () => message.error("Copy failed")
+  );
+}
 
 function authHeadersBase(): Record<string, string> {
   const token = getAccessToken();
@@ -24,10 +30,6 @@ function authHeadersBase(): Record<string, string> {
   return h;
 }
 
-/**
- * fetch wrapper: injects Authorization, never sets Content-Type for FormData,
- * sets JSON content-type when needed, and uses sane defaults.
- */
 async function authFetch(
   input: RequestInfo | URL,
   init: RequestInit = {}
@@ -112,6 +114,7 @@ type Assistant = {
   approvedAt: string | null;
   converstionTone: string | null;
   contactDetails: string | null;
+  screenStatus?: "STAGE1" | "STAGE2" | "STAGE3" | "STAGE4" | null;
 };
 
 type Conversation = {
@@ -131,6 +134,17 @@ type AllAgentDataResponse = {
   userId: string;
   assistants: Assistant[];
   conversations: Conversation[];
+};
+
+type UploadedFile = {
+  id?: string;
+  fileId?: string;
+  filename?: string; // normalized display name
+  fileName?: string; // API alt name
+  url?: string;
+  uploadedAt?: string; // normalized ISO string
+  createdAt?: any; // API may send an array timestamp
+  sizeBytes?: number;
 };
 
 type EditDraft = Partial<
@@ -164,8 +178,14 @@ const AllAgentsPage: React.FC = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [editMap, setEditMap] = useState<Record<string, EditDraft>>({});
+  const [fileModalOpen, setFileModalOpen] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [filesMap, setFilesMap] = useState<Record<string, UploadedFile[]>>({});
+  const [filePanelOpen, setFilePanelOpen] = useState<string | null>(null);
+  const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
+  const [removingFileId, setRemovingFileId] = useState<string | null>(null);
+  const showId = showEdit ?? "";
   const resolvedUserId = useMemo(() => {
     const id = getUserId();
     return id && id !== "null" && id !== "undefined" ? id : "";
@@ -216,6 +236,14 @@ const AllAgentsPage: React.FC = () => {
     })();
   }, [resolvedUserId]);
 
+  useEffect(() => {
+    if (!fileModalOpen) return;
+    const onKey = (e: KeyboardEvent) =>
+      e.key === "Escape" && setFileModalOpen(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fileModalOpen]);
+
   const conversationsByAgent = React.useMemo(() => {
     const map: Record<string, Conversation[]> = {};
     (data?.conversations || []).forEach((c) => {
@@ -230,6 +258,19 @@ const AllAgentsPage: React.FC = () => {
     sessionStorage.setItem("edit_agentId", a.id);
     sessionStorage.setItem("edit_assistantId", a.assistantId || "");
 
+    // Map screenStatus -> step index
+    const stepFromScreen =
+      a?.screenStatus === "STAGE2"
+        ? 1
+        : a?.screenStatus === "STAGE3"
+        ? 2
+        : a?.screenStatus === "STAGE4"
+        ? 3
+        : 0;
+
+    // also persist planned jump step for hard refresh
+    sessionStorage.setItem("edit_jumpStep", String(stepFromScreen));
+
     const qs = new URLSearchParams({
       agentId: a.id,
       assistantId: a.assistantId || "",
@@ -237,8 +278,88 @@ const AllAgentsPage: React.FC = () => {
     }).toString();
 
     navigate(`/main/create-aiagent?${qs}`, {
-      state: { mode: "edit", seed: a },
+      state: { mode: "edit", seed: a, jumpToStep: stepFromScreen },
     });
+  };
+
+  // VIEW: GET /api/ai-service/agent/getUploaded?assistantId=...
+  const fetchUploadedFiles = async (assistantId: string) => {
+    if (!assistantId) {
+      message.error("Missing assistantId.");
+      return;
+    }
+    setLoadingFiles((m) => ({ ...m, [assistantId]: true }));
+    try {
+      const url = new URL("/api/ai-service/agent/getUploaded", BASE_URL);
+      url.searchParams.set("assistantId", assistantId);
+
+      const res = await authFetch(url.toString(), { method: "GET" });
+      const text = await res.text().catch(() => "");
+      if (!res.ok) throw new Error(`Fetch files failed: ${res.status} ${text}`);
+
+      let data: any = [];
+      try {
+        data = text ? JSON.parse(text) : [];
+      } catch {
+        data = [];
+      }
+
+      // Normalize: accept either array itself or {files:[...]}
+      const list: UploadedFile[] = Array.isArray(data)
+        ? data
+        : data?.files || [];
+      setFilesMap((m) => ({ ...m, [assistantId]: list }));
+      setFileModalOpen(assistantId); // open modal instead of inline panel
+    } catch (e: any) {
+      message.error(e?.message || "Failed to fetch uploaded files.");
+    } finally {
+      setLoadingFiles((m) => ({ ...m, [assistantId]: false }));
+    }
+  };
+
+  const removeUploadedFile = async (assistantId: string, fileId: string) => {
+    if (!assistantId || !fileId) {
+      message.error("Missing assistantId or fileId.");
+      return;
+    }
+
+    setRemovingFileId(fileId);
+    try {
+      // Build URL with query params
+      const url = new URL("/api/ai-service/agent/removeFiles", BASE_URL);
+      url.searchParams.set("assistantId", assistantId);
+      url.searchParams.set("fileId", fileId);
+
+      // Primary attempt: DELETE (no body for widest server compatibility)
+      let res = await authFetch(url.toString(), { method: "DELETE" });
+
+      // Some servers misconfigure DELETE; try GET fallback on 405/501
+      if (res.status === 405 || res.status === 501) {
+        res = await authFetch(url.toString(), { method: "GET" });
+      }
+
+      const text = await res.text().catch(() => "");
+
+      if (!res.ok) {
+        throw new Error(
+          `Remove failed: ${res.status}${text ? ` ${text}` : ""}`
+        );
+      }
+
+      // Update local state after success
+      setFilesMap((m) => ({
+        ...m,
+        [assistantId]: (m[assistantId] || []).filter(
+          (f) => (f.fileId || f.id) !== fileId
+        ),
+      }));
+
+      message.success("File removed.");
+    } catch (e: any) {
+      message.error(e?.message || "Failed to remove file.");
+    } finally {
+      setRemovingFileId(null);
+    }
   };
 
   const filteredAssistants = useMemo(() => {
@@ -247,29 +368,9 @@ const AllAgentsPage: React.FC = () => {
       (a) => filterStatus === "All" || a.status === filterStatus
     );
   }, [data, filterStatus]);
+
   const onChangeDraft = (id: string, patch: EditDraft) => {
     setEditMap((m) => ({ ...m, [id]: { ...(m[id] || {}), ...patch } }));
-  };
-
-  const openEdit = (a: Assistant) => {
-    setEditMap((m) => ({
-      ...m,
-      [a.id]: {
-        agentName: a.agentName || "",
-        description: a.description || "",
-        status: a.status || "",
-        agentStatus: a.agentStatus || "",
-        activeStatus: !!a.activeStatus,
-        voiceStatus: !!a.voiceStatus,
-        domain: a.domain || "",
-        subDomain: a.subDomain || "",
-        targetUser: a.targetUser || "",
-        usageModel: a.usageModel || "",
-        responseFormat: a.responseFormat || "auto",
-        converstionTone: a.converstionTone || "",
-      },
-    }));
-    setShowEdit(a.id);
   };
 
   const saveEdit = async (id: string) => {
@@ -810,8 +911,188 @@ const AllAgentsPage: React.FC = () => {
                             >
                               View
                             </button>
+
+                            <button
+                              onClick={() =>
+                                a.assistantId
+                                  ? fetchUploadedFiles(a.assistantId)
+                                  : message.error("Missing assistantId.")
+                              }
+                              className="rounded-md px-3 py-2 text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                              disabled={loadingFiles[a.assistantId || ""]}
+                            >
+                              {loadingFiles[a.assistantId || ""]
+                                ? "Loading…"
+                                : "View Files"}
+                            </button>
                           </div>
                         </div>
+
+                        {/* File Modal (white background, no shadow) */}
+                        {fileModalOpen && (
+                          <div
+                            className="fixed inset-0 z-50 bg-transparent flex items-center justify-center px-4 sm:px-6 lg:px-8"
+                            onMouseDown={(e) => {
+                              if (e.target === e.currentTarget)
+                                setFileModalOpen(null); // click outside closes
+                            }}
+                            role="dialog"
+                            aria-modal="true"
+                          >
+                            <div className="w-full max-w-3xl max-h-[82vh] overflow-hidden rounded-2xl bg-white text-gray-900 shadow-none border border-gray-200">
+                              {/* Header */}
+                              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-white">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                      viewBox="0 0 24 24"
+                                      fill="currentColor"
+                                    >
+                                      <path d="M14.59 2.59A2 2 0 0 0 13.17 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.83a2 2 0 0 0-.59-1.41l-4.82-4.83Z" />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <h3 className="text-lg font-semibold">
+                                      Uploaded Files
+                                    </h3>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setFileModalOpen(null)}
+                                  className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                  aria-label="Close"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              {/* Body */}
+                              <div className="p-5 overflow-y-auto max-h-[calc(82vh-4rem)]">
+                                {loadingFiles[fileModalOpen] ? (
+                                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                                    <svg
+                                      className="animate-spin h-5 w-5 text-gray-500"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        className="opacity-20"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      />
+                                      <path
+                                        className="opacity-80"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
+                                      />
+                                    </svg>
+                                    Loading files…
+                                  </div>
+                                ) : (filesMap[fileModalOpen] || []).length ===
+                                  0 ? (
+                                  <div className="text-sm text-gray-500 italic">
+                                    No files found.
+                                  </div>
+                                ) : (
+                                  <ul
+                                    className="grid gap-3"
+                                    style={{
+                                      gridTemplateColumns:
+                                        "repeat(auto-fill, minmax(240px, 1fr))",
+                                    }}
+                                  >
+                                    {(filesMap[fileModalOpen] || []).map(
+                                      (f) => {
+                                        const key =
+                                          f.fileId ||
+                                          f.id ||
+                                          f.fileName ||
+                                          Math.random().toString(36);
+                                        const displayName =
+                                          f.fileName ||
+                                          f.filename ||
+                                          f.fileId ||
+                                          f.id ||
+                                          "Unnamed file";
+                                        const idToRemove = (
+                                          f.fileId ||
+                                          f.id ||
+                                          ""
+                                        ).toString();
+
+                                        return (
+                                          <li
+                                            key={key}
+                                            className="group rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors p-3"
+                                          >
+                                            <div className="flex items-start gap-3">
+                                              <div className="mt-0.5 h-9 w-9 flex-shrink-0 rounded-lg bg-gray-200 flex items-center justify-center">
+                                                <svg
+                                                  xmlns="http://www.w3.org/2000/svg"
+                                                  className="h-5 w-5 text-gray-600"
+                                                  viewBox="0 0 24 24"
+                                                  fill="currentColor"
+                                                >
+                                                  <path d="M14.59 2.59A2 2 0 0 0 13.17 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.83a2 2 0 0 0-.59-1.41l-4.82-4.83Z" />
+                                                </svg>
+                                              </div>
+                                              <div className="min-w-0 flex-1">
+                                                <div
+                                                  className="text-sm font-medium text-gray-900 truncate"
+                                                  title={displayName}
+                                                >
+                                                  {displayName}
+                                                </div>
+
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                  {f.url && (
+                                                    <a
+                                                      href={f.url}
+                                                      target="_blank"
+                                                      rel="noreferrer"
+                                                      className="text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-200"
+                                                    >
+                                                      Open
+                                                    </a>
+                                                  )}
+
+                                                  {idToRemove && (
+                                                    <button
+                                                      onClick={() =>
+                                                        removeUploadedFile(
+                                                          fileModalOpen,
+                                                          idToRemove
+                                                        )
+                                                      }
+                                                      className="text-xs px-2 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white"
+                                                      disabled={
+                                                        removingFileId ===
+                                                        idToRemove
+                                                      }
+                                                    >
+                                                      {removingFileId ===
+                                                      idToRemove
+                                                        ? "Removing…"
+                                                        : "Remove"}
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </li>
+                                        );
+                                      }
+                                    )}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {/* use assistantId for the busy state check */}
                         {uploadingMap[a.assistantId || ""] && (
@@ -912,74 +1193,79 @@ const AllAgentsPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextField
                 label="Agent Name"
-                value={editMap[showEdit]?.agentName || ""}
-                onChange={(v) => onChangeDraft(showEdit, { agentName: v })}
+                value={editMap[showId]?.agentName || ""}
+                onChange={(v) => onChangeDraft(showId, { agentName: v })}
               />
+
               <TextField
                 label="Status"
-                value={editMap[showEdit]?.status || ""}
-                onChange={(v) => onChangeDraft(showEdit, { status: v })}
+                value={editMap[showId]?.status || ""}
+                onChange={(v) => onChangeDraft(showId, { status: v })}
               />
+
               <TextField
                 label="Agent Status"
-                value={editMap[showEdit]?.agentStatus || ""}
-                onChange={(v) => onChangeDraft(showEdit, { agentStatus: v })}
+                value={editMap[showId]?.agentStatus || ""}
+                onChange={(v) => onChangeDraft(showId, { agentStatus: v })}
               />
+
               <TextField
                 label="Domain"
-                value={editMap[showEdit]?.domain || ""}
-                onChange={(v) => onChangeDraft(showEdit, { domain: v })}
+                value={editMap[showId]?.domain || ""}
+                onChange={(v) => onChangeDraft(showId, { domain: v })}
               />
+
               <TextField
                 label="Sub Domain"
-                value={editMap[showEdit]?.subDomain || ""}
-                onChange={(v) => onChangeDraft(showEdit, { subDomain: v })}
+                value={editMap[showId]?.subDomain || ""}
+                onChange={(v) => onChangeDraft(showId, { subDomain: v })}
               />
+
               <TextField
                 label="Target User"
-                value={editMap[showEdit]?.targetUser || ""}
-                onChange={(v) => onChangeDraft(showEdit, { targetUser: v })}
+                value={editMap[showId]?.targetUser || ""}
+                onChange={(v) => onChangeDraft(showId, { targetUser: v })}
               />
+
               <TextField
                 label="Usage Model"
-                value={editMap[showEdit]?.usageModel || ""}
-                onChange={(v) => onChangeDraft(showEdit, { usageModel: v })}
+                value={editMap[showId]?.usageModel || ""}
+                onChange={(v) => onChangeDraft(showId, { usageModel: v })}
               />
+
               <TextField
                 label="Response Format"
-                value={editMap[showEdit]?.responseFormat || "auto"}
-                onChange={(v) => onChangeDraft(showEdit, { responseFormat: v })}
-                placeholder="auto | JSON_object"
+                value={editMap[showId]?.responseFormat || "auto"}
+                onChange={(v) => onChangeDraft(showId, { responseFormat: v })}
               />
+
               <TextField
                 label="Tone"
-                value={editMap[showEdit]?.converstionTone || ""}
-                onChange={(v) =>
-                  onChangeDraft(showEdit, { converstionTone: v })
-                }
+                value={editMap[showId]?.converstionTone || ""}
+                onChange={(v) => onChangeDraft(showId, { converstionTone: v })}
               />
+
               <ToggleField
                 label="Active"
-                value={!!editMap[showEdit]?.activeStatus}
+                value={!!editMap[showId]?.activeStatus}
                 onChange={(v) =>
-                  onChangeDraft(showEdit, { activeStatus: v as any })
+                  onChangeDraft(showId, { activeStatus: v as any })
                 }
               />
+
               <ToggleField
                 label="Voice"
-                value={!!editMap[showEdit]?.voiceStatus}
+                value={!!editMap[showId]?.voiceStatus}
                 onChange={(v) =>
-                  onChangeDraft(showEdit, { voiceStatus: v as any })
+                  onChangeDraft(showId, { voiceStatus: v as any })
                 }
               />
-              <div className="sm:col-span-2">
-                <TextArea
-                  label="Description"
-                  value={editMap[showEdit]?.description || ""}
-                  onChange={(v) => onChangeDraft(showEdit, { description: v })}
-                  rows={4}
-                />
-              </div>
+
+              <TextArea
+                label="Description"
+                value={editMap[showId]?.description || ""}
+                onChange={(v) => onChangeDraft(showId, { description: v })}
+              />
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">
@@ -990,37 +1276,11 @@ const AllAgentsPage: React.FC = () => {
                 Cancel
               </button>
               <button
-                onClick={() => saveEdit(showEdit)}
-                disabled={saving === showEdit}
+                onClick={() => showId && saveEdit(showId)}
+                disabled={!showId || saving === showId}
                 className="rounded-lg px-4 py-2 text-sm font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-md transition-all disabled:opacity-60"
               >
-                {saving === showEdit ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Saving…
-                  </span>
-                ) : (
-                  "Save Changes"
-                )}
+                {saving === showId ? /* spinner */ "Saving…" : "Save Changes"}
               </button>
             </div>
           </div>

@@ -38,8 +38,8 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇮🇳",
     speechLang: "te-IN",
     imageUrl:
-      "https://wallpaperaccess.com/full/2732802.jpg",
-    assistantName: "Sindu",
+      "https://i.ibb.co/p6XPMZdn/Chat-GPT-Image-Aug-13-2025-05-42-43-PM.png",
+    assistantName: "Priya",
   },
   {
     code: "en",
@@ -48,9 +48,9 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇺🇸",
     speechLang: "en-US",
     imageUrl:
-      "https://www.visa.co.in/content/dam/VCOM/global/our-purpose/images/partner-a-fintech-800x450.jpg",
+      "https://images.hindustantimes.com/img/2021/12/08/1600x900/4614293a-5775-11ec-ba48-cf98c20b89f1_1638944726659.jpg",
      
-    assistantName: "Smaira",
+    assistantName: "Vicky",
   },
   {
     code: "hi",
@@ -59,7 +59,7 @@ export const LANGUAGES: LanguageConfig[] = [
     flag: "🇮🇳",
     speechLang: "hi-IN",
     imageUrl:
-      "https://img.freepik.com/premium-photo/woman-suit-with-smile-her-face_662214-22756.jpg",
-    assistantName: "Ananya",
+      "https://assets.khelnow.com/news/uploads/2021/08/E8MH-Y3WUAAR9YO-scaled.jpeg",
+    assistantName: "Neeraj",
   },
 ];

@@ -28,6 +28,8 @@ import {
   EyeOutlined,
   EditOutlined,
   InfoCircleOutlined,
+  AudioOutlined,
+  AudioMutedOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import axios from "axios";
@@ -156,6 +158,19 @@ function getAuthToken(): string {
     return "";
   }
 }
+function coerceStepFromScreenStatus(s?: string | null): 0 | 1 | 2 | 3 {
+  switch (s) {
+    case "STAGE2":
+      return 1;
+    case "STAGE3":
+      return 2;
+    case "STAGE4":
+      return 3;
+    case "STAGE1":
+    default:
+      return 0;
+  }
+}
 
 function getAuthHeader(): Record<string, string> {
   const t = getAuthToken();
@@ -227,8 +242,95 @@ const CreateAgentWizard: React.FC = () => {
   const [mainProblemText, setMainProblemText] = useState("");
   const [uniqueSolution, setUniqueSolution] = useState("");
 
+  const [showViewInstructions, setShowViewInstructions] = useState(false);
+  const [isViewEditing, setIsViewEditing] = useState(false);
+
   const location = useLocation() as any;
   const [search] = useSearchParams();
+
+  // ===== Speech Recognition Helpers =====
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Map UI language -> BCP-47 for SpeechRecognition
+  function languageToBCP47(uiLang?: string) {
+    const v = (uiLang || "").toLowerCase();
+    if (v.includes("telugu") || v.includes("తెలుగు")) return "te-IN";
+    if (v.includes("hindi") || v.includes("हिंदी")) return "hi-IN";
+    return "en-US"; // default English
+  }
+
+  // Secure context check (required by Chrome)
+  function isSecureContextOk() {
+    return window.isSecureContext || window.location.hostname === "localhost";
+  }
+
+  function startListening({ toModal }: { toModal: boolean }) {
+    try {
+      if (!isSecureContextOk()) {
+        message.error("Voice input requires HTTPS (or localhost).");
+        return;
+      }
+      const SR: any =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+      if (!SR) {
+        message.error("Speech recognition is not supported in this browser.");
+        return;
+      }
+      const recog = new SR();
+      recognitionRef.current = recog;
+      recog.lang = languageToBCP47(language);
+      recog.interimResults = false;
+      recog.maxAlternatives = 1;
+
+      recog.onstart = () => setIsListening(true);
+
+      recog.onresult = (evt: any) => {
+        const transcript = evt?.results?.[0]?.[0]?.transcript || "";
+        if (!transcript) return;
+        if (toModal) {
+          setTempInstructions((prev) =>
+            prev ? prev + "\n" + transcript : transcript
+          );
+        } else {
+          setInstructions((prev) =>
+            prev ? prev + "\n" + transcript : transcript
+          );
+        }
+        message.success("Voice captured.");
+      };
+
+      recog.onerror = (e: any) => {
+        // Typical errors: "no-speech", "audio-capture", "not-allowed"
+        const code = e?.error || "";
+        if (code === "not-allowed") {
+          message.error(
+            "Microphone permission denied. Please allow mic access."
+          );
+        } else if (code === "no-speech") {
+          message.warning("No speech detected. Try again closer to the mic.");
+        } else if (code === "audio-capture") {
+          message.error("No microphone found. Check your device.");
+        } else {
+          message.error("Could not capture voice. Please try again.");
+        }
+      };
+
+      recog.onend = () => setIsListening(false);
+
+      recog.start(); // must be called from a user gesture (button click)
+    } catch {
+      setIsListening(false);
+      message.error("Could not start voice capture. Please try again.");
+    }
+  }
+
+  function stopListening() {
+    try {
+      recognitionRef.current?.stop?.();
+    } catch {}
+  }
 
   // Allowed header titles
   const HEADER_TITLES = [
@@ -303,6 +405,7 @@ const CreateAgentWizard: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [storeBharat, setStoreBharat] = useState(false);
   const [storeOxy, setStoreOxy] = useState(false);
+  const [showStoreModal, setShowStoreModal] = useState(false);
 
   // simple styles
   const purpleBtn: React.CSSProperties = {
@@ -768,6 +871,9 @@ const CreateAgentWizard: React.FC = () => {
     ) {
       missing.push("Target Customers (Other)");
     }
+    if (!instructions.trim()) {
+      missing.push("Instructions (Generate or Write your own)");
+    }
 
     // Gender
     if (genderSelections.length === 0) missing.push("Target Audience Gender");
@@ -1117,6 +1223,13 @@ const CreateAgentWizard: React.FC = () => {
     }
     try {
       setLoading(true);
+      // NEW: require user to choose at least one store
+      if (!storeBharat && !storeOxy) {
+        setLoading(false);
+        message.error("Please choose at least one store to publish.");
+        setShowStoreModal(true);
+        return;
+      }
       const chooseStore =
         storeBharat && storeOxy
           ? "BharatAIStore,OxyGPTStore"
@@ -1283,7 +1396,23 @@ const CreateAgentWizard: React.FC = () => {
     setConStarter4((editSeed as any).conStarter4 || "");
     setActiveStatus(Boolean(editSeed.activeStatus));
 
-    setStep(0);
+    // Decide where to land the wizard in edit mode
+    const jumpFromState =
+      (location?.state?.jumpToStep as 0 | 1 | 2 | 3 | undefined) ?? undefined;
+
+    const jumpFromScreen = coerceStepFromScreenStatus(
+      (editSeed as any)?.screenStatus ?? null
+    );
+
+    const jumpFromSession = (() => {
+      const v = sessionStorage.getItem("edit_jumpStep");
+      return v === "1" || v === "2" || v === "3" ? (Number(v) as 1 | 2 | 3) : 0;
+    })();
+
+    // Priority: explicit state > screenStatus on seed > sessionStorage > 0
+    const initialStep = jumpFromState ?? jumpFromScreen ?? jumpFromSession ?? 0;
+
+    setStep(initialStep as 0 | 1 | 2 | 3);
   }, [isEditMode, editSeed]);
 
   // UI helpers
@@ -2161,67 +2290,81 @@ const CreateAgentWizard: React.FC = () => {
                       )}
                     </div>
                   </Col>
-
-                  {/* Instructions */}
-                  <Col xs={24}>
-                    <div style={{ marginBottom: 12 }}>
-                      <div
+                  <Row gutter={[16, 12]}>
+                    {/* Box 1 – Generate */}
+                    <Col xs={24} md={12}>
+                      <Card
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: 8,
-                          gap: 8,
+                          minHeight: 160,
+                          border: "2px dashed #d9d9d9",
+                          borderRadius: 8,
+                          textAlign: "center",
+                          position: "relative",
+                          zIndex: 1, // keeps on top
+                          background: "#fff", // prevents bleed
                         }}
                       >
-                        {labelWithInfo(
-                          "Instructions",
-                          "Click Generate to auto-create; you can then Edit."
-                        )}
-                        <Space>
+                        <Button
+                          onClick={handleGenerate}
+                          type="primary"
+                          style={{ ...purpleBtn, marginBottom: 8 }} // ✅ spread fix
+                          loading={loading}
+                        >
+                          Generate Instructions
+                        </Button>
+                        <div style={{ fontSize: 12, color: "#8c8c8c" }}>
+                          Auto-create based on your context
+                        </div>
+                      </Card>
+                    </Col>
+
+                    {/* Box 2 – Write */}
+                    <Col xs={24} md={12}>
+                      <Card
+                        style={{
+                          minHeight: 160,
+                          border: "2px dashed #d9d9d9",
+                          borderRadius: 8,
+                          textAlign: "center",
+                          position: "relative",
+                          zIndex: 1, // keeps on top
+                          background: "#fff", // prevents bleed
+                        }}
+                      >
+                        <Space
+                          direction="vertical"
+                          align="center"
+                          style={{ width: "100%" }}
+                        >
                           <Button
-                            type="primary"
-                            size="small"
-                            onClick={handleGenerate}
-                            loading={loading}
-                            style={purpleBtn}
+                            onClick={() => {
+                              setTempInstructions(instructions);
+                              setShowInstructionsModal(true);
+                            }}
+                            type="default"
+                            style={{ marginBottom: 8 }}
+                            icon={null}
                           >
-                            Generate
+                            Write Instructions
                           </Button>
-                          {instructions && (
+
+                          <Space>
                             <Button
                               size="small"
-                              icon={<EditOutlined />}
-                              onClick={() => {
-                                setTempInstructions(instructions);
-                                setShowInstructionsModal(true);
-                              }}
+                              icon={<EyeOutlined />}
+                              onClick={() => setShowViewInstructions(true)}
                             >
-                              Edit
+                              View
                             </Button>
-                          )}
-                        </Space>
-                      </div>
+                          </Space>
 
-                      <div
-                        style={{
-                          minHeight: 140,
-                          maxHeight: 240,
-                          padding: 12,
-                          border: "2px solid #f0f0f0",
-                          borderRadius: 8,
-                          background: instructions ? "#fafafa" : "#f9f9f9",
-                          whiteSpace: "pre-wrap",
-                          fontSize: 14,
-                          lineHeight: 1.4,
-                          overflowY: "auto",
-                        }}
-                      >
-                        {instructions ||
-                          "Click 'Generate' to create instructions automatically, then use 'Edit' to customize them."}
-                      </div>
-                    </div>
-                  </Col>
+                          <div style={{ fontSize: 12, color: "#8c8c8c" }}>
+                            Type your own
+                          </div>
+                        </Space>
+                      </Card>
+                    </Col>
+                  </Row>
                 </Row>
               </div>
             )}
@@ -2564,7 +2707,8 @@ const CreateAgentWizard: React.FC = () => {
             <Button onClick={() => setShowPreview(false)}>Back</Button>
             <Button
               type="primary"
-              onClick={handleConfirmPublish}
+              // OLD: onClick={handleConfirmPublish}
+              onClick={() => setShowStoreModal(true)} // NEW: open store modal first
               loading={loading}
               style={purpleBtn}
             >
@@ -2574,21 +2718,225 @@ const CreateAgentWizard: React.FC = () => {
         </div>
       </Modal>
 
-      {/* EDIT INSTRUCTIONS MODAL */}
+      {/* STORE SELECTION MODAL */}
       <Modal
-        title="Edit Instructions"
+        title="Choose Store(s) to list your Agent"
+        open={showStoreModal}
+        onCancel={() => setShowStoreModal(false)}
+        onOk={() => {
+          // allow publish only if at least one is selected
+          if (!storeBharat && !storeOxy) {
+            message.error("Please select at least one store.");
+            return;
+          }
+          setShowStoreModal(false);
+          handleConfirmPublish();
+        }}
+        okText={isEditMode ? "Update & Publish" : "Publish"}
+      >
+        <div style={{ marginBottom: 8, color: "#595959" }}>
+          Select where this agent should appear:
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            gridTemplateColumns: "1fr",
+            marginTop: 4,
+          }}
+        >
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <Checkbox
+              checked={storeBharat}
+              onChange={(e) => setStoreBharat(e.target.checked)}
+            />
+            <div>
+              <div style={{ fontWeight: 600 }}>Bharat AI Store</div>
+              <div style={{ color: "#8c8c8c", fontSize: 12 }}>
+                Public marketplace listing inside Bharat AI Store.
+              </div>
+            </div>
+          </label>
+
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <Checkbox
+              checked={storeOxy}
+              onChange={(e) => setStoreOxy(e.target.checked)}
+            />
+            <div>
+              <div style={{ fontWeight: 600 }}>OxyGPT Store</div>
+              <div style={{ color: "#8c8c8c", fontSize: 12 }}>
+                Internal OxyGPT discovery listing for early adopters.
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <div style={{ marginTop: 12, fontSize: 12, color: "#8c8c8c" }}>
+          You can list in one or both stores. This can be changed later by
+          editing the agent.
+        </div>
+      </Modal>
+
+      <Modal
         open={showInstructionsModal}
-        onCancel={() => setShowInstructionsModal(false)}
-        onOk={handleSaveInstructions}
-        okText="Save"
+        onCancel={() => {
+          stopListening();
+          setShowInstructionsModal(false);
+        }}
+        footer={null}
+        title="Write Instructions"
       >
         <TextArea
-          rows={12}
           value={tempInstructions}
           onChange={(e) => setTempInstructions(e.target.value)}
-          maxLength={7000}
-          showCount
+          rows={8}
+          style={{ borderRadius: 8 }}
+          placeholder="Type or speak your instructions here…"
         />
+
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <Button
+            onClick={() =>
+              isListening ? stopListening() : startListening({ toModal: true })
+            }
+            icon={isListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+            danger={isListening}
+          >
+            {isListening ? "Stop" : "Speak"}
+          </Button>
+
+          <div>
+            <Button
+              onClick={() => {
+                stopListening();
+                setShowInstructionsModal(false);
+              }}
+              style={{ marginRight: 8 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                stopListening();
+                handleSaveInstructions();
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showViewInstructions}
+        onCancel={() => {
+          setIsViewEditing(false);
+          setShowViewInstructions(false);
+        }}
+        footer={null}
+        title="Instructions"
+        width={720}
+      >
+        {!isViewEditing ? (
+          <>
+            <div
+              style={{
+                whiteSpace: "pre-wrap",
+                border: "1px dashed #e6e6e6",
+                borderRadius: 8,
+                padding: 12,
+                maxHeight: 360,
+                overflow: "auto",
+                background: "#fff",
+              }}
+            >
+              {instructions || "— No instructions yet —"}
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
+            >
+              <Button onClick={() => setShowViewInstructions(false)}>
+                Close
+              </Button>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setTempInstructions(instructions);
+                  setIsViewEditing(true);
+                }}
+              >
+                Edit
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <TextArea
+              value={tempInstructions}
+              onChange={(e) => setTempInstructions(e.target.value)}
+              rows={10}
+              style={{ borderRadius: 8 }}
+            />
+            <div
+              style={{
+                marginTop: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
+              <Button
+                onClick={() =>
+                  isListening
+                    ? stopListening()
+                    : startListening({ toModal: true })
+                }
+                icon={isListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+                danger={isListening}
+              >
+                {isListening ? "Stop" : "Speak"}
+              </Button>
+              <div>
+                <Button
+                  onClick={() => {
+                    stopListening();
+                    setIsViewEditing(false);
+                  }}
+                  style={{ marginRight: 8 }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    stopListening();
+                    setInstructions(tempInstructions);
+                    setIsViewEditing(false);
+                    message.success("Instructions updated!");
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </Modal>
 
       {/* SUCCESS CARD */}

@@ -347,7 +347,8 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
               setIsListening(false);
               setTimerActive(false);
               setCurrentView("selection");
-            }
+            },
+            "alloy"
           );
         } catch (error) {
           console.error("Failed to restart voice conversation:", error);
@@ -440,7 +441,8 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
           setIsListening(false);
           setTimerActive(false);
           setCurrentView("selection");
-        }
+        },
+        "alloy"
       );
     } catch (error) {
       console.error("Failed to start voice conversation:", error);
@@ -672,7 +674,7 @@ You are ${assistantName}, a real-time voice assistant created by Genoxy speciali
             {/* Left Side: Title */}
             <div className="text-center md:text-left">
               <h1 className="text-2xl md:text-3xl font-bold text-yellow-400 leading-tight">
-              OXYGPT
+                OXYGPT
               </h1>
               <p className="text-white text-xs md:text-sm">
                 VOICE ASSISTANT - INSURANCE AI LLM

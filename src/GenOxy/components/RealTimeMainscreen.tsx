@@ -90,7 +90,12 @@ const RealtimePage: React.FC = () => {
         (speaking: boolean) => {
           setIsAssistantSpeaking(speaking);
         },
-        navigate
+        navigate,
+        selectedLanguage.name === "English"
+          ? "ballad"
+          : selectedLanguage.name === "Hindi"
+          ? "verse"
+          : "coral"
       );
 
       setIsSessionActive(true);

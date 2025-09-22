@@ -337,11 +337,11 @@ class VoiceSessionService {
 
   async getEphemeralToken(
     instructions: string,
-    assistantId: string
+    assistantId: string,voicemode:string
   ): Promise<string> {
     try {
       const res = await fetch(
-        `${BASE_URL}/student-service/user/token?assistnatId=${assistantId}`,
+        `${BASE_URL}/student-service/user/token?assistantId=${assistantId}&voicemode=${voicemode}`,
         {
           method: "POST",
           headers: {
@@ -365,12 +365,13 @@ class VoiceSessionService {
     selectedInstructions: string,
     onMessage: (message: ChatMessage) => void,
     onAssistantSpeaking: (speaking: boolean) => void,
-    navigate: (path: string) => void
+    navigate: (path: string) => void,
+    voicemode:string
   ): Promise<RTCDataChannel> {
     try {
       const EPHEMERAL_KEY = await this.getEphemeralToken(
         selectedInstructions,
-        assistantId
+        assistantId,voicemode
       );
 
       const pc = new RTCPeerConnection();

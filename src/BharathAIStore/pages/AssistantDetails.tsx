@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate,useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Loader2, Send, User, Bot, Mic } from "lucide-react";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { GiElephantHead } from "react-icons/gi";
 import {
   Copy,
   Share2,
@@ -56,7 +57,6 @@ const AssistantDetails: React.FC = () => {
   const { id, agentId } = useParams<{ id: string; agentId: string }>();
   const navigate = useNavigate();
 
-
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -79,9 +79,9 @@ const AssistantDetails: React.FC = () => {
     const response = await axios.get(
       `${BASE_URL}/ai-service/agent/getConversation/${agentId}`,
       {
-        headers: { 
-          Authorization: `Bearer ${localStorage.getItem("token") }`,
-         },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
     );
     return response.data;
@@ -150,7 +150,7 @@ const AssistantDetails: React.FC = () => {
       }
     };
     fetchAssistant();
-  }, [agentId, id,navigate]);
+  }, [agentId, id, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -410,6 +410,9 @@ backdrop-blur-md sticky top-0 z-20 "
                       </button>
                     ))}
                 </div>
+
+
+                
               </div>
             ) : (
               <>
@@ -452,10 +455,7 @@ backdrop-blur-md sticky top-0 z-20 "
                               </div>
                             </div>
                           ) : (
-                            <MarkdownRenderer
-                              className={`prose prose-sm sm:prose-base max-w-none prose-invert text-purple-700 dark:text-white`}
-                              content={msg.content}
-                            />
+                            <MarkdownRenderer content={msg.content} />
                           )}
                         </div>
                       </div>
@@ -489,15 +489,10 @@ backdrop-blur-md sticky top-0 z-20 "
                       key={idx}
                       className={`flex mb-3 sm:mb-4 justify-start`}
                     >
-                      <div
-                        className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600`}
-                      >
-                        <div className="flex gap-2">
-                          <Bot className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
-                          <MarkdownRenderer
-                            className={`prose prose-sm sm:prose-base max-w-none prose-indigo dark:prose-invert text-purple-700 dark:text-white`}
-                            content={msg.content}
-                          />
+                      <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                        <div className="flex-1">
+                          <GiElephantHead className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
+                          <MarkdownRenderer content={msg.content} />
                         </div>
 
                         <div className="flex justify-end gap-2 mt-2">

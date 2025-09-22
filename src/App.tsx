@@ -213,6 +213,7 @@ import AppRoutes from "./BharathAIStore/routes/Landingpage";
 import Layout from "./BharathAIStore/routes/Landingpage";
 import BharatAgentsStore from "./BharathAIStore/pages/BharatAgentsStore";
 import BananaImageGenerate from "./AgentStore/BananaImageGenerate";
+import InsuranceAgentsPage from "./BharathAIStore/pages/InsuranceAgentsPage";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -260,6 +261,7 @@ const App: React.FC = () => {
             <Route path="/carnival-list" element={<CarnivalListPage />} />
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
             <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
+            <Route path="/bharath-aistore/insurance" element={<InsuranceAgentsPage />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}

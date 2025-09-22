@@ -1,6 +1,6 @@
 // /src/AgentStore/BharatAgentsStore.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Bot, Shield, Loader2, Star, X ,Flame} from "lucide-react";
+import { Bot, Shield, Loader2, Star, X, Flame } from "lucide-react";
 import BASE_URL from "../../Config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -42,8 +42,8 @@ interface AssistantsResponse {
   object: string;
   data: Assistant[];
   has_more: boolean;
-  first_id?: string;
-  last_id?: string;
+  firstId?: string;
+  lastId?: string;
 }
 
 interface PaginationState {
@@ -57,11 +57,16 @@ interface PaginationState {
 // ---------- api ----------
 const apiClient = axios.create({ baseURL: BASE_URL });
 
-async function getAssistants(limit = 50, after?: string): Promise<AssistantsResponse> {
+async function getAssistants(
+  limit = 50,
+  after?: string
+): Promise<AssistantsResponse> {
   const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
     headers: {
       "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}` ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` } : {}),
+      ...(`${process.env.AUTH_TOKEN}`
+        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
+        : {}),
     },
     params: { limit, after },
   });
@@ -76,12 +81,12 @@ async function getAssistants(limit = 50, after?: string): Promise<AssistantsResp
   return {
     object: res.data?.object ?? "list",
     data: normalized,
+    // 🔑 normalize names here
     has_more: !!res.data?.has_more,
-    first_id: res.data?.first_id,
-    last_id: res.data?.last_id,
+    firstId: res.data?.firstId,
+    lastId: res.data?.lastId,
   };
 }
-
 
 // Search API → /ai-service/agent/webSearchForAgent?message=...
 async function searchAssistants(query: string): Promise<Assistant[]> {
@@ -89,7 +94,9 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     params: { message: query },
     headers: {
       "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}` ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` } : {}),
+      ...(`${process.env.AUTH_TOKEN}`
+        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
+        : {}),
     },
   });
 
@@ -111,9 +118,6 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     imageUrl: a.imageUrl || a.image || a.thumbUrl || "", // ✅ carry through image
   }));
 }
-
-
-
 
 // ---------- helpers ----------
 
@@ -155,18 +159,24 @@ const hashSeed = (s: string) => {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  return (h >>> 0);
+  return h >>> 0;
 };
 
 const gradientFor = (seed: string) => {
   const h = hashSeed(seed || "AI");
   // pick two distinct palette colors
   const i1 = h % PLAY_COLORS.length;
-  const i2 = (i1 + 1 + ((h >> 3) % (PLAY_COLORS.length - 1))) % PLAY_COLORS.length;
+  const i2 =
+    (i1 + 1 + ((h >> 3) % (PLAY_COLORS.length - 1))) % PLAY_COLORS.length;
   const c1 = PLAY_COLORS[i1];
   const c2 = PLAY_COLORS[i2];
   // vary angle a bit so not all look identical
-  const angle = [ [0,1], [1,0], [0,0], [1,1] ][(h >> 7) & 3]; // [x2,y2]
+  const angle = [
+    [0, 1],
+    [1, 0],
+    [0, 0],
+    [1, 1],
+  ][(h >> 7) & 3]; // [x2,y2]
   return { c1, c2, x2: angle[0], y2: angle[1] };
 };
 
@@ -200,7 +210,6 @@ function makeInitialsSVG(name: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-
 // ---------- reusable assistant card ----------
 const AssistantCard: React.FC<{
   assistant: Assistant;
@@ -211,7 +220,7 @@ const AssistantCard: React.FC<{
   const seed = assistant.name || `A${index}`;
   const badge =
     (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
- 
+
   const fallbackSVG = makeInitialsSVG(assistant.name || "AI");
   const chosenThumb = (assistant.imageUrl || "").trim() || fallbackSVG;
   // Keep a stateful src that swaps to fallback on error
@@ -299,7 +308,11 @@ const ReadMoreModal: React.FC<{
         <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">{title}</h3>
-            <button onClick={onClose} className="p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md hover:bg-gray-100"
+              aria-label="Close"
+            >
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
@@ -334,7 +347,9 @@ const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
         role="button"
         tabIndex={0}
         onClick={onOpen}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? onOpen() : null)}
+        onKeyDown={(e) =>
+          e.key === "Enter" || e.key === " " ? onOpen() : null
+        }
         className="relative group rounded-2xl shadow-purple-400/60 transition-transform hover:-translate-y-0.5 h-full"
         aria-label="Open THE FAN OF OG"
       >
@@ -423,15 +438,43 @@ const BharatAgentsStore: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 40,
-    hasMore: true,
-    total: 0,
-  });
+const [pagination, setPagination] = useState<PaginationState>({
+  pageSize: 100,  // ⬅️ bump to 100
+  hasMore: true,
+  total: 0,
+});
 
+const PRIORITY_ORDER = [
+  "Bharath AI Mission",
+  "Nyaya Gpt",
+  "IndiaAI Discovery",
+  "IRDAI Enforcement Actions",
+  "AI-Based IRDAI GI Reg Audit",
+  "GST Reforms 2025",
+  "General Insurance Discovery",
+  "Criminal Law Expert",
+  "Advocate Law",
+  "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
+];
+
+const priorityIndex = (name?: string) => {
+  const n = (name || "").trim().toLowerCase();
+  const i = PRIORITY_ORDER.findIndex(
+    (x) => x.trim().toLowerCase() === n
+  );
+  return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+};
   const ALWAYS_SHOW_NAMES = new Set([
+    "Bharath AI Mission",
+    "Nyaya Gpt",
+    "IndiaAI Discovery",
+    "IRDAI Enforcement Actions",
+    "AI-Based IRDAI GI Reg Audit",
+    "GST Reforms 2025",
     "General Insurance Discovery",
-    "Life Insurance Citizen Discovery",
+    "Criminal Law Expert",
+    "Advocate Law",
+    "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   ]);
 
   const NEXT_PATH = "/main/bharat-expert";
@@ -451,31 +494,54 @@ const BharatAgentsStore: React.FC = () => {
       setLoading(false);
     }
   };
+// 2) inside fetchAssistants
+const fetchAssistants = useCallback(
+  async (after?: string, isLoadMore = false) => {
+    setLoading(true);
+    try {
+      const response = await getAssistants(pagination.pageSize, after);
 
-  const fetchAssistants = useCallback(
-    async (after?: string, isLoadMore = false) => {
-      setLoading(true);
-      try {
-        const response = await getAssistants(pagination.pageSize, after);
-        setAssistants((prev) =>
-          isLoadMore ? [...prev, ...response.data] : response.data
-        );
-        setPagination((prev) => ({
-          ...prev,
-          hasMore: response.has_more,
-          firstId: response.first_id,
-          lastId: response.last_id,
-          total: isLoadMore ? prev.total + response.data.length : response.data.length,
-        }));
-      } catch (err) {
-        console.error("Error fetching assistants:", err);
-        setError("Failed to load assistants");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [pagination.pageSize]
-  );
+      // ⬇️ de-dupe by id/assistantId/agentId
+      setAssistants((prev) => {
+        const merged = isLoadMore ? [...prev, ...response.data] : response.data;
+        const byId = new Map<string, Assistant>();
+        for (const a of merged) {
+          const key = a.assistantId || a.id || a.agentId || "";
+          if (key) byId.set(key, a);
+        }
+        return Array.from(byId.values());
+      });
+
+      // ⬇️ robust next cursor
+      const nextCursor =
+        response.lastId ||
+        response.data[response.data.length - 1]?.assistantId ||
+        response.data[response.data.length - 1]?.id ||
+        response.data[response.data.length - 1]?.agentId ||
+        undefined;
+
+      // ⬇️ compute hasMore even if API doesn't set has_more
+      const pageFull = response.data.length >= pagination.pageSize;
+
+      setPagination((prev) => ({
+        ...prev,
+        hasMore: Boolean(response.has_more ?? pageFull),
+        firstId: response.firstId ?? prev.firstId,
+        lastId: nextCursor ?? prev.lastId,
+        total: isLoadMore
+          ? prev.total + response.data.length
+          : response.data.length,
+      }));
+    } catch (err) {
+      console.error("Error fetching assistants:", err);
+      setError("Failed to load assistants");
+    } finally {
+      setLoading(false);
+    }
+  },
+  [pagination.pageSize]
+);
+
 
   useEffect(() => {
     fetchAssistants();
@@ -514,7 +580,9 @@ const BharatAgentsStore: React.FC = () => {
         console.error("Search API failed:", e);
         if (!active) return;
         setSearchResults([]);
-        setSearchError(e?.response?.data?.message || e?.message || "Search failed");
+        setSearchError(
+          e?.response?.data?.message || e?.message || "Search failed"
+        );
       } finally {
         if (active) setSearchLoading(false);
       }
@@ -525,13 +593,16 @@ const BharatAgentsStore: React.FC = () => {
     };
   }, [q]);
 
-  // What we actually show:
-  const shownAssistants = useMemo<Assistant[]>(() => {
-    if ((q || "").trim()) {
-      return (searchResults ?? []) as Assistant[];
-    }
-    return approvedAssistants;
-  }, [q, searchResults, approvedAssistants]);
+const shownAssistants = useMemo<Assistant[]>(() => {
+  const list = (q || "").trim() ? (searchResults ?? []) : approvedAssistants;
+  return [...list].sort((a, b) => {
+    const pa = priorityIndex(a.name);
+    const pb = priorityIndex(b.name);
+    if (pa !== pb) return pa - pb;                 // priority first
+    return (a.name || "").localeCompare(b.name || ""); // stable order next
+  });
+}, [q, searchResults, approvedAssistants]);
+
 
   const SkeletonCard = () => (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse">
@@ -663,7 +734,9 @@ const BharatAgentsStore: React.FC = () => {
               {isSearching ? "No results found" : "No Assistants Found"}
             </h3>
             <p className="text-gray-600">
-              {isSearching ? "Try a different search term." : "Try a different search term."}
+              {isSearching
+                ? "Try a different search term."
+                : "Try a different search term."}
             </p>
           </div>
         ) : (
