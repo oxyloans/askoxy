@@ -97,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     {
       to: "/main/bharat-expert",
       icon: <PlusCircle size={18} />,
-      label: "Create Agent",
+      label: "Create AI Agent",
     },
     {
       to: "/main/bharath-aistore/agents",

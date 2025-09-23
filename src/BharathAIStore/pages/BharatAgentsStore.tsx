@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Bot, Shield, Loader2, Star, X, Flame } from "lucide-react";
 import BASE_URL from "../../Config";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Highlighter from "../components/Highlighter";
 
@@ -88,7 +88,7 @@ async function getAssistants(
   };
 }
 
-// Search API → /ai-service/agent/webSearchForAgent?message=...
+// /ai-service/agent/webSearchForAgent?message=...
 async function searchAssistants(query: string): Promise<Assistant[]> {
   const res = await apiClient.get("/ai-service/agent/webSearchForAgent", {
     params: { message: query },
@@ -110,12 +110,13 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
 
   return raw.map((a: any, idx: number) => ({
     ...a,
+    // ✅ make sure both ids exist in the object
+    assistantId: a.assistantId || a.id || a.agentId || "",
+    agentId: a.agentId || a.assistantId || a.id || "",
+
     name: a.name ?? `Agent ${idx + 1}`,
     description: a.description ?? a.desc ?? "",
-    assistantId: a.assistantId || a.id || a.agentId,
-    agentId: a.agentId || a.assistantId || a.id,
-    status: a.status || a.agentStatus,
-    imageUrl: a.imageUrl || a.image || a.thumbUrl || "", // ✅ carry through image
+    imageUrl: a.imageUrl || a.image || a.thumbUrl || "",
   }));
 }
 
@@ -266,7 +267,7 @@ const AssistantCard: React.FC<{
         <div className="pt-8 px-5 pb-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-1 leading-snug">
+              <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-2 leading-snug">
                 <Highlighter text={assistant.name || ""} query={q} />
               </h3>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-5 ">
@@ -307,7 +308,9 @@ const ReadMoreModal: React.FC<{
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">{title}</h3>
+            <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-2 leading-snug">
+              {title}
+            </h3>
             <button
               onClick={onClose}
               className="p-1 rounded-md hover:bg-gray-100"
@@ -438,43 +441,50 @@ const BharatAgentsStore: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-const [pagination, setPagination] = useState<PaginationState>({
-  pageSize: 100,  // ⬅️ bump to 100
-  hasMore: true,
-  total: 0,
-});
+  const location = useLocation();
 
-const PRIORITY_ORDER = [
-  "Bharath AI Mission",
-  "Nyaya Gpt",
-  "IndiaAI Discovery",
-  "IRDAI Enforcement Actions",
-  "AI-Based IRDAI GI Reg Audit",
-  "GST Reforms 2025",
-  "General Insurance Discovery",
-  "Criminal Law Expert",
-  "Advocate Law",
-  "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
-];
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageSize: 100, // ⬅️ bump to 100
+    hasMore: true,
+    total: 0,
+  });
 
-const priorityIndex = (name?: string) => {
-  const n = (name || "").trim().toLowerCase();
-  const i = PRIORITY_ORDER.findIndex(
-    (x) => x.trim().toLowerCase() === n
-  );
-  return i === -1 ? Number.MAX_SAFE_INTEGER : i;
-};
-  const ALWAYS_SHOW_NAMES = new Set([
+  const PRIORITY_ORDER = [
     "Bharath AI Mission",
-    "Nyaya Gpt",
-    "IndiaAI Discovery",
+ 
+   
+    "Life Insurance Citizen Discovery",
     "IRDAI Enforcement Actions",
     "AI-Based IRDAI GI Reg Audit",
-    "GST Reforms 2025",
+ 
     "General Insurance Discovery",
-    "Criminal Law Expert",
-    "Advocate Law",
+    
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
+       "GST Reforms 2025",
+          "Nyaya Gpt",
+       "Criminal Law Expert",
+
+  ];
+
+  const priorityIndex = (name?: string) => {
+    const n = (name || "").trim().toLowerCase();
+    const i = PRIORITY_ORDER.findIndex((x) => x.trim().toLowerCase() === n);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  const ALWAYS_SHOW_NAMES = new Set([
+    "Bharath AI Mission",
+  
+  
+    "Life Insurance Citizen Discovery",
+    "IRDAI Enforcement Actions",
+    "AI-Based IRDAI GI Reg Audit",
+ 
+    "General Insurance Discovery",
+    
+    "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
+       "GST Reforms 2025",
+         "Nyaya Gpt", 
+       "Criminal Law Expert",
   ]);
 
   const NEXT_PATH = "/main/bharat-expert";
@@ -494,54 +504,55 @@ const priorityIndex = (name?: string) => {
       setLoading(false);
     }
   };
-// 2) inside fetchAssistants
-const fetchAssistants = useCallback(
-  async (after?: string, isLoadMore = false) => {
-    setLoading(true);
-    try {
-      const response = await getAssistants(pagination.pageSize, after);
+  // 2) inside fetchAssistants
+  const fetchAssistants = useCallback(
+    async (after?: string, isLoadMore = false) => {
+      setLoading(true);
+      try {
+        const response = await getAssistants(pagination.pageSize, after);
 
-      // ⬇️ de-dupe by id/assistantId/agentId
-      setAssistants((prev) => {
-        const merged = isLoadMore ? [...prev, ...response.data] : response.data;
-        const byId = new Map<string, Assistant>();
-        for (const a of merged) {
-          const key = a.assistantId || a.id || a.agentId || "";
-          if (key) byId.set(key, a);
-        }
-        return Array.from(byId.values());
-      });
+        // ⬇️ de-dupe by id/assistantId/agentId
+        setAssistants((prev) => {
+          const merged = isLoadMore
+            ? [...prev, ...response.data]
+            : response.data;
+          const byId = new Map<string, Assistant>();
+          for (const a of merged) {
+            const key = a.assistantId || a.id || a.agentId || "";
+            if (key) byId.set(key, a);
+          }
+          return Array.from(byId.values());
+        });
 
-      // ⬇️ robust next cursor
-      const nextCursor =
-        response.lastId ||
-        response.data[response.data.length - 1]?.assistantId ||
-        response.data[response.data.length - 1]?.id ||
-        response.data[response.data.length - 1]?.agentId ||
-        undefined;
+        // ⬇️ robust next cursor
+        const nextCursor =
+          response.lastId ||
+          response.data[response.data.length - 1]?.assistantId ||
+          response.data[response.data.length - 1]?.id ||
+          response.data[response.data.length - 1]?.agentId ||
+          undefined;
 
-      // ⬇️ compute hasMore even if API doesn't set has_more
-      const pageFull = response.data.length >= pagination.pageSize;
+        // ⬇️ compute hasMore even if API doesn't set has_more
+        const pageFull = response.data.length >= pagination.pageSize;
 
-      setPagination((prev) => ({
-        ...prev,
-        hasMore: Boolean(response.has_more ?? pageFull),
-        firstId: response.firstId ?? prev.firstId,
-        lastId: nextCursor ?? prev.lastId,
-        total: isLoadMore
-          ? prev.total + response.data.length
-          : response.data.length,
-      }));
-    } catch (err) {
-      console.error("Error fetching assistants:", err);
-      setError("Failed to load assistants");
-    } finally {
-      setLoading(false);
-    }
-  },
-  [pagination.pageSize]
-);
-
+        setPagination((prev) => ({
+          ...prev,
+          hasMore: Boolean(response.has_more ?? pageFull),
+          firstId: response.firstId ?? prev.firstId,
+          lastId: nextCursor ?? prev.lastId,
+          total: isLoadMore
+            ? prev.total + response.data.length
+            : response.data.length,
+        }));
+      } catch (err) {
+        console.error("Error fetching assistants:", err);
+        setError("Failed to load assistants");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.pageSize]
+  );
 
   useEffect(() => {
     fetchAssistants();
@@ -593,16 +604,15 @@ const fetchAssistants = useCallback(
     };
   }, [q]);
 
-const shownAssistants = useMemo<Assistant[]>(() => {
-  const list = (q || "").trim() ? (searchResults ?? []) : approvedAssistants;
-  return [...list].sort((a, b) => {
-    const pa = priorityIndex(a.name);
-    const pb = priorityIndex(b.name);
-    if (pa !== pb) return pa - pb;                 // priority first
-    return (a.name || "").localeCompare(b.name || ""); // stable order next
-  });
-}, [q, searchResults, approvedAssistants]);
-
+  const shownAssistants = useMemo<Assistant[]>(() => {
+    const list = (q || "").trim() ? searchResults ?? [] : approvedAssistants;
+    return [...list].sort((a, b) => {
+      const pa = priorityIndex(a.name);
+      const pb = priorityIndex(b.name);
+      if (pa !== pb) return pa - pb;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [q, searchResults, approvedAssistants]);
 
   const SkeletonCard = () => (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse">
@@ -677,11 +687,40 @@ const shownAssistants = useMemo<Assistant[]>(() => {
     );
   }
 
-  const handleOpen = (a: Assistant) => {
-    const assistantId = a.assistantId || a.id || a.agentId;
-    const agentId = a.agentId || a.assistantId || a.id;
-    if (!assistantId) return;
-    navigate(`/bharath-aistore/assistant/${assistantId}/${agentId}`);
+  const slugify = (s: string) =>
+    (s || "agent")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const handleOpen = (a: any) => {
+    const assistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const agentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
+    const nameSlug = slugify(a.name);
+    const base = location.pathname.includes("bharath-aistore")
+      ? "bharath-aistore"
+      : "bharat-aistore";
+
+    if (assistantId && agentId) {
+      // ✅ best (canonical) route
+      navigate(
+        `/${base}/assistant/${encodeURIComponent(
+          assistantId
+        )}/${encodeURIComponent(agentId)}`
+      );
+      return;
+    }
+
+    if (assistantId) {
+      // ✅ still good: single-id route (see Route #3 below)
+      navigate(`/${base}/assistant/${encodeURIComponent(assistantId)}`);
+      return;
+    }
+    navigate(`/${base}/assistant/by-name/${encodeURIComponent(nameSlug)}`);
   };
 
   const isSearching = !!(q || "").trim();

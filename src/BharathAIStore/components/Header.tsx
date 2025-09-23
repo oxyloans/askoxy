@@ -426,8 +426,8 @@ const Header: React.FC<HeaderProps> = ({
                     <button
                       onClick={handleCreateAgentClick}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
-                      aria-label="Create Agent"
-                      title="Create Agent"
+                      aria-label="Create AI Agent"
+                      title="Create AI Agent"
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -473,9 +473,9 @@ const Header: React.FC<HeaderProps> = ({
                     "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)]",
                     "animate-pulse",
                   ].join(" ")}
-                  aria-label="Create Agent"
+                  aria-label="Create AI Agent"
                 >
-                  {isLoading ? "Loading…" : "Create Agent"}
+                  {isLoading ? "Loading…" : "Create AI Agent"}
                 </button>
               </div>
             </div>
@@ -536,7 +536,7 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={handleCreateAgentClick}
                 className="w-full rounded-full bg-purple-600 text-white font-semibold py-3 shadow shadow-purple-400/60 animate-pulse hover:bg-purple-700"
               >
-                {isLoading ? "Loading…" : "Create Agent"}
+                {isLoading ? "Loading…" : "Create AI Agent"}
               </button>
             </div>
           </div>

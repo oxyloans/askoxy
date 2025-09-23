@@ -186,10 +186,12 @@ const AllAgentsPage: React.FC = () => {
   const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
   const [removingFileId, setRemovingFileId] = useState<string | null>(null);
   const showId = showEdit ?? "";
+
   const resolvedUserId = useMemo(() => {
     const id = getUserId();
     return id && id !== "null" && id !== "undefined" ? id : "";
   }, []);
+  const gotoStore = () => navigate("/bharath-aistore");
 
   useEffect(() => {
     (async () => {
@@ -362,12 +364,19 @@ const AllAgentsPage: React.FC = () => {
     }
   };
 
-  const filteredAssistants = useMemo(() => {
-    if (!data) return [];
-    return data.assistants.filter(
-      (a) => filterStatus === "All" || a.status === filterStatus
-    );
-  }, [data, filterStatus]);
+const filteredAssistants = useMemo(() => {
+  if (!data) return [];
+
+  return data.assistants.filter((a) => {
+    if (filterStatus === "All") {
+      // ✅ Show everything EXCEPT deleted
+      return a.status !== "DELETED";
+    }
+    // ✅ Show only matching status
+    return a.status === filterStatus;
+  });
+}, [data, filterStatus]);
+
 
   const onChangeDraft = (id: string, patch: EditDraft) => {
     setEditMap((m) => ({ ...m, [id]: { ...(m[id] || {}), ...patch } }));
@@ -600,10 +609,42 @@ const AllAgentsPage: React.FC = () => {
     }
   };
 
-  const gotoStore = () => navigate("/main/bharat-expert");
-
   return (
     <div className="min-h-screen">
+      {/* 🔥 Top Bar with responsive layout */}
+      <div
+        className="sticky  w-full bg-white shadow-sm border-b border-purple-200 px-4 py-3
+                flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        {/* Left: Status Filter */}
+        <div className="w-full sm:w-auto">
+          <Select
+            value={filterStatus}
+            onChange={setFilterStatus}
+            size="large" // ✅ makes control ~40px tall (matches button)
+            className="w-full sm:w-[220px]"
+            options={[
+              { value: "All", label: "ALL STATUSES" },
+              { value: "APPROVED", label: "APPROVED" },
+              { value: "DELETED", label: "DELETED" },
+              { value: "REQUESTED", label: "REQUESTED" },
+              { value: "REJECTED", label: "REJECTED" },
+            ]}
+            placeholder="Filter by Status"
+          />
+        </div>
+
+        {/* Right: Bharath AI Store button */}
+        <button
+          onClick={gotoStore} // uses your existing handler
+          className="w-full sm:w-auto h-10 rounded-lg px-5 font-semibold
+               bg-gradient-to-r from-purple-600 to-purple-700 text-white
+               hover:from-purple-700 hover:to-purple-800 shadow-md transition-all"
+        >
+          Bharath AI Store
+        </button>
+      </div>
+
       {/* Body */}
       <main className="mx-auto max-w-7xl px-4 py-6">
         {loading && (
@@ -646,21 +687,6 @@ const AllAgentsPage: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="mb-6">
-                  <Select
-                    value={filterStatus}
-                    onChange={setFilterStatus}
-                    style={{ width: 200 }}
-                    options={[
-                      { value: "All", label: "ALL STATUSES" },
-                      { value: "APPROVED", label: "APPROVED" },
-                      { value: "DELETED", label: "DELETED" },
-                      { value: "REQUESTED", label: "REQUESTED" },
-                      { value: "REJECTED", label: "REJECTED" },
-                    ]}
-                    placeholder="Filter by Status"
-                  />
-                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredAssistants.map((a) => {
                     const conv = conversationsByAgent[a.id] || [];
