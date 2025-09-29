@@ -255,34 +255,48 @@ const AllAgentsPage: React.FC = () => {
     return map;
   }, [data]);
 
-  const openUpdateWizard = (a: Assistant) => {
-    // Persist IDs for hard refresh in the wizard
-    sessionStorage.setItem("edit_agentId", a.id);
-    sessionStorage.setItem("edit_assistantId", a.assistantId || "");
+ const openUpdateWizard = (a: Assistant) => {
+  // Persist IDs
+  sessionStorage.setItem("edit_agentId", a.id);
+  sessionStorage.setItem("edit_assistantId", a.assistantId || "");
 
-    // Map screenStatus -> step index
-    const stepFromScreen =
-      a?.screenStatus === "STAGE2"
-        ? 1
-        : a?.screenStatus === "STAGE3"
-        ? 2
-        : a?.screenStatus === "STAGE4"
-        ? 3
-        : 0;
+  // pick jump step from screenStatus
+  const stepFromScreen =
+    a?.screenStatus === "STAGE2" ? 1 :
+    a?.screenStatus === "STAGE3" ? 2 :
+    a?.screenStatus === "STAGE4" ? 3 : 0;
 
-    // also persist planned jump step for hard refresh
-    sessionStorage.setItem("edit_jumpStep", String(stepFromScreen));
+  sessionStorage.setItem("edit_jumpStep", String(stepFromScreen));
 
-    const qs = new URLSearchParams({
-      agentId: a.id,
-      assistantId: a.assistantId || "",
-      mode: "edit",
-    }).toString();
+  // 🔥 NEW: merge latest conversation starters into seed
+  const convList = conversationsByAgent[a.id] || [];
+  const latest = [...convList].sort((x, y) =>
+    new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime()
+  )[0];
 
-    navigate(`/main/create-aiagent?${qs}`, {
-      state: { mode: "edit", seed: a, jumpToStep: stepFromScreen },
-    });
-  };
+  const seed = latest
+    ? {
+        ...a,
+        conStarter1: latest.conStarter1,
+        conStarter2: latest.conStarter2,
+        conStarter3: latest.conStarter3,
+        conStarter4: latest.conStarter4,
+        rateThisPlatform: latest.rateThisPlatform,
+        shareYourFeedback: latest.shareYourFeedback,
+      }
+    : a;
+
+  const qs = new URLSearchParams({
+    agentId: a.id,
+    assistantId: a.assistantId || "",
+    mode: "edit",
+  }).toString();
+
+  navigate(`/main/create-aiagent?${qs}`, {
+    state: { mode: "edit", seed, jumpToStep: stepFromScreen },
+  });
+};
+
 
   // VIEW: GET /api/ai-service/agent/getUploaded?assistantId=...
   const fetchUploadedFiles = async (assistantId: string) => {

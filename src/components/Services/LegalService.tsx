@@ -205,9 +205,9 @@ const LegalService: React.FC = () => {
 
     try {
       const hasInterest = await checkUserInterest(userId, "LEGALSERVICES");
-      setInterested(hasInterest);
+      setInterested(hasInterest.exists);
       if (submitclicks) {
-        handleSubmit(hasInterest);
+        handleSubmit(hasInterest.exists);
       }
     } catch (error) {
       console.error("Error while fetching offers:", error);
@@ -256,55 +256,34 @@ const LegalService: React.FC = () => {
             <img
               src="https://i.ibb.co/1fNpVjbB/Legal-knowledge-hub-9db183177e6a1533ba16.png"
               alt="My Rotarian"
-              className="w-full md:w-auto h-auto "
+              className="w-full md:w-auto h-auto rounded-lg shadow-lg"
             />
           </div>
           <div className="w-full md:w-1/2 text-left md:pl-8 space-y-6">
             <div className="text-center md:text-left">
               <strong className="text-[20px] md:text-[24px] text-[#6A1B9A] font-semibold">
                 Welcome, Lawyers and Advocates! Elevate Your Legal Practice with
-                ASKOXY.AI
+                AskOxy.ai
               </strong>
             </div>
-            <div className="mt-6 p-6 ">
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#6A1B9A] text-white flex items-center justify-center text-sm font-bold">
-                    ✓
-                  </span>
-                  <p className="text-gray-700">
-                    <strong>Enhance Your Professional Presence:</strong>{" "}
-                    Increase your visibility among individuals seeking legal
-                    guidance.
-                  </p>
+            <div className="space-y-4 text-gray-800">
+              <ul className="list-disc pl-6">
+                <li>
+                  <strong>Enhance Your Professional Presence:</strong> Increase
+                  your visibility among individuals seeking legal guidance.
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#6A1B9A] text-white flex items-center justify-center text-sm font-bold">
-                    ✓
-                  </span>
-                  <p className="text-gray-700">
-                    <strong>Share Expertise:</strong> Publish legal insights to
-                    educate and establish your authority.
-                  </p>
+                <li>
+                  <strong>Share Expertise:</strong> Publish legal insights to
+                  educate and establish your authority.
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#6A1B9A] text-white flex items-center justify-center text-sm font-bold">
-                    ✓
-                  </span>
-                  <p className="text-gray-700">
-                    <strong>Collaborate on Legal Publications:</strong> Partner
-                    with professionals to create impactful legal content.
-                  </p>
+                <li>
+                  <strong>Collaborate on Legal Publications:</strong> Partner
+                  with professionals to create impactful legal content.
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#6A1B9A] text-white flex items-center justify-center text-sm font-bold">
-                    ✓
-                  </span>
-                  <p className="text-gray-700">
-                    <strong>Expand Your Legal Network:</strong> Be part of a
-                    vibrant, trusted platform for knowledge sharing and
-                    collaboration.
-                  </p>
+                <li>
+                  <strong>Expand Your Legal Network:</strong> Be part of a
+                  vibrant, trusted platform for knowledge sharing and
+                  collaboration.
                 </li>
               </ul>
             </div>
@@ -503,25 +482,19 @@ const LegalService: React.FC = () => {
 
         {/* Write To Us Modal */}
         {isOpen && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
-            <div className="relative bg-white rounded-lg shadow-2xl p-6 w-96">
-              {/* Close Button */}
-              <button
-                className="absolute top-3 right-3 text-gray-700 hover:text-red-600 text-2xl font-bold focus:outline-none"
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
+            <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
+              <i
+                className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close"
-              >
-                ×
-              </button>
-
-              <h2 className="text-xl font-bold mb-4 text-[#3d2a71] text-center">
+              />
+              <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
                 Write To Us
               </h2>
-
-              {/* Mobile Number */}
               <div className="mb-4">
                 <label
-                  className="block text-sm text-gray-800 font-semibold mb-1"
+                  className="block text-m text-black font-medium mb-1"
                   htmlFor="phone"
                 >
                   Mobile Number
@@ -531,14 +504,14 @@ const LegalService: React.FC = () => {
                   id="phone"
                   disabled={true}
                   value={finalMobileNumber || ""}
-                  className="block w-full text-gray-700 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
+                  className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                  placeholder="Enter your mobile number"
+                  style={{ fontSize: "0.8rem" }}
                 />
               </div>
-
-              {/* Email */}
               <div className="mb-4">
                 <label
-                  className="block text-sm text-gray-800 font-semibold mb-1"
+                  className="block text-m text-black font-medium mb-1"
                   htmlFor="email"
                 >
                   Email
@@ -546,16 +519,16 @@ const LegalService: React.FC = () => {
                 <input
                   type="email"
                   id="email"
-                  disabled={true}
                   value={email || ""}
-                  className="block w-full text-gray-700 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
+                  disabled={true}
+                  className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
+                  placeholder="Enter your email"
+                  style={{ fontSize: "0.8rem" }}
                 />
               </div>
-
-              {/* Query */}
               <div className="mb-4">
                 <label
-                  className="block text-sm text-gray-800 font-semibold mb-1"
+                  className="block text-m text-black font-medium mb-1"
                   htmlFor="query"
                 >
                   Query
@@ -563,20 +536,18 @@ const LegalService: React.FC = () => {
                 <textarea
                   id="query"
                   rows={3}
-                  className="block w-full text-gray-700 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71]"
+                  className="block w-full text-black px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3d2a71] focus:border-[#3d2a71] transition-all duration-200"
                   placeholder="Enter your query"
-                  value={query}
+                  style={{ fontSize: "0.8rem" }}
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 {queryError && (
                   <p className="text-red-500 text-sm mt-1">{queryError}</p>
                 )}
               </div>
-
-              {/* Submit Button */}
               <div className="flex justify-center">
                 <button
-                  className="px-5 py-2 bg-[#3d2a71] text-white rounded-lg shadow-md hover:bg-[#2a1d4e] transition duration-200"
+                  className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
                   onClick={handleWriteToUsSubmitButton}
                   disabled={isLoading}
                 >

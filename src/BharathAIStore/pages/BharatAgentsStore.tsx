@@ -11,6 +11,7 @@ import CA3image from "../../assets/img/ca3.png";
 
 // ---------- constants ----------
 const OG_IMAGE = "https://i.ibb.co/h1fpCXzw/fanofog.png";
+const ELEPHANT = "https://i.ibb.co/cSPD6dCH/elephantbg.png";
 
 // ---------- types ----------
 interface Assistant {
@@ -81,7 +82,6 @@ async function getAssistants(
   return {
     object: res.data?.object ?? "list",
     data: normalized,
-    // 🔑 normalize names here
     has_more: !!res.data?.has_more,
     firstId: res.data?.firstId,
     lastId: res.data?.lastId,
@@ -110,10 +110,8 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
 
   return raw.map((a: any, idx: number) => ({
     ...a,
-    // ✅ make sure both ids exist in the object
     assistantId: a.assistantId || a.id || a.agentId || "",
     agentId: a.agentId || a.assistantId || a.id || "",
-
     name: a.name ?? `Agent ${idx + 1}`,
     description: a.description ?? a.desc ?? "",
     imageUrl: a.imageUrl || a.image || a.thumbUrl || "",
@@ -121,7 +119,6 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
 }
 
 // ---------- helpers ----------
-
 const normalizeList = (data: any) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.data)) return data.data;
@@ -150,11 +147,10 @@ async function getFeedbackByAgent(agentId: string): Promise<Feedback[] | null> {
     return null;
   }
 }
-// Google Play palette (brand-adjacent)
+
 const PLAY_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"] as const;
 
 const hashSeed = (s: string) => {
-  // simple deterministic 32-bit hash
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
@@ -165,23 +161,20 @@ const hashSeed = (s: string) => {
 
 const gradientFor = (seed: string) => {
   const h = hashSeed(seed || "AI");
-  // pick two distinct palette colors
   const i1 = h % PLAY_COLORS.length;
   const i2 =
     (i1 + 1 + ((h >> 3) % (PLAY_COLORS.length - 1))) % PLAY_COLORS.length;
   const c1 = PLAY_COLORS[i1];
   const c2 = PLAY_COLORS[i2];
-  // vary angle a bit so not all look identical
   const angle = [
     [0, 1],
     [1, 0],
     [0, 0],
     [1, 1],
-  ][(h >> 7) & 3]; // [x2,y2]
+  ][(h >> 7) & 3];
   return { c1, c2, x2: angle[0], y2: angle[1] };
 };
 
-// Build a data-URL SVG avatar with initials (Play Store style gradient)
 function makeInitialsSVG(name: string) {
   const initials =
     name
@@ -196,7 +189,6 @@ function makeInitialsSVG(name: string) {
   const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="${initials}">
   <defs>
-    <!-- diagonal gradient using Google Play-like colors -->
     <linearGradient id="g" x1="0" y1="0" x2="${x2}" y2="${y2}">
       <stop offset="0%" stop-color="${c1}" />
       <stop offset="100%" stop-color="${c2}" />
@@ -224,8 +216,8 @@ const AssistantCard: React.FC<{
 
   const fallbackSVG = makeInitialsSVG(assistant.name || "AI");
   const chosenThumb = (assistant.imageUrl || "").trim() || fallbackSVG;
-  // Keep a stateful src that swaps to fallback on error
   const [imgSrc, setImgSrc] = useState<string>(chosenThumb);
+
   return (
     <div
       role="button"
@@ -236,13 +228,13 @@ const AssistantCard: React.FC<{
         "relative group cursor-pointer rounded-2xl",
         "shadow-purple-400/60",
         "after:absolute after:-inset-[2px] after:rounded-2xl after:content-[''] after:-z-10",
-        "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)]",
-        "after:pointer-events-none after:animate-pulse",
+        "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)] after:pointer-events-none",
         "transition-transform hover:-translate-y-0.5",
+        "h-full flex flex-col", // ✅ equal-height cell
       ].join(" ")}
       aria-label={`Open ${assistant.name}`}
     >
-      <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden">
+      <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden flex flex-col h-full">
         {/* Thumbnail / Header */}
         <div className="relative w-full">
           <div
@@ -264,13 +256,13 @@ const AssistantCard: React.FC<{
         </div>
 
         {/* Content */}
-        <div className="pt-8 px-5 pb-5">
+        <div className="pt-8 px-5 pb-5 flex flex-col h-full">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-2 leading-snug">
+              <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
                 <Highlighter text={assistant.name || ""} query={q} />
               </h3>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-5 ">
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
                 <Highlighter text={assistant.description || ""} query={q} />
               </p>
             </div>
@@ -281,7 +273,8 @@ const AssistantCard: React.FC<{
             </span>
           </div>
 
-          <div className="mt-5 flex items-center gap-2">
+          {/* Push the CTA to the bottom for alignment */}
+          <div className="mt-auto pt-5 flex items-center gap-2">
             <button
               onClick={onOpen}
               className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
@@ -308,7 +301,7 @@ const ReadMoreModal: React.FC<{
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-2 leading-snug">
+            <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
               {title}
             </h3>
             <button
@@ -376,7 +369,7 @@ const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
           <div className="pt-8 px-5 pb-5 flex flex-col flex-1">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="font-semibold text-[16px] text-gray-900 leading-snug">
+                <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
                   THE FAN OF OG
                 </h3>
                 <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
@@ -393,17 +386,13 @@ const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
                 </button>
               </div>
 
-              {/* 🔥 #OGFever Badge */}
               <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 text-[11px] font-semibold">
                 <Flame className="h-3.5 w-3.5 text-red-600" />
                 #OGFever
               </span>
             </div>
 
-            <div className="flex-1" />
-
-            {/* Action buttons */}
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-auto pt-4 flex items-center gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -418,7 +407,6 @@ const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
         </div>
       </div>
 
-      {/* Read More Modal */}
       <ReadMoreModal
         open={readMoreOpen}
         onClose={() => setReadMoreOpen(false)}
@@ -442,28 +430,28 @@ const BharatAgentsStore: React.FC = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const location = useLocation();
+  const [showHero, setShowHero] = useState(false); // 🔑 toggle state
+
+  const toggleHero = () => {
+    setShowHero((prev) => !prev);
+  };
 
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 100, // ⬅️ bump to 100
+    pageSize: 100,
     hasMore: true,
     total: 0,
   });
 
   const PRIORITY_ORDER = [
     "Bharath AI Mission",
- 
-   
-    "Life Insurance Citizen Discovery",
+    "Nyaya Gpt",
     "IRDAI Enforcement Actions",
     "AI-Based IRDAI GI Reg Audit",
- 
+    "GST Reforms 2025",
     "General Insurance Discovery",
-    
+    "Criminal Law Expert",
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
-       "GST Reforms 2025",
-          "Nyaya Gpt",
-       "Criminal Law Expert",
-
+    "Life Insurance Citizen Discovery",
   ];
 
   const priorityIndex = (name?: string) => {
@@ -471,20 +459,18 @@ const BharatAgentsStore: React.FC = () => {
     const i = PRIORITY_ORDER.findIndex((x) => x.trim().toLowerCase() === n);
     return i === -1 ? Number.MAX_SAFE_INTEGER : i;
   };
+
   const ALWAYS_SHOW_NAMES = new Set([
     "Bharath AI Mission",
-  
-  
+    "Nyaya Gpt",
+    "IndiaAI Discovery",
     "Life Insurance Citizen Discovery",
     "IRDAI Enforcement Actions",
     "AI-Based IRDAI GI Reg Audit",
- 
+    "GST Reforms 2025",
     "General Insurance Discovery",
-    
+    "Criminal Law Expert",
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
-       "GST Reforms 2025",
-         "Nyaya Gpt", 
-       "Criminal Law Expert",
   ]);
 
   const NEXT_PATH = "/main/bharat-expert";
@@ -504,14 +490,13 @@ const BharatAgentsStore: React.FC = () => {
       setLoading(false);
     }
   };
-  // 2) inside fetchAssistants
+
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
       setLoading(true);
       try {
         const response = await getAssistants(pagination.pageSize, after);
 
-        // ⬇️ de-dupe by id/assistantId/agentId
         setAssistants((prev) => {
           const merged = isLoadMore
             ? [...prev, ...response.data]
@@ -524,7 +509,6 @@ const BharatAgentsStore: React.FC = () => {
           return Array.from(byId.values());
         });
 
-        // ⬇️ robust next cursor
         const nextCursor =
           response.lastId ||
           response.data[response.data.length - 1]?.assistantId ||
@@ -532,7 +516,6 @@ const BharatAgentsStore: React.FC = () => {
           response.data[response.data.length - 1]?.agentId ||
           undefined;
 
-        // ⬇️ compute hasMore even if API doesn't set has_more
         const pageFull = response.data.length >= pagination.pageSize;
 
         setPagination((prev) => ({
@@ -558,7 +541,6 @@ const BharatAgentsStore: React.FC = () => {
     fetchAssistants();
   }, [fetchAssistants]);
 
-  // Keep APPROVED + whitelist for default (no search)
   const approvedAssistants = useMemo(() => {
     return assistants.filter((a) => {
       const s = (a.status || a.agentStatus || "").toString().toUpperCase();
@@ -571,7 +553,6 @@ const BharatAgentsStore: React.FC = () => {
     });
   }, [assistants]);
 
-  // SEARCH: call API when q changes (non-empty)
   useEffect(() => {
     let active = true;
     const doSearch = async () => {
@@ -615,19 +596,18 @@ const BharatAgentsStore: React.FC = () => {
   }, [q, searchResults, approvedAssistants]);
 
   const SkeletonCard = () => (
-    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse">
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse h-full flex flex-col">
       <div className="h-0 pb-[56%] w-full bg-gray-100" />
-      <div className="p-4">
+      <div className="p-4 flex flex-col h-full">
         <div className="h-4 bg-gray-100 rounded w-3/5" />
         <div className="h-3 bg-gray-100 rounded w-4/5 mt-2" />
-        <div className="flex items-center gap-2 mt-4">
-          <div className="h-8 w-20 bg-gray-100 rounded" />
+        <div className="mt-auto pt-4">
+          <div className="h-8 w-24 bg-gray-100 rounded" />
         </div>
       </div>
     </div>
   );
 
-  // Initial load skeleton (default list)
   if (loading && assistants.length === 0) {
     return (
       <div className="min-h-screen bg-white">
@@ -647,17 +627,9 @@ const BharatAgentsStore: React.FC = () => {
             </div>
           </section>
 
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-              Bharat AI Store
-            </h2>
-            <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-              Discover expert AI assistants.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
-            {Array.from({ length: 10 }).map((_, i) => (
+          {/* SKELETON GRID */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+            {Array.from({ length: 12 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
@@ -666,14 +638,13 @@ const BharatAgentsStore: React.FC = () => {
     );
   }
 
-  // Error loading default list
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md">
           <div className="text-red-500 text-4xl mb-3">⚠️</div>
           <h2 className="text-xl font-semibold text-purple-700 mb-2">
-            Error Loading Assistants
+            Unable to Load Assistants
           </h2>
           <p className="text-gray-500 mb-5">{error}</p>
           <button
@@ -694,19 +665,58 @@ const BharatAgentsStore: React.FC = () => {
       .replace(/^-+|-+$/g, "");
 
   const handleOpen = (a: any) => {
+    // 1) Block guests → hard redirect to WhatsApp login
+    const userId =
+      typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    if (!userId) {
+      // optional: remember where they were trying to go
+      try {
+        const nameSlug = ((a?.name as string) || "agent")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        const assistantIdTmp = (a?.assistantId || a?.id || a?.agentId || "")
+          .toString()
+          .trim();
+        const agentIdTmp = (a?.agentId || a?.assistantId || a?.id || "")
+          .toString()
+          .trim();
+        const baseTmp = location.pathname.includes("bharath-aistore")
+          ? "bharath-aistore"
+          : "bharat-aistore";
+
+        // Build the intended target so you can optionally restore after login
+        const intended =
+          assistantIdTmp && agentIdTmp
+            ? `/${baseTmp}/assistant/${encodeURIComponent(
+                assistantIdTmp
+              )}/${encodeURIComponent(agentIdTmp)}`
+            : assistantIdTmp
+            ? `/${baseTmp}/assistant/${encodeURIComponent(assistantIdTmp)}`
+            : `/${baseTmp}/assistant/by-name/${encodeURIComponent(nameSlug)}`;
+
+        sessionStorage.setItem("redirectPath", intended);
+      } catch {}
+      window.location.href = "/whatsapplogin";
+      return;
+    }
+
+    // 2) Logged-in users → follow existing routing
     const assistantId = (a.assistantId || a.id || a.agentId || "")
       .toString()
       .trim();
     const agentId = (a.agentId || a.assistantId || a.id || "")
       .toString()
       .trim();
-    const nameSlug = slugify(a.name);
+    const nameSlug = (a.name || "agent")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
     const base = location.pathname.includes("bharath-aistore")
       ? "bharath-aistore"
       : "bharat-aistore";
 
     if (assistantId && agentId) {
-      // ✅ best (canonical) route
       navigate(
         `/${base}/assistant/${encodeURIComponent(
           assistantId
@@ -714,9 +724,7 @@ const BharatAgentsStore: React.FC = () => {
       );
       return;
     }
-
     if (assistantId) {
-      // ✅ still good: single-id route (see Route #3 below)
       navigate(`/${base}/assistant/${encodeURIComponent(assistantId)}`);
       return;
     }
@@ -724,13 +732,68 @@ const BharatAgentsStore: React.FC = () => {
   };
 
   const isSearching = !!(q || "").trim();
-
-  // Route handler for the featured OG card
   const openOG = () => navigate("/ThefanofOG");
 
   return (
     <div className="min-h-screen bg-white">
+      {/* <button
+        onClick={toggleHero}
+        className="fixed top-50 right-8 z-50 w-2 h-2 rounded-full bg-purple-600 shadow-lg hover:bg-purple-700 transition"
+        aria-label="Toggle Hero Section"
+      /> */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* ==== HERO ==== */}
+
+        {/* ==== HERO ==== */}
+        {showHero && (
+          <section className="w-full mb-6 sm:mb-8">
+            <div className="mx-auto max-w-7xl px-0 py-6 md:py-8 lg:py-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              {/* left text */}
+              <div>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-purple-700 leading-tight">
+                  Bharat AI Store
+                </h1>
+                <p className="mt-5 text-lg sm:text-xl text-gray-700 max-w-2xl">
+                  Build AI Twin, Executor, Discovery, Validator, and Enabler
+                  agents to transform ideas, validate results, execute
+                  seamlessly, enable innovation, and discover insights.
+                </p>
+
+                <div className="mt-8 hidden sm:flex items-center gap-4">
+                  <button
+                    onClick={handleCreateAgentClick}
+                    className="inline-flex items-center justify-center rounded-full bg-purple-600 px-6 py-3 text-white font-semibold hover:bg-purple-700"
+                  >
+                    Create AI Agent →
+                  </button>
+                </div>
+              </div>
+
+              {/* right image */}
+              <div className="flex justify-center md:justify-end">
+                <div className="relative">
+                  <img
+                    src={ELEPHANT}
+                    alt="Elephant illustration"
+                    className="relative z-10 w-72 sm:w-80 md:w-[28rem] h-auto object-contain drop-shadow-xl"
+                    loading="eager"
+                  />
+                </div>
+              </div>
+
+              {/* mobile CTA */}
+              <div className="sm:hidden">
+                <button
+                  onClick={handleCreateAgentClick}
+                  className="inline-flex items-center justify-center rounded-full bg-purple-600 px-5 py-3 text-white font-semibold w-full"
+                >
+                  Create AI Agent →
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="mb-6 sm:mb-8">
           <div className="relative w-full rounded-2xl overflow-hidden">
             <div className="w-full">
@@ -748,10 +811,10 @@ const BharatAgentsStore: React.FC = () => {
 
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-            Bharat AI Store
+            AI Agents
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-            Discover expert AI assistants.
+            Discover expert AI Agents.
           </p>
         </div>
 
@@ -781,8 +844,8 @@ const BharatAgentsStore: React.FC = () => {
         ) : (
           <>
             {/* GRID */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
-              {/* 👉 Featured OG card appears first only when NOT searching */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+              {/* Featured OG card first when NOT searching */}
               {!isSearching && <FeaturedOGCard onOpen={openOG} />}
 
               {shownAssistants.map((assistant, index) => (
@@ -793,7 +856,7 @@ const BharatAgentsStore: React.FC = () => {
                     assistant.agentId ||
                     `${index}`
                   }
-                  className="flex flex-col h-full"
+                  className="h-full flex flex-col"
                 >
                   <AssistantCard
                     assistant={assistant}
@@ -805,7 +868,7 @@ const BharatAgentsStore: React.FC = () => {
               ))}
             </div>
 
-            {/* Only show "Load More" in the default (non-search) list */}
+            {/* Load more only in non-search list */}
             {!isSearching && (
               <div className="text-center mt-10 sm:mt-12">
                 <button

@@ -148,23 +148,31 @@ export const submitWriteToUsQuery = async (
 export const checkUserInterest = async (
   userId: string,
   campaignType: string
-): Promise<boolean> => {
+): Promise<{ exists: boolean; userRole?: string }> => {
   try {
     const response = await axios.post(
-      `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+     `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
       { userId }
     );
 
     if (response.status === 200 && Array.isArray(response.data)) {
-      return response.data.some(
+      const matchedOffer = response.data.find(
         (offer: any) => offer.askOxyOfers === campaignType
       );
+
+      if (matchedOffer) {
+        return {
+          exists: true,
+          userRole: matchedOffer.userRole,
+        };
+      }
     }
-    return false;
+
+    return { exists: false };
   } catch (error) {
     console.error("Error while fetching offers:", error);
-    return false;
-  }
+    return { exists: false };
+  }
 };
 
 export const submitInterest = async (

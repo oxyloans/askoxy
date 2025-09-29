@@ -183,6 +183,7 @@ import BlogDetails from "./components/BlogDetails";
 
 import GenOxy from "./GenOxy/Genoxy";
 import RealtimePage from "./GenOxy/components/RealTimeMainscreen";
+import VisaVoice from "./Visavoice/RealTimeMainscreen";
 import JobDetails from "./components/JobDetails";
 import AddJob from "./AskoxyAdmin/AddJob";
 import VersionUpdate from "./PartnerWeb/VersionUpdate";
@@ -215,6 +216,11 @@ import BharatAgentsStore from "./BharathAIStore/pages/BharatAgentsStore";
 import BananaImageGenerate from "./AgentStore/BananaImageGenerate";
 import InsuranceAgentsPage from "./BharathAIStore/pages/InsuranceAgentsPage";
 import AwardsRewardsVideo from "./BharathAIStore/pages/AwardsRewardsVideo";
+import CartCaCsService from "./components/CartCaCsService";
+import ServiceCAList from "./components/ServiceCAList";
+import ServiceDashboard from "./components/ServiceDashboard";
+import EmployeeInteractions from "./Taskmanagement/EmployeeInstructions";
+import EmployeeViewChat from "./Taskmanagement/EmployeeChatView";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -388,6 +394,11 @@ const App: React.FC = () => {
             <Route path="/voiceAssistant/:screen" element={<RealtimePage />} />
             <Route path="/caandcsservices" element={<CACSService />} />
             <Route
+              path="/visavoice"
+              element={<Navigate to="/visavoice/welcome" replace />}
+            />
+            <Route path="/visavoice/:screen" element={<VisaVoice />} />
+            <Route
               path="/goldandsilveranddiamonds"
               element={<GoldAndSilverAndDiamond />}
             />
@@ -402,6 +413,8 @@ const App: React.FC = () => {
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />
+            <Route path="/userinstructionsview" element={<EmployeeInteractions />} />
+            <Route path="/taskmanagement/chatview/:id" element={<EmployeeViewChat/>}/>
             <Route path="/taskupdated" element={<TaskUpdate />} />
             <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
             <Route path="/leavestatus" element={<TeamLeaveStatus />} />
@@ -561,6 +574,9 @@ const App: React.FC = () => {
               <Route path="dashboard/myblogs" element={<BlogsPage />} />
               <Route path="jobdetails" element={<JobDetails />} />
               <Route path="caserviceitems" element={<CAServicesItems />} />
+              <Route path="cartcaservice" element={<CartCaCsService />} />
+              <Route path="servicecalist" element={<ServiceCAList />} />
+              <Route path="servicedashboard" element={<ServiceDashboard/>}/>
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               {/* <Route
                 path="services/freerudraksha"

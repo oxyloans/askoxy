@@ -8,13 +8,13 @@ import {
 } from "react-router-dom";
 
 import RealTimeHeader from "./RealTimeHeader";
-import RealTimeWelcomeScreen from "./RealTimeWellcomescreen";
+import RealTimeWelcomeScreen from "./RealtimeWelcomescreen";
 import StartScreen from "./RealTimeStartScreen";
 import ConversationScreen from "./RealTImeConversation";
 
 import { useState, useEffect } from "react";
-import { LanguageConfig, ChatMessage } from "../types/types";
-import { voiceSessionService } from "../hooks/useMessages";
+import { LanguageConfig, ChatMessage } from "./types";
+import { voiceSessionService } from "./useMessages";
 
 type Screen = "welcome" | "start" | "conversation";
 
@@ -49,7 +49,7 @@ const RealtimePage: React.FC = () => {
 
   // Navigation helpers to move between screens via URL
   const goToScreen = (newScreen: Screen) => {
-    navigate(`/voiceAssistant/${newScreen}`);
+    navigate(`/visavoice/${newScreen}`);
   };
 
   const handleLanguageSelect = (
@@ -91,7 +91,11 @@ const RealtimePage: React.FC = () => {
           setIsAssistantSpeaking(speaking);
         },
         navigate,
-        "alloy"
+        selectedLanguage.name === "English"
+          ? "ballad"
+          : selectedLanguage.name === "Hindi"
+          ? "verse"
+          : "coral"
       );
 
       setIsSessionActive(true);

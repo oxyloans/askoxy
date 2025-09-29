@@ -1,7 +1,7 @@
 // StartScreen.tsx
 import React from "react";
 import { Play } from "lucide-react";
-import { LanguageConfig } from "../types/types";
+import { LanguageConfig } from "./types";
 
 interface StartScreenProps {
   selectedLanguage: LanguageConfig;
@@ -9,10 +9,10 @@ interface StartScreenProps {
   onStartSession: () => void;
 }
 
-export default function StartScreen({
-  selectedLanguage,
-  isConnecting,
-  onStartSession,
+export default function StartScreen({ 
+  selectedLanguage, 
+  isConnecting, 
+  onStartSession 
 }: StartScreenProps) {
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -45,7 +45,9 @@ export default function StartScreen({
 
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8 min-h-screen pt-24">
         <div className="text-center space-y-6">
-          <div className="text-8xl animate-bounce">{selectedLanguage.flag}</div>
+          <div className="text-8xl animate-bounce">
+            {selectedLanguage.flag}
+          </div>
           <h2 className="text-3xl font-bold text-white">
             {selectedLanguage.code === "te" && "తెలుగు వాయిస్ అసిస్టెంట్"}
             {selectedLanguage.code === "en" && "English Voice Assistant"}
@@ -85,17 +87,17 @@ export default function StartScreen({
             )}
           </button>
         </div>
-
+        
         <div className="mt-8 max-w-4xl w-full text-center">
           <h4 className="text-lg font-semibold text-yellow-600 mb-3">
             Disclaimer
           </h4>
           <p className="text-gray-400 text-sm leading-relaxed">
-            ASKOXY.AI is a real-time AI assistant. While you can select your
+            VISA is a real-time AI assistant. While you can select your
             preferred language above, we cannot guarantee 100% adherence to the
-            selected language throughout the conversation. The AI may
-            occasionally respond in English or mix languages based on context
-            and system limitations.
+            selected language throughout the conversation. The AI may occasionally
+            respond in English or mix languages based on context and system
+            limitations.
           </p>
         </div>
       </div>

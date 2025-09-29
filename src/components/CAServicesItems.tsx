@@ -6,10 +6,11 @@ import {
   ArrowRight,
   X,
   MessageCircle,
+  ShoppingCart,
 } from "lucide-react";
 import Header from "./Header";
 import BASE_URL from "../Config";
-import { message } from "antd";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 // Type definitions
@@ -42,10 +43,10 @@ interface CityClassification {
 }
 
 const CITY_CLASSIFICATIONS: CityClassification = {
-  "ANDAMAN & NICOBAR ISLANDS": { A: [], B: [], C: ["All cities"] },
-  "ANDHRA PRADESH": {
-    A: [],
-    B: ["Vijayawada", "Greater Visakhapatnam", "Guntur", "Nellore"],
+  UTTARAKHAND: { A: [], B: ["Dehradun"], C: ["Other Cities"] },
+  "WEST BENGAL": {
+    A: ["Kolkata"],
+    B: ["Asansol", "Siliguri", "Durgapur"],
     C: ["Other Cities"],
   },
 };
@@ -57,10 +58,10 @@ export default function CAServicesApp() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
-  const navigate = useNavigate();
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(
     null
   );
+  const navigate = useNavigate();
   const [subCategories, setSubCategories] = useState<string[]>([]);
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [filteredAgreements, setFilteredAgreements] = useState<Agreement[]>([]);
@@ -68,9 +69,13 @@ export default function CAServicesApp() {
   // Loading states
   const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [apiLoadingStates, setApiLoadingStates] = useState<{
-    [key: string]: boolean;
-  }>({});
+
+  // Cart states
+  const [cartItems, setCartItems] = useState<Set<string>>(new Set());
+  const [cartCount, setCartCount] = useState(0);
+  const [cartLoading, setCartLoading] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   // Filter states
   const [selectedState, setSelectedState] = useState<string | null>(null);
@@ -81,19 +86,36 @@ export default function CAServicesApp() {
   const [showStateModal, setShowStateModal] = useState(false);
   const [showCityModal, setShowCityModal] = useState(false);
 
+  // User authentication - Debug localStorage values
+  const userId = localStorage.getItem("userId");
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("accessToken");
+  const customerId =
+    localStorage.getItem("customerId") ||
+    localStorage.getItem("userId") ||
+    userId;
+
+  // Debug log to see what values we're getting
+  console.log("Debug - Auth values:", {
+    userId,
+    token: token ? "Present" : "Missing",
+    customerId,
+    allLocalStorage: Object.keys(localStorage),
+  });
+
   // Navigation states
   const [currentView, setCurrentView] = useState<
     "CATEGORIES" | "SUBCATEGORIES" | "AGREEMENTS"
   >("CATEGORIES");
 
-  // Get userId from localStorage
-  const getUserId = () => {
-    return localStorage.getItem("userId");
-  };
-
   // Fetch all data initially
   useEffect(() => {
     fetchAllData();
+    if (customerId && token) {
+      fetchCartItems();
+    }
   }, []);
 
   // Filter agreements when filters change
@@ -127,7 +149,6 @@ export default function CAServicesApp() {
           });
         }
       });
-
       // Check if categories have subcategories
       const categoriesArray: Category[] = Array.from(
         uniqueCategories.values()
@@ -147,13 +168,151 @@ export default function CAServicesApp() {
           hasSubCategories: hasNonEmptySubTypes,
         };
       });
-
       setCategories(categoriesArray);
     } catch (error) {
       console.error("Error fetching data:", error);
-      // alert("Failed to load data. Please try again.");
+      alert("Failed to load data. Please try again.");
     } finally {
       setInitialLoading(false);
+    }
+  };
+
+  const fetchCartItems = async () => {
+    try {
+      if (!customerId || !token) return;
+
+      const response = await axios.get(
+        `https://meta.oxyloans.com/api/cart-service/cart/view?userId=${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        // Filter out items with "REMOVE" status
+        const activeItems = response.data.filter(
+          (item: any) => item.status !== "REMOVE"
+        );
+
+        // Extract agreement service IDs from active cart items only
+        const cartItemIds = activeItems.map(
+          (item: any) => item.agreementServiceId
+        );
+
+        setCartItems(new Set(cartItemIds));
+        setCartCount(activeItems.length);
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      setCartItems(new Set());
+      setCartCount(0);
+    }
+  };
+
+  const isItemInCart = (agreementId: string) => {
+    return cartItems.has(agreementId);
+  };
+
+  const handleAddToCart = async (agreement: Agreement) => {
+    // Debug current auth state
+    console.log("Add to cart - Auth check:", {
+      customerId,
+      token: token ? "Present" : "Missing",
+      userId,
+    });
+
+    if (!customerId || !token) {
+      // Check all possible localStorage keys for debugging
+      const allKeys = Object.keys(localStorage);
+      const authKeys = allKeys.filter(
+        (key) =>
+          key.toLowerCase().includes("token") ||
+          key.toLowerCase().includes("user") ||
+          key.toLowerCase().includes("auth") ||
+          key.toLowerCase().includes("id")
+      );
+
+      console.log("Available auth-related localStorage keys:", authKeys);
+      alert(
+        `Please login to add items to cart. Debug info: customerId=${customerId}, token=${
+          token ? "present" : "missing"
+        }`
+      );
+      return;
+    }
+
+    // Check if item is already in cart
+    if (isItemInCart(agreement.id!)) {
+      alert("This service is already in your cart.");
+      return;
+    }
+
+    try {
+      setCartLoading((prev) => ({ ...prev, [agreement.id!]: true }));
+
+      const payload = {
+        agreementServiceId: agreement.id,
+        agreementServiceName: agreement.agreementName,
+        userId: customerId,
+      };
+
+      const response = await axios.post(
+        "http://meta.oxyloans.com/api/cart-service/cart/add",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Item added to cart successfully:", response.data);
+
+      // Check if response is successful
+      if (response.data && response.data.id) {
+        // Refresh cart items to get updated state
+        await fetchCartItems();
+
+        alert("Service added to cart successfully!");
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error: any) {
+      console.error("Error adding to cart:", error);
+
+      let errorMessage = "Failed to add service to cart. Please try again.";
+
+      // Handle different types of errors
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        if (status === 401) {
+          errorMessage = "Please login again to add items to cart.";
+        } else if (status === 409) {
+          errorMessage = "This service is already in your cart.";
+          // Update local state to reflect this
+        } else if (status === 400) {
+          errorMessage = "Invalid request. Please try again.";
+        } else if (status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else if (data && data.message) {
+          errorMessage = data.message;
+        }
+      } else if (error.request) {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      alert(errorMessage);
+    } finally {
+      setCartLoading((prev) => ({ ...prev, [agreement.id!]: false }));
     }
   };
 
@@ -291,160 +450,33 @@ export default function CAServicesApp() {
     return `₹${price.toLocaleString("en-IN")}`;
   };
 
-  // API call for "I'm Interested" functionality
-  const handleInterestedClick = async (agreement: Agreement) => {
-    const currentUserId = getUserId();
-
-    if (!currentUserId) {
-      message.info("Please log in to express interest in this service.");
-      sessionStorage.setItem("redirectPath", "/main/caserviceitems");
-      navigate("/whatsapplogin");
-      return;
-    }
-
-    if (!agreement.id) {
-      message.error("Service ID not found. Please try again.");
-      return;
-    }
-
-    const agreementId = agreement.id;
-
-    // Set loading state for this specific agreement
-    setApiLoadingStates((prev) => ({ ...prev, [agreementId]: true }));
-
-    try {
-      const response = await fetch(
-        BASE_URL + "/product-service/cacsinterested",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            cacsAggrementId: agreementId,
-            userId: currentUserId,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.status === true) {
-        message.success(
-          "Thank you for your interest! We have recorded your interest in this service."
-        );
-
-        handleServiceSelection(agreement);
-      } else if (data.status === false) {
-        message.info("You have already participated in this service. Thank you....!");
-      } else {
-        message.error(
-          "There was an issue recording your interest. Please try again."
-        );
-      }
-    } catch (error) { 
-      console.error("Error calling cacsinterested API:", error);
-      message.error("Failed to record your interest. Please try again later.");
-    } finally {
-      // Remove loading state for this specific agreement
-      setApiLoadingStates((prev) => {
-        const newStates = { ...prev };  
-        delete newStates[agreementId];
-        return newStates;
-      });
-    }
+  const handleNavigateToCart = () => {
+    console.log("Navigate to cart");
+    navigate("/main/cartcaservice");
   };
 
-  const handleServiceSelection = (agreement: Agreement) => {
-    const serviceName = agreement.agreementName;
-    const categoryName = selectedCategory?.name;
-    const subCategoryName = selectedSubCategory || "";
-    const price = getPriceForCityTier(agreement);
-
-    let message = `Hello, I'm interested in your CA services.
-
-Service: ${serviceName}`;
-
-    if (categoryName) {
-      message += `
-Category: ${categoryName}`;
-    }
-
-    if (subCategoryName) {
-      message += `
-Subcategory: ${subCategoryName}`;
-    }
-
-    if (selectedCity && selectedState) {
-      message += `
-Location: ${selectedCity}, ${selectedState}`;
-    }
-
-    if (price) {
-      message += `
-Price: ${formatPrice(price)}`;
-    }
-
-    message += `
-
-Please provide more details about this service and confirm the pricing.`;
-
-    // const encodedMessage = encodeURIComponent(message);
-    // const whatsappUrl = `https://wa.me/918978455447?text=${encodedMessage}`;
-    // window.open(whatsappUrl, "_blank");
-  };
-
-  //   const handleGeneralWhatsAppContact = () => {
-  //     const categoryName = selectedCategory?.name;
-  //     const subCategoryName = selectedSubCategory || "";
-
-  //     let message = `Hello, I'm interested in your CA services.
-
-  // Category: ${categoryName}`;
-
-  //     if (subCategoryName) {
-  //       message += `
-  // Subcategory: ${subCategoryName}`;
-  //     }
-
-  //     if (selectedCity && selectedState) {
-  //       message += `
-  // Location: ${selectedCity}, ${selectedState}`;
-  //     }
-
-  //     message += `
-
-  // Please provide more details about your services and pricing.`;
-
-  //     const encodedMessage = encodeURIComponent(message);
-  //     const whatsappUrl = `https://wa.me/918978455447?text=${encodedMessage}`;
-  //     window.open(whatsappUrl, "_blank");
-  //   };
-
-  //   if (initialLoading) {
-  //     return (
-  //       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-  //         <div className="text-center">
-  //           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-  //           <p className="mt-4 text-lg text-gray-600 font-medium">
-  //             Loading services...
-  //           </p>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600 font-medium">
+            Loading services...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div>{!getUserId() && <Header />}</div>
+      <div>{!userId && <Header />}</div>
 
-      <div className="max-w-7xl mx-auto px-1 mt-8 sm:px-6 lg:px-8 py-4 relative">
+      {/* Simple navigation with back button and text */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 relative">
         {currentView !== "CATEGORIES" && (
           <div className="relative flex items-center justify-center mb-4">
+            {/* Back Button */}
             <button
               onClick={handleBackNavigation}
               className="absolute left-0 flex items-center text-gray-600 hover:text-gray-800"
@@ -458,6 +490,20 @@ Please provide more details about this service and confirm the pricing.`;
               {selectedCategory?.name}
               {selectedSubCategory && ` > ${selectedSubCategory}`}
             </span>
+
+            {customerId && token && (
+              <button
+                className="absolute top-0 right-0 bg-white rounded-full shadow-lg p-3 hover:shadow-xl transition-shadow border border-gray-200"
+                onClick={() => handleNavigateToCart()}
+              >
+                <ShoppingCart className="w-6 h-6 text-purple-600" />
+                {cartCount > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount}
+                  </div>
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -465,10 +511,10 @@ Please provide more details about this service and confirm the pricing.`;
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Compact Location & Service Info Bar */}
         {currentView === "AGREEMENTS" && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          // <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               {/* Location Selection - Left Side */}
-              <div className="flex flex-wrap gap-2 items-center">
+              {/* <div className="flex flex-wrap gap-2 items-center">
                 <span className="text-sm font-medium text-gray-700 mr-2">
                   Location:
                 </span>
@@ -510,30 +556,45 @@ Please provide more details about this service and confirm the pricing.`;
                     Clear
                   </button>
                 )}
-              </div>
+              </div> */}
 
               {/* Service Info - Right Side */}
-              <div className="text-right">
+              {/* <div className="text-right">
                 <p className="text-sm text-blue-700 font-medium">
                   {selectedCity
-                    ? `Pricing for ${selectedCity} | Click service for WhatsApp`
-                    : "Select location for pricing | Click service for WhatsApp"}
+                    ? `Pricing for ${selectedCity} | Click to add to cart`
+                    : "Select location for pricing | Click to add to cart"}
                 </p>
-              </div>
+              </div> */}
             </div>
-          </div>
+          // </div>
         )}
 
         {/* Categories View - Column Layout */}
         {currentView === "CATEGORIES" && (
           <div>
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 relative">
               <h2 className="text-2xl font-bold text-yellow-600 mb-4">
                 Professional Chartered Accountant Services
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Choose a service category to get started
               </p>
+
+              {/* Cart Icon in Categories Header */}
+              {customerId && token && (
+                <button
+                  className="absolute top-0 right-0 bg-white rounded-full shadow-lg p-3 hover:shadow-xl transition-shadow border border-gray-200"
+                  onClick={() => handleNavigateToCart()}
+                >
+                  <ShoppingCart className="w-6 h-6 text-purple-600" />
+                  {cartCount > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartCount}
+                    </div>
+                  )}
+                </button>
+              )}
             </div>
 
             <div className="max-w-4x2 mx-auto">
@@ -614,13 +675,12 @@ Please provide more details about this service and confirm the pricing.`;
             </div>
           </div>
         )}
-
         {/* Agreements View - Constrained Width Column Layout */}
         {currentView === "AGREEMENTS" && (
           <div>
             {/* Two Column Layout */}
             <div className="max-w-6xl mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredAgreements.length === 0 ? (
                   <div className="col-span-full text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
                     <div className="max-w-sm mx-auto">
@@ -638,7 +698,6 @@ Please provide more details about this service and confirm the pricing.`;
                       key={agreement.id || index}
                       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 overflow-hidden"
                     >
-                      {/* Service Header with WhatsApp in same container */}
                       <div className="p-4 flex items-center justify-between border-b border-gray-100">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -648,6 +707,7 @@ Please provide more details about this service and confirm the pricing.`;
                             <p className="text-lg font-semibold text-gray-900 mb-1">
                               {agreement.agreementName}
                             </p>
+
                             {selectedCity && (
                               <div className="bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 inline-block">
                                 <span className="text-sm font-semibold text-blue-700">
@@ -658,26 +718,47 @@ Please provide more details about this service and confirm the pricing.`;
                           </div>
                         </div>
 
-                        {/* WhatsApp Button in same container */}
-                        <div
-                          className={`bg-green-100 hover:bg-green-200 cursor-pointer transition-all rounded-lg px-3 py-2 flex items-center gap-2 ${
-                            apiLoadingStates[agreement.id || ""]
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
+                        {/* Add to Cart Button - Show for all users but handle login check inside */}
+                        <button
+                          className={`rounded-lg px-3 py-2 flex items-center gap-2 transition-all text-sm font-semibold ${
+                            !customerId || !token
+                              ? "bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                              : isItemInCart(agreement.id!)
+                              ? "bg-gray-100 text-gray-600 cursor-not-allowed"
+                              : cartLoading[agreement.id!]
+                              ? "bg-blue-100 text-blue-600 cursor-wait"
+                              : "bg-green-100 hover:bg-green-200 text-green-800 cursor-pointer"
                           }`}
-                          onClick={() => handleInterestedClick(agreement)}
+                          onClick={() => handleAddToCart(agreement)}
+                          disabled={
+                            (customerId &&
+                              token &&
+                              isItemInCart(agreement.id!)) ||
+                            cartLoading[agreement.id!]
+                          }
                         >
-                          {apiLoadingStates[agreement.id || ""] ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                          {cartLoading[agreement.id!] ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              <span>Adding...</span>
+                            </>
+                          ) : !customerId || !token ? (
+                            <>
+                              <ShoppingCart className="w-4 h-4" />
+                              <span>Add to Cart</span>
+                            </>
+                          ) : isItemInCart(agreement.id!) ? (
+                            <>
+                              <ShoppingCart className="w-4 h-4" />
+                              <span>In Cart</span>
+                            </>
                           ) : (
-                            <i className="fab fa-whatsapp text-green-600 text-lg"></i>
+                            <>
+                              <ShoppingCart className="w-4 h-4" />
+                              <span>Add to Cart</span>
+                            </>
                           )}
-                          <span className="text-sm font-semibold text-green-800">
-                            {apiLoadingStates[agreement.id || ""]
-                              ? "Processing..."
-                              : "Contact"}
-                          </span>
-                        </div>
+                        </button>
                       </div>
 
                       {/* Description */}

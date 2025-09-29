@@ -111,7 +111,7 @@ export const fetchDeliveredOrders = async (
       }
     );
     return response.data
-      .filter((order: any) => !order.testUser)
+      .filter((order: any) => order.testUser === "false")
       .map((order: any) => ({
         orderId: order.orderId,
         uniqueId: order.orderId.slice(-4),

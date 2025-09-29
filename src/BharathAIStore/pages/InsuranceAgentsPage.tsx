@@ -462,7 +462,7 @@ const InsuranceAgentsPage: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-            Insurance Assistants
+            Insurance Agents
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
             AI Based Insurance Agents
@@ -473,7 +473,7 @@ const InsuranceAgentsPage: React.FC = () => {
         {inSearchMode ? (
           // ------- SEARCH MODE -------
           searchLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
                 <SkeletonCard key={`search-skel-${i}`} />
               ))}
@@ -489,7 +489,7 @@ const InsuranceAgentsPage: React.FC = () => {
               <p className="text-gray-600">Try a different search term.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
               {cardsToRender.map((a, i) => (
                 <AssistantCard
                   key={`${a.name || (a as any).displayName || i}-search`}
@@ -501,8 +501,8 @@ const InsuranceAgentsPage: React.FC = () => {
           )
         ) : // ------- CANONICAL MODE -------
         loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
+            {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={`init-skel-${i}`} />
             ))}
           </div>
@@ -517,7 +517,7 @@ const InsuranceAgentsPage: React.FC = () => {
             <p className="text-gray-600">Check later or contact the admin.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
             {items.map((a, i) => (
               <AssistantCard
                 key={`${a.displayName}-${a.assistantId || a.id || i}`}

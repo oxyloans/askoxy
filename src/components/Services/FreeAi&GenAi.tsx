@@ -174,9 +174,9 @@ const FreeAiandGenAi: React.FC = () => {
 
     try {
       const hasInterest = await checkUserInterest(userId, "FREEAI");
-      setInterested(hasInterest);
+      setInterested(hasInterest.exists); 
       if (submitclicks) {
-        handleSubmit(hasInterest);
+        handleSubmit(hasInterest.exists);
       }
     } catch (error) {
       console.error("Error while fetching offers:", error);

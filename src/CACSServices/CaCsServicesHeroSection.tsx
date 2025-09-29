@@ -2,13 +2,12 @@ import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, CheckCircle } from "lucide-react";
 import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
 import { useNavigate } from "react-router-dom";
-import { message } from "antd";
 function CacsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+const [isLoading, setIsLoading] = useState<boolean>(false);
   const LOGIN_URL = "/whatsapplogin";
   const navigate = useNavigate();
   const rotatingWords = [
@@ -49,24 +48,22 @@ function CacsHeroSection() {
     return () => clearInterval(typingInterval);
   }, [currentWordIndex]);
 
-  const handleSignIn = (text: string) => {
+
+  const handleSignIn = () => {
     try {
       setIsLoading(true);
-      let redirectPath = "/main/caserviceitems";
+
       const userId = localStorage.getItem("userId");
-      if (text === "items") {
-        if (userId) {
-          navigate(redirectPath);
-        } else {
-          navigate("/caserviceitems");
-        }
+      // const redirectPath = "/main/services/3385/ca-services"; // your desired path
+      const redirectPath = "/main/caserviceitems"; 
+
+      if (userId) {
+        // User is already logged in
+        navigate(redirectPath);
       } else {
-        redirectPath = "/main/services/3385/ca-services";
-        if (userId) {
-          navigate(redirectPath);
-        } else {
-          navigate("/services/3385/ca-services");
-        }
+        // Save redirect path before redirecting to login
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -74,6 +71,8 @@ function CacsHeroSection() {
       setIsLoading(false);
     }
   };
+  
+  
 
   return (
     <section className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8 sm:py-12 lg:py-16 xl:py-20 overflow-hidden min-h-screen flex items-center">
@@ -101,7 +100,7 @@ function CacsHeroSection() {
           >
             <div className="space-y-4 sm:space-y-6">
               {/* Main Heading */}
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white">
                 {fullHeadingText}
                 <span className="block mt-2 sm:mt-4">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
@@ -182,14 +181,20 @@ function CacsHeroSection() {
             {/* Enhanced CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start mt-8 sm:mt-10">
               <button
-                onClick={() => handleSignIn("items")}
+                onClick={handleSignIn}
                 className="group bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-full flex items-center justify-center gap-2 sm:gap-3 hover:from-cyan-600 hover:to-blue-700 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm sm:text-base"
               >
                 Explore Services
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
 
-             
+              <button
+                onClick={handleSignIn}
+                className="group bg-white/10 backdrop-blur-sm text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-full hover:bg-white/20 flex items-center justify-center gap-2 sm:gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 border border-white/20 hover:border-white/40 text-sm sm:text-base"
+              >
+                Free Consultation
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" />
+              </button>
             </div>
           </div>
 
@@ -206,17 +211,17 @@ function CacsHeroSection() {
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100"></div>
 
               <img
-                src="https://i.ibb.co/S4CD7nM0/8.png"
+                src="https://i.ibb.co/TD2JCyy7/8.png"
                 alt="CA CS Services Professional"
                 className="relative rounded-2xl sm:rounded-3xl shadow-2xl object-cover w-full max-w-sm sm:max-w-md lg:max-w-full transform group-hover:scale-105 transition-all duration-500"
               />
 
               {/* Floating Badge */}
-              {/* <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
+              <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce">
                 <span className="text-xs sm:text-sm font-bold">
                   Trusted Experts
                 </span>
-              </div> */}
+              </div>
             </div>
           </div>
         </div>

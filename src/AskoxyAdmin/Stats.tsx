@@ -40,6 +40,7 @@ import dayjs, { Dayjs } from "dayjs";
 import BASE_URL from "../Config";
 import { Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -68,6 +69,7 @@ interface Order {
   whatsappNumber: string;
   pincode: number;
   orderItems: OrderItem[];
+  testUser: string;
   deliveryDate: string;
 }
 
@@ -91,6 +93,13 @@ interface PincodeStats {
   >;
 }
 
+interface AmountApiResponse {
+  totalAmountInMonth: number;
+  totalAmountInOnline: number;
+  totalAmountInCod: number;
+  totalSalesInMonth: number;
+}
+
 const Stats: React.FC = () => {
   const [orderData, setOrderData] = useState<Order[]>([]);
   const [filteredOrderData, setFilteredOrderData] = useState<Order[]>([]);
@@ -102,8 +111,33 @@ const Stats: React.FC = () => {
   const navigate = useNavigate();
   const [csvLoader, setCsvLoader] = useState<boolean>(false);
   const [endDate, setEndDate] = useState<Dayjs>(dayjs());
+  const [amount, setAmount] = useState<AmountApiResponse>({
+    totalAmountInMonth: 0,
+    totalAmountInOnline: 0,
+    totalAmountInCod: 0,
+    totalSalesInMonth: 0,
+  });
+  const [useSalesData, setUseSalesData] = useState<boolean>(false);
 
-  // Status mapping
+  const fetchAmountData = async () => {
+    try {
+      const response = await axios.get<AmountApiResponse>(
+        `${BASE_URL}/order-service/orderSaleData`,
+        {
+          params: {
+            startDate: startDate.format("YYYY-MM-DD"),
+            endDate: endDate.format("YYYY-MM-DD"),
+          },
+          headers: { accept: "*/*" },
+        }
+      );
+
+      setAmount(response.data);
+    } catch (error) {
+      console.error("Error fetching amount data:", error);
+    }
+  };
+
   const statusMap: Record<string, StatusInfo> = {
     "1": { label: "Placed", color: "#2563eb", bgColor: "#dbeafe" },
     "3": { label: "Assigned", color: "#ea580c", bgColor: "#fed7aa" },
@@ -124,7 +158,6 @@ const Stats: React.FC = () => {
     online: "linear-gradient(135deg, #60a5fa 0%, #38bdf8 100%)",
   };
 
-  // Chart colors
   const chartColors = [
     "#3b82f6",
     "#10b981",
@@ -138,15 +171,15 @@ const Stats: React.FC = () => {
 
   // Filter out items with 35kg and 20kg weight
   const filterOrderItems = (orders: Order[]): Order[] => {
-    return orders.map((order) => ({
+    const sample = orders.map((order) => ({
       ...order,
       orderItems: order.orderItems.filter(
         (item) => item.weight !== 35 && item.weight !== 20
       ),
     }));
+    return sample.filter((order) => order.testUser === "false");
   };
 
-  // API call function
   const fetchOrderData = async (startDate1: Dayjs, endDate1: Dayjs) => {
     setLoading(true);
     try {
@@ -170,6 +203,7 @@ const Stats: React.FC = () => {
 
       const data: ApiResponse = await response.json();
       const filteredData = filterOrderItems(data);
+
       setOrderData(filteredData);
       setFilteredOrderData(filteredData);
       message.success(`Loaded ${filteredData.length} orders successfully`);
@@ -198,37 +232,8 @@ const Stats: React.FC = () => {
   // Initial data load on component mount
   useEffect(() => {
     fetchOrderData(startDate, endDate);
+    // fetchAmountData();
   }, []);
-
-  const handlePeriodChange = (period: string): void => {
-    setSelectedPeriod(period);
-    let newStartDate: Dayjs;
-    let newEndDate = dayjs();
-
-    switch (period) {
-      case "today":
-        newStartDate = dayjs();
-        break;
-      case "yesterday":
-        newStartDate = dayjs().subtract(1, "day");
-        newEndDate = dayjs().subtract(1, "day");
-        break;
-      case "week":
-        newStartDate = dayjs().subtract(7, "days");
-        break;
-      case "month":
-        newStartDate = dayjs().subtract(30, "days");
-        break;
-      default:
-        newStartDate = dayjs().subtract(3, "days");
-    }
-
-    setStartDate(newStartDate);
-    setEndDate(newEndDate);
-    setTimeout(() => {
-      fetchOrderData(newStartDate, newEndDate);
-    }, 0);
-  };
 
   const handleStatusChange = (status: string): void => {
     setSelectedStatus(status);
@@ -652,6 +657,7 @@ const Stats: React.FC = () => {
             <ShoppingCartOutlined className="mr-3" />
             Orders Stats
           </Title>
+
           <Card>
             <Row gutter={[16, 16]} align="middle">
               <Col xs={24} sm={12} md={6} lg={4}>
@@ -713,6 +719,13 @@ const Stats: React.FC = () => {
                     type="primary"
                     onClick={() => {
                       fetchOrderData(startDate, endDate);
+                      // Set useSalesData based on current selected status
+                      if (selectedStatus === "4") {
+                        fetchAmountData();
+                        setUseSalesData(true);
+                      } else {
+                        setUseSalesData(false);
+                      }
                     }}
                     loading={loading}
                     icon={<ReloadOutlined />}
@@ -733,7 +746,6 @@ const Stats: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Key Metrics */}
             <Row gutter={[16, 16]} className="mb-6">
               <Col xs={24} sm={8}>
                 <Card
@@ -745,7 +757,11 @@ const Stats: React.FC = () => {
                         Total Revenue
                       </span>
                     }
-                    value={Math.round(stats.totalRevenue)}
+                    value={
+                      useSalesData
+                        ? Math.round(amount.totalAmountInMonth)
+                        : Math.round(stats.totalRevenue)
+                    }
                     formatter={(value) => formatCurrency(Number(value))}
                     prefix={<DollarOutlined style={{ color: "white" }} />}
                     valueStyle={{ color: "white", fontWeight: "bold" }}
@@ -762,7 +778,11 @@ const Stats: React.FC = () => {
                         COD Revenue
                       </span>
                     }
-                    value={Math.round(stats.paymentRevenue.COD)}
+                    value={
+                      useSalesData
+                        ? Math.round(amount.totalAmountInCod)
+                        : Math.round(stats.paymentRevenue.COD)
+                    }
                     formatter={(value) => formatCurrency(Number(value))}
                     prefix={<CreditCardOutlined style={{ color: "white" }} />}
                     valueStyle={{ color: "white", fontWeight: "bold" }}
@@ -779,7 +799,11 @@ const Stats: React.FC = () => {
                         Online Revenue
                       </span>
                     }
-                    value={Math.round(stats.paymentRevenue.Online)}
+                    value={
+                      useSalesData
+                        ? Math.round(amount.totalAmountInOnline)
+                        : Math.round(stats.paymentRevenue.Online)
+                    }
                     formatter={(value) => formatCurrency(Number(value))}
                     prefix={<CreditCardOutlined style={{ color: "white" }} />}
                     valueStyle={{ color: "white", fontWeight: "bold" }}

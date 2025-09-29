@@ -18,6 +18,7 @@ import {
   PlusCircle,
   Bot,
 } from "lucide-react";
+import { RobotOutlined } from "@ant-design/icons";
 
 interface SidebarProps {
   onCollapse: (collapsed: boolean) => void;
@@ -94,6 +95,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <Coins size={18} />,
       label: "My Crypto",
     },
+      {
+    to: "/bharath-aistore",
+    icon: <RobotOutlined style={{ fontSize: "18px", color: "#722ed1" }} />,
+    label: "Bharat AI Store",
+  },
     {
       to: "/main/bharat-expert",
       icon: <PlusCircle size={18} />,

@@ -5,6 +5,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
 import { FaClipboardCheck, FaExchangeAlt } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
+import { MdChat } from "react-icons/md";
+
 import {
   FaTachometerAlt,
   FaUsers,
@@ -85,6 +87,12 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         label: <Link to="/taskupdated">End Of The Day Report</Link>,
         icon: <FaHistory className="text-green-500" />,
       },
+      {
+  key: "/userinstructionsview",
+  label: <Link to="/userinstructionsview">Employee Interactions</Link>,
+  icon: <MdChat className="text-blue-500" />, // better chat icon
+},
+
 
       {
         key: "Employee Leave Request",

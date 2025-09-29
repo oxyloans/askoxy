@@ -139,16 +139,17 @@ const TaskUpdate: React.FC = () => {
     }
   }, []);
   // Check if task can be updated based on date and time
-  const canUpdateTask = (task: Task): boolean => {
-    const currentTime = dayjs();
-    const taskDate = dayjs(task.planCreatedAt);
-    const isSameDay = currentTime.isSame(taskDate, "day");
-   const isBeforeEightThirtyPM =
-     currentTime.hour() < 20 ||
-     (currentTime.hour() === 20 && currentTime.minute() <= 30);
+const canUpdateTask = (task: Task): boolean => {
+  const currentTime = dayjs();
+  const taskDate = dayjs(task.planCreatedAt);
+  const isSameDay = currentTime.isSame(taskDate, "day");
 
-    return isSameDay && isBeforeEightThirtyPM;
-  };
+  const isBeforeNinePM =
+    currentTime.hour() < 21 ||
+    (currentTime.hour() === 21 && currentTime.minute() === 0);
+
+  return isSameDay && isBeforeNinePM;
+};
 
   // Modified to fetch all pending tasks without date filter
   const fetchAllPendingTasks = async (userIdValue: string) => {

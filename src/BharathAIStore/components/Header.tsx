@@ -40,14 +40,6 @@ const Header: React.FC<HeaderProps> = ({
 
   const nav = [
     {
-      label: "BHARAT AI STORE",
-      to: "/bharath-aistore",
-      sectionId: "bharat-ai-store",
-      scrollTo: () => {
-        bharatAgentsStoreRef.current?.scrollIntoView({ behavior: "smooth" });
-      },
-    },
-    {
       label: "AI INITIATIVES",
       to: "/bharath-aistore/ai-initiatives",
       sectionId: "ai-initiatives",
@@ -57,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({
     },
     // inside the `nav` array
     {
-      label: "AWARDS&REWARDS",
+      label: "AWARDS & REWARDS",
       to: "/awards-rewards",
       sectionId: "awards-rewards",
       scrollTo: () => {
@@ -169,13 +161,8 @@ const Header: React.FC<HeaderProps> = ({
   // AFTER:
   const isActive = (sectionId: string) => {
     if (
-      location.pathname === "/ai-initiatives" &&
+      location.pathname === "/bharath-aistore/ai-initiatives" &&
       sectionId === "ai-initiatives"
-    )
-      return true;
-    if (
-      location.pathname === "/bharath-aistore" &&
-      sectionId === "bharat-ai-store"
     )
       return true;
     if (

@@ -194,19 +194,6 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
     sessionStorage.setItem("primaryType", detectedPrimaryType);
   }, [location]);
 
-  // Redirect to mobile app stores
- useEffect(() => {
-   const userAgent = navigator.userAgent || navigator.vendor;
-
-   if (/android/i.test(userAgent)) {
-     window.location.href =
-       "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer";
-   } else if (/iPad|iPhone|iPod/.test(userAgent) && !("MSStream" in window)) {
-     window.location.href =
-       "https://apps.apple.com/in/app/askoxy-ai-ai-z-marketplace/id6738732000";
-   }
- }, []);
-
   // Resend OTP timer
   useEffect(() => {
     if (resendDisabled) {

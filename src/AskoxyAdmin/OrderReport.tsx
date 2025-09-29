@@ -264,16 +264,16 @@ const OrderReport: React.FC = () => {
         </span>
       ),
     },
-    {
-      title: "Amount",
-      dataIndex: "grandTotal",
-      key: "grandTotal",
-      render: (text: number) => (
-        <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
-          ₹ {Math.ceil(text)}
-        </span>
-      ),
-    },
+    // {
+    //   title: "Amount",
+    //   dataIndex: "grandTotal",
+    //   key: "grandTotal",
+    //   render: (text: number) => (
+    //     <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+    //       ₹ {Math.ceil(text)}
+    //     </span>
+    //   ),
+    // },
   ];
   const weeklyColumns = [
     {
@@ -765,7 +765,7 @@ const OrderReport: React.FC = () => {
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-md border border-gray-200 ">
-              <div className="p-4 bg-blue-50 border-t border-blue-100 flex justify-end items-center">
+              {/* <div className="p-4 bg-blue-50 border-t border-blue-100 flex justify-end items-center">
                 <div className="text-sm text-green-800">
                   Grand Total:{" "}
                   <span className="text-lg font-bold">
@@ -778,7 +778,7 @@ const OrderReport: React.FC = () => {
                     ).toLocaleString("en-IN")}
                   </span>
                 </div>
-              </div>
+              </div> */}
               <Table
                 dataSource={sortedFilteredData}
                 columns={columns}
