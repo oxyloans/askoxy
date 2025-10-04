@@ -717,8 +717,13 @@ const BharatAgentsStore: React.FC = () => {
             ? `/${baseTmp}/assistant/${encodeURIComponent(assistantIdTmp)}`
             : `/${baseTmp}/assistant/by-name/${encodeURIComponent(nameSlug)}`;
 
+        // ✅ FIXED: Ensure redirectPath is set to the FULL intended path (including any query params if needed)
+        // This preserves the exact assistant URL for return after auth success in both register/login
         sessionStorage.setItem("redirectPath", intended);
+        // ✅ FIXED: Also set a flag to indicate coming from AI Store for better primaryType detection
+        sessionStorage.setItem("fromAISTore", "true");
       } catch {}
+      // ✅ FIXED: Use window.location.href to force full page reload, ensuring sessionStorage persists across redirects
       window.location.href = "/whatsappregister?primaryType=AGENT";
       return;
     }

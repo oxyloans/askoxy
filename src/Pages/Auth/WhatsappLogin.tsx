@@ -38,28 +38,52 @@ interface ErrorResponse {
   message?: string;
 }
 
-// UPDATED: Handle auth error utility function to include AGENT similar to STUDENT
-const handleAuthError = (err: AxiosError<ErrorResponse>, navigate: (path: string) => void): boolean => {
+const handleAuthError = (
+  err: AxiosError<ErrorResponse>,
+  navigate: (path: string) => void
+): boolean => {
   if (err.response?.status === 401) {
-    sessionStorage.setItem("redirectPath", window.location.pathname);
+    // ✅ FIXED: Do NOT overwrite existing redirectPath; preserve original assistant path
+    if (!sessionStorage.getItem("redirectPath")) {
+      sessionStorage.setItem(
+        "redirectPath",
+        window.location.pathname + window.location.search
+      );
+    }
+    if (!sessionStorage.getItem("fromAISTore")) {
+      sessionStorage.setItem("fromAISTore", "true");
+    }
     // UPDATED: Handle primaryType for AGENT similar to STUDENT
     const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
     sessionStorage.setItem("fromStudyAbroad", "true");
-    navigate(`/whatsapplogin?primaryType=${primaryType}`);
+    // ✅ FIXED: Toggle: login -> register, else -> login (but since this is login, go to register)
+    const isLoginPage = window.location.pathname.includes("whatsapplogin");
+    const targetPath = isLoginPage ? "/whatsappregister" : "/whatsapplogin";
+    navigate(`${targetPath}?primaryType=${primaryType}`);
     return true;
   }
   return false;
 };
 
-// UPDATED: Handle login redirect for non-authenticated users to include AGENT similar to STUDENT
-const handleLoginRedirect = (navigate: (path: string) => void, redirectPath?: string) => {
-  sessionStorage.setItem("redirectPath", redirectPath || window.location.pathname);
+// ✅ FIXED: Updated handleLoginRedirect to preserve flags
+const handleLoginRedirect = (
+  navigate: (path: string) => void,
+  redirectPath?: string
+) => {
+  if (!sessionStorage.getItem("redirectPath")) {
+    sessionStorage.setItem(
+      "redirectPath",
+      redirectPath || window.location.pathname
+    );
+  }
+  if (!sessionStorage.getItem("fromAISTore")) {
+    sessionStorage.setItem("fromAISTore", "true");
+  }
   // UPDATED: Handle primaryType for AGENT similar to STUDENT
   const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
   sessionStorage.setItem("fromStudyAbroad", "true");
   navigate(`/whatsapplogin?primaryType=${primaryType}`);
 };
-
 const WhatsappLogin: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -177,57 +201,41 @@ const WhatsappLogin: React.FC = () => {
   }, [location, navigate]);
 
   // Check for existing authentication
-  useEffect(() => {
-    if (userId && accessToken) {
-      fetchUserDetails(accessToken).then((userData) => {
-        if (userData && userData.userId) {
-          const redirectPath =
-            sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
-          sessionStorage.removeItem("redirectPath");
-          navigate(redirectPath, { replace: true });
-        } else {
-          // Clear invalid credentials
-          localStorage.removeItem("userId");
-          localStorage.removeItem("accessToken");
-        }
-      });
-    }
-  }, [navigate]);
+ useEffect(() => {
+   const queryParams = new URLSearchParams(location.search);
+   // UPDATED: Include AGENT in detectedPrimaryType type
+   let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" = "CUSTOMER";
 
-  // Determine primary type
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    // UPDATED: Include AGENT in detectedPrimaryType type
-    let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" = "CUSTOMER";
+   // UPDATED: Handle primaryType for AGENT similar to STUDENT
+   const urlPrimaryType = queryParams.get("primaryType");
+   if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
+     detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT";
+   } else if (
+     queryParams.get("from") === "studyabroad" ||
+     location.state?.from?.includes("/studyabroad") ||
+     document.referrer.includes("/studyabroad") ||
+     sessionStorage.getItem("primaryType") === "STUDENT" ||
+     sessionStorage.getItem("fromStudyAbroad") === "true"
+   ) {
+     detectedPrimaryType = "STUDENT";
+   } else if (
+     queryParams.get("from") === "bharath-aistore" ||
+     location.state?.from?.includes("/bharath-aistore") ||
+     document.referrer.includes("/bharath-aistore") ||
+     sessionStorage.getItem("primaryType") === "AGENT" ||
+     // ✅ FIXED: Detect fromAISTore flag for AGENT primaryType
+     sessionStorage.getItem("fromAISTore") === "true"
+   ) {
+     detectedPrimaryType = "AGENT";
+   }
 
-    // UPDATED: Handle primaryType for AGENT similar to STUDENT
-    const urlPrimaryType = queryParams.get("primaryType");
-    if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
-      detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT";
-    } else if (
-      queryParams.get("from") === "studyabroad" ||
-      location.state?.from?.includes("/studyabroad") ||
-      document.referrer.includes("/studyabroad") ||
-      sessionStorage.getItem("primaryType") === "STUDENT" ||
-      sessionStorage.getItem("fromStudyAbroad") === "true"
-    ) {
-      detectedPrimaryType = "STUDENT";
-    } else if (
-      queryParams.get("from") === "bharath-aistore" ||
-      location.state?.from?.includes("/bharath-aistore") ||
-      document.referrer.includes("/bharath-aistore") ||
-      sessionStorage.getItem("primaryType") === "AGENT"
-    ) {
-      detectedPrimaryType = "AGENT";
-    }
-
-    setPrimaryType(detectedPrimaryType);
-    // UPDATED: Handle showEriceAlert for AGENT similar to STUDENT
-    setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
-    // UPDATED: Handle showGoogleButton for AGENT similar to STUDENT
-    setShowGoogleButton(detectedPrimaryType === "CUSTOMER");
-    sessionStorage.setItem("primaryType", detectedPrimaryType);
-  }, [location]);
+   setPrimaryType(detectedPrimaryType);
+   // UPDATED: Handle showEriceAlert for AGENT similar to STUDENT
+   setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
+   // UPDATED: Handle showGoogleButton for AGENT similar to STUDENT
+   setShowGoogleButton(detectedPrimaryType === "CUSTOMER");
+   sessionStorage.setItem("primaryType", detectedPrimaryType);
+ }, [location]);
 
   // Redirect to mobile app stores
   //  useEffect(() => {
@@ -305,19 +313,23 @@ const WhatsappLogin: React.FC = () => {
     }
   };
 
-  const handleClose = () => {
-    setIsClosing(true);
-    // UPDATED: Handle defaultPath for AGENT similar to STUDENT
-    const defaultPath =
-      primaryType === "AGENT"
-        ? "/bharath-aistore"
-        : primaryType === "STUDENT"
-        ? "/studyabroad"
-        : "/";
-    const entryPoint = localStorage.getItem("entryPoint") || defaultPath;
-    console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
-    setTimeout(() => navigate(entryPoint), 300);
-  };
+const handleClose = () => {
+  setIsClosing(true);
+  // UPDATED: Handle defaultPath for AGENT similar to STUDENT
+  const defaultPath =
+    primaryType === "AGENT"
+      ? "/bharath-aistore"
+      : primaryType === "STUDENT"
+      ? "/studyabroad"
+      : "/";
+  // ✅ FIXED: Prefer stored redirectPath if available
+  const entryPoint =
+    sessionStorage.getItem("redirectPath") ||
+    localStorage.getItem("entryPoint") ||
+    defaultPath;
+  console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
+  setTimeout(() => navigate(entryPoint), 300);
+};
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");

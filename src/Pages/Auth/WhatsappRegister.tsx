@@ -25,22 +25,44 @@ import BASE_URL from "../../Config";
 // Handle auth error
 const handleAuthError = (err: any, navigate: any) => {
   if (err.response?.status === 401) {
-    sessionStorage.setItem("redirectPath", window.location.pathname);
-    // UPDATED: Handle primaryType for AGENT similar to STUDENT
+    // ✅ FIXED: Do NOT overwrite existing redirectPath; preserve the original (e.g., assistant URL)
+    if (!sessionStorage.getItem("redirectPath")) {
+      sessionStorage.setItem(
+        "redirectPath",
+        window.location.pathname + window.location.search
+      );
+    }
+    // ✅ FIXED: Preserve fromAISTore flag if set
+    if (!sessionStorage.getItem("fromAISTore")) {
+      sessionStorage.setItem("fromAISTore", "true");
+    }
     const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
     sessionStorage.setItem("fromStudyAbroad", "true");
-    navigate(`/whatsappregister?primaryType=${primaryType}`);
+    // ✅ FIXED: Toggle based on current page: register -> login, else -> register
+    const isRegisterPage =
+      window.location.pathname.includes("whatsappregister");
+    const targetPath = isRegisterPage ? "/whatsapplogin" : "/whatsappregister";
+    navigate(`${targetPath}?primaryType=${primaryType}`);
     return true;
   }
   return false;
 };
 
-// Handle login redirect for non-authenticated users
+// ✅ FIXED: Updated handleLoginRedirect to preserve existing redirectPath and flags
 const handleLoginRedirect = (navigate: any, redirectPath?: string) => {
-  sessionStorage.setItem(
-    "redirectPath",
-    redirectPath || window.location.pathname
-  );
+  // ✅ FIXED: Only set redirectPath if not already set (preserve original)
+  if (!sessionStorage.getItem("redirectPath")) {
+    sessionStorage.setItem(
+      "redirectPath",
+      redirectPath || window.location.pathname
+    );
+  }
+  // ✅ FIXED: Preserve fromAISTore if set
+  if (sessionStorage.getItem("fromAISTore")) {
+    // Keep it
+  } else {
+    sessionStorage.setItem("fromAISTore", "true");
+  }
   // UPDATED: Handle primaryType for AGENT similar to STUDENT
   const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
   sessionStorage.setItem("fromStudyAbroad", "true");
@@ -216,16 +238,19 @@ const WhatsappRegister = () => {
 
     const urlPrimaryType = queryParams.get("primaryType");
     const fromStudyAbroad = sessionStorage.getItem("fromStudyAbroad");
+    // ✅ FIXED: Enhanced primaryType detection to include fromAISTore flag for AGENT
+    const fromAISTore = sessionStorage.getItem("fromAISTore");
 
     if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
       setPrimaryType(urlPrimaryType as "STUDENT" | "AGENT");
     } else if (fromStudyAbroad === "true") {
       setPrimaryType("STUDENT");
+    } else if (fromAISTore === "true") {
+      setPrimaryType("AGENT");
     } else {
       setPrimaryType("CUSTOMER");
     }
   }, [navigate, location]);
-
   useEffect(() => {
     if (resendDisabled) {
       const timer = setInterval(() => {
@@ -256,7 +281,15 @@ const WhatsappRegister = () => {
 
   const handleClose = () => {
     setIsClosing(true);
-    const entryPoint = localStorage.getItem("entryPoint") || "/";
+    // UPDATED: Handle defaultPath for AGENT similar to STUDENT
+    const defaultPath =
+      primaryType === "AGENT"
+        ? "/bharath-aistore"
+        : primaryType === "STUDENT"
+        ? "/studyabroad"
+        : "/";
+    const entryPoint = localStorage.getItem("entryPoint") || defaultPath;
+    console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
     setTimeout(() => navigate(entryPoint), 300);
   };
 

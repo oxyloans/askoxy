@@ -100,7 +100,18 @@ const AssistantDetails: React.FC = () => {
     localStorage.getItem("userId")
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
-
+  // ✅ FIXED: Add auth check at the top of the component to redirect unauthenticated users to register/login
+  // This ensures that if someone directly accesses the assistant URL without auth, they are redirected properly
+  // with redirectPath preserved for return after auth
+  useEffect(() => {
+    if (!userId) {
+      // Set the current full path as redirectPath for return after auth
+      sessionStorage.setItem("redirectPath", currentPath);
+      sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
+      window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
+      return;
+    }
+  }, [userId, currentPath]);
   // assistant + chat state
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -1061,21 +1072,21 @@ const AssistantDetails: React.FC = () => {
     <>
       {!userId &&
         (() => {
-         try {
-           sessionStorage.setItem(
-             "returnTo",
-             `${location.pathname}${location.search || ""}`
-           );
-         } catch (e) {
-           console.warn("Could not save returnTo:", e);
-         }
-         return (
-           <Navigate
-             to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
-               currentPath
-             )}`}
-           />
-         );
+          try {
+            sessionStorage.setItem(
+              "returnTo",
+              `${location.pathname}${location.search || ""}`
+            );
+          } catch (e) {
+            console.warn("Could not save returnTo:", e);
+          }
+          return (
+            <Navigate
+              to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
+                currentPath
+              )}`}
+            />
+          );
         })()}
 
       <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">
@@ -1534,7 +1545,6 @@ const AssistantDetails: React.FC = () => {
                                     <User className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
                                       <textarea
-                                      
                                         className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
                                         style={{ minHeight: "20px" }}
                                         value={editingContent}
