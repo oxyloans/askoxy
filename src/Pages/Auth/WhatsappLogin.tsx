@@ -69,7 +69,7 @@ const WhatsappLogin: React.FC = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
-  const [otpMethod, setOtpMethod] = useState<"mobile" | "whatsapp">("mobile");
+ const [otpMethod, setOtpMethod] = useState<"mobile" | "whatsapp">("whatsapp");
   const [showEnglish, setShowEnglish] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
@@ -194,6 +194,19 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
     sessionStorage.setItem("primaryType", detectedPrimaryType);
   }, [location]);
 
+  // Redirect to mobile app stores
+//  useEffect(() => {
+//    const userAgent = navigator.userAgent || navigator.vendor;
+
+//    if (/android/i.test(userAgent)) {
+//      window.location.href =
+//        "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer";
+//    } else if (/iPad|iPhone|iPod/.test(userAgent) && !("MSStream" in window)) {
+//      window.location.href =
+//        "https://apps.apple.com/in/app/askoxy-ai-ai-z-marketplace/id6738732000";
+//    }
+//  }, []);
+
   // Resend OTP timer
   useEffect(() => {
     if (resendDisabled) {
@@ -234,11 +247,12 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   }, [phoneNumber]);
 
   // Set SMS as default for Erice users
-  useEffect(() => {
-    if (window.location.search.includes("erice") || window.location.pathname.includes("erice")) {
-      setOtpMethod("mobile");
-    }
-  }, []);
+// Set SMS as default for Erice users
+useEffect(() => {
+  if (window.location.search.includes("erice") || window.location.pathname.includes("erice")) {
+    setOtpMethod("mobile");
+  }
+}, []);
 
   const handleGmailAuth = () => {
     setIsGoogleLoading(true);
@@ -700,6 +714,23 @@ const handleClose = () => {
           >
             <div className="flex flex-col items-center gap-4 p-2  pb-4">
               <div className="flex gap-4">
+                       <button
+                  type="button"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    otpMethod === "whatsapp"
+                      ? "bg-green-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  } ${
+                    isPhoneDisabled || isMethodDisabled
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
+                  onClick={() => switchOtpMethod("whatsapp")}
+                  disabled={isPhoneDisabled || isMethodDisabled}
+                >
+                  <FaWhatsapp className="w-5 h-5" />
+                  WhatsApp
+                </button>
                 <button
                   type="button"
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -717,23 +748,7 @@ const handleClose = () => {
                   <Smartphone className="w-5 h-5" />
                   SMS
                 </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    otpMethod === "whatsapp"
-                      ? "bg-green-500 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  } ${
-                    isPhoneDisabled || isMethodDisabled
-                      ? "opacity-70 cursor-not-allowed"
-                      : ""
-                  }`}
-                  onClick={() => switchOtpMethod("whatsapp")}
-                  disabled={isPhoneDisabled || isMethodDisabled}
-                >
-                  <FaWhatsapp className="w-5 h-5" />
-                  WhatsApp
-                </button>
+         
               </div>
             </div>
 

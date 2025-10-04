@@ -1521,64 +1521,87 @@ const AssistantDetails: React.FC = () => {
                         msg.role === "user" ? (
                           <div
                             key={idx}
-                            className="flex mb-3 sm:mb-4 justify-end group relative"
+                            className={`flex mb-3 sm:mb-4 justify-end group relative ${
+                              editingIndex === idx ? "w-full" : ""
+                            }`}
                           >
-                            <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white">
-                              <div className="flex gap-2">
-                                <User className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
-                                {editingIndex === idx ? (
-                                  <div className="w-full">
-                                    <textarea
-                                      className="w-full bg-transparent border border-gray-300 dark:border-gray-600 rounded p-2 text-purple-700 dark:text-white"
-                                      rows={3}
-                                      value={editingContent}
-                                      onChange={(e) =>
-                                        setEditingContent(e.target.value)
-                                      }
-                                    />
-                                    <div className="flex justify-end gap-2 mt-2">
-                                      <button
-                                        onClick={() =>
-                                          handleEditSave(idx, editingContent)
+                            {editingIndex === idx ? (
+                              <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
+                                <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
+                                  <div className="flex items-start gap-3">
+                                    <User className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <textarea
+                                      
+                                        className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
+                                        style={{ minHeight: "20px" }}
+                                        value={editingContent}
+                                        onChange={(e) =>
+                                          setEditingContent(e.target.value)
                                         }
-                                        className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-                                      >
-                                        Save & Submit
-                                      </button>
-                                      <button
-                                        onClick={() => setEditingIndex(null)}
-                                        className="px-3 py-1 bg-gray-200 text-black dark:bg-gray-600 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                                      >
-                                        Cancel
-                                      </button>
+                                        onInput={(e) => {
+                                          const target =
+                                            e.target as HTMLTextAreaElement;
+                                          target.style.height = "auto"; // reset height
+                                          target.style.height =
+                                            target.scrollHeight + "px"; // expand to fit content
+                                        }}
+                                        placeholder="Edit your message..."
+                                      />
                                     </div>
                                   </div>
-                                ) : (
-                                  <MarkdownRenderer content={msg.content} />
-                                )}
+                                  <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                    <button
+                                      onClick={() => {
+                                        setEditingIndex(null);
+                                        setEditingContent("");
+                                      }}
+                                      className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleEditSave(idx, editingContent)
+                                      }
+                                      disabled={!editingContent.trim()}
+                                      className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-
-                            {editingIndex !== idx && (
-                              <div className="absolute bottom-0 right-0 flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(msg.content);
-                                    message.success("Copied to clipboard");
-                                  }}
-                                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                  title="Copy"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleEdit(idx)}
-                                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                  title="Edit"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                              </div>
+                            ) : (
+                              <>
+                                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative">
+                                  <div className="flex gap-2">
+                                    <User className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
+                                    <MarkdownRenderer content={msg.content} />
+                                  </div>
+                                  <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(
+                                          msg.content
+                                        );
+                                        message.success("Copied to clipboard");
+                                      }}
+                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                      title="Copy"
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleEdit(idx)}
+                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                      title="Edit"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
                             )}
                           </div>
                         ) : (
@@ -1587,7 +1610,7 @@ const AssistantDetails: React.FC = () => {
                             className="flex mb-3 sm:mb-4 justify-start"
                           >
                             <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-                              <div className="flex items-start gap-2 flex-1">
+                              <div className="items-start gap-2 flex-1">
                                 <GiElephantHead className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
                                 <MarkdownRenderer content={msg.content} />
                               </div>

@@ -221,6 +221,8 @@ import ServiceCAList from "./components/ServiceCAList";
 import ServiceDashboard from "./components/ServiceDashboard";
 import EmployeeInteractions from "./Taskmanagement/EmployeeInstructions";
 import EmployeeViewChat from "./Taskmanagement/EmployeeChatView";
+import HealthcareAgentsPage from "./BharathAIStore/pages/Healthcareagents";
+import RemoveTrailingSlash from "./auth/RemoveTrailingSlash";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -257,6 +259,7 @@ const App: React.FC = () => {
   return (
     <CartProvider>
       <SearchProvider>
+        <RemoveTrailingSlash />
         <ScrollToTop />
         <div className="App">
           <Routes>
@@ -311,6 +314,10 @@ const App: React.FC = () => {
                 path="/bharath-aistore/insurance"
                 element={<InsuranceAgentsPage />}
               />
+              <Route
+                path="/bharath-aistore/healthcare"
+                element={<HealthcareAgentsPage />}
+              />
               <Route path="/awards-rewards" element={<AwardsRewardsVideo />} />
               <Route
                 path="/bharath-aistore/ai-initiatives"

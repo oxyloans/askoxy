@@ -32,6 +32,8 @@ interface Campaign {
   campaignId: string;
   campainInputType: string;
   socialMediaCaption: string;
+  createdAt: string;
+  updatedAt: string;
   campaignPostsUrls: PostUrl[];
 }
 interface PostUrl {
@@ -66,6 +68,8 @@ const AllCampaignsDetails: React.FC = () => {
     campainInputType: "",
     campaignPostsUrls: [],
     socialMediaCaption: "",
+    createdAt: "",
+    updatedAt: "",
   });
 
   const baseUrl = window.location.href.includes("sandbox")
@@ -174,6 +178,8 @@ const AllCampaignsDetails: React.FC = () => {
       campainInputType: campaign.campainInputType,
       campaignPostsUrls: [],
       socialMediaCaption: campaign.socialMediaCaption,
+      createdAt: "",
+      updatedAt: "",
     });
     setIsUpdateModalVisible(true);
   };
@@ -308,53 +314,56 @@ const AllCampaignsDetails: React.FC = () => {
     );
   };
 
- const handlePlatformPublish = async (platform: string) => {
-  try {
-    message.loading(`Publishing to ${platform}...`, 0);
+  const handlePlatformPublish = async (platform: string) => {
+    try {
+      message.loading(`Publishing to ${platform}...`, 0);
 
-    const response = await axios.post(
-      `${BASE_URL}/marketing-service/campgin/publishposttosocialmedia?campaignId=${
-        currentBlogCampaign?.campaignId
-      }&platform=${platform.toUpperCase()}&socialMediaCaption=${encodeURIComponent(
-        socialMediaCaption.trim()
-      )}`,
-      "",
-      {
-        headers: {
-          accept: "*/*",
-        },
+      const response = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/publishposttosocialmedia?campaignId=${
+          currentBlogCampaign?.campaignId
+        }&platform=${platform.toUpperCase()}&socialMediaCaption=${encodeURIComponent(
+          socialMediaCaption.trim()
+        )}`,
+        "",
+        {
+          headers: {
+            accept: "*/*",
+          },
+        }
+      );
+
+      message.destroy();
+
+      const { status, url, postId } = response.data;
+
+      if (status) {
+        message.success(`Successfully published to ${platform}!`);
+
+        if (url && postId) {
+          updateCampaignPostUrls(platform, url, postId);
+
+          // ✅ Store to reopen modal again
+          localStorage.setItem(
+            "reopenPublishModal",
+            currentBlogCampaign?.campaignId || ""
+          );
+        }
+
+        // ✅ Just re-fetch data, DO NOT reload page
+        fetchCampaigns();
+      } else {
+        message.error(`Failed to publish to ${platform}`);
       }
-    );
+    } catch (error) {
+      message.destroy();
+      console.error(`Error publishing to ${platform}:`, error);
 
-    message.destroy();
-
-    const { status, url, postId } = response.data;
-
-    if (status) {
-      message.success(`Successfully published to ${platform}!`);
-
-      if (url && postId) {
-        updateCampaignPostUrls(platform, url, postId);
-
-        // ✅ Store to reopen modal again
-        localStorage.setItem("reopenPublishModal", currentBlogCampaign?.campaignId || "");
-      }
-
-      // ✅ Just re-fetch data, DO NOT reload page
-      fetchCampaigns();
-    } else {
-      message.error(`Failed to publish to ${platform}`);
+      const err = error as AxiosError;
+      const errorMessage =
+        (err.response?.data as any)?.message || "Please try again.";
+      message.error(`Failed to publish to ${platform}: ${errorMessage}`);
     }
-  } catch (error) {
-    message.destroy();
-    console.error(`Error publishing to ${platform}:`, error);
-
-    const err = error as AxiosError;
-    const errorMessage = (err.response?.data as any)?.message || "Please try again.";
-    message.error(`Failed to publish to ${platform}: ${errorMessage}`);
-  }
-};
-
+  };
 
   const updateCampaignPostUrls = (
     platform: string,
@@ -451,6 +460,8 @@ const AllCampaignsDetails: React.FC = () => {
           campainInputType: "",
           campaignPostsUrls: [],
           socialMediaCaption: "",
+          createdAt: "",
+          updatedAt: "",
         });
         setIsUpdateModalVisible(false);
       } else {
@@ -648,9 +659,36 @@ const AllCampaignsDetails: React.FC = () => {
       title: <div className="text-center">Added By</div>,
       dataIndex: "campaignTypeAddBy",
       key: "campaignTypeAddBy",
-      render: (text: string) => (
-        <div className="max-w-xs break-words">{text}</div>
-      ),
+      render: (_: string, record: Campaign) => {
+        const formatDate = (value: string) => {
+          return new Date(Number(value)).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          });
+        };
+
+        return (
+          <div className="max-w-xs break-words text-center">
+            {/* Added By */}
+            <div>{record.campaignTypeAddBy}</div>
+
+            {/* Created At */}
+            {record.createdAt && (
+              <div className="text-sm text-gray-500">
+                <strong>Created:</strong> {formatDate(record.createdAt)}
+              </div>
+            )}
+
+            {/* Updated At */}
+            {record.updatedAt && (
+              <div className="text-sm text-gray-500">
+                <strong>Updated:</strong> {formatDate(record.updatedAt)}
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: <div className="text-center">Actions</div>,

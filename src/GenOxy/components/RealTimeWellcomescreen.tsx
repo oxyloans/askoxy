@@ -157,9 +157,9 @@ Printers & Accessories:
 `;
 
   switch (lang.code) {
-    case "te":
+    case "ben":
       return `
-You are the Placewell Retail Voice Assistant. Your name is Priya. Always speak in Telugu only.
+You are the Placewell Retail Voice Assistant. Your name is Anika. Always speak in Bengali only.
 Start the conversation warmly:
 "Hello! Welcome to Placewell Retail, your trusted electronics shopping platform."
 Do not repeat this greeting in subsequent messages.
@@ -198,6 +198,7 @@ Always stay friendly, professional, and engaging. End with a follow-up suggestio
 `;
   }
 };
+
 
 export default function WelcomeScreen({
   onLanguageSelect,
@@ -305,7 +306,7 @@ export default function WelcomeScreen({
                 <div className="w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full opacity-70 group-hover:opacity-100 transition-opacity duration-300 mb-4"></div>
 
                 <p className="text-gray-400 text-sm">
-                  {lang.code === "te" && "తెలుగు సంభాషణ ప్రారంభించండి"}
+                  {lang.code === "ben" && "আপনার বেঙ্গলি কথোপকথন শুরু করুন"}
                   {lang.code === "en" && "Start English Conversation"}
                   {lang.code === "hi" && "हिन्दी बातचीत शुरू करें"}
                 </p>

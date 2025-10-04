@@ -48,7 +48,7 @@ type ModelInfo = {
 type AgentApiResponse = {
   id: string | null;
   userId: string | null;
-  agentName: string;
+  name: string;
   voiceStatus: boolean | null;
   activeStatus: boolean;
   userRole: string | null;
@@ -127,6 +127,31 @@ const TARGET_USER_OPTIONS = [
   "Consultants",
   "Other",
 ];
+
+const LIMITS = {
+  nameMin: 3,              nameMax: 50,
+  creatorMin: 3,           creatorMax: 50,
+  roleOtherMin: 2,         roleOtherMax: 50,
+  expMax: 120,
+  achievementsMax: 150,
+  descMin: 10,             descMax: 250,
+
+  businessMin: 3,          businessMax: 100,
+  domainOtherMin: 2,       domainOtherMax: 60,
+  subDomainOtherMin: 2,    subDomainOtherMax: 60,
+
+  problemMax: 250,
+  solutionMax: 250,
+
+  targetOtherMin: 2,       targetOtherMax: 60,
+  ageOtherMin: 2,          ageOtherMax: 20,
+
+  contactMin: 5,           contactMax: 100,
+
+  starterMin: 5,           starterMax: 150,
+
+  instructionsMax: 7000, // you already slice to 7000 in cleanInstructionText
+};
 
 const AGE_LIMIT_OPTIONS = [
   "Below 18",
@@ -215,12 +240,11 @@ const CreateAgentWizard: React.FC = () => {
   // Step 1 - Profile
   const [creatorName, setCreatorName] = useState("");
   const [acheivements, setAcheivements] = useState("");
-  const [agentName, setAgentName] = useState("");
+  const [name, setName] = useState("");
   const [userRole, setUserRole] = useState("Advocate");
   const [userRoleOther, setUserRoleOther] = useState("");
   const [userExperienceSummary, setUserExperienceSummary] = useState("");
   const [description, setDescription] = useState("");
-  const [strength, setStrength] = useState("");
   const [language, setLanguage] = useState("English");
 
   // Step 4 fields
@@ -570,7 +594,7 @@ const CreateAgentWizard: React.FC = () => {
         setAssistantId(String(seed.assistantId || ""));
 
         // Step 1 – Profile
-        setAgentName(seed.agentName || seed.name || "");
+        setName(seed.Name || seed.name || "");
         setDescription(seed.description || "");
         setLanguage(seed.language || "English");
         setUserExperienceSummary(seed.userExperienceSummary || "");
@@ -718,12 +742,11 @@ const CreateAgentWizard: React.FC = () => {
     }`.trim();
     setCreatorName(fullName || ""); // prefill from profile again
     setAcheivements("");
-    setAgentName("");
+    setName("");
     setUserRole("Advocate");
     setUserRoleOther("");
     setUserExperienceSummary("");
     setDescription("");
-    setStrength("");
     setLanguage("English");
 
     // Step 2 – Business & Model & Problem
@@ -765,11 +788,11 @@ const CreateAgentWizard: React.FC = () => {
   };
 
   // ===== Allowed Models =====
-  const ALLOWED_MODELS = ["gpt-4o"];
+  const ALLOWED_MODELS = ["gpt-4o", "GPT-4o / DALL·E 3"];
   const FALLBACK_MODELS_ALLOWED: ModelInfo[] = ALLOWED_MODELS.map((id) => ({
     id,
     owned_by: "openai",
-  }));
+  }));
 
   useEffect(() => {
     if (step !== 1) return;
@@ -804,100 +827,199 @@ const CreateAgentWizard: React.FC = () => {
     })();
   }, [step]);
 
-  // ===== VALIDATION =====
-  const validateStep0 = (): boolean => {
-    const missing: string[] = [];
-    if (!agentName.trim()) missing.push("Agent Name");
-    if (!creatorName.trim()) missing.push("Creator Name");
-    if (!(effectiveUserRole || "").trim())
-      missing.push("Professional Identity");
-    if (!description.trim()) missing.push("Description");
-    if (!language.trim()) missing.push("Language");
-    if (missing.length) {
-      message.error(
-        `Please fill the following before Continue: ${missing.join(", ")}`
-      );
-      return false;
-    }
-    return true;
-  };
+  const within = (v: string, min: number, max: number) =>
+  v.trim().length >= min && v.trim().length <= max;
 
-  const validateStep1 = (): boolean => {
-    const missing: string[] = [];
-    if (!business.trim()) missing.push("Business/Idea");
-    if (!(resolvedDomain || "").trim()) missing.push("Domain/Sector");
-    if (!(resolvedSubDomain || "").trim()) missing.push("Sub-Domain/Subsector");
-    if (!selectedModelId?.trim()) missing.push("GPT Model");
-    // if (!responseFormat) missing.push("Response Format");
-    if (!solveProblem) missing.push("Are you solving a problem?");
-    if (solveProblem === "YES") {
-      if (!mainProblemText.trim()) missing.push("Main Problem to Solve");
-      if (!uniqueSolution.trim()) missing.push("Unique Solution Method");
-      if (mainProblemText.length > 100) {
-        message.error("Main Problem to Solve must be ≤ 100 characters.");
-        return false;
-      }
-      if (uniqueSolution.length > 100) {
-        message.error("Unique Solution Method must be ≤ 100 characters.");
-        return false;
-      }
-    }
-    if (missing.length) {
-      message.error(
-        `Please fill the following before Continue: ${missing.join(", ")}`
-      );
+
+const validateStep0 = (): boolean => {
+  const missing: string[] = [];
+
+  if (!name.trim()) {
+    missing.push("Agent Name");
+  } else if (!within(name, LIMITS.nameMin, LIMITS.nameMax)) {
+    message.error(`Agent Name must be ${LIMITS.nameMin}–${LIMITS.nameMax} characters.`);
+    return false;
+  }
+
+  if (!creatorName.trim()) {
+    missing.push("Creator Name");
+  } else if (!within(creatorName, LIMITS.creatorMin, LIMITS.creatorMax)) {
+    message.error(`Creator Name must be ${LIMITS.creatorMin}–${LIMITS.creatorMax} characters.`);
+    return false;
+  }
+
+  if (!(effectiveUserRole || "").trim()) {
+    missing.push("Professional Identity");
+  } else if (userRole === "Other") {
+    if (!within(userRoleOther, LIMITS.roleOtherMin, LIMITS.roleOtherMax)) {
+      message.error(`Please describe your profession in ${LIMITS.roleOtherMin}–${LIMITS.roleOtherMax} characters.`);
       return false;
     }
-    return true;
-  };
+  }
+
+  if (!description.trim()) {
+    missing.push("Description");
+  } else if (!within(description, LIMITS.descMin, LIMITS.descMax)) {
+    message.error(`Description must be ${LIMITS.descMin}–${LIMITS.descMax} characters.`);
+    return false;
+  }
+
+  if (!language.trim()) {
+    missing.push("Language");
+  }
+
+  // soft caps already on inputs:
+  if (userExperienceSummary.length > LIMITS.expMax) {
+    message.error(`Creator Experience must be ≤ ${LIMITS.expMax} characters.`);
+    return false;
+  }
+  if (acheivements.length > LIMITS.achievementsMax) {
+    message.error(`Strengths must be ≤ ${LIMITS.achievementsMax} characters.`);
+    return false;
+  }
+
+  if (missing.length) {
+    message.error(`Please fill the following before Continue: ${missing.join(", ")}`);
+    return false;
+  }
+  return true;
+};
+
+const validateStep1 = (): boolean => {
+  const missing: string[] = [];
+
+  // Business/Idea
+  if (!business.trim()) {
+    missing.push("Business/Idea");
+  } else if (!within(business, LIMITS.businessMin, LIMITS.businessMax)) {
+    message.error(`Business/Idea must be ${LIMITS.businessMin}–${LIMITS.businessMax} characters.`);
+    return false;
+  }
+
+  // Domain
+  if (!(resolvedDomain || "").trim()) {
+    missing.push("Domain/Sector");
+  } else if (domain === "Other") {
+    if (!within(domainOther, LIMITS.domainOtherMin, LIMITS.domainOtherMax)) {
+      message.error(`Custom Domain must be ${LIMITS.domainOtherMin}–${LIMITS.domainOtherMax} characters.`);
+      return false;
+    }
+  }
+
+  // Sub-domain
+  if (!(resolvedSubDomain || "").trim()) {
+    missing.push("Sub-Domain/Subsector");
+  } else if (subDomain === "Other") {
+    if (!within(subDomainOther, LIMITS.subDomainOtherMin, LIMITS.subDomainOtherMax)) {
+      message.error(`Custom Sub-domain must be ${LIMITS.subDomainOtherMin}–${LIMITS.subDomainOtherMax} characters.`);
+      return false;
+    }
+  }
+
+  // Model
+  if (!selectedModelId?.trim()) {
+    missing.push("GPT Model");
+  }
+
+  // Problem/Solution
+  if (!solveProblem) missing.push("Are you solving a problem?");
+  if (solveProblem === "YES") {
+    if (!mainProblemText.trim()) missing.push("Main Problem to Solve");
+    if (!uniqueSolution.trim()) missing.push("Unique Solution Method");
+    if (mainProblemText.length > LIMITS.problemMax) {
+      message.error(`Main Problem to Solve must be ≤ ${LIMITS.problemMax} characters.`);
+      return false;
+    }
+    if (uniqueSolution.length > LIMITS.solutionMax) {
+      message.error(`Unique Solution Method must be ≤ ${LIMITS.solutionMax} characters.`);
+      return false;
+    }
+  }
+
+  if (missing.length) {
+    message.error(`Please fill the following before Continue: ${missing.join(", ")}`);
+    return false;
+  }
+  return true;
+};
+
 
   const isAllSelected = (selected: string[], allOptions: string[]) =>
     allOptions.every((opt) => selected.includes(opt));
 
-  const validateStep2 = (): boolean => {
-    const missing: string[] = [];
+const validateStep2 = (): boolean => {
+  const missing: string[] = [];
 
-    // Target Customers
-    const allCustomersSelected = isAllSelected(
-      targetUsers,
-      TARGET_USER_OPTIONS
-    );
-    if (!targetUsers.length) missing.push("Target Customers");
-    if (!converstionTone?.trim()) missing.push("Conversation Tone");
-    if (
-      targetUsers.includes("Other") &&
-      !allCustomersSelected &&
-      !targetUserOther.trim()
-    ) {
-      missing.push("Target Customers (Other)");
-    }
-    if (!instructions.trim()) {
-      missing.push("Instructions (Generate or Write your own)");
-    }
-
-    // Gender
-    if (genderSelections.length === 0) missing.push("Target Audience Gender");
-
-    // Age
-    const allAgesSelected = isAllSelected(ageLimits, AGE_LIMIT_OPTIONS);
-    if (!ageLimits.length) missing.push("Target Age Limit(s)");
-    if (ageLimits.includes("Other") && !allAgesSelected && !ageOther.trim()) {
-      missing.push("Custom Age Limit (Other)");
-    }
-
-    // Share Contact validation (now appears before Instructions)
-    if (shareContact === "YES" && !contactDetails.trim()) {
-      missing.push("Contact Details (since you chose to share)");
-    }
-
-    if (missing.length) {
-      message.error(
-        `Please fill the following before Continue: ${missing.join(", ")}`
-      );
+  // Target Customers
+  const allCustomersSelected = isAllSelected(targetUsers, TARGET_USER_OPTIONS);
+  if (!targetUsers.length) missing.push("Target Customers");
+  if (!converstionTone?.trim()) missing.push("Conversation Tone");
+  if (targetUsers.includes("Other") && !allCustomersSelected && !targetUserOther.trim()) {
+    missing.push("Target Customers (Other)");
+  } else if (targetUsers.includes("Other") && targetUserOther.trim()) {
+    if (!within(targetUserOther, LIMITS.targetOtherMin, LIMITS.targetOtherMax)) {
+      message.error(`Custom Target must be ${LIMITS.targetOtherMin}–${LIMITS.targetOtherMax} characters.`);
       return false;
     }
-    return true;
-  };
+  }
+
+  // Gender
+  if (genderSelections.length === 0) missing.push("Target Audience Gender");
+
+  // Age
+  const allAgesSelected = isAllSelected(ageLimits, AGE_LIMIT_OPTIONS);
+  if (!ageLimits.length) missing.push("Target Age Limit(s)");
+  if (ageLimits.includes("Other") && !allAgesSelected) {
+    if (!within(ageOther, LIMITS.ageOtherMin, LIMITS.ageOtherMax)) {
+      message.error(`Custom Age must be ${LIMITS.ageOtherMin}–${LIMITS.ageOtherMax} characters.`);
+      return false;
+    }
+  }
+
+  // Contact
+  if (shareContact === "YES") {
+    if (!contactDetails.trim()) {
+      missing.push("Contact Details (since you chose to share)");
+    } else if (!within(contactDetails, LIMITS.contactMin, LIMITS.contactMax)) {
+      message.error(`Contact Details must be ${LIMITS.contactMin}–${LIMITS.contactMax} characters.`);
+      return false;
+    }
+  }
+
+  // Instructions
+  if (!instructions.trim()) {
+    missing.push("Instructions (Generate or Write your own)");
+  } else if (instructions.length > LIMITS.instructionsMax) {
+    message.error(`Instructions must be ≤ ${LIMITS.instructionsMax} characters.`);
+    return false;
+  }
+
+  if (missing.length) {
+    message.error(`Please fill the following before Continue: ${missing.join(", ")}`);
+    return false;
+  }
+  return true;
+};
+
+function startersOk() {
+  const starters = [conStarter1, conStarter2, conStarter3, conStarter4]
+    .map(s => (s || "").trim())
+    .filter(Boolean);
+
+  if (starters.length < 2) return false;
+
+  // every provided starter must be within limits
+  for (const s of starters) {
+    if (!within(s, LIMITS.starterMin, LIMITS.starterMax)) return false;
+  }
+  return true;
+}
+
+function startersError() {
+  message.error(`Please add at least 2 conversation starters and keep each ${LIMITS.starterMin}–${LIMITS.starterMax} characters.`);
+}
+
+
 
   // ===== PATCH helper =====
   async function doPatch(path: string, payload: Record<string, any>) {
@@ -942,8 +1064,7 @@ const CreateAgentWizard: React.FC = () => {
         headerStatus: false,
 
         // Profile
-        agentName,
-        creatorName,
+        name : creatorName,
         userRole: effectiveUserRole || "Developer",
 
         userExperienceSummary,
@@ -951,13 +1072,9 @@ const CreateAgentWizard: React.FC = () => {
 
         acheivements,
         description, // keep only 'description' (removed misspelled 'discription')
-
-        strength,
         language,
         voiceStatus: false,
-
-        // compatibility
-        name: agentName,
+        agentName: name, // legacy field, same as 'name'
       };
       const data = await doPatch("/ai-service/agent/agentScreen1", payload);
       const aId = (data as any)?.agentId || (data as any)?.id || "";
@@ -1077,109 +1194,146 @@ const CreateAgentWizard: React.FC = () => {
     if (step > 0) setStep((step - 1) as any);
   };
 
+  // Add these 2 small helpers near your other helpers (above handleGenerate)
+function cleanForTransport(s: string): string {
+  if (!s) return "";
+  // Remove accidental wrapped quotes and any injected JSON fragments
+  let t = s.trim();
+  // collapse repeated quotes and trailing commas often caused by copy/paste
+  t = t.replace(/^"+|"+$/g, "");           // strip leading/trailing double-quotes
+  t = t.replace(/^'+|'+$/g, "");           // strip leading/trailing single-quotes
+  t = t.replace(/\s+,/g, ",");             // remove space before commas
+  t = t.replace(/,{2,}$/g, "");            // strip trailing commas
+  // extremely defensive: kill attempts to stuff JSON keys inside description
+  t = t.replace(/"\s*,\s*"agentId"\s*:\s*".*?"\s*$/i, "");
+  return t;
+}
+
+async function postJson(url: string, body: any, signal?: AbortSignal) {
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    body: JSON.stringify(stripEmpty(body)),
+    signal,
+  });
+}
+
   // ===== Generate Instructions (appends contact line if shared) =====
-  const handleGenerate = async () => {
-    if (
-      !description.trim() &&
-      !(solveProblem === "YES" && uniqueSolution.trim())
-    ) {
-      message.error(
-        "Please fill either ‘Description’ or ‘Unique Solution’ before generating instructions."
-      );
-      return;
-    }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-    try {
-      setLoading(true);
-      const desc = encodeURIComponent(
-        classifyText || description || "Create helpful assistant instructions"
-      );
-      const url = `${BASE_URL}/ai-service/agent/classifyInstruct?description=${desc}`;
-      const baseHeaders: Record<string, string> = { ...getAuthHeader() };
-      if (!baseHeaders.Authorization) {
-        message.error("You’re not signed in. Please log in and try again.");
-        return;
-      }
-      let res = await fetch(url, {
-        method: "POST",
-        headers: { ...baseHeaders, "Content-Type": "application/json" },
-        body: JSON.stringify(
-          stripEmpty({
-            description,
-            domain: resolvedDomain,
-            subDomain: resolvedSubDomain,
-            targetUser: resolvedTargetUsersString,
-            language,
-            model: selectedModelId,
-            tone: converstionTone,
-            format: responseFormat, // already concrete: "auto" | "json_object"
-            capabilities: [],
-          })
-        ),
-        signal: controller.signal,
+const handleGenerate = async () => {
+  const baseErr = "Please fill either ‘Description’ or ‘Unique Solution’ before generating instructions.";
+  if (!description.trim() && !(solveProblem === "YES" && uniqueSolution.trim())) {
+    message.error(baseErr);
+    return;
+  }
+
+  // Build a rich classification text (you already do this)
+  const sourceText =
+    classifyText || description || "Create helpful assistant instructions";
+
+  // Clean description for transport (avoid %22 and embedded JSON)
+  const descClean = cleanForTransport(sourceText);
+
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 20000);
+
+  const baseUrl = `${BASE_URL}/ai-service/agent/classifyInstruct`;
+  const auth = getAuthHeader();
+  if (!auth.Authorization) {
+    message.error("You’re not signed in. Please log in and try again.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // --- Primary: POST JSON (preferred) ---
+    let res = await postJson(
+      baseUrl,
+      { description: descClean, agentId: agentId || undefined },
+      ctrl.signal
+    );
+
+    // --- Fallback 1: POST with no JSON body, pass via query ---
+    if (!res.ok && (res.status === 400 || res.status === 415)) {
+      const q = new URLSearchParams({
+        description: descClean,
+        ...(agentId ? { agentId } : {}),
       });
-      if (!res.ok && (res.status === 400 || res.status === 415)) {
-        res = await fetch(url, {
-          method: "POST",
-          headers: baseHeaders,
-          signal: controller.signal,
-        });
-      }
-
-      if (!res.ok) throw new Error(`classifyInstruct failed: ${res.status}`);
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-      let raw: string;
-      if (ct.includes("application/json")) {
-        const data = await res.json();
-        raw =
-          typeof data === "string"
-            ? data
-            : (data as any).instructions ||
-              (data as any).message ||
-              JSON.stringify(data);
-      } else {
-        raw = await res.text();
-        try {
-          const maybe = JSON.parse(raw);
-          raw =
-            typeof maybe === "string"
-              ? maybe
-              : maybe.instructions || maybe.message || raw;
-        } catch {
-          raw = raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
-        }
-      }
-      let cleaned = cleanInstructionText(raw);
-
-      if (shareContact === "YES" && contactDetails.trim()) {
-        cleaned =
-          `${cleaned}\n\nContact: ${contactDetails.trim()}.\nIf you have any queries, feel free to reach out.`.trim();
-      }
-
-      setInstructions(cleaned);
-      setGenerated(true);
-      message.success(
-        "Instructions generated and inserted. You can edit them before publishing."
-      );
-    } catch (e: any) {
-      message.error(
-        e?.name === "AbortError"
-          ? "Request timed out. Please try again."
-          : e?.message || "Failed to generate instructions"
-      );
-    } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
+      res = await fetch(`${baseUrl}?${q.toString()}`, {
+        method: "POST",
+        headers: { ...auth }, // no Content-Type and no body
+        signal: ctrl.signal,
+      });
     }
-  };
+
+    // --- Fallback 2: GET with query ---
+    if (!res.ok && (res.status === 400 || res.status === 415)) {
+      const q2 = new URLSearchParams({
+        description: descClean,
+        ...(agentId ? { agentId } : {}),
+      });
+      res = await fetch(`${baseUrl}?${q2.toString()}`, {
+        headers: { ...auth },
+        signal: ctrl.signal,
+      });
+    }
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`classifyInstruct failed: ${res.status} ${txt}`);
+    }
+
+    // Parse text or JSON softly
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    let raw: string;
+    if (ct.includes("application/json")) {
+      const data = await res.json();
+      raw =
+        typeof data === "string"
+          ? data
+          : data.instructions || data.message || JSON.stringify(data);
+    } else {
+      raw = await res.text();
+      try {
+        const maybe = JSON.parse(raw);
+        raw =
+          typeof maybe === "string"
+            ? maybe
+            : maybe.instructions || maybe.message || raw;
+      } catch {
+        raw = raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
+      }
+    }
+
+    // Clean and append contact if chosen
+    let cleaned = cleanInstructionText(raw);
+    if (shareContact === "YES" && contactDetails.trim()) {
+      cleaned =
+        `${cleaned}\n\nContact: ${contactDetails.trim()}.\nIf you have any queries, feel free to reach out.`.trim();
+    }
+
+    setInstructions(cleaned);
+    setGenerated(true);
+    message.success("Instructions generated and inserted. You can edit them before publishing.");
+  } catch (e: any) {
+    message.error(
+      e?.name === "AbortError"
+        ? "Request timed out. Please try again."
+        : e?.message || "Failed to generate instructions"
+    );
+  } finally {
+    clearTimeout(timeout);
+    setLoading(false);
+  }
+};
 
   // Instructions edit modal
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-  const handleSaveInstructions = () => {
+  // replace the old handler
+  const handleSaveInstructions = (opts?: { close?: boolean }) => {
     setInstructions(tempInstructions);
-    setShowInstructionsModal(false);
-    message.success("Instructions updated!");
+    message.success("Instructions saved!");
+    if (opts?.close) setShowInstructionsModal(false);
   };
 
   // Require at least 2 conversation starters (before preview/publish)
@@ -1193,34 +1347,30 @@ const CreateAgentWizard: React.FC = () => {
     return starters.length >= 2;
   }
 
-  // PREVIEW gate: ensure latest step 3 is saved + min starters
-  const handleOpenPreview = async () => {
-    if (!(await saveStep2())) return;
-    if (!hasMinStarters()) {
-      message.error(
-        "Please provide at least 2 Conversation Starters before preview."
-      );
-      return;
-    }
-    if (!agentName.trim()) {
-      message.error("Please add an Agent Name before preview.");
-      return;
-    }
-    setShowPreview(true);
-  };
+const handleOpenPreview = async () => {
+  if (!(await saveStep2())) return;
+  if (!startersOk()) {
+    startersError();
+    return;
+  }
+  if (!name.trim()) {
+    message.error("Please add an Agent Name before preview.");
+    return;
+  }
+  setShowPreview(true);
+};
+
 
   // ====== PUBLISH / UPDATE ======
-  const handleConfirmPublish = async () => {
-    if (isEditMode && !agentId) {
-      message.error(
-        "Missing agentId in edit mode. Please reopen from All Agents."
-      );
-      return;
-    }
-    if (!hasMinStarters()) {
-      message.error("Please provide at least 2 Conversation Starters.");
-      return;
-    }
+const handleConfirmPublish = async () => {
+  if (isEditMode && !agentId) {
+    message.error("Missing agentId in edit mode. Please reopen from All Agents.");
+    return;
+  }
+  if (!startersOk()) {
+    startersError();
+    return;
+  }
     try {
       setLoading(true);
       // NEW: require user to choose at least one store
@@ -1230,14 +1380,7 @@ const CreateAgentWizard: React.FC = () => {
         setShowStoreModal(true);
         return;
       }
-      const chooseStore =
-        storeBharat && storeOxy
-          ? "BharatAIStore,OxyGPTStore"
-          : storeBharat
-          ? "BharatAIStore"
-          : storeOxy
-          ? "OxyGPTStore"
-          : "";
+      const chooseStore = "BharatAIStore";
 
       const basePayload: any = {
         agentId: agentId || undefined,
@@ -1308,7 +1451,7 @@ const CreateAgentWizard: React.FC = () => {
     setAssistantId(String(editSeed.assistantId || ""));
 
     // Step 1 – Profile
-    setAgentName(editSeed.agentName || (editSeed as any).name || "");
+    setName(editSeed.Name || (editSeed as any).name || "");
     setDescription(editSeed.description || "");
     setLanguage(editSeed.language || "English");
     setUserExperienceSummary((editSeed as any).userExperienceSummary || "");
@@ -1492,11 +1635,11 @@ const CreateAgentWizard: React.FC = () => {
                 fontWeight: 700,
               }}
             >
-              {((data.agentName || "AG")[0] || "A").toUpperCase()}
+              {((data.name || "AG")[0] || "A").toUpperCase()}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 18, fontWeight: 700 }}>
-                {data.agentName || "—"}
+                {data.name || "—"}
               </div>
               <div style={{ color: "#52c41a", fontSize: 13 }}>
                 {data.message || "Success"}
@@ -1709,11 +1852,14 @@ const CreateAgentWizard: React.FC = () => {
                         "Example: 'TaxBuddy Pro', 'Visa Mentor', 'HealthCare FAQ Bot'"
                       )}
                       <Input
-                        value={agentName}
-                        onChange={(e) => setAgentName(e.target.value)}
-                        placeholder="Enter agent name"
-                        style={compactInputStyle}
-                      />
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  placeholder="Enter agent name"
+  maxLength={LIMITS.nameMax}
+  style={compactInputStyle}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{name.length}/{LIMITS.nameMax}</Text>}
+/>
+
                     </div>
                   </Col>
 
@@ -1723,12 +1869,16 @@ const CreateAgentWizard: React.FC = () => {
                         "Creator Name *",
                         "Your full name or brand representative name."
                       )}
-                      <Input
-                        value={creatorName}
-                        onChange={(e) => setCreatorName(e.target.value)}
-                        placeholder="Enter creator name"
-                        style={compactInputStyle}
-                      />
+    <Input
+  value={creatorName}
+  onChange={(e) => setCreatorName(e.target.value)}
+  placeholder="Enter creator name"
+  maxLength={LIMITS.creatorMax}
+  style={compactInputStyle}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{creatorName.length}/{LIMITS.creatorMax}</Text>}
+/>
+
+
                     </div>
                   </Col>
 
@@ -1779,12 +1929,15 @@ const CreateAgentWizard: React.FC = () => {
                         <Option value="Other">Other</Option>
                       </Select>
                       {userRole === "Other" && (
-                        <Input
-                          value={userRoleOther}
-                          onChange={(e) => setUserRoleOther(e.target.value)}
-                          placeholder="Enter your profession"
-                          style={{ marginTop: 8, ...compactInputStyle }}
-                        />
+                       <Input
+  value={userRoleOther}
+  onChange={(e) => setUserRoleOther(e.target.value)}
+  placeholder="Enter your profession"
+  maxLength={LIMITS.roleOtherMax}
+  style={{ marginTop: 8, ...compactInputStyle }}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{userRoleOther.length}/{LIMITS.roleOtherMax}</Text>}
+/>
+
                       )}
                     </div>
                   </Col>
@@ -1795,20 +1948,15 @@ const CreateAgentWizard: React.FC = () => {
                         "Creator Experience Overview",
                         "Optional 1–2 lines."
                       )}
-                      <Input
-                        value={userExperienceSummary}
-                        onChange={(e) =>
-                          setUserExperienceSummary(e.target.value)
-                        }
-                        placeholder="Brief summary (optional)"
-                        maxLength={120}
-                        style={compactInputStyle}
-                        suffix={
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {userExperienceSummary.length}/120
-                          </Text>
-                        }
-                      />
+                     <Input
+  value={userExperienceSummary}
+  onChange={(e) => setUserExperienceSummary(e.target.value)}
+  placeholder="Brief summary (optional)"
+  maxLength={LIMITS.expMax}
+  style={compactInputStyle}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{userExperienceSummary.length}/{LIMITS.expMax}</Text>}
+/>
+
                     </div>
                   </Col>
 
@@ -1834,22 +1982,21 @@ const CreateAgentWizard: React.FC = () => {
                       </Text>
                     </div>
                   </Col>
-
                   <Col xs={24} md={12}>
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
-                        "Your Strengths in the Field",
-                        "Optional."
+                        "Strengths",
+                        "Optional — awards, milestones, notable cases."
                       )}
                       <Input
-                        value={strength}
-                        onChange={(e) => setStrength(e.target.value)}
+                        value={acheivements}
+                        onChange={(e) => setAcheivements(e.target.value)}
                         placeholder="(optional)"
-                        maxLength={100}
+                        maxLength={150}
                         style={compactInputStyle}
                         suffix={
                           <Text type="secondary" style={{ fontSize: 12 }}>
-                            {strength.length}/100
+                            {acheivements.length}/150
                           </Text>
                         }
                       />
@@ -1902,18 +2049,15 @@ const CreateAgentWizard: React.FC = () => {
                         "Business/Idea *",
                         "Your brand, firm or practice."
                       )}
-                      <Input
-                        value={business}
-                        onChange={(e) => setBusiness(e.target.value)}
-                        placeholder="Firm/brand/practice"
-                        maxLength={100}
-                        style={compactInputStyle}
-                        suffix={
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {business.length}/100
-                          </Text>
-                        }
-                      />
+                     <Input
+  value={business}
+  onChange={(e) => setBusiness(e.target.value)}
+  placeholder="Firm/brand/practice"
+  maxLength={LIMITS.businessMax}
+  style={compactInputStyle}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{business.length}/{LIMITS.businessMax}</Text>}
+/>
+
                     </div>
                   </Col>
 
@@ -1937,12 +2081,15 @@ const CreateAgentWizard: React.FC = () => {
                         ))}
                       </Select>
                       {domain === "Other" && (
-                        <Input
-                          style={{ marginTop: 8, ...compactInputStyle }}
-                          placeholder="Enter custom domain/sector"
-                          value={domainOther}
-                          onChange={(e) => setDomainOther(e.target.value)}
-                        />
+                      <Input
+  style={{ marginTop: 8, ...compactInputStyle }}
+  placeholder="Enter custom domain/sector"
+  value={domainOther}
+  onChange={(e) => setDomainOther(e.target.value)}
+  maxLength={LIMITS.domainOtherMax}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{domainOther.length}/{LIMITS.domainOtherMax}</Text>}
+/>
+
                       )}
                     </div>
                   </Col>
@@ -1967,12 +2114,15 @@ const CreateAgentWizard: React.FC = () => {
                         ))}
                       </Select>
                       {subDomain === "Other" && (
-                        <Input
-                          style={{ marginTop: 8, ...compactInputStyle }}
-                          placeholder="Enter custom sub-domain/subsector"
-                          value={subDomainOther}
-                          onChange={(e) => setSubDomainOther(e.target.value)}
-                        />
+                       <Input
+  style={{ marginTop: 8, ...compactInputStyle }}
+  placeholder="Enter custom sub-domain/subsector"
+  value={subDomainOther}
+  onChange={(e) => setSubDomainOther(e.target.value)}
+  maxLength={LIMITS.subDomainOtherMax}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{subDomainOther.length}/{LIMITS.subDomainOtherMax}</Text>}
+/>
+
                       )}
                     </div>
                   </Col>
@@ -1994,6 +2144,12 @@ const CreateAgentWizard: React.FC = () => {
                             {m.owned_by ? ` · ${m.owned_by}` : ""}
                           </Option>
                         ))}
+                        <Option
+                          key="GPT-4o / DALL·E 3"
+                          value="GPT-4o / DALL·E 3"
+                        >
+                          GPT-4o / DALL·E 3
+                        </Option>
                       </Select>
                     </div>
                   </Col>
@@ -2039,7 +2195,7 @@ const CreateAgentWizard: React.FC = () => {
                     <Col xs={24}>
                       <div style={{ marginBottom: 12 }}>
                         {labelWithInfo(
-                          "Main Problem to Solve * (max 100 chars)",
+                          "Main Problem to Solve * (max 250 chars)",
                           "What exact user problem?"
                         )}
                         <TextArea
@@ -2063,7 +2219,7 @@ const CreateAgentWizard: React.FC = () => {
                   <Col xs={24}>
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
-                        "Unique Solution Method (max 100 chars)",
+                        "Unique Solution Method (max 250 chars)",
                         "How is your approach different?"
                       )}
                       <TextArea
@@ -2135,14 +2291,17 @@ const CreateAgentWizard: React.FC = () => {
                         ))}
                       </Select>
 
-                      {targetUsers.includes("Other") && (
-                        <Input
-                          style={{ marginTop: 8, ...compactInputStyle }}
-                          placeholder="Specify your target user(s)"
-                          value={targetUserOther}
-                          onChange={(e) => setTargetUserOther(e.target.value)}
-                        />
-                      )}
+                     {targetUsers.includes("Other") && (
+  <Input
+    style={{ marginTop: 8, ...compactInputStyle }}
+    placeholder="Specify your target user(s)"
+    value={targetUserOther}
+    onChange={(e) => setTargetUserOther(e.target.value)}
+    maxLength={LIMITS.targetOtherMax}
+    suffix={<Text type="secondary" style={{ fontSize: 12 }}>{targetUserOther.length}/{LIMITS.targetOtherMax}</Text>}
+/>
+)}
+
                     </div>
                   </Col>
 
@@ -2262,32 +2421,17 @@ const CreateAgentWizard: React.FC = () => {
                         <Radio value="YES">Yes</Radio>
                         <Radio value="NO">No</Radio>
                       </Radio.Group>
-                      {shareContact === "YES" && (
-                        <div style={{ marginTop: 8 }}>
-                          <Input
-                            value={contactDetails}
-                            onChange={(e) => setContactDetails(e.target.value)}
-                            placeholder="Phone / WhatsApp / Email"
-                            style={compactInputStyle}
-                          />
-                          <div style={{ marginTop: 6 }}>
-                            <Button
-                              size="small"
-                              onClick={() => setOpenProfileModal(true)}
-                            >
-                              View Profile & Autofill
-                            </Button>
-                            <Text
-                              type="secondary"
-                              style={{ marginLeft: 8, fontSize: 12 }}
-                            >
-                              {isLoadingProfile
-                                ? "Checking your profile…"
-                                : "Details from your profile"}
-                            </Text>
-                          </div>
-                        </div>
-                      )}
+                  {shareContact === "YES" && (
+  <Input
+    value={contactDetails}
+    onChange={(e) => setContactDetails(e.target.value)}
+    placeholder="Your best contact (email/phone)"
+    maxLength={LIMITS.contactMax}
+    style={compactInputStyle}
+    suffix={<Text type="secondary" style={{ fontSize: 12 }}>{contactDetails.length}/{LIMITS.contactMax}</Text>}
+/>
+)}
+
                     </div>
                   </Col>
                   <Row gutter={[16, 12]}>
@@ -2393,11 +2537,13 @@ const CreateAgentWizard: React.FC = () => {
                         'Example: "What service do you need help with today?"'
                       )}
                       <Input
-                        value={conStarter1}
-                        onChange={(e) => setConStarter1(e.target.value)}
-                        placeholder='e.g., "What service do you need help with today?"'
-                        style={compactInputStyle}
-                      />
+  value={conStarter1}
+  onChange={(e) => setConStarter1(e.target.value)}
+  placeholder="Starter 1"
+  maxLength={LIMITS.starterMax}
+  style={compactInputStyle}
+  suffix={<Text type="secondary" style={{ fontSize: 12 }}>{conStarter1.trim().length}/{LIMITS.starterMax}</Text>}
+/>
                     </div>
                   </Col>
 
@@ -2637,7 +2783,7 @@ const CreateAgentWizard: React.FC = () => {
             }}
           >
             <Title level={4} style={{ color: "#722ed1", margin: 0 }}>
-              {agentName || "—"}
+              {name || "—"}
             </Title>
             <div style={{ marginTop: 8, color: "#8c8c8c" }}>
               <div>
@@ -2720,7 +2866,7 @@ const CreateAgentWizard: React.FC = () => {
 
       {/* STORE SELECTION MODAL */}
       <Modal
-        title="Choose Store(s) to list your Agent"
+        title="Choose Store to list your Agent"
         open={showStoreModal}
         onCancel={() => setShowStoreModal(false)}
         onOk={() => {
@@ -2732,7 +2878,7 @@ const CreateAgentWizard: React.FC = () => {
           setShowStoreModal(false);
           handleConfirmPublish();
         }}
-        okText={isEditMode ? "Update & Publish" : "Publish"}
+        okText={isEditMode ? "Update" : "Publish"}
       >
         <div style={{ marginBottom: 8, color: "#595959" }}>
           Select where this agent should appear:
@@ -2755,19 +2901,6 @@ const CreateAgentWizard: React.FC = () => {
               <div style={{ fontWeight: 600 }}>Bharat AI Store</div>
               <div style={{ color: "#8c8c8c", fontSize: 12 }}>
                 Public marketplace listing inside Bharat AI Store.
-              </div>
-            </div>
-          </label>
-
-          <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <Checkbox
-              checked={storeOxy}
-              onChange={(e) => setStoreOxy(e.target.checked)}
-            />
-            <div>
-              <div style={{ fontWeight: 600 }}>OxyGPT Store</div>
-              <div style={{ color: "#8c8c8c", fontSize: 12 }}>
-                Internal OxyGPT discovery listing for early adopters.
               </div>
             </div>
           </label>
@@ -2824,12 +2957,13 @@ const CreateAgentWizard: React.FC = () => {
             >
               Cancel
             </Button>
+
             <Button
-              type="primary"
               onClick={() => {
                 stopListening();
-                handleSaveInstructions();
+                handleSaveInstructions(); // ✅ stays open
               }}
+              style={{ marginRight: 8 }}
             >
               Save
             </Button>
@@ -2846,6 +2980,9 @@ const CreateAgentWizard: React.FC = () => {
         footer={null}
         title="Instructions"
         width={720}
+        maskClosable={false} // ✅ don't close on outside click
+        keyboard={false} // ✅ don't close on Esc
+        destroyOnClose={false} // ✅ preserve state
       >
         {!isViewEditing ? (
           <>
@@ -2893,6 +3030,7 @@ const CreateAgentWizard: React.FC = () => {
               rows={10}
               style={{ borderRadius: 8 }}
             />
+            
             <div
               style={{
                 marginTop: 12,
@@ -2928,7 +3066,9 @@ const CreateAgentWizard: React.FC = () => {
                     stopListening();
                     setInstructions(tempInstructions);
                     setIsViewEditing(false);
+                    setShowViewInstructions(true);
                     message.success("Instructions updated!");
+                    setShowViewInstructions(false);
                   }}
                 >
                   Save

@@ -1,27 +1,36 @@
 // /src/AgentStore/InsuranceAgentsPage.tsx
 import React, { useEffect, useState } from "react";
-import { Bot, Loader2, Shield, X, Search } from "lucide-react";
+import { Bot, Shield, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../../Config";
 
-// ================= Canonical names & order =================
+/* ================= Canonical names & order ================= */
 const CANONICAL = [
   "AI-Based IRDAI GI Reg Audit",
   "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   "IRDAI Enforcement Actions",
   "General Insurance Discovery",
- "Life Insurance Citizen Discovery"
+  "Life Insurance Citizen Discovery",
 ] as const;
 
 type CanonicalName = (typeof CANONICAL)[number];
 
-// Optional: exclude this one assistantId
+/* ========= Use assistantId → name mapping (NO name matching) ========== */
+const ID_TO_CANONICAL: Record<string, CanonicalName> = {
+  asst_fGP7NQpP6kbr5iHGtaFhrhow: "AI-Based IRDAI GI Reg Audit",
+  asst_hKOb17A6fLeBFKq05sDLVbSL: "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
+  asst_v65QvaurFXMf7VJ8oFJ6F6Zn: "IRDAI Enforcement Actions",
+  asst_bRxg1cfAfcQ05O3UGUjcAwwC: "General Insurance Discovery",
+  asst_G2jtvsfDcWulax5QDcyWhFX1: "Life Insurance Citizen Discovery",
+};
+
+/* ===== Optional: exclude these assistantIds entirely (by id) ===== */
 const EXCLUDE_ASSISTANT_IDS = new Set<string>([
   "asst_s3pT6JYZcPhuYRP84uQT4e4a",
 ]);
 
-// Explicit image overrides (used when API image is empty)
+/* ========= Explicit image overrides (used when API image is empty) ========= */
 const NAME_TO_IMAGE: Record<CanonicalName, string> = {
   "AI-Based IRDAI GI Reg Audit":
     "https://i.ibb.co/PGtHTnf9/Chat-GPT-Image-Sep-21-2025-09-13-25-AM.png",
@@ -31,10 +40,11 @@ const NAME_TO_IMAGE: Record<CanonicalName, string> = {
     "https://i.ibb.co/6JmrvSXc/Chat-GPT-Image-Sep-21-2025-09-11-37-AM.png",
   "General Insurance Discovery":
     "https://i.ibb.co/BHLgWkHx/Chat-GPT-Image-Sep-21-2025-09-09-37-AM.png",
-   "Life Insurance Citizen Discovery":
-   "https://i.ibb.co/3ybg3TMD/Chat-GPT-Image-Sep-22-2025-12-33-31-PM.png",
+  "Life Insurance Citizen Discovery":
+    "https://i.ibb.co/3ybg3TMD/Chat-GPT-Image-Sep-22-2025-12-33-31-PM.png",
 };
 
+/* ================= Types ================= */
 type Assistant = {
   id?: string;
   assistantId?: string;
@@ -50,111 +60,122 @@ type Assistant = {
 
 type AssistantView = Assistant & {
   displayName: CanonicalName;
-  imageUrl: string; // ensured non-empty after mapping
+  imageUrl: string; // guaranteed non-empty after mapping
 };
 
-interface AssistantsResponse {
+
+// Create a lean axios client (no auth header by default)
+const apiClient = axios.create({
+  baseURL: (BASE_URL || "").replace(/\/+$/, ""),
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+// Fallback token for pre-login calls
+const PRELOGIN_TOKEN =
+  "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzOGY3MWRhMy01ZjFkLTRiODItYTgzZi0wZmM0MDU4ZTI1NTQiLCJpYXQiOjE3NTkyMzExMTEsImV4cCI6MTc2MDA5NTExMX0.WPotQxTI9_HuJJ_YXzKJPaWb6GU9F9nf8BUI5HjmZZB3N8Vw0Mad7K0rpRcXViqFqSF5u23IoyKMqkszkKpxmQ";
+
+function getOptionalAuthHeaders(): Record<string, string> {
+  const envToken =
+    typeof process !== "undefined" &&
+    (process as any).env &&
+    String((process as any).env.AUTH_TOKEN || "").trim();
+
+  const lsToken =
+    typeof window !== "undefined"
+      ? (localStorage.getItem("AUTH_TOKEN") ||
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token") ||
+          "")
+      : "";
+
+  // ✅ Use your pre-login token if nothing else is available
+  const token = envToken || lsToken || PRELOGIN_TOKEN;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
+type AssistantsResponse = {
   object: string;
-  data: Assistant[];
+  data: any[];
   has_more: boolean;
   firstId?: string;
   lastId?: string;
-}
+};
 
-function getAuthHeaders() {
-  let token =
-    (typeof window !== "undefined" &&
-      (localStorage.getItem("AUTH_TOKEN") ||
-        localStorage.getItem("authToken") ||
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token"))) ||
-    "";
-  if (!token && process.env.AUTH_TOKEN)
-    token = process.env.AUTH_TOKEN as string;
+// Backend 500 avoidance: send ONLY 'after' when present (omit 'limit')
+async function getAssistants(_limit = 50, after?: string): Promise<AssistantsResponse> {
+  const config: any = { headers: getOptionalAuthHeaders() };
 
-  if (!token) {
-    // Surface a clear error instead of sending a header-less call that may trigger a 500
-    throw new Error("Missing access token. Please login again.");
+  // attach params BEFORE the request
+  if (after) {
+    config.params = { after };
   }
 
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-}
+  const response = await apiClient.get("/ai-service/agent/getAllAssistants", config);
 
-const apiClient = axios.create({ baseURL: BASE_URL });
-
-async function getAssistants(
-  limit = 100,
-  after?: string
-): Promise<AssistantsResponse> {
-  const safeLimit = Math.min(Math.max(limit, 1), 100);
-  const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
-     headers: {
-      "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
-    },
-    params: { limit: safeLimit, after },
-  });
-
-  const normalized = (res.data?.data ?? []).map((a: any) => ({
+  // Normalize a few fields so the rest of the page can rely on consistent keys
+  const normalized = (response.data?.data ?? []).map((a: any) => ({
     ...a,
-    assistantId: a.assistantId || a.id,
-    agentId: a.agentId || a.id || a.assistantId,
-    imageUrl: a.imageUrl || a.image || a.thumbUrl || "",
+    assistantId: a?.assistantId || a?.id,
+    agentId: a?.agentId || a?.id || a?.assistantId,
+    imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
+    description: a?.description ?? a?.desc ?? "",
+    status: a?.status || a?.agentStatus,
   }));
 
   return {
-    object: res.data?.object ?? "list",
+    object: response.data?.object ?? "list",
     data: normalized,
-    has_more: !!res.data?.has_more,
-    firstId: res.data?.firstId,
-    lastId: res.data?.lastId,
+    has_more: !!(response.data?.has_more ?? response.data?.hasMore),
+    firstId: response.data?.firstId,
+    lastId: response.data?.lastId,
   };
 }
 
-// Search API → /ai-service/agent/webSearchForAgent?message=...
-async function searchAssistants(query: string): Promise<Assistant[]> {
-  const res = await apiClient.get("/ai-service/agent/webSearchForAgent", {
-    headers: {
-      "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
-    },
-    params: { message: query },
-  });
 
-  const raw = Array.isArray(res.data)
-    ? res.data
-    : Array.isArray(res.data?.data)
-    ? res.data.data
-    : res.data
-    ? [res.data]
+function normalizeAssistantsPayload(resData: any): Assistant[] {
+  const list = Array.isArray(resData?.data)
+    ? resData.data
+    : Array.isArray(resData)
+    ? resData
     : [];
 
-  return raw.map((a: any, idx: number) => ({
+  return list.map((a: any) => ({
     ...a,
-    name: a.name ?? `Agent ${idx + 1}`,
-    description: a.description ?? a.desc ?? "",
-    assistantId: a.assistantId || a.id || a.agentId,
-    agentId: a.agentId || a.assistantId || a.id,
-    status: a.status || a.agentStatus,
-    imageUrl: a.imageUrl || a.image || a.thumbUrl || "",
+    assistantId: a?.assistantId || a?.id,
+    agentId: a?.agentId || a?.id || a?.assistantId,
+    imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
+    description: a?.description ?? a?.desc ?? "",
+    status: a?.status || a?.agentStatus,
   }));
 }
 
-// ================= helpers =================
-function toCanonicalName(raw?: string): CanonicalName | null {
-  if (!raw) return null;
-  const lower = raw.toLowerCase().trim();
-  const hit = CANONICAL.find((c) => c.toLowerCase() === lower);
-  return (hit as CanonicalName) ?? null;
+async function searchAssistants(query: string): Promise<Assistant[]> {
+  const path = "/ai-service/agent/webSearchForAgent";
+  try {
+    const resp = await apiClient.get(path, {
+      headers: getOptionalAuthHeaders(),
+      params: { message: query },
+    });
+    return normalizeAssistantsPayload(resp?.data);
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const body = e?.response?.data;
+    console.error(`[webSearchForAgent] ${status || ""}`, body || e?.message);
+    throw e;
+  }
 }
 
+
+/* ================= helpers ================= */
 function mapImage(displayName: CanonicalName, apiImage?: string): string {
   const cleaned = (apiImage || "").trim();
   if (cleaned) return cleaned; // prefer API image if present
@@ -178,41 +199,40 @@ function applyFallbackDescription(view: AssistantView): AssistantView {
         "This agent guides users through all aspects of general insurance—health, motor, home, travel, and more. It solves problems like policy confusion, claim delays, and compliance gaps by explaining coverage clearly, comparing options, and tracking IRDAI updates. With real-time insights, it helps customers, agents, and insurers make smarter, faster, and fairer decisions.",
     };
   }
-    if (emptyDesc && view.displayName === "Life Insurance Citizen Discovery") {
+  if (emptyDesc && view.displayName === "Life Insurance Citizen Discovery") {
     return {
       ...view,
       description:
-       "This agent simplifies life insurance—term, whole, ULIPs & more. It clears premium confusion, compares plans, tracks IRDAI updates & ensures fair, secure decisions.",
+        "This agent simplifies life insurance—term, whole, ULIPs & more. It clears premium confusion, compares plans, tracks IRDAI updates & ensures fair, secure decisions.",
     };
   }
   return view;
 }
 
-function buildInsuranceList(all: Assistant[]): AssistantView[] {
-  // Filter only our four by exact name from API (no fuzzy match)
-  const pool = all
-    .filter((a) => !EXCLUDE_ASSISTANT_IDS.has((a.assistantId || "").trim()))
-    .filter((a) => !!toCanonicalName(a.name));
+function buildInsuranceListById(all: Assistant[]): AssistantView[] {
+  return all
+    .filter((a) => {
+      const id = (a.assistantId || a.id || "").trim();
+      return id && ID_TO_CANONICAL[id];
+    })
+    .map((a) => {
+      const id = (a.assistantId || a.id || "").trim();
+      const displayName = ID_TO_CANONICAL[id] as CanonicalName;
+      const img = mapImage(displayName, a.imageUrl);
 
-  // Convert to view model with forced displayName & image mapping
-  const views: AssistantView[] = pool.map((a) => {
-    const displayName = toCanonicalName(a.name)!; // filtered above
-    const img = mapImage(displayName, a.imageUrl);
-    return applyFallbackDescription({
-      ...a,
-      displayName,
-      imageUrl: img,
-    });
-  });
-
-  // Keep canonical order
-  return views.sort(
-    (a, b) =>
-      CANONICAL.indexOf(a.displayName) - CANONICAL.indexOf(b.displayName)
-  );
+      return applyFallbackDescription({
+        ...a,
+        displayName,
+        imageUrl: img,
+      } as AssistantView);
+    })
+    .sort(
+      (a, b) =>
+        CANONICAL.indexOf(a.displayName) - CANONICAL.indexOf(b.displayName)
+    );
 }
 
-// ================ Skeleton Loader ================
+/* ================ Skeleton Loader ================ */
 const SkeletonCard: React.FC = () => (
   <div className="animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden">
     <div className="relative w-full">
@@ -231,8 +251,7 @@ const SkeletonCard: React.FC = () => (
   </div>
 );
 
-
-// ================ UI bits ================
+/* ================ UI bits ================ */
 const ReadMoreModal: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -375,33 +394,70 @@ const AssistantCard: React.FC<{
   );
 };
 
-// ================= Page =================
+/* ================= Page ================= */
 const InsuranceAgentsPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // canonical list state
   const [items, setItems] = useState<AssistantView[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // search state
-  const [q, setQ] = useState<string>(""); // if you already have a search box elsewhere, bind it here
+  // (Optional search wiring kept; you can add a textbox to set q)
+  const [q] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Assistant[] | null>(null);
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Initial load: get all and build canonical 4
+  // inside the component:
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [hasMore, setHasMore] = useState<boolean>(false);
+
+  // fetch pages until we either collect all whitelisted agents or run out of pages
+  async function loadWhitelisted(initialAfter?: string) {
+    let after = initialAfter;
+    let collected: Assistant[] = [];
+    const targetCount = Object.keys(ID_TO_CANONICAL).length;
+
+    for (let i = 0; i < 5; i++) {
+      // safety cap: up to 5 pages
+     const res = await getAssistants(50, after);
+      collected = collected.concat(res.data);
+
+      const filtered = buildInsuranceListById(collected);
+      setItems(filtered);
+
+      if (filtered.length >= targetCount || !res.has_more) {
+        setCursor(res.lastId);
+        setHasMore(!!res.has_more);
+        return;
+      }
+      after = res.lastId;
+      setCursor(after);
+      setHasMore(true);
+    }
+  }
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
         setErr(null);
-        const res = await getAssistants(100);
-        const list = buildInsuranceList(res.data || []);
-        if (mounted) setItems(list);
+        await loadWhitelisted(); // ✅ will auto-page until it finds your 5
       } catch (e: any) {
-        if (mounted) setErr(e?.message || "Failed to load agents");
+        const status = e?.response?.status;
+        const body = e?.response?.data;
+        console.error(
+          "[InsuranceAgentsPage] Load failed:",
+          status,
+          body || e?.message
+        );
+        if (mounted) {
+          setErr(
+            body?.message ||
+              `Failed to load agents${status ? ` (HTTP ${status})` : ""}`
+          );
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -411,7 +467,7 @@ const InsuranceAgentsPage: React.FC = () => {
     };
   }, []);
 
-  // 🔎 Search hook (your provided logic + skeleton loader)
+  // Optional search effect (inactive unless you add a UI to set q)
   useEffect(() => {
     let active = true;
     const doSearch = async () => {
@@ -429,12 +485,12 @@ const InsuranceAgentsPage: React.FC = () => {
         if (!active) return;
         setSearchResults(results);
       } catch (e: any) {
-        console.error("Search API failed:", e);
+        const status = e?.response?.status;
+        const body = e?.response?.data;
+        console.error("Search API failed:", status, body || e?.message);
         if (!active) return;
         setSearchResults([]);
-        setSearchError(
-          e?.response?.data?.message || e?.message || "Search failed"
-        );
+        setSearchError(body?.message || e?.message || "Search failed");
       } finally {
         if (active) setSearchLoading(false);
       }
@@ -445,14 +501,101 @@ const InsuranceAgentsPage: React.FC = () => {
     };
   }, [q]);
 
-  const handleOpen = (a: Partial<AssistantView & Assistant>) => {
-    const assistantId = a.assistantId || a.id || a.agentId || "";
-    const agentId = a.agentId || a.assistantId || a.id || "";
-    if (!assistantId) return;
-    navigate(`/bharath-aistore/assistant/${assistantId}/${agentId}`);
+  // 🔹 keep this function as-is
+  const postAgentChat = async (
+    agentIdParam: string,
+    userIdParam: string | null,
+    messageHistory: any[],
+    threadIdParam?: string | null
+  ) => {
+    const headers = getOptionalAuthHeaders(); // token optional
+
+    const payload: any = {
+      agentId: agentIdParam,
+      userId: userIdParam,
+      messageHistory,
+    };
+    if (threadIdParam) payload.threadId = threadIdParam;
+
+    const { data } = await axios.post(
+      `${BASE_URL}/ai-service/agent/agentChat`,
+      payload,
+      { headers }
+    );
+    return data;
   };
 
-  // Decide which list to show: search or canonical
+
+const handleOpen = (a: any) => {
+  // 1) Block guests → hard redirect to WhatsApp login
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  if (!userId) {
+    // optional: remember where they were trying to go
+    try {
+      const nameSlug = ((a?.name as string) || "agent")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const assistantIdTmp = (a?.assistantId || a?.id || a?.agentId || "")
+        .toString()
+        .trim();
+      const agentIdTmp = (a?.agentId || a?.assistantId || a?.id || "")
+        .toString()
+        .trim();
+      const baseTmp = (typeof window !== "undefined" &&
+        window.location.pathname.includes("bharath-aistore"))
+        ? "bharath-aistore"
+        : "bharat-aistore";
+
+      // Build the intended target so you can optionally restore after login
+      const intended =
+        assistantIdTmp && agentIdTmp
+          ? `/${baseTmp}/assistant/${encodeURIComponent(
+              assistantIdTmp
+            )}/${encodeURIComponent(agentIdTmp)}`
+          : assistantIdTmp
+          ? `/${baseTmp}/assistant/${encodeURIComponent(assistantIdTmp)}`
+          : `/${baseTmp}/assistant/by-name/${encodeURIComponent(nameSlug)}`;
+
+      sessionStorage.setItem("redirectPath", intended);
+    } catch {}
+    window.location.href = "/whatsapplogin";
+    return;
+  }
+
+  // 2) Logged-in users → follow existing routing
+  const assistantId = (a.assistantId || a.id || a.agentId || "")
+    .toString()
+    .trim();
+  const agentId = (a.agentId || a.assistantId || a.id || "")
+    .toString()
+    .trim();
+  const nameSlug = (a.name || "agent")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const base =
+    typeof window !== "undefined" &&
+    window.location.pathname.includes("bharath-aistore")
+      ? "bharath-aistore"
+      : "bharat-aistore";
+
+  if (assistantId && agentId) {
+    navigate(
+      `/${base}/assistant/${encodeURIComponent(
+        assistantId
+      )}/${encodeURIComponent(agentId)}`
+    );
+    return;
+  }
+  if (assistantId) {
+    navigate(`/${base}/assistant/${encodeURIComponent(assistantId)}`);
+    return;
+  }
+  navigate(`/${base}/assistant/by-name/${encodeURIComponent(nameSlug)}`);
+};
+
   const inSearchMode = (q || "").trim().length > 0;
   const cardsToRender: Array<Partial<AssistantView & Assistant>> =
     inSearchMode && searchResults ? searchResults : items;
@@ -471,7 +614,6 @@ const InsuranceAgentsPage: React.FC = () => {
 
         {/* Loading / Error / Cards */}
         {inSearchMode ? (
-          // ------- SEARCH MODE -------
           searchLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -492,15 +634,16 @@ const InsuranceAgentsPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
               {cardsToRender.map((a, i) => (
                 <AssistantCard
-                  key={`${a.name || (a as any).displayName || i}-search`}
+                  key={`${
+                    a.assistantId || a.id || (a as any).displayName || i
+                  }-search`}
                   a={a}
                   onOpen={() => handleOpen(a)}
                 />
               ))}
             </div>
           )
-        ) : // ------- CANONICAL MODE -------
-        loading ? (
+        ) : loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={`init-skel-${i}`} />

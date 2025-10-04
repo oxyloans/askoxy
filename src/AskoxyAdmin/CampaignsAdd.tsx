@@ -37,6 +37,13 @@ const CampaignsAdd: React.FC = () => {
   const [nameErrorMessage, setNameErrorMessage] = useState<string>("");
   const [descErrormessage, setDescErrorMessage] = useState<string>("");
   const [typeErrorMessage, setTypeErrorMessage] = useState<string>("");
+  const [charCounts, setCharCounts] = useState<{
+    campaignType: number;
+    campaignDescription: number;
+  }>({
+    campaignType: 0,
+    campaignDescription: 0,
+  });
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -44,7 +51,24 @@ const CampaignsAdd: React.FC = () => {
     >
   ) => {
     const { name, value } = e.target;
+
+    // Define character limits
+    const limits: Record<string, number> = {
+      campaignType: 255,
+      campaignDescription: 10000,
+    };
+
+    // Check if field has a limit and enforce it
+    if (limits[name] && value.length > limits[name]) {
+      return; // Don't update if limit exceeded
+    }
+
     setFormData({ ...formData, [name]: value });
+
+    // Update character count
+    if (limits[name]) {
+      setCharCounts((prev) => ({ ...prev, [name]: value.length }));
+    }
   };
 
   const handleFileChange = async (
@@ -144,9 +168,8 @@ const CampaignsAdd: React.FC = () => {
   };
 
   const submitCampaign = async () => {
-
     const disclaimerText = `### ✅ *Disclaimer*
-    *This ${ formData.campainInputType} is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [support@askoxy.ai]`;
+    *This ${formData.campainInputType} is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [support@askoxy.ai]`;
 
     const finalCampaignDescription =
       (formData.campaignDescription || "") + disclaimerText;
@@ -187,12 +210,20 @@ const CampaignsAdd: React.FC = () => {
           campainInputType: "SERVICE",
         });
       } else {
-        setErrorMessage("Failed to add service. Please try again.");
-        message.error("Failed to add service. Please try again.");
+        setErrorMessage(
+          "Something went wrong while adding your blog. Kindly try again after some time."
+        );
+        message.error(
+          "Something went wrong while adding your blog. Kindly try again after some time."
+        );
       }
     } catch (error) {
-      setErrorMessage("Failed to add service. Please try again.");
-      message.error("Failed to add service. Please try again.");
+      setErrorMessage(
+        "Something went wrong while adding your blog. Kindly try again after some time."
+      );
+      message.error(
+        "Something went wrong while adding your blog. Kindly try again after some time."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -324,9 +355,13 @@ const CampaignsAdd: React.FC = () => {
                 name="campaignType"
                 value={formData.campaignType}
                 onChange={handleInputChange}
+                maxLength={255}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               />
+              <div className="text-sm text-gray-500 mt-1">
+                {charCounts.campaignType}/255 characters
+              </div>
               {nameErrorMessage && (
                 <div className="text-red-500 text-sm mb-4">
                   {nameErrorMessage}
@@ -348,9 +383,13 @@ const CampaignsAdd: React.FC = () => {
                 value={formData.campaignDescription}
                 onChange={handleInputChange}
                 rows={4}
+                maxLength={10000}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               ></textarea>
+              <div className="text-sm text-gray-500 mt-1">
+                {charCounts.campaignDescription}/10,000 characters
+              </div>
               {descErrormessage && (
                 <div className="text-red-500 text-sm mb-4">
                   {descErrormessage}

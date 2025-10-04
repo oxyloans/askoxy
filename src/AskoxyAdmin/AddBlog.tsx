@@ -69,6 +69,15 @@ const AddBlog: React.FC = () => {
   });
   const primaryType = localStorage.getItem("admin_primaryType");
   const userId = localStorage.getItem("userId");
+  const [charCounts, setCharCounts] = useState<{
+    campaignType: number;
+    campaignDescription: number;
+    socialMediaCaption: number;
+  }>({
+    campaignType: 0,
+    campaignDescription: 0,
+    socialMediaCaption: 0,
+  });
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -76,7 +85,25 @@ const AddBlog: React.FC = () => {
     >
   ) => {
     const { name, value } = e.target;
+
+    // Define character limits
+    const limits: Record<string, number> = {
+      campaignType: 255,
+      campaignDescription: 10000,
+      socialMediaCaption: 25,
+    };
+
+    // Check if field has a limit and enforce it
+    if (limits[name] && value.length > limits[name]) {
+      return; // Don't update if limit exceeded
+    }
+
     setFormData({ ...formData, [name]: value });
+
+    // Update character count
+    if (limits[name]) {
+      setCharCounts((prev) => ({ ...prev, [name]: value.length }));
+    }
 
     if (name === "socialMediaCaption") {
       if (value.length < 25) {
@@ -165,13 +192,13 @@ const AddBlog: React.FC = () => {
           setMediaErrorMessage("");
         } else {
           setMediaErrorMessage(
-            `Failed to upload ${file.name}. Please try again.`
+            `Failed to upload ${file.name}. Please try again. and check your file format and size`
           );
         }
       } catch (error) {
         console.error("Error uploading file:", error);
         setMediaErrorMessage(
-          `Failed to upload ${file.name}. Please try again.`
+          `Failed to upload ${file.name}. Please try again. and check your file format and size`
         );
       } finally {
         setIsUploading(false);
@@ -277,12 +304,20 @@ const AddBlog: React.FC = () => {
           }
         }
       } else {
-        setErrorMessage("Failed to add blog. Please try again.");
-        message.error("Failed to add blog. Please try again.");
+        setErrorMessage(
+          "Something went wrong while adding your blog. Kindly try again after some time."
+        );
+        message.error(
+          "Something went wrong while adding your blog. Kindly try again after some time."
+        );
       }
     } catch (error) {
-      setErrorMessage("Failed to add blog. Please try again.");
-      message.error("Failed to add blog. Please try again.");
+      setErrorMessage(
+        "Something went wrong while adding your blog. Kindly try again after some time."
+      );
+      message.error(
+        "Something went wrong while adding your blog. Kindly try again after some time."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -338,9 +373,13 @@ const AddBlog: React.FC = () => {
                 name="campaignType"
                 value={formData.campaignType}
                 onChange={handleInputChange}
+                maxLength={255}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               />
+              <div className="text-sm text-gray-500 mt-1">
+                {charCounts.campaignType}/255 characters
+              </div>
               {nameErrorMessage && (
                 <div className="text-red-500 text-sm mb-4">
                   {nameErrorMessage}
@@ -361,9 +400,13 @@ const AddBlog: React.FC = () => {
                 value={formData.campaignDescription}
                 onChange={handleInputChange}
                 rows={4}
+                maxLength={10000}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               ></textarea>
+              <div className="text-sm text-gray-500 mt-1">
+                {charCounts.campaignDescription}/10,000 characters
+              </div>
               {descErrormessage && (
                 <div className="text-red-500 text-sm mb-4">
                   {descErrormessage}
@@ -384,10 +427,15 @@ const AddBlog: React.FC = () => {
                 value={formData.socialMediaCaption}
                 onChange={handleInputChange}
                 rows={3}
+                maxLength={25}
                 placeholder="Please enter a social media caption with at least 25 characters."
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               ></textarea>
+              <div className="text-sm text-gray-500 mt-1">
+                {charCounts.socialMediaCaption}/25 characters (minimum 25
+                required)
+              </div>
               {socialMediaCaptionErrorMessage && (
                 <div className="text-red-500 text-sm mb-4">
                   {socialMediaCaptionErrorMessage}

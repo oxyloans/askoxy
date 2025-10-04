@@ -31,14 +31,14 @@ export interface LanguageConfig {
 
 export const LANGUAGES: LanguageConfig[] = [
   {
-    code: "te",
-    name: "Telugu",
-    nativeName: "తెలుగు",
+    code: "ben",
+    name: "Bengali",
+    nativeName: "বাঙালি",
     flag: "🇮🇳",
-    speechLang: "te-IN",
+    speechLang: "bn-IN",
     imageUrl:
-      "https://i.ibb.co/p6XPMZdn/Chat-GPT-Image-Aug-13-2025-05-42-43-PM.png",
-    assistantName: "Priya",
+      "https://tse1.explicit.bing.net/th/id/OIP.LKDBDva9o-3AdzzmWhqsRgHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
+    assistantName: "Anika",
   },
   {
     code: "en",
@@ -58,6 +58,6 @@ export const LANGUAGES: LanguageConfig[] = [
     speechLang: "hi-IN",
     imageUrl:
       "https://static.vecteezy.com/system/resources/thumbnails/045/782/543/small/professional-businesswoman-in-formal-suit-confident-smile-modern-office-background-corporate-leadership-stock-for-business-marketing-branding-photo.jpg",
-    assistantName: "Tara",
-  },
+    assistantName: "Tara",
+  },
 ];
