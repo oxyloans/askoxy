@@ -22,11 +22,14 @@ import {
 import BASE_URL from "../../Config";
 
 // Handle auth error
+// Handle auth error
 const handleAuthError = (err: any, navigate: any) => {
   if (err.response?.status === 401) {
     sessionStorage.setItem("redirectPath", window.location.pathname);
+    // UPDATED: Handle primaryType for AGENT similar to STUDENT
+    const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
     sessionStorage.setItem("fromStudyAbroad", "true");
-    navigate("/whatsappregister?primaryType=STUDENT");
+    navigate(`/whatsappregister?primaryType=${primaryType}`);
     return true;
   }
   return false;
@@ -38,8 +41,10 @@ const handleLoginRedirect = (navigate: any, redirectPath?: string) => {
     "redirectPath",
     redirectPath || window.location.pathname
   );
+  // UPDATED: Handle primaryType for AGENT similar to STUDENT
+  const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
   sessionStorage.setItem("fromStudyAbroad", "true");
-  navigate("/whatsapplogin?primaryType=STUDENT");
+  navigate(`/whatsapplogin?primaryType=${primaryType}`);
 };
 
 const WhatsappRegister = () => {
@@ -73,9 +78,9 @@ const WhatsappRegister = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [receiveNotifications, setReceiveNotifications] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">(
-    "CUSTOMER"
-  );
+  const [primaryType, setPrimaryType] = useState<
+    "CUSTOMER" | "STUDENT" | "AGENT"
+  >("CUSTOMER");
   const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   const queryParams = new URLSearchParams(window.location.search);
   const params = Object.fromEntries(queryParams.entries());
@@ -212,7 +217,9 @@ const WhatsappRegister = () => {
     const urlPrimaryType = queryParams.get("primaryType");
     const fromStudyAbroad = sessionStorage.getItem("fromStudyAbroad");
 
-    if (urlPrimaryType === "STUDENT" || fromStudyAbroad === "true") {
+    if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
+      setPrimaryType(urlPrimaryType as "STUDENT" | "AGENT");
+    } else if (fromStudyAbroad === "true") {
       setPrimaryType("STUDENT");
     } else {
       setPrimaryType("CUSTOMER");
@@ -405,8 +412,8 @@ const WhatsappRegister = () => {
           setShowSuccessPopup(false);
           setError("You are already registered with this number.");
           const loginUrl =
-            primaryType === "STUDENT"
-              ? "/whatsapplogin?primaryType=STUDENT"
+            primaryType === "STUDENT" || primaryType === "AGENT"
+              ? `/whatsapplogin?primaryType=${primaryType}`
               : "/whatsapplogin";
           setTimeout(() => navigate(loginUrl), 1000);
         } else {
@@ -437,8 +444,8 @@ const WhatsappRegister = () => {
         setShowSuccessPopup(false);
         setError("You are already registered with this number. Please log in.");
         const loginUrl =
-          primaryType === "STUDENT"
-            ? "/whatsapplogin?primaryType=STUDENT"
+          primaryType === "STUDENT" || primaryType === "AGENT"
+            ? `/whatsapplogin?primaryType=${primaryType}`
             : "/whatsapplogin";
         setTimeout(() => navigate(loginUrl), 1500);
       } else {
@@ -561,8 +568,8 @@ const WhatsappRegister = () => {
           "You are already registered with this number. Redirecting to login..."
         );
         const loginUrl =
-          primaryType === "STUDENT"
-            ? "/whatsapplogin?primaryType=STUDENT"
+          primaryType === "STUDENT" || primaryType === "AGENT"
+            ? `/whatsapplogin?primaryType=${primaryType}`
             : "/whatsapplogin";
         setTimeout(() => navigate(loginUrl), 1500);
       } else {
@@ -611,8 +618,8 @@ const WhatsappRegister = () => {
               "You are already registered with this number. Redirecting to login..."
             );
             const loginUrl =
-              primaryType === "STUDENT"
-                ? "/whatsapplogin?primaryType=STUDENT"
+              primaryType === "STUDENT" || primaryType === "AGENT"
+                ? `/whatsapplogin?primaryType=${primaryType}`
                 : "/whatsapplogin";
             setTimeout(() => navigate(loginUrl), 1000);
             return;
@@ -685,10 +692,11 @@ const WhatsappRegister = () => {
     });
   };
 
+  // UPDATED: Handle primaryType for AGENT similar to STUDENT
   const handleLoginRedirectClick = () => {
     const loginUrl =
-      primaryType === "STUDENT"
-        ? "/whatsapplogin?primaryType=STUDENT"
+      primaryType === "STUDENT" || primaryType === "AGENT"
+        ? `/whatsapplogin?primaryType=${primaryType}`
         : "/whatsapplogin";
     navigate(loginUrl);
   };
@@ -704,6 +712,8 @@ const WhatsappRegister = () => {
           <h2 className="text-2xl font-bold text-white text-center">
             {primaryType === "STUDENT"
               ? "Register to Study Abroad"
+              : primaryType === "AGENT"
+              ? "Register to Bharat AI Store"
               : "Register to ASKOXY.AI"}
           </h2>
           <button
@@ -723,8 +733,8 @@ const WhatsappRegister = () => {
               <button
                 onClick={() => {
                   const registerUrl =
-                    primaryType === "STUDENT"
-                      ? "/whatsappregister?primaryType=STUDENT"
+                    primaryType === "STUDENT" || primaryType === "AGENT"
+                      ? `/whatsappregister?primaryType=${primaryType}`
                       : "/whatsappregister";
                   window.location.href = registerUrl;
                 }}

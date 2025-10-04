@@ -37,7 +37,27 @@ const Header: React.FC<HeaderProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+const handleLogin = () => {
+  try {
+    setLoading(true);
 
+    const userId = localStorage.getItem("userId");
+    const redirectPath = "/main/bharat-expert";
+
+    if (userId) {
+      navigate(redirectPath);
+    } else {
+      sessionStorage.setItem("redirectPath", redirectPath);
+      sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+      // Pass primaryType as query parameter
+      window.location.href = "/whatsappregister?primaryType=AGENT";
+    }
+  } catch (error) {
+    console.error("Sign in error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
   const nav = [
     {
       label: "AI INITIATIVES",
@@ -411,7 +431,7 @@ const Header: React.FC<HeaderProps> = ({
 
                     {/* Mobile CTA (icon only) */}
                     <button
-                      onClick={handleCreateAgentClick}
+                      onClick={handleLogin}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100"
                       aria-label="Create AI Agent"
                       title="Create AI Agent"
@@ -449,7 +469,7 @@ const Header: React.FC<HeaderProps> = ({
 
                 {/* Desktop CTA with pulse animation & comfortable gap */}
                 <button
-                  onClick={handleCreateAgentClick}
+                  onClick={handleLogin}
                   className={[
                     "relative hidden md:inline-flex items-center justify-center",
                     "bg-purple-600 hover:bg-purple-700 text-white font-semibold",
@@ -520,7 +540,7 @@ const Header: React.FC<HeaderProps> = ({
 
               {/* Mobile CTA (full-width with pulse) */}
               <button
-                onClick={handleCreateAgentClick}
+                onClick={handleLogin}
                 className="w-full rounded-full bg-purple-600 text-white font-semibold py-3 shadow shadow-purple-400/60 animate-pulse hover:bg-purple-700"
               >
                 {isLoading ? "Loading…" : "Create AI Agent"}

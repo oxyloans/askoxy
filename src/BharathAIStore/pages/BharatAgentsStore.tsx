@@ -474,22 +474,44 @@ const BharatAgentsStore: React.FC = () => {
   ]);
 
   const NEXT_PATH = "/main/bharat-expert";
-  const handleCreateAgentClick = () => {
-    try {
-      setLoading(true);
-      const userId = localStorage.getItem("userId");
-      if (userId) {
-        navigate(NEXT_PATH);
-      } else {
-        sessionStorage.setItem("redirectPath", NEXT_PATH);
-        navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
-      }
-    } catch (e) {
-      console.error("Create Agent CTA error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleCreateAgentClick = () => {
+  //   try {
+  //     setLoading(true);
+  //     const userId = localStorage.getItem("userId");
+  //     if (userId) {
+  //       navigate(NEXT_PATH);
+  //     } else {
+  //       sessionStorage.setItem("redirectPath", NEXT_PATH);
+  //       navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
+  //     }
+  //   } catch (e) {
+  //     console.error("Create Agent CTA error:", e);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+ const handleLogin = () => {
+   try {
+     setLoading(true);
+ 
+     const userId = localStorage.getItem("userId");
+     const redirectPath = "/main/bharat-expert";
+ 
+     if (userId) {
+       navigate(redirectPath);
+     } else {
+       sessionStorage.setItem("redirectPath", redirectPath);
+       sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+       // Pass primaryType as query parameter
+       window.location.href = "/whatsappregister?primaryType=AGENT";
+     }
+   } catch (error) {
+     console.error("Sign in error:", error);
+   } finally {
+     setLoading(false);
+   }
+ };
 
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
@@ -619,7 +641,7 @@ const BharatAgentsStore: React.FC = () => {
                   src={CA3image}
                   alt="Header"
                   className="w-full h-full object-cover cursor-pointer"
-                  onClick={handleCreateAgentClick}
+                  onClick={handleLogin}
                   loading="eager"
                   decoding="async"
                 />
@@ -697,7 +719,7 @@ const BharatAgentsStore: React.FC = () => {
 
         sessionStorage.setItem("redirectPath", intended);
       } catch {}
-      window.location.href = "/whatsapplogin";
+      window.location.href = "/whatsappregister?primaryType=AGENT";
       return;
     }
 
@@ -761,7 +783,7 @@ const BharatAgentsStore: React.FC = () => {
 
                 <div className="mt-8 hidden sm:flex items-center gap-4">
                   <button
-                    onClick={handleCreateAgentClick}
+                    onClick={handleLogin}
                     className="inline-flex items-center justify-center rounded-full bg-purple-600 px-6 py-3 text-white font-semibold hover:bg-purple-700"
                   >
                     Create AI Agent →
@@ -784,7 +806,7 @@ const BharatAgentsStore: React.FC = () => {
               {/* mobile CTA */}
               <div className="sm:hidden">
                 <button
-                  onClick={handleCreateAgentClick}
+                  onClick={handleLogin}
                   className="inline-flex items-center justify-center rounded-full bg-purple-600 px-5 py-3 text-white font-semibold w-full"
                 >
                   Create AI Agent →
@@ -801,7 +823,7 @@ const BharatAgentsStore: React.FC = () => {
                 src={CA3image}
                 alt="Header"
                 className="w-full h-full object-cover cursor-pointer"
-                onClick={handleCreateAgentClick}
+                onClick={handleLogin}
                 loading="eager"
                 decoding="async"
               />

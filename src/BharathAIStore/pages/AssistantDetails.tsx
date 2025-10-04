@@ -574,7 +574,7 @@ const AssistantDetails: React.FC = () => {
           }
         } catch (err) {
           console.error("Error fetching conversation starters:", err);
-          message.warning("Could not load suggested prompts.");
+          // message.warning("Could not load suggested prompts.");
           setPrompts([]);
         }
 
@@ -1061,19 +1061,21 @@ const AssistantDetails: React.FC = () => {
     <>
       {!userId &&
         (() => {
-          try {
-            sessionStorage.setItem(
-              "returnTo",
-              `${location.pathname}${location.search || ""}`
-            );
-          } catch (e) {
-            console.warn("Could not save returnTo:", e);
-          }
-          return (
-            <Navigate
-              to={`/whatsapplogin?returnTo=${encodeURIComponent(currentPath)}`}
-            />
-          );
+         try {
+           sessionStorage.setItem(
+             "returnTo",
+             `${location.pathname}${location.search || ""}`
+           );
+         } catch (e) {
+           console.warn("Could not save returnTo:", e);
+         }
+         return (
+           <Navigate
+             to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
+               currentPath
+             )}`}
+           />
+         );
         })()}
 
       <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">

@@ -38,22 +38,26 @@ interface ErrorResponse {
   message?: string;
 }
 
-// Handle auth error utility function
+// UPDATED: Handle auth error utility function to include AGENT similar to STUDENT
 const handleAuthError = (err: AxiosError<ErrorResponse>, navigate: (path: string) => void): boolean => {
   if (err.response?.status === 401) {
     sessionStorage.setItem("redirectPath", window.location.pathname);
+    // UPDATED: Handle primaryType for AGENT similar to STUDENT
+    const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
     sessionStorage.setItem("fromStudyAbroad", "true");
-    navigate("/whatsapplogin?primaryType=STUDENT");
+    navigate(`/whatsapplogin?primaryType=${primaryType}`);
     return true;
   }
   return false;
 };
 
-// Handle login redirect for non-authenticated users
+// UPDATED: Handle login redirect for non-authenticated users to include AGENT similar to STUDENT
 const handleLoginRedirect = (navigate: (path: string) => void, redirectPath?: string) => {
   sessionStorage.setItem("redirectPath", redirectPath || window.location.pathname);
+  // UPDATED: Handle primaryType for AGENT similar to STUDENT
+  const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
   sessionStorage.setItem("fromStudyAbroad", "true");
-  navigate("/whatsapplogin?primaryType=STUDENT");
+  navigate(`/whatsapplogin?primaryType=${primaryType}`);
 };
 
 const WhatsappLogin: React.FC = () => {
@@ -61,7 +65,8 @@ const WhatsappLogin: React.FC = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
-  const [isGmailButtonEnabled, setIsGmailButtonEnabled] = useState<boolean>(true);
+  const [isGmailButtonEnabled, setIsGmailButtonEnabled] =
+    useState<boolean>(true);
   const [credentials, setCredentials] = useState<Credentials>({
     otp: ["", "", "", ""],
     mobileOTP: ["", "", "", "", "", ""],
@@ -69,7 +74,7 @@ const WhatsappLogin: React.FC = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
- const [otpMethod, setOtpMethod] = useState<"mobile" | "whatsapp">("whatsapp");
+  const [otpMethod, setOtpMethod] = useState<"mobile" | "whatsapp">("whatsapp");
   const [showEnglish, setShowEnglish] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("91"); // Default to India
@@ -84,11 +89,15 @@ const WhatsappLogin: React.FC = () => {
   const [isPhoneDisabled, setIsPhoneDisabled] = useState<boolean>(false);
   const [animateOtp, setAnimateOtp] = useState<boolean>(false);
   const [isMethodDisabled, setIsMethodDisabled] = useState<boolean>(false);
-  const [changeNumberClicked, setChangeNumberClicked] = useState<boolean>(false);
-  const [isGetOtpButtonDisabled, setIsGetOtpButtonDisabled] = useState<boolean>(true);
+  const [changeNumberClicked, setChangeNumberClicked] =
+    useState<boolean>(false);
+  const [isGetOtpButtonDisabled, setIsGetOtpButtonDisabled] =
+    useState<boolean>(true);
   const [showEriceAlert, setShowEriceAlert] = useState<boolean>(false);
-  const [primaryType, setPrimaryType] = useState<"CUSTOMER" | "STUDENT">("CUSTOMER");
-const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
+  const [primaryType, setPrimaryType] = useState<
+    "CUSTOMER" | "STUDENT" | "AGENT"
+  >("CUSTOMER");
+  const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   // Retrieve variables from localStorage and sessionStorage
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
@@ -103,10 +112,9 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   // Fetch user details
   const fetchUserDetails = async (accessToken: string) => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/user-service/me`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      const response = await axios.get(`${BASE_URL}/user-service/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       setUserDetails(response.data);
       localStorage.setItem("userId", response.data.userId || "");
       return response.data;
@@ -127,16 +135,30 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
     const queryParamsGoogle = new URLSearchParams(location.search);
     const accessTokenGoogle = queryParamsGoogle.get("token");
 
-    if (pendingGoogleAuth && accessTokenGoogle && accessTokenGoogle !== "null") {
+    if (
+      pendingGoogleAuth &&
+      accessTokenGoogle &&
+      accessTokenGoogle !== "null"
+    ) {
       localStorage.setItem("accessToken", accessTokenGoogle);
-      localStorage.setItem("primaryType", sessionStorage.getItem("primaryType") || "CUSTOMER");
-      localStorage.setItem("receiveNotifications", sessionStorage.getItem("receiveNotifications") || "false");
-      localStorage.setItem("agreeToTerms", sessionStorage.getItem("agreeToTerms") || "false");
+      localStorage.setItem(
+        "primaryType",
+        sessionStorage.getItem("primaryType") || "CUSTOMER"
+      );
+      localStorage.setItem(
+        "receiveNotifications",
+        sessionStorage.getItem("receiveNotifications") || "false"
+      );
+      localStorage.setItem(
+        "agreeToTerms",
+        sessionStorage.getItem("agreeToTerms") || "false"
+      );
 
       fetchUserDetails(accessTokenGoogle).then((userData) => {
         if (userData && userData.userId) {
           // localStorage.setItem("userId", userData.userId); // Store userId (commented as per snippet)
-          const redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+          const redirectPath =
+            sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
           sessionStorage.removeItem("pendingGoogleAuth");
           sessionStorage.removeItem("redirectPath");
           sessionStorage.removeItem("receiveNotifications");
@@ -159,7 +181,8 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
     if (userId && accessToken) {
       fetchUserDetails(accessToken).then((userData) => {
         if (userData && userData.userId) {
-          const redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+          const redirectPath =
+            sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
           sessionStorage.removeItem("redirectPath");
           navigate(redirectPath, { replace: true });
         } else {
@@ -174,10 +197,13 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   // Determine primary type
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
-    let detectedPrimaryType: "CUSTOMER" | "STUDENT" = "CUSTOMER";
+    // UPDATED: Include AGENT in detectedPrimaryType type
+    let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" = "CUSTOMER";
 
-    if (queryParams.get("primaryType") === "STUDENT") {
-      detectedPrimaryType = "STUDENT";
+    // UPDATED: Handle primaryType for AGENT similar to STUDENT
+    const urlPrimaryType = queryParams.get("primaryType");
+    if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
+      detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT";
     } else if (
       queryParams.get("from") === "studyabroad" ||
       location.state?.from?.includes("/studyabroad") ||
@@ -186,26 +212,35 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
       sessionStorage.getItem("fromStudyAbroad") === "true"
     ) {
       detectedPrimaryType = "STUDENT";
+    } else if (
+      queryParams.get("from") === "bharath-aistore" ||
+      location.state?.from?.includes("/bharath-aistore") ||
+      document.referrer.includes("/bharath-aistore") ||
+      sessionStorage.getItem("primaryType") === "AGENT"
+    ) {
+      detectedPrimaryType = "AGENT";
     }
 
     setPrimaryType(detectedPrimaryType);
+    // UPDATED: Handle showEriceAlert for AGENT similar to STUDENT
     setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
+    // UPDATED: Handle showGoogleButton for AGENT similar to STUDENT
     setShowGoogleButton(detectedPrimaryType === "CUSTOMER");
     sessionStorage.setItem("primaryType", detectedPrimaryType);
   }, [location]);
 
   // Redirect to mobile app stores
-//  useEffect(() => {
-//    const userAgent = navigator.userAgent || navigator.vendor;
+  //  useEffect(() => {
+  //    const userAgent = navigator.userAgent || navigator.vendor;
 
-//    if (/android/i.test(userAgent)) {
-//      window.location.href =
-//        "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer";
-//    } else if (/iPad|iPhone|iPod/.test(userAgent) && !("MSStream" in window)) {
-//      window.location.href =
-//        "https://apps.apple.com/in/app/askoxy-ai-ai-z-marketplace/id6738732000";
-//    }
-//  }, []);
+  //    if (/android/i.test(userAgent)) {
+  //      window.location.href =
+  //        "https://play.google.com/store/apps/details?id=com.oxyrice.oxyrice_customer";
+  //    } else if (/iPad|iPhone|iPod/.test(userAgent) && !("MSStream" in window)) {
+  //      window.location.href =
+  //        "https://apps.apple.com/in/app/askoxy-ai-ai-z-marketplace/id6738732000";
+  //    }
+  //  }, []);
 
   // Resend OTP timer
   useEffect(() => {
@@ -247,12 +282,15 @@ const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
   }, [phoneNumber]);
 
   // Set SMS as default for Erice users
-// Set SMS as default for Erice users
-useEffect(() => {
-  if (window.location.search.includes("erice") || window.location.pathname.includes("erice")) {
-    setOtpMethod("mobile");
-  }
-}, []);
+  // Set SMS as default for Erice users
+  useEffect(() => {
+    if (
+      window.location.search.includes("erice") ||
+      window.location.pathname.includes("erice")
+    ) {
+      setOtpMethod("mobile");
+    }
+  }, []);
 
   const handleGmailAuth = () => {
     setIsGoogleLoading(true);
@@ -267,13 +305,19 @@ useEffect(() => {
     }
   };
 
-const handleClose = () => {
-  setIsClosing(true);
-  const defaultPath = primaryType === "STUDENT" ? "/studyabroad" : "/";
-  const entryPoint = localStorage.getItem("entryPoint") || defaultPath;
-  console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
-  setTimeout(() => navigate(entryPoint), 300);
-};
+  const handleClose = () => {
+    setIsClosing(true);
+    // UPDATED: Handle defaultPath for AGENT similar to STUDENT
+    const defaultPath =
+      primaryType === "AGENT"
+        ? "/bharath-aistore"
+        : primaryType === "STUDENT"
+        ? "/studyabroad"
+        : "/";
+    const entryPoint = localStorage.getItem("entryPoint") || defaultPath;
+    console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
+    setTimeout(() => navigate(entryPoint), 300);
+  };
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");
@@ -316,7 +360,10 @@ const handleClose = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (e.key === "Backspace") {
       if (otpMethod === "whatsapp") {
         if (!credentials.otp[index] && index > 0) {
@@ -375,9 +422,15 @@ const handleClose = () => {
       );
       setIsButtonEnabled(true);
       if (response.data) {
-        localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession || "");
+        localStorage.setItem(
+          "mobileOtpSession",
+          response.data.mobileOtpSession || ""
+        );
         localStorage.setItem("salt", response.data.salt || "");
-        localStorage.setItem("expiryTime", response.data.otpGeneratedTime || "");
+        localStorage.setItem(
+          "expiryTime",
+          response.data.otpGeneratedTime || ""
+        );
         localStorage.setItem("primaryType", primaryType);
 
         if (
@@ -389,8 +442,8 @@ const handleClose = () => {
           setShowSuccessPopup(true);
           setMessage("This number is not registered. Please register now.");
           const registerPath =
-            primaryType === "STUDENT"
-              ? "/whatsappregister?primaryType=STUDENT"
+            primaryType === "STUDENT" || primaryType === "AGENT"
+              ? `/whatsappregister?primaryType=${primaryType}`
               : "/whatsappregister";
           setTimeout(() => navigate(registerPath), 1000);
         } else {
@@ -399,7 +452,9 @@ const handleClose = () => {
           setTimeout(() => setAnimateOtp(false), 1000);
           setShowSuccessPopup(true);
           setMessage(
-            `OTP sent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`
+            `OTP sent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
           );
           setResendDisabled(true);
           setIsPhoneDisabled(true);
@@ -413,11 +468,17 @@ const handleClose = () => {
       }
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
-      if (error.response?.data?.message === "User already registered with this Mobile Number, please log in.") {
+      if (
+        error.response?.data?.message ===
+        "User already registered with this Mobile Number, please log in."
+      ) {
         setError("You are already registered with this number. Please log in.");
         setTimeout(() => navigate("/whatsapplogin"), 1500);
       } else {
-        setError(error.response?.data?.message || "An error occurred. Please try again later.");
+        setError(
+          error.response?.data?.message ||
+            "An error occurred. Please try again later."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -440,7 +501,10 @@ const handleClose = () => {
       setOtpError("Please enter the complete WhatsApp OTP");
       setIsLoading(false);
       return;
-    } else if (otpMethod === "mobile" && credentials.mobileOTP.join("").length !== 6) {
+    } else if (
+      otpMethod === "mobile" &&
+      credentials.mobileOTP.join("").length !== 6
+    ) {
       setOtpError("Please enter the complete Mobile OTP");
       setIsLoading(false);
       return;
@@ -484,7 +548,10 @@ const handleClose = () => {
           if (otpMethod === "whatsapp") {
             localStorage.setItem("whatsappNumber", phoneWithoutCode);
           } else {
-            localStorage.setItem("mobileNumber", phoneWithoutCode.replace(countryCode, ""));
+            localStorage.setItem(
+              "mobileNumber",
+              phoneWithoutCode.replace(countryCode, "")
+            );
           }
           localStorage.removeItem("mobileOtpSession");
           localStorage.removeItem("salt");
@@ -497,7 +564,8 @@ const handleClose = () => {
           setMessage("Login Successful");
 
           setTimeout(() => {
-            const redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+            const redirectPath =
+              sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
             sessionStorage.removeItem("redirectPath");
             navigate(redirectPath, { replace: true });
           }, 1000);
@@ -512,7 +580,9 @@ const handleClose = () => {
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       if (error.response?.status === 401) {
-        setOtpError("Unauthorized: Invalid or missing access token. Please try again.");
+        setOtpError(
+          "Unauthorized: Invalid or missing access token. Please try again."
+        );
         handleAuthError(error, navigate);
       } else {
         setOtpError(error.response?.data?.message || "Invalid OTP");
@@ -546,17 +616,28 @@ const handleClose = () => {
           requestBody
         );
         if (response.data) {
-          localStorage.setItem("mobileOtpSession", response.data.mobileOtpSession || "");
+          localStorage.setItem(
+            "mobileOtpSession",
+            response.data.mobileOtpSession || ""
+          );
           localStorage.setItem("salt", response.data.salt || "");
-          localStorage.setItem("expiryTime", response.data.otpGeneratedTime || "");
+          localStorage.setItem(
+            "expiryTime",
+            response.data.otpGeneratedTime || ""
+          );
 
           setShowSuccessPopup(true);
           setMessage(
-            `OTP resent successfully to your ${otpMethod === "whatsapp" ? "WhatsApp" : "mobile"} number`
+            `OTP resent successfully to your ${
+              otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
+            } number`
           );
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
-            mobileOTP: otpMethod === "mobile" ? ["", "", "", "", "", ""] : prev.mobileOTP,
+            mobileOTP:
+              otpMethod === "mobile"
+                ? ["", "", "", "", "", ""]
+                : prev.mobileOTP,
           }));
           setTimeout(() => {
             setShowSuccessPopup(false);
@@ -565,7 +646,10 @@ const handleClose = () => {
         }
       } catch (err) {
         const error = err as AxiosError<ErrorResponse>;
-        setError(error.response?.data?.message || "An error occurred. Please try again later.");
+        setError(
+          error.response?.data?.message ||
+            "An error occurred. Please try again later."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -599,7 +683,7 @@ const handleClose = () => {
     setIsGetOtpButtonDisabled(true);
     if (primaryType === "CUSTOMER") {
       setShowEriceAlert(true);
-      setShowGoogleButton(true);  
+      setShowGoogleButton(true);
     }
     setCredentials({
       otp: ["", "", "", ""],
@@ -608,7 +692,10 @@ const handleClose = () => {
   };
 
   const handleRegisterRedirectClick = () => {
-    const registerUrl = primaryType === "STUDENT" ? "/whatsappregister?primaryType=STUDENT" : "/whatsappregister";
+    const registerUrl =
+      primaryType === "STUDENT" || primaryType === "AGENT"
+        ? `/whatsappregister?primaryType=${primaryType}`
+        : "/whatsappregister";
     navigate(registerUrl);
   };
 
@@ -629,15 +716,17 @@ const handleClose = () => {
           <div className="flex flex-col items-center gap-4 sm:gap-6 text-center pr-8 sm:pr-0">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">
               {primaryType === "STUDENT"
-                ? "Welcome to Study Abroad"
-                : "Welcome to ASKOXY.AI"}
+                ? "Login to Study Abroad"
+                : primaryType === "AGENT"
+                ? "Login to Bharat AI Store"
+                : "Login to ASKOXY.AI"}
             </h2>
             <div className="flex flex-row gap-2 sm:gap-3 justify-center w-full">
               <button
                 onClick={() => {
                   const loginPath =
-                    primaryType === "STUDENT"
-                      ? "/whatsapplogin?primaryType=STUDENT"
+                    primaryType === "STUDENT" || primaryType === "AGENT"
+                      ? `/whatsapplogin?primaryType=${primaryType}`
                       : "/whatsapplogin";
                   navigate(loginPath);
                 }}
@@ -714,7 +803,7 @@ const handleClose = () => {
           >
             <div className="flex flex-col items-center gap-4 p-2  pb-4">
               <div className="flex gap-4">
-                       <button
+                <button
                   type="button"
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     otpMethod === "whatsapp"
@@ -748,7 +837,6 @@ const handleClose = () => {
                   <Smartphone className="w-5 h-5" />
                   SMS
                 </button>
-         
               </div>
             </div>
 
