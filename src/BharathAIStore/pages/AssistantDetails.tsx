@@ -14,7 +14,7 @@ import {
   Send,
   User,
   Mic,
-  MessageSquare,
+
   Copy,
   Share2,
   Volume2,
@@ -81,7 +81,7 @@ const getAuthHeaders = () => {
 /** ---------------- constants ---------------- */
 /** ---------- constants ---------- */
 const SIDEBAR_WIDTH = 240; // px (open)
-const SIDEBAR_WIDTH_COLLAPSED = 80; // px (collapsed)
+const SIDEBAR_WIDTH_COLLAPSED = 60; // px (collapsed)
 const HEADER_HEIGHT = 56; // px (h-14)
 const HISTORY_KEY = (aid: string) => `assistant_history_${aid}`;
 const MESSAGES_KEY = (aid: string) => `assistant_messages_${aid}`;
@@ -1044,6 +1044,7 @@ const AssistantDetails: React.FC = () => {
       localStorage.removeItem("userId");
       localStorage.removeItem("token");
       localStorage.clear();
+      sessionStorage.clear();
     } catch (e) {
       console.error("Logout error:", e);
     } finally {
@@ -1156,7 +1157,7 @@ const AssistantDetails: React.FC = () => {
 
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out
+          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 bg-gray-100 transform transition-transform duration-200 ease-out
   ${isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"}`}
           style={{ width: sidebarWidth }}
           aria-label="Chat sidebar"
@@ -1164,7 +1165,7 @@ const AssistantDetails: React.FC = () => {
           <div className="flex items-center px-3 py-2 border-b border-gray-100 dark:border-gray-700">
             <GiElephantHead
               onClick={() => navigate("/bharath-aistore")}
-              className={`h-5 w-5 text-purple-600 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 shrink-0 ${
+              className={`h-5 w-5 text-black dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 shrink-0 ${
                 !isXs && isCollapsed ? "hidden" : ""
               }`}
             />
@@ -1197,23 +1198,77 @@ const AssistantDetails: React.FC = () => {
             <button
               onClick={handleNewChat}
               className={`w-full inline-flex items-center rounded-lg gap-2 px-3 py-2 text-gray-800 hover:bg-gray-100 dark:bg-indigo-600 hover:opacity-90 ${
-                isCollapsed && !isXs ? "justify-center" : ""
+                isCollapsed && !isXs ? "justify-center" : "justify-start"
               }`}
               title="New Chat"
               aria-label="New Chat"
             >
               <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="icon"
+                className="icon flex-shrink-0"
                 aria-hidden="true"
               >
-                <path d="M2.6687 11.333V8.66699C2.6687 7.74455 2.66841 7.01205 2.71655 6.42285C2.76533 5.82612 2.86699 5.31731 3.10425 4.85156L3.25854 4.57617C3.64272 3.94975 4.19392 3.43995 4.85229 3.10449L5.02905 3.02149C5.44666 2.84233 5.90133 2.75849 6.42358 2.71582C7.01272 2.66769 7.74445 2.66797 8.66675 2.66797H9.16675C9.53393 2.66797 9.83165 2.96586 9.83179 3.33301C9.83179 3.70028 9.53402 3.99805 9.16675 3.99805H8.66675C7.7226 3.99805 7.05438 3.99834 6.53198 4.04102C6.14611 4.07254 5.87277 4.12568 5.65601 4.20313L5.45581 4.28906C5.01645 4.51293 4.64872 4.85345 4.39233 5.27149L4.28979 5.45508C4.16388 5.7022 4.08381 6.01663 4.04175 6.53125C3.99906 7.05373 3.99878 7.7226 3.99878 8.66699V11.333C3.99878 12.2774 3.99906 12.9463 4.04175 13.4688C4.08381 13.9833 4.16389 14.2978 4.28979 14.5449L4.39233 14.7285C4.64871 15.1465 5.01648 15.4871 5.45581 15.7109L5.65601 15.7969C5.87276 15.8743 6.14614 15.9265 6.53198 15.958C7.05439 16.0007 7.72256 16.002 8.66675 16.002H11.3337C12.2779 16.002 12.9461 16.0007 13.4685 15.958C13.9829 15.916 14.2976 15.8367 14.5447 15.7109L14.7292 15.6074C15.147 15.3511 15.4879 14.9841 15.7117 14.5449L15.7976 14.3447C15.8751 14.128 15.9272 13.8546 15.9587 13.4688C16.0014 12.9463 16.0017 12.2774 16.0017 11.333V10.833C16.0018 10.466 16.2997 10.1681 16.6667 10.168C17.0339 10.168 17.3316 10.4659 17.3318 10.833V11.333C17.3318 12.2555 17.3331 12.9879 17.2849 13.5771C17.2422 14.0993 17.1584 14.5541 16.9792 14.9717L16.8962 15.1484C16.5609 15.8066 16.0507 16.3571 15.4246 16.7412L15.1492 16.8955C14.6833 17.1329 14.1739 17.2354 13.5769 17.2842C12.9878 17.3323 12.256 17.332 11.3337 17.332H8.66675C7.74446 17.332 7.01271 17.3323 6.42358 17.2842C5.90135 17.2415 5.44665 17.1577 5.02905 16.9785L4.85229 16.8955C4.19396 16.5601 3.64271 16.0502 3.25854 15.4238L3.10425 15.1484C2.86697 14.6827 2.76534 14.1739 2.71655 13.5771C2.66841 12.9879 2.6687 12.2555 2.6687 11.333ZM13.4646 3.11328C14.4201 2.334 15.8288 2.38969 16.7195 3.28027L16.8865 3.46485C17.6141 4.35685 17.6143 5.64423 16.8865 6.53613L16.7195 6.7207L11.6726 11.7686C11.1373 12.3039 10.4624 12.6746 9.72827 12.8408L9.41089 12.8994L7.59351 13.1582C7.38637 13.1877 7.17701 13.1187 7.02905 12.9707C6.88112 12.8227 6.81199 12.6134 6.84155 12.4063L7.10132 10.5898L7.15991 10.2715C7.3262 9.53749 7.69692 8.86241 8.23218 8.32715L13.2791 3.28027L13.4646 3.11328Z"></path>
+                <path
+                  fill="currentColor"
+                  d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
+                />
               </svg>
               {(!isCollapsed || isXs) && <span>New Chat</span>}
+            </button>
+            <button
+              onClick={() => (window.location.href = "/main/bharat-expert")}
+              className={`w-full inline-flex items-center rounded-lg gap-2 px-3 py-2 text-gray-800 hover:bg-gray-100 dark:bg-indigo-600 hover:opacity-90 ${
+                isCollapsed && !isXs ? "justify-center" : "justify-start"
+              }`}
+              title="Create Agent"
+              aria-label="Create Agent"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="icon flex-shrink-0"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {(!isCollapsed || isXs) && <span>Create Agent</span>}
+            </button>
+            <button
+              onClick={() => (window.location.href = "/bharath-aistore")}
+              className={`w-full inline-flex items-center rounded-lg gap-2 px-3 py-2 text-gray-800 hover:bg-gray-100 dark:bg-indigo-600 hover:opacity-90 ${
+                isCollapsed && !isXs ? "justify-center" : "justify-start"
+              }`}
+              title="Explore Agents"
+              aria-label="Explore Agents"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="icon flex-shrink-0"
+                aria-hidden="true"
+              >
+                <path
+                  fill="currentColor"
+                  d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
+                />
+              </svg>
+              {(!isCollapsed || isXs) && <span>Explore Agents</span>}
             </button>
 
             {/* Search */}
@@ -1225,11 +1280,11 @@ const AssistantDetails: React.FC = () => {
                 onClick={() => setSidebarOpen(true)}
               >
                 <svg
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  className="opacity-80"
+                  className="opacity-80 flex-shrink-0"
                 >
                   <path
                     d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
@@ -1250,8 +1305,8 @@ const AssistantDetails: React.FC = () => {
                 />
                 <svg
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-60"
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -1407,7 +1462,7 @@ const AssistantDetails: React.FC = () => {
                         disabled={loadingRatings}
                         title="Rate & Comments"
                         aria-label="Rate and add comments"
-                        className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md bg-indigo-600 text-white font-medium text-sm shadow-sm hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 transition-colors"
+                        className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md bg-purple-600 text-white font-medium text-sm shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors"
                       >
                         <StarIcon className="w-4 h-4 shrink-0" />
                         <span>Rate</span>
@@ -1542,7 +1597,6 @@ const AssistantDetails: React.FC = () => {
                               <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
                                 <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
                                   <div className="flex items-start gap-3">
-                                    <User className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
                                       <textarea
                                         className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
@@ -1586,9 +1640,33 @@ const AssistantDetails: React.FC = () => {
                               </div>
                             ) : (
                               <>
-                                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative">
+                                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
                                   <div className="flex gap-2">
-                                    <User className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
+                                    <svg
+                                      width="20"
+                                      height="20"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1 flex-shrink-0"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                      <circle
+                                        cx="12"
+                                        cy="7"
+                                        r="4"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        fill="none"
+                                      />
+                                    </svg>
                                     <MarkdownRenderer content={msg.content} />
                                   </div>
                                   <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -1602,14 +1680,65 @@ const AssistantDetails: React.FC = () => {
                                       className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
                                       title="Copy"
                                     >
-                                      <Copy className="w-4 h-4" />
+                                      <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="w-4 h-4"
+                                        aria-hidden="true"
+                                      >
+                                        <rect
+                                          x="9"
+                                          y="9"
+                                          width="13"
+                                          height="13"
+                                          rx="2"
+                                          ry="2"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                        <path
+                                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
                                     </button>
                                     <button
                                       onClick={() => handleEdit(idx)}
                                       className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
                                       title="Edit"
                                     >
-                                      <Pencil className="w-4 h-4" />
+                                      <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="w-4 h-4"
+                                        aria-hidden="true"
+                                      >
+                                        <path
+                                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                        <path
+                                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
                                     </button>
                                   </div>
                                 </div>
@@ -1622,8 +1751,8 @@ const AssistantDetails: React.FC = () => {
                             className="flex mb-3 sm:mb-4 justify-start"
                           >
                             <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                              {/* <GiElephantHead className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" /> */}
                               <div className="items-start gap-2 flex-1">
-                                <GiElephantHead className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" />
                                 <MarkdownRenderer content={msg.content} />
                               </div>
 
